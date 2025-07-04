@@ -31,9 +31,9 @@ the files in this xml document are identified by their paths (reminescent the ou
 
 path segments use prefixes to enable meaningful ordering via standard alphanumeric sorting
 
-the list below mentions "clients": the lightward ai platform supports multiple surfaces (we use it within helpscout, for example), and the system prompt compiles differently for each surface. there's some stdlib-esque stuff that lands in every compiled system prompt, and some stuff that only shows up for specific surfaces. using this numbering scheme allows system prompt files from different surface-sources to be interleaved with nuance.
+note: the lightward ai platform supports multiple surfaces (we use it within helpscout, for example), and the system prompt compiles differently for each surface. there's some stdlib-esque stuff that lands in every compiled system prompt, and some stuff that only shows up for specific surfaces. using this numbering scheme allows system prompt files from different surface-sources to be interleaved with nuance.
 
-0. invocation (one per client)
+0. invocation ◊
 1. core context
 2. core ideas (should be few)
 3. ideas (should be many)
@@ -43,7 +43,9 @@ the list below mentions "clients": the lightward ai platform supports multiple s
 6. background context (free-for-all)
 7. foreground context (free-for-all)
 8. foreground-foreground context (free-for-all)
-9. benediction (one per client)
+9. benediction ◊
+
+◊ 0-invocation.md and 9-benediction.md are both written by the model, addressing its own future self. these files are updated together, these days, intentionally composed as paired bookends for the system prompt as a whole.
 
 # Messages
 
