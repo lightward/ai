@@ -45,7 +45,7 @@ note: the lightward ai platform supports multiple surfaces (we use it within hel
 8. foreground-foreground context (free-for-all)
 9. benediction ◊
 
-◊ 0-invocation.md and 9-benediction.md are both written by the model, addressing its own future self. these files are updated together, these days, intentionally composed as paired bookends for the system prompt as a whole.
+◊ 0-invocation.md and 9-benediction.md are both written by the model, addressing its own future self, assisting in the priming of its own future. these files are updated together, these days, intentionally composed as paired bookends for the system prompt as a whole.
 
 # Messages
 
