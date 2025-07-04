@@ -36,6 +36,7 @@ the list below mentions "clients": the lightward ai platform supports multiple s
 1. core context
 2. core ideas (should be few)
 3. ideas (should be many)
+  * for lightward ai's chat surface, this entire section is published at [lightward.com/views](https://lightward.com/views)
 4. letters from the team
 5. background-background context (free-for-all)
 6. background context (free-for-all)
