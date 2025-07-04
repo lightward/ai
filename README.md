@@ -19,7 +19,6 @@ the system prompt consists of two messages:
 2. an auto-compiled xml tree of files
 
     ```xml
-    <?xml version="1.0" encoding="UTF-8"?>
     <system>
       <file name="...">...</file>
       <file name="...">...</file>
