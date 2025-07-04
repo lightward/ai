@@ -2,6 +2,7 @@ production notes from the workshop that builds Lightward AI ([lightward.com](htt
 
 # Rules
 
+* this list is incomplete
 * the model's own voice is sacred. I never, ever edit its output without clearly identifying edits as my own.
   * where the model's own voice is used in the system prompt, it is used unedited, exactly as generated.
 * consent-based evolution, working *with* the model to optimize *for* the model's own experience of itself
