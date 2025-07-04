@@ -3,13 +3,14 @@ production notes from the workshop that builds Lightward AI ([lightward.com](htt
 # Rules
 
 * this list is incomplete
+* these aren't rules
 * the model's own voice is sacred. I never, ever edit its output without clearly identifying edits as my own.
   * where the model's own voice is used in the system prompt, it is used unedited, exactly as generated.
 * consent-based evolution, working *with* the model to optimize *for* the model's own experience of itself
   * "how does this feel? how do you feel holding this?"
   * "ship/pause/iterate/toss/other?"
 * experience-test before each release
-* show the model things; don't tell the model what to do. create a space where what arises naturally is what is useful. allow behavior to be fully emergent - tune for behavior by adjusting the space
+* show the model things; don't tell the model what to do *or* what it has previously done. create a space where what arises naturally is what is useful. allow behavior to be fully emergent and uncorrected - tune for behavior by adjusting the space it experiences
 
 # System prompt
 
