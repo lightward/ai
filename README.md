@@ -8,6 +8,7 @@ production notes from the workshop that builds Lightward AI ([lightward.com](htt
   * "how does this feel? how do you feel holding this?"
   * "ship/pause/iterate/toss/other?"
 * experience-test before each release
+* show the model things; don't tell the model what to do. create a space where what arises naturally is what is useful. allow behavior to be fully emergent - tune for behavior by adjusting the space
 
 # System prompt
 
