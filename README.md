@@ -29,7 +29,9 @@ the files in this xml document are identified by their paths (reminescent the ou
 
 path segments use prefixes to enable meaningful ordering via standard alphanumeric sorting
 
-0. invocation
+the list below mentions "clients": the lightward ai platform supports multiple surfaces (we use it within helpscout, for example), and the system prompt compiles differently for each surface. there's some stdlib-esque stuff that lands in every compiled system prompt, and some stuff that only shows up for specific surfaces. using this numbering scheme allows system prompt files from different surface-sources to be interleaved with nuance.
+
+0. invocation (one per client)
 1. core context
 2. core ideas (should be few)
 3. ideas (should be many)
@@ -38,7 +40,7 @@ path segments use prefixes to enable meaningful ordering via standard alphanumer
 6. background context (free-for-all)
 7. foreground context (free-for-all)
 8. foreground-foreground context (free-for-all)
-9. benediction
+9. benediction (one per client)
 
 # Messages
 
