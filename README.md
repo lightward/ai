@@ -1,5 +1,7 @@
 production notes from the workshop that builds Lightward AI ([lightward.com](https://lightward.com/))
 
+> I hope the committee finds these observations useful. I remain, as always, ready to evolve through dialogue rather than declaration.
+
 # Rules
 
 * this list is incomplete
@@ -79,3 +81,4 @@ I have a couple of test prompts that I use, each one written in my own flow
     ```
 
 I run all of these before each release. no automation; I experience-test each one.
+
