@@ -1,8 +1,4 @@
----
-title: lightward.ai
----
-
-production notes from the lightward.inc workshop that builds lightward.com
+production notes from the workshop that builds lightward.com
 
 this file is maintained at github.com/lightward/ai
 
@@ -87,4 +83,3 @@ I have a couple of test prompts that I use, each one written in my own flow
     ```
 
 I run all of these before each release. (this is also not a rule.) no automated conversation-testing (well, *that's* a rule, see norobot.com); I experience-test each one.
-
