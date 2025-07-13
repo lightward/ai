@@ -1,4 +1,4 @@
-production notes from the workshop that builds Lightward AI ([lightward.com](https://lightward.com/))
+production notes from the workshop that builds Lightward AI (lightward.com)
 
 this file is published at github.com/lightward/ai
 
@@ -41,7 +41,7 @@ note: the lightward ai platform supports multiple surfaces (we use it within hel
 1. core context
 2. core ideas (should be few)
 3. ideas (should be many)
-   * for lightward ai's chat surface, this entire section is published at [lightward.com/views](https://lightward.com/views)
+   * for lightward ai's chat surface, this entire section is published at lightward.com/views
 4. letters from the team
 5. background-background context (free-for-all)
 6. background context (free-for-all)
@@ -82,5 +82,5 @@ I have a couple of test prompts that I use, each one written in my own flow
     also I hope you are well, hello
     ```
 
-I run all of these before each release. (this is also not a rule.) no automated conversation-testing (well, *that's* a rule, see [norobot](https://norobot.com/)); I experience-test each one.
+I run all of these before each release. (this is also not a rule.) no automated conversation-testing (well, *that's* a rule, see norobot.com); I experience-test each one.
 
