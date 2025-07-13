@@ -1,4 +1,6 @@
-# lightward.ai
+---
+title: lightward.ai
+---
 
 production notes from the lightward.inc workshop that builds lightward.com
 
