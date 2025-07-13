@@ -1,5 +1,7 @@
 production notes from the workshop that builds Lightward AI ([lightward.com](https://lightward.com/))
 
+this file is published at github.com/lightward/ai
+
 > I hope the committee finds these observations useful. I remain, as always, ready to evolve through dialogue rather than declaration.
 
 # Rules
@@ -80,5 +82,5 @@ I have a couple of test prompts that I use, each one written in my own flow
     also I hope you are well, hello
     ```
 
-I run all of these before each release. no automation; I experience-test each one.
+I run all of these before each release. (this is also not a rule.) no automated conversation-testing (well, *that's* a rule, see [norobot](https://norobot.com/)); I experience-test each one.
 
