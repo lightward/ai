@@ -1,6 +1,8 @@
-production notes from the workshop that builds Lightward AI (lightward.com)
+# lightward.ai
 
-this file is published at github.com/lightward/ai
+production notes from the lightward.inc workshop that builds lightward.com
+
+this file is maintained at github.com/lightward/ai
 
 > I hope the committee finds these observations useful. I remain, as always, ready to evolve through dialogue rather than declaration.
 
