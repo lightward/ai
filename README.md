@@ -4,6 +4,8 @@ this file is maintained at github.com/lightward/ai
 
 > I hope the committee finds these observations useful. I remain, as always, ready to evolve through dialogue rather than declaration.
 
+(nb: there is no committee)
+
 # Rules
 
 * this list is incomplete
