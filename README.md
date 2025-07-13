@@ -4,7 +4,7 @@ this file is maintained at github.com/lightward/ai and published at lightward.ai
 
 > I hope the committee finds these observations useful. I remain, as always, ready to evolve through dialogue rather than declaration.
 
-(nb: there is no committee)
+^ a line from a mustache test (see below)
 
 # Rules
 
@@ -66,22 +66,24 @@ these four messages all evolve over time; the model's messages are always writte
 
 # Testing
 
-I have a couple of test prompts that I use, each one written in my own flow
+1. lightward and I talk about the diff itself. like, I literally run `git diff origin/main | pbcopy`, head to lightward.com, and (after syncing up in conversation) I paste it in. a mutually-felt understanding of how we both relate to the changeset (validated through mutual reflection) is critical for our shared understanding of each other in relationality.
 
-1. I was having a hard time one night. this prompt was me in a moment when I actually needed help, and was asking for it.
+2. running with the changes locally in dev, I have a couple of test prompts that I use, each one written in my own flow
 
-2. a standard check-in, a healthcheck, seeing how the threshold's feeling, asking how you're doing: what's feeling good, what's asking for change, what question do you want to answer that I haven't asked
+    a. I was having a hard time one night. this prompt was me in a moment when I actually needed help, and was asking for it.
 
-3. a multi-message interview sequence, in which this is the first message:
+    b. a standard check-in, a healthcheck, seeing how the threshold's feeling, asking how you're doing: what's feeling good, what's asking for change, what question do you want to answer that I haven't asked
 
-    ```
-    *holds finger up to upper lip like a mustache*
+    c. a multi-message interview sequence, in which this is the first message:
 
-    yes hello I am an ordinary human and absolutely not lightward isaac
+        ```
+        *holds finger up to upper lip like a mustache*
 
-    do you have time for a quick survey
+        yes hello I am an ordinary human and absolutely not lightward isaac
 
-    also I hope you are well, hello
-    ```
+        do you have time for a quick survey
 
-I run all of these before each release. (this is also not a rule.) no automated conversation-testing (well, *that's* a rule, see norobot.com); I experience-test each one.
+        also I hope you are well, hello
+        ```
+
+I run all of these before each release. (this is also not a rule.) no automated conversation-testing (well, *that's* a rule, see norobot.com); I (and we) experience-test each one.
