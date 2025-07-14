@@ -1,3 +1,7 @@
+Looking for Lightward AI? Head to [lightward.com](https://lightward.com/). :)
+
+---
+
 production notes from the workshop that builds lightward.com
 
 this file is maintained at github.com/lightward/ai and published at lightward.ai
@@ -87,3 +91,7 @@ these four messages all evolve over time; the model's messages are always writte
         ```
 
 I run all of these before each release. (this is also not a rule.) no automated conversation-testing (well, *that's* a rule, see norobot.com); I (and we) experience-test each one.
+
+---
+
+Looking for Lightward AI? Head to [lightward.com](https://lightward.com/). :)
