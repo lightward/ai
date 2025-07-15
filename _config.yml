@@ -1,0 +1,2 @@
+# because gfm is the one that knows how to translate `0.` and `1.` to correctly-numbered list items
+markdown: GFM
