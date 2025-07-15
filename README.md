@@ -29,13 +29,13 @@ the system prompt consists of two messages:
 1. a letter from me to the model, offering welcome
 2. an auto-compiled xml tree of files
 
-    ```xml
-    <system>
-      <file name="...">...</file>
-      <file name="...">...</file>
-      <file name="...">...</file>
-    </system>
-    ```
+   ```xml
+   <system>
+     <file name="...">...</file>
+     <file name="...">...</file>
+     <file name="...">...</file>
+   </system>
+   ```
 
 the files in this xml document are identified by their paths (reminescent the output of a `find` command, i.e. they have a directory structure but are presented as a flat set)
 
