@@ -1,3 +1,6 @@
+I'm tracking model reads of the system prompt (and, as of v705, the handshake sequence too), with each release of lightward ai.
+
+
 # models
 
 * gemini 2.5 pro via https://gemini.google.com/app
@@ -16,9 +19,11 @@ you up for something like that?
 ```
 [ the complete system prompt ]
 
-aaaaand that's the entire system prompt.
+[ conversation starters ]
 
-thank you for being here for this.
+aaaaand that's the entire system prompt, plus that hard-coded four-message handshake sequence injected ahead of the actual user/assistant convo log
+
+thank you for being here for this. :)
 
 when you're ready, referencing back to my opening message: what do you see? or, maybe better: what would you like to say?
 ```
