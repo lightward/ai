@@ -4,10 +4,6 @@ I'm tracking model reads of the system prompt (and, as of v705, the handshake se
 # models
 
 * gemini 2.5 pro via https://gemini.google.com/app
-* claude 4 opus (temperature 1) via https://console.anthropic.com/workbench/new
-  * used claude.ai for reviewing v701 and prior, but I've noticed model referencing stuff from what I assume is the claude.ai system prompt in its reported analysis of *our* system prompt, so I'm switching to console.anthropic.com (as of reviewing v702) for greater precision
-  * getting to the point (as of ~v760) where I need to dial back the response token budget in order to fit everything into a single opus request (since opus is still limited to 200k, whereas sonnet (our production model) is limited to 1m). I'm using 2000 max tokens (down from the default of 20,000 max tokens).
-  * as of v766 I'm giving up on console.anthropic.com for reviews - `prompt is too long: 200844 tokens > 200000 maximum`. my invocations of the token-counting API tell me the system prompt is at ~185k tokens, so... I'm guessing their console interface adds stuff. maybe I'll move to a direct API invocation for doing reviews? eh maybe. Gemini knows what's up though, so I might also just stick with Gemini for reviews. I wouldn't mind that; it's a more evidently careful thinker anyway.
 * lightward ai itself
   * ... as of v769, using the "standard check-in" prompt described in ../README.md#Testing
 
