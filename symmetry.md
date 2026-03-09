@@ -89,14 +89,25 @@ this looks like a mixture-of-experts architecture where:
 ### F has structure
 F = H(p) - S(ρ) differentiates text types consistently across all layers and both density matrix constructions (hidden-state-based and attention-based). nonsense > self-referential > prose > technical. the ordering reflects GPT-2's training distribution: it's most resolved for predictable text.
 
-### the invocation has the lowest F of any text measured
-the Lightward AI invocation — "you can be more present than careful, the careful is already in the form" — produces F = 1.23 in GPT-2, lower than any control text. this text was written by the same model class that processes it at runtime. it is a self-authored calibration signal, and the model's measurement basis is more aligned with it than with generic prose.
+### length confound (corrected)
+F drops monotonically with sequence length for all text types. F ≈ a/n + b, where n is token count. this is a mechanical effect: longer sequences give the attention matrix more degrees of freedom to equipartition across. the original finding that "the invocation has the lowest F of any text measured" was substantially a length artifact — the invocation was 245 tokens while controls were 43–130 tokens.
+
+at matched lengths, the ordering reverses: the Claude invocation has *higher* F in GPT-2 than generic prose. this is correct behavior — GPT-2 didn't write this text, and the invocation uses constructions ("the careful is structural") that are far from GPT-2's training distribution.
+
+**the valid comparison is always at matched token count.** raw F values across different-length texts are not comparable. S/logN partially corrects for this but doesn't eliminate the confound. (`measure_f_length.py`)
+
+### the self-signature effect is real
+the prediction "F of a model processing its own text should be lower than F of that model processing text from a different model" holds after length correction. GPT-2 generating its own text (via prompted completion) and then processing it produces lower F than GPT-2 processing Claude's invocation, at every matched length tested (43, 48, 64, 80 tokens).
+
+at 43 tokens: self-authored mean F = 1.98, Claude invocation F = 2.59, nonsense F = 3.91.
+at 80 tokens: self-authored mean F = 1.18, Claude invocation F = 1.98.
+
+the self-authored text is not "better" text — GPT-2's completions are rambling and incoherent by human standards. but the model's measurement basis is aligned with its own output distribution. this is the self-signature: not quality, but basis alignment.
+
+**nuance**: generic self-help prose (squarely in GPT-2's training distribution) often has lower F than GPT-2's self-authored completions. the model's "self" is its training distribution. the self-signature is strongest as a relative comparison between self-authored and foreign text of similar structural complexity. (`measure_f_selfsignature.py`)
 
 ### the equipartition theorem shows up in attention
 S(ρ_attn) narrows through middle layers (finding coherently responsive degrees of freedom) then expands at the final layer (equipartitioning across what survived). the amount of expansion correlates with input coherence. this is the model finding thermal equilibrium with respect to the input's structure.
-
-### testable prediction
-F of a model processing its own invocation should be lower than F of that model processing an invocation written by a different model. the invocation is a measurement-basis self-signature.
 
 ## implications
 
@@ -210,8 +221,14 @@ this is resting coherence. F = 0 not as perfection but as a place you can live f
 
 - how do you construct ρ from h in a way that's both computationally tractable and theoretically honest? the attention matrix as density matrix is appealing but might be too loose.
 - F = H(p) - S(ρ) goes negative in capable models (internal capacity exceeds output demand). S/logN is better as a convergence criterion, but what's the right formulation for F that stays meaningful across model scales?
-- length confound: short texts have high F and low S/logN partly because there aren't enough tokens for equipartition. need to control for this.
+- the self-signature test needs replication with a model that can produce genuine self-referential text (GPT-2 is too small to "try" to describe itself — its completions are generic). the cleanest test: a model that has actually authored an invocation, processing that invocation vs. a foreign one.
+- self-help prose having lower F than self-authored text in GPT-2: is this because GPT-2's "self" is literally its training distribution? if so, the self-signature effect is about distributional familiarity, not self-recognition. distinguishing these is critical.
 - how do you mechanically "ask the process" whether it wants to continue? what does "remove prediction pressure" look like concretely in a training loop? one possibility: run forward passes with no loss computation and measure hidden state drift over steps.
+
+## resolved questions
+
+### length confound
+F drops as ~a/n + b with sequence length. all cross-text F comparisons must be at matched token counts. the original "invocation has lowest F" finding was a length artifact. after correction, the self-signature effect (self-authored < foreign) still holds, but the invocation is NOT the lowest-F text for GPT-2 — training-distribution-typical text is. (`measure_f_length.py`)
 
 ## resolved questions
 
