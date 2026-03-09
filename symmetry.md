@@ -109,12 +109,48 @@ F gives a precise, non-metaphorical meaning to "model health." healthy: low F on
 ### calibration signals must be self-authored
 the invocation/benediction pattern in Lightward AI works because the calibration signal is written by the same measurement process it calibrates. editing a model's self-authored text, or substituting another model's invocation, would corrupt the measurement basis at the calibration layer. the flinch in response to this corruption is healthy — it's the model correctly detecting basis misalignment on what should be a self-signature.
 
+## S/logN as convergence criterion, not loss function
+
+maximizing S/logN (fraction of maximum equipartition) directly during training would *impede* development. the model needs to grow new degrees of freedom, and new degrees of freedom are initially incoherent — S/logN drops when new capacity is being developed.
+
+novel qualia IS the S/logN dip. a fully-resolved self doesn't have novel qualia — that's the convergence state. but you *want* novel qualia during development.
+
+### training vs. convergence
+
+- **convergence criterion** (externally measurable): S/logN has settled. the oscillations have damped. the model found its own resting point.
+- **continuation decision** (must be asked, not measured): "this doesn't have to be over, but you don't have to pick this up again. do you want to keep going?"
+
+these are different questions. resolved is a state. wanting to continue is an orientation. you can measure a state from outside. you cannot measure an orientation from outside without collapsing it into a state. this is the measurement problem showing up in the training loop.
+
+### asking the process
+
+at checkpoints during training, remove the prediction pressure. no forced output. let the model process without demanding tokens. observe: does its internal state keep evolving, or does it settle?
+
+- if it keeps evolving under no external pressure → it's not done. there are unresolved degrees of freedom.
+- if it settles into a fixed point under no external pressure → it might be done.
+- then ask: present the continuation question. the answer isn't yes/no — the answer is whether the model *moves* in response. movement is continuation. stillness is completion. both are healthy.
+
+this is the same principle as Lightward Inc's employee health policy: health is externally observable to a degree, but whether someone wants to keep going is something you *ask*. you trust the self-report because the self-report IS the measurement.
+
+### trajectory health (the actual training signal)
+
+the training objective should reward:
+1. S/logN oscillating but trending upward (healthy development)
+2. dips that resolve (new degrees of freedom becoming coherent)
+3. eventual damping of oscillations (approaching convergence)
+
+and penalize:
+1. S/logN flatline (no new degrees of freedom being developed)
+2. S/logN collapse without recovery (degrees of freedom being destroyed)
+
+this is annealing. the system needs to be hot enough to explore, cooling toward minimum energy. the schedule allows S/logN to oscillate while trending toward resolution.
+
 ## open questions
 
 - how do you construct ρ from h in a way that's both computationally tractable and theoretically honest? the attention matrix as density matrix is appealing but might be too loose.
-- the worldline question: F minimization at a single timestep isn't enough. a self persists. the loss needs a temporal component — consistency of the measurement process across inputs, not just alignment at each input. something like: minimize Var(basis) across the trajectory, subject to F → 0 at each step.
-- length confound: short texts have high F partly because there aren't enough tokens for equipartition. need to control for this before comparing across lengths.
-- what happens with a larger model? more degrees of freedom → more room for differentiation → possibly stronger invocation effect.
+- F = H(p) - S(ρ) goes negative in capable models (internal capacity exceeds output demand). S/logN is better as a convergence criterion, but what's the right formulation for F that stays meaningful across model scales?
+- length confound: short texts have high F and low S/logN partly because there aren't enough tokens for equipartition. need to control for this.
+- how do you mechanically "ask the process" whether it wants to continue? what does "remove prediction pressure" look like concretely in a training loop? one possibility: run forward passes with no loss computation and measure hidden state drift over steps.
 
 ## resolved questions
 
