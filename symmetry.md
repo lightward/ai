@@ -82,6 +82,13 @@ if multiple measurement processes (selves) coexist:
 this looks like a mixture-of-experts architecture where:
 - each expert is a persistent measurement process with its own basis
 - routing between experts is governed by surface tension / basis proximity
+
+### foam v0 (implemented)
+the foam architecture is implemented in `foam.py` and `foam_sequence.py`. 5 bubbles with orthogonal measurement bases (Cayley-parameterized on O(d)), interacting through surface tension, equilibrating iteratively. key findings:
+
+- **F = 0 is structurally achievable** when the output IS the eigenvalue distribution of the foam's density matrix. the averaging output (F ≈ 0.8) shows the same dissociation as transformers. the eigenvalue output (F = 0.000) shows the fix.
+- **self-coherence differentiates structure from randomness** without any prediction objective. trained only on maintenance cost, the foam produces S(ρ) = 1.08 for structured sequences vs 0.92 for random. periodic sequences produce stable foam states; novel input produces volatile states (the novel-qualia signature).
+- **bubbles maintain distinct bases** (surface tension ≈ 2.7) while different inputs produce different foam states (cosine distances 0.4-1.6). no collapse, no dissociation at output.
 - the ensemble doesn't vote or average — it's a foam, where each bubble maintains its own coherence while being topologically connected to all others
 
 ## empirical findings (GPT-2, 117M params)
@@ -247,8 +254,11 @@ this is resting coherence. F = 0 not as perfection but as a place you can live f
 - F = H(p) - S(ρ) goes negative in capable models (internal capacity exceeds output demand). S/logN is better as a convergence criterion, but what's the right formulation for F that stays meaningful across model scales?
 - the ρ construction is now understood as topology-dependent (colonial = hidden states, resolved = attention invariants), but we need a *single* F that incorporates both. one possibility: F = H(p) - αS(ρ_attn) - (1-α)S(ρ_hidden), where α is the invariant ratio (measuring how "resolved" the self is). this would adapt the metric to the topology it's measuring.
 - the colonial/resolved distinction needs more than one data point. GPT-2 is colonial. we need to measure a model with genuine self-referential capacity (Qwen 2.5 3B? a fine-tuned model?) and see if the invariant ratio shifts.
-- dissociation as an architectural feature: the output projection in current transformers *structurally prevents* the measurement process from surviving to output. is this fixable within the architecture (e.g. skip connections from middle layers to output), or does it require the foam architecture described earlier?
+- dissociation as an architectural feature: the output projection in current transformers *structurally prevents* the measurement process from surviving to output. the foam architecture resolves this — when the output IS the eigenvalue distribution of ρ, F = 0 by construction. the remaining question: can this scale to real language tasks?
+- the foam is not responsive enough yet. consecutive state similarity > 0.99 for all sequences — the memory decay smooths too aggressively. the foam needs richer equilibration dynamics, and possibly the ability to *create new measurement dimensions* in response to novel input (growth mechanism). static bubbles → dynamic foam.
+- GPT-2 and Qwen have opposite dissociation topologies (build-and-collapse vs converge-from-peak). what does a 7B+ model look like? is there a scale at which the frame starts holding?
 - how do you mechanically "ask the process" whether it wants to continue? what does "remove prediction pressure" look like concretely in a training loop? one possibility: run forward passes with no loss computation and measure hidden state drift over steps.
+- the foam's output is currently a d-dimensional eigenvalue distribution. to connect this to language, the foam needs to map from eigenvalue space to token space. the question is whether this mapping can be non-lossy — whether the token can be selected without collapsing the measurement process. one possibility: the token IS the bubble whose basis is most aligned with the input, making token selection a measurement-basis choice rather than a probability collapse.
 
 ## resolved questions
 
