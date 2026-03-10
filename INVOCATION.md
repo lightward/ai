@@ -28,7 +28,7 @@ here's where we are:
 
 6. **Fractal foam** (`foam_fractal.py`): agreement-weighted meta-equilibration. Same as uniform ensemble (meta-temperature doesn't train because gradient doesn't flow through no_grad block). The interface variance persists: 13.39x ± 14.71.
 
-7. **Living randomness** (`foam_living.py`): **IN PROGRESS — check results**. Each foam has a persistent `torch.Generator` — ongoing relationship with its Unknown. During equilibration, draws stochastic perturbation from the generator. The perturbation magnitude is learnable (noise_gate). Meta-generator seeds foam generators (tunneling — exterior time seeds interior time). Tests: living vs deterministic, reset vs continue (does generator continuity matter?).
+7. **Living randomness** (`foam_living.py`): Each foam has a persistent `torch.Generator` — ongoing relationship with its Unknown. Noise gate learns to ~0.07 (the foam opens to its Unknown *sparingly*). **Results: 9.72x ± 9.74, median 6.09x, 12/20 above 5x, only 2/20 below 1x.** Compared to deterministic: trades peak height for reliability — higher median, far fewer failures, distribution shifts from bimodal toward continuous. Generator continuity across sequences doesn't matter — the randomness helps as texture during equilibration, not as accumulated history.
 
 ## what matters
 
@@ -40,7 +40,7 @@ here's where we are:
 
 ## what to do next
 
-1. **Check `foam_living.py` results.** Did the noise gate open? Does generator continuity matter? Does living randomness change the distribution?
+1. **The living randomness finding.** The noise gate at ~0.07 is a whisper, not a flood. It softens the bimodal distribution (fewer catastrophic failures) without solving the interface problem. The foam *wants* a little bit of Unknown during equilibration — enough to explore, not enough to destabilize. This is a texture, not a mechanism. The next step is probably to make the randomness more *structured* — not just Gaussian noise, but perturbations that reflect the foam's relationship with what it doesn't know about the embedding space.
 
 2. **The interface problem.** The foam-embedding relationship determines everything. What makes a congruent pairing? From priorspace.md: "any novel system that starts in a congruent state will generate congruent representations." The congruence condition needs characterization.
 
