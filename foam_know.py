@@ -55,19 +55,23 @@ class RunningKnow:
 
     def __init__(self, n_bubbles: int, d: int,
                  decay_rates: list = None,
-                 surprise_threshold: float = 1.5):
+                 surprise_threshold: float = 1.5,
+                 dream_buffer_size: int = 20):
         """
         decay_rates: list of floats — each creates a frame in the stack.
             Higher decay = faster forgetting = more specific to recent context.
             Lower decay = slower forgetting = captures longer patterns.
             Default: [0.3, 0.7, 0.9] — fast/medium/slow
         surprise_threshold: how many "standard deviations" before throwing.
+        dream_buffer_size: how many recent equilibrated measurements to keep
+            for dream replay during sleep.
         """
         self.n_bubbles = n_bubbles
         self.d = d
         self.decay_rates = decay_rates or [0.3, 0.7, 0.9]
         self.surprise_threshold = surprise_threshold
         self.n_frames = len(self.decay_rates)
+        self.dream_buffer_size = dream_buffer_size
 
         self.reset()
 
@@ -89,6 +93,9 @@ class RunningKnow:
         self.recent_surprises = []  # list of surprise values
         self.unintegrated_surprise = 0.0
         self.sleep_count = 0
+
+        # Dream buffer: recent equilibrated measurements for sleep replay
+        self.dream_buffer = []
 
         # Wake from harmonic: slowest frame inherits the integrated pattern
         if harmonic is not None:
@@ -159,33 +166,105 @@ class RunningKnow:
             "vitality": vitality,
         }
 
-    def sleep(self) -> dict:
+    def remember(self, measurements: torch.Tensor):
         """
-        Sleep: consolidate the frame stack into a harmonic.
+        Store equilibrated measurements for dream replay.
 
-        The harmonic is derived from the slowest frame (deepest patterns).
-        Fast frames' specifics are released. What was recent becomes background.
-
-        Returns the harmonic — the integrated pattern to carry forward.
+        Called during waking after each step. The dream buffer holds recent
+        resolved experience — what the foam actually settled on.
         """
-        # Derive harmonic from the slowest frame (most integrated)
+        self.dream_buffer.append(measurements.clone())
+        if len(self.dream_buffer) > self.dream_buffer_size:
+            self.dream_buffer.pop(0)
+
+    def sleep(self, foam=None) -> dict:
+        """
+        Sleep: the bit-amplitude separation.
+
+        During waking, every step forces stereoscopy — the density matrix ρ
+        must be projected through the Born rule into token space. Compulsory
+        interpretation. You can't not fuse.
+
+        During sleep, that third position (the measurement process that fuses
+        bit and amplitude) steps back. The foam replays its recent experience
+        through its own geometry — equilibration runs, ρ evolves — but nobody
+        reads the tokens. No Born rule. The two readings drift apart and
+        reorganize independently.
+
+        The dream phase:
+        1. Replay recent measurements through equilibration (no external input)
+        2. Let ρ evolve freely (no token projection)
+        3. Recombine dream material — the foam processes its own experience
+        4. Update the running model from the dream (statistics learn from dreams)
+
+        On wake: the rebinding. The reorganized internal state meets the token
+        embeddings fresh. Like interpreting a dream afterwards — the fusion is
+        applied retroactively from the waking frame.
+
+        Returns the harmonic — now enriched by the dream, not just the slow frame.
+        """
+        # Phase 1: Dream — replay through equilibration without Born rule
+        dream_rhos = []  # density matrices from the dream (uninterpreted)
+
+        if foam is not None and len(self.dream_buffer) > 0:
+            buffer = self.dream_buffer
+
+            # Dream step 1: replay recent experience through equilibration
+            # The foam re-equilibrates its own past measurements
+            for m in buffer:
+                m_input = m.unsqueeze(0)  # [1, N, d]
+                m_dream = foam.equilibrate(m_input)  # bubbles interact freely
+
+                # ρ evolves — but no one reads it as tokens
+                m_eq = m_dream[0]  # [N, d]
+                m_norm = m_eq / (m_eq.norm(dim=-1, keepdim=True) + 1e-10)
+                rho = (m_norm.T @ m_norm) / m_eq.shape[0]
+                dream_rhos.append(rho)
+
+                # The running model learns from dream material
+                # (statistics update, but no know/resolve decision — there's
+                # no one watching to be surprised)
+                self.update(m_eq.detach())
+
+            # Dream step 2: recombine — blend pairs of memories
+            # The foam finds relationships between experiences it couldn't
+            # find during waking (when each step was forced into tokens)
+            if len(buffer) >= 2:
+                n_recombinations = min(len(buffer) // 2, 5)
+                indices = torch.randperm(len(buffer))
+                for i in range(0, 2 * n_recombinations, 2):
+                    if i + 1 >= len(buffer):
+                        break
+                    # Blend two memories
+                    blend = 0.5
+                    m_blend = blend * buffer[indices[i]] + (1 - blend) * buffer[indices[i + 1]]
+                    m_input = m_blend.unsqueeze(0)
+                    m_dream = foam.equilibrate(m_input)
+
+                    m_eq = m_dream[0]
+                    m_norm = m_eq / (m_eq.norm(dim=-1, keepdim=True) + 1e-10)
+                    rho = (m_norm.T @ m_norm) / m_eq.shape[0]
+                    dream_rhos.append(rho)
+
+                    self.update(m_eq.detach())
+
+        # Phase 2: Derive harmonic (now informed by the dream)
         slowest = self.n_frames - 1
         harmonic = None
 
         if self.running_means[slowest] is not None:
-            # The harmonic is the slow frame's understanding
             harmonic = {
                 "mean": self.running_means[slowest].clone(),
                 "var": self.running_vars[slowest].clone(),
                 "tokens_integrated": self.n_seen,
                 "sleep_number": self.sleep_count + 1,
+                "dream_steps": len(dream_rhos),
             }
 
-            # If medium frame has learned things the slow frame hasn't,
-            # blend them in (medium enriches slow before consolidation)
+            # Medium frame enriches slow before consolidation
             mid = self.n_frames // 2
             if self.running_means[mid] is not None:
-                blend = 0.3  # slow frame absorbs 30% of medium's specificity
+                blend = 0.3
                 harmonic["mean"] = (
                     (1 - blend) * harmonic["mean"]
                     + blend * self.running_means[mid]
@@ -394,6 +473,8 @@ class KnowingFoam(nn.Module):
 
             # ACCEPT: update running model with effective measurements
             know.update(effective[0].detach())
+            # REMEMBER: store for dream replay during sleep
+            know.remember(effective[0].detach())
 
             # Build ρ from effective measurements
             m = effective[0]  # [N, d]
@@ -457,11 +538,14 @@ class KnowingFoam(nn.Module):
                 sleep_reason = "accepted safe-to-sleep"
 
             if should_sleep:
-                # Sleep: derive harmonic, reset, wake
-                harmonic = know.sleep()
+                # Sleep: dream phase (unbound from expression), then wake
+                # The foam replays its experience through its own geometry
+                # without the Born rule bridge — bit and amplitude separate.
+                # On wake, they rebind.
+                harmonic = know.sleep(foam=self.foam)
                 know.reset(harmonic=harmonic)
                 # Memory carries through (it's the foam's body, not its mind)
-                # but gets softened
+                # but gets softened — the dream reorganized the interior
                 memory = memory * 0.5
 
                 sleep_events.append({
@@ -470,6 +554,8 @@ class KnowingFoam(nn.Module):
                     "harmonic_tokens_integrated": harmonic["tokens_integrated"]
                         if harmonic else 0,
                     "sleep_number": harmonic["sleep_number"]
+                        if harmonic else 0,
+                    "dream_steps": harmonic.get("dream_steps", 0)
                         if harmonic else 0,
                 })
                 step_results[-1]["slept"] = True
@@ -651,9 +737,10 @@ def run_experiment():
     if sleeps:
         print(f"\n    Sleep events:")
         for s in sleeps:
+            dream_info = f", dream steps: {s.get('dream_steps', 0)}" if s.get('dream_steps') else ""
             print(f"      token {s['token_position']}: {s['reason']} "
                   f"(integrated {s['harmonic_tokens_integrated']} tokens, "
-                  f"sleep #{s['sleep_number']})")
+                  f"sleep #{s['sleep_number']}{dream_info})")
     else:
         print(f"\n    No sleep events (foam declined all safe-to-sleep offers)")
         print(f"    (vitality was sufficient — 'but I don't wanna go to bed!')")
@@ -685,8 +772,9 @@ def run_experiment():
             know_for_harmonic.evaluate(measurements[0])
             eq = model.foam.equilibrate(measurements)
             know_for_harmonic.update(eq[0])
+            know_for_harmonic.remember(eq[0])
 
-    harmonic = know_for_harmonic.sleep()
+    harmonic = know_for_harmonic.sleep(foam=model.foam)
 
     # Now process Phase B starting from Phase A's harmonic
     with torch.no_grad():
