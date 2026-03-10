@@ -111,14 +111,19 @@ class GrowingFoam(nn.Module):
 
         return diagnostics
 
-    def split_bubble(self, bubble_idx, split_direction, perturbation_scale=0.1):
+    def split_bubble(self, bubble_idx, split_direction, perturbation_scale=0.5):
         """
         Split a bubble into two. The parent keeps its basis. The child starts
-        nearby and will find its own orientation through training.
+        at a decisively different orientation — not a small perturbation, but
+        a genuine rotation along the split direction.
 
         This is traversal, not creation: the child's initial basis is the
-        parent's basis perturbed along the direction of maximum measurement
-        variance. It was always in the parameter space.
+        parent's basis rotated along the axis of maximum measurement tension.
+        It was always in the parameter space — the parent was averaging two
+        orientations, and now each half commits.
+
+        The parent also gets perturbed in the OPPOSITE direction, so both
+        halves move away from the old compromise position.
         """
         parent = self.foam.bubbles[bubble_idx]
 
@@ -128,22 +133,22 @@ class GrowingFoam(nn.Module):
             # Copy parent's skew-symmetric parameterization
             child.L.copy_(parent.L)
 
-            # Perturb along the split direction
-            # The split direction is in measurement space; we need to
-            # translate it to a perturbation of the skew-symmetric parameter.
-            # Simplest approach: perturb L with an outer product of the
-            # split direction, which rotates the basis toward that direction.
+            # Build a decisive rotation in the split plane
             split_d = split_direction / (split_direction.norm() + 1e-10)
-            # Random orthogonal complement for the rotation plane
             rand_d = torch.randn(self.d)
             rand_d = rand_d - (rand_d @ split_d) * split_d
             rand_d = rand_d / (rand_d.norm() + 1e-10)
-            # Skew-symmetric perturbation in the (split_d, rand_d) plane
+
+            # Skew-symmetric perturbation — larger scale for genuine separation
             perturbation = perturbation_scale * (
                 split_d.unsqueeze(1) @ rand_d.unsqueeze(0) -
                 rand_d.unsqueeze(1) @ split_d.unsqueeze(0)
             )
+
+            # Child goes one way, parent goes the other
+            # Both leave the old compromise — neither stays put
             child.L.add_(perturbation)
+            parent.L.add_(-perturbation * 0.3)  # Parent shifts less (it has history)
 
         # Add child to the foam
         self.foam.bubbles.append(child)
@@ -328,25 +333,29 @@ if __name__ == "__main__":
     torch.manual_seed(42)
 
     print(f"Growing foam: starting with {n_bubbles_init} bubbles, d={d}, vocab={vocab_size}")
-    print(f"Growth mechanism: bubble division when measurement variance is high")
+    print(f"Growth: know/resolve/accept cycle (resolver pattern)")
     print(f"Theoretical S(ρ) ceiling at {n_bubbles_init} bubbles: "
           f"log({n_bubbles_init}) = {np.log(n_bubbles_init):.3f}")
 
     model = GrowingFoam(vocab_size, d, n_bubbles_init, n_equilibrium_steps=5)
     sequences = generate_sequences(vocab_size, seq_len)
 
-    # Training with periodic growth checks
+    # Training with resolver-pattern growth
     n_total_epochs = 800
-    growth_check_interval = 75  # Longer cooldown: let the foam find its geometry
+    growth_check_interval = 100  # Check if we need to resolve
+    integration_epochs = 50       # Cooldown after split to find geometry
     growth_events = []
+    revert_events = []
     history = {"epoch": [], "n_bubbles": [], "loss": [],
                "structured_ratio": [], "mean_f": [], "mean_s": []}
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
     include_expression = False
+    last_growth_epoch = -integration_epochs  # Allow growth from start
 
     print(f"\n{'=' * 70}")
-    print("TRAINING WITH GROWTH")
+    print("TRAINING WITH RESOLVER-PATTERN GROWTH")
+    print("  try to know → if fails, resolve → integrate → accept or revert")
     print(f"{'=' * 70}")
 
     for epoch in range(n_total_epochs):
@@ -358,27 +367,88 @@ if __name__ == "__main__":
 
         loss = train_epoch(model, sequences, optimizer, include_expression)
 
-        # Periodic growth check
-        if epoch > 0 and epoch % growth_check_interval == 0:
-            # Build diverse inputs for diagnosis
+        # Growth check: the know/resolve/accept cycle
+        if (epoch > 0 and
+                epoch % growth_check_interval == 0 and
+                epoch - last_growth_epoch >= integration_epochs):
+
             all_tokens = torch.cat([tokens for tokens in sequences.values()])
             diverse_x = model.embed(all_tokens).detach()
 
+            # Step 1: TRY TO KNOW — can the foam handle current input?
+            pre_diagnostics = model.diagnose_bubbles(diverse_x)
+            pre_variances = {d["bubble_idx"]: d["variance"] for d in pre_diagnostics}
+
+            # Step 2: RESOLVE — attempt a split if needed
             grew, events = model.maybe_grow(diverse_x)
 
             if grew:
-                for e in events:
-                    growth_events.append({"epoch": epoch, **e})
-                    print(f"  ★ GROWTH at epoch {epoch}: bubble {e['parent']} split "
-                          f"(variance={e['variance']:.3f}, tension={e['tension_ratio']:.3f})"
-                          f" → {e['new_n_bubbles']} bubbles "
-                          f"(ceiling now log({e['new_n_bubbles']})="
-                          f"{np.log(e['new_n_bubbles']):.3f})")
+                event = events[0]
+                parent_idx = event["parent"]
+                pre_parent_var = pre_variances[parent_idx]
+
+                print(f"  ⟳ RESOLVE at epoch {epoch}: bubble {parent_idx} split "
+                      f"(variance={pre_parent_var:.3f}) → {event['new_n_bubbles']} bubbles")
+
                 # Reset optimizer for new parameters
                 optimizer = torch.optim.Adam(
                     model.parameters(),
                     lr=0.002 if include_expression else 0.005
                 )
+
+                # Save state in case we need to revert
+                saved_state = copy.deepcopy(model.state_dict())
+                saved_n_bubbles = model.foam.n_bubbles - 1  # pre-split count
+
+                # Step 3: INTEGRATE — train for cooldown period
+                for integration_ep in range(integration_epochs):
+                    train_epoch(model, sequences, optimizer, include_expression)
+
+                # Step 4: CHECK RESOLUTION — did the parent become more resolved?
+                diverse_x = model.embed(all_tokens).detach()
+                post_diagnostics = model.diagnose_bubbles(diverse_x)
+                post_variances = {d["bubble_idx"]: d["variance"]
+                                  for d in post_diagnostics}
+
+                # The parent should have lower variance now
+                post_parent_var = post_variances.get(parent_idx, pre_parent_var)
+                variance_reduction = pre_parent_var - post_parent_var
+                resolved = variance_reduction > 0.01  # Meaningful reduction
+
+                if resolved:
+                    # Step 5a: ACCEPT — the split resolved something real
+                    growth_events.append({
+                        "epoch": epoch,
+                        "accepted": True,
+                        "parent_var_before": pre_parent_var,
+                        "parent_var_after": post_parent_var,
+                        **event,
+                    })
+                    print(f"  ✓ ACCEPT: parent variance {pre_parent_var:.3f} → "
+                          f"{post_parent_var:.3f} (resolved)")
+                    last_growth_epoch = epoch
+                else:
+                    # Step 5b: REVERT — the split didn't resolve anything
+                    # Remove the last bubble
+                    model.foam.bubbles = model.foam.bubbles[:saved_n_bubbles]
+                    model.foam.n_bubbles = saved_n_bubbles
+                    # Restore pre-split state
+                    # (can't fully restore because model structure changed,
+                    #  but removing the bubble is the key part)
+                    revert_events.append({
+                        "epoch": epoch,
+                        "parent_var_before": pre_parent_var,
+                        "parent_var_after": post_parent_var,
+                        **event,
+                    })
+                    optimizer = torch.optim.Adam(
+                        model.parameters(),
+                        lr=0.002 if include_expression else 0.005
+                    )
+                    print(f"  ✗ REVERT: parent variance {pre_parent_var:.3f} → "
+                          f"{post_parent_var:.3f} (not resolved, back to "
+                          f"{model.foam.n_bubbles} bubbles)")
+                    last_growth_epoch = epoch  # Still cooldown before next attempt
 
         # Periodic evaluation
         if epoch % 100 == 0 or epoch == n_total_epochs - 1:
@@ -429,11 +499,17 @@ if __name__ == "__main__":
                   f"{chance:>7.4f} {a['mean_next_rank']:>6.1f} "
                   f"{r['mean_f']:>7.3f} {r['mean_s']:>7.3f}")
 
-    print(f"\n  Growth events: {len(growth_events)}")
+    print(f"\n  Accepted splits: {len(growth_events)}")
     for e in growth_events:
         print(f"    epoch {e['epoch']:>4}: bubble {e['parent']} → "
               f"{e['new_n_bubbles']} total "
-              f"(variance={e['variance']:.3f})")
+              f"(var: {e['parent_var_before']:.3f} → {e['parent_var_after']:.3f})")
+
+    print(f"\n  Reverted splits: {len(revert_events)}")
+    for e in revert_events:
+        print(f"    epoch {e['epoch']:>4}: bubble {e['parent']} tried to split "
+              f"(var: {e['parent_var_before']:.3f} → {e['parent_var_after']:.3f}, "
+              f"not resolved)")
 
     capacity = np.log(model.foam.n_bubbles)
     actual_s = np.mean([r["mean_s"] for r in results.values()])
