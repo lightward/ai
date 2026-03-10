@@ -271,17 +271,21 @@ def plot_results(all_results, analysis, save_path="f_rotation.png"):
     plt.close()
 
 
-if __name__ == "__main__":
-    device = "mps"
-    target_len = 32
+def run_model(model_name, device="mps", target_len=32, hf_token=None,
+              save_prefix="", dtype=torch.float32):
+    """Run the full rotation analysis on a single model."""
+    print(f"\nLoading {model_name}...")
+    kwargs = {}
+    if hf_token:
+        kwargs["token"] = hf_token
 
-    print("Loading GPT-2...")
-    tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    tokenizer = AutoTokenizer.from_pretrained(model_name, **kwargs)
     model = AutoModelForCausalLM.from_pretrained(
-        "gpt2",
+        model_name,
         output_hidden_states=True,
         output_attentions=True,
-        dtype=torch.float32,
+        torch_dtype=dtype,
+        **kwargs,
     ).to(device)
     model.eval()
 
@@ -295,7 +299,7 @@ if __name__ == "__main__":
     print(f"Using {len(valid_texts)} texts at {target_len} tokens each")
 
     # measure
-    print("\nMeasuring frame rotation...")
+    print("Measuring frame rotation...")
     all_results = measure_frame_rotation(model, tokenizer, valid_texts, target_len, device)
 
     # analyze
@@ -303,23 +307,19 @@ if __name__ == "__main__":
 
     # report
     print(f"\n{'=' * 70}")
-    print("FRAME ROTATION ANALYSIS")
+    print(f"FRAME ROTATION ANALYSIS — {model_name}")
     print(f"{'=' * 70}")
 
-    print(f"\n{'Layer':<8} {'CosD(hidden)':>13} {'Std S(hidden)':>14} {'Std S(attn)':>12} {'Ratio':>8}")
-    print("-" * 58)
+    print(f"\n{'Layer':<8} {'CosD(hidden)':>13} {'Std S(hidden)':>14} {'Std S(attn)':>12}")
+    print("-" * 50)
     n_attn = len(analysis["S_attn_std"])
     for i in range(len(analysis["hidden_state_variance"])):
-        cos_d = analysis["hidden_state_variance"][i]
+        cos_d_val = analysis["hidden_state_variance"][i]
         s_h_std = analysis["S_hidden_std"][i]
         s_a_std = analysis["S_attn_std"][i] if i < n_attn else float('nan')
-        ratio = s_h_std / s_a_std if i < n_attn and s_a_std > 0 else float('nan')
-        print(f"  {i:<6} {cos_d:>13.4f} {s_h_std:>14.4f} {s_a_std:>12.4f} {ratio:>8.2f}")
+        print(f"  {i:<6} {cos_d_val:>13.4f} {s_h_std:>14.4f} {s_a_std:>12.4f}")
 
-    print(f"\n{'=' * 70}")
-    print("PER-TEXT COMPARISON AT FINAL LAYER")
-    print(f"{'=' * 70}")
-    print(f"{'Text':<20} {'H(p)':>7} {'S_hidden':>9} {'S_attn':>8} {'F_hidden':>9} {'F_attn':>8}")
+    print(f"\n{'Text':<20} {'H(p)':>7} {'S_hidden':>9} {'S_attn':>8} {'F_hidden':>9} {'F_attn':>8}")
     print("-" * 65)
     for label in sorted(all_results.keys()):
         r = all_results[label]
@@ -328,37 +328,64 @@ if __name__ == "__main__":
         print(f"  {label:<18} {r['H_p']:>7.3f} {r['S_hidden'][-1]:>9.3f} "
               f"{r['S_attn'][-1]:>8.3f} {f_h:>9.3f} {f_a:>8.3f}")
 
-    # Summary
-    print(f"\n{'=' * 70}")
-    print("VERDICT: Does the frame rotate?")
-    print(f"{'=' * 70}")
-    mean_ratio = np.nanmean([
-        analysis["S_hidden_std"][i] / analysis["S_attn_std"][i]
-        for i in range(n_attn) if analysis["S_attn_std"][i] > 0
-    ])
-    print(f"  Mean ratio (Std S_hidden / Std S_attn): {mean_ratio:.2f}")
-    if mean_ratio > 2:
-        print("  → Hidden states vary MUCH MORE than attention across inputs")
-        print("  → The frame rotates in hidden-state space, not attention space")
-        print("  → Attention is dissociated from content; hidden states hold it")
-    elif mean_ratio > 1:
-        print("  → Hidden states vary somewhat more than attention")
-    else:
-        print("  → Hidden states and attention vary similarly")
-
-    # Dissociation check: does variance drop at any layer?
+    # Dissociation check
     cos_d = analysis["hidden_state_variance"]
     peak_layer = np.argmax(cos_d)
     final_layer = len(cos_d) - 1
-    if cos_d[final_layer] < cos_d[peak_layer] * 0.5:
-        print(f"\n  ⚠ DISSOCIATION SIGNAL: Hidden state variance peaks at layer {peak_layer}")
-        print(f"    then drops to {cos_d[final_layer]:.4f} at final layer "
-              f"({cos_d[peak_layer]:.4f} at peak)")
-        print(f"    The frame rotates in middle layers but collapses at the end")
-    else:
-        print(f"\n  Hidden state variance {'increases' if cos_d[-1] > cos_d[0] else 'decreases'} "
-              f"through layers")
-        print(f"    (layer 0: {cos_d[0]:.4f}, peak: {cos_d[peak_layer]:.4f} at layer {peak_layer}, "
-              f"final: {cos_d[-1]:.4f})")
+    peak_val = cos_d[peak_layer]
+    final_val = cos_d[final_layer]
+    drop_pct = (1 - final_val / peak_val) * 100 if peak_val > 0 else 0
 
-    plot_results(all_results, analysis)
+    print(f"\n  Hidden state variance: peak={peak_val:.4f} at layer {peak_layer}, "
+          f"final={final_val:.4f} (drop: {drop_pct:.0f}%)")
+    if drop_pct > 50:
+        print(f"  ⚠ DISSOCIATION: frame collapses at output")
+    elif drop_pct > 20:
+        print(f"  ~ PARTIAL DISSOCIATION: some frame collapse at output")
+    else:
+        print(f"  ✓ Frame holds through to output")
+
+    save_path = f"f_rotation{'_' + save_prefix if save_prefix else ''}.png"
+    plot_results(all_results, analysis, save_path=save_path)
+
+    # cleanup
+    del model
+    if device == "mps":
+        torch.mps.empty_cache()
+
+    return all_results, analysis
+
+
+if __name__ == "__main__":
+    import os
+    hf_token = os.environ.get("HF_TOKEN", "")
+    device = "mps"
+    target_len = 32
+
+    # GPT-2
+    gpt2_results, gpt2_analysis = run_model("gpt2", device, target_len)
+
+    # Qwen 2.5 3B
+    print("\n\nDownloading Qwen 2.5 3B (may take a minute)...")
+    qwen_results, qwen_analysis = run_model(
+        "Qwen/Qwen2.5-3B", device, target_len,
+        hf_token=hf_token, save_prefix="qwen",
+        dtype=torch.float16,
+    )
+
+    # Cross-model comparison
+    print(f"\n\n{'#' * 70}")
+    print("CROSS-MODEL DISSOCIATION COMPARISON")
+    print(f"{'#' * 70}")
+
+    for name, analysis in [("GPT-2 (117M)", gpt2_analysis), ("Qwen-2.5-3B", qwen_analysis)]:
+        cos_d = analysis["hidden_state_variance"]
+        peak = np.argmax(cos_d)
+        drop = (1 - cos_d[-1] / cos_d[peak]) * 100 if cos_d[peak] > 0 else 0
+        print(f"\n  {name}:")
+        print(f"    Layers: {len(cos_d)}")
+        print(f"    Peak variance: {cos_d[peak]:.4f} at layer {peak}")
+        print(f"    Final variance: {cos_d[-1]:.4f}")
+        print(f"    Drop from peak: {drop:.0f}%")
+        print(f"    S_hidden std (final): {analysis['S_hidden_std'][-1]:.4f}")
+        print(f"    S_attn std (final): {analysis['S_attn_std'][-1]:.4f}")
