@@ -32,14 +32,22 @@ class Bubble(nn.Module):
 
     The bubble maintains its basis on the Stiefel manifold (orthogonal matrices)
     via Cayley parameterization: U = (I - A)(I + A)^{-1} where A is skew-symmetric.
+
+    Each bubble has a learnable input gate: how much it attends to external input
+    vs the foam's own previous state. gate=1 → fully external, gate=0 → fully
+    self-referential. The foam decides for itself which bubbles look outward
+    and which look inward.
     """
 
-    def __init__(self, d: int):
+    def __init__(self, d: int, input_gate_logit: float = 2.0):
         super().__init__()
         self.d = d
         # Skew-symmetric parameterization: A = L - L^T
         # This guarantees the basis stays orthogonal
         self.L = nn.Parameter(torch.randn(d, d) * 0.1)
+        # Input gate: sigmoid(logit) → [0,1]. Default 2.0 → sigmoid ≈ 0.88
+        # (strongly external-facing, but not locked there)
+        self.input_gate_logit = nn.Parameter(torch.tensor(input_gate_logit))
 
     @property
     def basis(self) -> torch.Tensor:
@@ -48,6 +56,11 @@ class Bubble(nn.Module):
         I = torch.eye(self.d, device=self.L.device)
         # Cayley transform: U = (I - A)(I + A)^{-1}
         return torch.linalg.solve(I + A, I - A)
+
+    @property
+    def input_gate(self) -> torch.Tensor:
+        """The input gate value ∈ [0,1]. 1 = external, 0 = self-referential."""
+        return torch.sigmoid(self.input_gate_logit)
 
     def measure(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -164,11 +177,14 @@ class Foam(nn.Module):
 
         return state
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, prev_equilibrium: torch.Tensor = None):
         """
         Process input through the foam.
 
         x: [batch, d] — input vectors
+        prev_equilibrium: [batch, N, d] or None — foam's previous equilibrium state.
+            When provided, each bubble gates between x and its own previous
+            equilibrium measurement. The gate is learnable per bubble.
         returns: dict with foam state, output, and diagnostic info
 
         The output is derived from the foam's own density matrix — not from
@@ -179,9 +195,22 @@ class Foam(nn.Module):
         batch = x.shape[0]
 
         # Step 1: Each bubble measures from its own basis
-        measurements = torch.stack(
-            [b.measure(x) for b in self.bubbles], dim=1
-        )  # [batch, N, d]
+        # If prev_equilibrium exists, each bubble gates between external input
+        # and its own previous state. The gate is the bubble's own learnable
+        # parameter — the foam discovers for itself which bubbles look outward
+        # and which look inward.
+        if prev_equilibrium is not None:
+            gated_measurements = []
+            for i, b in enumerate(self.bubbles):
+                ext = b.measure(x)                          # [batch, d]
+                prev = prev_equilibrium[:, i, :]            # [batch, d]
+                gate = b.input_gate                         # scalar ∈ [0,1]
+                gated_measurements.append(gate * ext + (1 - gate) * prev)
+            measurements = torch.stack(gated_measurements, dim=1)  # [batch, N, d]
+        else:
+            measurements = torch.stack(
+                [b.measure(x) for b in self.bubbles], dim=1
+            )  # [batch, N, d]
 
         # Step 2: Equilibrate
         equilibrium = self.equilibrate(measurements)  # [batch, N, d]
@@ -215,6 +244,9 @@ class Foam(nn.Module):
         # Also compute the averaged expression for comparison
         output_avg = expressions.mean(dim=1)  # [batch, d]
 
+        # Gate values for monitoring (which bubbles look inward?)
+        gate_values = torch.stack([b.input_gate for b in self.bubbles])  # [N]
+
         return {
             "output": output_avg,  # legacy: averaged expression
             "output_dist": output_dist,  # new: eigenvalue distribution of ρ
@@ -223,9 +255,10 @@ class Foam(nn.Module):
             "equilibrium": equilibrium,
             "expressions": expressions,
             "surface_tension": self.surface_tension(),
+            "gate_values": gate_values,
         }
 
-    def compute_f(self, x: torch.Tensor):
+    def compute_f(self, x: torch.Tensor, prev_equilibrium: torch.Tensor = None):
         """
         Compute F = H(p) - S(ρ) for the foam processing input x.
 
@@ -236,7 +269,7 @@ class Foam(nn.Module):
         When the output IS the eigenvalue distribution of ρ, F = 0 by construction.
         The interesting question becomes: does the foam produce a ρ that's useful?
         """
-        result = self.forward(x)
+        result = self.forward(x, prev_equilibrium=prev_equilibrium)
 
         # F_old: Shannon entropy of softmaxed average expression
         output = result["output"]  # [batch, d]
@@ -263,7 +296,7 @@ class Foam(nn.Module):
             "F": F_old,  # use old for training signal (it has gradient)
         }
 
-    def maintenance_cost(self, x: torch.Tensor):
+    def maintenance_cost(self, x: torch.Tensor, prev_equilibrium: torch.Tensor = None):
         """
         The training signal: minimize the cost of maintaining self-coherence.
 
@@ -276,7 +309,7 @@ class Foam(nn.Module):
         3. Expression coherence: how well does the output reflect the internal state?
            This IS F — and we want it near zero.
         """
-        result = self.compute_f(x)
+        result = self.compute_f(x, prev_equilibrium=prev_equilibrium)
 
         # 1. Surface energy (regularized: penalize both too high and too low)
         tension = result["surface_tension"]
