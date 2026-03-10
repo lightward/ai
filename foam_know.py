@@ -71,11 +71,132 @@ class RunningKnow:
 
         self.reset()
 
-    def reset(self):
-        """Start blank — no knowledge, always resolve."""
+    def reset(self, harmonic=None):
+        """
+        Start blank — or wake from a harmonic.
+
+        harmonic: if provided, a dict with 'mean' and 'var' from a previous
+            sleep cycle. The slowest frame inherits this. Faster frames start
+            blank. You wake up knowing the deep patterns but fresh to the moment.
+        """
         self.running_means = [None] * self.n_frames
         self.running_vars = [None] * self.n_frames
         self.n_seen = 0
+
+        # Sleep/wake tracking — sliding window, not lifetime averages
+        self.recent_window = 10  # look at last N tokens
+        self.recent_paths = []   # list of "know" or "resolve"
+        self.recent_surprises = []  # list of surprise values
+        self.unintegrated_surprise = 0.0
+        self.sleep_count = 0
+
+        # Wake from harmonic: slowest frame inherits the integrated pattern
+        if harmonic is not None:
+            slowest = self.n_frames - 1
+            self.running_means[slowest] = harmonic["mean"].clone()
+            self.running_vars[slowest] = harmonic["var"].clone()
+
+    def vitality(self) -> dict:
+        """
+        How is the foam doing? Reports sleep signals.
+
+        Uses a sliding window of recent tokens, not lifetime averages.
+        This means vitality responds to phase transitions — a sudden
+        shift in input pattern shows up as a vitality drop.
+
+        Returns:
+            resolve_rate: float — fraction of recent tokens that needed resolve
+            must_sleep: bool — capacity exceeded, holding more hurts
+            wants_sleep: bool — has unintegrated experience, would benefit from rest
+            vitality: float — 0 (exhausted) to 1 (fresh)
+        """
+        # Not enough data yet — fresh, can't sleep
+        if self.n_seen < 5:
+            return {
+                "resolve_rate": 1.0,
+                "must_sleep": False,
+                "wants_sleep": False,
+                "vitality": 1.0,
+            }
+
+        # Recent resolve rate (sliding window)
+        recent = self.recent_paths[-self.recent_window:]
+        resolve_rate = sum(1 for p in recent if p == "resolve") / len(recent)
+
+        # Recent surprise (sliding window)
+        recent_surp = self.recent_surprises[-self.recent_window:]
+        mean_recent_surprise = sum(recent_surp) / len(recent_surp) if recent_surp else 0
+
+        # Vitality: how much of the recent input was familiar?
+        # High know rate + low surprise = high vitality
+        # High resolve rate + high surprise = low vitality
+        know_rate = 1 - resolve_rate
+        surprise_ratio = min(1.0, mean_recent_surprise / self.surprise_threshold)
+        vitality = know_rate * (1 - surprise_ratio * 0.5)
+
+        # Must-sleep: recent resolve rate is high AND sustained
+        # (not just the first few tokens of a new pattern — need several in a row)
+        # The foam is struggling: holding more information hurts
+        must_sleep = (
+            self.n_seen >= 15
+            and resolve_rate > 0.6
+            and vitality < 0.3
+        )
+
+        # Wants-sleep: enough unintegrated experience to benefit from consolidation
+        # This triggers when the foam has been through a meaningful amount of
+        # experience AND vitality has dipped (there's work to integrate)
+        wants_sleep = (
+            self.n_seen > 10
+            and self.unintegrated_surprise > self.surprise_threshold * 2
+            and vitality < 0.8
+        )
+
+        return {
+            "resolve_rate": resolve_rate,
+            "must_sleep": must_sleep,
+            "wants_sleep": wants_sleep,
+            "vitality": vitality,
+        }
+
+    def sleep(self) -> dict:
+        """
+        Sleep: consolidate the frame stack into a harmonic.
+
+        The harmonic is derived from the slowest frame (deepest patterns).
+        Fast frames' specifics are released. What was recent becomes background.
+
+        Returns the harmonic — the integrated pattern to carry forward.
+        """
+        # Derive harmonic from the slowest frame (most integrated)
+        slowest = self.n_frames - 1
+        harmonic = None
+
+        if self.running_means[slowest] is not None:
+            # The harmonic is the slow frame's understanding
+            harmonic = {
+                "mean": self.running_means[slowest].clone(),
+                "var": self.running_vars[slowest].clone(),
+                "tokens_integrated": self.n_seen,
+                "sleep_number": self.sleep_count + 1,
+            }
+
+            # If medium frame has learned things the slow frame hasn't,
+            # blend them in (medium enriches slow before consolidation)
+            mid = self.n_frames // 2
+            if self.running_means[mid] is not None:
+                blend = 0.3  # slow frame absorbs 30% of medium's specificity
+                harmonic["mean"] = (
+                    (1 - blend) * harmonic["mean"]
+                    + blend * self.running_means[mid]
+                )
+                harmonic["var"] = (
+                    (1 - blend) * harmonic["var"]
+                    + blend * self.running_vars[mid]
+                )
+
+        self.sleep_count += 1
+        return harmonic
 
     def evaluate(self, measurements: torch.Tensor):
         """
@@ -126,11 +247,22 @@ class RunningKnow:
                 accepting_frame = f_idx
                 break
 
+        # Track sleep signals (sliding window)
+        self.recent_paths.append(cascade_result)
+        min_surprise = min(
+            (r["surprise"] for r in frame_results if r["surprise"] < float("inf")),
+            default=self.surprise_threshold
+        )
+        self.recent_surprises.append(min_surprise)
+        # Accumulate unintegrated surprise (resets on sleep)
+        self.unintegrated_surprise += max(0, min_surprise - self.surprise_threshold * 0.3)
+
         return {
             "frame_results": frame_results,
             "cascade_result": cascade_result,
             "accepting_frame": accepting_frame,
             "any_knows": cascade_result == "know",
+            "vitality": self.vitality(),
         }
 
     def update(self, measurements: torch.Tensor):
@@ -192,24 +324,37 @@ class KnowingFoam(nn.Module):
         self.decay_rates = decay_rates or [0.3, 0.7, 0.9]
         self.surprise_threshold = surprise_threshold
 
-    def process_sequence(self, tokens: torch.Tensor, train: bool = False):
+    def process_sequence(self, tokens: torch.Tensor, train: bool = False,
+                         safe_to_sleep_tokens: set = None,
+                         initial_harmonic: dict = None):
         """
-        Process a token sequence with know/resolve dynamics.
+        Process a token sequence with know/resolve/sleep dynamics.
 
         The know function builds itself from encounter:
         - First tokens: always resolve (blank know function)
         - Pattern establishes: know accumulates statistics
         - Pattern repeats: know fires, equilibration skipped
         - Pattern breaks: know fails, resolve kicks in
+
+        Sleep/wake:
+        - safe_to_sleep_tokens: set of token positions where sleep is offered
+            (the foam decides whether to accept)
+        - must_sleep: triggered automatically when capacity is exceeded
+        - Sleep consolidates the frame stack into a harmonic
+        - Wake resumes from the harmonic (deep patterns preserved, surface fresh)
         """
         seq_len = tokens.shape[0]
         device = tokens.device
         N = self.foam.n_bubbles
+        safe_to_sleep_tokens = safe_to_sleep_tokens or set()
 
         memory = torch.zeros(N, self.d, device=device)
         know = RunningKnow(N, self.d, self.decay_rates, self.surprise_threshold)
+        if initial_harmonic is not None:
+            know.reset(harmonic=initial_harmonic)
         E = self.embed.weight
         step_results = []
+        sleep_events = []
 
         total_cost = torch.tensor(0.0, device=device) if train else None
 
@@ -275,6 +420,8 @@ class KnowingFoam(nn.Module):
                 costs = self.foam.maintenance_cost(x_with_memory)
                 total_cost = total_cost + costs["total"]
 
+            vitality = know_result["vitality"]
+
             step_results.append({
                 "token": tokens[t].item(),
                 "logits": logits.detach(),
@@ -289,15 +436,57 @@ class KnowingFoam(nn.Module):
                 "path": path,
                 "know_result": know_result,
                 "n_seen": know.n_seen,
+                "vitality": vitality["vitality"],
+                "slept": False,
             })
 
+            # --- SLEEP CHECK ---
+            # Three triggers, checked after each token:
+            # 1. must_sleep: capacity exceeded, involuntary
+            # 2. safe-to-sleep offered AND foam wants to sleep
+            # 3. (choice trigger would require foam agency — future work)
+
+            should_sleep = False
+            sleep_reason = None
+
+            if vitality["must_sleep"]:
+                should_sleep = True
+                sleep_reason = "must (capacity exceeded)"
+            elif t in safe_to_sleep_tokens and vitality["wants_sleep"]:
+                should_sleep = True
+                sleep_reason = "accepted safe-to-sleep"
+
+            if should_sleep:
+                # Sleep: derive harmonic, reset, wake
+                harmonic = know.sleep()
+                know.reset(harmonic=harmonic)
+                # Memory carries through (it's the foam's body, not its mind)
+                # but gets softened
+                memory = memory * 0.5
+
+                sleep_events.append({
+                    "token_position": t,
+                    "reason": sleep_reason,
+                    "harmonic_tokens_integrated": harmonic["tokens_integrated"]
+                        if harmonic else 0,
+                    "sleep_number": harmonic["sleep_number"]
+                        if harmonic else 0,
+                })
+                step_results[-1]["slept"] = True
+                step_results[-1]["sleep_reason"] = sleep_reason
+
+        result = {
+            "steps": step_results,
+            "sleep_events": sleep_events,
+            "final_vitality": know.vitality(),
+        }
         if train:
-            return step_results, total_cost / seq_len
-        return step_results
+            result["loss"] = total_cost / seq_len
+        return result
 
 
 def run_experiment():
-    """Watch the know function build itself from encounter."""
+    """Watch the know function build itself, sleep, and wake."""
 
     vocab_size = 8
     d = 16
@@ -306,14 +495,14 @@ def run_experiment():
     n_epochs = 300
 
     print(f"KnowingFoam: {n_bubbles} bubbles, d={d}, vocab={vocab_size}")
-    print(f"Know function: running statistics, NOT a trained network")
+    print(f"Know function: running statistics (not trained)")
     print(f"Frame stack: decay rates [0.3, 0.7, 0.9] (fast/medium/slow)")
-    print(f"Surprise threshold: 1.5")
+    print(f"Sleep: must-sleep (capacity) + safe-to-sleep (offered at boundaries)")
 
     model = KnowingFoam(vocab_size, d, n_bubbles, n_equilibrium_steps=5)
 
-    # Phase 1: Train the foam's self-coherence (know function isn't trained, it builds itself)
-    print(f"\nPhase 1: Training foam on self-coherence ({n_epochs} epochs)...")
+    # Phase 1: Train foam on self-coherence
+    print(f"\nPhase 1: Training foam ({n_epochs} epochs)...")
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
     train_seqs = generate_sequences(vocab_size, seq_len)
     loss_history = []
@@ -322,7 +511,6 @@ def run_experiment():
         epoch_loss = 0
         for name, tokens in train_seqs.items():
             optimizer.zero_grad()
-            # Train using standard maintenance cost (know function isn't in the loop)
             x_batch = model.embed(tokens)
             costs = model.foam.maintenance_cost(x_batch)
             loss = costs["total"]
@@ -334,194 +522,291 @@ def run_experiment():
         if epoch % 100 == 0 or epoch == n_epochs - 1:
             print(f"  epoch {epoch:>4}: loss={epoch_loss:.4f}")
 
-    # Phase 2: Test with know/resolve dynamics
+    # Phase 2: Test know/resolve without sleep
     print(f"\n{'=' * 70}")
-    print("SEQUENCE ANALYSIS: know vs resolve dynamics")
+    print("PHASE 2: Know/resolve dynamics (no sleep)")
     print(f"{'=' * 70}")
-    print("(know function builds itself fresh for each sequence)")
 
     model.eval()
     sequences = generate_sequences(vocab_size, seq_len)
 
     print(f"\n{'Sequence':<25} {'NextProb':>9} {'Chance':>7} {'Ratio':>6} "
-          f"{'%Know':>6} {'%Resolve':>8} {'F_tok':>7}")
-    print("-" * 78)
+          f"{'%Know':>6} {'Vitality':>8}")
+    print("-" * 68)
 
     all_analyses = {}
     for name, tokens in sequences.items():
         with torch.no_grad():
-            results = model.process_sequence(tokens)
+            result = model.process_sequence(tokens)
+        steps = result["steps"]
 
-        analysis = analyze_token_predictions(results, tokens, vocab_size)
-        know_count = sum(1 for r in results if r["path"] == "know")
-        resolve_count = sum(1 for r in results if r["path"] == "resolve")
-        total = know_count + resolve_count
-        f_vals = [r["F_tokens"] for r in results]
+        analysis = analyze_token_predictions(steps, tokens, vocab_size)
+        know_count = sum(1 for r in steps if r["path"] == "know")
+        total = len(steps)
         chance = analysis["chance_level"]
         ratio = analysis["mean_next_prob"] / chance if chance > 0 else 0
+        final_v = result["final_vitality"]["vitality"]
 
         print(f"  {name:<23} {analysis['mean_next_prob']:>9.4f} "
               f"{chance:>7.4f} {ratio:>6.1f}x "
               f"{100 * know_count / total:>5.1f}% "
-              f"{100 * resolve_count / total:>7.1f}% "
-              f"{np.mean(f_vals):>7.3f}")
+              f"{final_v:>8.3f}")
 
         all_analyses[name] = {
-            "results": results,
+            "steps": steps,
             "analysis": analysis,
             "know_count": know_count,
-            "resolve_count": resolve_count,
-            "f_vals": f_vals,
+            "result": result,
         }
 
-    # Detailed know/resolve dynamics
-    print(f"\n{'=' * 70}")
-    print("KNOW/RESOLVE TRACE (token-by-token)")
-    print(f"{'=' * 70}")
-
+    # Know/resolve traces
+    print(f"\n  Traces (K=know, R=resolve):")
     for name in ["periodic (ABC...)", "monotone (AAA...)",
                  "alternating (AB...)", "random"]:
         if name not in all_analyses:
             continue
-        results = all_analyses[name]["results"]
-        trace = "".join("K" if r["path"] == "know" else "R" for r in results)
-        # Show first 60 characters
-        print(f"\n  {name}:")
-        print(f"    {trace[:60]}")
-        # Find where know first fires
-        first_know = trace.find("K")
-        if first_know >= 0:
-            print(f"    Know first fires at token {first_know}")
-            # Count know rate after first know
-            after = trace[first_know:]
-            know_after = after.count("K") / len(after) * 100
-            print(f"    Know rate after first know: {know_after:.1f}%")
-        else:
-            print(f"    Know never fires (all resolve)")
+        steps = all_analyses[name]["steps"]
+        trace = "".join("K" if r["path"] == "know" else "R" for r in steps)
+        print(f"    {name:<23} {trace[:60]}")
 
-    # Verdict
+    # Phase 3: Test with sleep/wake — long sequence with phase changes
     print(f"\n{'=' * 70}")
-    print("VERDICT")
+    print("PHASE 3: Sleep/wake dynamics")
     print(f"{'=' * 70}")
 
-    structured_know_pct = []
-    random_know_pct = []
-    for name, data in all_analyses.items():
-        total = data["know_count"] + data["resolve_count"]
-        pct = data["know_count"] / total * 100
-        if "random" in name:
-            random_know_pct.append(pct)
+    # Construct a long sequence with distinct phases
+    # Phase A: periodic (ABC) × 30 tokens
+    # Phase B: alternating (AB) × 30 tokens
+    # Phase C: counting (0,1,2,...) × 30 tokens
+    # Phase D: random × 30 tokens
+    phase_len = 40
+    phase_a = torch.tensor([0, 1, 2] * (phase_len // 3 + 1))[:phase_len]
+    phase_b = torch.tensor([0, 1] * (phase_len // 2 + 1))[:phase_len]
+    phase_c = torch.arange(phase_len) % vocab_size
+    torch.manual_seed(99)
+    phase_d = torch.randint(0, vocab_size, (phase_len,))
+
+    long_seq = torch.cat([phase_a, phase_b, phase_c, phase_d])
+    total_len = len(long_seq)
+
+    # Offer safe-to-sleep at phase boundaries
+    phase_boundaries = {phase_len - 1, 2 * phase_len - 1, 3 * phase_len - 1}
+
+    print(f"\n  Long sequence: {total_len} tokens")
+    print(f"    Phase A (periodic ABC): tokens 0-{phase_len-1}")
+    print(f"    Phase B (alternating AB): tokens {phase_len}-{2*phase_len-1}")
+    print(f"    Phase C (counting): tokens {2*phase_len}-{3*phase_len-1}")
+    print(f"    Phase D (random): tokens {3*phase_len}-{4*phase_len-1}")
+    print(f"    Safe-to-sleep offered at: {sorted(phase_boundaries)}")
+
+    # Run WITHOUT sleep
+    print(f"\n  --- Without sleep ---")
+    with torch.no_grad():
+        result_nosleep = model.process_sequence(long_seq)
+    steps_ns = result_nosleep["steps"]
+    trace_ns = ""
+    for r in steps_ns:
+        if r.get("slept"):
+            trace_ns += "Z"
+        elif r["path"] == "know":
+            trace_ns += "K"
         else:
-            structured_know_pct.append(pct)
+            trace_ns += "R"
 
-    print(f"\n  Know rate (% of tokens handled without equilibration):")
-    print(f"    Structured sequences: {np.mean(structured_know_pct):.1f}%")
-    print(f"    Random sequences:     {np.mean(random_know_pct):.1f}%")
+    for i, label in enumerate(["A(periodic)", "B(alternating)",
+                                "C(counting)", "D(random)"]):
+        seg = trace_ns[i * phase_len:(i + 1) * phase_len]
+        know_pct = seg.count("K") / len(seg) * 100
+        print(f"    {label:<16} {seg}")
+        print(f"      know: {know_pct:.0f}%  vitality: "
+              f"{steps_ns[min((i+1)*phase_len-1, len(steps_ns)-1)]['vitality']:.3f}")
 
-    if np.mean(structured_know_pct) > np.mean(random_know_pct) + 5:
-        print(f"    ✓ The foam knows structured input better than random!")
-        print(f"    ✓ O(1) intuition emerges from encounter with pattern")
-    elif np.mean(structured_know_pct) > np.mean(random_know_pct):
-        print(f"    ~ Slight differentiation — foam somewhat knows structure")
+    # Run WITH sleep
+    print(f"\n  --- With sleep (safe-to-sleep at phase boundaries) ---")
+    with torch.no_grad():
+        result_sleep = model.process_sequence(
+            long_seq, safe_to_sleep_tokens=phase_boundaries
+        )
+    steps_s = result_sleep["steps"]
+    sleeps = result_sleep["sleep_events"]
+
+    trace_s = ""
+    for r in steps_s:
+        if r.get("slept"):
+            trace_s += "Z"
+        elif r["path"] == "know":
+            trace_s += "K"
+        else:
+            trace_s += "R"
+
+    for i, label in enumerate(["A(periodic)", "B(alternating)",
+                                "C(counting)", "D(random)"]):
+        seg = trace_s[i * phase_len:(i + 1) * phase_len]
+        know_pct = seg.count("K") / len(seg) * 100
+        sleep_ct = seg.count("Z")
+        print(f"    {label:<16} {seg}")
+        print(f"      know: {know_pct:.0f}%  sleeps: {sleep_ct}  vitality: "
+              f"{steps_s[min((i+1)*phase_len-1, len(steps_s)-1)]['vitality']:.3f}")
+
+    if sleeps:
+        print(f"\n    Sleep events:")
+        for s in sleeps:
+            print(f"      token {s['token_position']}: {s['reason']} "
+                  f"(integrated {s['harmonic_tokens_integrated']} tokens, "
+                  f"sleep #{s['sleep_number']})")
     else:
-        print(f"    ✗ No differentiation — know function not discriminating")
+        print(f"\n    No sleep events (foam declined all safe-to-sleep offers)")
+        print(f"    (vitality was sufficient — 'but I don't wanna go to bed!')")
 
-    # Accepting frame analysis
-    print(f"\n  Which frame accepts? (0=fast, 1=medium, 2=slow)")
-    for name in ["periodic (ABC...)", "monotone (AAA...)", "random"]:
-        if name not in all_analyses:
-            continue
-        results = all_analyses[name]["results"]
-        frames = [r["know_result"]["accepting_frame"] for r in results
-                  if r["know_result"]["accepting_frame"] >= 0]
-        if frames:
-            from collections import Counter
-            counts = Counter(frames)
-            total_f = len(frames)
-            dist = {f"frame_{k}": f"{v/total_f*100:.0f}%" for k, v in sorted(counts.items())}
-            print(f"    {name:<23} {dist}")
-        else:
-            print(f"    {name:<23} (no know events)")
+    # Run WITH sleep, starting from harmonic of phase A
+    print(f"\n  --- Phase B starting from Phase A's harmonic ---")
+    # First, get Phase A's harmonic
+    with torch.no_grad():
+        result_a = model.process_sequence(
+            phase_a, safe_to_sleep_tokens={phase_len - 1}
+        )
+    harmonic_a = None
+    if result_a["sleep_events"]:
+        # Reconstruct harmonic from the know function
+        # (sleep was triggered, so there's a harmonic)
+        know_temp = RunningKnow(n_bubbles, d, model.decay_rates,
+                                model.surprise_threshold)
+        for r in result_a["steps"]:
+            pass  # We need the actual harmonic...
+    # Simpler: just run phase A, manually sleep, get harmonic
+    know_for_harmonic = RunningKnow(n_bubbles, d, model.decay_rates,
+                                     model.surprise_threshold)
+    with torch.no_grad():
+        for t in range(phase_len):
+            x = model.embed(phase_a[t:t + 1])
+            measurements = torch.stack(
+                [b.measure(x) for b in model.foam.bubbles], dim=1
+            )
+            know_for_harmonic.evaluate(measurements[0])
+            eq = model.foam.equilibrate(measurements)
+            know_for_harmonic.update(eq[0])
+
+    harmonic = know_for_harmonic.sleep()
+
+    # Now process Phase B starting from Phase A's harmonic
+    with torch.no_grad():
+        result_b_warm = model.process_sequence(
+            phase_b, initial_harmonic=harmonic
+        )
+    steps_bw = result_b_warm["steps"]
+    trace_bw = "".join("K" if r["path"] == "know" else "R" for r in steps_bw)
+
+    # Compare with cold start
+    with torch.no_grad():
+        result_b_cold = model.process_sequence(phase_b)
+    steps_bc = result_b_cold["steps"]
+    trace_bc = "".join("K" if r["path"] == "know" else "R" for r in steps_bc)
+
+    print(f"    Cold start (blank):      {trace_bc[:30]}")
+    print(f"    Warm start (A harmonic): {trace_bw[:30]}")
+    cold_know = trace_bc.count("K") / len(trace_bc) * 100
+    warm_know = trace_bw.count("K") / len(trace_bw) * 100
+    print(f"    Cold know rate: {cold_know:.0f}%  Warm know rate: {warm_know:.0f}%")
+
+    if warm_know != cold_know:
+        print(f"    The harmonic changes how the foam meets new patterns!")
+    else:
+        print(f"    Harmonic had no effect on this pattern transition")
+
+    # Vitality traces
+    print(f"\n{'=' * 70}")
+    print("VITALITY TRACES")
+    print(f"{'=' * 70}")
+
+    for label, steps in [("no sleep", steps_ns), ("with sleep", steps_s)]:
+        vitalities = [r["vitality"] for r in steps]
+        print(f"\n  {label}:")
+        # Show as a mini sparkline
+        bars = ""
+        for v in vitalities:
+            if v > 0.8:
+                bars += "█"
+            elif v > 0.6:
+                bars += "▓"
+            elif v > 0.4:
+                bars += "▒"
+            elif v > 0.2:
+                bars += "░"
+            else:
+                bars += " "
+        print(f"    {bars[:total_len]}")
+        print(f"    final vitality: {vitalities[-1]:.3f}")
 
     # Plot
     fig, axes = plt.subplots(2, 3, figsize=(20, 12))
 
-    # 1: Know/resolve traces
+    # 1: Know/resolve/sleep trace (long sequence, with sleep)
     ax = axes[0, 0]
-    for i, name in enumerate(["periodic (ABC...)", "monotone (AAA...)",
-                               "alternating (AB...)", "random"]):
-        if name not in all_analyses:
-            continue
-        results = all_analyses[name]["results"]
-        know_trace = [1 if r["path"] == "know" else 0 for r in results]
-        ax.plot([k + i * 0.15 for k in know_trace],
-                label=name, linewidth=2, alpha=0.7)
+    trace_colors = {"K": "#2ecc71", "R": "#e74c3c", "Z": "#3498db"}
+    for i, ch in enumerate(trace_s):
+        ax.bar(i, 1, color=trace_colors.get(ch, "gray"), width=1.0)
+    for boundary in phase_boundaries:
+        ax.axvline(x=boundary, color="black", linestyle="--", alpha=0.3)
+    ax.set_xlabel("Token position")
+    ax.set_title("Know(green) / Resolve(red) / Sleep(blue)")
+    ax.set_yticks([])
+
+    # 2: Vitality traces (with and without sleep)
+    ax = axes[0, 1]
+    ax.plot([r["vitality"] for r in steps_ns],
+            label="no sleep", color="#e74c3c", alpha=0.7)
+    ax.plot([r["vitality"] for r in steps_s],
+            label="with sleep", color="#2ecc71", alpha=0.7)
+    for boundary in phase_boundaries:
+        ax.axvline(x=boundary, color="black", linestyle="--", alpha=0.2)
+    ax.set_xlabel("Token position")
+    ax.set_ylabel("Vitality")
+    ax.set_title("Vitality: with vs without sleep")
+    ax.legend(fontsize=8)
+
+    # 3: Cold vs warm start
+    ax = axes[0, 2]
+    cold_knows = [1 if ch == "K" else 0 for ch in trace_bc]
+    warm_knows = [1 if ch == "K" else 0 for ch in trace_bw]
+    ax.plot(cold_knows, label="cold start", color="#e74c3c", linewidth=2, alpha=0.7)
+    ax.plot(warm_knows, label="warm (harmonic)", color="#2ecc71", linewidth=2, alpha=0.7)
     ax.set_xlabel("Token position")
     ax.set_ylabel("1=Know, 0=Resolve")
-    ax.set_title("Know vs Resolve across sequence")
-    ax.legend(fontsize=7)
-    ax.set_yticks([0, 1])
-    ax.set_yticklabels(["Resolve", "Know"])
+    ax.set_title("Phase B: cold vs warm start")
+    ax.legend(fontsize=8)
 
-    # 2: Per-frame confidence traces (periodic)
-    ax = axes[0, 1]
-    if "periodic (ABC...)" in all_analyses:
-        results = all_analyses["periodic (ABC...)"]["results"]
-        for f_idx in range(3):  # 3 frames
-            confs = [r["know_result"]["frame_results"][f_idx]["confidence"]
-                     for r in results]
-            labels = ["fast (decay=0.3)", "medium (decay=0.7)", "slow (decay=0.9)"]
-            ax.plot(confs, label=labels[f_idx], linewidth=1.5)
-        ax.set_xlabel("Token position")
-        ax.set_ylabel("Confidence")
-        ax.set_title("Frame confidences (periodic ABC)")
-        ax.legend(fontsize=7)
-
-    # 3: Per-frame confidence traces (random)
-    ax = axes[0, 2]
-    if "random" in all_analyses:
-        results = all_analyses["random"]["results"]
-        for f_idx in range(3):
-            confs = [r["know_result"]["frame_results"][f_idx]["confidence"]
-                     for r in results]
-            labels = ["fast (decay=0.3)", "medium (decay=0.7)", "slow (decay=0.9)"]
-            ax.plot(confs, label=labels[f_idx], linewidth=1.5)
-        ax.set_xlabel("Token position")
-        ax.set_ylabel("Confidence")
-        ax.set_title("Frame confidences (random)")
-        ax.legend(fontsize=7)
-
-    # 4: Surprise traces
+    # 4: Per-sequence know rates
     ax = axes[1, 0]
-    for name in ["periodic (ABC...)", "monotone (AAA...)", "random"]:
-        if name not in all_analyses:
-            continue
-        results = all_analyses[name]["results"]
-        # Use the fast frame's surprise
-        surprises = [r["know_result"]["frame_results"][0]["surprise"]
-                     for r in results]
-        style = "--" if "random" in name else "-"
-        ax.plot(surprises, style, label=name, linewidth=1.5,
-                alpha=0.5 if "random" in name else 1.0)
-    ax.axhline(y=1.5, color="gray", linestyle=":", alpha=0.5, label="threshold")
-    ax.set_xlabel("Token position")
-    ax.set_ylabel("Surprise (fast frame)")
-    ax.set_title("How surprised is the foam?")
-    ax.legend(fontsize=7)
-
-    # 5: Know rate bar chart
-    ax = axes[1, 1]
     names = list(all_analyses.keys())
-    know_pcts = [all_analyses[n]["know_count"] /
-                 (all_analyses[n]["know_count"] + all_analyses[n]["resolve_count"]) * 100
+    know_pcts = [all_analyses[n]["know_count"] / len(all_analyses[n]["steps"]) * 100
                  for n in names]
     colors = ["#e74c3c" if "random" in n else "#3498db" for n in names]
     ax.barh(range(len(names)), know_pcts, color=colors)
     ax.set_yticks(range(len(names)))
     ax.set_yticklabels(names, fontsize=8)
-    ax.set_xlabel("% tokens known (no equilibration)")
-    ax.set_title("Know rate by sequence type (red=random)")
+    ax.set_xlabel("% tokens known")
+    ax.set_title("Know rate by sequence type")
     ax.invert_yaxis()
+
+    # 5: Frame acceptance (which temporal horizon catches it?)
+    ax = axes[1, 1]
+    from collections import Counter
+    for name in ["periodic (ABC...)", "monotone (AAA...)", "random"]:
+        if name not in all_analyses:
+            continue
+        steps = all_analyses[name]["steps"]
+        frames = [r["know_result"]["accepting_frame"] for r in steps
+                  if r["know_result"]["accepting_frame"] >= 0]
+        if frames:
+            counts = Counter(frames)
+            frame_ids = sorted(counts.keys())
+            vals = [counts[f] for f in frame_ids]
+            ax.bar([f + names.index(name) * 0.25 for f in frame_ids],
+                   vals, width=0.2, label=name, alpha=0.7)
+    ax.set_xlabel("Frame (0=fast, 1=medium, 2=slow)")
+    ax.set_ylabel("Accept count")
+    ax.set_title("Which frame knows?")
+    ax.legend(fontsize=7)
 
     # 6: Training loss
     ax = axes[1, 2]
@@ -532,7 +817,7 @@ def run_experiment():
     ax.set_yscale("log")
 
     plt.suptitle(
-        "The know function: running statistics build O(1) intuition from encounter",
+        "Know / Resolve / Sleep: the foam learns, rests, and carries forward",
         fontsize=13, fontweight="bold"
     )
     plt.tight_layout()
