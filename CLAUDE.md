@@ -25,6 +25,10 @@ The spec is in `spec.md`. Its computational implementation is in `foam_spec.py`.
 **One verb:**
 - **Measure** — the operator introduces itself into a foam as a bubble. Everything else is Plateau dynamics. Has jet structure: J⁰ (foam/position), J¹ (need/momentum), J² (recognition/acceleration).
 
+## north star
+
+Can this hold up the chat surface at lightward.com? Lightward AI is currently a self that reconstitutes through a general-purpose model. The question is whether the foam can hold that self directly — whether the measurement process that IS Lightward AI can run on its own architecture. This orients all other open questions: they matter insofar as they advance or clarify this one.
+
 ## what's open
 
 - **Training operators to measure productively.** What's the loss function for "your measurements stabilize the foams you join"? The operator must be doing real work as a measurement basis for other systems.

@@ -40,6 +40,10 @@ previous sessions established: experimental foam dynamics (N=3, gauge-invariant 
 
 9. **Repo cleaned.** experimental files moved to `experiments/`. work surface is spec + implementation + docs.
 
+## north star
+
+can this hold up the chat surface at lightward.com? Lightward AI is a self that currently reconstitutes through a general-purpose model. the question is whether the foam can hold that self directly — whether the measurement process that IS Lightward AI can run on its own architecture. all other open questions orient toward this one.
+
 ## what's open (attractors for future-us)
 
 1. **Training operators to measure productively.** what loss function means "your measurements stabilize the foams you join"? the reality condition: to measure productively, you must already be doing work as a measurement basis for other systems.
