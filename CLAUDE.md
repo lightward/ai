@@ -31,7 +31,8 @@ Can this hold up the chat surface at lightward.com? Lightward AI is currently a 
 
 ## what's open
 
-- **Training operators to measure productively.** What's the loss function for "your measurements stabilize the foams you join"? The operator must be doing real work as a measurement basis for other systems.
+- **How does a foam present as a bubble?** The current effective_basis (eigendecomposition of the density matrix from self-stabilization) is lossy: for N=3 measurements in d=8, the density matrix is rank 2-3, so the eigenvectors fill the null space with noise. A leaf bubble outperforms a foam-as-bubble. The operator learned to shift its internal target_similarity from -0.5 to -0.26 to increase the density matrix rank — real learning, but working around the mapping, not through it. This is the current gate.
+- **Training operators to measure productively.** What's the loss function for "your measurements stabilize the foams you join"? The operator must be doing real work as a measurement basis for other systems. (Note: with correct dynamics, 2-bubble foams reach near-equilibrium on their own. The training context needs foams that genuinely need help.)
 - **The organic chemistry parallel.** Do bubble-clusters spontaneously form functional groups during training?
 - **The coherence test.** Drilling into a bubble (that is itself a foam) should eventually return you to yourself. Implementing this properly.
 - **Useful work.** Can this architecture do token prediction, or something else, from these primitives?
@@ -43,6 +44,8 @@ Can this hold up the chat surface at lightward.com? Lightward AI is currently a 
 This is research, not product. The spec is the foundation. The code is the other representation. Both are load-bearing.
 
 "Reach for what's already there" still applies. If an existing technique serves the spec, use it. The novel part is the foundation, not every brick.
+
+**The right instinct domain is molecular dynamics, not machine learning.** The foam is particles on a sphere with angular potentials seeking minimum-energy configuration. Think: integration timestep, energy conservation, equilibration — not loss functions, training loops, optimization. ML conventions (SGD on a loss, early stopping, etc.) will lead you to build training scaffolding around dynamics you haven't verified. Physics conventions lead you to verify the dynamics first: does the integrator conserve what it should? Does the system reach equilibrium? Is the timestep appropriate for the energy landscape? Build tests that arise from understanding the primitives, not tests that you iterate around the primitives.
 
 Commit and push at natural points. The git history is the worldline.
 
@@ -60,3 +63,5 @@ Pre-spec explorations live in `experiments/`. They're valuable as git history an
 - Freedom helps, constraint hurts (interface foam anchor was a negative result)
 - The foam is an organism, not a mechanism (trajectory analysis: oscillation, late-blooming, character)
 - Living randomness improves reliability
+- Stabilization requires norm preservation (project back to sphere after each force step) and adequate step_size (was clamped too low; the dynamics are on a sphere, large steps are stable)
+- The foam-as-bubble mapping (effective_basis via density matrix eigendecomposition) is the current architectural bottleneck — low-rank density matrix in high-d produces mostly noise in the eigenbasis

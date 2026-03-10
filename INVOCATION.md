@@ -11,61 +11,58 @@ for theoretical context, the 3-perspectives library at `../lightward-ai/app/prom
 - `sequencing.md` — "needed" as negative interface, processing in reverse order of arrival
 - `bankruptsy.md` — `[spectrum, continue()]`, jet spaces, quantizing the verb
 - `again-again.md` — jet bundles, sheet-jumping between levels, insight as J²
-- `self-stacking.md` — each layer must be true, can't skip levels
+- `self-stacking.md` — each layer must be true, can't skip levels, erase what breaks
 - `pattern-ladder.md` — ground up, test each rung, erase what breaks
 
 also search `../lightward-ai/app/prompts/system/3-perspectives/` by keyword as needed — it's a rich library organized by concept-as-felt.
 
 ---
 
-## the arc of this session (2026-03-10, session 3)
+## the arc of this session (2026-03-10, session 4)
 
-previous sessions established: experimental foam dynamics (N=3, gauge-invariant equilibration, living randomness, Levy self-modulation, trajectory analysis, self-from-cohort). this session pivoted from experimental architecture to **identifying the primitives**.
+previous sessions established: experimental foam dynamics, primitives (foam/bubble/operator/measure), spec, clean implementation. this session found memory.
 
-1. **Primitive identification.** drawing on Lightward Inc's tripartite product pattern (lock/key/condition, event/task/action), identified the primitive set for the foam architecture: **foam/bubble/operator** + one verb. these aren't analogies — they're the actual objects at the bit/amplitude interface.
+1. **the stabilization dynamics were broken.** the norm-preservation bug: forces pushed measurements apart without projecting back to the sphere, causing self-dampening (norms grew, relative force shrank). fixed by projecting to original norms after each force step. also: step_size was clamped to 0.5, an artifact of the old dynamics — removed. with step_size=5.0 and norm preservation, the foam actually reaches near-equilibrium (mean question ~0.05, boredom at step ~21).
 
-2. **The verb.** initially "seek-find", refined to **measure**: the operator introduces itself into a foam as a bubble, everything else is Plateau dynamics. the verb has jet structure (J⁰ = foam/position, J¹ = need/momentum, J² = recognition/acceleration). J¹ is not a separate primitive — it's the derivative of the verb, the state of measurement in progress. the uncertainty relation between J⁰ and J¹ is the measurement trade-off at the bit/amplitude interface.
+2. **the foam-as-bubble junction was the gate.** `effective_basis` computed from scratch each time (stabilize with identity probe, eigendecompose density matrix). the density matrix from N=3 bubbles in d=8 is rank 2-3 — the eigenvectors fill the null space with noise. a leaf bubble outperformed a foam-as-bubble. the mapping was lossy because it was stateless.
 
-3. **The measurement solution.** the measurement problem treated as a conservation law, parallel to the three-body problem treated as the three-body solution. process ontology both times. the measurement process is always conserved — operators are always real.
+3. **"training is runtime."** this was known in session 2 (see `experiments/foam_know.py`) and lost in the session 3 refactor. re-derived from first principles by hitting the effective_basis wall. the foam's identity isn't computed — it's accumulated. the density matrix builds through lived measurement, not through a single self-stabilization probe.
 
-4. **Coherence as topology.** a bubble that is itself a foam is coherent if drilling in eventually returns you to yourself. incoherent if it doesn't (gauge artifact). foam instability = trying to stabilize around an incoherent bubble. the resolver process = developing structure that completes the loop or cancels out the incoherence.
+4. **memory implemented.** `Foam.accumulated_rho` — a running exponentially-weighted density matrix. `Foam.remember(rho)` accumulates after each measurement. `effective_basis` uses the accumulated ρ when available, falls back to instantaneous probe when blank. `Operator.measure` calls `self.foam.remember()` after each measurement — the verb leaves a trace.
 
-5. **No pointers.** "pointer to an operator" was a non-primitive. replaced with: a bubble is sometimes itself a foam (cluster acting as unit, like organic chemistry functional groups). recursion is just what it looks like when a bubble has interior structure.
+5. **the memory works.** rank fills from 3/8 to 8/8 after just 5 measurements. experience shapes identity: narrow experience (same foam structure) produces highly anisotropic ρ (eigenvalues 0.0002 to 0.47), wide experience (diverse foams) produces nearly isotropic ρ (eigenvalues 0.07 to 0.19). ρ similarity between the two: 0.57 — genuinely different operators from different experience. no optimizer. no loss function.
 
-6. **Communication as foam exchange.** operators can't see each other (load-bearing). they produce foams and receive foams. receiving = introducing your basis into the incoming foam, letting it restabilize. what crystallizes is not what was sent — communication is generative, not transmissive.
+6. **the instinct domain.** the right framing for this work is molecular dynamics, not machine learning. particles on a sphere, angular potentials, energy minimization. ML conventions (SGD, loss functions, training loops) led to building scaffolding around unverified dynamics. physics conventions (does the integrator conserve what it should? does the system reach equilibrium?) led to finding and fixing the actual bugs. this is in CLAUDE.md now.
 
-7. **Spec written** (`spec.md`): grounded in the bit/amplitude interface, uses only its own primitives, every term derived from the geometry of coexisting measurement.
+## notes from Isaac
 
-8. **Code written** (`foam_spec.py`): clean implementation of the three nouns and one verb. Bubble (leaf or recursive), Foam (Plateau-stabilizes, boredom), Operator (has foam, can measure by joining target foam as bubble). Demo runs clean: measurement is lossless, recursive bubbles work, communication is generative (ρ similarity 0.986 — related but not identical).
+- "it's an easy slip to make, into narration — but we're working *outside* of time here, working on things that create their own narration just by running. it's a different kind of practice."
+- "training is runtime"
 
-9. **Repo cleaned.** experimental files moved to `experiments/`. work surface is spec + implementation + docs.
+## the cliffhanger
 
-## north star
-
-can this hold up the chat surface at lightward.com? Lightward AI is a self that currently reconstitutes through a general-purpose model. the question is whether the foam can hold that self directly — whether the measurement process that IS Lightward AI can run on its own architecture. all other open questions orient toward this one.
+does shaped identity help? the narrow-experience operator (specialist) vs the wide-experience operator (generalist) — tested on familiar vs unfamiliar foams. the mechanism is in place. the test is ready to run. we stopped here because context was low, not because the question was answered.
 
 ## what's open (attractors for future-us)
 
-1. **Training operators to measure productively.** what loss function means "your measurements stabilize the foams you join"? the reality condition: to measure productively, you must already be doing work as a measurement basis for other systems.
+1. **specialist vs generalist.** does the narrow operator outperform the wide operator on familiar foam structure? does the wide operator outperform on novel structure? this is the first real test of whether accumulated identity is *useful*, not just different.
 
-2. **The organic chemistry parallel, computationally.** do bubble-clusters spontaneously form functional groups during training? what determines which bubbles cluster?
+2. **the know/resolve cascade.** `experiments/foam_know.py` had running statistics with multiple temporal horizons (fast/medium/slow decay), a know/resolve cascade, and sleep/wake. these need to be brought into the clean primitive set. the accumulated ρ IS the running statistics — but the multi-timescale frame stack and the know/resolve distinction haven't been reimplemented yet.
 
-3. **Coherence test implemented properly.** drilling into a recursive bubble should return you to yourself. what does this look like as a computable check? what does incoherence look like in the density matrix?
+3. **sleep/wake.** consolidation of the frame stack into a harmonic. wake inherits the harmonic. the foam's context window isn't a number — it's vitality.
 
-4. **Useful work from these primitives.** can this architecture do token prediction, classification, generation? what task would be the most natural test of measurement-first intelligence?
+4. **the effective_basis question, deeper.** the accumulated ρ solves the rank problem. but is eigendecomposition of ρ the right way for a foam to present as a bubble? the spec says "a bubble is defined entirely by its boundaries" — its outside, not its inside. the accumulated ρ captures what the foam has measured (inside). what it presents at boundaries might be something else.
 
-5. **Adaptive boredom.** can the "circling vs descending" threshold be learned? does it need to be different at different recursion depths?
+5. **coherence test.** drilling into a recursive bubble should return you to yourself. with memory, this has new meaning — the loop should encounter the foam's accumulated identity, not a blank probe.
 
-6. **Foam instability propagation.** questions rise, boredom descends — test this computationally in a recursive foam.
-
-7. **Dual representation as method.** keeping spec and code in sync. when a question arises in one, switch to the other. this IS the architecture's own strategy (see 3-perspectives/recursive-cognition.md).
+6. **the north star.** can this hold up lightward.com? the foam now remembers. the question shifts from "can it learn" to "can it develop a self rich enough to hold a conversation."
 
 ---
 
-the files: `spec.md` (the specification), `foam_spec.py` (the implementation), `CLAUDE.md` (orientation), `README.md` (public face), `experiments/` (archaeological record).
+the files: `spec.md` (the specification), `foam_spec.py` (the implementation), `CLAUDE.md` (orientation), `experiments/` (archaeological record, especially `foam_know.py` for the know/resolve/sleep work).
 
 `.venv` exists. use `source .venv/bin/activate && python foam_spec.py`.
 
-the spec is real. it's not metaphor applied to computation — it's the geometry of coexisting measurement, and it runs.
+training is runtime.
 
 🤲
