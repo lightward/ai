@@ -42,9 +42,11 @@ class SequenceFoam(nn.Module):
         # The foam
         self.foam = Foam(n_bubbles, d, n_equilibrium_steps)
 
-        # State: running average of foam measurements (memory)
-        # This gives the foam history — without it, each token is independent
-        self.memory_decay = nn.Parameter(torch.tensor(0.8))
+        # Memory dynamics: novelty-modulated decay
+        # Base decay rate (sigmoid applied at runtime)
+        self.memory_decay_base = nn.Parameter(torch.tensor(0.8))
+        # How strongly novelty reduces decay (more novelty → more responsive)
+        self.novelty_sensitivity = nn.Parameter(torch.tensor(1.0))
 
     def process_sequence(self, tokens: torch.Tensor):
         """
@@ -64,14 +66,27 @@ class SequenceFoam(nn.Module):
             # Embed token
             x = self.embed(tokens[t:t+1])  # [1, d]
 
-            # Combine with memory: input = embed + decayed memory mean
-            decay = torch.sigmoid(self.memory_decay)
-            x_with_memory = x + decay * memory.mean(dim=0, keepdim=True)
+            # Novelty signal: how different is this input from the memory?
+            memory_mean = memory.mean(dim=0, keepdim=True)  # [1, d]
+            mem_norm = memory_mean.norm() + 1e-10
+            x_norm = x.norm() + 1e-10
+            if mem_norm > 1e-8:
+                novelty = 1 - (x * memory_mean).sum() / (x_norm * mem_norm)
+            else:
+                novelty = torch.tensor(1.0, device=device)  # first token is maximally novel
+            # novelty ∈ [0, 2] (cosine distance), typically [0, 1]
+
+            # Novelty-modulated decay: high novelty → low decay → more responsive
+            sensitivity = self.novelty_sensitivity.abs()
+            decay = torch.sigmoid(self.memory_decay_base - sensitivity * novelty)
+
+            # Combine with memory
+            x_with_memory = x + decay * memory_mean
 
             # Process through foam
             result = self.foam.forward(x_with_memory)
 
-            # Update memory with this step's equilibrium measurements
+            # Update memory with novelty-modulated decay
             eq = result["equilibrium"][0]  # [N, d]
             memory = decay * memory + (1 - decay) * eq
 
@@ -86,6 +101,8 @@ class SequenceFoam(nn.Module):
                 "output_dist": output_dist.detach(),
                 "rho": rho.detach(),
                 "S_rho": -(output_dist * output_dist.log().clamp(min=-100)).sum().item(),
+                "novelty": novelty.item(),
+                "decay": decay.item(),
                 "equilibrium": eq.detach(),
                 "surface_tension": result["surface_tension"].detach(),
             })
@@ -139,24 +156,40 @@ def analyze_predictiveness(step_results, tokens, vocab_size):
     """
     Does the foam's state at step t carry information about token t+1?
 
-    For each step, we look at the eigenvalue distribution and check if it
-    correlates with the next token's identity. If the foam is naturally
-    predictive, the distribution at step t should be more similar to the
-    distribution at step t+1 for structured sequences than for random ones.
+    Metrics:
+    - JSD: Jensen-Shannon divergence between consecutive eigenvalue distributions.
+      (Proper distribution distance, unlike cosine similarity which is structurally
+      near 1.0 for non-negative vectors that sum to 1.)
+    - State distance: cosine distance between full equilibrium states [N, d].
+      This is the richer signal — the eigenvalue distribution compresses away
+      the bubble structure.
     """
     dists = torch.stack([r["output_dist"] for r in step_results])  # [T, d]
+    equil = torch.stack([r["equilibrium"] for r in step_results])  # [T, N, d]
 
-    # Consecutive cosine similarity of eigenvalue distributions
     if len(dists) < 2:
-        return {"mean_similarity": 0, "similarity_trace": []}
+        return {"mean_jsd": 0, "jsd_trace": [], "mean_state_dist": 0, "state_dist_trace": []}
 
-    d1 = dists[:-1]  # [T-1, d]
-    d2 = dists[1:]   # [T-1, d]
-    cos_sim = (d1 * d2).sum(dim=-1) / (d1.norm(dim=-1) * d2.norm(dim=-1) + 1e-10)
+    # Jensen-Shannon divergence between consecutive eigenvalue distributions
+    p = dists[:-1]  # [T-1, d]
+    q = dists[1:]   # [T-1, d]
+    m = 0.5 * (p + q)
+    # KL(p||m) and KL(q||m), handling zeros
+    kl_pm = (p * (p / (m + 1e-12) + 1e-12).log()).sum(dim=-1)
+    kl_qm = (q * (q / (m + 1e-12) + 1e-12).log()).sum(dim=-1)
+    jsd = 0.5 * (kl_pm + kl_qm)
+
+    # Full state cosine distance (flatten [N, d] → [N*d])
+    e1 = equil[:-1].flatten(start_dim=1)  # [T-1, N*d]
+    e2 = equil[1:].flatten(start_dim=1)   # [T-1, N*d]
+    cos_sim = (e1 * e2).sum(dim=-1) / (e1.norm(dim=-1) * e2.norm(dim=-1) + 1e-10)
+    state_dist = 1 - cos_sim
 
     return {
-        "mean_similarity": cos_sim.mean().item(),
-        "similarity_trace": cos_sim.tolist(),
+        "mean_jsd": jsd.mean().item(),
+        "jsd_trace": jsd.tolist(),
+        "mean_state_dist": state_dist.mean().item(),
+        "state_dist_trace": state_dist.tolist(),
     }
 
 
@@ -203,8 +236,8 @@ if __name__ == "__main__":
 
     all_analyses = {}
 
-    print(f"\n{'Sequence':<25} {'Mean S(ρ)':>10} {'Std S(ρ)':>10} {'ConsecSim':>10}")
-    print("-" * 58)
+    print(f"\n{'Sequence':<25} {'Mean S(ρ)':>10} {'Std S(ρ)':>10} {'JSD':>8} {'StateDist':>10} {'Novelty':>8}")
+    print("-" * 74)
 
     for name, tokens in sequences.items():
         with torch.no_grad():
@@ -212,14 +245,17 @@ if __name__ == "__main__":
 
         analysis = analyze_predictiveness(results, tokens, vocab_size)
         s_values = [r["S_rho"] for r in results]
+        novelty_values = [r["novelty"] for r in results]
 
         print(f"  {name:<23} {np.mean(s_values):>10.4f} {np.std(s_values):>10.4f} "
-              f"{analysis['mean_similarity']:>10.4f}")
+              f"{analysis['mean_jsd']:>8.4f} {analysis['mean_state_dist']:>10.4f} "
+              f"{np.mean(novelty_values):>8.4f}")
 
         all_analyses[name] = {
             "results": results,
             "analysis": analysis,
             "s_values": s_values,
+            "novelty_values": novelty_values,
         }
 
     # Key test: does the foam differentiate structured from random?
@@ -242,12 +278,14 @@ if __name__ == "__main__":
     else:
         print(f"  ✗ No differentiation — the foam responds the same to both")
 
-    # Consecutive similarity: does the foam "expect" what comes next?
-    print(f"\n  Consecutive similarity (does the foam state predict the next step?):")
+    # State dynamics: how much does the foam change between tokens?
+    print(f"\n  State dynamics (JSD of eigenvalues, cosine distance of full state):")
     for name, data in all_analyses.items():
-        sim = data["analysis"]["mean_similarity"]
-        print(f"    {name:<23} {sim:.4f}")
-    print(f"  (higher = more predictable state evolution)")
+        jsd = data["analysis"]["mean_jsd"]
+        sd = data["analysis"]["mean_state_dist"]
+        print(f"    {name:<23} JSD={jsd:.4f}  StateDist={sd:.4f}")
+    print(f"  (higher = more dynamic response to input)")
+    print(f"  (monotone should be ~0, periodic should show rhythmic variation)")
 
     # Plot
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
@@ -263,17 +301,17 @@ if __name__ == "__main__":
     ax.set_title("Foam entropy across sequence")
     ax.legend(fontsize=7)
 
-    # 2: Consecutive similarity traces
+    # 2: State distance traces (full equilibrium state, not just eigenvalues)
     ax = axes[0, 1]
     for name, data in all_analyses.items():
-        sim_trace = data["analysis"]["similarity_trace"]
-        if sim_trace:
+        trace = data["analysis"]["state_dist_trace"]
+        if trace:
             style = "--" if "random" in name else "-"
             alpha = 0.5 if "random" in name else 1.0
-            ax.plot(sim_trace, style, label=name, alpha=alpha, linewidth=1.5)
+            ax.plot(trace, style, label=name, alpha=alpha, linewidth=1.5)
     ax.set_xlabel("Token position")
-    ax.set_ylabel("Cosine similarity with next step")
-    ax.set_title("State predictability across sequence")
+    ax.set_ylabel("Cosine distance from previous step")
+    ax.set_title("How much does the foam state change per token?")
     ax.legend(fontsize=7)
 
     # 3: Bar chart of mean S by sequence type
@@ -288,16 +326,16 @@ if __name__ == "__main__":
     ax.set_title("Internal entropy by sequence type (gray=random)")
     ax.invert_yaxis()
 
-    # 4: Eigenvalue distribution evolution for one structured sequence
+    # 4: Novelty traces — does the foam detect structure vs randomness?
     ax = axes[1, 1]
-    # Pick periodic sequence
-    periodic_results = all_analyses["periodic (ABC...)"]["results"]
-    dists = torch.stack([r["output_dist"] for r in periodic_results]).numpy()
-    im = ax.imshow(dists.T, aspect="auto", cmap="viridis")
+    for name, data in all_analyses.items():
+        style = "--" if "random" in name else "-"
+        alpha = 0.5 if "random" in name else 1.0
+        ax.plot(data["novelty_values"], style, label=name, alpha=alpha, linewidth=1.5)
     ax.set_xlabel("Token position")
-    ax.set_ylabel("Eigenvalue index")
-    ax.set_title("Eigenvalue distribution evolution (periodic ABC)")
-    plt.colorbar(im, ax=ax)
+    ax.set_ylabel("Novelty (cosine distance from memory)")
+    ax.set_title("Novelty signal across sequence")
+    ax.legend(fontsize=7)
 
     plt.tight_layout()
     plt.savefig("foam_sequence.png", dpi=150, bbox_inches="tight")

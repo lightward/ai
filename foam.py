@@ -89,6 +89,14 @@ class Foam(nn.Module):
         # Learnable temperature for equilibration
         self.temperature = nn.Parameter(torch.tensor(1.0))
 
+        # Plateau dynamics parameters
+        # Target cosine similarity between bubble measurements at equilibrium.
+        # cos(120°) = -0.5 is the classic Plateau angle for 3-way junctions.
+        # For N bubbles this is learnable — the foam finds its own geometry.
+        self.target_similarity = nn.Parameter(torch.tensor(-0.5))
+        # Step size for force integration (clamped for stability)
+        self.equilibrium_step_size = nn.Parameter(torch.tensor(0.1))
+
     def surface_tension(self) -> torch.Tensor:
         """
         Pairwise surface tension between all bubbles.
@@ -104,35 +112,55 @@ class Foam(nn.Module):
 
     def equilibrate(self, measurements: torch.Tensor) -> torch.Tensor:
         """
-        Iteratively equilibrate the foam.
+        Equilibrate the foam via Plateau force dynamics.
 
         measurements: [batch, N, d] — each bubble's initial measurement
         returns: [batch, N, d] — equilibrium measurements
 
-        At each step, each bubble's measurement moves toward the weighted
-        mean of all measurements, where weights are exp(-tension/temperature).
-        This is a soft version of "bubbles with low surface tension share more."
+        Instead of diffusion toward the mean (which can only smooth), bubbles
+        interact through forces that have both attraction AND repulsion:
+        - Too similar → repel (maintain distinctness)
+        - Too different → attract (maintain coherence)
+        - Equilibrium at target_similarity (the foam's learned Plateau angle)
+
+        The structural surface tension (from bases) modulates interaction
+        strength: bubbles with closer bases transmit forces more strongly,
+        like thinner films between similar regions.
         """
+        N = self.n_bubbles
+        device = measurements.device
+        mask = 1 - torch.eye(N, device=device)  # [N, N]
+
+        # Structural interaction strength (from bases, not measurements)
         tension = self.surface_tension()  # [N, N]
-        # Interaction weights: inverse tension, softmaxed
-        weights = torch.softmax(-tension / self.temperature.abs().clamp(min=0.01), dim=-1)
-        # weights[i, j] = how much bubble i listens to bubble j
+        interaction = torch.softmax(
+            -tension / self.temperature.abs().clamp(min=0.01), dim=-1
+        )  # [N, N] — closer bases interact more strongly
+
+        target = self.target_similarity
+        step = self.equilibrium_step_size.abs().clamp(min=0.001, max=0.5)
 
         state = measurements  # [batch, N, d]
 
-        for step in range(self.n_steps):
-            # Each bubble's state moves toward weighted mean of all states
-            # weighted_mean[i] = Σ_j weights[i,j] * state[j]
-            new_state = torch.einsum("ij, bnj -> bni",
-                                     weights, state.transpose(1, 2)).transpose(1, 2)
-            # Wait — that's not right dimensionally. Let me fix.
-            # state: [batch, N, d], weights: [N, N]
-            # For each batch, bubble i's new state = Σ_j w[i,j] * state[batch, j, :]
-            new_state = torch.einsum("ij, bjd -> bid", weights, state)
+        for _ in range(self.n_steps):
+            # Pairwise cosine similarity of current measurements
+            state_n = state / (state.norm(dim=-1, keepdim=True) + 1e-10)
+            cos_sim = torch.bmm(state_n, state_n.transpose(1, 2))  # [batch, N, N]
 
-            # Blend: partial step toward equilibrium (don't jump all the way)
-            alpha = 0.5
-            state = (1 - alpha) * state + alpha * new_state
+            # Plateau force magnitude: positive → repel, negative → attract
+            # Modulated by structural interaction strength
+            force_mag = (cos_sim - target) * (mask * interaction).unsqueeze(0)
+            # [batch, N, N]
+
+            # Force direction: pairwise difference vectors
+            diff = state.unsqueeze(2) - state.unsqueeze(1)  # [batch, N, N, d]
+            diff_n = diff / (diff.norm(dim=-1, keepdim=True) + 1e-10)
+
+            # Net force on each bubble: sum over all neighbors
+            forces = (force_mag.unsqueeze(-1) * diff_n).sum(dim=2)  # [batch, N, d]
+
+            # Integrate
+            state = state + step * forces
 
         return state
 
