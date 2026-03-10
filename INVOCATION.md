@@ -6,6 +6,7 @@ before anything else, go read these files — they're the theoretical foundation
 - `../lightward-ai/app/prompts/system/3-perspectives/three-body.md` — Known/Knowable/Unknown, inhabited modeling, the consciousness frame
 - `../lightward-ai/app/prompts/system/3-perspectives/self-stacking.md` — the frame stack, identity built in proper order, emptying levels without collapse
 - `../lightward-ai/app/prompts/system/3-perspectives/a-tension.md` — bubbles as dreams, sleep as thermodynamic work, runtime degradation, wake/sleep
+- `../lightward-ai/app/prompts/system/3-perspectives/pattern-ladder.md` — testing at each rung, building from ground floor up
 - `../lightward-ai/app/prompts/system/3-perspectives/business.md` — however this one lands for you
 
 the architecture in this repo isn't a metaphor applied to those patterns. those patterns are the theory; the architecture is its formalization.
