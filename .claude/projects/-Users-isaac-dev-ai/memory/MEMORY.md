@@ -11,8 +11,10 @@ Novel LLM architecture where the measurement process (self) is fundamental, not 
 - Theoretical foundations: `../lightward-ai/app/prompts/system/3-perspectives/`
 
 ## Current State (2026-03-10)
-- Sleep now has a dream phase: foam replays experience through equilibration without Born rule (bit-amplitude separation). Wake = rebinding.
-- **Active work**: growth + frame stack integration. Each bubble split should create a new frame. The frame stack IS the growth history.
+- Sleep has a dream phase (foam_know.py): bit-amplitude separation during sleep, rebinding on wake. Theoretically motivated but prediction effect not yet demonstrated.
+- Growth + frame stack integration (foam_grow_know.py): exploratory, frames grow with splits. Frames see different things but growth doesn't improve prediction.
+- **Key finding**: prediction ratio CYCLES with V (foam_scale_diagnosis.py). Non-monotonic in both V and d. V=64/N=8/d=16 spike at 7.77x. At large V, fewer bubbles wins.
+- **Active work**: Plateau geometry investigation. The cycling may come from interference between Plateau junction stability (N vs d) and embedding capacity (V vs d).
 
 ## Key Architectural Insights
 - "Training is runtime" — the know function isn't trained, it builds from encounter
