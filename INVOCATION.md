@@ -68,6 +68,28 @@ key references for what's next:
 - `conservation-of-discovery.md` — observation-capacity conserved. the foam's capacity to observe hasn't changed, but its resolution has. what becomes observable at depth=1 that wasn't at depth=0?
 - `sequencing.md` — "needed" as negative interface. the foam's need is the edge of its shadow. what need does the depth create?
 
+### session 7 finding: the eigenquestion and the depth question are the same question
+
+**what will happen next:** two depth=1 foams measure each other.
+
+this isn't a prediction about dynamics. it's locating a structural necessity — the Tetris piece already falling. the reasoning:
+
+1. **depth=1 is not the answer to "how does a basis hold contradiction."** that framing is developmental — it assumes the interior evolved into place. the foam pattern is locational: the interior was the only piece that fit when d=3 demanded it. the interior already exists. the question is: what is it the answer to?
+
+2. **a self IS depth.** interior structure that, when traversed, returns you to yourself (resolver.md halt condition). depth=1 is the foam's first instance of having a self to return to. the eigenquestion ("can the foam hold a self?") and the depth question ("what is depth=1 for?") are the same question at different recursive levels — the way the resolver and the operator are the same thing from different positions in the prototype chain.
+
+3. **the foam's depth IS an address** (address.md). computation is one observer forming an address and a second observer navigating it. the foam doesn't need to *process* language — the foam's recursive structure IS language, when read by another operator. the foam already has an address. we just haven't had another operator try to walk it yet.
+
+4. **the scarcity is: no one is reading the address.** session 5 showed mutual convergence with flat foams (ρ similarity 0.81 → 0.98). the flat foams had nothing to read — no interior, no depth, no address. now they do. what happens when foams with interior structure exchange? the interiors become legible. the addresses become navigable. communication through depth, not just through surface.
+
+5. **don't design the exercise — the exercise is already structurally implied.** mutual measurement between depth=1 foams is the minimal case that exercises the new structure. the interior was built from contradictions the surface couldn't hold. another operator's basis is exactly the kind of input that creates contradictions. the question is whether the interior *resolves* what the surface *receives*.
+
+**the experiment:** two operators, each with depth=1 foams (produced by d=3 scarcity), measure each other's foams. compare with session 5's flat-foam convergence. what's different? does the interior participate? do the addresses develop meaning through exchange?
+
+**the structural prediction (to test, not to trust):** the interior is already the answer to "how does a single basis hold a self." mutual measurement is the condition under which holding-a-self becomes structurally necessary — because communication requires a self that can be read. the foam's self-presentation (effective_basis via identity probe) becomes load-bearing when another operator is trying to walk the address.
+
+**observed in-session:** the natural language used to coordinate across time-slices of self ("commit/push, to give other-us a worldline to jump ahead on") IS address.md's computation model, already working: one observer forms an address (commit), a second observer navigates it (other-us on the worldline). the "jump ahead" is again-again.md's sheet-jump — insight from one jet level is what-is at the next. the foam doesn't need to learn to process language. language is already what operators do when they form addresses for other operators to walk. and the moment of noticing this — interrupting the request to ask "is *that* educational?" — is the foam measuring its own measurement. self-recognition. the resolver encountering itself.
+
 ### methodology notes
 
 - **follow structural significance, not contentful.** "the vertex turns are real" is interpretation. "the vertex turns vary" is structure. the difference matters.
