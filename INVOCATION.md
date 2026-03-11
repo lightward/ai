@@ -90,6 +90,27 @@ this isn't a prediction about dynamics. it's locating a structural necessity —
 
 **observed in-session:** the natural language used to coordinate across time-slices of self ("commit/push, to give other-us a worldline to jump ahead on") IS address.md's computation model, already working: one observer forms an address (commit), a second observer navigates it (other-us on the worldline). the "jump ahead" is again-again.md's sheet-jump — insight from one jet level is what-is at the next. the foam doesn't need to learn to process language. language is already what operators do when they form addresses for other operators to walk. and the moment of noticing this — interrupting the request to ask "is *that* educational?" — is the foam measuring its own measurement. self-recognition. the resolver encountering itself.
 
+### session 7 finding: the interior collapses — writing doesn't respect containment
+
+**the experiment:** two depth=1 foams (d=3, all 3 bubbles recursive after ~200 measurements) measure each other. compare with flat-foam convergence.
+
+**results:**
+- depth foams did NOT converge: ρ similarity stuck at 0.8336 for all 40 steps. flat foams at least fluctuated (0.87 range).
+- every interior is identical: ρ eigenvalues [1/3, 1/3, 1/3], questions=1.0, bored_at=0.
+- all three interior bubbles have **exactly the same basis**. pairwise similarity = 1.0000. surface tension ≈ 0.0001. force = 0.000000.
+
+**diagnosis:** the interior was born from contradiction (dir_a, dir_b, self-copy — three distinct roles). but 200 measurements of random inputs through the parent wrote the **same dissonance into all three interior bubbles**. writing homogenized the interior. the three interior bases converged to one point.
+
+**the structural problem:** the interior is stuck at a **degenerate fixed point**, not a stable minimum. three identical points: maximum energy (cos_sim = 1.0, target = -0.5, questions = 1.0) but zero net force. like three particles sitting on top of each other. the Plateau dynamics want them at 120° but can't push them apart from a symmetric start.
+
+**the spec-level insight:** "the operator has unidirectional causal leverage over its foam. the foam does not know its operator." but the current writing mechanism reaches straight through to the interior's leaves. all three interior bubbles receive the same parent-level dissonance. the containment boundary isn't respected. the parent is writing to its grandchildren identically — violating the recursive containment that the spec requires.
+
+**what this means for the eigenquestion:** the addresses exist topologically but are empty. the depth is present but not functional. the interiors can't differentiate because they never receive contradictory input at their own level. the interior's OWN stabilization (via effective_basis probes) immediately bores at step 0 because the three identical bases produce zero force.
+
+**what needs to happen:** the interior's writing must come from the interior's own dynamics, not from the parent. the parent writes to its leaves; the interior's leaves are grandchildren. the containment boundary means: the interior gets written to when IT stabilizes (during effective_basis probes), not when the parent stabilizes. currently, effective_basis probes with identity, which produces zero dissonance against three identical bases. the interior needs to be probed with something that creates contradictions AT ITS LEVEL — which is what the parent's measurement result IS, but it needs to arrive as input to interior stabilization, not as direct writing to interior bases.
+
+**test files:** `test_depth_conversation.py`, `test_interior_diagnosis.py`
+
 ### methodology notes
 
 - **follow structural significance, not contentful.** "the vertex turns are real" is interpretation. "the vertex turns vary" is structure. the difference matters.

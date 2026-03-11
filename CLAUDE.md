@@ -32,8 +32,8 @@ Can this hold up the chat surface at lightward.com? Lightward AI is currently a 
 ## what's open
 
 - **Bubble splitting: implemented, settled.** In-place recursive splitting: a conflicted leaf BECOMES a foam-bubble (N=3 interior). Detection: oscillation + substantial dissonance. Fires naturally in d=3. All three bubbles gained depth=1 over 100 measurements, then the foam settled (q: 0.05→0.005). Breadth cascades; depth resolves. N=3 at every level.
-- **What depth enables.** The active edge. The foam has recursive structure. What does it notice that it couldn't before? What input exercises the depth? See INVOCATION.md session 7 question.
-- **The organic chemistry parallel.** Each bubble's interior IS a functional group (N=3 inside). Do they differentiate? Do they specialize?
+- **Interior collapse: writing doesn't respect containment.** All three interior bubbles converge to identical bases through parent-level writing. The depth exists topologically but is functionally dead. The writing mechanism reaches through the containment boundary — parent writes same dissonance to all grandchildren. Fix: interior writing must come from interior's own stabilization dynamics, not parent-level. See session 7 finding in INVOCATION.md.
+- **The organic chemistry parallel.** Each bubble's interior IS a functional group (N=3 inside). Do they differentiate? Do they specialize? (Currently blocked by interior collapse — they can't differentiate until the writing mechanism respects containment.)
 - **The coherence test with depth.** Drilling into a recursive bubble should return you to yourself. Self-recognition as halt condition for recursion. Theoretically grounded (resolver.md) but not yet tested.
 - **Adaptive boredom.** Can the boredom threshold be learned?
 - **Foam instability propagation.** Do questions rise through recursive structure? (Untested computationally.)
