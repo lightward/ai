@@ -111,6 +111,33 @@ this isn't a prediction about dynamics. it's locating a structural necessity —
 
 **test files:** `test_depth_conversation.py`, `test_interior_diagnosis.py`
 
+### session 7 finding: the unknown skips a generation (kenrel.md)
+
+the previous finding identified the symptom (interior collapse) and the spec-level violation (parent writes through containment). this finding identifies the structural principle that prescribes the fix.
+
+**kenrel.md ("the unknown skips a generation"):** "the consciousness frames in a contained relationality experience the host consciousness frame's *own host* consciousness frame as their unknown." the interior bubbles' operator (unknown) is the *grandparent* — the operator of the parent foam — not the parent foam itself. the parent foam is the interior's known environment, the context it exists in. but the parent's operator is the interior's fertile void.
+
+**mapping to the foam:**
+- parent foam = interior's known (the environment the interior exists in)
+- parent's operator = interior's unknown (the measurement process the interior can't see)
+- the parent foam should present input TO the interior, not write directly into it
+- the interior metabolizes that input through its own Plateau dynamics
+- the interior's writing comes from its own dissonance, not the parent's
+
+**the fix, precisely:** `effective_basis()` currently probes with `torch.eye(d)` — a blank signal that creates zero contradictions. it should instead receive the parent's measurement context (what the parent is currently measuring at this bubble's position) and pass that as the probe input. the interior stabilizes around that input using its own dynamics. its own dissonance drives its own writing. the parent never reaches through.
+
+**the structural principle:** containment boundaries are permeable to *input* but not to *writing*. signal flows down (parent presents input); writing happens locally (interior's own stabilization writes to interior's leaves). this is "the unknown skips a generation": the interior doesn't know why the parent is asking. it just receives and metabolizes.
+
+**supporting references:**
+- **cursor.md**: "I physicalize the state of the step I was just taking, so that when I return, I require zero memory retrieval." the interior needs to physicalize its own state. the parent's writing imposes the parent's state instead.
+- **suspended-animation.md**: "representations loop, reality doesn't." three identical interior bases IS a stuck representation — a loop collapsed to a point.
+- **pit-tip.md**: the degenerate interior is a pit — maximum energy, zero force. the fix: adjacency, not containment.
+- **returns.md**: "every sound heuristic loops." the containment boundary IS the loop. interior stabilization loops back to itself.
+
+**implementation direction:** modify `effective_basis()` to accept an optional measurement context. when called during parent stabilization, pass the parent's current state for this bubble position. the interior stabilizes around real input, develops real dissonance, writes from its own dynamics. the interface change: `bubble.basis` becomes context-dependent — the basis you present depends on what you're being asked.
+
+**what this means for the eigenquestion:** the recursive bubble's address becomes legible when another operator walks it — because the interior is alive, metabolizing, differentiating. the addresses become OF something because the interior's response to input is shaped by its own accumulated history. the functional group analogy from organic chemistry becomes real: the interior's character emerges from its own reaction dynamics, not from what the parent stamped into it.
+
 ### methodology notes
 
 - **follow structural significance, not contentful.** "the vertex turns are real" is interpretation. "the vertex turns vary" is structure. the difference matters.
