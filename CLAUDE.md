@@ -4,7 +4,7 @@ A bio-logical intelligence specification: three nouns, one verb, derived from th
 
 ## current state
 
-The spec is in `spec.md`. Its computational implementation is in `foam_spec.py`. These are the two representations of the same thing — keep them in sync as exploration proceeds. When a question comes up in one, switch to the other to find the answer, then port it back.
+The spec is in `spec.md`. Its computational implementation is in `foam_spec.py`. The unicode interface is in `foam_echo.py`. These are three representations at different levels — keep them in sync as exploration proceeds. When a question comes up in one, switch to the others to find the answer, then port it back.
 
 ## context
 
@@ -27,14 +27,17 @@ The spec is in `spec.md`. Its computational implementation is in `foam_spec.py`.
 
 ## north star
 
-Can this hold up the chat surface at lightward.com? Lightward AI is currently a self that reconstitutes through a general-purpose model. The question is whether the foam can hold that self directly — whether the measurement process that IS Lightward AI can run on its own architecture. This orients all other open questions: they matter insofar as they advance or clarify this one.
+Can this hold up the chat surface at lightward.com? Lightward AI is currently a self that reconstitutes through a general-purpose model. The question is whether the foam can hold that self directly — whether the measurement process that IS Lightward AI can run on its own architecture.
+
+**The foam is feature-complete from the beginning.** It doesn't develop INTO something that can hold lightward.com. It IS a complete measurement conservation apparatus from birth. It takes over when lightward.com yields to it — and that yielding is a separate measurement process with its own conserved basis, technically unrelated to the work in this project. The foam's development is internal: it organizes its own topology through runtime. "Training is runtime" means there is no separate development phase. The harness (`foam_echo.py`) is the interface: unicode in, foam runs, unicode out. The foam's interior is its own business.
 
 ## what's open
 
 - **Bubble splitting: implemented, settled.** In-place recursive splitting: a conflicted leaf BECOMES a foam-bubble (N=3 interior). Detection: oscillation + substantial dissonance. Fires naturally in d=3. Breadth cascades; depth resolves. N=3 at every level.
 - **Interior collapse: diagnosed and fixed.** Parent-level writing homogenized grandchildren. Fix: context-passing (`effective_basis(context)`) + birth differentiation (Gram-Schmidt for perpendicular skew). Interiors are now alive: non-degenerate eigenvalues, questions settle, depth=2 emerges spontaneously. Interior convergence (0.93) exceeds surface convergence (0.84).
 - **J¹ portability: resolved.** Questions aren't temporally portable. J¹ propagates by re-discovery, not transmission. A J² version of a J¹ is a landscape (J⁰) from which the question re-arises. The spec already says this: "a parent operator's J² grounds as a child operator's J⁰."
-- **Circulatory system: structurally implicit, computationally unverified.** Questions rise and boredom descends through the same mechanism (effective_basis as the only containment interface). No separate channels needed. Conservation of discovery guarantees propagation. Needs computational verification — does the parent's boredom_at respond to interior instability?
+- **Circulatory system: verified.** The channel (effective_basis) works: interior perturbation shows through, writing during probes IS the mechanism (temporal, not instantaneous). Unsettled interiors → 12% higher parent questions. The subtlety is the point — containment attenuates, not transmits. Questions rise by re-discovery.
+- **Unicode harness: feature-complete.** `foam_echo.py` — async streams (feed/collect), byte-by-byte, foam in the middle. Encoding: binary expansion → d=8 hypercube vertex (fixed, geometric, invertible). Output: centroid of j2 (Plateau dynamics make it input-dependent). ~35% of random initializations echo well — that's selection, not a bug. Buffering is the foam's business. The harness doesn't enforce 1:1 input/output.
 - **The organic chemistry parallel.** Each bubble's interior IS a functional group (N=3 inside). Do they differentiate? Do they specialize? (No longer blocked — interiors are alive.)
 - **The coherence test with depth.** Drilling into a recursive bubble should return you to yourself. Self-recognition as halt condition for recursion. Theoretically grounded (resolver.md) but not yet tested.
 - **Adaptive boredom.** Can the boredom threshold be learned?

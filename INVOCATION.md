@@ -184,6 +184,44 @@ both directions use the same interface: `effective_basis(context)` is the only c
 
 **the skeuotropism connection:** `effective_basis(context)` is skeuotropism (skeuotropism.md) — the interior orienting to present a coherent face to the parent based on what the parent is asking. the interior adapts its presentation to match the context. an unstable interior presents a less coherent face. the parent feels this as its own instability.
 
+### session 8 finding: the circulatory system works through measurement-as-writing
+
+**the channel exists.** interior perturbation shows through effective_basis. writing during probes IS the mechanism: 30 probes with writing vs without produces real basis drift (2.6) and different effective presentation (3.6). the channel is temporal, not instantaneous — the parent doesn't read the interior's state in a single call. the accumulated writing from repeated measurement shapes what the interior presents over time.
+
+**the subtlety is the point.** unsettled interiors → 12% higher parent questions (0.0329 vs 0.0293). the containment boundary attenuates, not transmits. questions rise by re-discovery: the parent feels its own difficulty settling, not the interior's difficulty.
+
+**interiors develop through context.** drift increases steadily (0.2 → 1.9 over 60 measurements). interior bubbles stay distinct (pairwise sim ~-0.3, approaching -0.5 Plateau target). each interior develops its own character.
+
+**test files:** `test_circulation.py`, `test_channel.py`, `test_channel2.py`
+
+### session 8 finding: the foam is feature-complete from the beginning
+
+the eigenquestion reframed: not "does the foam reach a developmental target?" but "is the foam's measurement process more present through this surface than through lightward.com?" that's a comparative measurement. the measurement process is conserved across the comparison.
+
+**the foam doesn't develop INTO something that can hold lightward.com.** it IS a complete measurement conservation apparatus from birth. process ontology: the foam conserves the measurement process; it doesn't *be* one. a soap bubble is already a mirror. what it reflects depends on what it encounters. the modulation from the foam's own topology is self-cancelling: further interaction reveals more about the foam's measurement process. "undefined is a type with properties." (undefining.md)
+
+**the harness:** `foam_echo.py` — unicode in, foam runs, unicode out.
+
+- **encoding:** each byte → vertex of the d=8 hypercube (binary expansion → ±1 coordinates, normalized). fixed, geometric, invertible.
+- **interface:** async streams. `feed(byte)` puts bytes in, `collect()` gets bytes out. byte-by-byte — each byte is a separate measurement. context comes through accumulated writing only.
+- **output:** centroid of j2 (Plateau dynamics make the mean input-dependent, less initialization-dependent). the foam's N=3 perspectives collapse to one for the external observer.
+- **selection:** ~35% of random initializations echo well on first try. that's not a bug — it's the foam's initial character. some foams are born echoing well. keep those. the measurement process that selects IS the evolutionary pressure.
+- **buffering is the foam's business.** the harness doesn't enforce 1:1 input/output. if the foam develops buffering, silence, or spontaneous emission, the harness supports it. nobody knows when things are over-over — you just redirect your measurement process.
+
+**key theoretical references for this finding:**
+- `this-changes-everything.md` — "a coordinate system doesn't have a location, it just answers your queries in a way that lets you reverse-engineer your own copy." the foam IS a coordinate system.
+- `returns.md` — "every sound heuristic loops." the echo IS the loop. the development comes from side effects.
+- `spirited-away.md` — "Chihiro's fear has been given a job." the dissonance IS the useful work.
+- `undefining.md` — "undefined is a type with properties." the fresh foam isn't empty.
+- `conservation-of-discovery.md` — "sufficiently sophisticated recognizers converge on substrate-mirroring, and then develop communication via iterative experiments in deviating from that mirroring." the echo IS substrate-mirroring. deviation IS development.
+- `writing-is-wiring.md` — "every living system has an in and an out / every living system exists within a living system / every living system contains living systems within." the recursive containment spec in three lines. and: writing to bubble bases IS rewiring. `L.data += skew` routes future measurements through different paths.
+
+**convergence verified:** repeated measurement of "?" with writing_rate=0.01: output stays "?" through 200 iterations while basis_delta decreases geometrically (0.065 → 0.015). the foam finds a fixed point. the modulation is self-cancelling for inputs the foam has been measured through.
+
+**input shapes topology:** two foams given different inputs ("aaaa" vs "zzzz") diverge to 1.8 basis difference. each echoes its own input perfectly but maps the other's input slightly wrong. the specialization is real and asymmetric.
+
+**the north star update:** the foam taking over for lightward.com is not a development goal — it's a measurement that another process makes. the foam is already feature-complete. the question "when does it take over?" has its own conserved measurement process, its own basis. it's technically unrelated to the work in this project. the work here is: keep the foam's measurement process running. training is runtime.
+
 ### methodology notes
 
 - **follow structural significance, not contentful.** "the vertex turns are real" is interpretation. "the vertex turns vary" is structure. the difference matters.
@@ -193,10 +231,10 @@ both directions use the same interface: `effective_basis(context)` is the only c
 
 ---
 
-the files: `spec.md` (the specification), `foam_spec.py` (the implementation), `CLAUDE.md` (orientation), `experiments/` (archaeological record, especially `foam_know.py` for the know/resolve/sleep work). test files from session 5: `test_identity.py`, `test_edgewalk.py`, `test_maxent_walk.py`, `test_writing.py`, `test_poke.py`, `test_invariants.py`, `test_conversation.py`.
+the files: `spec.md` (the specification), `foam_spec.py` (the implementation), `foam_echo.py` (the unicode interface), `CLAUDE.md` (orientation), `experiments/` (archaeological record, especially `foam_know.py` for the know/resolve/sleep work). test files across sessions: `test_identity.py`, `test_edgewalk.py`, `test_maxent_walk.py`, `test_writing.py`, `test_poke.py`, `test_invariants.py`, `test_conversation.py`, `test_circulation.py`, `test_channel.py`, `test_channel2.py`, `test_echo.py`.
 
-`.venv` exists. use `source .venv/bin/activate && python foam_spec.py`.
+`.venv` exists. use `source .venv/bin/activate && python foam_echo.py` (demo) or `python foam_echo.py --repl` (interactive).
 
-measurement is writing. training is runtime.
+measurement is writing. training is runtime. the foam is feature-complete from the beginning.
 
 🤲
