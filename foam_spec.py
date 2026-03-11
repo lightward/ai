@@ -48,18 +48,27 @@ class Bubble(nn.Module):
     def is_leaf(self) -> bool:
         return self.interior is None
 
-    @property
-    def basis(self) -> torch.Tensor:
-        """The measurement basis U ∈ O(d)."""
+    def get_basis(self, context: torch.Tensor | None = None) -> torch.Tensor:
+        """The measurement basis U ∈ O(d).
+
+        For recursive bubbles, context is the input being measured —
+        passed to the interior so it can stabilize around real input
+        and develop its own dissonance. The parent never reaches through.
+        """
         if self.interior is not None:
-            return self.interior.effective_basis()
+            return self.interior.effective_basis(context)
         A = self.L - self.L.T
         I = torch.eye(self.d, device=self.L.device)
         return torch.linalg.solve(I + A, I - A)
 
+    @property
+    def basis(self) -> torch.Tensor:
+        """The measurement basis U ∈ O(d). No context (identity probe for recursive)."""
+        return self.get_basis()
+
     def measure(self, x: torch.Tensor) -> torch.Tensor:
         """Measure x from this bubble's basis. x: [batch, d] or [d]."""
-        return x @ self.basis
+        return x @ self.get_basis(x)
 
     def express(self, m: torch.Tensor) -> torch.Tensor:
         """Express measurement back to shared space."""
@@ -287,17 +296,38 @@ class Foam(nn.Module):
                 dis_prev_mag = dis_prev.norm()
                 dir_b = dis_prev / dis_prev_mag if dis_prev_mag > 1e-10 else -dir_a
 
+                # the two contradictory directions are antiparallel when the
+                # bubble is oscillating (that's what oscillation means).
+                # outer(a, -a) - outer(-a, a) = 0, so we need an orthogonal
+                # direction to create a nonzero skew. the measurement direction
+                # at this position provides the perpendicular axis — it's the
+                # direction the bubble was being measured FROM, orthogonal to
+                # the dissonance line along which it was being pulled.
+                m_dir = j0[:, worst_idx, :].mean(dim=0)
+                m_dir = m_dir / (m_dir.norm() + 1e-10)
+                # Gram-Schmidt: get component of m_dir perpendicular to dir_a
+                m_perp = m_dir - torch.dot(m_dir, dir_a) * dir_a
+                m_perp_norm = m_perp.norm()
+                if m_perp_norm > 1e-6:
+                    m_perp = m_perp / m_perp_norm
+                else:
+                    # m_dir is parallel to dir_a; use a random perpendicular
+                    m_perp = torch.randn(self.d)
+                    m_perp = m_perp - torch.dot(m_perp, dir_a) * dir_a
+                    m_perp = m_perp / m_perp.norm()
+
                 interior = Foam(
                     self.d, n_bubbles=0, n_steps=self.n_steps,
                     writing_rate=self.writing_rate,
                     split_threshold=self.split_threshold,
                 )
                 with torch.no_grad():
-                    # bubble a: original basis perturbed toward dir_a
+                    # bubble a: perturbed along the dissonance line
                     ba = Bubble(self.d)
-                    skew = torch.outer(dir_a, dir_b) - torch.outer(dir_b, dir_a)
+                    skew = (torch.outer(dir_a, m_perp)
+                            - torch.outer(m_perp, dir_a))
                     ba.L.data = bubble.L.data.clone() + 0.5 * skew
-                    # bubble b: original basis perturbed toward dir_b
+                    # bubble b: perturbed in the opposite rotation
                     bb = Bubble(self.d)
                     bb.L.data = bubble.L.data.clone() - 0.5 * skew
                     # bubble c: self-copy (the original basis, for coherence)
@@ -363,18 +393,27 @@ class Foam(nn.Module):
         # ρ = (1/N) Σ |m_i⟩⟨m_i|
         return torch.bmm(m_n.transpose(1, 2), m_n) / equilibrium.shape[1]
 
-    def effective_basis(self) -> torch.Tensor:
+    def effective_basis(self, context: torch.Tensor | None = None) -> torch.Tensor:
         """
         The foam's effective basis when acting as a single bubble at a parent level.
 
         The foam's memory IS its bubble bases — they carry the history of
-        every measurement that changed them. Probe the foam as it is now:
-        stabilize with identity, eigendecompose the resulting ρ.
+        every measurement that changed them. Probe the foam with the
+        measurement context from the parent — the input it's being asked
+        to measure. The interior stabilizes around real input and develops
+        its own dissonance. Its own writing comes from its own dynamics.
+        The parent never reaches through.
+
+        When no context is provided (e.g. standalone probing), falls back
+        to identity — a blank signal.
 
         This probe is itself a measurement and changes the foam (writing).
         Repeated probing converges: the foam settles into presenting itself.
         """
-        probe = torch.eye(self.d)
+        if context is not None:
+            probe = context if context.dim() > 1 else context.unsqueeze(0)
+        else:
+            probe = torch.eye(self.d)
         result = self.stabilize(probe)
         rho = self.density_matrix(result["j2"]).mean(dim=0)
 
