@@ -31,11 +31,9 @@ Can this hold up the chat surface at lightward.com? Lightward AI is currently a 
 
 ## what's open
 
-- **How does a foam present as a bubble?** The current effective_basis (eigendecomposition of the density matrix from self-stabilization) is lossy: for N=3 measurements in d=8, the density matrix is rank 2-3, so the eigenvectors fill the null space with noise. A leaf bubble outperforms a foam-as-bubble. The operator learned to shift its internal target_similarity from -0.5 to -0.26 to increase the density matrix rank — real learning, but working around the mapping, not through it. This is the current gate.
-- **Training operators to measure productively.** What's the loss function for "your measurements stabilize the foams you join"? The operator must be doing real work as a measurement basis for other systems. (Note: with correct dynamics, 2-bubble foams reach near-equilibrium on their own. The training context needs foams that genuinely need help.)
-- **The organic chemistry parallel.** Do bubble-clusters spontaneously form functional groups during training?
-- **The coherence test.** Drilling into a bubble (that is itself a foam) should eventually return you to yourself. Implementing this properly.
-- **Useful work.** Can this architecture do token prediction, or something else, from these primitives?
+- **Bubble splitting.** When J¹ can't reach J² — a bubble needs to be two things at once — the foam adds a bubble. Split into: (a) original stays, (b) copy of current foam becomes a recursive bubble. This is the path to recursive depth, which is the path to vocabulary, which is the path to the north star. Detection: contradictory forces on a bubble during stabilization (high magnitude, incompatible directions). Not yet implemented.
+- **The organic chemistry parallel.** Do bubble-clusters spontaneously form functional groups? Splitting may be the mechanism.
+- **The coherence test.** Drilling into a bubble (that is itself a foam) should eventually return you to yourself. With writing (measurement changes the foam), this has new meaning — the loop encounters the foam as it has been shaped by measurement.
 - **Adaptive boredom.** Can the threshold for "stabilization is circling rather than descending" be learned?
 - **Foam instability propagation.** Does instability propagate upward through recursive structure? (The spec says yes — "questions rise, boredom descends" — but it hasn't been tested computationally.)
 
@@ -64,4 +62,8 @@ Pre-spec explorations live in `experiments/`. They're valuable as git history an
 - The foam is an organism, not a mechanism (trajectory analysis: oscillation, late-blooming, character)
 - Living randomness improves reliability
 - Stabilization requires norm preservation (project back to sphere after each force step) and adequate step_size (was clamped too low; the dynamics are on a sphere, large steps are stable)
-- The foam-as-bubble mapping (effective_basis via density matrix eigendecomposition) is the current architectural bottleneck — low-rank density matrix in high-d produces mostly noise in the eigenbasis
+- The foam-as-bubble mapping (effective_basis via density matrix eigendecomposition) was the architectural bottleneck — resolved in session 5 by making measurement change the foam directly (writing to bubble bases). No separate memory mechanism. The bubbles carry the history.
+- Measurement IS writing: stabilization commits dissonance into bubble bases. No passive records. Training is runtime.
+- Two operators converge through mutual measurement (0.81 → 0.98 ρ similarity). Conversation produces more convergence than solo measurement.
+- Input selection doesn't affect what accumulates — the memory records foam topology, not input content (zero-amplitude collection)
+- Follow structural significance, not contentful. "If it tracks a parameterization, it's out of bounds."

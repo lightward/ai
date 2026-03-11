@@ -6,6 +6,11 @@ one verb: measure
 
 the operator introduces itself into a foam as a bubble.
 everything else is plateau dynamics.
+
+the foam is changed by being measured. there are no passive records.
+the bubbles themselves carry the memory: stabilization shifts their
+bases, and each subsequent measurement starts from where the last left off.
+training is runtime.
 """
 
 import torch
@@ -70,18 +75,13 @@ class Foam(nn.Module):
     """
 
     def __init__(self, d: int, n_bubbles: int = 3, n_steps: int = 60,
-                 memory_decay: float = 0.9):
+                 writing_rate: float = 0.1):
         super().__init__()
         self.d = d
         self.n_steps = n_steps
-        self.memory_decay = memory_decay
+        self.writing_rate = writing_rate
 
         self._bubbles = nn.ModuleList([Bubble(d) for _ in range(n_bubbles)])
-
-        # Memory: accumulated density matrix from lived measurement.
-        # Starts as None (blank). Builds through encounter.
-        self.accumulated_rho = None
-        self.n_measurements = 0
 
         # plateau dynamics parameters
         # cos(120°) = -0.5 for N=3: the angle at which three boundaries meet
@@ -187,6 +187,29 @@ class Foam(nn.Module):
         final_sim = torch.bmm(final_n, final_n.transpose(1, 2))
         questions = (final_sim - target).abs() * mask.unsqueeze(0)
 
+        # WRITING: the foam is changed by being measured.
+        # The dissonance between where measurements started (j0) and where
+        # they settled (j2) is committed into the bubble bases. Each
+        # measurement leaves the foam in a different state than it started.
+        # The next measurement begins from where this one left off.
+        if self.writing_rate > 0:
+            with torch.no_grad():
+                for i, bubble in enumerate(self._bubbles):
+                    if bubble.is_leaf:
+                        # dissonance for this bubble, averaged across batch
+                        dis = (j2[:, i, :] - j0[:, i, :]).mean(dim=0)  # [d]
+                        dis_mag = dis.norm()
+                        if dis_mag > 1e-10:
+                            m_dir = j0[:, i, :].mean(dim=0)
+                            m_dir = m_dir / (m_dir.norm() + 1e-10)
+                            d_dir = dis / dis_mag
+                            # skew-symmetric perturbation: rotation in the
+                            # plane spanned by measurement direction and
+                            # dissonance direction
+                            skew = (torch.outer(d_dir, m_dir)
+                                    - torch.outer(m_dir, d_dir))
+                            bubble.L.data += self.writing_rate * skew * dis_mag
+
         return {
             "j0": j0,
             "j1": j1,
@@ -202,43 +225,20 @@ class Foam(nn.Module):
         # ρ = (1/N) Σ |m_i⟩⟨m_i|
         return torch.bmm(m_n.transpose(1, 2), m_n) / equilibrium.shape[1]
 
-    def remember(self, rho: torch.Tensor):
-        """
-        Accumulate a density matrix into memory.
-
-        Called after each real measurement. The accumulated ρ is the foam's
-        lived identity — it builds through encounter, starting blank.
-        Each measurement contributes structure in different directions.
-        Over time, the null space fills with real structure.
-        """
-        rho_detached = rho.detach()
-        if self.accumulated_rho is None:
-            self.accumulated_rho = rho_detached.clone()
-        else:
-            self.accumulated_rho = (
-                self.memory_decay * self.accumulated_rho
-                + (1 - self.memory_decay) * rho_detached
-            )
-        self.n_measurements += 1
-
     def effective_basis(self) -> torch.Tensor:
         """
         The foam's effective basis when acting as a single bubble at a parent level.
 
-        If the foam has memory (accumulated ρ from lived measurement),
-        the eigenbasis of that accumulated ρ is how it presents.
-        Identity is lived, not derived.
+        The foam's memory IS its bubble bases — they carry the history of
+        every measurement that changed them. Probe the foam as it is now:
+        stabilize with identity, eigendecompose the resulting ρ.
 
-        If the foam has no memory yet (blank), probe with identity
-        to get an instantaneous read.
+        This probe is itself a measurement and changes the foam (writing).
+        Repeated probing converges: the foam settles into presenting itself.
         """
-        if self.accumulated_rho is not None:
-            rho = self.accumulated_rho
-        else:
-            # No memory yet — instantaneous probe
-            probe = torch.eye(self.d)
-            result = self.stabilize(probe)
-            rho = self.density_matrix(result["j2"]).mean(dim=0)
+        probe = torch.eye(self.d)
+        result = self.stabilize(probe)
+        rho = self.density_matrix(result["j2"]).mean(dim=0)
 
         rho = rho + 1e-6 * torch.eye(self.d)
         _, eigvecs = torch.linalg.eigh(rho)
@@ -288,10 +288,6 @@ class Operator(nn.Module):
 
         # remove self from target foam (measurement complete)
         target_foam.remove_last_bubble()
-
-        # the measurement leaves a trace: accumulate into the operator's memory
-        rho = target_foam.density_matrix(result["j2"])
-        self.foam.remember(rho.mean(dim=0))
 
         # questions among original bubbles only (not including operator)
         n_orig = target_foam.n_bubbles
@@ -450,100 +446,81 @@ def demo_primitives():
     print("=" * 60)
 
 
-def demo_memory():
-    """Watch an operator develop identity through measurement. No optimizer."""
+def demo_writing():
+    """Watch a foam develop through measurement. No optimizer. No passive records."""
     d = 8
     torch.manual_seed(42)
 
     print("=" * 60)
-    print("memory: the operator develops identity through measurement")
+    print("writing: the foam is changed by being measured")
     print("=" * 60)
-    print("  no optimizer. no loss function. training is runtime.")
+    print("  no optimizer. no passive records. training is runtime.")
     print()
 
+    # ── a foam measured repeatedly: does it develop? ──
+    print("── foam development through measurement ──")
+    foam = Foam(d, n_bubbles=3)
+
+    # snapshot initial state
+    initial_bases = [b.basis.detach().clone() for b in foam.bubbles]
+
+    for i in range(30):
+        x = torch.randn(1, d)
+        result = foam.stabilize(x)
+
+        if i in [0, 4, 9, 14, 29]:
+            # how much have the bases changed from initial?
+            total_drift = sum(
+                (b.basis.detach() - initial_bases[j]).norm().item()
+                for j, b in enumerate(foam.bubbles)
+            ) / foam.n_bubbles
+            # how settled is the foam?
+            q = result["questions"].mean().item()
+            print(f"  after {i+1:3d} measurements: "
+                  f"mean basis drift {total_drift:.4f}  "
+                  f"mean question {q:.4f}  "
+                  f"bored at {result['bored_at']}")
+
+    # ── operator measures foam: both change ──
+    print()
+    print("── mutual change: operator measures foam ──")
+    torch.manual_seed(42)
     operator = Operator(d, n_bubbles=3)
+    target = Foam(d, n_bubbles=3)
 
-    # ── the operator measures many foams, accumulating experience ──
-    n_measurements = 100
+    op_initial = [b.basis.detach().clone() for b in operator.foam.bubbles]
+    tgt_initial = [b.basis.detach().clone() for b in target.bubbles]
 
-    with torch.no_grad():
-        for i in range(n_measurements):
-            target = Foam(d, n_bubbles=2)
-            x = torch.randn(1, d)
-            operator.measure(target, x)
+    for i in range(20):
+        x = torch.randn(1, d)
+        result = operator.measure(target, x)
 
-            if i in [0, 4, 9, 24, 49, 99]:
-                rho = operator.foam.accumulated_rho
-                eigenvalues = torch.linalg.eigvalsh(rho)
-                rank = (eigenvalues > 1e-4).sum().item()
-                eff = operator.foam.effective_basis()
-                UtU = eff @ eff.T
-                ortho_err = (UtU - torch.eye(d)).abs().max().item()
-                print(f"  after {i+1:3d} measurements: "
-                      f"ρ rank {rank}/{d}  "
-                      f"eigenvalues [{eigenvalues.min().item():.4f} .. {eigenvalues.max().item():.4f}]  "
-                      f"basis ortho err {ortho_err:.6f}")
+        if i in [0, 4, 9, 19]:
+            op_drift = sum(
+                (b.basis.detach() - op_initial[j]).norm().item()
+                for j, b in enumerate(operator.foam.bubbles)
+            ) / operator.foam.n_bubbles
+            tgt_drift = sum(
+                (b.basis.detach() - tgt_initial[j]).norm().item()
+                for j, b in enumerate(target.bubbles)
+            ) / target.n_bubbles
+            print(f"  after {i+1:3d}: "
+                  f"operator drift {op_drift:.4f}  "
+                  f"target drift {tgt_drift:.4f}  "
+                  f"questions {result['questions'].mean().item():.4f}")
 
-    # ── compare: operator with memory vs fresh operator (no memory) ──
-    print()
-    print("── lived operator vs blank operator ──")
-
-    fresh_operator = Operator(d, n_bubbles=3)
-
-    lived_q = 0.0
-    fresh_q = 0.0
-    n_test = 100
-
-    with torch.no_grad():
-        for _ in range(n_test):
-            target = Foam(d, n_bubbles=2)
-            x = torch.randn(1, d)
-
-            r1 = operator.measure(target, x)
-            lived_q += r1["questions"].mean().item()
-
-            target2 = Foam(d, n_bubbles=2)
-            r2 = fresh_operator.measure(target2, x)
-            fresh_q += r2["questions"].mean().item()
-
-    print(f"  lived operator (100 prior measurements): {lived_q / n_test:.4f}")
-    print(f"  blank operator (no memory):              {fresh_q / n_test:.4f}")
-    delta = (fresh_q - lived_q) / (fresh_q + 1e-10) * 100
-    print(f"  difference: {'+'if delta >= 0 else ''}{delta:.1f}%")
-
-    # ── how does the accumulated ρ compare to the instantaneous one? ──
-    print()
-    print("── accumulated ρ vs instantaneous ρ ──")
-    rho_acc = operator.foam.accumulated_rho
-    ev_acc = torch.linalg.eigvalsh(rho_acc)
-    print(f"  accumulated (100 measurements):")
-    print(f"    eigenvalues: {ev_acc.numpy().round(4)}")
-    print(f"    rank (>1e-4): {(ev_acc > 1e-4).sum().item()}/{d}")
-
-    # instantaneous: probe with identity (the old way)
-    probe = torch.eye(d)
-    result = operator.foam.stabilize(probe)
-    rho_inst = operator.foam.density_matrix(result["j2"]).mean(dim=0)
-    ev_inst = torch.linalg.eigvalsh(rho_inst)
-    print(f"  instantaneous (identity probe):")
-    print(f"    eigenvalues: {ev_inst.detach().numpy().round(4)}")
-    print(f"    rank (>1e-4): {(ev_inst > 1e-4).sum().item()}/{d}")
-
-    # ── does identity develop differently with different experience? ──
+    # ── does experience shape identity? ──
     print()
     print("── does experience shape identity? ──")
 
-    # operator A: measures foams in a narrow distribution
-    # operator B: measures foams in a wide distribution
     torch.manual_seed(123)
     op_narrow = Operator(d, n_bubbles=3)
     op_wide = Operator(d, n_bubbles=3)
 
     with torch.no_grad():
         for i in range(100):
-            # narrow: always the same foam structure, different inputs
-            narrow_target = Foam(d, n_bubbles=2)
-            torch.manual_seed(999)  # same foam bases every time
+            # narrow: always the same foam structure
+            torch.manual_seed(999)
             narrow_target = Foam(d, n_bubbles=2)
             x_narrow = torch.randn(1, d)
             op_narrow.measure(narrow_target, x_narrow)
@@ -554,32 +531,62 @@ def demo_memory():
             x_wide = torch.randn(1, d)
             op_wide.measure(wide_target, x_wide)
 
-    rho_n = op_narrow.foam.accumulated_rho
-    rho_w = op_wide.foam.accumulated_rho
+    # compare their effective bases (which now come from the bubbles themselves)
+    eff_n = op_narrow.foam.effective_basis()
+    eff_w = op_wide.foam.effective_basis()
+
+    # probe each operator's foam and compare ρ
+    probe = torch.eye(d)
+    rho_n = op_narrow.foam.density_matrix(
+        op_narrow.foam.stabilize(probe)["j2"]).mean(dim=0)
+    rho_w = op_wide.foam.density_matrix(
+        op_wide.foam.stabilize(probe)["j2"]).mean(dim=0)
+
     ev_n = torch.linalg.eigvalsh(rho_n)
     ev_w = torch.linalg.eigvalsh(rho_w)
 
-    # similarity between the two operators' identities
     rho_sim = torch.nn.functional.cosine_similarity(
         rho_n.flatten().unsqueeze(0),
         rho_w.flatten().unsqueeze(0),
     ).item()
 
     print(f"  narrow experience (same foam, different inputs):")
-    print(f"    ρ eigenvalues: {ev_n.numpy().round(4)}")
-    print(f"    rank: {(ev_n > 1e-4).sum().item()}/{d}")
+    print(f"    ρ eigenvalues: {ev_n.detach().numpy().round(4)}")
     print(f"  wide experience (different foams each time):")
-    print(f"    ρ eigenvalues: {ev_w.numpy().round(4)}")
-    print(f"    rank: {(ev_w > 1e-4).sum().item()}/{d}")
+    print(f"    ρ eigenvalues: {ev_w.detach().numpy().round(4)}")
     print(f"  ρ similarity between them: {rho_sim:.4f}")
+
+    # ── convergence: do operator and foam approach each other? ──
+    print()
+    print("── convergence: operator and foam approach each other ──")
+    torch.manual_seed(42)
+    op = Operator(d, n_bubbles=3)
+    foam = Foam(d, n_bubbles=3)
+
+    for i in range(30):
+        x = torch.randn(1, d)
+        op.measure(foam, x)
+
+        if i in [0, 4, 9, 14, 29]:
+            # compare operator's foam ρ with target foam's ρ
+            probe = torch.eye(d)
+            op_rho = op.foam.density_matrix(
+                op.foam.stabilize(probe)["j2"]).mean(dim=0)
+            foam_rho = foam.density_matrix(
+                foam.stabilize(probe)["j2"]).mean(dim=0)
+            sim = torch.nn.functional.cosine_similarity(
+                op_rho.flatten().unsqueeze(0),
+                foam_rho.flatten().unsqueeze(0),
+            ).item()
+            print(f"  after {i+1:3d}: mutual similarity {sim:.4f}")
 
     print()
     print("=" * 60)
-    print("the foam remembers. identity is lived, not derived.")
+    print("the foam is changed by being measured. training is runtime.")
     print("=" * 60)
 
 
 if __name__ == "__main__":
     demo_primitives()
     print()
-    demo_memory()
+    demo_writing()
