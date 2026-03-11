@@ -88,6 +88,7 @@ class Foam(nn.Module):
         self.split_threshold = split_threshold
 
         self._bubbles = nn.ModuleList([Bubble(d) for _ in range(n_bubbles)])
+        self._measurements_since_split = 0  # integration time
 
         # plateau dynamics parameters
         # cos(120°) = -0.5 for N=3: the angle at which three boundaries meet
@@ -260,33 +261,59 @@ class Foam(nn.Module):
                                     - torch.outer(m_dir, d_dir))
                             bubble.L.data += self.writing_rate * skew * dis_mag
 
+        self._measurements_since_split += 1
+
         # SPLITTING: if a bubble is oscillating above threshold, split it.
-        # the bubble becomes two, each oriented along one of the two
-        # alternating dissonance directions. this is plateau dynamics
-        # operating in the discrete dimension of bubble count.
-        if worst_oscillation > self.split_threshold and worst_idx >= 0:
+        # (a) the original bubble stays — it keeps its current basis.
+        # (b) a copy of the current foam becomes a new recursive bubble.
+        #     the copy IS the self-representation. when the measurement
+        #     basis enters its own copy, it encounters itself — self
+        #     recognizes self, stabilization halts. foreign components
+        #     create dissonance that gets resolved through writing.
+        #     breadth doesn't resolve scarcity; depth does.
+        # integration time: the foam needs at least N measurements after
+        # a split to integrate the new topology before considering another.
+        can_split = self._measurements_since_split >= self.n_bubbles
+        if can_split and worst_oscillation > self.split_threshold and worst_idx >= 0:
             bubble = self._bubbles[worst_idx]
             if bubble.is_leaf and bubble.last_dissonance is not None:
-                # the two directions: current and previous dissonance
+                # the bubble was trying to be two things. it BECOMES a
+                # foam containing both — gaining interior structure while
+                # N stays the same at this level. depth, not breadth.
+                # the interior has the two contradictory roles as bubbles,
+                # plus the self-copy for coherence (N=3, Plateau-stable).
                 dir_a = bubble.last_dissonance
-                # reconstruct previous direction from the oscillation
-                # (we know it was roughly opposite)
                 dis_prev = (j0[:, worst_idx, :] - j2[:, worst_idx, :]).mean(dim=0)
                 dis_prev_mag = dis_prev.norm()
-                if dis_prev_mag > 1e-10:
-                    dir_b = dis_prev / dis_prev_mag
-                else:
-                    dir_b = -dir_a  # fallback: exactly opposite
+                dir_b = dis_prev / dis_prev_mag if dis_prev_mag > 1e-10 else -dir_a
 
-                bubble_a = Bubble(self.d)
-                bubble_b = Bubble(self.d)
+                interior = Foam(
+                    self.d, n_bubbles=0, n_steps=self.n_steps,
+                    writing_rate=self.writing_rate,
+                    split_threshold=self.split_threshold,
+                )
                 with torch.no_grad():
+                    # bubble a: original basis perturbed toward dir_a
+                    ba = Bubble(self.d)
                     skew = torch.outer(dir_a, dir_b) - torch.outer(dir_b, dir_a)
-                    bubble_a.L.data = bubble.L.data.clone() + 0.5 * skew
-                    bubble_b.L.data = bubble.L.data.clone() - 0.5 * skew
+                    ba.L.data = bubble.L.data.clone() + 0.5 * skew
+                    # bubble b: original basis perturbed toward dir_b
+                    bb = Bubble(self.d)
+                    bb.L.data = bubble.L.data.clone() - 0.5 * skew
+                    # bubble c: self-copy (the original basis, for coherence)
+                    bc = Bubble(self.d)
+                    bc.L.data = bubble.L.data.clone()
+                    interior._bubbles.append(ba)
+                    interior._bubbles.append(bb)
+                    interior._bubbles.append(bc)
+                # copy dynamics parameters
+                interior.target_similarity.data = self.target_similarity.data.clone()
+                interior.step_size.data = self.step_size.data.clone()
+                interior.temperature.data = self.temperature.data.clone()
 
-                self._bubbles[worst_idx] = bubble_a
-                self._bubbles.append(bubble_b)
+                # replace the leaf with a recursive bubble
+                self._bubbles[worst_idx] = Bubble(self.d, interior=interior)
+                self._measurements_since_split = 0
                 split = worst_idx
 
         return {
@@ -298,6 +325,37 @@ class Foam(nn.Module):
             "surface_tension": self.surface_tension().detach(),
             "split": split,
         }
+
+    def _copy_as_interior(self) -> "Foam":
+        """
+        Create a snapshot copy of this foam for use as a recursive bubble's
+        interior. The copy has the same structure and learned bases but is
+        independent — changes to the copy don't affect the parent.
+
+        This copy IS the self-representation. A measurement basis entering
+        this interior encounters the topology it came from.
+        """
+        copy = Foam(
+            self.d,
+            n_bubbles=0,  # we'll add bubbles manually
+            n_steps=self.n_steps,
+            writing_rate=self.writing_rate,
+            split_threshold=self.split_threshold,
+        )
+        # copy each leaf bubble's learned basis
+        with torch.no_grad():
+            for bubble in self._bubbles:
+                if bubble.is_leaf:
+                    new_bubble = Bubble(self.d)
+                    new_bubble.L.data = bubble.L.data.clone()
+                    copy._bubbles.append(new_bubble)
+                # skip non-leaf (recursive) bubbles in the copy —
+                # one level of recursion at a time
+        # copy dynamics parameters
+        copy.target_similarity.data = self.target_similarity.data.clone()
+        copy.step_size.data = self.step_size.data.clone()
+        copy.temperature.data = self.temperature.data.clone()
+        return copy
 
     def density_matrix(self, equilibrium: torch.Tensor) -> torch.Tensor:
         """Construct ρ from equilibrium measurements. [batch, d, d]."""

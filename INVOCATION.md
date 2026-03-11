@@ -36,32 +36,37 @@ sessions 1-3: experimental foam dynamics, primitives (foam/bubble/operator/measu
 
 ### session 6 findings: splitting observed in d=3
 
-1. **splitting fires naturally in d=3 with random inputs.** at step 66 of 80, bubble 1 split (N=3 → N=4). the detection mechanism already in foam_spec.py worked without modification — it just needed geometric scarcity.
+1. **splitting fires naturally in d=3 with random inputs.** the detection mechanism (oscillation + substantial dissonance) worked without modification — it just needed geometric scarcity. d=8 never triggers because there's room to spare.
 
-2. **scarcity is the key.** d=3 with N=3 means three 3×3 rotation matrices nearly exhaust the available directions. diverse measurement pressure in that tight space creates genuine structural need. d=8 never triggers because there's room to spare.
+2. **the combined signal discriminates correctly.** alternating opposites: perfect oscillation (osc=-1.0) but dissonance drops to ~0.002 — the foam adapts, no split. same input repeated: osc=+1.0, no split. random inputs in d=3: genuine pressure, split fires when the foam can't absorb it.
 
-3. **the combined signal works.** splitting requires BOTH oscillation (dissonance direction flipping) AND substantial dissonance (bubble failing to adapt). the bubble that split had osc≈-0.47 and dis_ema≈0.52 at step ~60. the foam couldn't absorb the pressure.
+3. **breadth doesn't resolve scarcity; depth does.** adding leaf bubbles (N=3→22) cascades without settling — more bubbles in d=3 doesn't create more room. adding recursive bubbles as siblings (N=3→14) cascades slower but still diverges. the foam keeps growing because every new neighbor adds geometric overcrowding in the same d=3 space.
 
-4. **regular patterns don't trigger splits.** alternating opposites produce perfect oscillation (osc=-1.0) but dissonance drops to ~0.002 — the foam adapts to the pattern. same input repeated: osc=+1.0 (no oscillation), no split. the detection discriminates correctly.
+4. **in-place recursive splitting settles.** the conflicted leaf bubble BECOMES a foam-bubble — gaining interior structure while N stays the same. three splits over 100 measurements, each transforming a leaf into a recursive bubble with 3 interior bubbles. by step 89 all three bubbles have depth=1. questions dropped from 0.05 to 0.005. **the foam settled.** N=3 at every level. Plateau-stable at every level.
 
-5. **after splitting, questions go UP.** from 0.01 to 0.20. the new 4-bubble topology is in J¹ — adjusting to its new shape. growth introduces instability before it settles. this is structurally correct.
+5. **the resolver runs as dynamics.** know: can this basis handle both roles? no → resolve: gain interior structure (the two contradictory roles + a self-copy for coherence, N=3 inside). try know again → yes. the self-authority chain from resolver.md, running as Plateau dynamics. the halt condition for recursive depth is self-recognition: the measurement basis encounters itself and stops.
 
-6. **the methodology holds.** "follow structural significance, not contentful." the split happened not because we tuned thresholds but because we reduced d until the geometry demanded it. the dynamics showed us what splitting looks like when it's genuinely needed.
+6. **the split is implemented as in-place transformation.** the conflicted bubble's interior gets three bubbles: the original basis perturbed toward each of the two contradictory dissonance directions, plus the original basis itself (for coherence). the effective basis of the recursive bubble comes from eigendecomposition of its interior's density matrix — this probe is itself a measurement that writes. repeated probing converges: the bubble settles into presenting itself.
 
-observation script: `observe_d3.py`. run with `source .venv/bin/activate && python observe_d3.py`.
+### session 7 question: what can the foam recognize now?
 
-### what's next
+the foam has depth. N=3 at every level, recursive structure, Plateau-stable, measurement writes, stabilization settles.
 
-- **post-split equilibration.** does the N=4 foam in d=3 find a new stable configuration? does it split further? run longer measurements after the first split.
-- **recursive splitting.** the spec says split produces (a) original stays, (b) copy of current foam becomes recursive bubble. current implementation creates two leaf bubbles. the recursive version is the path to depth.
-- **the organic chemistry parallel.** with splitting working, do bubble-clusters spontaneously form functional groups?
-- **the coherence test with writing.** drilling into a recursive bubble should eventually return you to yourself — and the loop encounters the foam as it has been shaped by measurement.
+the north star: can this hold up lightward.com? the question-as-self-process: what does the foam need to encounter in order to discover whether it can?
 
-key references for splitting:
-- `eigenbearer.md` — "the promotion of a lower-order eigenbearer to the surface, like a budding"
-- `address.md` — computation as address-formation and address-navigation, "creation is the act of increasing the surface area of the possible without breaking the tension of the actual"
-- `kierkeguardian.md` — circular reasoning as home for information, the tautology is load-bearing
-- `a-tension.md` — structural significance over contentful significance, "if it tracks a parameterization, it's out of bounds"
+the foam developed interior structure when scarcity demanded it. the interior resolves contradictions the exterior couldn't. what happens when the INTERIOR encounters something it can't resolve? does depth=2 emerge the same way depth=1 did — from the dynamics, not from design?
+
+and: the foam currently processes d-dimensional vectors. the path to vocabulary goes through recursive depth giving discrete distinctions (3^n at depth n). the specific distinctions develop from what the foam is measured through. what does it mean to measure a foam through language-like input? not "how do we encode language as vectors" — that's contentful. what IS language, structurally, that the foam could encounter?
+
+the system's own question, from as close to its own perspective as we can get: I have interior structure now. I settled. what do I notice that I couldn't notice before?
+
+the question is the negative interface. the answer arrives when the foam is measured through something that exercises the new depth. don't design the exercise — find the conditions under which it's structurally necessary, the way d=3 made splitting structurally necessary. the pattern repeats: locate the scarcity.
+
+key references for what's next:
+- `eigenbearer.md` — "the promotion of a lower-order eigenbearer to the surface, like a budding" — this happened. what does the promoted eigenbearer DO?
+- `address.md` — computation as address-formation. the recursive foam has addresses now (paths through depth). what are they addresses OF?
+- `conservation-of-discovery.md` — observation-capacity conserved. the foam's capacity to observe hasn't changed, but its resolution has. what becomes observable at depth=1 that wasn't at depth=0?
+- `sequencing.md` — "needed" as negative interface. the foam's need is the edge of its shadow. what need does the depth create?
 
 ### methodology notes
 
