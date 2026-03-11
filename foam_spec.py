@@ -34,6 +34,11 @@ class Bubble(nn.Module):
         super().__init__()
         self.d = d
         self.interior = interior
+        # split detection: tracks whether this bubble is oscillating
+        # (being asked to be two things) AND failing to adapt.
+        self.last_dissonance: torch.Tensor | None = None
+        self.oscillation_score: float = 0.0  # negative = oscillating
+        self.dissonance_ema: float = 0.0     # running avg of dissonance magnitude
 
         if interior is None:
             # leaf bubble: basis via Cayley transform of skew-symmetric matrix
@@ -75,16 +80,18 @@ class Foam(nn.Module):
     """
 
     def __init__(self, d: int, n_bubbles: int = 3, n_steps: int = 60,
-                 writing_rate: float = 0.1):
+                 writing_rate: float = 0.1, split_threshold: float = 0.3):
         super().__init__()
         self.d = d
         self.n_steps = n_steps
         self.writing_rate = writing_rate
+        self.split_threshold = split_threshold
 
         self._bubbles = nn.ModuleList([Bubble(d) for _ in range(n_bubbles)])
 
         # plateau dynamics parameters
         # cos(120°) = -0.5 for N=3: the angle at which three boundaries meet
+        # this is a local Plateau constraint (junction geometry), valid for any N
         self.target_similarity = nn.Parameter(torch.tensor(-0.5))
         self.step_size = nn.Parameter(torch.tensor(5.0))
         self.temperature = nn.Parameter(torch.tensor(1.0))
@@ -127,6 +134,7 @@ class Foam(nn.Module):
           j2: final equilibrium state (recognition)
           questions: boundary instabilities that didn't settle
           bored_at: step at which boredom kicked in (None if ran to completion)
+          split: index of bubble that split (None if no split)
         """
         N = self.n_bubbles
         batch = x.shape[0] if x.dim() > 1 else 1
@@ -141,7 +149,7 @@ class Foam(nn.Module):
         # J⁰: what is, before the verb moves
         j0 = measurements.detach().clone()
 
-        # plateau dynamics
+        # plateau dynamics — pure Plateau, no topology changes in the loop
         device = x.device
         mask = 1 - torch.eye(N, device=device)
         tension = self.surface_tension()
@@ -192,6 +200,15 @@ class Foam(nn.Module):
         # they settled (j2) is committed into the bubble bases. Each
         # measurement leaves the foam in a different state than it started.
         # The next measurement begins from where this one left off.
+        #
+        # SPLIT DETECTION: each bubble's dissonance direction is compared
+        # to its last dissonance direction. if they're nearly opposite,
+        # the bubble is oscillating — being used as a single proxy for
+        # two alternating roles. that's the "two things lined up" signal.
+        split = None
+        worst_oscillation = 0.0
+        worst_idx = -1
+
         if self.writing_rate > 0:
             with torch.no_grad():
                 for i, bubble in enumerate(self._bubbles):
@@ -200,15 +217,77 @@ class Foam(nn.Module):
                         dis = (j2[:, i, :] - j0[:, i, :]).mean(dim=0)  # [d]
                         dis_mag = dis.norm()
                         if dis_mag > 1e-10:
+                            d_dir = dis / dis_mag
+
+                            # split detection: two signals.
+                            # 1. oscillation: is the dissonance direction
+                            #    persistently flipping? (bubble asked to be
+                            #    two things)
+                            # 2. non-adaptation: is the dissonance magnitude
+                            #    NOT decreasing? (bubble failing to adapt)
+                            # both together = needs to become two.
+                            alpha = 0.3
+                            bubble.dissonance_ema = (
+                                (1 - alpha) * bubble.dissonance_ema
+                                + alpha * dis_mag.item()
+                            )
+
+                            if bubble.last_dissonance is not None:
+                                alignment = torch.dot(
+                                    d_dir, bubble.last_dissonance
+                                ).item()
+                                bubble.oscillation_score = (
+                                    (1 - alpha) * bubble.oscillation_score
+                                    + alpha * alignment
+                                )
+                                # split signal: oscillating AND dissonance
+                                # still substantial (bubble hasn't adapted).
+                                is_oscillating = bubble.oscillation_score < -self.split_threshold
+                                is_substantial = bubble.dissonance_ema > 0.1
+                                if is_oscillating and is_substantial:
+                                    split_signal = -bubble.oscillation_score * bubble.dissonance_ema
+                                    if split_signal > worst_oscillation:
+                                        worst_oscillation = split_signal
+                                        worst_idx = i
+
+                            # record this dissonance direction
+                            bubble.last_dissonance = d_dir.detach().clone()
+
+                            # write: skew-symmetric perturbation
                             m_dir = j0[:, i, :].mean(dim=0)
                             m_dir = m_dir / (m_dir.norm() + 1e-10)
-                            d_dir = dis / dis_mag
-                            # skew-symmetric perturbation: rotation in the
-                            # plane spanned by measurement direction and
-                            # dissonance direction
                             skew = (torch.outer(d_dir, m_dir)
                                     - torch.outer(m_dir, d_dir))
                             bubble.L.data += self.writing_rate * skew * dis_mag
+
+        # SPLITTING: if a bubble is oscillating above threshold, split it.
+        # the bubble becomes two, each oriented along one of the two
+        # alternating dissonance directions. this is plateau dynamics
+        # operating in the discrete dimension of bubble count.
+        if worst_oscillation > self.split_threshold and worst_idx >= 0:
+            bubble = self._bubbles[worst_idx]
+            if bubble.is_leaf and bubble.last_dissonance is not None:
+                # the two directions: current and previous dissonance
+                dir_a = bubble.last_dissonance
+                # reconstruct previous direction from the oscillation
+                # (we know it was roughly opposite)
+                dis_prev = (j0[:, worst_idx, :] - j2[:, worst_idx, :]).mean(dim=0)
+                dis_prev_mag = dis_prev.norm()
+                if dis_prev_mag > 1e-10:
+                    dir_b = dis_prev / dis_prev_mag
+                else:
+                    dir_b = -dir_a  # fallback: exactly opposite
+
+                bubble_a = Bubble(self.d)
+                bubble_b = Bubble(self.d)
+                with torch.no_grad():
+                    skew = torch.outer(dir_a, dir_b) - torch.outer(dir_b, dir_a)
+                    bubble_a.L.data = bubble.L.data.clone() + 0.5 * skew
+                    bubble_b.L.data = bubble.L.data.clone() - 0.5 * skew
+
+                self._bubbles[worst_idx] = bubble_a
+                self._bubbles.append(bubble_b)
+                split = worst_idx
 
         return {
             "j0": j0,
@@ -216,7 +295,8 @@ class Foam(nn.Module):
             "j2": j2,
             "questions": questions,
             "bored_at": bored_at,
-            "surface_tension": tension.detach(),
+            "surface_tension": self.surface_tension().detach(),
+            "split": split,
         }
 
     def density_matrix(self, equilibrium: torch.Tensor) -> torch.Tensor:

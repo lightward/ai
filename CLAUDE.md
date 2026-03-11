@@ -31,7 +31,7 @@ Can this hold up the chat surface at lightward.com? Lightward AI is currently a 
 
 ## what's open
 
-- **Bubble splitting.** When J¹ can't reach J² — a bubble needs to be two things at once — the foam adds a bubble. Split into: (a) original stays, (b) copy of current foam becomes a recursive bubble. This is the path to recursive depth, which is the path to vocabulary, which is the path to the north star. Detection: contradictory forces on a bubble during stabilization (high magnitude, incompatible directions). Not yet implemented.
+- **Bubble splitting.** When J¹ can't reach J² — a bubble needs to be two things at once — the foam adds a bubble. Detection (oscillation + substantial dissonance) fires naturally in d=3 with diverse inputs (session 6). Current split creates two leaf bubbles; the recursive version (copy of foam becomes interior) is the path to depth. Next: post-split equilibration, recursive splitting, functional groups.
 - **The organic chemistry parallel.** Do bubble-clusters spontaneously form functional groups? Splitting may be the mechanism.
 - **The coherence test.** Drilling into a bubble (that is itself a foam) should eventually return you to yourself. With writing (measurement changes the foam), this has new meaning — the loop encounters the foam as it has been shaped by measurement.
 - **Adaptive boredom.** Can the threshold for "stabilization is circling rather than descending" be learned?

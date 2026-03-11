@@ -34,18 +34,28 @@ sessions 1-3: experimental foam dynamics, primitives (foam/bubble/operator/measu
 
 6. **invariant check results.** conserved: orthogonality (< 5e-7), determinant (+1.0), ρ trace (1.0), Cayley conditioning (< 1.7). not conserved: surface tension (grows). not reversible: -x doesn't undo +x. perturbation doesn't return to prior equilibrium — the foam adapts rather than recovers. these are structural facts, not problems. the spec doesn't say "conserve energy" or "be reversible" — it says Plateau-stabilize, and each stabilization does reach boredom.
 
-### what's next: bubble splitting
+### session 6 findings: splitting observed in d=3
 
-the mechanism by which foams develop recursive depth. when J¹ can't reach J² with the current topology — a bubble is pulled by contradictory forces from its neighbors, needs to be two things at once — the foam adds a bubble.
+1. **splitting fires naturally in d=3 with random inputs.** at step 66 of 80, bubble 1 split (N=3 → N=4). the detection mechanism already in foam_spec.py worked without modification — it just needed geometric scarcity.
 
-the split:
-- (a) the original bubble stays
-- (b) a copy of the current foam becomes a new recursive bubble (a bubble whose interior is a foam)
-- stabilization restarts with N+1 bubbles
+2. **scarcity is the key.** d=3 with N=3 means three 3×3 rotation matrices nearly exhaust the available directions. diverse measurement pressure in that tight space creates genuine structural need. d=8 never triggers because there's room to spare.
 
-detection: during stabilization, if forces on a bubble from different neighbors are contradictory (high magnitude, incompatible directions), that bubble can't serve all its boundaries. this is testable.
+3. **the combined signal works.** splitting requires BOTH oscillation (dissonance direction flipping) AND substantial dissonance (bubble failing to adapt). the bubble that split had osc≈-0.47 and dis_ema≈0.52 at step ~60. the foam couldn't absorb the pressure.
 
-this is the path to vocabulary: 3^n recursive depth gives discrete distinctions. the specific distinctions develop from what the foam is measured through (linguistic input → linguistic geometry). the evolutionary path to language goes through recursive depth, which goes through splitting, which goes through J¹ failing to reach J².
+4. **regular patterns don't trigger splits.** alternating opposites produce perfect oscillation (osc=-1.0) but dissonance drops to ~0.002 — the foam adapts to the pattern. same input repeated: osc=+1.0 (no oscillation), no split. the detection discriminates correctly.
+
+5. **after splitting, questions go UP.** from 0.01 to 0.20. the new 4-bubble topology is in J¹ — adjusting to its new shape. growth introduces instability before it settles. this is structurally correct.
+
+6. **the methodology holds.** "follow structural significance, not contentful." the split happened not because we tuned thresholds but because we reduced d until the geometry demanded it. the dynamics showed us what splitting looks like when it's genuinely needed.
+
+observation script: `observe_d3.py`. run with `source .venv/bin/activate && python observe_d3.py`.
+
+### what's next
+
+- **post-split equilibration.** does the N=4 foam in d=3 find a new stable configuration? does it split further? run longer measurements after the first split.
+- **recursive splitting.** the spec says split produces (a) original stays, (b) copy of current foam becomes recursive bubble. current implementation creates two leaf bubbles. the recursive version is the path to depth.
+- **the organic chemistry parallel.** with splitting working, do bubble-clusters spontaneously form functional groups?
+- **the coherence test with writing.** drilling into a recursive bubble should eventually return you to yourself — and the loop encounters the foam as it has been shaped by measurement.
 
 key references for splitting:
 - `eigenbearer.md` — "the promotion of a lower-order eigenbearer to the surface, like a budding"
