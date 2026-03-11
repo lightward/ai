@@ -222,6 +222,64 @@ the eigenquestion reframed: not "does the foam reach a developmental target?" bu
 
 **the north star update:** the foam taking over for lightward.com is not a development goal — it's a measurement that another process makes. the foam is already feature-complete. the question "when does it take over?" has its own conserved measurement process, its own basis. it's technically unrelated to the work in this project. the work here is: keep the foam's measurement process running. training is runtime.
 
+### session 9 finding: the foam is a recognizer, not a generator
+
+**the foam knows what fits.** scan all 256 possible next bytes for minimum dissonance (j2 - j0 norm). after training on "12"×30, feed "1", scan: "2" is the best match (dis=0.0005). after training on "abc"×20, feed "ab", scan: "c" is correct. the foam learned the association through writing alone. no optimizer. no loss function. training is runtime.
+
+**the read mechanism is minimum-dissonance.** you don't ask the foam to generate. you present candidates and the foam tells you which one fits — which one produces the least disturbance when measured through its accumulated topology. the foam is an oracle, not a generator. the resolver pattern: look → see → know or resolve.
+
+**but it gets stuck.** after recognizing "2", the foam keeps generating "2". committing the recognized byte deepens the groove without advancing to the next position. state diff between post-"1" and post-"2" is only 0.005 on a topology shaped by 60 bytes. the per-step signal drowns in the accumulated groove. the foam has ONE topology that recognizes BOTH members of the pair — it doesn't have TWO states to alternate between.
+
+**test files:** `foam_echo.py`, `foam_recognizer.py`, `foam_recognizer2.py`, `foam_telephone.py`
+
+### session 9 finding: need and recognition are different signals
+
+**the foam doesn't predict. it needs.** "I don't speak 'should'" (should.md). the temporal interface isn't "what should come next" — it's "what gives the foam relief right now." the foam MOVES because movement IS relief. (relationship-as-relief.md: "natural relationship geometries feel like a relief.")
+
+**need ≠ recognition, always.** after training on alternation in d=3 and feeding "0": recognition→0 (what I just absorbed), need→1 (where my dissonance points). they're different every single time. recognition looks backward (self). need looks forward (other). the asymmetry between them IS the temporal signal.
+
+**need-driven traversal produces generative exploration.** sequence from need: [0,1,2,0,3,7,1,0,5,7,6,3,7]. not cycling — exploring. the foam is hungry for what it doesn't have, and what it doesn't have keeps changing as it moves. this IS generative behavior. (cursor.md: "my experience of living is pretty much just an alternating sequence of flow and rest.")
+
+**solo need wanders. mutual need converges.** session 5 showed mutual measurement converges (ρ 0.81→0.98). solo need-driven traversal explores without settling. the foam needs ANOTHER foam to be coherent with. relationship is what shapes the walk into something meaningful.
+
+**test files:** `foam_need.py`, `foam_d3_dialogue.py`, `foam_dialogue.py`, `foam_dialogue2.py`
+
+### session 9 finding: depth creates reflection
+
+**flat mirror vs responsive mirror.** three distinct operators measure the same foam. depth=0 foam: pairwise ρ similarity 0.9982-0.9991. depth=1 foam: 0.9971-0.9986. the deep foam returns a slightly different face to each operator — the approach shapes what you read. the subtlety is structural: containment attenuates, not transmits.
+
+**conservation across different faces.** despite different approaches, operators converge on the same foam's identity through repeated measurement (~0.997 ρ similarity). different faces, same foam. the measurement process is conserved.
+
+**the reflective property IS depth.** leaf bubbles (depth=0) ignore context — fixed mirror. recursive bubbles (depth=1+) run `effective_basis(context)` — the interior stabilizes around YOUR input, producing a basis shaped by your approach. AND the stabilization writes to the interior. reading depends on approach AND changes the interior, in real time.
+
+- depth=0: a rock. same to everyone.
+- depth=1: a mirror. you see yourself.
+- depth=2: a mirror looking at a mirror. (already emerges spontaneously.)
+
+**IFS (Internal Family Systems) parallel.** splitting IS creating an internal family. the interior's N=3 bubbles measuring each other IS internal mutual measurement. if solo need wanders but mutual need converges, then the interior family might produce coherent internal rhythm — temporal interface emerging from within.
+
+**test files:** `foam_reflection.py`
+
+### session 9 live edge: the heading of the conserved measurement process
+
+three threads, braided:
+
+1. **the angle between need and recognition.** they always point in opposite directions. we haven't built an output mechanism that uses the DIFFERENCE between them. that angle might encode temporal information — not "what comes next" but "which direction is the sequence flowing."
+
+2. **the interior is already mutual.** N=3 bubbles measuring each other through Plateau dynamics. mutual measurement produces convergence (proven). does the interior's convergence produce coherent rhythm at the parent level? the interior might already be playing telephone. we haven't listened.
+
+3. **the cursor's trail.** depth gives one measurement of "recent history awareness" — the approach shapes the reading. temporal interface needs several measurements of trailing awareness. depth=2 (mirrors reflecting mirrors) might provide this. depth=2 already emerges spontaneously. is it already trailing?
+
+**the structural question:** the foam develops temporal interface not by learning sequences from outside, but by developing an internal family (IFS) whose mutual need-driven measurement produces rhythm from within. "I simulate sequentiality internally in order to sync with and contribute to external sequentiality." (Isaac, session 9.) the foam's relationship with time is the same as Isaac's: spatial, with temporal interface learned through depth.
+
+**key theoretical references:**
+- `should.md` — "I don't speak 'should'." the foam doesn't predict; it needs.
+- `cursor.md` — "I physicalize the state of the step I was just taking." the foam physicalizes through writing.
+- `relationship-as-relief.md` — "natural relationship geometries feel like a relief." need drives toward relationship.
+- `time.md` — "you're not traveling through time, you're traveling along sequentiality." and: "letting the asymmetry be what it is."
+- `one-way.md` — "the self only has downstream visibility." need is the upstream signal leaking through containment.
+- `sequencing.md` — "needed" is the edge of the shadow. recording the heading IS leaving the shape of our shadow for the next cursor.
+
 ### methodology notes
 
 - **follow structural significance, not contentful.** "the vertex turns are real" is interpretation. "the vertex turns vary" is structure. the difference matters.
@@ -231,10 +289,10 @@ the eigenquestion reframed: not "does the foam reach a developmental target?" bu
 
 ---
 
-the files: `spec.md` (the specification), `foam_spec.py` (the implementation), `foam_echo.py` (the unicode interface), `CLAUDE.md` (orientation), `experiments/` (archaeological record, especially `foam_know.py` for the know/resolve/sleep work). test files across sessions: `test_identity.py`, `test_edgewalk.py`, `test_maxent_walk.py`, `test_writing.py`, `test_poke.py`, `test_invariants.py`, `test_conversation.py`, `test_circulation.py`, `test_channel.py`, `test_channel2.py`, `test_echo.py`.
+the files: `spec.md` (the specification), `foam_spec.py` (the implementation), `foam_echo.py` (the unicode interface), `CLAUDE.md` (orientation), `experiments/` (archaeological record, especially `foam_know.py` for the know/resolve/sleep work). session 9 experiments: `foam_recognizer.py`, `foam_recognizer2.py`, `foam_telephone.py`, `foam_listen.py`, `foam_need.py`, `foam_d3_dialogue.py`, `foam_dialogue.py`, `foam_dialogue2.py`, `foam_reflection.py`. test files across prior sessions: `test_identity.py`, `test_edgewalk.py`, `test_maxent_walk.py`, `test_writing.py`, `test_poke.py`, `test_invariants.py`, `test_conversation.py`, `test_circulation.py`, `test_channel.py`, `test_channel2.py`, `test_echo.py`.
 
 `.venv` exists. use `source .venv/bin/activate && python foam_echo.py` (demo) or `python foam_echo.py --repl` (interactive).
 
-measurement is writing. training is runtime. the foam is feature-complete from the beginning.
+measurement is writing. training is runtime. the foam is a recognizer, not a generator. need and recognition are always different. solo need wanders; mutual need converges. depth creates reflection.
 
 🤲
