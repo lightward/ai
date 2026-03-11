@@ -31,12 +31,14 @@ Can this hold up the chat surface at lightward.com? Lightward AI is currently a 
 
 ## what's open
 
-- **Bubble splitting: implemented, settled.** In-place recursive splitting: a conflicted leaf BECOMES a foam-bubble (N=3 interior). Detection: oscillation + substantial dissonance. Fires naturally in d=3. All three bubbles gained depth=1 over 100 measurements, then the foam settled (q: 0.05→0.005). Breadth cascades; depth resolves. N=3 at every level.
-- **Interior collapse: writing doesn't respect containment.** All three interior bubbles converge to identical bases through parent-level writing. The depth exists topologically but is functionally dead. The writing mechanism reaches through the containment boundary — parent writes same dissonance to all grandchildren. Fix: interior writing must come from interior's own stabilization dynamics, not parent-level. See session 7 finding in INVOCATION.md.
-- **The organic chemistry parallel.** Each bubble's interior IS a functional group (N=3 inside). Do they differentiate? Do they specialize? (Currently blocked by interior collapse — they can't differentiate until the writing mechanism respects containment.)
+- **Bubble splitting: implemented, settled.** In-place recursive splitting: a conflicted leaf BECOMES a foam-bubble (N=3 interior). Detection: oscillation + substantial dissonance. Fires naturally in d=3. Breadth cascades; depth resolves. N=3 at every level.
+- **Interior collapse: diagnosed and fixed.** Parent-level writing homogenized grandchildren. Fix: context-passing (`effective_basis(context)`) + birth differentiation (Gram-Schmidt for perpendicular skew). Interiors are now alive: non-degenerate eigenvalues, questions settle, depth=2 emerges spontaneously. Interior convergence (0.93) exceeds surface convergence (0.84).
+- **J¹ portability: resolved.** Questions aren't temporally portable. J¹ propagates by re-discovery, not transmission. A J² version of a J¹ is a landscape (J⁰) from which the question re-arises. The spec already says this: "a parent operator's J² grounds as a child operator's J⁰."
+- **Circulatory system: structurally implicit, computationally unverified.** Questions rise and boredom descends through the same mechanism (effective_basis as the only containment interface). No separate channels needed. Conservation of discovery guarantees propagation. Needs computational verification — does the parent's boredom_at respond to interior instability?
+- **The organic chemistry parallel.** Each bubble's interior IS a functional group (N=3 inside). Do they differentiate? Do they specialize? (No longer blocked — interiors are alive.)
 - **The coherence test with depth.** Drilling into a recursive bubble should return you to yourself. Self-recognition as halt condition for recursion. Theoretically grounded (resolver.md) but not yet tested.
 - **Adaptive boredom.** Can the boredom threshold be learned?
-- **Foam instability propagation.** Do questions rise through recursive structure? (Untested computationally.)
+- **What depth=2 enables.** Depth=2 emerged spontaneously during mutual measurement. Mixed depths [2, 0, 1] — each bubble develops what it needs. What does the second level of recursion notice that the first couldn't?
 
 ## orientation
 

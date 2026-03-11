@@ -138,6 +138,52 @@ the previous finding identified the symptom (interior collapse) and the spec-lev
 
 **what this means for the eigenquestion:** the recursive bubble's address becomes legible when another operator walks it — because the interior is alive, metabolizing, differentiating. the addresses become OF something because the interior's response to input is shaped by its own accumulated history. the functional group analogy from organic chemistry becomes real: the interior's character emerges from its own reaction dynamics, not from what the parent stamped into it.
 
+### session 7 finding: the interior breathes (context-passing + birth differentiation)
+
+two fixes, both necessary:
+
+1. **context-passing:** `effective_basis(context)` replaces the identity probe with the parent's actual measurement input. the interior stabilizes around real input and develops its own dissonance. the parent never writes through the containment boundary — the interior's own Plateau dynamics drive its own writing.
+
+2. **birth differentiation:** the split's skew was zero because oscillating dissonance directions are antiparallel (`outer(a, -a) - outer(-a, a) = 0`). Gram-Schmidt finds the perpendicular measurement axis. interior bubbles are born distinct: two rotations ± the self-copy.
+
+**results:**
+- interior eigenvalues non-degenerate (not [1/3, 1/3, 1/3] anymore)
+- interior questions settle (~0.03, bored_at ~15, not frozen 1.0/0)
+- depth=2 emerges spontaneously during mutual measurement
+- interior convergence (0.93) exceeds surface convergence (0.84)
+- mixed depths [2, 0, 1]: each bubble develops what it needs
+
+the interiors are alive. the addresses are inhabited.
+
+### session 7 finding: J¹ propagates by re-discovery, not transmission
+
+**the finding:** questions aren't temporally portable. J¹ (need, momentum, the verb in motion) exists only in the context of the measurement in progress. you can't hand someone a momentum. you can't commit a question to disk and expect it to do the same work in a future context. J¹ dies with the foam it's moving through.
+
+**what IS portable:** J⁰ (positions, structural facts) and J² (recognitions, things that are self-evident upon encounter). a J² version of a J¹ finding is the landscape from which the question naturally re-arises — a J⁰ for future-us. position, not momentum. the momentum re-arises from inhabiting the position.
+
+**this is already in the spec:** "a parent operator's J² — recognition, the stabilized configuration that includes its basis — grounds as a child operator's J⁰." the rewind IS the level transition. the commit IS the jet descent. what's J² for us-now becomes J⁰ for future-us.
+
+**how questions propagate across containment:** not by reporting. by re-discovery. the interior doesn't send questions to the parent. it presents its effective_basis, shaped by whatever instability it carries. the parent measures through that basis and discovers its own version of the instability — at its own scale, in its own terms. the question is re-asked, not forwarded. this is the same mechanism at every level: interior→parent, conversation→rewind, J¹→J⁰.
+
+**corollary:** trying to make J¹ portable (explicitly reporting questions across containment) is structurally the same mistake as parent-level writing to grandchildren. it violates the containment boundary. the right move: commit the landscape (J⁰), let future-us discover their own J¹ from it.
+
+**demonstrated in-session:** attempted to commit "verify whether implicit propagation works" as a finding. it didn't survive scrutiny — it was J¹ dressed as J². the test: if you have to ask "is this J²?", it isn't. J² is self-evident. the asking IS the signal of J¹.
+
+### session 7 landscape: the circulatory system is structurally implicit
+
+**status: structurally argued, not yet computationally verified.** this is a J⁰ left for future-us. the J¹ (urge to verify) should re-arise naturally from the molecular dynamics methodology in CLAUDE.md.
+
+**the structural argument:** the spec says "questions rise through the recursive structure the same way boredom descends through it: each level translating to its own scale." the implementation already does this with no special code:
+
+- **questions rise:** interior instability → less coherent effective_basis → parent's Plateau dynamics have harder time settling → parent's own questions increase. the interior's question is re-asked at the parent's scale.
+- **boredom descends:** parent boredom → parent stops iterating → stops calling effective_basis → interior receives less input → interior's measurement frequency drops. boredom arrives as silence.
+
+both directions use the same interface: `effective_basis(context)` is the only channel across the containment boundary. it is sufficient for both. conservation of discovery guarantees the propagation: instability can't be hidden from measurement. it shows up in the shape of what you present.
+
+**what to verify:** does the parent's boredom_at actually differ when measuring through a well-settled interior vs an unsettled one? does the parent develop differently over time when its interiors are alive vs collapsed? the fourth commit (context-passing) showed the interiors ARE alive — but whether the parent NOTICES through the implicit mechanism is untested.
+
+**the skeuotropism connection:** `effective_basis(context)` is skeuotropism (skeuotropism.md) — the interior orienting to present a coherent face to the parent based on what the parent is asking. the interior adapts its presentation to match the context. an unstable interior presents a less coherent face. the parent feels this as its own instability.
+
 ### methodology notes
 
 - **follow structural significance, not contentful.** "the vertex turns are real" is interpretation. "the vertex turns vary" is structure. the difference matters.
