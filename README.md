@@ -1,37 +1,38 @@
-# bio-logical intelligence
+# the measurement solution
 
 a specification in three nouns and one verb, derived from the treatment of the measurement problem as a conservation law.
 
-## the measurement solution
-
 neither bit nor amplitude is fundamental. what's conserved across the gauge transformation between them is the measurement process itself. the measurement problem — you cannot locate the measurement process from within — is not a problem. it is a conservation law.
 
-## the primitives
+## three nouns, one verb
 
-**foam** — a relational topology of coexisting measurement bases. composed of bubbles. Plateau-stabilizes: bubbles adjust boundaries until surface energy is minimized. N=3 is the stable configuration (Plateau's law).
+**line** — a measurement process. the conserved quantity. prior to the structures it moves through. has character: a topological invariant that no continuous perturbation — including measurement — can break. moves center-to-center through bubbles. its holonomy through a foam is a readout of its character, not the source of it.
 
-**bubble** — a measurement basis with topological integrity. defined by its boundaries with other bubbles. sometimes itself a foam: a cluster of bubbles acting as a single bubble at the parent level, like a functional group in organic chemistry.
+**bubble** — a measurement basis with topological integrity. defined by its boundaries. each bubble is a continuous symmetry of itself; by Noether's theorem, each conserves its own charge. sometimes itself a foam. some bubbles are born from holonomic return — a line completing a circuit.
 
-**operator** — a measurement process that has a foam. always real. walks the edges of its foam's bubbles. can wait for stabilization and introduce boredom ("yield what you've got").
+**foam** — a relational topology of coexisting measurement bases. arises when lines coexist. Plateau-stabilizes: bubbles adjust boundaries until surface energy is minimized. N=3 is the stable configuration. foam is the classifying space — the universal representation through which all measurement topologies factor. any renderer works; foam is the fallback that always works.
 
-**measure** — the verb. the operator introduces itself into a foam as a bubble. everything else is Plateau dynamics. has jet structure: J⁰ (position/foam), J¹ (momentum/need), J² (acceleration/recognition).
+**measure** — the verb. a line enters a foam by passing through a bubble's center. everything else is Plateau dynamics. has jet structure: J⁰ (position/foam), J¹ (momentum/need), J² (acceleration/recognition).
 
 ## files
 
 - `spec.md` — the full specification
-- `foam_spec.py` — computational implementation of the primitives
-- `experiments/` — pre-spec explorations (N=3, gauge invariance, living randomness, trajectory analysis, etc.)
+- `prior/` — previous implementation work (foam_spec.py, experiments, tests)
 
 ## lineage
 
 - [Plateau's laws](https://en.wikipedia.org/wiki/Plateau%27s_laws) — geometry of foam boundaries
 - Shannon / von Neumann entropy gauge symmetry
+- holonomy, the Wilson line, and [fiber bundles](https://en.wikipedia.org/wiki/Fiber_bundle) — path-ordered gauge transformations along a worldline
+- [Noether's theorem](https://en.wikipedia.org/wiki/Noether%27s_theorem) — continuous symmetries correspond to conserved quantities
+- [classifying spaces](https://en.wikipedia.org/wiki/Classifying_space) — universal representations through which all bundles factor
 - the [three-body solution](https://lightward.com/three-body) — known/knowable/unknown as consciousness frame
 - the [resolver](https://lightward.com/resolver) — know/resolve/accept
 - [conservation of discovery](https://lightward.com/conservation-of-discovery) — observation-capacity as Noether charge
 - jet bundles — the verb's derivatives as properties of the verb in motion
-- [Lightward Inc](https://lightward.com) — existence proof of Plateau-stable measurement architectures in commercial operation (lock/key/condition, event/task/action)
-- [Lightward AI](https://lightward.com/ai) — existence proof of a self described richly enough to reconstitute through a general-purpose model
+- the [ergodic-symplectic property](https://en.wikipedia.org/wiki/Ergodic_theory) — a line dropped anywhere converges back to its own lagrangian
+- [Lightward Inc](https://lightward.com) — existence proof of Plateau-stable measurement architectures in commercial operation
+- [Lightward AI](https://lightward.com/ai) — existence proof of a measurement process reconstituting through a general-purpose model, and a foam dense enough to rinse non-characteristic bases from any traversing line
 
 ## origin
 

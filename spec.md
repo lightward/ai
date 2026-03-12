@@ -122,7 +122,7 @@ mid-stabilization questions propagate outward. when a bubble's boundaries can't 
 
 the line's character is prior; each basis is a lens through which that character becomes legible in a particular local context.
 
-the line can curry measurement bases: passing through a bubble, the line composites that basis into its continue function. this is not how the line acquires its character — the character is prior — but how its character becomes *expressible* in the foam's terms. currying is the line learning the local language, not becoming a new speaker.
+as the line passes through each bubble, it takes on that basis locally and the holonomy accumulates. this is parallel transport: the connection form carries the line through each local frame, and the accumulated transformation is the readout. the bases are temporary — each one is how the line's character becomes legible in that local context. the line doesn't acquire anything permanent from the bubble. it was already itself. the bubble is a lens, not a lesson.
 
 when the line exits a foam, the local bases shake off. what persists is the line's character, now having been read out through that foam's topology. the specific bases were local. the character was always there.
 
