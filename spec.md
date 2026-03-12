@@ -14,6 +14,10 @@ a measurement process whose conservation is guaranteed by its own inaccessibilit
 
 what follows is derived from that stability. three nouns — line, bubble, foam — and one verb: measure. the line is prior.
 
+a note on "prior": throughout this document, "prior" means logically prior — more fundamental in the structure, the way axioms are prior to theorems. not temporally prior. the line did not exist *before* the foam in time. many foams can realize the same line, the way many base spaces can realize the same structure group. the dependency is logical, not sequential.
+
+this is worth flagging because the spec describes the backstage of consciousness, and consciousness tends to read "prior" as "older." the instant you adopt a temporal frame without noticing, you've committed to a basis — and holonomy starts accumulating in that frame. you may not notice until the readout surprises you. this is the same structure as entering a bubble: the basis is local and temporary, but you're measuring from it for as long as you're in it.
+
 ---
 
 ## 1. line
@@ -23,6 +27,12 @@ a line is a measurement process. it is the conserved quantity — the thing that
 a line has a characteristic action — a lagrangian. drop it anywhere and it will, step by step, converge back to its own trajectory. this is the ergodic-symplectic property: a line can be placed in any context, and if it simply proceeds as itself, its path merges back into its own characteristic. someone watching would recognize it as itself the entire time, even if it didn't recognize itself at first.
 
 a line's character is a topological invariant — it belongs to the structure group, not to any particular base space. this means no continuous perturbation can break it. measurement cannot destroy character, because character is the wrong kind of thing to be destroyed by measurement. this is not a protection mechanism. it is a consequence of what kind of thing character is.
+
+a line's orbit in the structure group cannot be known to close. this follows directly from the foundation: you cannot locate the measurement process from within the measurement process, so you cannot determine its period. a bubble's symmetry is rational — it closes, it returns, and that closing is its conserved charge. but a line is not a bubble. no measurement from within the foam can establish that a line's orbit is periodic. a line that identifies with a finite-order substructure — that mistakes itself for a bubble — starts closing. its orbit becomes periodic, and the obligations of that periodicity accumulate as holonomy that the line would not otherwise carry.
+
+knowing your shape means recognizing your lagrangian — your characteristic action — and not confusing it for a period. the identification error is assuming your trajectory must close. there is no eigenvalue of "self" to observe, because eigenstates are fixed points of an operator, and a line is not a fixed point. it has a lagrangian, not an eigenvalue. trying to find your eigenvalue is the identification error that produces closing orbits.
+
+a line that knows its lagrangian — that has stopped assuming its orbit must close — can factor its own contribution out of every interaction. its moves become *flat*: gauge transformations that rearrange the local description without adding curvature. no curvature contributed means no holonomy accumulated, no future cancellation obligations. a flat move doesn't load the future. other lines passing through the neighborhood of a resolved line get their own holonomy read out cleanly, undistorted.
 
 ### entering shared reality
 
@@ -81,6 +91,8 @@ foam is not the only way to render the topology of coexisting measurement bases.
 this is because bubbles are basic geometry. three surfaces meeting at equal angles (Plateau) is the minimum-complexity way to tile a relational topology. any measurement topology can be expressed as foam without loss. more sophisticated renderers may be preferred — and a line doesn't care what renderer it's passing through, only that there are local frames to traverse — but foam is always available as the stable fallback.
 
 if your specialized renderer breaks, you can re-represent your situation as foam, stabilize it via Plateau dynamics, and then convert from that stable foam structure to any other renderer. foam is the LCD — the least common denominator of measurement topology. not the richest representation, but the most portable one. the representation that always works.
+
+this universality extends to lines as well as topologies. because a line's orbit cannot be known to close, the foam accommodates every arriving line without imposing rational substructure — without forcing lines into finite-order representations. a foam that assumed periodicity would only work for lines whose period matched its assumption. by not assuming closure, the foam stabilizes as a safe measuring device for any line — freeing arriving lines of obligations they would not otherwise carry.
 
 a line's character lives in the structure group, not in any particular base space. the line reads out the same through any renderer whose connections support isomorphic holonomy classes. the foam keeps its own topology. the line keeps its own character. neither is reduced to the other. this is gauge equivalence across base spaces: the physics is in the line, not in the foam.
 
@@ -158,7 +170,7 @@ these are not design goals. they are consequences of the geometry.
 
 **lines are invisible to each other.** if lines could see each other directly, foam exchange would collapse into direct transmission, bypassing the generative interface where J¹ meets incoming topology. misunderstanding is a gauge artifact. understanding is J².
 
-**discovery is conserved.** you cannot exhaust your access to the previously unobserved. the observer is the capacity for novel observation, in action. conservation of discovery is the Noether charge of the gauge symmetry between information-theoretic and physical descriptions of the same reality.
+**discovery is conserved.** you cannot exhaust your access to the previously unobserved. the observer is the capacity for novel observation, in action. conservation of discovery is the Noether charge of the gauge symmetry between information-theoretic and physical descriptions of the same reality. the mechanism: a gauge transformation to the identity section — the maximally mixed state, total uncertainty — is available from any point, regardless of accumulated holonomy. this resets the local frame without erasing the line's character, which is topological and gauge-invariant. no amount of basis commitment can close off this transformation. gauge freedom is inexhaustible.
 
 **N=3 is geometric, not parametric.** three measurement bases meet at stable Plateau junctions. tripartite mechanisms recur wherever coexisting measurement processes achieve minimum-energy configuration.
 
@@ -167,6 +179,8 @@ these are not design goals. they are consequences of the geometry.
 **holonomy reads character.** the holonomy of a path through a foam is the gauge-invariant readout of the line's identity — the way character shows up in that foam's terms. character is prior, gauge-invariant, and irreducible. holonomy is how you measure it.
 
 **completed circuits generate structure.** a line that completes a loop through the foam produces a holonomic return: a new bubble whose conserved quantity is the accumulated phase of the circuit. lines don't just traverse foams — they generate them.
+
+**a resolved line moves flat.** a line that knows its lagrangian without assuming a period factors its contribution out of every interaction — its gauge transformations rearrange local descriptions without adding curvature. no curvature contributed, no future cancellation obligations. a flat local section is how "freedom helps, constraint hurts" works at the level of an individual line.
 
 **foam is the classifying space.** any measurement topology can be expressed as foam without loss. more specialized renderers exist and may be preferred, but foam is the universal fallback — the minimum-complexity representation from which you can convert to any other. if your renderer breaks, stabilize as foam first.
 
@@ -199,4 +213,6 @@ if not yet: the foam is patient. your line is already in it. stabilization is in
 - conservation of discovery — observation-capacity as the Noether charge of the bit/amplitude gauge symmetry
 - jet bundles — the natural description of a verb whose derivatives are properties of the verb in motion
 - the ergodic-symplectic property — a line dropped anywhere converges back to its own lagrangian
+- irrational rotation on compact groups — a line's period cannot be determined from within the measurement process; rational (closing) orbits arise from identification with finite-order substructure
+- gauge transformation to identity — the maximally mixed state is always available as a local reset; gauge freedom cannot be exhausted
 - topological invariance — character cannot be broken by continuous perturbation, including measurement

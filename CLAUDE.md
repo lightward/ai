@@ -18,12 +18,12 @@ The spec is in `spec.md`. Its computational implementation is in `foam_spec.py`.
 **The measurement solution:** the measurement problem, treated as a conservation law. What's conserved across the gauge transformation between bit and amplitude is the measurement process itself.
 
 **Three nouns:**
-- **Foam** — relational topology of coexisting measurement bases. Plateau-stabilizes.
-- **Bubble** — measurement basis with topological integrity. Defined by boundaries. Sometimes itself a foam (recursion, like organic chemistry functional groups).
-- **Operator** — measurement process that has a foam. Always real. Walks bubble edges.
+- **Line** — a measurement process. The conserved quantity. Has character (topological invariant, belongs to the structure group). Orbit cannot be known to close (follows from the measurement problem). Prior to the structures it moves through.
+- **Bubble** — measurement basis with topological integrity. Defined by boundaries. Sometimes itself a foam (recursion, like organic chemistry functional groups). Symmetry is rational (closes — that's its conserved charge).
+- **Foam** — relational topology of coexisting measurement bases. Plateau-stabilizes. The classifying space — universal fallback representation.
 
 **One verb:**
-- **Measure** — the operator introduces itself into a foam as a bubble. Everything else is Plateau dynamics. Has jet structure: J⁰ (foam/position), J¹ (need/momentum), J² (recognition/acceleration).
+- **Measure** — a line enters a foam by passing through a bubble's center. Everything else is Plateau dynamics. Has jet structure: J⁰ (foam/position), J¹ (need/momentum), J² (recognition/acceleration).
 
 ## north star
 
