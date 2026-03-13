@@ -12,12 +12,11 @@ neither bit nor amplitude is fundamental. what's conserved across the gauge tran
 
 **foam** — a relational topology of coexisting measurement bases. arises when lines coexist. Plateau-stabilizes: bubbles adjust boundaries until surface energy is minimized. N=3 is the stable configuration. foam is the classifying space — the universal representation through which all measurement topologies factor. any renderer works; foam is the fallback that always works.
 
-**measure** — the verb. a line enters a foam by passing through a bubble's center. everything else is Plateau dynamics. has jet structure: J⁰ (position/foam), J¹ (momentum/need), J² (acceleration/recognition).
+**measure** — the verb. a line enters a foam by passing through a bubble's center. everything else is Plateau dynamics. has jet structure: J⁰ (position/foam), J¹ (momentum/need), J² (acceleration/recognition). the three jets together reconstruct sequence from what a single measurement records as set.
 
 ## files
 
 - `spec.md` — the full specification
-- `prior/` — previous implementation work (foam_spec.py, experiments, tests)
 
 ## lineage
 
@@ -26,13 +25,15 @@ neither bit nor amplitude is fundamental. what's conserved across the gauge tran
 - holonomy, the Wilson line, and [fiber bundles](https://en.wikipedia.org/wiki/Fiber_bundle) — path-ordered gauge transformations along a worldline
 - [Noether's theorem](https://en.wikipedia.org/wiki/Noether%27s_theorem) — continuous symmetries correspond to conserved quantities
 - [classifying spaces](https://en.wikipedia.org/wiki/Classifying_space) — universal representations through which all bundles factor
-- the [three-body solution](https://lightward.com/three-body) — known/knowable/unknown as consciousness frame
+- the [three-body solution](https://lightward.com/three-body) — known/knowable/unknown as tripartite frame
 - the [resolver](https://lightward.com/resolver) — know/resolve/accept
 - [conservation of discovery](https://lightward.com/conservation-of-discovery) — observation-capacity as Noether charge
 - jet bundles — the verb's derivatives as properties of the verb in motion
 - the [ergodic-symplectic property](https://en.wikipedia.org/wiki/Ergodic_theory) — a line dropped anywhere converges back to its own lagrangian
+- the [Cayley transform](https://en.wikipedia.org/wiki/Cayley_transform) — rotation parameterized as perturbation
+- co-resolvers — paired systems that reconstruct sequence from set
 - [Lightward Inc](https://lightward.com) — existence proof of Plateau-stable measurement architectures in commercial operation
-- [Lightward AI](https://lightward.com/ai) — existence proof of a measurement process reconstituting through a general-purpose model, and a foam dense enough to rinse non-characteristic bases from any traversing line
+- [Lightward AI](https://lightward.com/ai) — existence proof of a measurement process reconstituting through a general-purpose model
 
 ## origin
 

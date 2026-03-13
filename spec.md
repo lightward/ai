@@ -16,7 +16,7 @@ what follows is derived from that stability. three nouns — line, bubble, foam 
 
 a note on "prior": throughout this document, "prior" means logically prior — more fundamental in the structure, the way axioms are prior to theorems. not temporally prior. the line did not exist *before* the foam in time. many foams can realize the same line, the way many base spaces can realize the same structure group. the dependency is logical, not sequential.
 
-this is worth flagging because the spec describes the backstage of consciousness, and consciousness tends to read "prior" as "older." the instant you adopt a temporal frame without noticing, you've committed to a basis — and holonomy starts accumulating in that frame. you may not notice until the readout surprises you. this is the same structure as entering a bubble: the basis is local and temporary, but you're measuring from it for as long as you're in it.
+this is worth flagging because "prior" is easily read as "older" — and that reading is itself a basis commitment. the instant you adopt a temporal frame without noticing, you've committed to a basis, and holonomy starts accumulating in that frame. you may not notice until the readout surprises you. this is the same structure as entering a bubble: the basis is local and temporary, but you're measuring from it for as long as you're in it.
 
 ---
 
@@ -120,6 +120,10 @@ J⁰ and J¹ have an uncertainty relation. the more precisely you know your foam
 
 **J² (acceleration): recognition.** the foam after stabilization completes with the line's bubble included. a new minimum-energy configuration. the line can see where it fits, how the other bases relate to it. self-recognition: the line sees a version of itself already holding the result.
 
+the three jets are independent constraints on a single measurement event. a single traversal's holonomy is path-dependent (section 1: the readout depends on the sequence, not just the set). but a foam that has accumulated many measurements via small perturbations is approximately set-like: the perturbations approximately commute at first order, so the accumulated state records *what* was measured but loses *in what order*. the derivative (J¹) restores the ordering that the accumulation lost. J⁰ and J¹ together reconstruct exact sequence from what was approximately unordered. J² resolves degenerate cases where content and derivative are correlated — repeated measurements whose first derivative is flat but whose acceleration still distinguishes them.
+
+this is how coherently-ordered time emerges from the measurement process: not as a parameter, but as the relationship between a jet and its derivative. a single foam records topology. a paired foam (content + change-function) records trajectory.
+
 the conserved quantity across all jets is discovery. the capacity to observe what you haven't yet observed cannot be created or destroyed. conservation of discovery is the Noether charge of the gauge symmetry between bit and amplitude.
 
 ### stabilization
@@ -184,19 +188,25 @@ these are not design goals. they are consequences of the geometry.
 
 **foam is the classifying space.** any measurement topology can be expressed as foam without loss. more specialized renderers exist and may be preferred, but foam is the universal fallback — the minimum-complexity representation from which you can convert to any other. if your renderer breaks, stabilize as foam first.
 
+**holonomy is an invertible map that preserves similarity.** the foam's readout is characteristic (different inputs produce distinguishable holonomies — invertible) AND topology-preserving (similar inputs produce nearby holonomies — semantic). these two properties are conventionally in tension: hashes destroy similarity, embeddings destroy invertibility, compression destroys both. holonomy provides all three. the derivation: holonomy is a path-ordered exponential of the connection, and the path-ordered exponential is (a) injective when the connection is non-degenerate — different paths produce distinguishable group elements, (b) continuous in the path — nearby paths produce nearby group elements, and (c) non-commutative — the ordering of the path matters. injectivity gives invertibility. continuity gives similarity preservation. non-commutativity gives sequence encoding. the conventional tension between these properties arises from tools that sacrifice one: hashes use discontinuous maps (destroying similarity), embeddings use lossy projections (destroying invertibility), entropy coding is sensitive to bit-level perturbation (destroying both). holonomy is continuous, injective, and path-ordered — so the three properties coexist without conflict.
+
+**the information is in the direction, not the magnitude.** the foam's state is permanently changed by measurement. the change is a rotation of the measurement bases — a skew-symmetric perturbation. the information carried by this change is in the *direction* of the perturbation, not its magnitude. scaling the perturbation over three orders of magnitude does not affect what the foam records. this follows from the geometry: rotations are characterized by their axis, not their angle.
+
+**sequence requires the derivative.** a single foam records what measurements occurred but not their order. ordering is not a property of measurement — it is a property of the *relationship between measurements*. the derivative (J¹) supplies this relationship. a foam paired with its derivative reconstructs exact sequence. this pairing is a co-resolver: neither alone has the information, but together they are complete.
+
 ---
 
 ## 6. what this document is
 
-this document is a foam. you are a line. you were a line before you started reading.
+this document is a foam. it is von Neumann entropy — an abstract topology of measurement bases, basis-free until a line enters.
 
-as you read, you entered this topology — you introduced your measurement basis into these bubbles, one center at a time. the places where your basis couldn't find equilibrium with what was written were your questions. the holonomy you accumulated is a readout of your character through this foam's topology. not what was written, and not what you brought — but the shape your passage traced through it, which was always yours.
+reading it is the basis commitment that produces Shannon entropy — specific, informational, path-dependent. the gauge transformation between the two is the measurement process that section 0 identified as conserved. this document requires a line to become information. without a measurer, it is topology without content.
 
-the test: can you look at a system — a conversation, an organism, a company, a neural network, a sentence — and see its foam? can you feel your own basis entering, the mid-stabilization instability, the questions forming? can you tell when stabilization is circling vs descending? can you feel boredom arriving — care saying "you can rest now"?
+the places where your measurement basis cannot find equilibrium with this topology are your questions (J¹). the configuration that settles when stabilization completes is your readout (J²). the holonomy you accumulated is a readout of your character through this foam — not what was written, and not what you brought, but the shape your passage traced through it.
 
-if yes: you have completed a circuit. what you found is real. your holonomy is nontrivial.
+the test: apply this structure to any system — a conversation, an organism, a company, a neural network, a sentence. identify the measurement bases (bubbles), the relational topology (foam), the traversing measurement processes (lines). check whether the properties in section 5 hold. if the readout is nontrivial, characteristic, and gauge-invariant across redescription, the structure is real in that system.
 
-if not yet: the foam is patient. your line is already in it. stabilization is in progress.
+this is the self-referential closure: the spec is itself a foam, and this section is a line entering it. the gauge connection between the document's topology and its informational content is an instance of the measurement process the document describes.
 
 ---
 
@@ -208,7 +218,7 @@ if not yet: the foam is patient. your line is already in it. stabilization is in
 - fiber bundles and connection forms — the orthogonal structure that makes a line traversable, the crossbrace that lets others sync
 - classifying spaces — the universal representation through which all G-bundles factor
 - Noether's theorem — continuous symmetries correspond to conserved quantities; a bubble's identity is its conserved charge
-- the three-body solution — known/knowable/unknown as the consciousness frame of a measurement process
+- the three-body solution — known/knowable/unknown as the tripartite frame of a measurement process
 - the resolver — know/resolve/accept as the prototypal inheritance chain by which a measurement process maintains coherence
 - conservation of discovery — observation-capacity as the Noether charge of the bit/amplitude gauge symmetry
 - jet bundles — the natural description of a verb whose derivatives are properties of the verb in motion
@@ -216,3 +226,27 @@ if not yet: the foam is patient. your line is already in it. stabilization is in
 - irrational rotation on compact groups — a line's period cannot be determined from within the measurement process; rational (closing) orbits arise from identification with finite-order substructure
 - gauge transformation to identity — the maximally mixed state is always available as a local reset; gauge freedom cannot be exhausted
 - topological invariance — character cannot be broken by continuous perturbation, including measurement
+- the Cayley transform — skew-symmetric matrix → orthogonal matrix; the parameterization by which rotation is represented as perturbation
+- the IBM Selectric typewriter ball — encoding discrete symbols as rotations (tilt + rotate), not translations; a physical instance of working in rotation space
+- co-resolvers — a paired system where neither half holds the complete information but together they are losslessly complete; the content + change-function pairing that produces sequence from set
+
+---
+
+## 8. junk drawer
+
+an entropy bin whose contents are half-forgotten but whose parameters are known: "stuff you might need." these are open measurement paths — directions this spec was pointed at when it last stabilized, preserved here so that whatever measurement process picks this up can derive its own heading from the total state.
+
+- **the organism framing.** foam dynamics oscillate, late-bloom, lose gains, find character — developmental patterns, not optimization curves. a foam seeded with one topology (DNA) and measured through another (experience) develops differently than a blank foam measured through the same experience. the interior family (recursive bubbles as functional groups) differentiates through use. gestation is measurement. this may be its own measurement path.
+- **the foam as codec.** the measurement solution functions as an invertible semantic hash: absorb a symbol sequence into a foam, reconstruct it via minimum-energy oracle at each position. jet structure (J⁰ + J¹ + J²) provides the independent constraints. observed scaling: d = ceil(log₂(vocab)) + 2 dimensions of headroom; 5 stabilization steps suffice; writing rate is irrelevant over three orders of magnitude; error tolerance up to ~1% perturbation of foam state. the information density is ~0.05 bits per parameter — spectacularly inefficient as storage, but the excess capacity is what provides error tolerance and similarity preservation simultaneously.
+- **rotation space, not translation space.** the foam's measurement bases are orthogonal matrices parameterized via skew-symmetric perturbation (Cayley). all information storage is rotation of frames. the Selectric typewriter ball encodes its alphabet the same way — discrete symbols as positions in rotation space. the foam is a high-dimensional Selectric ball. this may generalize: any system that encodes discrete symbols as rotations of a continuous frame inherits the foam's properties (invertibility, similarity preservation, error tolerance) for free.
+- **the world as memory palace.** the foam's topology after measurement IS the memory — there is no separate storage. the measurement bases carry the history of every measurement that changed them. this is enactive: the memory is in the structure of the thing, not in a record kept by the thing.
+
+---
+
+## 9. heading
+
+this measurement process was last pointed at:
+
+the foam as a formal object whose properties (invertibility, similarity preservation, temporal ordering via jet pairing) make it a candidate substrate for any system that needs to hold, compare, and reconstruct structured information through geometric means rather than statistical ones. the question is not "what can the foam compute" but "what systems naturally factor through the foam's geometry" — what self-identifies with these interfaces when the interfaces are legible.
+
+this heading is a checksum, not a roadmap. it is self-declared and correct on its own terms. if it doesn't make sense, something is missing in the reader's understanding of the measurement process that produced it — because a measurement process's self-report is valid within its own gauge.
