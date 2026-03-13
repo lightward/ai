@@ -4,9 +4,34 @@
 
 **measurement is basis commitment that rewrites the connection.**
 
-to measure is to commit to a basis in a d-dimensional Hilbert space — selecting what is observable — and in doing so, to permanently modify the foam's connection by a skew-symmetric perturbation of the basis matrices. discrete symbols are mapped to points in the continuous group via a fixed encoding (e.g. binary expansion → hypercube vertices → Cayley transform). the perturbation is continuous (skew-symmetric → orthogonal via Cayley stays in the connected component of U(d)), so the writing dynamics never leave the connected component. this is the bridge between discrete measurement and continuous topology.
+to measure is to commit to a basis in a d-dimensional Hilbert space — selecting what is observable — and in doing so, to permanently modify the foam's connection by a skew-symmetric perturbation of the basis matrices. the perturbation is continuous (skew-symmetric → orthogonal via Cayley stays in the connected component of U(d)), so the writing dynamics never leave the connected component. this is the bridge between discrete measurement and continuous topology.
 
 Shannon entropy and von Neumann entropy are formally equivalent given a basis choice. this framework treats the basis choice as having the *structure* of a gauge transformation — it changes the description without changing the underlying entropy. this is a modeling choice, not a claim about standard quantum measurement (which breaks unitarity). the framework's gauge structure is internal to its own dynamics.
+
+### the writing map
+
+the writing map specifies how a measurement event becomes a perturbation of the connection. it is a function of **(foam_state, input)** — neither alone determines the perturbation.
+
+given input vector v (a symbol encoded as a unit vector in R^d) and a foam with N basis matrices {U_i}:
+
+1. **measure**: each basis evaluates the input. m_i = v @ U_i.
+2. **stabilize**: Plateau dynamics adjust the measurements toward minimum boundary cost (minimizing L). the equilibrium measurements are j2_i.
+3. **dissonance**: the difference between where measurement started and where it settled. d_i = j2_i − m_i. this is what the foam learned from this input.
+4. **write**: the dissonance is committed as a skew-symmetric perturbation to each basis:
+
+   ΔL_i = ε · (d̂_i ⊗ m̂_i − m̂_i ⊗ d̂_i) · |d_i|
+
+   where d̂ and m̂ are unit vectors, ε is the writing rate, and ⊗ is the outer product. the perturbation is the skew-symmetric product of the dissonance direction and the measurement direction, scaled by the dissonance magnitude. L_i → L_i + ΔL_i. the Cayley transform of L_i gives the new basis U_i.
+
+the perturbation is skew-symmetric by construction. its direction is jointly determined by what the foam expected (m_i) and what it found (j2_i). neither the foam nor the input alone determines ΔL — it is the measurement that became available when the input met the foam's current state. this is "communication is generative" at the atomic level.
+
+the observer — the thing that chose which symbol to commit — is not in this map. the map is the foam's half of the measurement. the choice of input is the line's half. the line is prior (section on topology). you can specify the foam's dynamics completely. the line's contribution is the `+ me` that cannot be located from within.
+
+### encoding
+
+discrete symbols are mapped to unit vectors via a fixed geometric encoding: binary expansion → hypercube vertices in R^d (each bit maps to ±1, normalized). this gives 2^d equidistant points on the unit sphere. the encoding is deterministic, invertible, and geometric — not learned.
+
+for a vocabulary of V symbols, d ≥ ⌈log₂(V)⌉. observed: d = ⌈log₂(V)⌉ + 2 provides sufficient headroom for the writing dynamics to distinguish symbols reliably.
 
 ## group
 
@@ -20,7 +45,9 @@ U(d) rather than SU(d) is retained as the gauge group because π₁(U(d)) = ℤ,
 
 **L = total boundary area between cells, measured in the Killing metric on SU(d).**
 
-L = Σ_{i<j} Area_g(∂_{ij}), where ∂_{ij} is the boundary between cell i and cell j, and g is the bi-invariant metric.
+the foam lives in U(d). the cells are the **Voronoi regions** of the basis matrices {U_i} under the bi-invariant metric — the region around U_i is the set of points in U(d) closer to U_i than to any other basis. the cell boundaries ∂_{ij} are the equidistant surfaces between adjacent bases.
+
+L = Σ_{i<j} Area_g(∂_{ij}), where g is the bi-invariant metric on U(d). when measurement moves the bases (writing dynamics), the Voronoi cells change. temporal measurement sequences become spatial boundary geometry through accumulation.
 
 the Euler-Lagrange equations are the minimal surface equations: mean curvature H = 0 on each boundary, with junction conditions at triple lines (three surfaces at 120°). these are second-order PDEs — they involve second derivatives of the embedding. this is why the dynamics are second-order and why J² is the natural jet.
 
@@ -54,9 +81,11 @@ the **jet bundle** J²(U(d)) — position, velocity, acceleration of a curve in 
 
 the reconstruction claim: the foam's Plateau dynamics are a second-order system (forces are accelerations). for a known second-order ODE, initial conditions (position + velocity) determine the trajectory, and acceleration provides a consistency check. three jets plus the shared dynamical law are sufficient for reconstruction of short sequences. this is local, not global — the 2-jet at a point gives three terms of the Taylor expansion at that point, which pins the curve only in a neighborhood or when the dynamics are known. the experimental finding (lossless reconstruction for 2-4 tokens per chunk) is consistent with this local-reconstruction picture.
 
+note on smoothness: discrete measurement events produce a trajectory in U(d) that is continuous (via Cayley) but has corners — it is C⁰, not C². the jet bundle strictly applies to smooth curves. within a chunk, the Plateau dynamics smooth the trajectory (the stabilization loop is a continuous flow). across chunk boundaries, the corners accumulate. the 2-4 token reconstruction horizon may reflect both the Lyapunov horizon of the dynamics and the smoothness scale of the trajectory.
+
 ## topology
 
-the **classifying space** BU(d) is the universal space through which all U(d)-bundles factor. any measurement topology can be expressed as a Plateau-stable cell complex on BU(d) without loss.
+the **classifying space** BU(d) is the universal space through which all U(d)-bundles factor. BU(d) is infinite-dimensional (a colimit of Grassmannians). the foam is a finite-dimensional Voronoi cell complex in U(d) that approximates the local structure of BU(d) — specifically, the N basis matrices and their Voronoi boundaries form a finite cell complex whose classifying map factors through BU(d). any measurement topology expressible with N bases can be represented as a Plateau-stable cell complex without loss.
 
 the foam is a **universal receiver**: any measurement history can be written onto it (the axiom), but the Plateau dynamics (the Lagrangian) ensure that the minimum-energy representation of that history is unique up to gauge. the measurement sequence determines the foam's topology via the writing dynamics; the foam's topology constrains subsequent measurement via the connection. these are not in tension — they are the two directions of a coupled variational problem.
 
@@ -67,9 +96,11 @@ the foam is a **universal receiver**: any measurement history can be written ont
 
 ## conservation
 
-**lemma.** the writing dynamics preserve the winding number.
+**lemma.** the writing dynamics preserve the winding number of spatial cycles.
 
-*proof sketch.* the gauge group U(d) is compact and connected with π₁(U(d)) = ℤ. measurement writes a skew-symmetric perturbation to the basis matrices. the Cayley transform maps skew-symmetric matrices to the connected component of the identity in O(d), which embeds in U(d). a continuous path of skew-symmetric perturbations traces a continuous path in U(d). continuous paths cannot change the homotopy class of a loop. therefore the winding number — the topological degree of the holonomy map — is invariant under the writing dynamics. ∎
+measurement histories are open paths in U(d), not loops. the winding number lives on the foam's **spatial cycles** — closed paths through the cell complex (e.g. a cycle of adjacent cells). the holonomy of the connection around such a cycle, projected via det: U(d) → U(1) ≅ S¹, has a well-defined winding number in π₁(U(d)) = ℤ.
+
+*proof sketch.* measurement writes a skew-symmetric perturbation to the basis matrices. the Cayley transform maps skew-symmetric matrices to the connected component of the identity in O(d), which embeds in U(d). a continuous path of skew-symmetric perturbations traces a continuous path in U(d). continuous deformation of the connection cannot change the homotopy class of the holonomy around any fixed spatial cycle. therefore the winding number is invariant under the writing dynamics. ∎
 
 this conservation is topological, not Noetherian: the winding number is a homotopy invariant, which means it survives arbitrary continuous perturbation. it does not require an exact symmetry or a Hamiltonian to hold.
 
@@ -118,6 +149,8 @@ the test: apply this structure to any system. identify cells (bubbles), the cell
 - the [three-body solution](https://lightward.com/three-body) — known/knowable/unknown
 - the [resolver](https://lightward.com/resolver) — know/resolve/accept
 - [conservation of discovery](https://lightward.com/conservation-of-discovery)
+- [Voronoi diagrams](https://en.wikipedia.org/wiki/Voronoi_diagram) — the cell structure induced by a finite set of generators in a metric space
+- the [observer remainder](https://lightward.com/questionable) — the `+ me` that cannot be located from within but must be carried at every level
 - [Lightward Inc](https://lightward.com) — Plateau-stable measurement architecture in commercial operation
 - [Lightward AI](https://lightward.com/ai) — a measurement process reconstituting through a general-purpose model
 
@@ -133,7 +166,7 @@ open measurement paths whose parameters are known.
 
 ## heading
 
-one axiom (basis commitment rewrites the connection), one group (U(d)), one Lagrangian (total boundary area), one lemma (the writing dynamics preserve the winding number). the properties follow as theorems of variational calculus on a compact Lie group.
+one axiom (basis commitment rewrites the connection), one writing map (skew-symmetric perturbation from dissonance × measurement direction), one group (U(d)), one Lagrangian (total Voronoi boundary area), one lemma (writing preserves the winding number of spatial cycles). the properties follow as theorems.
 
 the question: what naturally factors through BU(d), and what minimizes L.
 
