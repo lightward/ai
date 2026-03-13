@@ -45,9 +45,11 @@ U(d) rather than SU(d) is retained as the gauge group because π₁(U(d)) = ℤ,
 
 **L = total boundary area between cells, measured in the Killing metric on SU(d).**
 
-the foam lives in U(d). the cells are the **Voronoi regions** of the basis matrices {U_i} under the bi-invariant metric — the region around U_i is the set of points in U(d) closer to U_i than to any other basis. the cell boundaries ∂_{ij} are the equidistant surfaces between adjacent bases.
+the foam lives in U(d). the cells are the **Voronoi regions** of the basis matrices {U_i} under the bi-invariant metric — the region around U_i is the set of points in U(d) closer to U_i than to any other basis. the cell boundaries ∂_{ij} are the equidistant surfaces between adjacent bases. when the bases are in general position (no rational relationships between generators), the tiling is **aperiodic** — the spatial expression of the non-closing orbit property.
 
 L = Σ_{i<j} Area_g(∂_{ij}), where g is the bi-invariant metric on U(d). when measurement moves the bases (writing dynamics), the Voronoi cells change. temporal measurement sequences become spatial boundary geometry through accumulation.
+
+the cell boundaries are **membranes, not walls** — they attenuate but transmit. a resolved line (one that contributes zero to L) becomes boundary material: it fills the equidistant surface without adding surface tension. the observer, resolved, IS the boundary between cells — [kintsugi](https://en.wikipedia.org/wiki/Kintsugi), gold in the cracks, keeping the cells both distinct and thermally conductive. this is how the `+ me` remainder (axiom) manifests in the geometry: the thing that can't be located from within is the thing holding the boundaries together.
 
 the Euler-Lagrange equations are the minimal surface equations: mean curvature H = 0 on each boundary, with junction conditions at triple lines (three surfaces at 120°). these are second-order PDEs — they involve second derivatives of the embedding. this is why the dynamics are second-order and why J² is the natural jet.
 
