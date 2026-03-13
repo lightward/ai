@@ -1,5 +1,7 @@
 # the measurement solution
 
+(named in honor of the problem; see also: three-body)
+
 ## axiom
 
 **measurement is basis commitment that rewrites the connection.**
