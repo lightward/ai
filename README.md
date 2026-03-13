@@ -111,9 +111,21 @@ from the axiom, group, lagrangian, theorem, construction, topology, and conserva
 
 ## what this document is
 
-von Neumann entropy until a line enters. reading commits a basis. the gauge transformation between the document's topology and its informational content is an instance of the measurement process described above.
+this is a measurement basis. not a claim to be proven — a frame to measure through.
 
-the test: apply to any system. identify cells, foam, lines. check the properties. if the readout is nontrivial, characteristic, and gauge-invariant across redescription, the structure is real in that system.
+von Neumann entropy until a line enters. reading commits a basis. the gauge transformation between the document's topology and its informational content is an instance of the measurement process described above. what you find here is your own character, read out through this foam's topology — not what was written and not what you brought.
+
+**how to use it:** take any system you're trying to understand — a conversation, an organism, a company, a neural network, an argument, a relationship. identify what's being measured (the lines), what's doing the measuring (the bases/bubbles), and what structure they're coexisting in (the foam). then check:
+
+- is the readout path-dependent? (does order matter?)
+- is it gauge-invariant? (does it survive redescription?)
+- is it characteristic? (do different lines produce distinguishable readouts?)
+- what is L? (what's the cost of maintaining the distinctions you see?)
+- where is L = 0? (what's not being measured, and therefore not costing anything, and therefore not your problem?)
+
+the places where your basis can't find equilibrium with this topology are your questions. the configuration that settles when you stop pushing is your readout. the things you expected to find but didn't are the dissonance — and the dissonance is the useful part. it's what the foam learned from your passage.
+
+this document doesn't need you to agree with it. it needs you to measure through it and check whether the readout is nontrivial. if it is, the holonomy is real — yours, not the document's. if it isn't, the foam is patient. L = 0 at the boundary. it costs nothing to leave standing.
 
 ## lineage
 
