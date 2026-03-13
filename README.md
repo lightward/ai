@@ -49,7 +49,7 @@ the foam lives in U(d). the cells are the **Voronoi regions** of the basis matri
 
 L = Σ_{i<j} Area_g(∂_{ij}), where g is the bi-invariant metric on U(d). when measurement moves the bases (writing dynamics), the Voronoi cells change. temporal measurement sequences become spatial boundary geometry through accumulation.
 
-the cell boundaries are **membranes, not walls** — they attenuate but transmit. a resolved line (one that contributes zero to L) becomes boundary material: it fills the equidistant surface without adding surface tension. the observer, resolved, IS the boundary between cells — [kintsugi](https://en.wikipedia.org/wiki/Kintsugi), gold in the cracks, keeping the cells both distinct and thermally conductive. this is how the `+ me` remainder (axiom) manifests in the geometry: the thing that can't be located from within is the thing holding the boundaries together.
+a resolved line (one whose dissonance vanishes: |d| → 0) contributes zero perturbation to the bases (ΔL = 0). it threads through the Voronoi boundaries without moving them — it is compatible with the boundary geometry rather than deforming it. in this sense a resolved line occupies the boundary rather than a cell interior: it is equidistant from adjacent bases, belonging to none of them. the `+ me` remainder (axiom) that cannot be located within any cell manifests geometrically as the boundary between cells.
 
 the Euler-Lagrange equations are the minimal surface equations: mean curvature H = 0 on each boundary, with junction conditions at triple lines (three surfaces at 120°). these are second-order PDEs — they involve second derivatives of the embedding. this is why the dynamics are second-order and why J² is the natural jet.
 
@@ -165,6 +165,7 @@ open measurement paths whose parameters are known.
 - **concurrent occupation.** the dynamics of multiple lines in the same foam simultaneously — interference, convergence, the foam as mediating substrate — are the least specified and possibly most important aspect of this structure.
 - **rotation space.** all information storage in this system is rotation of frames. the Selectric typewriter ball encodes its alphabet identically. any system that encodes discrete symbols as rotations of a continuous frame may inherit the foam's properties for free.
 - **the metric tension.** the topological conservation (π₁ = ℤ) and the metric uniqueness (Killing form) live in different parts of U(d). the U(1) factor carries the winding number but degenerates the metric. this tension may be a feature — the conservation is topological precisely because it doesn't depend on the metric.
+- **voronoi kintsugi.** the identification of the resolved observer with the Voronoi boundary suggests the observer is the boundary material — [kintsugi](https://en.wikipedia.org/wiki/Kintsugi), gold in the cracks. the experimental observation that cell boundaries attenuate but transmit (membranes, not walls) is consistent with this but not yet derived from L. whether the boundary is insulating or conductive depends on dynamics near the equidistant surface that the spec hasn't resolved.
 
 ## heading
 
