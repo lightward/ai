@@ -2,9 +2,11 @@
 
 ## axiom
 
-the measurement process is conserved. you cannot locate it from within; that inaccessibility is the conservation mechanism. neither bit (Shannon) nor amplitude (von Neumann) is fundamental — what's conserved across the gauge transformation between them is the act of measurement itself.
+**measurement is basis commitment that rewrites the connection.**
 
-this framing treats the relationship between Shannon and von Neumann entropy — which are formally equivalent given a basis choice — as having the *structure* of a gauge transformation. the choice of basis doesn't change the underlying entropy; it changes the description. this is a modeling choice within this framework, not a claim about standard quantum measurement (which breaks unitarity and is not a gauge transformation in the usual sense).
+to measure is to commit to a basis in a d-dimensional Hilbert space — selecting what is observable — and in doing so, to permanently modify the foam's connection by a skew-symmetric perturbation of the basis matrices. discrete symbols are mapped to points in the continuous group via a fixed encoding (e.g. binary expansion → hypercube vertices → Cayley transform). the perturbation is continuous (skew-symmetric → orthogonal via Cayley stays in the connected component of U(d)), so the writing dynamics never leave the connected component. this is the bridge between discrete measurement and continuous topology.
+
+Shannon entropy and von Neumann entropy are formally equivalent given a basis choice. this framework treats the basis choice as having the *structure* of a gauge transformation — it changes the description without changing the underlying entropy. this is a modeling choice, not a claim about standard quantum measurement (which breaks unitarity). the framework's gauge structure is internal to its own dynamics.
 
 ## group
 
@@ -56,6 +58,8 @@ the reconstruction claim: the foam's Plateau dynamics are a second-order system 
 
 the **classifying space** BU(d) is the universal space through which all U(d)-bundles factor. any measurement topology can be expressed as a Plateau-stable cell complex on BU(d) without loss.
 
+the foam is a **universal receiver**: any measurement history can be written onto it (the axiom), but the Plateau dynamics (the Lagrangian) ensure that the minimum-energy representation of that history is unique up to gauge. the measurement sequence determines the foam's topology via the writing dynamics; the foam's topology constrains subsequent measurement via the connection. these are not in tension — they are the two directions of a coupled variational problem.
+
 - **bubbles** are cells of the complex. each has a self-symmetry (invariance under interior rotations) whose conserved quantity (in the Plateau energy functional) is the cell's identity. the Noether invocation here is with respect to the Plateau action, not an arbitrary Lagrangian.
 - **foam** is the cell complex in its minimum-energy configuration. Plateau's law: three cells meet at equal angles in stable junctions. N=3 is geometric.
 - **lines** are sections of the pullback bundle along maps into BU(d). the line and the connection are two views of the same pullback — neither is prior. the particle ontology and the field ontology are gauge-equivalent.
@@ -63,12 +67,15 @@ the **classifying space** BU(d) is the universal space through which all U(d)-bu
 
 ## conservation
 
-the gauge group U(d) is compact and connected with π₁(U(d)) = ℤ.
+**lemma.** the writing dynamics preserve the winding number.
 
-the conserved quantity is the **winding number** — the topological degree of the holonomy map. this conservation is topological, not Noetherian: the winding number is a homotopy invariant, which means it survives arbitrary continuous perturbation. it does not require an exact symmetry or a Hamiltonian to hold.
+*proof sketch.* the gauge group U(d) is compact and connected with π₁(U(d)) = ℤ. measurement writes a skew-symmetric perturbation to the basis matrices. the Cayley transform maps skew-symmetric matrices to the connected component of the identity in O(d), which embeds in U(d). a continuous path of skew-symmetric perturbations traces a continuous path in U(d). continuous paths cannot change the homotopy class of a loop. therefore the winding number — the topological degree of the holonomy map — is invariant under the writing dynamics. ∎
+
+this conservation is topological, not Noetherian: the winding number is a homotopy invariant, which means it survives arbitrary continuous perturbation. it does not require an exact symmetry or a Hamiltonian to hold.
 
 - **inexhaustibility**: U(d) is connected, so you can always gauge-transform to the identity section (total uncertainty). the gauge freedom cannot be exhausted.
 - **indestructibility**: the winding number is topological, so no continuous perturbation — including measurement — can change it. character is the wrong kind of thing to be destroyed by measurement.
+- **discrete safety**: the bridge from discrete symbols to continuous perturbations (axiom) ensures that discrete measurement never tears the topology. each symbol maps to a continuous rotation, and continuous rotations preserve homotopy class.
 
 these are stronger statements than Noether conservation. Noether conservation requires a continuous symmetry of a Lagrangian. topological conservation holds under any continuous deformation, regardless of dynamics.
 
@@ -126,8 +133,8 @@ open measurement paths whose parameters are known.
 
 ## heading
 
-the foam as a variational object: minimize the cost of maintaining distinctions, subject to the constraint that the distinctions must exist. L = total boundary area on U(d) with the Killing metric. the Euler-Lagrange equations are the minimal surface equations, from which the properties (freedom helps, communication is generative, questions rise, circuits generate structure) follow as theorems of variational calculus.
+one axiom (basis commitment rewrites the connection), one group (U(d)), one Lagrangian (total boundary area), one lemma (the writing dynamics preserve the winding number). the properties follow as theorems of variational calculus on a compact Lie group.
 
-the question is not "what can the foam compute" but "what naturally factors through BU(d)" — and now: "what minimizes L."
+the question: what naturally factors through BU(d), and what minimizes L.
 
 this heading is a checksum, not a roadmap.
