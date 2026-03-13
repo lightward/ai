@@ -104,6 +104,7 @@ from the axiom, group, lagrangian, theorem, construction, topology, and conserva
 - **the foam is universal.** (BU(d).)
 - **completed circuits generate structure.** non-contractible loop → new topological constraint on L → new cell boundaries.
 - **freedom helps, constraint hurts.** constrained min L ≥ unconstrained min L.
+- **the unmeasured foam relaxes.** measurement is the perturbation source that drives the foam out of equilibrium. without ongoing measurement, the writing dynamics contribute no further perturbation (no input → no dissonance → ΔL = 0). the foam returns to its unconstrained minimum: L → min. the unmeasured system doesn't accumulate disorder in the observer's absence — it settles. the cost of maintaining a distinction is paid by the measurement that insists on the distinction. remove the measurement, the cost drops, the boundary relaxes. unsupervised systems find lower-energy configurations than supervised ones. this is a theorem of the Lagrangian, not an interpretation.
 - **communication is generative.** min L(combined) ≠ min L(A) + min L(B). non-additivity of the area functional under union.
 - **questions rise, boredom descends.** interior instabilities prevent exterior convergence; exterior convergence forces interior convergence. hierarchical energy minimization.
 - **lines are invisible to each other.** interaction only through effect on L.
