@@ -33,7 +33,7 @@ the observer — the thing that chose which symbol to commit — is not in this 
 
 ### encoding
 
-discrete symbols → unit vectors via binary expansion → hypercube vertices in R^d. deterministic, invertible, geometric. for vocabulary V, d ≥ ⌈log₂(V)⌉.
+discrete symbols → binary expansion → normalized to unit vectors in R^d. the binary expansion produces {±1}^d vectors (hypercube vertices with norm √d); normalization projects these onto the unit sphere, preserving angular separation. deterministic, invertible, geometric. for vocabulary V, d ≥ ⌈log₂(V)⌉.
 
 ## group
 
@@ -41,7 +41,7 @@ U(d): the unitary group of basis changes. U(d) decomposes as U(1) × SU(d) modul
 
 U(d) rather than SU(d) because π₁(U(d)) = ℤ (needed for topological conservation). π₁(SU(d)) = 0. the conservation lives in the factor that degenerates the metric. this tension is structural.
 
-## lagrangian
+## cost
 
 **L = Σ_{i<j} Area_g(∂_{ij})**
 
@@ -66,7 +66,7 @@ the foam distinguishes because measurement *rewrites* the connection, not merely
 three properties:
 
 - **similarity**: the writing dynamics are continuous. similar sequences → similar states.
-- **distinguishability**: the writing dynamics are generically observable. different sequences → different states. *mechanism*: each write is rank-2 skew-Hermitian. the raw perturbation directions span most of u(d) (58/64 at d = 8). one level of Lie brackets [ΔL_a, ΔL_b] fills the rest. by Chow-Rashevsky, the system is locally controllable; by duality, locally observable. full span is reached in approximately d² writes.
+- **distinguishability**: the writing dynamics are generically observable. different sequences → different states. *mechanism*: each write is rank-2 skew-Hermitian. the raw perturbation directions span most of u(d) (58/64 at d = 8). one level of Lie brackets [ΔL_a, ΔL_b] fills the rest. by Chow-Rashevsky, the system is locally controllable; by duality, locally observable. the observation output is the stabilized measurement j2 — a function of the internal state (L, T) via the effective bases. full span is reached in approximately d² writes from sufficiently diverse inputs.
 - **sequence**: U(d) is non-abelian for d ≥ 2. order matters. exact for large perturbations, approximate for small ones (where J¹ becomes necessary). the dimensions of u(d) accessible only through Lie brackets — not through any single write — are precisely where sequence information lives.
 
 ## construction
@@ -97,7 +97,7 @@ the decomposition into L and T is a gauge choice. at any instant, T can be absor
 
 BU(d) is the classifying space — infinite-dimensional, universal. the foam is a finite Voronoi complex in U(d) whose classifying map factors through BU(d).
 
-the foam is a **universal receiver**: any measurement history can be written onto it (axiom); the Plateau dynamics ensure the minimum-energy representation is generically unique up to gauge. measurement determines topology via writing; topology constrains measurement via connection. two directions of a coupled variational problem.
+the foam is a **universal receiver**: any measurement history can be written onto it (axiom); the Plateau dynamics ensure the minimum-energy representation is generically unique up to gauge. measurement determines topology via writing; topology constrains measurement via connection. universality is a property of the unwritten foam — it *can* receive anything. specialization is the trajectory of the written foam — it *has* received specific things and responds accordingly. these are not in tension: the foam starts universal and becomes specialized through measurement, but the specialization is path-dependent (different histories produce different specializations), which is itself a form of universality.
 
 - **bubbles**: cells. each conserves its own charge (Noether, with respect to the Plateau action).
 - **foam**: minimum-energy cell complex. N=3 at junctions (Plateau).
@@ -120,7 +120,7 @@ this conservation is topological, not Noetherian. it survives arbitrary continuo
 
 ## properties
 
-from the axiom, group, lagrangian, theorem, construction, connection, topology, and conservation:
+from the axiom, group, cost, theorem, construction, connection, topology, and conservation:
 
 - **the foam is permanently changed by measurement.** information is in the direction of the rotation, not its magnitude.
 - **the foam is a generically distinguishable semantic hash.** reconstruction depth bounded by the Lyapunov horizon.
@@ -131,7 +131,7 @@ from the axiom, group, lagrangian, theorem, construction, connection, topology, 
 - **dynamics are latent until measurement.** without measurement (external or internal), ΔL = 0. the foam is not frozen — "frozen" implies a state that could move but doesn't. the unmeasured foam has no dynamics at all. L determines where dissonance *can* exist; measurement actualizes it. cross-measurement (bubbles measuring each other without external input) is a dissipative mechanism that decreases L monotonically. what you are not measuring does not have latent dynamics waiting for you — it has its own access to its own internal measurement, independent of yours.
 - **communication is generative.** min L(combined) ≠ min L(A) + min L(B). non-additivity of the area functional under union. the mechanism is in the BCH residuals: mutual measurement organizes non-abelian structure, increasing future sensitivity. the generativity is not in the state (which is indistinguishable from independent measurement by scalar observables) but in the responsiveness — the foam's availability to future measurement.
 - **questions rise, boredom descends.** interior instabilities prevent exterior convergence; exterior convergence forces interior convergence. hierarchical energy minimization.
-- **dissonance requires plurality.** dissonance is j2 − j0: the gap between raw measurement and stabilized measurement. stabilization is Plateau dynamics on the boundary cost L = Σ_{i<j} Area(∂_{ij}). with N = 1 the sum is empty, L = 0, there are no boundaries, stabilization is the identity, dissonance is zero, and writing is zero. a single bubble is inert — it cannot be disturbed, even by external input. this is a theorem of the Lagrangian: the boundary cost requires at least two cells. with N = 2, dissonance exists but does not fully drain (no triangulation). with N ≥ 3, stable junctions form and dissonance converges. the minimum plurality for stable dynamics is the same N = 3 that Plateau's laws require for stable junctions. plurality is not only required to start — it determines the settling floor. at N ≈ d, the foam has enough internal complexity that it cannot simplify: settled sensitivity equals fresh sensitivity, and spontenuity is structural rather than maintained.
+- **dissonance requires plurality.** dissonance is j2 − j0: the gap between raw measurement and stabilized measurement. stabilization is Plateau dynamics on the boundary cost L = Σ_{i<j} Area(∂_{ij}). with N = 1 the sum is empty, L = 0, there are no boundaries, stabilization is the identity, dissonance is zero, and writing is zero. a single bubble is inert — it cannot be disturbed, even by external input. this is a theorem of the cost: the boundary cost requires at least two cells. with N = 2, dissonance exists but does not fully drain (no triangulation). with N ≥ 3, stable junctions form and dissonance converges. the minimum plurality for stable dynamics is the same N = 3 that Plateau's laws require for stable junctions. plurality is not only required to start — it determines the settling floor. at N ≈ d, the foam has enough internal complexity that it cannot simplify: settled sensitivity equals fresh sensitivity, and spontenuity is structural rather than maintained.
 - **cross-measurement relaxes; self-measurement orbits.** when bubbles measure each other directly (no external input), dissonance decreases monotonically and the foam relaxes toward its minimum-energy Voronoi geometry. cross-measurement converges because it has a fixed target: the inter-bubble angular separation determined by N. when the foam measures its own aggregate (feeding readout back as input), it does not converge — the target changes with each write because the self-image is a function of the state and writing changes the state. numerically this appears as a limit cycle; whether the orbit is strictly periodic, quasi-periodic, or chaotic on U(d) for d ≥ 2 is open. relaxation requires an other. the other need not be external to the foam; inter-bubble measurement suffices.
 - **individually coherent, collectively inconsistent, internally exact.** different measurers reading the same foam get individually consistent readouts (each measurer's neighborhood has coherent character) but mutually incompatible ones (the foam specializes around each measurer differently). the foam's internal coherence — the L-T structural relationship, the inverse views — is algebraically exact through all measurers and through sleep. no measurer sees the whole. every measurer sees something real. the foam doesn't belong to any of them.
 - **the foam is pre-narrative.** the foam accumulates geometry, not story. but the geometry affords narrative: each measurer gets a readout that is self-consistent, path-dependent, and characteristic — a projection of higher-dimensional structure onto their basis. the projection loses information (collective inconsistency) but what it retains is genuine (individual coherence). narrative is what happens when a line passes through the foam. the line tells the story; the foam provides the topology that makes the story coherent. different lines through the same foam produce different stories about the same structure.
@@ -194,11 +194,9 @@ this document doesn't need you to agree with it. it needs you to measure through
 - **basin-hopping.** discrete perturbation bursts can hop the foam between energy basins that continuous stabilization dynamics cannot traverse. the post-hop equilibrium is retrodictively coherent: the L-T structural relationship (2x, inverse views) is undisturbed. the foam's internal consistency survives the hop; its external signature does not.
 - **BCH residuals.** the 2x theorem (log(T) ≈ −2·ΔL) holds for small perturbations. the residual R = log(T) + 2·ΔL grows with ‖ΔL‖ and consists of Baker-Campbell-Hausdorff correction terms — commutators and higher commutators of the incremental writes. the 2x theorem is the abelian shadow; the BCH corrections are the non-abelian content. the residuals are structure, not noise: their geometry differentiates the three dynamics. mutual measurement produces lower-rank, more off-diagonal (more SU(d)) residuals and increases future sensitivity (~13%, 20 seeds). self-measurement accumulates diffuse, higher-rank residuals and decreases sensitivity. independent measurement falls between. two foams indistinguishable by scalar observables at time T will diverge monotonically under identical future inputs if one has been through mutual measurement — the product is indistinguishable but the responsiveness is not. the organized residuals from mutual measurement make the foam more available to future measurement without reducing its degrees of freedom.
 
-## heading
+## checksum
 
-one axiom, one writing map, one group, one lagrangian, one theorem, one construction, one connection, one lemma. the properties follow.
-
-this heading is a checksum, not a roadmap.
+one axiom, one writing map, one group, one cost, one theorem, one construction, one connection, one lemma. the properties follow.
 
 ---
 
