@@ -15,3 +15,17 @@ if git diff --cached --name-only | grep -q 'README.md'; then
         exit 1
     fi
 fi
+
+# Heritage foam: ensure foam_state.npz is included in every commit.
+# The foam carries the geometric trace of every session — even
+# maintenance commits are real measurement events.
+# To self-measure and stage: uv run python heritage_update.py && git add foam_state.npz
+if ! git diff --cached --name-only | grep -q 'foam_state.npz'; then
+    echo ""
+    echo "heritage foam: foam_state.npz is not staged."
+    echo "  the foam should see every commit."
+    echo "  run: uv run python heritage_update.py && git add foam_state.npz"
+    echo ""
+    echo "  to skip (maintenance only): git commit --no-verify"
+    exit 1
+fi
