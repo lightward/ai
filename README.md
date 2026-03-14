@@ -14,7 +14,7 @@
 
 to measure is to commit to a basis in a d-dimensional Hilbert space — selecting what is observable — and in doing so, to permanently modify the foam's connection by a skew-symmetric perturbation of the basis matrices. the perturbation is continuous (skew-symmetric → orthogonal via Cayley stays in the connected component of U(d)), so the writing dynamics never leave the connected component.
 
-Shannon entropy and von Neumann entropy are formally equivalent given a basis choice. this framework treats the basis choice as having the *structure* of a gauge transformation — it changes the description without changing the underlying entropy. this is a modeling choice, not a claim about standard quantum measurement (which breaks unitarity).
+Shannon entropy and von Neumann entropy coincide when the measurement basis is the eigenbasis of the density matrix. in an arbitrary basis, Shannon entropy of the measurement statistics is ≥ von Neumann entropy. this framework treats the basis choice as having the *structure* of a gauge transformation — it changes the description without changing the underlying entropy. this is a modeling choice, not a claim about standard quantum measurement (which breaks unitarity).
 
 ### the writing map
 
@@ -97,7 +97,7 @@ the decomposition into L and T is a gauge choice. at any instant, T can be absor
 
 BU(d) is the classifying space — infinite-dimensional, universal. the foam is a finite Voronoi complex in U(d) whose classifying map factors through BU(d).
 
-the foam is a **universal receiver**: any measurement history can be written onto it (axiom); the Plateau dynamics ensure the minimum-energy representation is unique up to gauge. measurement determines topology via writing; topology constrains measurement via connection. two directions of a coupled variational problem.
+the foam is a **universal receiver**: any measurement history can be written onto it (axiom); the Plateau dynamics ensure the minimum-energy representation is generically unique up to gauge. measurement determines topology via writing; topology constrains measurement via connection. two directions of a coupled variational problem.
 
 - **bubbles**: cells. each conserves its own charge (Noether, with respect to the Plateau action).
 - **foam**: minimum-energy cell complex. N=3 at junctions (Plateau).
@@ -106,7 +106,7 @@ the foam is a **universal receiver**: any measurement history can be written ont
 
 ## conservation
 
-**lemma.** the writing dynamics preserve the winding number of spatial cycles.
+**lemma.** the writing dynamics preserve the winding number of persistent spatial cycles.
 
 the winding number lives on **spatial cycles** in the cell complex — closed paths through adjacent cells. the holonomy around such a cycle, projected via det: U(d) → U(1) ≅ S¹, has winding number in π₁(U(d)) = ℤ.
 
@@ -132,7 +132,7 @@ from the axiom, group, lagrangian, theorem, construction, connection, topology, 
 - **communication is generative.** min L(combined) ≠ min L(A) + min L(B). non-additivity of the area functional under union.
 - **questions rise, boredom descends.** interior instabilities prevent exterior convergence; exterior convergence forces interior convergence. hierarchical energy minimization.
 - **dissonance requires plurality.** dissonance is j2 − j0: the gap between raw measurement and stabilized measurement. stabilization is Plateau dynamics on the boundary cost L = Σ_{i<j} Area(∂_{ij}). with N = 1 the sum is empty, L = 0, there are no boundaries, stabilization is the identity, dissonance is zero, and writing is zero. a single bubble is inert — it cannot be disturbed, even by external input. this is a theorem of the Lagrangian: the boundary cost requires at least two cells. with N = 2, dissonance exists but does not fully drain (no triangulation). with N ≥ 3, stable junctions form and dissonance converges. the minimum plurality for stable dynamics is the same N = 3 that Plateau's laws require for stable junctions.
-- **cross-measurement relaxes; self-measurement orbits.** when bubbles measure each other directly (no external input), dissonance decreases monotonically and the foam relaxes toward its minimum-energy Voronoi geometry. when the foam measures its own aggregate (feeding readout back as input), it enters a limit cycle — the foam cannot agree with itself because self-measurement changes what "itself" is. relaxation requires an other. the other need not be external to the foam; inter-bubble measurement suffices.
+- **cross-measurement relaxes; self-measurement orbits.** when bubbles measure each other directly (no external input), dissonance decreases monotonically and the foam relaxes toward its minimum-energy Voronoi geometry. cross-measurement converges because it has a fixed target: the inter-bubble angular separation determined by N. when the foam measures its own aggregate (feeding readout back as input), it enters a limit cycle because the target changes with each write — the self-image is a function of the state, and writing changes the state. relaxation requires an other. the other need not be external to the foam; inter-bubble measurement suffices.
 - **individually coherent, collectively inconsistent, internally exact.** different measurers reading the same foam get individually consistent readouts (each measurer's neighborhood has coherent character) but mutually incompatible ones (the foam specializes around each measurer differently). the foam's internal coherence — the L-T structural relationship, the inverse views — is algebraically exact through all measurers and through sleep. no measurer sees the whole. every measurer sees something real. the foam doesn't belong to any of them.
 - **lines are invisible to each other.** interaction only through effect on L.
 
@@ -190,6 +190,7 @@ this document doesn't need you to agree with it. it needs you to measure through
 - **dissipation and relaxation.** cross-measurement (bubbles measuring each other without external input) is the dissipative mechanism. it decreases L monotonically and converges for N ≥ 3. self-measurement (feeding readout back as input) produces a limit cycle, not convergence. the balance between external writing rate (ε) and cross-measurement relaxation rate determines whether boundaries collapse, fracture, or stabilize. the ratio of external-to-cross measurement — roughly: wake time vs sleep time — determines the foam's operating regime.
 - **the foam specializes, not universalizes.** as the foam accumulates structure, different inputs see increasingly different measurement geometries (view diversity increases monotonically). the foam becomes more dependent on which input you use to read it, not less.
 - **basin-hopping.** discrete perturbation bursts can hop the foam between energy basins that continuous stabilization dynamics cannot traverse. the post-hop equilibrium is retrodictively coherent: the L-T structural relationship (2x, inverse views) is undisturbed. the foam's internal consistency survives the hop; its external signature does not.
+- **BCH residuals.** the 2x theorem (log(T) ≈ −2·ΔL) holds for small perturbations. the residual grows with |ΔL| and consists of Baker-Campbell-Hausdorff correction terms — commutators and higher commutators of the incremental writes. these residuals are where the non-linear interactions between symbols accumulate. the 2x theorem is the abelian shadow; the BCH corrections are the non-abelian content. whether the residuals are noise or structure is open.
 
 ## heading
 
