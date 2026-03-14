@@ -77,6 +77,20 @@ three properties:
 
 three jets plus the shared dynamical law reconstruct short sequences locally (2-4 tokens per chunk observed). the trajectory is C⁰ not C² at measurement events; the jet bundle applies within chunks where Plateau dynamics smooth the flow. the reconstruction horizon reflects both the Lyapunov exponent of the dynamics and the smoothness scale.
 
+## connection
+
+**the foam carries its path, not just its position.**
+
+each bubble has a skew-Hermitian generator L (position in the Lie algebra) and a unitary matrix T (transport in the group). L accumulates additively: L ← L + ΔL. T accumulates multiplicatively: T ← T · cayley(ΔL). the effective basis is cayley(L) · T — position composed with path.
+
+the decomposition into L and T is a gauge choice. at any instant, T can be absorbed into L: there exists L' such that cayley(L') = cayley(L) · T. the decomposition is statically redundant. but L and T respond differently to the same write — additive vs multiplicative — so the decomposition is dynamically meaningful. the gauge freedom exists at each instant and breaks under time evolution.
+
+**the 2x theorem.** for small skew-Hermitian δ: cayley(δ) = (I − δ)(I + δ)⁻¹ ≈ I − 2δ. therefore log(cayley(δ)) ≈ −2δ. the transport T = Π cayley(ΔLᵢ) satisfies log(T) ≈ −2 · ΔL_total. position and transport are the same rotation at 1x and 2x scale, with opposite sign. the approximation degrades as |ΔL| grows; the residual is bounded by the Baker-Campbell-Hausdorff correction terms.
+
+**inverse views.** T†U and U†T are exact inverses: (T†U)(U†T) = I. this is algebraic (associativity of matrix multiplication), not approximate. their Lie algebra elements satisfy log(T†U) = −log(U†T) exactly. the mind seen through the state and the state seen through the mind are the same rotation, negated. the foam reads each through the other and finds a mirror.
+
+**J¹ is the transport.** the construction section defines J¹ as the derivative — the temporal direction that recovers sequence from the set-like J⁰. the transport T is J¹ made concrete: it is the ordered product of all incremental rotations, carrying sequence information that L (position, J⁰) cannot. T is not stored as a record; it is the accumulated shape of the measurement apparatus itself. J¹ propagates by re-discovery: to access the temporal direction, you must measure again, and the measurement produces a new write, which updates T.
+
 ## topology
 
 BU(d) is the classifying space — infinite-dimensional, universal. the foam is a finite Voronoi complex in U(d) whose classifying map factors through BU(d).
@@ -169,14 +183,12 @@ this document doesn't need you to agree with it. it needs you to measure through
 - **kintsugi.** a resolved line is transparent to the cell structure. the observer-as-boundary-material intuition holds weakly: compatibility (not equidistance) means the resolved line doesn't deform what it touches.
 - **the observability proof.** the theorem claims generic observability but doesn't verify the rank conditions for the specific writing dynamics. the perturbation is rank-2 skew-symmetric (determined by two unit vectors). degenerate configurations may exist. open.
 - **dissipation.** every measurement drives the foam out of equilibrium; Plateau dynamics relax it back. the balance between writing rate (ε) and relaxation determines whether boundaries collapse, fracture, or stabilize. not specified.
-- **the transport.** each write ΔL is a rank-2 skew-Hermitian perturbation (one plane of rotation). cayley(ΔL) is the corresponding group element. the ordered product T = Π cayley(ΔL_i) is the parallel transport along the measurement history. if T participates in the basis (effective basis = cayley(L) @ T), the foam measures through its own accumulated path. this is an implementation choice that the axiom supports but does not mandate.
-- **the 2x theorem.** for small perturbations: log(T) ≈ -2·ΔL_accumulated. proof: cayley(δ) ≈ I - 2δ for small skew-Hermitian δ, so log(cayley(δ)) ≈ -2δ. the approximation degrades as |ΔL| grows (residual ~4% at |ΔL| ≈ 0.5). consequence: T†U and U†T are exact inverses at all scales (algebraic, not approximate). position and transport are the same rotation, negated. the decomposition into L and T is a gauge choice — statically redundant, dynamically meaningful.
-- **stabilization is decoupled from L.** the Plateau dynamics operate on measurements in R^d (or C^d). they do not directly minimize the boundary cost L, which is defined on the bases in U(d). the coupling is indirect: stabilization determines dissonance, dissonance drives writing, writing moves bases, bases change L. the stabilization itself is blind to L.
+- **stabilization is decoupled from L.** the Plateau dynamics operate on measurements in C^d. they do not directly minimize the boundary cost L, which is defined on the bases in U(d). the coupling is indirect: stabilization determines dissonance, dissonance drives writing, writing moves bases, bases change L. the stabilization itself is blind to L.
 - **the foam specializes, not universalizes.** as the foam accumulates structure, different inputs see increasingly different measurement geometries (view diversity increases monotonically). the foam becomes more dependent on which input you use to read it, not less.
-- **basin-hopping.** discrete perturbation bursts ("particle mode") can hop the foam between energy basins that continuous stabilization dynamics ("wave mode") cannot traverse. the post-hop equilibrium is retrodictively coherent: the L-T structural relationship (2x, inverse views) is undisturbed. the foam's internal consistency survives the hop; its external signature does not.
+- **basin-hopping.** discrete perturbation bursts can hop the foam between energy basins that continuous stabilization dynamics cannot traverse. the post-hop equilibrium is retrodictively coherent: the L-T structural relationship (2x, inverse views) is undisturbed. the foam's internal consistency survives the hop; its external signature does not.
 
 ## heading
 
-one axiom, one writing map, one group, one lagrangian, one lemma. the properties follow.
+one axiom, one writing map, one group, one lagrangian, one theorem, one construction, one connection, one lemma. the properties follow.
 
 this heading is a checksum, not a roadmap.
