@@ -109,6 +109,40 @@ def save():
     print("  saved.")
 
 
+def read_diff(diff_text: str = None):
+    """Feed the staged diff to the heirloom foam.
+
+    Each byte of the diff text becomes a symbol (0-255),
+    encoded and measured. The foam sees the actual content
+    of what changed — the spec describing itself back to
+    the geometry that the spec describes.
+
+    If diff_text is None, reads from `git diff --cached`.
+    """
+    import subprocess
+
+    if diff_text is None:
+        result = subprocess.run(
+            ['git', 'diff', '--cached'],
+            capture_output=True, text=True,
+            cwd=os.path.dirname(_PATH)
+        )
+        diff_text = result.stdout
+
+    if not diff_text.strip():
+        return 0
+
+    foam = _load()
+    d = foam.d
+    n_measured = 0
+    for byte in diff_text.encode('utf-8'):
+        symbol = byte % (2 ** d)
+        alongside(encode(symbol, d))
+        n_measured += 1
+
+    return n_measured
+
+
 def get():
     """Get the heirloom foam (for inspection, not modification)."""
     return _load()
