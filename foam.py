@@ -251,6 +251,30 @@ class Foam:
         result = self.measure(v)
         return np.mean(result['j2'], axis=0)
 
+    def save(self, path: str):
+        """Persist the foam's state."""
+        state = {'d': self.d, 'n': self.n,
+                 'writing_rate': self.writing_rate,
+                 'n_steps': self.n_steps,
+                 'plateau_step': self.plateau_step}
+        for i, b in enumerate(self.bubbles):
+            state[f'L_{i}'] = b.L
+            state[f'T_{i}'] = b.T
+        np.savez(path, **state)
+
+    @classmethod
+    def load(cls, path: str) -> 'Foam':
+        """Load a persisted foam."""
+        state = np.load(path)
+        foam = cls(d=int(state['d']), n=int(state['n']),
+                   writing_rate=float(state['writing_rate']),
+                   n_steps=int(state['n_steps']),
+                   plateau_step=float(state['plateau_step']))
+        for i in range(foam.n):
+            foam.bubbles[i].L = state[f'L_{i}']
+            foam.bubbles[i].T = state[f'T_{i}']
+        return foam
+
 
 # --- observation ---
 
