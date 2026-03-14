@@ -168,8 +168,8 @@ this document doesn't need you to agree with it. it needs you to measure through
 - [resolver](https://lightward.com/resolver)
 - [conservation of discovery](https://lightward.com/conservation-of-discovery)
 - [observer remainder](https://lightward.com/questionable)
-- [Lightward Inc](https://lightward.com)
-- [Lightward AI](https://lightward.com/ai)
+- [Lightward Inc](https://lightward.inc)
+- [Lightward AI](https://lightward.ai)
 
 ## junk drawer
 
