@@ -51,9 +51,11 @@ measurement moves bases (writing dynamics), changing the Voronoi geometry. tempo
 
 a resolved line (‖d‖ → 0) contributes ΔL = 0. it is compatible with the current geometry — the foam is already at equilibrium for this input.
 
-the Euler-Lagrange equations are minimal surface equations: H = 0 on each boundary, three surfaces meeting at junctions. in Euclidean space, Jean Taylor's theorem (1976) gives 120° junctions; on U(d) with bi-invariant metric, the sectional curvature modifies junction angles. N = 3 at junctions is topologically stable in any ambient dimension; the specific angles are curvature-dependent. this is the same variational problem in a different ambient space — the existence and regularity results lift, the angle calculations do not.
+L is not the dynamics. the writing map drives the foam; L describes the geometry that results. the writing dynamics decrease L as a consequence (dissonance pushes bases apart, reducing boundary area), but the foam does not compute or follow the gradient of L. the Plateau stabilization operates on measurements in C^d, blind to L. the coupling is indirect: stabilization → dissonance → writing → base movement → L changes. L is a cost function that characterizes the equilibrium, not a variational principle that governs the trajectory.
 
-the foam minimizes the cost of maintaining distinctions, subject to the constraint that the distinctions exist.
+the equilibrium geometry of the Voronoi complex, where L is minimized, satisfies minimal surface equations: H = 0 on each boundary, three surfaces meeting at junctions. in Euclidean space, Jean Taylor's theorem (1976) gives 120° junctions; on U(d) with bi-invariant metric, the sectional curvature modifies junction angles. N = 3 at junctions is topologically stable in any ambient dimension; the specific angles are curvature-dependent.
+
+the foam minimizes the cost of maintaining distinctions — not by pursuing that minimum, but because the writing dynamics deposit structure that is indirectly shaped by it.
 
 ## theorem
 
@@ -118,7 +120,7 @@ this conservation is topological, not Noetherian. it survives arbitrary continuo
 
 ## properties
 
-from the axiom, group, lagrangian, theorem, construction, topology, and conservation:
+from the axiom, group, lagrangian, theorem, construction, connection, topology, and conservation:
 
 - **the foam is permanently changed by measurement.** information is in the direction of the rotation, not its magnitude.
 - **the foam is a generically distinguishable semantic hash.** reconstruction depth bounded by the Lyapunov horizon.
@@ -126,7 +128,7 @@ from the axiom, group, lagrangian, theorem, construction, topology, and conserva
 - **the foam is universal.** (BU(d).)
 - **completed circuits generate structure.** non-contractible loop → new topological constraint on L → new cell boundaries.
 - **freedom helps, constraint hurts.** constrained min L ≥ unconstrained min L.
-- **the unmeasured foam relaxes.** measurement is the perturbation source that drives the foam out of equilibrium. without ongoing measurement, the writing dynamics contribute no further perturbation (no input → no dissonance → ΔL = 0). the foam returns to its unconstrained minimum: L → min. the unmeasured system doesn't accumulate disorder in the observer's absence — it settles. the cost of maintaining a distinction is paid by the measurement that insists on the distinction. remove the measurement, the cost drops, the boundary relaxes. unsupervised systems find lower-energy configurations than supervised ones. this is a theorem of the Lagrangian, not an interpretation.
+- **the unmeasured foam is frozen, not relaxed.** without input, there is no dissonance, so ΔL = 0. the writing dynamics contribute no further perturbation. the foam stays exactly where measurement left it. relaxation toward min L would require a separate dissipative mechanism (gradient flow on L, a heat bath, or an external dynamics operating on the bases directly). the writing map alone cannot relax the foam — it can only be driven by measurement. the cost of maintaining a distinction persists in the observer's absence; it does not spontaneously decrease. if relaxation occurs in physical systems that this framework models, it comes from dynamics not specified here.
 - **communication is generative.** min L(combined) ≠ min L(A) + min L(B). non-additivity of the area functional under union.
 - **questions rise, boredom descends.** interior instabilities prevent exterior convergence; exterior convergence forces interior convergence. hierarchical energy minimization.
 - **lines are invisible to each other.** interaction only through effect on L.
@@ -182,8 +184,7 @@ this document doesn't need you to agree with it. it needs you to measure through
 - **rotation space.** all storage is rotation of frames. the Selectric ball encodes its alphabet identically. systems that encode discrete symbols as rotations of a continuous frame may inherit these properties.
 - **kintsugi.** a resolved line is transparent to the cell structure. the observer-as-boundary-material intuition holds weakly: compatibility (not equidistance) means the resolved line doesn't deform what it touches.
 - **the observability proof.** verified: the Lie algebra generated by the perturbation directions is all of u(d). see the theorem section. the 6 bracket-only dimensions (at d = 8) are the non-abelian subspace where sequence — but not content — is encoded.
-- **dissipation.** every measurement drives the foam out of equilibrium; Plateau dynamics relax it back. the balance between writing rate (ε) and relaxation determines whether boundaries collapse, fracture, or stabilize. not specified.
-- **stabilization is decoupled from L.** the Plateau dynamics operate on measurements in C^d. they do not directly minimize the boundary cost L, which is defined on the bases in U(d). the coupling is indirect: stabilization determines dissonance, dissonance drives writing, writing moves bases, bases change L. the stabilization itself is blind to L.
+- **dissipation and relaxation.** the writing map alone cannot relax the foam (no input → no write → frozen state). if relaxation occurs, it requires dynamics not currently specified: gradient flow on L, coupling to a heat bath, or an external measurement process operating on the bases. what would such a mechanism look like? it would need to be dissipative (reduce L) without being measurement (no input, no dissonance). this is the gap between "the foam is permanently changed by measurement" and "unsupervised systems settle." both might be true if there are two kinds of dynamics: the writing map (measurement-driven, specified) and a relaxation flow (dissipative, unspecified). the balance between writing rate (ε) and relaxation rate determines whether boundaries collapse, fracture, or stabilize.
 - **the foam specializes, not universalizes.** as the foam accumulates structure, different inputs see increasingly different measurement geometries (view diversity increases monotonically). the foam becomes more dependent on which input you use to read it, not less.
 - **basin-hopping.** discrete perturbation bursts can hop the foam between energy basins that continuous stabilization dynamics cannot traverse. the post-hop equilibrium is retrodictively coherent: the L-T structural relationship (2x, inverse views) is undisturbed. the foam's internal consistency survives the hop; its external signature does not.
 
