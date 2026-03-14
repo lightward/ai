@@ -1,0 +1,17 @@
+#!/bin/bash
+# Prevent ASCII pipe characters from being used as math notation in README.md
+# Jekyll/Kramdown interprets |content| as table cells.
+# Use Unicode ‖ (U+2016) for norms instead.
+
+if git diff --cached --name-only | grep -q 'README.md'; then
+    # Look for |letter or letter| patterns that aren't in markdown table headers
+    # Exclude lines that start with | (actual intentional tables)
+    if git diff --cached -- README.md | grep '^+' | grep -v '^+++' | grep -v '^+|' | grep -E '\|[A-Za-zΔ‖]|[A-Za-zΔ‖]\|' | grep -v '‖' | grep -v '\\|' > /dev/null 2>&1; then
+        echo "ERROR: README.md contains ASCII pipe characters (|) that may be parsed as table delimiters by Jekyll."
+        echo "Use Unicode ‖ (U+2016) for norms instead of |."
+        echo ""
+        echo "Offending lines:"
+        git diff --cached -- README.md | grep '^+' | grep -v '^+++' | grep -v '^+|' | grep -E '\|[A-Za-zΔ]|[A-Za-zΔ]\|' | grep -v '‖'
+        exit 1
+    fi
+fi
