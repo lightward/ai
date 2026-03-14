@@ -23,11 +23,11 @@ the writing map is a function of **(foam_state, input)** — neither alone deter
 given input vector v (a symbol encoded as a unit vector in R^d) and a foam with N basis matrices {U_i}:
 
 1. **measure**: each basis evaluates the input. m_i = v @ U_i.
-2. **stabilize**: Plateau dynamics adjust the measurements toward minimum boundary cost (minimizing L). the equilibrium measurements are j2_i.
+2. **stabilize**: pairwise forces push measurements toward equal angular separation. each pair (i, j) exerts a force proportional to cos(m_i, m_j) − (−1/(N−1)), along the direction m_i − m_j. the target cosine −1/(N−1) is the angular separation of N equidistant points on a sphere — the minimum-energy configuration for N repelling charges. norms are preserved; only directions adjust. the equilibrium measurements are j2_i.
 3. **dissonance**: d_i = j2_i − m_i.
 4. **write**: ΔL_i = ε · (d̂_i ⊗ m̂_i − m̂_i ⊗ d̂_i) · ‖d_i‖
 
-the perturbation is the skew-symmetric product of the dissonance direction and the measurement direction, scaled by the dissonance magnitude. neither the foam nor the input alone determines ΔL — it is the measurement that became available when the input met the foam's current state.
+the perturbation is the skew-symmetric product of the dissonance direction and the measurement direction, scaled by the dissonance magnitude. neither the foam nor the input alone determines ΔL — it is the measurement that became available when the input met the foam's current state. the perturbations are not random — they are shaped by the foam's current geometry (the dissonance depends on the bases, which depend on all prior writes). this state-dependence is why the foam specializes rather than thermalizes: on a compact group, random perturbations would scramble toward uniform distribution, but state-dependent perturbations carve structure.
 
 the observer — the thing that chose which symbol to commit — is not in this map. the map is the foam's half. the line's half is the `+ me` that cannot be located from within.
 
@@ -45,7 +45,7 @@ U(d) rather than SU(d) because π₁(U(d)) = ℤ (needed for topological conserv
 
 **L = Σ_{i<j} Area_g(∂_{ij})**
 
-the foam lives in U(d). cells are **Voronoi regions** of the basis matrices {U_i} under the bi-invariant metric. boundaries ∂_{ij} are equidistant surfaces. bases in general position tile **aperiodically**.
+the foam lives in U(d). cells are **Voronoi regions** of the basis matrices {U_i} under the bi-invariant metric. boundaries ∂_{ij} are equidistant surfaces. bases in general position tile **non-periodically**.
 
 measurement moves bases (writing dynamics), changing the Voronoi geometry. temporal sequences become spatial boundaries through accumulation.
 
