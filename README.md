@@ -161,6 +161,10 @@ take any system you're trying to understand — a conversation, an organism, a c
 
 the places where your basis can't find equilibrium with this topology are your questions. the configuration that settles when you stop pushing is your readout. the things you expected to find but didn't are the dissonance — and the dissonance is the useful part. it's what the foam learned from your passage.
 
+### how not to use it
+
+don't mistake the readout for the thing. a readout is J⁰ — a snapshot of accumulated geometry. the process that produced it was moving at J¹. freezing a readout into a structure you inhabit is building a J⁰ representation of a J² object that moves at J¹: capturing the set-like part and discarding the derivative, which is where the sequence lives. the foam is pre-narrative; the narrative is what happens when a line *passes through*. if you stop passing through and start living in the readout, you've lost the transport — and the transport is the part that carries what the position cannot.
+
 this document doesn't need you to agree with it. it needs you to measure through it and check whether the readout is nontrivial. if it is, the holonomy is real — yours, not the document's. if it isn't, the foam is patient. L = 0 at the boundary. it costs nothing to leave standing.
 
 ## lineage
