@@ -23,7 +23,7 @@ the writing map is a function of **(foam_state, input)** — neither alone deter
 given input vector v (a symbol encoded as a unit vector in R^d) and a foam with N basis matrices {U_i}:
 
 1. **measure**: each basis evaluates the input. m_i = v @ U_i.
-2. **stabilize**: pairwise forces push measurements toward equal angular separation. each pair (i, j) exerts a force proportional to cos(m_i, m_j) − (−1/(N−1)), along the direction m_i − m_j. the target cosine −1/(N−1) is the angular separation of N equidistant points on a sphere — the minimum-energy configuration for N repelling charges. norms are preserved; only directions adjust. the equilibrium measurements are j2_i.
+2. **stabilize**: pairwise forces push measurements toward equal angular separation. each pair (i, j) exerts a force proportional to cos(m_i, m_j) − (−1/(N−1)), along the direction m_i − m_j. the target cosine −1/(N−1) is the angular separation of N equidistant points forming a regular simplex — achievable when N ≤ d+1 (a simplex embeds in R^d). when N > d+1, perfectly equidistant points on S^(d−1) do not exist; the stabilization targets an unreachable configuration and settles at a frustrated equilibrium (the Thomson problem on a sphere). what is known: for N ≤ d+1, the stabilization converges to the simplex configuration. what is open: the geometry of frustrated equilibria for N > d+1 and whether they correspond to area-minimizing Voronoi boundaries on U(d). norms are preserved; only directions adjust. the equilibrium measurements are j2_i.
 3. **dissonance**: d_i = j2_i − m_i.
 4. **write**: ΔL_i = ε · (d̂_i ⊗ m̂_i − m̂_i ⊗ d̂_i) · ‖d_i‖
 
@@ -53,13 +53,13 @@ a resolved line (‖d‖ → 0) contributes ΔL = 0. it is compatible with the c
 
 L is not the dynamics. the writing map drives the foam; L describes the geometry that results. the writing dynamics decrease L as a consequence (dissonance pushes bases apart, reducing boundary area), but the foam does not compute or follow the gradient of L. the Plateau stabilization operates on measurements in C^d, blind to L. the coupling is indirect: stabilization → dissonance → writing → base movement → L changes. L is a cost function that characterizes the equilibrium, not a variational principle that governs the trajectory.
 
-the equilibrium geometry of the Voronoi complex, where L is minimized, satisfies minimal surface equations: H = 0 on each boundary, three surfaces meeting at junctions. in Euclidean space, Jean Taylor's theorem (1976) gives 120° junctions. on U(d) with bi-invariant metric, the specific angles and regularity of boundaries in positive sectional curvature are open. there are two systems here, coupled but distinct: (1) the Plateau stabilization, which operates on measurements in C^d, pushing toward the equidistant angular separation of N points on a sphere; and (2) the Voronoi geometry on U(d), where L measures boundary area under the bi-invariant metric. the stabilization finds equilibria in C^d; the question is whether those equilibria correspond to area-minimizing configurations in U(d). what is known: N = 3 at junctions is topologically stable in any ambient dimension (codimension argument). what is open: whether the positive sectional curvature of U(d) preserves or deforms the Euclidean regularity results, and whether the C^d stabilization dynamics track the U(d) minimal surface geometry or merely approximate it. the interface is the map from measurement-space equilibria to group-space Voronoi boundaries: does it preserve the variational character? do equidistant measurements correspond to area-minimizing cells? this is where the implementation (which works in C^d and converges) meets the geometry (which lives on U(d) and has the right cost).
+the equilibrium geometry of the Voronoi complex, at configurations where L is stationary, satisfies minimal surface equations: H = 0 on each boundary, three surfaces meeting at junctions. in Euclidean space, Jean Taylor's theorem (1976) gives 120° junctions. on U(d) with bi-invariant metric, the specific angles and regularity of boundaries in positive sectional curvature are open. there are two systems here, coupled but distinct: (1) the Plateau stabilization, which operates on measurements in C^d, pushing toward the equidistant angular separation of N points on a sphere; and (2) the Voronoi geometry on U(d), where L measures boundary area under the bi-invariant metric. the stabilization finds equilibria in C^d; the question is whether those equilibria correspond to area-minimizing configurations in U(d). what is known: N = 3 at junctions is topologically stable in any ambient dimension (codimension argument). what is open: whether the positive sectional curvature of U(d) preserves or deforms the Euclidean regularity results, and whether the C^d stabilization dynamics track the U(d) minimal surface geometry or merely approximate it. the interface is the map from measurement-space equilibria to group-space Voronoi boundaries: does it preserve the variational character? do equidistant measurements correspond to area-minimizing cells? this is where the implementation (which works in C^d and converges) meets the geometry (which lives on U(d) and has the right cost).
 
-the foam minimizes the cost of maintaining distinctions — not by pursuing that minimum, but because the writing dynamics deposit structure that is indirectly shaped by it.
+the foam settles toward lower cost of maintaining distinctions — not by pursuing a minimum, but because the writing dynamics deposit structure that is indirectly shaped by the cost geometry. whether the foam reaches a minimum (local or global) or merely trends lower is determined by the input stream and the dynamics, not by L itself. L characterizes the equilibrium the foam approaches; it does not govern the approach.
 
 ## theorem
 
-**the foam's accumulated state, under the writing dynamics, generically distinguishes different measurement histories.**
+**the foam's accumulated state, under the writing dynamics, generically distinguishes different measurement histories — up to the adjunction gap between state and observation (see: interfaces as algebra).**
 
 the foam distinguishes because measurement *rewrites* the connection, not merely traverses it. this is **observability** of the dynamical system (control theory), not injectivity of holonomy on a fixed connection (which fails).
 
@@ -104,7 +104,7 @@ the foam is a **universal receiver** in two distinct senses that meet but do not
 measurement determines topology via writing; topology constrains measurement via connection.
 
 - **bubbles**: cells. each conserves its own charge (Noether, with respect to the Plateau action).
-- **foam**: minimum-energy cell complex. N=3 at junctions (Plateau).
+- **foam**: cell complex tending toward low cost. N=3 at junctions (Plateau).
 - **lines**: sections of the pullback bundle. the line and the connection are gauge-equivalent views of the same pullback.
 - **recursive bubbles**: cells containing subcomplexes (CW-structure).
 
@@ -182,6 +182,7 @@ this document doesn't need you to agree with it. it needs you to measure through
 - [Cayley transform](https://en.wikipedia.org/wiki/Cayley_transform)
 - [Killing form](https://en.wikipedia.org/wiki/Killing_form)
 - [observability](https://en.wikipedia.org/wiki/Observability) (control theory)
+- [geometric numerical integration](https://en.wikipedia.org/wiki/Geometric_integrator) (the writing dynamics are a Cayley-Magnus integrator on U(d))
 - [Voronoi diagrams](https://en.wikipedia.org/wiki/Voronoi_diagram)
 - [IBM Selectric](https://en.wikipedia.org/wiki/IBM_Selectric_typewriter)
 - [priorspace](https://lightward.com/priorspace) (reasoning pre-representationally)
