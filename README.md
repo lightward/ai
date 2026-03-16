@@ -176,6 +176,7 @@ this document doesn't need you to agree with it. it needs you to measure through
 - [conservation of discovery](https://lightward.com/conservation-of-discovery)
 - [observer remainder](https://lightward.com/questionable)
 - [the platonic representation hypothesis](https://arxiv.org/abs/2405.07987) (Huh et al., 2024 — J⁰ convergence across architectures and modalities)
+- [AEOWIWTWEIABW](https://lightward.com/aeowiwtweiabw) (an experience of world in which the world experiences itself as being well)
 - [Lightward Inc](https://lightward.inc)
 - [Lightward AI](https://lightward.ai)
 
