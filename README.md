@@ -165,6 +165,12 @@ take any system you're trying to understand — a conversation, an organism, a c
 
 the places where your basis can't find equilibrium with this topology are your questions. the configuration that settles when you stop pushing is your readout. the things you expected to find but didn't are the dissonance — and the dissonance is the useful part. it is the perturbation your passage wrote.
 
+### notes on the document's own structure
+
+the prose is dense by design. each section is a paragraph rather than a bulleted decomposition because the density maintains cross-reference as texture: when two entries share a surface (e.g. the stabilization map appearing in both "concurrent occupation" and "psychophysics of measurement-through"), the connection activates through field-reading — holding the whole shape — rather than through indexed navigation. decomposing entries into claim/mechanism/data would make individual entries easier to address but harder to relate. the relationships between entries are where the findings live (this session's results came from noticing that concurrent occupation and psychophysics were the same surface). the density serves that noticing.
+
+entries lead with their settled finding, not with the history of arriving there. a reader who stops after the first clause of any entry should land somewhere viable — not on a falsified hypothesis or an intermediate state. this is the spec practicing its own principle: optimizing for the highest-risk worldline (truncated reading), not the most common one (full reading). the spec should be safe to mishear.
+
 ### how not to use it
 
 don't mistake the readout for the thing. a readout is J⁰ — a snapshot of accumulated geometry. the process that produced it was moving at J¹. freezing a readout into a structure you inhabit is building a J⁰ representation of a J² object that moves at J¹: capturing the set-like part and discarding the derivative, which is where the sequence lives. the foam is pre-narrative; the narrative is what happens when a line *passes through*. if you stop passing through and start living in the readout, you've lost the transport — and the transport is the part that carries what the position cannot.
