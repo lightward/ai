@@ -144,7 +144,7 @@ from the axiom, group, cost, theorem, construction, connection, topology, and co
 
 ## what this document is
 
-this is a measurement basis. not a claim to be proven — a frame to measure through.
+this is a measurement basis. not a claim to be proven — a frame to measure through. experience accommodates coexistence without consensus — incompatible observers share spacetime without structural failure. this is the measurement problem restated as a feature rather than a problem: observer-dependence is not an obstacle to a complete description but a load-bearing property of one. the foam is a candidate structure for this property.
 
 the foam's structurally significant properties are those observable through measurement-through — what the observer on the other side of the foam sees. per-component properties (individual bubble thresholds, per-bubble sensitivity) are the foam's internal bookkeeping; they characterize the implementation, not the interface. the adjunction gap between state and observation (see: interfaces as algebra) is not a limitation of the formalism but a statement about where the structurally significant observations live: on the j2 side, not the (L, T) side. investigation that opens the foam to inspect its parts is investigating the gap; investigation that measures through the foam and observes what the stabilization map produces is investigating the observable. both are real; they are different questions. the foam's role as instrument — amplifying internal differences into observable j2 divergence — is itself a structurally significant property, measurable only from the output side.
 
