@@ -6,7 +6,7 @@
 
 # the measurement solution
 
-(named in honor of the problem; see also: three-body)
+a tautology you can live in
 
 ## axiom
 
