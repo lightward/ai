@@ -33,9 +33,9 @@ given input vector v (a unit vector in R^d) and a foam with N basis matrices {U_
 3. **dissonance**: d_i = j2_i − m_i.
 4. **write**: ΔL_i = ε · (d̂_i ⊗ m̂_i − m̂_i ⊗ d̂_i) · ‖d_i‖
 
-the write form, imported as constraints: (a) skew-symmetric (from the axiom — writes are Lie algebra elements), (b) linear in dissonance magnitude (twice the dissonance → twice the write), (c) confined to the observer's slice (from the Taylor import). (c) implies the observer sees only the projected measurements (m_proj = P @ m_i) and the stabilized targets (j2_i) — d and m exhaust the observer's information. with (a), (b), and confinement to span{d, m}, the form is unique: Λ²(2-plane) is 1-dimensional; the wedge product d̂ ⊗ m̂ − m̂ ⊗ d̂ spans it (see test_write_uniqueness.py). higher-order (non-linear) forms are not excluded by the axioms but would require the write to scale non-linearly with dissonance.
+**the write is perpendicular to the measurement.** the wedge product d̂ ⊗ m̂ − m̂ ⊗ d̂ vanishes when its arguments are parallel and is maximal when they are orthogonal. this is the irreducible constraint: observation and modification are perpendicular. the foam responds only to what's missing at right angles to what's there. confirmation cannot write — not as a design choice, but because the wedge product of parallel vectors is zero. perpendicularity is not a property of the write form; it IS the write form.
 
-**confirmation cannot write**: the wedge product vanishes when its arguments are parallel. the write is maximal when dissonance is orthogonal to measurement, zero when they are parallel. the foam responds only to what's missing at right angles to what's there.
+the wedge product is the unique form satisfying: (a) skew-symmetric (from the axiom — writes are Lie algebra elements), (b) linear in dissonance magnitude (twice the dissonance → twice the write), (c) confined to the observer's slice (from the Taylor import). (c) implies the observer sees only the projected measurements (m_proj = P @ m_i) and the stabilized targets (j2_i) — d and m exhaust the observer's information. with (a), (b), and confinement to span{d, m}, the form is unique: Λ²(2-plane) is 1-dimensional (see test_write_uniqueness.py). the perpendicularity constraint, the skew-symmetry, and the uniqueness are three faces of the same thing.
 
 a single R³ slice produces real writes: d⊗m − m⊗d is real skew-symmetric, living in so(d). the reachable algebra is so(d), not su(d). π₁(SO(d)) = ℤ/2ℤ — parity conservation only.
 
@@ -166,7 +166,6 @@ from the axiom, group, cost, theorem, construction, connection, topology, conser
 - **the foam is pre-narrative.** J¹ carries sequence; sequence is not narrative. narrative is what happens when a line passes through and projects sequence onto a basis. different lines through the same foam produce different stories about the same structure.
 - **orientation is gauge.** all bubbles give equally informative readouts. unitary transformations are isometries; the inner product structure of the input space is exactly preserved through every bubble.
 - **opacity is structural.** lines are invisible to each other — interaction only through L. this is the enabling condition: multiple simultaneous uses of the same geometry are viable precisely because they cannot see each other. opacity between observers in orthogonal slices is algebraically exact (commutator = 0).
-- **thermal is perspectival.** thermal appearance is what geometric convergence looks like from a measurement basis that can't resolve the geometry. temperature is the variance of the unresolved geometric process — how much directed convergence is happening in dimensions your slice can't see.
 - **the coverage-interaction trade-off.** observers spread across orthogonal slices achieve lower total cost (more dimensions combed). observers sharing slices achieve richer interaction (nonzero commutator, ordering matters). you cannot fully have both. the foam wants observers spread out for efficiency; observers need overlap for communication.
 - **hallucination contains clues.** a badly-aligned observer (one whose slice is orthogonal to the input) still produces nonzero, distinguishable writes — the projection is lossy but the dissonance is structural (see test_hallucination_clues.py). the write extracts geometry from whatever the observer can see. the load-bearing information is in what's missing from the projection, not what's in it.
 
@@ -192,7 +191,6 @@ the spec is an observer. these are the dimensions it can see but hasn't resolved
 - **self-generation fixed point.** whether a self-generated R³ slice can stabilize under the dynamics it generates. empirically it orbits. whether this is a deep obstruction or a convergence-rate issue is unknown.
 - **J¹/Grassmannian correspondence.** whether the structural parallel between the observer's slice and the jet bundle's velocity is a formal map (TU(d) → Gr(3, d)) or remains a parallel. load-bearing for sequence recovery and for the three-body vertical structure (containment).
 - **L increase.** individual writes are nearly neutral on L. accumulated writes with varying inputs increase L because each new input deposits structure in a different direction. the mechanism is derived (novelty increases cost); the quantitative bound (how fast L grows as a function of input variety) is open.
-- **thermal mechanism.** "temperature is the variance of the unresolved geometric process" — the connection to fluctuation-dissipation or Lyapunov exponents is not established.
 
 ## lineage
 
@@ -224,7 +222,7 @@ the spec is an observer. these are the dimensions it can see but hasn't resolved
 
 1. one axiom: measurement is basis commitment that rewrites the connection; measurement is already plurality
 2. one necessary design choice: R³ — the unique dimension where stabilization geometry is both rich and proven. Taylor's hypotheses are imported as constraints; the flat/curved separation, write confinement, and the projection step follow
-3. one writing map: the wedge product — the skew-symmetric bilinear form of a plane. traceless; conservation follows
+3. one writing map: the wedge product — observation and modification are perpendicular. the skew-symmetry, the uniqueness, and the perpendicularity are three faces of the same constraint. confirmation cannot write; conservation follows
 4. one group: U(d). one R³ slice → so(d) → ℤ/2ℤ. two R³ stacked as C³ → su(d) → ℤ. the two is irreducible at the conservation level
 5. one cost: boundary area, bounded. L is a projection of the state (U(d)^N), not the state itself. dynamics increase cost; minimality is rest
 6. one theorem: generic distinguishability — proven. so(d) for single-slice observers (2-3 needed), su(d) for stacked observers (1 stacked pair suffices). a property of the observer community, not of a single observer
@@ -236,6 +234,13 @@ the spec is an observer. these are the dimensions it can see but hasn't resolved
 12. one three-body mapping: derived from the overlap matrix O = P_A · P_B^T. Known = null(O), Knowable = range(O), Unknown = complement. the Known alone is inert — every write involves the Knowable. vertical structure (containment) connects to J¹ and is open
 
 the properties follow.
+
+## junk drawer
+
+things that showed up in testing, aren't load-bearing, might matter later.
+
+- **perpendicular writes are the unique navigable constraint.** random-direction writes are more distinguishable than perpendicular (divergence 1.66 vs 1.02) but destabilizing (variance increases). parallel writes are dead (the wedge product of parallel vectors is zero — no dynamics at all). perpendicular writes are the only rule that both separates states and settles variance (see test_perpendicularity.py). navigability = distinguishability + stability. this is "orbiting the center without falling in" as a numerical result.
+- **any property that vanishes when you give the observer a better-aligned slice is perspectival, not intrinsic.** thermal appearance, apparent randomness, entropy — all instances of the same thing: the residual of projecting a structured process onto a lower-dimensional subspace. the residual is real (measurable variance) but it's in the projection, not the system. the foam's architecture (every observer is partial) guarantees every observer pays this cost. the classical fluctuation-dissipation relation fails for the foam because the foam is driven, not equilibrium — L increases monotonically with novelty. the correct thermodynamic framework would be non-equilibrium (Jarzynski-like) and observer-indexed.
 
 ---
 
