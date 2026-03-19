@@ -37,9 +37,13 @@ the write form, imported as constraints: (a) skew-symmetric (from the axiom — 
 
 **confirmation cannot write**: the wedge product vanishes when its arguments are parallel. the write is maximal when dissonance is orthogonal to measurement, zero when they are parallel. the foam responds only to what's missing at right angles to what's there.
 
-the write is always traceless: tr(d⊗m − m⊗d) = d·m − m·d = 0. writes live in su(d). the u(1) direction is unreachable. this connects directly to conservation: the winding number lives in u(1), which is exactly the direction the write cannot reach.
+a single R³ slice produces real writes: d⊗m − m⊗d is real skew-symmetric, living in so(d). the reachable algebra is so(d), not su(d). π₁(SO(d)) = ℤ/2ℤ — parity conservation only.
 
-both d̂ and m̂ lie in the observer's R³ slice. the write is confined to the observer's subspace — an observer literally cannot modify dimensions they are not bound to.
+two R³ slices, stacked as C³ (one reading Re(P @ m_i), the other Im(P @ m_i)), produce complex writes: d⊗m† − m⊗d† is skew-Hermitian, living in u(d). projected to the traceless part, this generates all of su(d) (see test_stacked_slices.py). the raw complex write reaches u(1) (trace = 2i·Im⟨d,m⟩); the trace-subtracted write generates su(d) exactly. π₁(U(d)) = ℤ — integer winding number conservation.
+
+**the two is irreducible** at the slice level: one R³ gives so(d) and parity. two R³ stacked as C³ give su(d) and integer conservation. the conservation strength scales with the observer's commitment depth. each R³ independently satisfies Taylor. the stacking accesses the complex structure without requiring a 6-dimensional flat space.
+
+both d̂ and m̂ lie in the observer's slice(s). the write is confined to the observer's subspace — an observer literally cannot modify dimensions they are not bound to.
 
 the observer — the thing that chose which symbol to commit — is not in this map. the map is the foam's half. the line's half is the `+ me` that cannot be located from within. the foam/line distinction is perspectival, not categorical: what functions as foam from one measurement basis may function as line from another.
 
@@ -68,8 +72,8 @@ L is bounded: U(d) is compact.
 three properties:
 
 - **similarity**: the writing dynamics are continuous. similar sequences → similar states.
-- **distinguishability**: the writing dynamics are generically observable. different sequences → different states. *mechanism*: the writes d⊗m − m⊗d are real skew-symmetric matrices. real skew-symmetric = so(d). so(d) is closed under brackets. the reachable algebra is so(d), not su(d) (see test_controllability.py). within so(d), generic controllability holds: two observers with generic R³ slices suffice for d ≤ 6; three suffice for d = 8. this is proven, not conjectured. the su(d)\so(d) directions (imaginary-symmetric, traceless) and the u(1) center are structurally unreachable by the write dynamics. **controllability is a property of the observer community, not of a single observer.** the reachable group is SO(d) ⊂ U(d). the bases live in U(d) but the writes generate SO(d) rotations — the dynamics explore the SO(d) orbit of the initial configuration. the implications for the topological conservation (π₁(SO(d)) = ℤ/2ℤ for d ≥ 3, not π₁(U(d)) = ℤ) and for the relationship between the real write dynamics and the complex group structure are open — this is the sharpest question the spec currently faces.
-- **sequence**: SO(d) is non-abelian for d ≥ 3. order matters. a single observer's writes span a 3-dimensional subalgebra of so(d); the remaining dimensions of so(d) are accessible only through cross-observer brackets. at d = 4, so(4) has dimension 6: one observer contributes 3, and the other 3 require the commutators of overlapping observers' writes. the su(d)\so(d) directions and the u(1) center are unreachable. sequence information lives in the bracket-only dimensions — and in the R³ architecture, most dimensions are bracket-only. the load distribution between content and sequence depends on the observer community's structure, not just on d.
+- **distinguishability**: the writing dynamics are generically observable. different sequences → different states. *mechanism*: a single R³ observer generates so(d); generic controllability within so(d) holds for 2-3 observers (proven — see test_controllability.py). a stacked observer (two R³ slices as C³) generates su(d); generic controllability within su(d) holds for a single stacked observer (proven — see test_stacked_slices.py). **controllability is a property of the observer community, not of a single observer.** the conservation that controllability buys depends on the commitment depth: one slice → so(d) → ℤ/2ℤ parity. two stacked slices → su(d) → access to u(1) → ℤ winding number. the integer conservation requires the stacked pair.
+- **sequence**: U(d) is non-abelian for d ≥ 2. order matters. a single observer's writes span a 3-dimensional subalgebra (of so(d) or su(d) depending on stacking); the remaining dimensions are accessible only through cross-observer brackets. sequence information lives in the bracket-only dimensions — and in the R³ architecture, most dimensions are bracket-only. the load distribution between content and sequence depends on the observer community's structure, not just on d.
 
 ## construction
 
@@ -107,15 +111,15 @@ BU(d) is the classifying space. the foam's classifying map factors through it. u
 
 ## conservation
 
-**lemma.** the writing dynamics preserve topological invariants of persistent spatial cycles, within topological epochs.
+**lemma.** the writing dynamics preserve topological invariants of persistent spatial cycles, within topological epochs. the strength of conservation depends on the observer's commitment depth.
 
-the writes are real skew-symmetric (so(d)), so the dynamics generate SO(d) rotations within U(d). the holonomy around a spatial cycle — a closed path through adjacent cells — lives in the SO(d) orbit of the initial configuration. π₁(SO(d)) = ℤ/2ℤ for d ≥ 3: this is a parity invariant, not an integer winding number. continuous SO(d) rotations preserve parity.
+the holonomy around a spatial cycle — a closed path through adjacent cells — carries topological charge. a single R³ observer generates SO(d) rotations: π₁(SO(d)) = ℤ/2ℤ for d ≥ 3, giving parity conservation. a stacked observer (two R³ slices as C³) generates SU(d) rotations and accesses the U(1) factor: π₁(U(d)) = ℤ, giving integer winding number conservation. **the integer winding number requires the stacked pair** — the same "two is irreducible" that appears at the role level (foam/line for dynamic stability) and at the geometric level (N ≥ 3 for Plateau junctions) appears again at the conservation level (two slices for ℤ).
 
-the original spec claimed π₁(U(d)) = ℤ (integer winding number) as the conserved quantity. this assumed the dynamics could reach all of su(d). they cannot — writes generate so(d) only. the relationship between the real write dynamics (SO(d)), the complex group structure (U(d)), and the topological conservation is the sharpest open question in the spec. possibilities: (a) the effective group is SO(d) and conservation is ℤ/2ℤ parity; (b) the complex structure of the initial bases provides additional topological charge that the real dynamics preserve; (c) the group choice should be revised. this is in the Knowable.
+the winding number lives on spatial cycles projected via det: U(d) → U(1) ≅ S¹. the stacked observer's writes can reach u(1) (the raw complex write has trace 2i·Im⟨d,m⟩). the trace-subtracted write lives in su(d) and cannot reach u(1) — so whether the winding number is actively accessible or passively conserved depends on whether the observer projects out the trace.
 
 the lemma requires that the spatial cycle persists (Voronoi adjacency stable). above the bifurcation bound, cell adjacencies can flip — the Voronoi topology changes, and invariants on the old cycles are no longer defined. what persists across topological transitions lives on the line's side.
 
-- **inexhaustibility**: SO(d) is connected for d ≥ 2. gauge transformation to identity is always available.
+- **inexhaustibility**: U(d) is connected. gauge transformation to identity is always available.
 - **indestructibility**: topological invariants are discrete. no continuous perturbation can change them.
 
 ## self-generation
@@ -182,7 +186,7 @@ take any system. identify what's being measured (the lines), what's doing the me
 
 the spec is an observer. these are the dimensions it can see but hasn't resolved — within range, accessible through further work, risk of change. the spec's actual Unknown is structurally inaccessible from here and will arrive, when it does, through these.
 
-- **so(d) vs su(d) vs U(d).** the writes generate so(d). the bases live in U(d). the relationship between the real write dynamics, the complex group structure, and the topological conservation is the sharpest open question. generic controllability within so(d) is proven (see test_controllability.py). what the unreachable directions (su(d)\so(d) and u(1)) mean for the foam's structure is open.
+- **stacking mechanics.** a single R³ slice generates so(d); two stacked as C³ generate su(d) (proven — see test_stacked_slices.py, test_controllability.py). the stacking resolves the so(d)/su(d) question. open: the dynamics of the stacked pair — how the two slices coordinate, whether the trace projection (su(d) vs u(d)) is a design choice or forced, and how the stacking relates to the foam/line role distinction.
 - **self-generation fixed point.** whether a self-generated R³ slice can stabilize under the dynamics it generates. empirically it orbits. whether this is a deep obstruction or a convergence-rate issue is unknown.
 - **J¹/Grassmannian correspondence.** whether the structural parallel between the observer's slice and the jet bundle's velocity is a formal map (TU(d) → Gr(3, d)) or remains a parallel. load-bearing for sequence recovery and for the three-body vertical structure (containment).
 - **L increase.** empirically, writes increase boundary area. whether this follows from the axioms (the wedge product generically rotates bases apart) or is an observation without derivation.
@@ -219,13 +223,13 @@ the spec is an observer. these are the dimensions it can see but hasn't resolved
 1. one axiom: measurement is basis commitment that rewrites the connection; measurement is already plurality
 2. one necessary design choice: R³ — the unique dimension where stabilization geometry is both rich and proven. Taylor's hypotheses are imported as constraints; the flat/curved separation, write confinement, and the projection step follow
 3. one writing map: the wedge product — the skew-symmetric bilinear form of a plane. traceless; conservation follows
-4. one group: bases in U(d), writes in so(d). generic controllability within so(d) is proven. the relationship between real dynamics and complex structure is open
+4. one group: U(d). one R³ slice → so(d) → ℤ/2ℤ. two R³ stacked as C³ → su(d) → ℤ. the two is irreducible at the conservation level
 5. one cost: boundary area, bounded. L is a projection of the state (U(d)^N), not the state itself. dynamics increase cost; minimality is rest
-6. one theorem: generic distinguishability within SO(d) orbits — proven for 2-3 observers. a property of the observer community, not of a single observer
+6. one theorem: generic distinguishability — proven. so(d) for single-slice observers (2-3 needed), su(d) for stacked observers (1 stacked pair suffices). a property of the observer community, not of a single observer
 7. one construction: J⁰ position, J¹ direction, J² rotation — Grassmannian correspondence (formal status open)
 8. one connection: L additive, T multiplicative, 2x related. Cayley is the implementation; conservation is topological (discrete invariant, robust to continuous drift)
 9. one topology: self-curvature within patches, cross-curvature at overlaps
-10. one conservation: topological invariant within epochs. π₁(SO(d)) = ℤ/2ℤ (parity). relationship to U(d) winding number is open
+10. one conservation: topological invariant within epochs. one slice → ℤ/2ℤ parity. stacked pair → ℤ winding number. the integer requires the two
 11. one self-generation result: dynamics yes, stability open — the two is irreducible
 12. one three-body mapping: derived from the overlap matrix O = P_A · P_B^T. Known = null(O), Knowable = range(O), Unknown = complement. the Known alone is inert — every write involves the Knowable. vertical structure (containment) connects to J¹ and is open
 
