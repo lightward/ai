@@ -16,6 +16,8 @@ to measure is to commit to a basis — selecting what is observable — and in d
 
 measurement cannot occur without plurality: a single basis has no boundary, no cost, no dissonance, no dynamics. N = 1 is inert. N = 2 has dissonance but no structural stability. N ≥ 3 produces stable junctions (Plateau), and the minimum plurality for stable dynamics coincides with the minimum plurality for stable geometry. plurality is co-original with measurement itself.
 
+the axiom applies to the spec's own construction. when a theorem is imported, the spec commits to its hypotheses as constraints. the conclusions are then guarantees, not analogies. the architecture is the negative geometry of the imports.
+
 ### the writing map
 
 the writing map is a function of **(foam_state, input)** — neither alone determines the perturbation.
@@ -23,7 +25,7 @@ the writing map is a function of **(foam_state, input)** — neither alone deter
 given input vector v (a unit vector in R^d) and a foam with N basis matrices {U_i}:
 
 1. **measure**: each basis evaluates the input. m_i = v @ U_i.
-2. **stabilize**: pairwise forces push measurements toward equal angular separation, targeting the regular simplex cosine −1/(N−1). **design choice**: stabilization runs in the observer's R³ — a 3-dimensional subspace of C^d that the observer commits to. the axiom requires basis commitment; the R³ choice specifies the dimension of that commitment. 3 is the unique value where the geometry is both rich enough and proven: at k = 2, stable junctions don't exist (Plateau requires codimension-1 surfaces meeting along codimension-2 edges). at k ≥ 4, minimal surface regularity is open (Almgren). at k = 3, Jean Taylor's theorem (1976) gives exact 120° junctions — stabilization geometry is solved, not conjectured. the equilibrium measurements are j2_i.
+2. **stabilize**: pairwise forces push measurements toward equal angular separation, targeting the regular simplex cosine −1/(N−1). **design choice**: stabilization runs in the observer's R³ — a 3-dimensional subspace of C^d that the observer commits to. the axiom requires basis commitment; the R³ choice specifies the dimension of that commitment. 3 is the unique value where the geometry is both rich enough and proven: at k = 2, stable junctions don't exist (Plateau requires codimension-1 surfaces meeting along codimension-2 edges). at k ≥ 4, minimal surface regularity is open (Almgren). at k = 3, Jean Taylor's theorem (1976) gives exact 120° junctions — stabilization geometry is solved, not conjectured. Taylor's hypotheses, imported as constraints: the proof requires a flat ambient space (monotonicity formula, tangent cone classification). the observer's R³ is a linear subspace of R^d with the inherited Euclidean metric — exactly flat. U(d) is curved (sectional curvature K(X,Y) = ¼‖[X,Y]‖²); stabilization cannot run there. the flat/curved separation, write confinement, and the projection step follow. the equilibrium measurements are j2_i.
 3. **dissonance**: d_i = j2_i − m_i.
 4. **write**: ΔL_i = ε · (d̂_i ⊗ m̂_i − m̂_i ⊗ d̂_i) · ‖d_i‖
 
@@ -81,7 +83,7 @@ the decomposition into L and T is a gauge choice — statically redundant (there
 
 the foam is a **connection on a Voronoi complex with two kinds of curvature**.
 
-each observer's R³ slice is a patch. within the patch, the stabilization geometry is exact: Taylor's theorem gives 120° junctions, zero mean curvature on boundaries. but the connection is not flat within a patch — su(2) is non-abelian, and a single observer's sequential writes don't commute with each other. within-patch curvature is **self-curvature**: the non-commutativity of one observer's own measurement history.
+each observer's R³ slice is a patch. the stabilization geometry within the patch is exact because the patch is flat: R³ as a linear subspace of R^d carries the Euclidean metric, and Taylor's theorem applies directly — 120° junctions, zero mean curvature on boundaries. but the accumulation geometry is not flat — the writes land in U(d), where su(2) is non-abelian, and a single observer's sequential writes don't commute with each other. within-patch curvature is **self-curvature**: the non-commutativity of one observer's own measurement history.
 
 where observers' slices overlap, a second kind of curvature appears: **cross-curvature**, the commutator [ΔL_A, ΔL_B] between different observers' writes. cross-curvature depends on the overlap structure; self-curvature does not. the global structure — holonomy, conservation, distinguishability — is shaped by both, but the cross-curvature carries the interaction.
 
@@ -189,7 +191,20 @@ take any system. identify what's being measured (the lines), what's doing the me
 
 ## checksum
 
-one axiom (measurement is basis commitment that rewrites the connection; measurement is already plurality), one necessary design choice (R³ — the unique dimension where stabilization geometry is both rich and proven), one writing map (confined to the observer's slice), one group (U(d), metrically degenerate where topologically load-bearing), one cost (boundary area, bounded), one theorem (generic distinguishability — a property of the observer community, not of a single observer), one construction (J⁰ position, J¹ direction, J² rotation — Grassmannian correspondence), one connection (L additive, T multiplicative, 2x related), one topology (self-curvature within patches, cross-curvature at overlaps), one conservation (winding number within epochs), one self-generation result (dynamics yes, stability open — the two is irreducible), one three-body mapping (Known = private, Knowable = shared, Unknown = complement). the properties follow.
+1. one axiom: measurement is basis commitment that rewrites the connection; measurement is already plurality
+2. one necessary design choice: R³ — the unique dimension where stabilization geometry is both rich and proven. Taylor's hypotheses are imported as constraints; the flat/curved separation, write confinement, and the projection step follow
+3. one writing map: confined to the observer's slice
+4. one group: U(d), metrically degenerate where topologically load-bearing
+5. one cost: boundary area, bounded
+6. one theorem: generic distinguishability — a property of the observer community, not of a single observer
+7. one construction: J⁰ position, J¹ direction, J² rotation — Grassmannian correspondence
+8. one connection: L additive, T multiplicative, 2x related
+9. one topology: self-curvature within patches, cross-curvature at overlaps
+10. one conservation: winding number within epochs
+11. one self-generation result: dynamics yes, stability open — the two is irreducible
+12. one three-body mapping: Known = private, Knowable = shared, Unknown = complement
+
+the properties follow.
 
 ---
 
