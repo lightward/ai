@@ -29,7 +29,11 @@ given input vector v (a unit vector in R^d) and a foam with N basis matrices {U_
 3. **dissonance**: d_i = j2_i − m_i.
 4. **write**: ΔL_i = ε · (d̂_i ⊗ m̂_i − m̂_i ⊗ d̂_i) · ‖d_i‖
 
-the write is skew-symmetric, maximal when dissonance is orthogonal to measurement, zero when they are parallel. **confirmation cannot write.** the foam responds only to what's missing at right angles to what's there.
+the write form, imported as constraints: (a) skew-symmetric (from the axiom — writes are Lie algebra elements), (b) bilinear in d and m (the only available quantities), (c) confined to the observer's slice (from the Taylor import). Λ²(2-plane) is 1-dimensional; the wedge product d̂ ⊗ m̂ − m̂ ⊗ d̂ spans it (see test_write_uniqueness.py).
+
+**confirmation cannot write**: the wedge product vanishes when its arguments are parallel. the write is maximal when dissonance is orthogonal to measurement, zero when they are parallel. the foam responds only to what's missing at right angles to what's there.
+
+the write is always traceless: tr(d⊗m − m⊗d) = d·m − m·d = 0. writes live in su(d). the u(1) direction is unreachable. this connects directly to conservation: the winding number lives in u(1), which is exactly the direction the write cannot reach.
 
 both d̂ and m̂ lie in the observer's R³ slice. the write is confined to the observer's subspace — an observer literally cannot modify dimensions they are not bound to.
 
@@ -60,8 +64,8 @@ L is bounded: U(d) is compact.
 three properties:
 
 - **similarity**: the writing dynamics are continuous. similar sequences → similar states.
-- **distinguishability**: the writing dynamics are generically observable. different sequences → different states. *mechanism*: a single observer's writes are rank-2 skew-Hermitian, confined to their R³ — they generate at most a 3-dimensional subalgebra of u(d). full controllability requires multiple observers with overlapping slices: the combined writes span more of u(d), and the commutators [ΔL_A, ΔL_B] at the overlaps generate the rest. by Chow-Rashevsky, if the overlap structure is rich enough (non-parallel slices spanning u(d) through brackets), the system is locally controllable; by duality, locally observable. **controllability is a property of the observer community, not of a single observer.** whether generic foam configurations produce overlap structures rich enough for full controllability is open — it depends on the number and relative orientation of observers, not just on the foam's internal geometry. this connects the theorem to the axiom: distinguishability requires plurality, and the strength of distinguishability depends on the plurality's geometric diversity.
-- **sequence**: U(d) is non-abelian for d ≥ 2. order matters. a single observer's writes span a 3-dimensional subalgebra; the remaining dimensions of u(d) are accessible only through cross-observer brackets. at d = 3, u(3) has dimension 9: one observer contributes 3, and the other 6 require the commutators of overlapping observers' writes. sequence information lives in the bracket-only dimensions — and in the R³ architecture, most dimensions are bracket-only. the load distribution between content and sequence depends on the observer community's structure, not just on d.
+- **distinguishability**: the writing dynamics are generically observable. different sequences → different states. *mechanism*: a single observer's writes are rank-2 skew-Hermitian, confined to their R³ — they generate at most a 3-dimensional subalgebra of su(d) (not u(d): writes are traceless by derivation). full controllability requires multiple observers with overlapping slices: the combined writes span more of su(d), and the commutators [ΔL_A, ΔL_B] at the overlaps generate the rest. brackets of traceless matrices are traceless, so the reachable algebra is su(d). the u(1) center is algebraically unreachable — this is what makes the winding number conserved. by Chow-Rashevsky, if the overlap structure is rich enough (non-parallel slices spanning su(d) through brackets), the system is locally controllable on the SU(d) factor; by duality, locally observable. **controllability is a property of the observer community, not of a single observer.** whether generic foam configurations produce overlap structures rich enough for full controllability is open — it depends on the number and relative orientation of observers, not just on the foam's internal geometry. this connects the theorem to the axiom: distinguishability requires plurality, and the strength of distinguishability depends on the plurality's geometric diversity.
+- **sequence**: U(d) is non-abelian for d ≥ 2. order matters. a single observer's writes span a 3-dimensional subalgebra of su(d); the remaining dimensions of su(d) are accessible only through cross-observer brackets. at d = 3, su(3) has dimension 8: one observer contributes 3, and the other 5 require the commutators of overlapping observers' writes. the 9th dimension (u(1)) is unreachable by any writes or brackets — it is the conservation direction. sequence information lives in the bracket-only dimensions — and in the R³ architecture, most dimensions are bracket-only. the load distribution between content and sequence depends on the observer community's structure, not just on d.
 
 ## construction
 
@@ -101,7 +105,7 @@ BU(d) is the classifying space. the foam's classifying map factors through it. u
 
 **lemma.** the writing dynamics preserve the winding number of persistent spatial cycles, within topological epochs.
 
-the winding number lives on spatial cycles — closed paths through adjacent cells. the holonomy around such a cycle, projected via det: U(d) → U(1) ≅ S¹, has winding number in π₁(U(d)) = ℤ. skew-symmetric perturbation → Cayley → connected component → homotopy class preserved.
+the winding number lives on spatial cycles — closed paths through adjacent cells. the holonomy around such a cycle, projected via det: U(d) → U(1) ≅ S¹, has winding number in π₁(U(d)) = ℤ. the write form is traceless by derivation (the wedge product of two vectors has zero trace), so writes live in su(d) and cannot perturb the u(1) factor. this is the algebraic reason the winding number is conserved: the dynamics are confined to the traceless subalgebra, and the conserved quantity lives in the trace direction. skew-symmetric perturbation → Cayley → connected component → homotopy class preserved.
 
 the lemma requires that the spatial cycle persists (Voronoi adjacency stable). above the bifurcation bound, cell adjacencies can flip — the Voronoi topology changes, and winding numbers on the old cycles are no longer defined. what persists across topological transitions lives on the line's side.
 
@@ -194,9 +198,9 @@ take any system. identify what's being measured (the lines), what's doing the me
 
 1. one axiom: measurement is basis commitment that rewrites the connection; measurement is already plurality
 2. one necessary design choice: R³ — the unique dimension where stabilization geometry is both rich and proven. Taylor's hypotheses are imported as constraints; the flat/curved separation, write confinement, and the projection step follow
-3. one writing map: confined to the observer's slice
-4. one group: U(d), metrically degenerate where topologically load-bearing
-5. one cost: boundary area, bounded. dynamics increase cost; minimality is rest
+3. one writing map: the wedge product — the skew-symmetric bilinear form of a plane. traceless; conservation follows
+4. one group: U(d), metrically degenerate where topologically load-bearing. writes span su(d); u(1) is unreachable
+5. one cost: boundary area, bounded. L is a projection of the state (U(d)^N), not the state itself. dynamics increase cost; minimality is rest
 6. one theorem: generic distinguishability — a property of the observer community, not of a single observer
 7. one construction: J⁰ position, J¹ direction, J² rotation — Grassmannian correspondence (formal status open)
 8. one connection: L additive, T multiplicative, 2x related
