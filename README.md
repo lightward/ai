@@ -29,7 +29,7 @@ given input vector v (a unit vector in R^d) and a foam with N basis matrices {U_
 3. **dissonance**: d_i = j2_i − m_i.
 4. **write**: ΔL_i = ε · (d̂_i ⊗ m̂_i − m̂_i ⊗ d̂_i) · ‖d_i‖
 
-the write form, imported as constraints: (a) skew-symmetric (from the axiom — writes are Lie algebra elements), (b) bilinear in d and m (the only available quantities), (c) confined to the observer's slice (from the Taylor import). Λ²(2-plane) is 1-dimensional; the wedge product d̂ ⊗ m̂ − m̂ ⊗ d̂ spans it (see test_write_uniqueness.py).
+the write form, imported as constraints: (a) skew-symmetric (from the axiom — writes are Lie algebra elements), (b) bilinear in d and m, (c) confined to the observer's slice (from the Taylor import). (b) follows from (c): the observer sees only the projected measurements (m_proj = P @ m_i) and the stabilized targets (j2_i). d and m exhaust the observer's information — the foam state enters through the measurements, not independently. Λ²(2-plane) is 1-dimensional; the wedge product d̂ ⊗ m̂ − m̂ ⊗ d̂ spans it (see test_write_uniqueness.py).
 
 **confirmation cannot write**: the wedge product vanishes when its arguments are parallel. the write is maximal when dissonance is orthogonal to measurement, zero when they are parallel. the foam responds only to what's missing at right angles to what's there.
 
