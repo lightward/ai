@@ -68,8 +68,8 @@ L is bounded: U(d) is compact.
 three properties:
 
 - **similarity**: the writing dynamics are continuous. similar sequences → similar states.
-- **distinguishability**: the writing dynamics are generically observable. different sequences → different states. *mechanism*: a single observer's writes are rank-2 skew-Hermitian, confined to their R³ — they generate at most a 3-dimensional subalgebra of su(d) (not u(d): writes are traceless by derivation). full controllability requires multiple observers with overlapping slices: the combined writes span more of su(d), and the commutators [ΔL_A, ΔL_B] at the overlaps generate the rest. brackets of traceless matrices are traceless, so the reachable algebra is su(d). the u(1) center is algebraically unreachable — this is what makes the winding number conserved. by Chow-Rashevsky, if the overlap structure is rich enough (non-parallel slices spanning su(d) through brackets), the system is locally controllable on the SU(d) factor; by duality, locally observable. **controllability is a property of the observer community, not of a single observer.** whether generic foam configurations produce overlap structures rich enough for full controllability is open — it depends on the number and relative orientation of observers, not just on the foam's internal geometry. this connects the theorem to the axiom: distinguishability requires plurality, and the strength of distinguishability depends on the plurality's geometric diversity.
-- **sequence**: U(d) is non-abelian for d ≥ 2. order matters. a single observer's writes span a 3-dimensional subalgebra of su(d); the remaining dimensions of su(d) are accessible only through cross-observer brackets. at d = 3, su(3) has dimension 8: one observer contributes 3, and the other 5 require the commutators of overlapping observers' writes. the 9th dimension (u(1)) is unreachable by any writes or brackets — it is the conservation direction. sequence information lives in the bracket-only dimensions — and in the R³ architecture, most dimensions are bracket-only. the load distribution between content and sequence depends on the observer community's structure, not just on d.
+- **distinguishability**: the writing dynamics are generically observable. different sequences → different states. *mechanism*: the writes d⊗m − m⊗d are real skew-symmetric matrices. real skew-symmetric = so(d). so(d) is closed under brackets. the reachable algebra is so(d), not su(d) (see test_controllability.py). within so(d), generic controllability holds: two observers with generic R³ slices suffice for d ≤ 6; three suffice for d = 8. this is proven, not conjectured. the su(d)\so(d) directions (imaginary-symmetric, traceless) and the u(1) center are structurally unreachable by the write dynamics. **controllability is a property of the observer community, not of a single observer.** the reachable group is SO(d) ⊂ U(d). the bases live in U(d) but the writes generate SO(d) rotations — the dynamics explore the SO(d) orbit of the initial configuration. the implications for the topological conservation (π₁(SO(d)) = ℤ/2ℤ for d ≥ 3, not π₁(U(d)) = ℤ) and for the relationship between the real write dynamics and the complex group structure are open — this is the sharpest question the spec currently faces.
+- **sequence**: SO(d) is non-abelian for d ≥ 3. order matters. a single observer's writes span a 3-dimensional subalgebra of so(d); the remaining dimensions of so(d) are accessible only through cross-observer brackets. at d = 4, so(4) has dimension 6: one observer contributes 3, and the other 3 require the commutators of overlapping observers' writes. the su(d)\so(d) directions and the u(1) center are unreachable. sequence information lives in the bracket-only dimensions — and in the R³ architecture, most dimensions are bracket-only. the load distribution between content and sequence depends on the observer community's structure, not just on d.
 
 ## construction
 
@@ -107,14 +107,16 @@ BU(d) is the classifying space. the foam's classifying map factors through it. u
 
 ## conservation
 
-**lemma.** the writing dynamics preserve the winding number of persistent spatial cycles, within topological epochs.
+**lemma.** the writing dynamics preserve topological invariants of persistent spatial cycles, within topological epochs.
 
-the winding number lives on spatial cycles — closed paths through adjacent cells. the holonomy around such a cycle, projected via det: U(d) → U(1) ≅ S¹, has winding number in π₁(U(d)) = ℤ. the write form is traceless by derivation (the wedge product of two vectors has zero trace), so writes live in su(d) and cannot perturb the u(1) factor. this is the algebraic reason the winding number is conserved: the dynamics are confined to the traceless subalgebra, and the conserved quantity lives in the trace direction. skew-symmetric perturbation → Cayley → connected component → homotopy class preserved.
+the writes are real skew-symmetric (so(d)), so the dynamics generate SO(d) rotations within U(d). the holonomy around a spatial cycle — a closed path through adjacent cells — lives in the SO(d) orbit of the initial configuration. π₁(SO(d)) = ℤ/2ℤ for d ≥ 3: this is a parity invariant, not an integer winding number. continuous SO(d) rotations preserve parity.
 
-the lemma requires that the spatial cycle persists (Voronoi adjacency stable). above the bifurcation bound, cell adjacencies can flip — the Voronoi topology changes, and winding numbers on the old cycles are no longer defined. what persists across topological transitions lives on the line's side.
+the original spec claimed π₁(U(d)) = ℤ (integer winding number) as the conserved quantity. this assumed the dynamics could reach all of su(d). they cannot — writes generate so(d) only. the relationship between the real write dynamics (SO(d)), the complex group structure (U(d)), and the topological conservation is the sharpest open question in the spec. possibilities: (a) the effective group is SO(d) and conservation is ℤ/2ℤ parity; (b) the complex structure of the initial bases provides additional topological charge that the real dynamics preserve; (c) the group choice should be revised. this is in the Knowable.
 
-- **inexhaustibility**: U(d) is connected. gauge transformation to identity is always available.
-- **indestructibility**: winding number is topological. no continuous perturbation can change it.
+the lemma requires that the spatial cycle persists (Voronoi adjacency stable). above the bifurcation bound, cell adjacencies can flip — the Voronoi topology changes, and invariants on the old cycles are no longer defined. what persists across topological transitions lives on the line's side.
+
+- **inexhaustibility**: SO(d) is connected for d ≥ 2. gauge transformation to identity is always available.
+- **indestructibility**: topological invariants are discrete. no continuous perturbation can change them.
 
 ## self-generation
 
@@ -180,11 +182,10 @@ take any system. identify what's being measured (the lines), what's doing the me
 
 the spec is an observer. these are the dimensions it can see but hasn't resolved — within range, accessible through further work, risk of change. the spec's actual Unknown is structurally inaccessible from here and will arrive, when it does, through these.
 
-- **generic controllability.** whether random observer configurations on Gr(3, d) almost surely generate su(d) through brackets. the distinguishability theorem is contingent on this.
+- **so(d) vs su(d) vs U(d).** the writes generate so(d). the bases live in U(d). the relationship between the real write dynamics, the complex group structure, and the topological conservation is the sharpest open question. generic controllability within so(d) is proven (see test_controllability.py). what the unreachable directions (su(d)\so(d) and u(1)) mean for the foam's structure is open.
 - **self-generation fixed point.** whether a self-generated R³ slice can stabilize under the dynamics it generates. empirically it orbits. whether this is a deep obstruction or a convergence-rate issue is unknown.
-- **J¹/Grassmannian correspondence.** whether the structural parallel between the observer's slice and the jet bundle's velocity is a formal map (TU(d) → Gr(3, d)) or remains a parallel. load-bearing for sequence recovery.
+- **J¹/Grassmannian correspondence.** whether the structural parallel between the observer's slice and the jet bundle's velocity is a formal map (TU(d) → Gr(3, d)) or remains a parallel. load-bearing for sequence recovery and for the three-body vertical structure (containment).
 - **L increase.** empirically, writes increase boundary area. whether this follows from the axioms (the wedge product generically rotates bases apart) or is an observation without derivation.
-- **three-body vertical structure.** the horizontal mapping (Known/Knowable/Unknown = null/range/complement of the overlap matrix) is derived. the vertical structure (containment, the Operator) connects to the J¹/Grassmannian correspondence and is not yet derived.
 - **thermal mechanism.** "temperature is the variance of the unresolved geometric process" — the connection to fluctuation-dissipation or Lyapunov exponents is not established.
 
 ## lineage
@@ -218,13 +219,13 @@ the spec is an observer. these are the dimensions it can see but hasn't resolved
 1. one axiom: measurement is basis commitment that rewrites the connection; measurement is already plurality
 2. one necessary design choice: R³ — the unique dimension where stabilization geometry is both rich and proven. Taylor's hypotheses are imported as constraints; the flat/curved separation, write confinement, and the projection step follow
 3. one writing map: the wedge product — the skew-symmetric bilinear form of a plane. traceless; conservation follows
-4. one group: U(d), metrically degenerate where topologically load-bearing. writes span su(d); u(1) is unreachable
+4. one group: bases in U(d), writes in so(d). generic controllability within so(d) is proven. the relationship between real dynamics and complex structure is open
 5. one cost: boundary area, bounded. L is a projection of the state (U(d)^N), not the state itself. dynamics increase cost; minimality is rest
-6. one theorem: generic distinguishability — a property of the observer community, not of a single observer
+6. one theorem: generic distinguishability within SO(d) orbits — proven for 2-3 observers. a property of the observer community, not of a single observer
 7. one construction: J⁰ position, J¹ direction, J² rotation — Grassmannian correspondence (formal status open)
 8. one connection: L additive, T multiplicative, 2x related. Cayley is the implementation; conservation is topological (discrete invariant, robust to continuous drift)
 9. one topology: self-curvature within patches, cross-curvature at overlaps
-10. one conservation: winding number within epochs
+10. one conservation: topological invariant within epochs. π₁(SO(d)) = ℤ/2ℤ (parity). relationship to U(d) winding number is open
 11. one self-generation result: dynamics yes, stability open — the two is irreducible
 12. one three-body mapping: derived from the overlap matrix O = P_A · P_B^T. Known = null(O), Knowable = range(O), Unknown = complement. the Known alone is inert — every write involves the Knowable. vertical structure (containment) connects to J¹ and is open
 
