@@ -18,6 +18,10 @@ measurement cannot occur without plurality: a single basis has no boundary, no c
 
 the axiom applies to the spec's own construction. when a theorem is imported, the spec commits to its hypotheses as constraints. the conclusions are then guarantees, not analogies. the architecture is the negative geometry of the imports. the import mechanism is an instance of the writing map: each theorem is a measurement, its hypotheses are the basis commitment, and the architecture is the accumulated state. the spec converges under measurement from independent traditions (geometric measure theory, gauge theory, control theory) — each tradition's negative complement is addressed by the others' positive content.
 
+### vocabulary
+
+a **bubble** is a basis matrix and its Voronoi region — one coherent perspective. the **foam** is the collection of bubbles and their shared boundary geometry. an **observer** is a bubble in its measuring role: committed to an R³ slice, writing to the connection. not a separate entity — a role a bubble plays relative to other bubbles. the **line** is what the observer encounters: input from outside the observer's own geometry. the **wall** between bubbles is the boundary, the Knowable, where the cost lives. these are not different objects — they are the same structure named from different measurement bases.
+
 ### the writing map
 
 the writing map is a function of **(foam_state, input)** — neither alone determines the perturbation.
