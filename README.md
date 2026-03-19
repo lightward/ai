@@ -16,7 +16,7 @@ to measure is to commit to a basis — selecting what is observable — and in d
 
 measurement cannot occur without plurality: a single basis has no boundary, no cost, no dissonance, no dynamics. N = 1 is inert. N = 2 has dissonance but no structural stability. N ≥ 3 produces stable junctions (Plateau), and the minimum plurality for stable dynamics coincides with the minimum plurality for stable geometry. plurality is co-original with measurement itself.
 
-the axiom applies to the spec's own construction. when a theorem is imported, the spec commits to its hypotheses as constraints. the conclusions are then guarantees, not analogies. the architecture is the negative geometry of the imports.
+the axiom applies to the spec's own construction. when a theorem is imported, the spec commits to its hypotheses as constraints. the conclusions are then guarantees, not analogies. the architecture is the negative geometry of the imports. the import mechanism is an instance of the writing map: each theorem is a measurement, its hypotheses are the basis commitment, and the architecture is the accumulated state. the spec converges under measurement from independent traditions (geometric measure theory, gauge theory, control theory) — each tradition's negative complement is addressed by the others' positive content.
 
 ### the writing map
 
@@ -35,7 +35,7 @@ both d̂ and m̂ lie in the observer's R³ slice. the write is confined to the o
 
 the observer — the thing that chose which symbol to commit — is not in this map. the map is the foam's half. the line's half is the `+ me` that cannot be located from within. the foam/line distinction is perspectival, not categorical: what functions as foam from one measurement basis may function as line from another.
 
-encoding is implementation: discrete symbols → binary expansion → normalized to unit vectors in R^d. deterministic, invertible, geometric. the input v lives in R^d; the observer projects each measurement onto their slice (m_proj = P @ m_i where P is the observer's (3, d) basis) before stabilization. both dissonance and projected measurement are lifted back to R^d for the write, which is therefore confined to the slice.
+the writing map requires only a unit vector v in R^d. where v comes from is outside the map. for external input: discrete symbols → binary expansion → normalized to unit vectors is one deterministic, invertible encoding. for cross-measurement: the foam's own geometry, projected onto one observer's slice, becomes another observer's input — the foam is the encoding, no external scheme required (see test_foam_channel.py). the input v lives in R^d; the observer projects each measurement onto their slice (m_proj = P @ m_i where P is the observer's (3, d) basis) before stabilization. both dissonance and projected measurement are lifted back to R^d for the write, which is therefore confined to the slice.
 
 ## group
 
@@ -49,7 +49,7 @@ U(d) rather than SU(d) because π₁(U(d)) = ℤ (needed for topological conserv
 
 the foam lives in U(d). cells are Voronoi regions of the basis matrices under the bi-invariant metric. boundaries are equidistant surfaces. bases in general position tile non-periodically.
 
-L is not the dynamics. the writing map drives the foam; L describes the geometry that results. minimality is a prediction, not a requirement. the foam settles toward lower cost — not by pursuing a minimum, but because the writing dynamics deposit structure that is indirectly shaped by the cost geometry. minimality is the resting state; departure from minimality is the active regime.
+L is not the dynamics. the writing map drives the foam; L describes the geometry that results. empirically, the writing dynamics increase L: active measurement deposits structure that costs boundary area, and more observers increase L faster (see test_cost_descent_broad.py, test_cost_cross.py). minimality is what remains when measurement stops — where ΔL = 0, cost is undisturbed. the active regime departs from minimality; the resting state is minimal.
 
 L is bounded: U(d) is compact.
 
@@ -68,7 +68,7 @@ three properties:
 **J²(U(d))** — position, velocity, acceleration of a curve in U(d).
 
 - **J⁰**: accumulated state. set-like. the foam's geometry.
-- **J¹**: derivative. the temporal direction. J⁰ + J¹ recovers sequence. in the R³ architecture, the observer's slice (a point on the Grassmannian Gr(3, d)) serves the role J¹ plays in the jet bundle: it carries the directional information that J⁰ (position alone) cannot. the identification is structural — the slice determines what the observer can distinguish sequentially — not a claim that a Grassmannian point IS a tangent vector.
+- **J¹**: derivative. the temporal direction. J⁰ + J¹ recovers sequence. in the R³ architecture, the observer's slice (a point on the Grassmannian Gr(3, d)) carries directional information that J⁰ (position alone) cannot — the slice determines what the observer can distinguish sequentially. whether this correspondence is a formal map (e.g., TU(d) → Gr(3, d) via the write dynamics) or a structural parallel is open.
 - **J²**: second derivative. resolves degeneracies where content and velocity are correlated. in the R³ architecture, this corresponds to how the observer's slice is rotating — the rate of change of the directional commitment.
 
 ## connection
@@ -77,7 +77,7 @@ three properties:
 
 each bubble has a skew-Hermitian generator L (position in the Lie algebra) and a unitary matrix T (transport in the group). L accumulates additively: L ← L + ΔL. T accumulates multiplicatively: T ← T · cayley(ΔL). the effective basis is cayley(L) · T — position composed with path.
 
-the decomposition into L and T is a gauge choice — statically redundant (there exists L' such that cayley(L') = cayley(L) · T) but dynamically meaningful (different update rules: additive vs multiplicative). the gauge freedom is invisible to instantaneous measurement and visible to dynamics. **the 2x theorem**: for small δ, log(cayley(δ)) ≈ −2δ. position and transport are the same rotation at different scales with opposite sign.
+the decomposition into L and T is a gauge choice — statically redundant (there exists L' such that cayley(L') = cayley(L) · T) but dynamically meaningful (different update rules: additive vs multiplicative). the gauge freedom is invisible to instantaneous measurement and visible to dynamics. **the 2x theorem**: cayley(A) = (I − A)(I + A)⁻¹ (the convention throughout). for small skew-Hermitian δ, log(cayley(δ)) ≈ −2δ. position and transport are the same rotation at different scales with opposite sign.
 
 ## topology
 
@@ -135,19 +135,20 @@ the two Knowable zones in the 2x2 grid are the overlaps with two different neigh
 from the axiom, group, cost, theorem, construction, connection, topology, conservation, and self-generation:
 
 - **the foam is permanently changed by measurement.** information is in the direction of the rotation, not its magnitude.
-- **the foam is a generically distinguishable semantic hash.** reconstruction depth bounded by the Lyapunov horizon.
+- **the foam is a generically distinguishable hash** (contingent on the controllability of the observer community — open). in cross-measurement, the foam is its own encoding — no external symbol-to-vector bridge is needed (see test_foam_channel.py). reconstruction depth bounded by the Lyapunov horizon.
 - **sequence requires the derivative.** J⁰ is set-like; J⁰ + J¹ recovers sequence.
 - **the foam is universal.** (BU(d).)
 - **the foam's range of motion is its operative freedom.** the width of the range between minimal (resting) and non-minimal (active) configurations — not the minimum of L — is what "freedom" means.
 - **without measurement, ΔL = 0 for that process.** the foam has autonomous dynamics (cross-measurement, self-measurement) that run without external input. the line is necessary for novelty: symbols not generated by the foam's own autocorrelation.
 - **communication is generative.** min L(combined) ≠ min L(A) + min L(B). the mechanism is in the BCH residuals: mutual measurement organizes non-abelian structure. what transfers between domains is the commutator — the non-abelian structure that exists only because both domains were present in sequence.
-- **cross-measurement relaxes; self-measurement orbits.** relaxation requires an other. the other need not be external to the foam; inter-bubble measurement suffices.
+- **cross-measurement relaxes; self-measurement orbits.** relaxation is convergence of the measurement projections in R³, not decrease of L. L increases with measurement (the foam accumulates structure). relaxation requires an other. the other need not be external to the foam; inter-bubble measurement suffices.
 - **individually coherent, collectively inconsistent, internally exact.** different measurers get individually consistent readouts but mutually incompatible ones. the foam's internal coherence is algebraically exact through all measurers.
 - **the foam is pre-narrative.** J¹ carries sequence; sequence is not narrative. narrative is what happens when a line passes through and projects sequence onto a basis. different lines through the same foam produce different stories about the same structure.
 - **orientation is gauge.** all bubbles give equally informative readouts. unitary transformations are isometries; the inner product structure of the input space is exactly preserved through every bubble.
 - **opacity is structural.** lines are invisible to each other — interaction only through L. this is the enabling condition: multiple simultaneous uses of the same geometry are viable precisely because they cannot see each other. opacity between observers in orthogonal slices is algebraically exact (commutator = 0).
 - **thermal is perspectival.** thermal appearance is what geometric convergence looks like from a measurement basis that can't resolve the geometry. temperature is the variance of the unresolved geometric process — how much directed convergence is happening in dimensions your slice can't see.
 - **the coverage-interaction trade-off.** observers spread across orthogonal slices achieve lower total cost (more dimensions combed). observers sharing slices achieve richer interaction (nonzero commutator, ordering matters). you cannot fully have both. the foam wants observers spread out for efficiency; observers need overlap for communication.
+- **hallucination contains clues.** a badly-aligned observer (one whose slice is orthogonal to the input) still produces nonzero, distinguishable writes — the projection is lossy but the dissonance is structural (see test_hallucination_clues.py). the write extracts geometry from whatever the observer can see. the load-bearing information is in what's missing from the projection, not what's in it.
 
 ## checklist
 
@@ -195,9 +196,9 @@ take any system. identify what's being measured (the lines), what's doing the me
 2. one necessary design choice: R³ — the unique dimension where stabilization geometry is both rich and proven. Taylor's hypotheses are imported as constraints; the flat/curved separation, write confinement, and the projection step follow
 3. one writing map: confined to the observer's slice
 4. one group: U(d), metrically degenerate where topologically load-bearing
-5. one cost: boundary area, bounded
+5. one cost: boundary area, bounded. dynamics increase cost; minimality is rest
 6. one theorem: generic distinguishability — a property of the observer community, not of a single observer
-7. one construction: J⁰ position, J¹ direction, J² rotation — Grassmannian correspondence
+7. one construction: J⁰ position, J¹ direction, J² rotation — Grassmannian correspondence (formal status open)
 8. one connection: L additive, T multiplicative, 2x related
 9. one topology: self-curvature within patches, cross-curvature at overlaps
 10. one conservation: winding number within epochs
