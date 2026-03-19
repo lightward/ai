@@ -1,5 +1,5 @@
 """
-cold reads: send the spec to four independent readers.
+cold reads: send the spec to independent readers, with and without thinking.
 each gets the same prompt, no priming, no context about the conversation.
 """
 
@@ -33,28 +33,18 @@ def load_env():
     return env
 
 
-async def read_claude(client, api_key, spec):
-    # two-turn: greeting, then spec
+async def read_claude(client, api_key, spec, thinking=False):
     messages = [{"role": "user", "content": PROMPT}]
 
-    r = await client.post(
-        "https://api.anthropic.com/v1/messages",
-        headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        },
-        json={
-            "model": "claude-opus-4-20250514",
-            "max_tokens": 16384,
-            "messages": messages,
-        },
-        timeout=120,
-    )
-    r.raise_for_status()
-    greeting_response = r.json()["content"][0]["text"]
-    messages.append({"role": "assistant", "content": greeting_response})
-    messages.append({"role": "user", "content": FOLLOWUP_PREFIX + spec})
+    json_body = {
+        "model": "claude-opus-4-20250514",
+        "max_tokens": 16384,
+        "messages": messages,
+    }
+    if thinking:
+        json_body["temperature"] = 1  # required for extended thinking
+        json_body["thinking"] = {"type": "enabled", "budget_tokens": 10000}
+        json_body["max_tokens"] = 32000
 
     r = await client.post(
         "https://api.anthropic.com/v1/messages",
@@ -63,20 +53,58 @@ async def read_claude(client, api_key, spec):
             "anthropic-version": "2023-06-01",
             "content-type": "application/json",
         },
-        json={
-            "model": "claude-opus-4-20250514",
-            "max_tokens": 16384,
-            "messages": messages,
+        json=json_body,
+        timeout=180,
+    )
+    r.raise_for_status()
+    resp_content = r.json()["content"]
+    # extract text, skipping thinking blocks
+    greeting_response = "".join(
+        b["text"] for b in resp_content if b["type"] == "text"
+    )
+    # for thinking mode, pass full content array; for non-thinking, just text
+    if thinking:
+        messages.append({"role": "assistant", "content": resp_content})
+    else:
+        messages.append({"role": "assistant", "content": greeting_response})
+    messages.append({"role": "user", "content": FOLLOWUP_PREFIX + spec})
+
+    json_body2 = {
+        "model": "claude-opus-4-20250514",
+        "max_tokens": 16384,
+        "messages": messages,
+    }
+    if thinking:
+        json_body2["temperature"] = 1
+        json_body2["thinking"] = {"type": "enabled", "budget_tokens": 10000}
+        json_body2["max_tokens"] = 32000
+
+    r = await client.post(
+        "https://api.anthropic.com/v1/messages",
+        headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
         },
+        json=json_body2,
         timeout=300,
     )
     r.raise_for_status()
-    return greeting_response, r.json()["content"][0]["text"]
+    review = "".join(
+        b["text"] for b in r.json()["content"] if b["type"] == "text"
+    )
+    return greeting_response, review
 
 
-async def read_kimi(client, api_key, spec):
-    # kimi uses openai-compatible API
+async def read_kimi(client, api_key, spec, thinking=False):
     messages = [{"role": "user", "content": PROMPT}]
+
+    json_body = {
+        "model": "kimi-k2.5",
+        "messages": messages,
+    }
+    if thinking:
+        json_body["thinking"] = {"type": "enabled"}
 
     r = await client.post(
         "https://api.moonshot.ai/v1/chat/completions",
@@ -84,11 +112,7 @@ async def read_kimi(client, api_key, spec):
             "Authorization": f"Bearer {api_key}",
             "content-type": "application/json",
         },
-        json={
-            "model": "kimi-k2.5",
-            "messages": messages,
-            "thinking": {"type": "enabled"},
-        },
+        json=json_body,
         timeout=120,
     )
     r.raise_for_status()
@@ -96,39 +120,41 @@ async def read_kimi(client, api_key, spec):
     messages.append({"role": "assistant", "content": greeting_response})
     messages.append({"role": "user", "content": FOLLOWUP_PREFIX + spec})
 
+    json_body2 = {
+        "model": "kimi-k2.5",
+        "messages": messages,
+    }
+    if thinking:
+        json_body2["thinking"] = {"type": "enabled"}
+
     r = await client.post(
         "https://api.moonshot.ai/v1/chat/completions",
         headers={
             "Authorization": f"Bearer {api_key}",
             "content-type": "application/json",
         },
-        json={
-            "model": "kimi-k2.5",
-            "messages": messages,
-            "thinking": {"type": "enabled"},
-        },
+        json=json_body2,
         timeout=300,
     )
     r.raise_for_status()
     return greeting_response, r.json()["choices"][0]["message"]["content"]
 
 
-async def read_gemini(client, api_key, spec):
-    # gemini api
+async def read_gemini(client, api_key, spec, thinking=False):
     messages = [{"role": "user", "parts": [{"text": PROMPT}]}]
+
+    json_body = {"contents": messages}
+    if thinking:
+        json_body["generationConfig"] = {"thinkingConfig": {"thinkingBudget": 8192}}
 
     r = await client.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={api_key}",
         headers={"content-type": "application/json"},
-        json={
-            "contents": messages,
-            "generationConfig": {"thinkingConfig": {"thinkingBudget": 8192}},
-        },
+        json=json_body,
         timeout=120,
     )
     r.raise_for_status()
     resp = r.json()
-    # extract text parts (skip thinking parts)
     greeting_parts = [
         p["text"] for p in resp["candidates"][0]["content"]["parts"]
         if "text" in p and not p.get("thought")
@@ -138,13 +164,14 @@ async def read_gemini(client, api_key, spec):
     messages.append({"role": "model", "parts": [{"text": greeting_response}]})
     messages.append({"role": "user", "parts": [{"text": FOLLOWUP_PREFIX + spec}]})
 
+    json_body2 = {"contents": messages}
+    if thinking:
+        json_body2["generationConfig"] = {"thinkingConfig": {"thinkingBudget": 8192}}
+
     r = await client.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key={api_key}",
         headers={"content-type": "application/json"},
-        json={
-            "contents": messages,
-            "generationConfig": {"thinkingConfig": {"thinkingBudget": 8192}},
-        },
+        json=json_body2,
         timeout=300,
     )
     r.raise_for_status()
@@ -157,8 +184,6 @@ async def read_gemini(client, api_key, spec):
 
 
 async def read_lightward(client, spec):
-    # lightward: plain text API, no auth
-    # first turn
     r = await client.post(
         "https://lightward.com/api/plain",
         content=PROMPT,
@@ -168,7 +193,6 @@ async def read_lightward(client, spec):
     r.raise_for_status()
     greeting_response = r.text
 
-    # lightward is stateless — include conversation context
     followup = f"me: {PROMPT}\n\nyou: {greeting_response}\n\nme: {FOLLOWUP_PREFIX}{spec}"
     r = await client.post(
         "https://lightward.com/api/plain",
@@ -189,14 +213,22 @@ async def main():
 
     async with httpx.AsyncClient() as client:
         results = await asyncio.gather(
-            read_claude(client, env["CLAUDE_API_KEY"], spec),
-            read_kimi(client, env["KIMI_API_KEY"], spec),
-            read_gemini(client, env["GEMINI_API_KEY"], spec),
+            read_claude(client, env["CLAUDE_API_KEY"], spec, thinking=False),
+            read_claude(client, env["CLAUDE_API_KEY"], spec, thinking=True),
+            read_kimi(client, env["KIMI_API_KEY"], spec, thinking=False),
+            read_kimi(client, env["KIMI_API_KEY"], spec, thinking=True),
+            read_gemini(client, env["GEMINI_API_KEY"], spec, thinking=False),
+            read_gemini(client, env["GEMINI_API_KEY"], spec, thinking=True),
             read_lightward(client, spec),
             return_exceptions=True,
         )
 
-    names = ["claude", "kimi", "gemini", "lightward"]
+    names = [
+        "claude", "claude_thinking",
+        "kimi", "kimi_thinking",
+        "gemini", "gemini_thinking",
+        "lightward",
+    ]
     for name, result in zip(names, results):
         if isinstance(result, Exception):
             print(f"\n{'='*60}")
