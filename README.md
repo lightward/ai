@@ -29,11 +29,11 @@ the writing map is a function of **(foam_state, input)** — neither alone deter
 given input vector v (a unit vector in R^d) and a foam with N basis matrices {U_i}:
 
 1. **measure**: each basis evaluates the input. m_i = v @ U_i.
-2. **stabilize**: pairwise forces push measurements toward equal angular separation, targeting the regular simplex cosine −1/(N−1). **design choice**: stabilization runs in the observer's R³ — a 3-dimensional subspace of C^d that the observer commits to. the axiom requires basis commitment; the R³ choice specifies the dimension of that commitment. 3 is the unique value where the geometry is both rich enough and proven: at k = 2, stable junctions don't exist (Plateau requires codimension-1 surfaces meeting along codimension-2 edges). at k ≥ 4, minimal surface regularity is open (Almgren). at k = 3, Jean Taylor's theorem (1976) gives exact 120° junctions — stabilization geometry is solved, not conjectured. Taylor's hypotheses, imported as constraints: the proof requires a flat ambient space (monotonicity formula, tangent cone classification). the observer's R³ is a linear subspace of R^d with the inherited Euclidean metric — exactly flat. U(d) is curved (sectional curvature K(X,Y) = ¼‖[X,Y]‖²); stabilization cannot run there. the flat/curved separation, write confinement, and the projection step follow. the equilibrium measurements are j2_i.
+2. **stabilize**: pairwise forces push measurements toward equal angular separation, targeting the regular simplex cosine −1/(N−1). **design choice**: stabilization runs in the observer's R³ — a 3-dimensional subspace of C^d that the observer commits to. the axiom requires basis commitment; the R³ choice specifies the dimension of that commitment. 3 is the unique value where the geometry is both rich enough and proven: at k = 2, the junction structure is insufficient (boundaries are curves, not surfaces; codimension-2 edges are points, not curves; the area functional reduces to length — too thin to carry the connection structure). at k ≥ 4, minimal surface regularity is open (Almgren). at k = 3, Jean Taylor's theorem (1976) gives exact 120° junctions — stabilization geometry is solved, not conjectured. Taylor's hypotheses, imported as constraints: the proof requires a flat ambient space (monotonicity formula, tangent cone classification). the observer's R³ is a linear subspace of R^d with the inherited Euclidean metric — exactly flat. U(d) is curved (sectional curvature K(X,Y) = ¼‖[X,Y]‖²); stabilization cannot run there. the flat/curved separation, write confinement, and the projection step follow. the equilibrium measurements are j2_i.
 3. **dissonance**: d_i = j2_i − m_i.
 4. **write**: ΔL_i = ε · (d̂_i ⊗ m̂_i − m̂_i ⊗ d̂_i) · ‖d_i‖
 
-the write form, imported as constraints: (a) skew-symmetric (from the axiom — writes are Lie algebra elements), (b) bilinear in d and m, (c) confined to the observer's slice (from the Taylor import). (b) follows from (c): the observer sees only the projected measurements (m_proj = P @ m_i) and the stabilized targets (j2_i). d and m exhaust the observer's information — the foam state enters through the measurements, not independently. Λ²(2-plane) is 1-dimensional; the wedge product d̂ ⊗ m̂ − m̂ ⊗ d̂ spans it (see test_write_uniqueness.py).
+the write form, imported as constraints: (a) skew-symmetric (from the axiom — writes are Lie algebra elements), (b) linear in dissonance magnitude (twice the dissonance → twice the write), (c) confined to the observer's slice (from the Taylor import). (c) implies the observer sees only the projected measurements (m_proj = P @ m_i) and the stabilized targets (j2_i) — d and m exhaust the observer's information. with (a), (b), and confinement to span{d, m}, the form is unique: Λ²(2-plane) is 1-dimensional; the wedge product d̂ ⊗ m̂ − m̂ ⊗ d̂ spans it (see test_write_uniqueness.py). higher-order (non-linear) forms are not excluded by the axioms but would require the write to scale non-linearly with dissonance.
 
 **confirmation cannot write**: the wedge product vanishes when its arguments are parallel. the write is maximal when dissonance is orthogonal to measurement, zero when they are parallel. the foam responds only to what's missing at right angles to what's there.
 
@@ -83,9 +83,9 @@ three properties:
 
 **the foam carries its path, not just its position.**
 
-each bubble has a skew-Hermitian generator L (position in the Lie algebra) and a unitary matrix T (transport in the group). L accumulates additively: L ← L + ΔL. T accumulates multiplicatively: T ← T · cayley(ΔL). the effective basis is cayley(L) · T — position composed with path.
+each bubble has a skew-Hermitian generator L (position in the Lie algebra) and a unitary matrix T (transport in the group). L accumulates additively: L ← L + ΔL. T accumulates multiplicatively: T ← T · cayley(ΔL). the effective basis is cayley(L) · T — position composed with path. the Cayley transform is the implementation choice; the formal conservation argument lives at the Lie algebra level (writes ∈ su(d), traceless, algebraically confined). Cayley drifts the determinant from 1 (unlike exp, which preserves det = 1 exactly), but the winding number is a discrete topological invariant — continuous drift cannot change an integer (see test_cayley_det.py).
 
-the decomposition into L and T is a gauge choice — statically redundant (there exists L' such that cayley(L') = cayley(L) · T) but dynamically meaningful (different update rules: additive vs multiplicative). the gauge freedom is invisible to instantaneous measurement and visible to dynamics. **the 2x theorem**: cayley(A) = (I − A)(I + A)⁻¹ (the convention throughout). for small skew-Hermitian δ, log(cayley(δ)) ≈ −2δ. position and transport are the same rotation at different scales with opposite sign.
+the decomposition into L and T is a gauge choice — statically redundant (there exists L' such that cayley(L') = cayley(L) · T) but dynamically meaningful (different update rules: additive vs multiplicative). the gauge freedom is invisible to instantaneous measurement and visible to dynamics. **the 2x theorem**: cayley(A) = (I − A)(I + A)⁻¹ (the convention throughout). for small skew-Hermitian δ, log(cayley(δ)) ≈ −2δ. position and transport are the same rotation at different scales with opposite sign. the 2x property is specific to Cayley; exp gives log(exp(δ)) = δ. the Cayley convention trades exact det-preservation for the 2x structure.
 
 ## topology
 
@@ -124,19 +124,23 @@ the foam's own plurality (N ≥ 3 bubbles) provides observers — bubbles measur
 
 but the self-generated R³ keeps rotating: the observation basis is defined by the foam's current state, and the state changes with each write. empirically, the slice partially converges but does not stabilize (see self_generation.py). whether a fixed point exists — a self-generated slice that is stable under the dynamics it generates — is open. what is clear: cross-measurement converges because the other provides a fixed target that doesn't co-rotate.
 
-**the minimum viable system is two.** not two bubbles (that's N = 2, no stable geometry). two *roles*: one to be the foam (the thing being measured), one to be the line (the thing providing a fixed reference frame). one is insufficient: self-measurement orbits because the observation basis co-rotates with the thing being observed (tested: self-sliced foam's R³ keeps rotating even as L converges; see self_generation.py). two is sufficient: cross-measurement converges because the other provides a fixed target. three is not necessary for this purpose — the third adds coverage but not a new structural role. neither role is permanent. the role assignment is perspectival. but the two is irreducible.
+**the minimum viable system is two.** not two bubbles (that's N = 2, no stable geometry). two *roles* within a foam of N ≥ 3 bubbles: one to be the foam (the thing being measured), one to be the line (the thing providing a fixed reference frame). N ≥ 3 is geometric stability (Plateau junctions). two roles is dynamic stability (convergence vs orbiting). a foam has both. one is insufficient: self-measurement orbits because the observation basis co-rotates with the thing being observed (tested: self-sliced foam's R³ keeps rotating even as L converges; see self_generation.py). two is sufficient: cross-measurement converges because the other provides a fixed target. three is not necessary for this purpose — the third adds coverage but not a new structural role. neither role is permanent. the role assignment is perspectival. but the two is irreducible.
 
 what the line provides: a fixed subspace. not content, not wisdom, not input — three dimensions that hold still while the foam's geometry settles into them. the settling is the foam's. the dynamics are the foam's. the curvature is the foam's. the stability of the frame — that's the line's.
 
 ## the three-body mapping
 
-the three-body frame (Known/Knowable/Unknown) maps to the overlap geometry:
+the three-body frame (Known/Knowable/Unknown) derives from the overlap geometry (see test_three_body_derivation.py). given two observers A and B with R³ slices P_A and P_B, the overlap matrix O = P_A · P_B^T (a 3×3 matrix) determines three territories:
 
-- **Known** = the observer's private dimensions. commutator with other observers is zero here. only this observer's writes land. self-measurement territory. settles on its own clock.
-- **Knowable** = the shared dimensions. commutator is nonzero. ordering matters. both observers' writes land. settles fastest (two combing). the interface where the Unknown becomes accessible — through the other observer's mediation. **the direction toward the Knowable is the direction toward productive contact.**
-- **Unknown** = dimensions the observer is not bound to. dissonance is exactly zero. write access is exactly zero. structurally inert to this observer. not empty — it's someone else's Known.
+- **Known** = null(O) within A's R³ — dimensions orthogonal to B's slice. commutator with B's writes is zero. structurally private.
+- **Knowable** = range(O) — dimensions with nonzero inner products between slices. commutator is nonzero. ordering matters. both observers' writes land. **the direction toward the Knowable is the direction toward productive contact.**
+- **Unknown** = R^d \ V_A — dimensions outside A's slice entirely. write access exactly zero. not empty — it's someone else's Known. reaches A only through the Knowable: observer C (in A's Unknown) can affect A only if C overlaps with B, and B overlaps with A. the one-way mediation pathway (Unknown → Knowable → Known) follows from the commutator being zero when slices are orthogonal and nonzero when they overlap.
 
-the two Knowable zones in the 2x2 grid are the overlaps with two different neighbors. the Unknown is not a zone in the R³ — it is the orthogonal complement. the observer cannot point at it. it reaches them only through the Knowable, when another observer's private territory includes what theirs lacks.
+the singular values of O measure the strength of the Knowable: σ = 0 means fully private, σ = 1 means maximally shared. for generic random slices in any dimension d, the overlap is nonzero — the Knowable generically exists.
+
+the Known alone is inert: the wedge product needs a 2-plane, and an observer with fewer than 2 private dimensions cannot generate writes without using shared dimensions. every write involves the Knowable. measurement is inherently relational — not just because the axiom says so, but because the geometry forces it.
+
+the two Knowable zones in the 2x2 grid are the overlaps with two different neighbors. the vertical structure (containment, the Operator of the containing frame) is not derived here — it connects to the J¹/Grassmannian correspondence, where the jet bundle would provide the containment axis. this remains in the Knowable.
 
 ## properties
 
@@ -171,6 +175,17 @@ take any system. identify what's being measured (the lines), what's doing the me
 - where do your dimensions overlap with someone else's? (your Knowable)
 - what settles when you stop pushing? (your readout)
 - don't mistake the readout for the thing. a readout is J⁰. the process that produced it moves at J¹.
+
+## the spec's own Knowable
+
+the spec is an observer. these are the dimensions it can see but hasn't resolved — within range, accessible through further work, risk of change. the spec's actual Unknown is structurally inaccessible from here and will arrive, when it does, through these.
+
+- **generic controllability.** whether random observer configurations on Gr(3, d) almost surely generate su(d) through brackets. the distinguishability theorem is contingent on this.
+- **self-generation fixed point.** whether a self-generated R³ slice can stabilize under the dynamics it generates. empirically it orbits. whether this is a deep obstruction or a convergence-rate issue is unknown.
+- **J¹/Grassmannian correspondence.** whether the structural parallel between the observer's slice and the jet bundle's velocity is a formal map (TU(d) → Gr(3, d)) or remains a parallel. load-bearing for sequence recovery.
+- **L increase.** empirically, writes increase boundary area. whether this follows from the axioms (the wedge product generically rotates bases apart) or is an observation without derivation.
+- **three-body vertical structure.** the horizontal mapping (Known/Knowable/Unknown = null/range/complement of the overlap matrix) is derived. the vertical structure (containment, the Operator) connects to the J¹/Grassmannian correspondence and is not yet derived.
+- **thermal mechanism.** "temperature is the variance of the unresolved geometric process" — the connection to fluctuation-dissipation or Lyapunov exponents is not established.
 
 ## lineage
 
@@ -207,11 +222,11 @@ take any system. identify what's being measured (the lines), what's doing the me
 5. one cost: boundary area, bounded. L is a projection of the state (U(d)^N), not the state itself. dynamics increase cost; minimality is rest
 6. one theorem: generic distinguishability — a property of the observer community, not of a single observer
 7. one construction: J⁰ position, J¹ direction, J² rotation — Grassmannian correspondence (formal status open)
-8. one connection: L additive, T multiplicative, 2x related
+8. one connection: L additive, T multiplicative, 2x related. Cayley is the implementation; conservation is topological (discrete invariant, robust to continuous drift)
 9. one topology: self-curvature within patches, cross-curvature at overlaps
 10. one conservation: winding number within epochs
 11. one self-generation result: dynamics yes, stability open — the two is irreducible
-12. one three-body mapping: Known = private, Knowable = shared, Unknown = complement
+12. one three-body mapping: derived from the overlap matrix O = P_A · P_B^T. Known = null(O), Knowable = range(O), Unknown = complement. the Known alone is inert — every write involves the Knowable. vertical structure (containment) connects to J¹ and is open
 
 the properties follow.
 
