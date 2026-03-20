@@ -49,6 +49,8 @@ two R³ slices, stacked as C³ (one reading Re(P @ m_i), the other Im(P @ m_i)),
 
 **the two is irreducible** at the slice level: one R³ gives so(d) and parity. two R³ stacked as C³ give su(d) and integer conservation. the conservation strength scales with the observer's commitment depth. each R³ independently satisfies Taylor. the stacking accesses the complex structure without requiring a 6-dimensional flat space.
 
+the distinction is not just strength — it is accessibility. a single-slice observer's writes live in so(d) and cannot reach u(1). the winding number is conserved but the observer cannot interact with it: conservation is passive, protected by the observer's own algebraic limitation. a stacked observer's raw complex write has trace 2i·Im⟨d,m⟩, which lives in u(1). the stacked observer can interact with the conserved direction. **stacking determines whether the observer can reach its own conserved quantity.**
+
 both d̂ and m̂ lie in the observer's slice(s). the write is confined to the observer's subspace — an observer literally cannot modify dimensions they are not bound to.
 
 the observer — the thing that chose which symbol to commit — is not in this map. the map is the foam's half. the line's half is the `+ me` that cannot be located from within. the foam/line distinction is perspectival, not categorical: what functions as foam from one measurement basis may function as line from another.
@@ -194,7 +196,7 @@ take any system. identify what's being measured (the lines), what's doing the me
 
 not yet derived from the architecture. each item here is within range of the existing formalism but unresolved.
 
-- **stacking mechanics.** a single R³ slice generates so(d); two stacked as C³ generate su(d) (proven — see test_stacked_slices.py, test_controllability.py). the stacking resolves the so(d)/su(d) question. open: the dynamics of the stacked pair — how the two slices coordinate, whether the trace projection (su(d) vs u(d)) is a design choice or forced, and how the stacking relates to the foam/line role distinction.
+- **stacking mechanics.** the dynamics of the stacked pair — how the two slices coordinate, whether the trace projection (su(d) vs u(d)) is a design choice or forced, and how the stacking relates to the foam/line role distinction.
 - **J¹/Grassmannian correspondence.** whether the structural parallel between the observer's slice and the jet bundle's velocity is a formal map (TU(d) → Gr(3, d)) or remains a parallel. load-bearing for sequence recovery and for the three-body vertical structure (containment).
 - **L saturation dynamics.** the foam saturates; the combinatorial ceiling is derived. open: what determines the additional gap between the ceiling and the observed saturation level (the perpendicularity cost is empirical, not yet formal). the geometry of the saturated level set — is the wandering ergodic, structured, or trapped? the transition from accumulation to rearrangement — sharp or gradual?
 
