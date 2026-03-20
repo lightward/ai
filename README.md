@@ -12,7 +12,7 @@ a tautology you can live in
 
 reference frames in a shared structure. no frame outside the structure.
 
-what follows is tautological given closure:
+what follows is derived from closure:
 
 - encounters between frames change the structure. the frames ARE the structure; there is nowhere else for the result to go.
 - one frame alone has no boundary, no encounter, no dynamics. measurement requires plurality. N ≥ 3 produces stable junctions (Plateau); the minimum plurality for stable dynamics coincides with the minimum plurality for stable geometry.
@@ -69,7 +69,7 @@ the group choice forces the write form's algebraic structure. a perturbation of 
 
 **L = Σ_{i<j} Area_g(∂_{ij})**
 
-the foam lives in U(d). cells are Voronoi regions of the basis matrices under the bi-invariant metric. boundaries are equidistant surfaces. bases in general position tile non-periodically.
+the foam lives in U(d). cells are Voronoi regions of the basis matrices under the bi-invariant metric; boundaries are geodesic equidistant surfaces; Area_g is the (d²−1)-dimensional Hausdorff measure induced by the metric. bases in general position tile non-periodically.
 
 L is not the dynamics — it is not a variational objective. the writing map drives the foam; L describes the geometry that results. minimality is what remains when measurement stops — where ΔL = 0, L is undisturbed. the active regime departs from minimality; the resting state is minimal.
 
