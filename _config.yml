@@ -1,2 +1,4 @@
 name: (foam) the measurement solution
 title: null
+exclude:
+  - history
