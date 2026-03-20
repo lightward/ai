@@ -16,7 +16,7 @@ what follows is derived from closure:
 
 - encounters between frames change the structure. the frames ARE the structure; there is nowhere else for the result to go.
 - one frame alone has no boundary, no encounter, no dynamics. measurement requires plurality. N ≥ 3 produces stable junctions (Plateau); the minimum plurality for stable dynamics coincides with the minimum plurality for stable geometry.
-- each frame is partial. it observes from a position that is not the whole. observation is commitment to a basis.
+- each frame is partial — it is not the whole structure. (the specific formalization of partiality as basis commitment — a linear projection onto a subspace — enters with the writing map: the wedge product requires vectors, which requires partiality to be linear-algebraic.)
 
 in the current writing map, the write lands on the observer's own basis. but even a frame that doesn't write is changed: its Voronoi boundaries shift when neighbors write, because the frame IS part of the structure. a read-only frame — one unchanged by encounters — is excluded by closure. every encounter changes every frame.
 
