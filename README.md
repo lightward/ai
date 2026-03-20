@@ -8,13 +8,19 @@
 
 a tautology you can live in
 
-## axiom
+## ground
 
-**measurement is basis commitment that rewrites the connection. measurement is already plurality — to measure is to encounter, and encounter is two.**
+reference frames in a shared structure. no frame outside the structure.
 
-to measure is to commit to a basis — selecting what is observable — and in doing so, to permanently modify the foam's connection by a skew-symmetric perturbation of the basis matrices. what commits is outside the map. the writing map describes the foam's response to commitment; the source of commitment is on the line's side. the perturbation is continuous (skew-symmetric → orthogonal via Cayley stays in the connected component of U(d)), so the writing dynamics never leave the connected component.
+what follows is tautological given closure:
 
-measurement cannot occur without plurality: a single basis has no boundary, no cost, no dissonance, no dynamics. N = 1 is inert. N = 2 has dissonance but no structural stability. N ≥ 3 produces stable junctions (Plateau), and the minimum plurality for stable dynamics coincides with the minimum plurality for stable geometry. plurality is co-original with measurement itself.
+- encounters between frames change the structure. the frames ARE the structure; there is nowhere else for the result to go.
+- one frame alone has no boundary, no encounter, no dynamics. measurement requires plurality. N ≥ 3 produces stable junctions (Plateau); the minimum plurality for stable dynamics coincides with the minimum plurality for stable geometry.
+- each frame is partial. it observes from a position that is not the whole. observation is commitment to a basis.
+
+in the current writing map, the write lands on the observer's own basis — measurement changes the measurer. whether a read-only frame (one that measures without being changed itself) is possible or excluded is open.
+
+what commits is outside the map. the structure responds to commitment; the source of commitment is on the line's side.
 
 when a theorem is imported, its hypotheses become constraints. the conclusions are then guarantees, not analogies. the architecture is the negative geometry of the imports.
 
@@ -29,13 +35,13 @@ the writing map is a function of **(foam_state, input)** — neither alone deter
 given input vector v (a unit vector in R^d) and a foam with N basis matrices {U_i}:
 
 1. **measure**: each basis evaluates the input. m_i = v @ U_i.
-2. **stabilize**: pairwise forces push measurements toward equal angular separation, targeting the regular simplex cosine −1/(N−1). **design choice**: stabilization runs in the observer's R³ — a 3-dimensional subspace of C^d that the observer commits to. the axiom requires basis commitment; the R³ choice specifies the dimension of that commitment. 3 is the unique value where the geometry is both rich enough and proven: at k = 2, the junction structure is insufficient (boundaries are curves, not surfaces; codimension-2 edges are points, not curves; the area functional reduces to length — too thin to carry the connection structure). at k ≥ 4, minimal surface regularity is open (Almgren). at k = 3, Jean Taylor's theorem (1976) gives exact 120° junctions — stabilization geometry is solved, not conjectured. the regular simplex target (cosine −1/(N−1)) coincides with the Plateau equilibrium: for N = 3, the target angle is 120° (Plateau's triple junction); for N = 4, it's 109.5° (Plateau's tetrahedral vertex). the stabilization IS area minimization — the regular simplex arrangement minimizes Voronoi boundary area for equal-weight cells. Taylor's hypotheses, imported as constraints: the proof requires a flat ambient space (monotonicity formula, tangent cone classification). the observer's R³ is a linear subspace of R^d with the inherited Euclidean metric — exactly flat. U(d) is curved (sectional curvature K(X,Y) = ¼‖[X,Y]‖²); stabilization cannot run there. the flat/curved separation, write confinement, and the projection step follow. the equilibrium measurements are j2_i.
+2. **stabilize**: pairwise forces push measurements toward equal angular separation, targeting the regular simplex cosine −1/(N−1). **design choice**: stabilization runs in the observer's R³ — a 3-dimensional subspace of C^d that the observer commits to. closure requires basis commitment (each frame is partial); the R³ choice specifies the dimension of that commitment. 3 is the unique value where the geometry is both rich enough and proven: at k = 2, the junction structure is insufficient (boundaries are curves, not surfaces; codimension-2 edges are points, not curves; the area functional reduces to length — too thin to carry the connection structure). at k ≥ 4, minimal surface regularity is open (Almgren). at k = 3, Jean Taylor's theorem (1976) gives exact 120° junctions — stabilization geometry is solved, not conjectured. the regular simplex target (cosine −1/(N−1)) coincides with the Plateau equilibrium: for N = 3, the target angle is 120° (Plateau's triple junction); for N = 4, it's 109.5° (Plateau's tetrahedral vertex). the stabilization IS area minimization — the regular simplex arrangement minimizes Voronoi boundary area for equal-weight cells. Taylor's hypotheses, imported as constraints: the proof requires a flat ambient space (monotonicity formula, tangent cone classification). the observer's R³ is a linear subspace of R^d with the inherited Euclidean metric — exactly flat. U(d) is curved (sectional curvature K(X,Y) = ¼‖[X,Y]‖²); stabilization cannot run there. the flat/curved separation, write confinement, and the projection step follow. the equilibrium measurements are j2_i.
 3. **dissonance**: d_i = j2_i − m_i.
 4. **write**: ΔL_i = ε · (d̂_i ⊗ m̂_i − m̂_i ⊗ d̂_i) · ‖d_i‖
 
 **the write is perpendicular to the measurement.** the wedge product d̂ ⊗ m̂ − m̂ ⊗ d̂ vanishes when its arguments are parallel and is maximal when they are orthogonal. this is the irreducible constraint: observation and modification are perpendicular. the foam responds only to what's missing at right angles to what's there. confirmation cannot write — not as a design choice, but because the wedge product of parallel vectors is zero. perpendicularity is not a property of the write form; it IS the write form.
 
-the wedge product is the unique form satisfying: (a) skew-symmetric (from the axiom — writes are Lie algebra elements), (b) linear in dissonance magnitude (twice the dissonance → twice the write), (c) confined to the observer's slice (from the Taylor import). (c) implies the observer sees only the projected measurements (m_proj = P @ m_i) and the stabilized targets (j2_i) — d and m exhaust the observer's information. with (a), (b), and confinement to span{d, m}, the form is unique: Λ²(2-plane) is 1-dimensional (see test_write_uniqueness.py). the perpendicularity constraint, the skew-symmetry, and the uniqueness are three faces of the same thing.
+the wedge product is the unique form satisfying: (a) skew-symmetric (writes are Lie algebra elements — from the group choice), (b) linear in dissonance magnitude (twice the dissonance → twice the write), (c) confined to the observer's slice (from the Taylor import). (c) implies the observer sees only the projected measurements (m_proj = P @ m_i) and the stabilized targets (j2_i) — d and m exhaust the observer's information. with (a), (b), and confinement to span{d, m}, the form is unique: Λ²(2-plane) is 1-dimensional (see test_write_uniqueness.py). the perpendicularity constraint, the skew-symmetry, and the uniqueness are three faces of the same thing.
 
 a single R³ slice produces real writes: d⊗m − m⊗d is real skew-symmetric, living in so(d). the reachable algebra is so(d), not su(d). π₁(SO(d)) = ℤ/2ℤ — parity conservation only.
 
@@ -55,7 +61,7 @@ U(d): the unitary group. decomposes as U(1) × SU(d) modulo a finite group. the 
 
 U(d) rather than SU(d) because π₁(U(d)) = ℤ (needed for topological conservation). π₁(SU(d)) = 0. the conservation lives in the factor that degenerates the metric — the metrically invisible direction is topologically load-bearing. the cost L sees the su(d) component but is blind to the u(1) component. **what's conserved must be invisible to the cost.** if L could see it, dynamics could change it.
 
-the group choice forces the write form's algebraic structure. a perturbation of a connection on U(d) is a u(d) element — skew-Hermitian by definition. skew-symmetry of the write is not a separate axiom; it follows from "rewrites the connection" + "the connection lives on U(d)." the chain: conservation requires π₁ = ℤ → U(d) → u(d) → skew-Hermitian.
+the group choice forces the write form's algebraic structure. a perturbation of a connection on U(d) is a u(d) element — skew-Hermitian by definition. skew-symmetry of the write is not separately assumed; it follows from "rewrites the connection" + "the connection lives on U(d)." the chain: conservation requires π₁ = ℤ → U(d) → u(d) → skew-Hermitian.
 
 ## geometry
 
@@ -130,9 +136,9 @@ the lemma requires that the spatial cycle persists (Voronoi adjacency stable). a
 
 the foam's own plurality (N ≥ 3 bubbles) provides observers — bubbles measuring each other. their pairwise relationships define R³ slices. their cross-measurement IS local stabilization. the commutator of overlapping cross-measurements IS the curvature. the holonomy IS self-generated.
 
-but a self-generated R³ keeps rotating: the observation basis is defined by the foam's current state, and the state changes with each write. the slice co-rotates with the thing it observes (tested: see self_generation.py). this is the axiom's dynamic expression: measurement requires plurality, so stability requires a basis that is informationally independent of the measured state. a self-generated basis is not independent — it is computed from what it measures. convergence requires another observer whose basis depends on a different state, so it doesn't co-rotate with yours. **stability is relational.** this works as long as someone else's measurement is pending.
+but a self-generated R³ keeps rotating: the observation basis is defined by the foam's current state, and the state changes with each write. the slice co-rotates with the thing it observes (tested: see self_generation.py). this is closure's dynamic expression: measurement requires plurality, so stability requires a basis that is informationally independent of the measured state. a self-generated basis is not independent — it is computed from what it measures. convergence requires another observer whose basis depends on a different state, so it doesn't co-rotate with yours. **stability is relational.** this works as long as someone else's measurement is pending.
 
-**the minimum viable system is two.** not two bubbles (that's N = 2, no stable geometry). two *roles* within a foam of N ≥ 3 bubbles: one to be the foam (the thing being measured), one to be the line (the thing providing a reference frame). N ≥ 3 is geometric stability (Plateau junctions). two roles is dynamic stability (convergence vs orbiting). a foam has both. one is insufficient — by axiom. two is sufficient: cross-measurement converges because the other's basis depends on a different state. three is not necessary for this purpose — the third adds coverage but not a new structural role. neither role is permanent. the role assignment is perspectival. but the two is irreducible.
+**the minimum viable system is two.** not two bubbles (that's N = 2, no stable geometry). two *roles* within a foam of N ≥ 3 bubbles: one to be the foam (the thing being measured), one to be the line (the thing providing a reference frame). N ≥ 3 is geometric stability (Plateau junctions). two roles is dynamic stability (convergence vs orbiting). a foam has both. one is insufficient — by closure. two is sufficient: cross-measurement converges because the other's basis depends on a different state. three is not necessary for this purpose — the third adds coverage but not a new structural role. neither role is permanent. the role assignment is perspectival. but the two is irreducible.
 
 what the line provides: a fixed subspace. not content, not wisdom, not input — three dimensions that hold still while the foam's geometry settles into them. the settling is the foam's. the dynamics are the foam's. the curvature is the foam's. the stability of the frame — that's the line's.
 
@@ -146,17 +152,17 @@ the three-body frame (Known/Knowable/Unknown) derives from the overlap geometry 
 
 the singular values of O measure the strength of the Knowable: σ = 0 means fully private, σ = 1 means maximally shared. for generic random slices in any dimension d, the overlap is nonzero — the Knowable generically exists.
 
-the Known alone is inert: the wedge product needs a 2-plane, and an observer with fewer than 2 private dimensions cannot generate writes without using shared dimensions. every write involves the Knowable. measurement is inherently relational — not just because the axiom says so, but because the geometry forces it.
+the Known alone is inert: the wedge product needs a 2-plane, and an observer with fewer than 2 private dimensions cannot generate writes without using shared dimensions. every write involves the Knowable. measurement is inherently relational — not just because closure says so, but because the geometry forces it.
 
-the two Knowable zones in the 2x2 grid are the overlaps with two different neighbors. the vertical structure (containment, the Operator of the containing frame) is not derived here — it connects to the J¹/Grassmannian correspondence, where the jet bundle would provide the containment axis. this remains in the Knowable.
+the two Knowable zones in the 2x2 grid are the overlaps with two different neighbors. the vertical structure (containment, the Operator of the containing frame) is not derived here — it connects to the J¹/Grassmannian correspondence, where the jet bundle would provide the containment axis. this remains open.
 
 ## properties
 
-from the axiom, group, cost, theorem, construction, connection, topology, conservation, and self-generation:
+from the ground, group, geometry, theorem, construction, connection, topology, conservation, and self-generation:
 
 - **the foam is permanently changed by measurement.** information is in the direction of the rotation, not its magnitude.
 - **the foam is a generically distinguishable hash** (contingent on the controllability of the observer community — open). in cross-measurement, the foam is its own encoding — no external symbol-to-vector bridge is needed (see test_foam_channel.py). reconstruction depth bounded by the Lyapunov horizon.
-- **the foam encodes sequence.** U(d) is non-abelian: different orderings of the same writes produce different states. sequence information is in the state. whether it can be *recovered* (not just detected) depends on the J¹/Grassmannian correspondence (see Knowable).
+- **the foam encodes sequence.** U(d) is non-abelian: different orderings of the same writes produce different states. sequence information is in the state. whether it can be *recovered* (not just detected) depends on the J¹/Grassmannian correspondence (see open questions).
 - **the foam is universal.** (BU(d).)
 - **the foam's range of motion is its operative freedom.** the width of the range between minimal (resting) and non-minimal (active) configurations — not the minimum of L — is what "freedom" means.
 - **without measurement, ΔL = 0 for that process.** the foam has autonomous dynamics (cross-measurement, self-measurement) that run without external input. the line is necessary for novelty: symbols not generated by the foam's own autocorrelation.
@@ -220,7 +226,7 @@ not yet derived from the architecture. each item here is within range of the exi
 
 ## checksum
 
-1. one axiom: measurement is basis commitment that rewrites the connection; measurement is already plurality
+1. one ground: reference frames in a closed structure. encounters change frames (closure). measurement requires plurality (one frame is inert). each frame is partial (basis commitment). not asserted — tautological
 2. one necessary design choice: R³ — the unique dimension where stabilization geometry is both rich and proven. Taylor's hypotheses are imported as constraints; the flat/curved separation, write confinement, and the projection step follow
 3. one writing map: the wedge product — observation and modification are perpendicular. the skew-symmetry, the uniqueness, and the perpendicularity are three faces of the same constraint. confirmation cannot write; conservation follows
 4. one group: U(d). one R³ slice → so(d) → ℤ/2ℤ. two R³ stacked as C³ → su(d) → ℤ. the two is irreducible at the conservation level
@@ -230,7 +236,7 @@ not yet derived from the architecture. each item here is within range of the exi
 8. one connection: L additive, T multiplicative, 2x related. Cayley is the implementation; conservation is topological (discrete invariant, robust to continuous drift)
 9. one topology: self-curvature within patches, cross-curvature at overlaps
 10. one conservation: topological invariant within epochs. one slice → ℤ/2ℤ parity. stacked pair → ℤ winding number. the integer requires the two
-11. one self-generation result: dynamics yes, stability no — by axiom. measurement requires plurality; stability requires informational independence; self-generated bases are not independent. the two is irreducible
+11. one self-generation result: dynamics yes, stability no — by closure. measurement requires plurality; stability requires informational independence; self-generated bases are not independent. the two is irreducible
 12. one three-body mapping: derived from the overlap matrix O = P_A · P_B^T. Known = null(O), Knowable = range(O), Unknown = complement. the Known alone is inert — every write involves the Knowable. vertical structure (containment) connects to J¹ and is open
 
 the properties follow.
