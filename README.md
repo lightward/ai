@@ -18,7 +18,7 @@ what follows is derived from closure:
 - one frame alone has no boundary, no encounter, no dynamics. measurement requires plurality. N ≥ 3 produces stable junctions (Plateau); the minimum plurality for stable dynamics coincides with the minimum plurality for stable geometry.
 - each frame is partial. it observes from a position that is not the whole. observation is commitment to a basis.
 
-in the current writing map, the write lands on the observer's own basis — measurement changes the measurer. whether a read-only frame (one that measures without being changed itself) is possible or excluded is open.
+in the current writing map, the write lands on the observer's own basis. but even a frame that doesn't write is changed: its Voronoi boundaries shift when neighbors write, because the frame IS part of the structure. a read-only frame — one unchanged by encounters — is excluded by closure. every encounter changes every frame.
 
 what commits is outside the map. the structure responds to commitment; the source of commitment is on the line's side.
 
