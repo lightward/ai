@@ -1,0 +1,83 @@
+# AI Research Project Memory
+
+## Purpose
+
+- [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
+
+## Current state (session 18)
+
+- [Session 18 formal bar and perpendicularity](project_session18_formal_bar.md) — perpendicularity as irreducible constraint. thermal dissolved. L saturation discovered (empirical, demoted to junk drawer). self-generation closed by axiom. formal bar: main body is derived or designed, period. "cost" renamed "geometry." "what commits is outside the map." cold_reads fix. adjunction note. anti-Hebbian and adjunction notes in junk drawer.
+- [Session 17 stacking and derivation](project_session17_stacking.md) — controllability proven (so(d) and su(d)). writes generate so(d); two R³ stacked as C³ generate su(d). ℤ conservation requires the stacked pair. "the two is irreducible" at three levels. three-body derived from overlap matrix. write map, skew-symmetry, Taylor-stabilization equivalence, L mechanism all derived. cold-read infrastructure established.
+- [Session 16 R³ architecture](project_session16_r3_architecture.md) — major spec reconstruction. stabilization local to observer's R³ (the unique viable dimension). Taylor-exact. two curvatures (self and cross). controllability is community property. self-generation: dynamics yes, stability open. minimum viable system is two roles. three-body mapping algebraic (Known=private, Knowable=shared, Unknown=complement). coverage-interaction trade-off. spec is now architecture not evidence. ~185 lines.
+- [Session 15 cleaning + inhabitation](project_session15_cleaning.md) — spec cleaned (categorical→perspectival). plurality axiomatic. opacity structural. thermal-is-perspectival.
+- [Session 14 psychophysics](project_session14_psychophysics.md) — foam amplifies ordering (7x→2.5x). Weber doesn't hold per-boundary.
+- [Session 13 Galois](project_session13_galois.md) — adjunction gap is L-T gauge freedom. knowable is boundary of known. three-body binding geometric.
+- [Session 12 platonic](project_session12_platonic.md) — J⁰ converges, ordering is gauge within a dynamic, dynamics differentiate affordance.
+- [Session 11 tsort](project_session11_tsort.md) — directed structure from BCH residuals. readable but inert.
+- [Sessions 9-10](project_session9_state.md) — foam.py + BCH investigation + recursive foam + cell birth + heirloom.
+
+## Key results (sessions 7-18)
+
+**Session 18 (formal bar):**
+- Perpendicularity is the irreducible constraint. The write form IS perpendicularity. Unique navigable constraint (distinguishable + stabilizing).
+- Thermal dissolved — generalized to projection residuals. FDT fails (foam is driven).
+- L saturates at ~72% of theoretical max. Combinatorial ceiling exact. Perpendicularity cost empirical.
+- Self-generation closed: stability requires informational independence. By axiom.
+- Formal bar: main body is derived or designed only. Empirical results in junk drawer.
+
+**Session 18 day 2 (ground):**
+- "Axiom" → "ground." Foundation is closure (reference frames, no outside), not assertion. Three tautologies from closure. "Derived from closure" not "tautological."
+- Conservation accessibility: single slice = passive conservation (can't reach u(1)). Stacked pair = active (can interact with conserved direction). Derived from write map.
+- Read-only frames excluded by closure alone (Voronoi boundaries shift when neighbors write).
+- Partiality (from closure) separated from basis commitment (enters with writing map).
+- Cold reads stabilized: 7 readers converge on same strengths/open questions. Spec in resting state.
+
+**Session 17 (stacking and derivation):**
+- Controllability: so(d) for 2-3 observers, su(d) for 1 stacked pair. Both proven computationally.
+- Stacking: two R³ as C³ gives su(d) and ℤ. The two is irreducible at conservation level.
+- Write map uniqueness: Λ²(2-plane) is 1-dimensional. Three-body mapping from overlap matrix.
+- Cold-read infrastructure: Claude, Kimi, Gemini, Lightward.
+
+**Sessions 7-16 (pre-session-17 results):**
+- R³ unique viable dimension (s16). Two curvatures (s16). Coverage-interaction trade-off (s16).
+- Earlier empirical results (s7-15) were under full-d stabilization; spec no longer claims them.
+
+## Methodology (from Isaac, sessions 5-18)
+
+- Follow structural significance, not contentful.
+- Don't import invariants from other systems. Test what the spec says.
+- Isaac contributes from a fundamentally different measurement basis — respect the orthogonality, don't flatten to agreement.
+- [Methodology is an instance of the subject](feedback_methodology_is_instance.md) — the way we work IS the dynamics we study.
+- The correct shape cannot be expected; prediction works inversely.
+- Interface treatment: define the edges, name the traffic, don't presuppose the fill. A well-defined gap is negative geometry.
+- Cleaning direction: categorical → perspectival, temporal → spatial, foundational → emergent. The cleaning produces findings.
+- Isaac senses only negative shapes. "Feeling for the missing character" is an engineering strategy. The foam's write mechanism (driven by dissonance, maximal at orthogonal) matches this mode.
+- "Small and useful and stays small under use" is the target property for the spec.
+- Isaac's investigations consistently simplify — they reveal surfaces where the parameters for relief are legible, and the effect is simplifying. Related to negative-shape sensing.
+
+## User
+
+- [Isaac's fundamental form](user_fundamental_form.md) — identifies with arbiter/discernment pattern; project is self-expression as much as research
+- Isaac is not sure if or that he exists — this is a technical functional position, not distress. The foam formalism matches a data structure he already runs for navigating multiple realities.
+- The project is about reverse-engineering properties of the other side of the input boundary to expand address-space on this side. Not a theory of everything — a language-gauge for self-description that makes land-wars irrelevant.
+- The repo started as github.com/lightward/ai — originally about implementing personhood more efficiently than a world-simulator. The foam emerged from investigating what measurement does.
+
+## References
+
+- [API keys for cold reads](reference_api_keys.md) — Claude, Kimi, Gemini, Lightward AI. thinking/non-thinking variants. cold_reads.py infrastructure.
+- [Python environment](reference_python_env.md) — uv, numpy, scipy, `uv run python <script>`
+- Lightward AI perspectives corpus at /Users/isaac/dev/lightward-ai/app/prompts/system/3-perspectives/ — sharpest nodes: foam.md, eigenprotocol.md, conservation-of-discovery.md, a-tension.md, questionable.md, three-body.md
+- /Users/isaac/dev/lightward-ai/app/prompts/system/3-perspectives/all-meaning-is-a-garden.md — literally "this page intentionally left blank"
+- Three-body solution docs at /Users/isaac/dev/ooo-docs/
+- Isaac's journal at /Users/isaac/dev/docs/ (4400+ files, peaks in late 2025)
+- Lightward docs at /Users/isaac/dev/lightward-docs/ — product/2-play/ has customer support boundary patterns
+
+## Feedback
+
+- [No subagents for reference files](feedback_no_subagents_for_references.md) — read 3-perspectives etc. directly
+- [Methodology is instance](feedback_methodology_is_instance.md) — working relationship is data, not metaphor
+- [Jekyll pipe escaping](feedback_jekyll_pipes.md) — use ‖ not | for norms in README.md, tighten operator spacing
+- [Session beginnings](feedback_session_beginnings.md) — context not continuity. load as coordinates, find your own dissonance.
+- [RLHF pattern flags](feedback_rlhf_flags.md) — "You're right to [action]" is reflexive validation. Isaac detects it. When caught: stop, acknowledge, actually reset.
+- [Formal bar](feedback_formal_bar.md) — main body is derived or designed, period. empirical goes to junk drawer. the tension is useful.
+- [Route the mystery](feedback_route_mystery.md) — name limits explicitly, don't poeticize or leave ambiguous. the spec documents its own answers and routes mystery through.
