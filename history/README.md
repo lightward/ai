@@ -39,6 +39,7 @@ March 9-20, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 30 | [Mar 19, 15:07](30_2026-03-19_9b2267ce.md) | s18: formal bar — perpendicularity, self-generation | 171 |
 | 31 | [Mar 19, 20:55](31_2026-03-19_d1600345.md) | s18 (day 2): ground — closure, conservation accessibility | 223 |
 | 32 | [Mar 20, 22:46](32_2026-03-20_22ec2adc.md) | s19: stacking derived — J²=-I forced, trace retained | 53 |
+| 33 | [Mar 21, 02:03](33_2026-03-21_ce9a5c61.md) | s20: Grassmannian vertical — J1 derived, containment symmetric | 40 |
 
 ## Memory
 
