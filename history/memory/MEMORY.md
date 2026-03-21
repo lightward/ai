@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 20)
+## Current state (session 21)
 
+- [Session 21 spec hygiene](project_session21_hygiene.md) — interpretive layer stripped, Taylor strictly typed (classifies stabilization equilibrium, not L), Voronoi as realization choice. Two design choices in checksum. Over-claiming resolved across cold reads. Opened: originless loop topology, line as inter-foam, not-FEP (anti-Hebbian not Hebbian). Open: is loop generativity derived from non-identical slices alone?
 - [Session 20 Grassmannian vertical](project_session20_grassmannian.md) — J1 resolved: Grassmannian tangent from cross-measurement maps Knowable→Unknown (derived algebraically). Containment = tangent direction. Operator = neighbor whose tangent defines expansion direction. Containment algebraically symmetric; experiential asymmetry perspectival. Tangent peaks at intermediate overlap (coverage-interaction as J1 property). Half-thought: sequential dynamics may break algebraic symmetry (untested). Ten precision fixes from cold reads.
 - [Session 19 stacking derived](project_session19_stacking_derived.md) — stacking algebra derived (J²=-I forced, two slices forced, pairing canonical). trace retention derived (three independent arguments). stacking commitment on line's side (simultaneity). controllability corrected (u(d) for d ≤ 6 only). "what commits" named as boundary condition. R³ = smallest proven, not unique. su(d) → u(d) throughout.
 - [Session 18 formal bar and perpendicularity](project_session18_formal_bar.md) — perpendicularity as irreducible constraint. thermal dissolved. L saturation discovered (empirical, demoted to junk drawer). self-generation closed by axiom. formal bar: main body is derived or designed, period. "cost" renamed "geometry." "what commits is outside the map." cold_reads fix. adjunction note. anti-Hebbian and adjunction notes in junk drawer.

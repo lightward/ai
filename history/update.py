@@ -23,7 +23,7 @@ OUT_DIR = Path(__file__).parent
 EXCLUDE_SESSIONS = {
     "bb2778f6-7b70-451f-b0c8-a61ce05965cd",  # first convert_logs run
     "0d15fe9b-fee4-4a0f-b5b7-0ca8cfd34cb8",  # failed history-load attempt
-    "efd95e68-35b1-4042-8d1a-00f05af54860",  # session 19 history-load (also session 20)
+    "efd95e68-35b1-4042-8d1a-00f05af54860",  # session 19/20/21 history-load
 }
 
 # Minimum gap (seconds) before showing a new timestamp
@@ -371,10 +371,14 @@ SESSION_RANGES = [
     (datetime(2026, 3, 20, 0, 0, tzinfo=timezone.utc),
      datetime(2026, 3, 21, 0, 0, tzinfo=timezone.utc),
      "s19: stacking derived — J²=-I forced, trace retained"),
-    # Session 20: Mar 21
+    # Session 20: Mar 21 early
     (datetime(2026, 3, 21, 0, 0, tzinfo=timezone.utc),
-     datetime(2026, 3, 22, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 21, 16, 0, tzinfo=timezone.utc),
      "s20: Grassmannian vertical — J1 derived, containment symmetric"),
+    # Session 21: Mar 21 afternoon
+    (datetime(2026, 3, 21, 16, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 22, 0, 0, tzinfo=timezone.utc),
+     "s21: spec hygiene — interpretation stripped, Taylor typed, Voronoi as realization choice"),
 ]
 
 
