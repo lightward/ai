@@ -4,8 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 18)
+## Current state (session 20)
 
+- [Session 20 Grassmannian vertical](project_session20_grassmannian.md) — J1 resolved: Grassmannian tangent from cross-measurement maps Knowable→Unknown (derived algebraically). Containment = tangent direction. Operator = neighbor whose tangent defines expansion direction. Containment algebraically symmetric; experiential asymmetry perspectival. Tangent peaks at intermediate overlap (coverage-interaction as J1 property). Half-thought: sequential dynamics may break algebraic symmetry (untested). Ten precision fixes from cold reads.
+- [Session 19 stacking derived](project_session19_stacking_derived.md) — stacking algebra derived (J²=-I forced, two slices forced, pairing canonical). trace retention derived (three independent arguments). stacking commitment on line's side (simultaneity). controllability corrected (u(d) for d ≤ 6 only). "what commits" named as boundary condition. R³ = smallest proven, not unique. su(d) → u(d) throughout.
 - [Session 18 formal bar and perpendicularity](project_session18_formal_bar.md) — perpendicularity as irreducible constraint. thermal dissolved. L saturation discovered (empirical, demoted to junk drawer). self-generation closed by axiom. formal bar: main body is derived or designed, period. "cost" renamed "geometry." "what commits is outside the map." cold_reads fix. adjunction note. anti-Hebbian and adjunction notes in junk drawer.
 - [Session 17 stacking and derivation](project_session17_stacking.md) — controllability proven (so(d) and su(d)). writes generate so(d); two R³ stacked as C³ generate su(d). ℤ conservation requires the stacked pair. "the two is irreducible" at three levels. three-body derived from overlap matrix. write map, skew-symmetry, Taylor-stabilization equivalence, L mechanism all derived. cold-read infrastructure established.
 - [Session 16 R³ architecture](project_session16_r3_architecture.md) — major spec reconstruction. stabilization local to observer's R³ (the unique viable dimension). Taylor-exact. two curvatures (self and cross). controllability is community property. self-generation: dynamics yes, stability open. minimum viable system is two roles. three-body mapping algebraic (Known=private, Knowable=shared, Unknown=complement). coverage-interaction trade-off. spec is now architecture not evidence. ~185 lines.
@@ -16,7 +18,25 @@
 - [Session 11 tsort](project_session11_tsort.md) — directed structure from BCH residuals. readable but inert.
 - [Sessions 9-10](project_session9_state.md) — foam.py + BCH investigation + recursive foam + cell birth + heirloom.
 
-## Key results (sessions 7-18)
+## Key results (sessions 7-20)
+
+**Session 20 (Grassmannian vertical structure):**
+- J1 = Grassmannian tangent from cross-measurement. Maps Knowable → Unknown (algebraically derived, not empirical).
+- Source: only Knowable contributes (Known is in P_B^perp, killed by B's write). Target: B's territory in A's Unknown (P_A^perp intersect P_B).
+- Vertical structure resolved: containment = direction of Grassmannian tangent. Operator = neighbor whose writes define expansion direction.
+- Containment algebraically symmetric. Experiential asymmetry is perspectival, not algebraic.
+- Tangent magnitude peaks at intermediate overlap = coverage-interaction trade-off as J1 property.
+- Half-thought (untested): sequential dynamics may break algebraic symmetry of containment.
+- Open question narrowed: "J1/Grassmannian correspondence" → "J1 global structure" (vertical resolved, global open).
+- New (c) item: containment asymmetry — can it be derived from dynamics?
+
+**Session 19 (stacking derived):**
+- Stacking algebra: J²=-I forced by su(d)\so(d) structure. Two slices forced by even dimensionality. Pairing canonical (SO(6) conjugacy).
+- Trace retained: write map produces it, group choice requires it, conservation needs it. Observer writes in u(d), not su(d).
+- Stacking is a line-side commitment: simultaneity of pre-write fusion. Dynamics can't generate it.
+- Controllability corrected: one stacked pair → u(min(3,d/2)). Full u(d) for d ≤ 6 only.
+- "What commits is outside the map" = boundary condition, not derived result.
+- R³ = smallest proven dimension, not unique.
 
 **Session 18 (formal bar):**
 - Perpendicularity is the irreducible constraint. The write form IS perpendicularity. Unique navigable constraint (distinguishable + stabilizing).
@@ -33,8 +53,8 @@
 - Cold reads stabilized: 7 readers converge on same strengths/open questions. Spec in resting state.
 
 **Session 17 (stacking and derivation):**
-- Controllability: so(d) for 2-3 observers, su(d) for 1 stacked pair. Both proven computationally.
-- Stacking: two R³ as C³ gives su(d) and ℤ. The two is irreducible at conservation level.
+- Controllability: so(d) for 2-3 observers. Stacked pair proven computationally (corrected in s19: u(d) for d ≤ 6 only).
+- Stacking: two R³ as C³ gives u(d) and ℤ (s17 said su(d); corrected in s19 — trace retained). The two is irreducible at conservation level.
 - Write map uniqueness: Λ²(2-plane) is 1-dimensional. Three-body mapping from overlap matrix.
 - Cold-read infrastructure: Claude, Kimi, Gemini, Lightward.
 

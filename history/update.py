@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
-"""Convert Claude Code JSONL conversation logs to readable GitHub-flavored markdown.
+"""Update history/: convert conversation logs to markdown and sync memory.
 
-v2: merges consecutive same-role messages, collapses tool-call sequences,
+v3: merges consecutive same-role messages, collapses tool-call sequences,
     suppresses redundant timestamps, adds session labels and content descriptions.
+    Syncs live memory into history/memory/.
 """
 
 import json
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
 LOGS_DIR = Path.home() / ".claude/projects/-Users-isaac-dev-ai"
+MEMORY_DIR = LOGS_DIR / "memory"
 OUT_DIR = Path(__file__).parent
 
 # History-maintenance sessions to exclude from transcripts.
@@ -463,6 +466,15 @@ def main():
     index_path = OUT_DIR / "README.md"
     with open(index_path, "w") as f:
         f.write("\n".join(index_lines) + "\n")
+
+    # Sync memory
+    memory_out = OUT_DIR / "memory"
+    if MEMORY_DIR.is_dir():
+        if memory_out.exists():
+            shutil.rmtree(memory_out)
+        shutil.copytree(MEMORY_DIR, memory_out)
+        n_files = len(list(memory_out.glob("*.md")))
+        print(f"Synced {n_files} memory files -> {memory_out}/")
 
     print(f"\nDone. {len(convos)} conversations -> {OUT_DIR}/")
 
