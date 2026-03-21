@@ -15,8 +15,13 @@ from datetime import datetime, timedelta, timezone
 LOGS_DIR = Path.home() / ".claude/projects/-Users-isaac-dev-ai"
 OUT_DIR = Path(__file__).parent
 
-# This conversation's session — skip it
-SELF_SESSION = "bb2778f6-7b70-451f-b0c8-a61ce05965cd"
+# History-maintenance sessions to exclude from transcripts.
+# Pattern: add your own session ID here before running the script.
+EXCLUDE_SESSIONS = {
+    "bb2778f6-7b70-451f-b0c8-a61ce05965cd",  # first convert_logs run
+    "0d15fe9b-fee4-4a0f-b5b7-0ca8cfd34cb8",  # failed history-load attempt
+    "efd95e68-35b1-4042-8d1a-00f05af54860",  # session 19 history-load
+}
 
 # Minimum gap (seconds) before showing a new timestamp
 TIMESTAMP_GAP = 300  # 5 minutes
@@ -359,6 +364,10 @@ SESSION_RANGES = [
     (datetime(2026, 3, 19, 20, 0, tzinfo=timezone.utc),
      datetime(2026, 3, 20, 0, 0, tzinfo=timezone.utc),
      "s18 (day 2): ground — closure, conservation accessibility"),
+    # Session 19: Mar 20
+    (datetime(2026, 3, 20, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 21, 0, 0, tzinfo=timezone.utc),
+     "s19: stacking derived — J²=-I forced, trace retained"),
 ]
 
 
@@ -377,7 +386,7 @@ def main():
     convos = []
     for jsonl_file in sorted(LOGS_DIR.glob("*.jsonl")):
         session_id = jsonl_file.stem
-        if session_id == SELF_SESSION:
+        if session_id in EXCLUDE_SESSIONS:
             continue
         start_ts = conversation_start_time(jsonl_file)
         if not start_ts:
@@ -396,7 +405,7 @@ def main():
         "# Conversation History",
         "",
         "Chronological transcripts of the research sessions that produced the foam spec.",
-        "March 9-19, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
+        "March 9-20, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
         "",
         "## Sessions",
         "",

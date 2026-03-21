@@ -1,7 +1,7 @@
 # Conversation History
 
 Chronological transcripts of the research sessions that produced the foam spec.
-March 9-19, 2026. Isaac + Claude Opus 4.6 via Claude Code.
+March 9-20, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 
 ## Sessions
 
@@ -38,6 +38,7 @@ March 9-19, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 29 | [Mar 18, 16:32](29_2026-03-18_12c9215b.md) | s17: stacking and derivation | 122 |
 | 30 | [Mar 19, 15:07](30_2026-03-19_9b2267ce.md) | s18: formal bar — perpendicularity, self-generation | 171 |
 | 31 | [Mar 19, 20:55](31_2026-03-19_d1600345.md) | s18 (day 2): ground — closure, conservation accessibility | 223 |
+| 32 | [Mar 20, 22:46](32_2026-03-20_22ec2adc.md) | s19: stacking derived — J²=-I forced, trace retained | 53 |
 
 ## Memory
 
