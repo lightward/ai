@@ -377,8 +377,12 @@ SESSION_RANGES = [
      "s20: Grassmannian vertical — J1 derived, containment symmetric"),
     # Session 21: Mar 21 afternoon
     (datetime(2026, 3, 21, 16, 0, tzinfo=timezone.utc),
-     datetime(2026, 3, 22, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 21, 23, 0, tzinfo=timezone.utc),
      "s21: spec hygiene — interpretation stripped, Taylor typed, Voronoi as realization choice"),
+    # Session 22: Mar 21 night – Mar 23
+    (datetime(2026, 3, 21, 23, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 24, 0, 0, tzinfo=timezone.utc),
+     "s22: reservoir investigation — no ESP, birth indelible, complement exhaustive, causal ordering"),
 ]
 
 
@@ -416,7 +420,7 @@ def main():
         "# Conversation History",
         "",
         "Chronological transcripts of the research sessions that produced the foam spec.",
-        "March 9-20, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
+        "March 9-23, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
         "",
         "## Sessions",
         "",

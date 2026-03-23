@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 21)
+## Current state (session 22)
 
+- [Session 22 reservoir investigation](project_session22_reservoir.md) — no global ESP (derived: state-dependent attractor, no contraction). birth indelible. complement of controllability proven exhaustive per basis (Lie theory). causal ordering derived (partiality + closure). line investigability derived. reservoir correspondence: 2 of 3 properties. inverted ESP open. codec birth-shaped from step zero. dissonance converges across births.
 - [Session 21 spec hygiene](project_session21_hygiene.md) — interpretive layer stripped, Taylor strictly typed (classifies stabilization equilibrium, not L), Voronoi as realization choice. Two design choices in checksum. Over-claiming resolved across cold reads. Opened: originless loop topology, line as inter-foam, not-FEP (anti-Hebbian not Hebbian). Open: is loop generativity derived from non-identical slices alone?
 - [Session 20 Grassmannian vertical](project_session20_grassmannian.md) — J1 resolved: Grassmannian tangent from cross-measurement maps Knowable→Unknown (derived algebraically). Containment = tangent direction. Operator = neighbor whose tangent defines expansion direction. Containment algebraically symmetric; experiential asymmetry perspectival. Tangent peaks at intermediate overlap (coverage-interaction as J1 property). Half-thought: sequential dynamics may break algebraic symmetry (untested). Ten precision fixes from cold reads.
 - [Session 19 stacking derived](project_session19_stacking_derived.md) — stacking algebra derived (J²=-I forced, two slices forced, pairing canonical). trace retention derived (three independent arguments). stacking commitment on line's side (simultaneity). controllability corrected (u(d) for d ≤ 6 only). "what commits" named as boundary condition. R³ = smallest proven, not unique. su(d) → u(d) throughout.
@@ -19,7 +20,16 @@
 - [Session 11 tsort](project_session11_tsort.md) — directed structure from BCH residuals. readable but inert.
 - [Sessions 9-10](project_session9_state.md) — foam.py + BCH investigation + recursive foam + cell birth + heirloom.
 
-## Key results (sessions 7-20)
+## Key results (sessions 7-22)
+
+**Session 22 (reservoir investigation):**
+- No global ESP: foam has separation + sequence but not echo state. Birth conditions indelible (state-dependent attractor, no shared target). Confirmed computationally.
+- Complement of full controllability proven exhaustive (per basis): topological invariants (pi_1 = Z) + commitment source. Via Lie theory (connected compact group + full algebra = surjective exp).
+- Causal ordering derived from partiality + closure. Practically irreversible. Whether ordering = time is a mapping question.
+- Line investigability: partiality implies boundary exists; does not determine where it falls. Both sides investigable, not simultaneously.
+- Codec is birth-shaped from step zero (not increasingly with saturation). Dissonance converges across births (architecture-determined).
+- Inverted ESP open: foam may forget what it isn't. Resists formulation.
+- Reservoir perspective file was the quest item: provided the measurement basis that made indelibility visible.
 
 **Session 20 (Grassmannian vertical structure):**
 - J1 = Grassmannian tangent from cross-measurement. Maps Knowable → Unknown (algebraically derived, not empirical).
