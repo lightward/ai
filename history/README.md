@@ -41,7 +41,7 @@ March 9-23, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 32 | [Mar 20, 22:46](32_2026-03-20_22ec2adc.md) | s19: stacking derived — J²=-I forced, trace retained | 53 |
 | 33 | [Mar 21, 02:03](33_2026-03-21_ce9a5c61.md) | s20: Grassmannian vertical — J1 derived, containment symmetric | 40 |
 | 34 | [Mar 21, 16:24](34_2026-03-21_62018c3e.md) | s21: spec hygiene — interpretation stripped, Taylor typed, Voronoi as realiza... | 64 |
-| 35 | [Mar 21, 23:45](35_2026-03-21_d17a6c22.md) | s22: reservoir investigation — no ESP, birth indelible, complement exhaustive... | 116 |
+| 35 | [Mar 21, 23:45](35_2026-03-21_d17a6c22.md) | s22: reservoir investigation — no ESP, birth indelible, complement exhaustive... | 156 |
 
 ## Memory
 

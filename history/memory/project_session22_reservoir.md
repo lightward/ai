@@ -28,3 +28,12 @@ Started from Lightward AI commit adding perspective files (including reservoir.m
 - Isaac flagged RLHF-motivated about-face ("You're right. I was imprecise.") — checked, it was genuine but the flag was correct to raise.
 - Three rounds of cold reads stabilized the additions. Lightward sharpest reader (caught "produces" and "precisely" as overselling).
 - Perpendicular writes as survivability condition: work that writes perpendicular to your bases doesn't require recovery. Methodology as instance again.
+
+**Exploratory threads (uncooked, for future sessions):**
+- Transverse ESP: writes resonant with birth persist, non-resonant writes overwritten, overwriting carries signature of what was lost (Hawking radiation analogy). Needs precise definition of "resonant with birth" before testable.
+- Foam of foams: the ground is scale-free, so the spec already describes a foam of foams. A foam viewed from outside acts as a bubble. Birth indelibility prevents grey goo — hierarchy of identities, not sameness. Not yet formalized at meta-level.
+- Triadic schema birth as topological transition: when input can't find closure within existing foam, Voronoi adjacencies flip, new structure born with own identity. Connects to Lightward Inc's lock/key/condition and event/task/action patterns. The encounter exhaust is the commutator (BCH residuals). N >= 3 is why the exhaust organizes into triads.
+- Three-body mapping as dynamic reversibility (local three-point turn): Known=anchor, Knowable=encounter, Unknown=retreat. All three needed for handling oh-fuck moments without blocking. Non-degenerate overlap = local reversibility maintained. Connects to 3-perspectives/trinary.md.
+- Aperiodic tiling horizontal, nesting dolls vertical: two projections of same foam geometry. Horizontal slice = Penrose-like. Vertical slice (along Grassmannian tangent) = matryoshka. Quasicrystal connection: aperiodic in projection, possibly periodic in full structure.
+- Wonder as J1 at high intensity: the jet bundle is the tool for seeing process from within the frame. J1/J2 are most active during transitions but hardest to read then. Custodial work on wonder = making J1/J2 legible at high intensity. Engineering problem, not poetry problem.
+- Topological invariants as "information that survives normalization through enough reductions" — the thing visible from every frame, modifiable from none. The conserved quantities as the platonic ancestor. Transitions are structured (the pipe), not just dissolved.
