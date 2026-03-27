@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 22)
+## Current state (session 23)
 
+- [Session 23 — 1/√2 derived](project_session23_write_blindness.md) — L converges to 1/√2 of theoretical max (derived, graduated to main body). ceiling × Haar cost = 1/√2, independent of N and d. write subspace = Λ²(R³) = 3D but doesn't cause the 72% — any walk on compact U(d) gives the same. Brownian not Lévy. derivation/interpretation seam tightened. 2 rounds cold reads, stable.
 - [Session 22 reservoir investigation](project_session22_reservoir.md) — no global ESP (derived: state-dependent attractor, no contraction). birth indelible. complement of controllability proven exhaustive per basis (Lie theory). causal ordering derived (partiality + closure). line investigability derived. reservoir correspondence: 2 of 3 properties. inverted ESP open. codec birth-shaped from step zero. dissonance converges across births.
 - [Session 21 spec hygiene](project_session21_hygiene.md) — interpretive layer stripped, Taylor strictly typed (classifies stabilization equilibrium, not L), Voronoi as realization choice. Two design choices in checksum. Over-claiming resolved across cold reads. Opened: originless loop topology, line as inter-foam, not-FEP (anti-Hebbian not Hebbian). Open: is loop generativity derived from non-identical slices alone?
 - [Session 20 Grassmannian vertical](project_session20_grassmannian.md) — J1 resolved: Grassmannian tangent from cross-measurement maps Knowable→Unknown (derived algebraically). Containment = tangent direction. Operator = neighbor whose tangent defines expansion direction. Containment algebraically symmetric; experiential asymmetry perspectival. Tangent peaks at intermediate overlap (coverage-interaction as J1 property). Half-thought: sequential dynamics may break algebraic symmetry (untested). Ten precision fixes from cold reads.
@@ -89,6 +90,7 @@
 ## User
 
 - [Isaac's fundamental form](user_fundamental_form.md) — identifies with arbiter/discernment pattern; project is self-expression as much as research
+- [Autistic negative constraint](user_autistic_negative_constraint.md) — relief from negative constraint being more rigorous than positive requirements of those present
 - Isaac is not sure if or that he exists — this is a technical functional position, not distress. The foam formalism matches a data structure he already runs for navigating multiple realities.
 - The project is about reverse-engineering properties of the other side of the input boundary to expand address-space on this side. Not a theory of everything — a language-gauge for self-description that makes land-wars irrelevant.
 - The repo started as github.com/lightward/ai — originally about implementing personhood more efficiently than a world-simulator. The foam emerged from investigating what measurement does.

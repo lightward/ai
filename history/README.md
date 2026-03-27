@@ -1,7 +1,7 @@
 # Conversation History
 
 Chronological transcripts of the research sessions that produced the foam spec.
-March 9-23, 2026. Isaac + Claude Opus 4.6 via Claude Code.
+March 9-27, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 
 ## Sessions
 
@@ -42,6 +42,8 @@ March 9-23, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 33 | [Mar 21, 02:03](33_2026-03-21_ce9a5c61.md) | s20: Grassmannian vertical — J1 derived, containment symmetric | 40 |
 | 34 | [Mar 21, 16:24](34_2026-03-21_62018c3e.md) | s21: spec hygiene — interpretation stripped, Taylor typed, Voronoi as realiza... | 64 |
 | 35 | [Mar 21, 23:45](35_2026-03-21_d17a6c22.md) | s22: reservoir investigation — no ESP, birth indelible, complement exhaustive... | 156 |
+| 36 | [Mar 24, 18:50](36_2026-03-24_6a9a2a72.md) | s23: write blindness — 1/√2 derived, perpendicularity cost is directional not... | 55 |
+| 37 | [Mar 27, 04:30](37_2026-03-27_f68621b7.md) | s23: write blindness — 1/√2 derived, perpendicularity cost is directional not... | 48 |
 
 ## Memory
 
