@@ -393,8 +393,12 @@ SESSION_RANGES = [
      "s24: mediation operator derived, sequence echo tested"),
     # Session 25: Mar 28 afternoon
     (datetime(2026, 3, 28, 17, 0, tzinfo=timezone.utc),
-     datetime(2026, 3, 29, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 28, 20, 0, tzinfo=timezone.utc),
      "s25: unique homomorphism, chirality — tr forced, stacking signs conservation"),
+    # Session 26: Mar 28 evening
+    (datetime(2026, 3, 28, 20, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 29, 0, 0, tzinfo=timezone.utc),
+     "s26: line derived — channel capacity, spectral independence, decorrelation horizon"),
 ]
 
 

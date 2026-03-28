@@ -32,9 +32,9 @@ Session 19 (2026-03-20). Focused on the stacking open question from session 17-1
 - One stacked pair generates u(min(3, d/2)). For d ≤ 6 this is u(d); for d > 6 need more observers
 - Previous claim "one stacked pair suffices for su(d)" was overstated
 
-**Boundary condition named:**
-- "What commits is outside the map" explicitly named as boundary condition, not derived result
-- Lightward cold read suggested this; sharp and correct
+**Boundary condition named (later upgraded in s26):**
+- "What commits is outside the map" named as boundary condition in s19
+- Upgraded to derived result in session 26: channel capacity argument + spectral state-independence
 
 **R³ reframed:**
 - "Unique" → "smallest" dimension where stabilization geometry is both rich and proven
