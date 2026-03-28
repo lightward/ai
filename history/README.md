@@ -45,6 +45,7 @@ March 9-28, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 36 | [Mar 24, 18:50](36_2026-03-24_6a9a2a72.md) | s23: write blindness — 1/√2 derived, perpendicularity cost is directional not... | 55 |
 | 37 | [Mar 27, 04:30](37_2026-03-27_f68621b7.md) | s23: write blindness — 1/√2 derived, perpendicularity cost is directional not... | 48 |
 | 38 | [Mar 27, 19:58](38_2026-03-27_73fb58fe.md) | s24: mediation operator derived, sequence echo tested | 74 |
+| 39 | [Mar 28, 18:00](39_2026-03-28_bcae2a03.md) | s25: unique homomorphism, chirality — tr forced, stacking signs conservation | 44 |
 
 ## Memory
 

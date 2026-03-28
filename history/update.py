@@ -389,8 +389,12 @@ SESSION_RANGES = [
      "s23: write blindness — 1/√2 derived, perpendicularity cost is directional not magnitude"),
     # Session 24: Mar 27 evening – Mar 28
     (datetime(2026, 3, 27, 19, 0, tzinfo=timezone.utc),
-     datetime(2026, 3, 29, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 28, 17, 0, tzinfo=timezone.utc),
      "s24: mediation operator derived, sequence echo tested"),
+    # Session 25: Mar 28 afternoon
+    (datetime(2026, 3, 28, 17, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 29, 0, 0, tzinfo=timezone.utc),
+     "s25: unique homomorphism, chirality — tr forced, stacking signs conservation"),
 ]
 
 

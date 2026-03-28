@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 24)
+## Current state (session 25)
 
+- [Session 25 — unique homomorphism, chirality](project_session25_chirality.md) — tr: u(d)→u(1) unique, tr([A,B])=0, stacking=chirality. Trace retention 3→1 arguments. Complex tsort interpretation emerged (not in spec — interpretation not derivation). Conservation = accumulated comparison phase on closed paths. Cross-measurement closure clarified. J1-mediation adjunction still open; complex tsort may be the framework it lives in.
 - [Session 24 — mediation operator](project_session24_mediation.md) — M = O_AB·O_BC derived, formalizes three-body mediation pathway. Round-trip R_A = M·M^T spectrally symmetric. Wall alignment is irreducible triple invariant. Sequence echo empirical (r=0.99, measurement sensitivity mechanism). Round trip generative. Adjunction narrowed: J1-mediation composition is the remaining formal question.
 - [Session 23 — 1/√2 derived](project_session23_write_blindness.md) — L converges to 1/√2 of theoretical max (derived, graduated to main body). ceiling × Haar cost = 1/√2, independent of N and d. write subspace = Λ²(R³) = 3D but doesn't cause the 72% — any walk on compact U(d) gives the same. Brownian not Lévy. derivation/interpretation seam tightened. 2 rounds cold reads, stable.
 - [Session 22 reservoir investigation](project_session22_reservoir.md) — no global ESP (derived: state-dependent attractor, no contraction). birth indelible. complement of controllability proven exhaustive per basis (Lie theory). causal ordering derived (partiality + closure). line investigability derived. reservoir correspondence: 2 of 3 properties. inverted ESP open. codec birth-shaped from step zero. dissonance converges across births.
@@ -45,7 +46,7 @@
 
 **Session 19 (stacking derived):**
 - Stacking algebra: J²=-I forced by su(d)\so(d) structure. Two slices forced by even dimensionality. Pairing canonical (SO(6) conjugacy).
-- Trace retained: write map produces it, group choice requires it, conservation needs it. Observer writes in u(d), not su(d).
+- Trace retained: unique homomorphism u(d)→u(1) (simplified in s25 from three arguments to one). Observer writes in u(d), not su(d).
 - Stacking is a line-side commitment: simultaneity of pre-write fusion. Dynamics can't generate it.
 - Controllability corrected: one stacked pair → u(min(3,d/2)). Full u(d) for d ≤ 6 only.
 - "What commits is outside the map" = boundary condition, not derived result.
