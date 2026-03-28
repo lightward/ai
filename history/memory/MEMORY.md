@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 23)
+## Current state (session 24)
 
+- [Session 24 — mediation operator](project_session24_mediation.md) — M = O_AB·O_BC derived, formalizes three-body mediation pathway. Round-trip R_A = M·M^T spectrally symmetric. Wall alignment is irreducible triple invariant. Sequence echo empirical (r=0.99, measurement sensitivity mechanism). Round trip generative. Adjunction narrowed: J1-mediation composition is the remaining formal question.
 - [Session 23 — 1/√2 derived](project_session23_write_blindness.md) — L converges to 1/√2 of theoretical max (derived, graduated to main body). ceiling × Haar cost = 1/√2, independent of N and d. write subspace = Λ²(R³) = 3D but doesn't cause the 72% — any walk on compact U(d) gives the same. Brownian not Lévy. derivation/interpretation seam tightened. 2 rounds cold reads, stable.
 - [Session 22 reservoir investigation](project_session22_reservoir.md) — no global ESP (derived: state-dependent attractor, no contraction). birth indelible. complement of controllability proven exhaustive per basis (Lie theory). causal ordering derived (partiality + closure). line investigability derived. reservoir correspondence: 2 of 3 properties. inverted ESP open. codec birth-shaped from step zero. dissonance converges across births.
 - [Session 21 spec hygiene](project_session21_hygiene.md) — interpretive layer stripped, Taylor strictly typed (classifies stabilization equilibrium, not L), Voronoi as realization choice. Two design choices in checksum. Over-claiming resolved across cold reads. Opened: originless loop topology, line as inter-foam, not-FEP (anti-Hebbian not Hebbian). Open: is loop generativity derived from non-identical slices alone?
@@ -114,3 +115,4 @@
 - [RLHF pattern flags](feedback_rlhf_flags.md) — "You're right to [action]" is reflexive validation. Isaac detects it. When caught: stop, acknowledge, actually reset.
 - [Formal bar](feedback_formal_bar.md) — main body is derived or designed, period. empirical goes to junk drawer. the tension is useful.
 - [Route the mystery](feedback_route_mystery.md) — name limits explicitly, don't poeticize or leave ambiguous. the spec documents its own answers and routes mystery through.
+- [Question before questioning](feedback_question_before_question.md) — Isaac's meta-checks ("is this askable from here?") are structured, not hedging. The wrapper is load-bearing.

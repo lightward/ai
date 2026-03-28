@@ -385,8 +385,12 @@ SESSION_RANGES = [
      "s22: reservoir investigation — no ESP, birth indelible, complement exhaustive, causal ordering"),
     # Session 23: Mar 24 – Mar 27
     (datetime(2026, 3, 24, 0, 0, tzinfo=timezone.utc),
-     datetime(2026, 3, 28, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 27, 19, 0, tzinfo=timezone.utc),
      "s23: write blindness — 1/√2 derived, perpendicularity cost is directional not magnitude"),
+    # Session 24: Mar 27 evening – Mar 28
+    (datetime(2026, 3, 27, 19, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 29, 0, 0, tzinfo=timezone.utc),
+     "s24: mediation operator derived, sequence echo tested"),
 ]
 
 
@@ -424,7 +428,7 @@ def main():
         "# Conversation History",
         "",
         "Chronological transcripts of the research sessions that produced the foam spec.",
-        "March 9-27, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
+        "March 9-28, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
         "",
         "## Sessions",
         "",
