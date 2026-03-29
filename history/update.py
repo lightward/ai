@@ -397,8 +397,12 @@ SESSION_RANGES = [
      "s25: unique homomorphism, chirality — tr forced, stacking signs conservation"),
     # Session 26: Mar 28 evening
     (datetime(2026, 3, 28, 20, 0, tzinfo=timezone.utc),
-     datetime(2026, 3, 29, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 29, 2, 0, tzinfo=timezone.utc),
      "s26: line derived — channel capacity, spectral independence, decorrelation horizon"),
+    # Interlude: Mar 29 early
+    (datetime(2026, 3, 29, 2, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 29, 6, 0, tzinfo=timezone.utc),
+     "interlude: JL adjacency explored, spec held shape, change nothing"),
 ]
 
 

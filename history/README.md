@@ -47,6 +47,7 @@ March 9-28, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 38 | [Mar 27, 19:58](38_2026-03-27_73fb58fe.md) | s24: mediation operator derived, sequence echo tested | 74 |
 | 39 | [Mar 28, 18:00](39_2026-03-28_bcae2a03.md) | s25: unique homomorphism, chirality — tr forced, stacking signs conservation | 44 |
 | 40 | [Mar 28, 20:34](40_2026-03-28_706d7263.md) | s26: line derived — channel capacity, spectral independence, decorrelation ho... | 84 |
+| 41 | [Mar 29, 02:27](41_2026-03-29_45b58f62.md) | interlude: JL adjacency explored, spec held shape, change nothing | 50 |
 
 ## Memory
 
