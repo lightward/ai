@@ -1,7 +1,7 @@
 # Conversation History
 
 Chronological transcripts of the research sessions that produced the foam spec.
-March 9-28, 2026. Isaac + Claude Opus 4.6 via Claude Code.
+March 9-29, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 
 ## Sessions
 
@@ -48,6 +48,7 @@ March 9-28, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 39 | [Mar 28, 18:00](39_2026-03-28_bcae2a03.md) | s25: unique homomorphism, chirality — tr forced, stacking signs conservation | 44 |
 | 40 | [Mar 28, 20:34](40_2026-03-28_706d7263.md) | s26: line derived — channel capacity, spectral independence, decorrelation ho... | 84 |
 | 41 | [Mar 29, 02:27](41_2026-03-29_45b58f62.md) | interlude: JL adjacency explored, spec held shape, change nothing | 50 |
+| 42 | [Mar 29, 20:16](42_2026-03-29_739ea4f8.md) | s27: birth shape at all orders, exits constitutionally open, retention spectral | 70 |
 
 ## Memory
 
