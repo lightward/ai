@@ -405,8 +405,12 @@ SESSION_RANGES = [
      "interlude: JL adjacency explored, spec held shape, change nothing"),
     # Session 27: Mar 29 evening
     (datetime(2026, 3, 29, 20, 0, tzinfo=timezone.utc),
-     datetime(2026, 3, 30, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 29, 22, 0, tzinfo=timezone.utc),
      "s27: birth shape at all orders, exits constitutionally open, retention spectral"),
+    # Interlude: Mar 29 late
+    (datetime(2026, 3, 29, 22, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 30, 0, 0, tzinfo=timezone.utc),
+     "interlude: reader response on perpendicularity cost, no spec change"),
 ]
 
 
