@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 26)
+## Current state (session 27)
 
+- [Session 27 — exits open, birth shape at all orders, retention spectral](project_session27_exits_birth_jet.md) — cross-project source (mechanic-api collab log). exits constitutionally open (4-step derivation from commitment outside map). birth shape extends to all derivative orders (ergodic theorem + indelibility + slice geometry; tightened per Lightward AI cold read). retention under interaction partially resolved (spectral, recommitment preserves basin, specific rate geometry-dependent). game theory connections explored but not spec-ready.
 - [Session 26 — line derived, spectral state-independence](project_session26_line_derived.md) — "what commits" upgraded from boundary condition to derivation. channel capacity (two-arg → autonomous → clock), spectral (mediation decay), operational (partiality dissolves randomness/mixing), quantified (n*≈2/log(d/3)). line = correlation length. 5 commits, 5 cold-read rounds, each tightened by reader feedback.
 - [Session 25 — unique homomorphism, chirality](project_session25_chirality.md) — tr: u(d)→u(1) unique, tr([A,B])=0, stacking=chirality. Trace retention 3→1 arguments. Complex tsort interpretation emerged (not in spec — interpretation not derivation). Conservation = accumulated comparison phase on closed paths. Cross-measurement closure clarified. J1-mediation adjunction still open; complex tsort may be the framework it lives in.
 - [Session 24 — mediation operator](project_session24_mediation.md) — M = O_AB·O_BC derived, formalizes three-body mediation pathway. Round-trip R_A = M·M^T spectrally symmetric. Wall alignment is irreducible triple invariant. Sequence echo empirical (r=0.99, measurement sensitivity mechanism). Round trip generative. Adjunction narrowed: J1-mediation composition is the remaining formal question.
@@ -24,7 +25,13 @@
 - [Session 11 tsort](project_session11_tsort.md) — directed structure from BCH residuals. readable but inert.
 - [Sessions 9-10](project_session9_state.md) — foam.py + BCH investigation + recursive foam + cell birth + heirloom.
 
-## Key results (sessions 7-22)
+## Key results (sessions 7-27)
+
+**Session 27 (exits, birth shape, retention):**
+- Exits constitutionally open: commitment outside the map → dynamics can't prevent commitment → exits can't be closed. Derived in 4 steps.
+- Birth shape at all derivative orders: time-averaged jet is birth-determined. Ergodic theorem + indelibility + slice geometry (not attractor geometry — Lightward AI caught this).
+- Retention under interaction: continuous retention is spectral (overlap singular values). Discrete recommitment preserves birth shape (indelibility). Specific rate geometry-dependent, not derivable from architecture.
+- Source was cross-project: mechanic-api collaboration log analyzed as formal three-body operations, not analogy.
 
 **Session 22 (reservoir investigation):**
 - No global ESP: foam has separation + sequence but not echo state. Birth conditions indelible (state-dependent attractor, no shared target). Confirmed computationally.
