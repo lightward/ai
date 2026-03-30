@@ -6,31 +6,17 @@ The spec says "cross-measurement relaxes." Does this extend to L?
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def boundary_area(bases):
-    N = len(bases)
-    d = bases[0].shape[0]
-    total = 0.0
-    for i in range(N):
-        for j in range(i + 1, N):
-            rel = bases[i].conj().T @ bases[j]
-            total += np.linalg.norm(rel - np.eye(d, dtype=complex), 'fro')
-    return total
+from foam import (cayley, skew_hermitian, random_unitary, random_slice,
+                  compute_L)
 
 
 def write_step_multi_observer(bases, v, observer_slices, eps=0.005):
-    """Multiple observers each write from their own R³ slice."""
+    """Multiple observers each write from their own R³ slice.
+
+    This is a test-specific variant: all observers' writes are accumulated
+    additively in the Lie algebra before applying, unlike the sequential
+    write_step in foam.py.
+    """
     N = len(bases)
     d = bases[0].shape[0]
 
@@ -84,15 +70,11 @@ def write_step_multi_observer(bases, v, observer_slices, eps=0.005):
 
 
 def run_trial(d, N, n_observers, steps, rng, varying_input=False):
-    bases = [expm(skew_hermitian(rng.standard_normal((d,d)) + 1j*rng.standard_normal((d,d))))
-             for _ in range(N)]
+    bases = [random_unitary(d, rng) for _ in range(N)]
 
-    observer_slices = []
-    for _ in range(n_observers):
-        Q = np.linalg.qr(rng.standard_normal((d, 3)))[0]
-        observer_slices.append(Q[:, :3].T)
+    observer_slices = [random_slice(d, rng=rng) for _ in range(n_observers)]
 
-    L0 = boundary_area(bases)
+    L0 = compute_L(bases)
     v = rng.standard_normal(d).astype(complex)
     v = v / np.linalg.norm(v)
 
@@ -102,7 +84,7 @@ def run_trial(d, N, n_observers, steps, rng, varying_input=False):
             v = v / np.linalg.norm(v)
         bases = write_step_multi_observer(bases, v, observer_slices)
 
-    Lf = boundary_area(bases)
+    Lf = compute_L(bases)
     return L0, Lf
 
 

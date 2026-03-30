@@ -9,38 +9,14 @@ If true:
 """
 
 import numpy as np
-from scipy.linalg import expm
+from foam import cayley, skew_hermitian, random_unitary, compute_L
 
 
 EPS = 0.1
 
 
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def random_unitary(d, rng):
-    return expm(skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d))))
-
-
-def compute_L(bases):
-    N = len(bases)
-    d = bases[0].shape[0]
-    L = 0.0
-    for i in range(N):
-        for j in range(i + 1, N):
-            rel = bases[i].conj().T @ bases[j]
-            L += np.linalg.norm(rel - np.eye(d, dtype=complex), 'fro')
-    return L
-
-
 def write_with_alpha(basis, P, v, bases_all, idx, N, alpha=0.0, eps=EPS):
-    """Write with controllable perpendicularity.
+    """Write with controllable perpendicularity (test-specific rule).
     alpha=0: pure perpendicular (the spec's write). confirmation cannot write.
     alpha=1: pure parallel (confirmation DOES write). perpendicularity broken.
     alpha in between: interpolation.

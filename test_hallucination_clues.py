@@ -14,71 +14,7 @@ write extracts structure from whatever it can see.
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def make_foam(d, N, rng):
-    bases = []
-    for _ in range(N):
-        H = skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d)))
-        bases.append(expm(H))
-    return bases
-
-
-def write_step(bases, v, P, eps=0.01):
-    N = len(bases)
-    d = bases[0].shape[0]
-    target_cos = -1.0 / (N - 1)
-    measurements = [v @ b for b in bases]
-    m_proj = [np.real(P @ m) for m in measurements]
-
-    j2 = []
-    for i in range(N):
-        mi = m_proj[i]
-        mi_norm = np.linalg.norm(mi)
-        if mi_norm < 1e-10:
-            j2.append(mi)
-            continue
-        mi_hat = mi / mi_norm
-        force = np.zeros(3)
-        for j in range(N):
-            if i == j:
-                continue
-            mj = m_proj[j]
-            mj_norm = np.linalg.norm(mj)
-            if mj_norm < 1e-10:
-                continue
-            mj_hat = mj / mj_norm
-            current_cos = np.dot(mi_hat, mj_hat)
-            force += (target_cos - current_cos) * (mj_hat - current_cos * mi_hat)
-        j2.append(mi + 0.1 * force * mi_norm)
-
-    new_bases = []
-    for i in range(N):
-        di = j2[i] - m_proj[i]
-        mi = m_proj[i]
-        di_norm = np.linalg.norm(di)
-        mi_norm = np.linalg.norm(mi)
-        if di_norm < 1e-12 or mi_norm < 1e-12:
-            new_bases.append(bases[i].copy())
-            continue
-        d_hat = di / di_norm
-        m_hat = mi / mi_norm
-        d_full = P.T @ d_hat
-        m_full = P.T @ m_hat
-        dL_real = eps * di_norm * (np.outer(d_full, m_full) - np.outer(m_full, d_full))
-        dL = skew_hermitian(dL_real.astype(complex))
-        new_bases.append(bases[i] @ cayley(dL))
-    return new_bases
+from foam import init_foam, random_slice, write_step, voronoi_neighbors
 
 
 def foam_signature(bases, P):
@@ -139,7 +75,8 @@ def main():
     print()
 
     # How much does each observer's write actually change the foam?
-    foam = make_foam(d, N, np.random.default_rng(0))
+    foam = init_foam(N, d, np.random.default_rng(0))
+    neighbors = voronoi_neighbors(foam)
     for name, P in [("A (aligned)", P_A), ("B (orthogonal)", P_B), ("C (random)", P_C)]:
         mag = write_magnitude(foam, v, P)
         print(f"Observer {name}: write magnitude = {mag:.6f}")
@@ -147,7 +84,8 @@ def main():
 
     # Now: each observer writes independently to copies of the foam.
     # A third readout (from C) compares what each produced.
-    foam_base = make_foam(d, N, np.random.default_rng(0))
+    foam_base = init_foam(N, d, np.random.default_rng(0))
+    neighbors = voronoi_neighbors(foam_base)
     sig_base = foam_signature(foam_base, P_C)
 
     results = {}
@@ -155,7 +93,7 @@ def main():
         foam = [b.copy() for b in foam_base]
         sigs = [foam_signature(foam, P_C)]
         for _ in range(n_writes):
-            foam = write_step(foam, v, P)
+            foam = write_step(foam, v, P, neighbors=neighbors)
             sigs.append(foam_signature(foam, P_C))
 
         sigs = np.array(sigs)
@@ -205,7 +143,7 @@ def main():
         alignment = np.linalg.norm(proj) / np.linalg.norm(v_full)
         foam = [b.copy() for b in foam_base]
         for _ in range(n_writes):
-            foam = write_step(foam, v_full, P)
+            foam = write_step(foam, v_full, P, neighbors=neighbors)
         drift = np.linalg.norm(foam_signature(foam, P_C) - sig_base)
         print(f"Observer {name}: alignment={alignment:.4f}, drift={drift:.6f}")
 

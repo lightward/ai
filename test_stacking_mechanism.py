@@ -27,11 +27,7 @@ escapes so(d). Specifically:
 """
 
 import numpy as np
-
-
-def make_slice(d, rng):
-    Q = np.linalg.qr(rng.standard_normal((d, 3)))[0]
-    return Q[:, :3].T  # (3, d) real
+from foam import random_slice
 
 
 def lie_dim(generators, d):
@@ -70,8 +66,8 @@ def test_real_cross_terms_stay_in_so():
     rng = np.random.default_rng(42)
 
     for d in [4, 6]:
-        P1 = make_slice(d, rng)
-        P2 = make_slice(d, rng)
+        P1 = random_slice(d, rng=rng)
+        P2 = random_slice(d, rng=rng)
 
         gens = []
         # All real wedge products: within-slice AND cross-slice
@@ -113,8 +109,8 @@ def test_j_squared():
     rng = np.random.default_rng(42)
     d = 4
 
-    P1 = make_slice(d, rng)
-    P2 = make_slice(d, rng)
+    P1 = random_slice(d, rng=rng)
+    P2 = random_slice(d, rng=rng)
 
     # Ensure orthogonal slices for clean separation
     # Use Gram-Schmidt on P2 against P1
@@ -265,8 +261,8 @@ def test_j_is_canonical():
     rng = np.random.default_rng(42)
     d = 4
 
-    P1 = make_slice(d, rng)
-    P2 = make_slice(d, rng)
+    P1 = random_slice(d, rng=rng)
+    P2 = random_slice(d, rng=rng)
 
     # Make P2 orthogonal to P1
     P2_orth = P2.copy()
@@ -319,7 +315,7 @@ def test_why_two():
     dim_su = d * d - 1
 
     # One slice: stays in so(d) subalgebra
-    P1 = make_slice(d, rng)
+    P1 = random_slice(d, rng=rng)
     gens_1 = []
     for i in range(3):
         for j in range(i + 1, 3):
@@ -328,7 +324,7 @@ def test_why_two():
     ld_1 = lie_dim(gens_1, d)
 
     # Two slices stacked as C³
-    P2 = make_slice(d, rng)
+    P2 = random_slice(d, rng=rng)
     gens_2 = []
     for i in range(3):
         for j in range(3):
@@ -341,7 +337,7 @@ def test_why_two():
 
     # Three slices: stack as... what? C³ only uses two.
     # Try: three slices, each pair stacked
-    P3 = make_slice(d, rng)
+    P3 = random_slice(d, rng=rng)
     gens_3 = []
     for Pa, Pb in [(P1, P2), (P1, P3), (P2, P3)]:
         for i in range(3):

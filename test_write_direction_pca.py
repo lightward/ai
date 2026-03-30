@@ -17,31 +17,7 @@ specific claim than "random-direction writes."
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def random_unitary(d, rng):
-    return expm(skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d))))
-
-
-def compute_L(bases):
-    N = len(bases)
-    d = bases[0].shape[0]
-    L = 0.0
-    for i in range(N):
-        for j in range(i + 1, N):
-            rel = bases[i].conj().T @ bases[j]
-            L += np.linalg.norm(rel - np.eye(d, dtype=complex), 'fro')
-    return L
+from foam import cayley, skew_hermitian, random_unitary, compute_L
 
 
 def foam_step_with_writes(bases, P, v, N, eps):

@@ -14,19 +14,8 @@ Let's compute this numerically and compare to the foam.
 """
 
 import numpy as np
-from scipy.linalg import expm
 from scipy.stats import unitary_group
-
-
-def compute_L(bases):
-    N = len(bases)
-    d = bases[0].shape[0]
-    L = 0.0
-    for i in range(N):
-        for j in range(i + 1, N):
-            rel = bases[i].conj().T @ bases[j]
-            L += np.linalg.norm(rel - np.eye(d, dtype=complex), 'fro')
-    return L
+from foam import compute_L
 
 
 def expected_pair_distance_haar(d, n_samples=100000):

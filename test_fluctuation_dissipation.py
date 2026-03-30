@@ -22,45 +22,15 @@ so this must be observer-indexed. The derivation:
 """
 
 import numpy as np
-from scipy.linalg import expm
+from foam import cayley, skew_hermitian, random_unitary, random_slice, compute_L
 
 
 EPS = 0.1  # write scale — large enough to see structure
 
 
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def random_unitary(d, rng):
-    return expm(skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d))))
-
-
-def random_slice(d, rng):
-    """Random R^3 slice: a (3, d) orthonormal projection."""
-    Q = np.linalg.qr(rng.standard_normal((d, 3)))[0]
-    return Q[:, :3].T  # (3, d)
-
-
-def compute_L(bases):
-    """Cost = sum of pairwise Frobenius distances."""
-    N = len(bases)
-    d = bases[0].shape[0]
-    L = 0.0
-    for i in range(N):
-        for j in range(i + 1, N):
-            rel = bases[i].conj().T @ bases[j]
-            L += np.linalg.norm(rel - np.eye(d, dtype=complex), 'fro')
-    return L
-
-
 def write_single(basis, P, v, bases_all, idx, N, eps=EPS):
-    """Apply one write to one basis from observer with slice P."""
+    """Centroid-based stabilization write (test-specific rule).
+    Returns (new_basis, dissonance_norm)."""
     m = np.real(P @ (v @ basis))
     m_norm = np.linalg.norm(m)
     if m_norm < 1e-12:
@@ -124,8 +94,8 @@ def test_perspectival_temperature():
     d, N, n_steps = 8, 4, 600
 
     bases = [random_unitary(d, rng) for _ in range(N)]
-    P_A = random_slice(d, rng)
-    P_B = random_slice(d, rng)
+    P_A = random_slice(d, rng=rng)
+    P_B = random_slice(d, rng=rng)
 
     O_AB = P_A @ P_B.T
     svs = np.linalg.svd(O_AB, compute_uv=False)
@@ -174,14 +144,14 @@ def test_temperature_geometry():
     rng = np.random.default_rng(123)
     d, N, n_steps, n_pairs = 8, 4, 400, 10
 
-    P_A = random_slice(d, rng)
+    P_A = random_slice(d, rng=rng)
     results = []
 
     for pair in range(n_pairs):
         bases = [random_unitary(d, rng) for _ in range(N)]
         alpha = pair / (n_pairs - 1)
 
-        P_rand = random_slice(d, rng)
+        P_rand = random_slice(d, rng=rng)
         P_interp = (1 - alpha) * P_A + alpha * P_rand
         U, S, Vt = np.linalg.svd(P_interp, full_matrices=False)
         P_B = U @ Vt
@@ -234,7 +204,7 @@ def test_fdt_relation():
     n_baseline, n_trials = 800, 100
     max_lag = 15
 
-    P_A = random_slice(d, rng)
+    P_A = random_slice(d, rng=rng)
     observers = [(0, P_A)]
 
     # ---- Part A: baseline autocorrelation C(tau) ----
@@ -345,7 +315,7 @@ def test_information_temperature():
     rng = np.random.default_rng(999)
     d, N, n_steps = 10, 4, 500
 
-    P_A = random_slice(d, rng)
+    P_A = random_slice(d, rng=rng)
     observers = [(0, P_A)]
 
     regimes = [
@@ -398,7 +368,7 @@ def test_temperature_gap():
     rng = np.random.default_rng(2024)
     d, N, n_steps = 8, 4, 400
 
-    P_A = random_slice(d, rng)
+    P_A = random_slice(d, rng=rng)
     n_tests = 8
     results = []
 
@@ -415,7 +385,7 @@ def test_temperature_gap():
             P_B = eigvecs[:, idx].T
         else:
             alpha = i / (n_tests - 1)
-            P_rand = random_slice(d, rng)
+            P_rand = random_slice(d, rng=rng)
             P_interp = (1 - alpha) * P_A + alpha * P_rand
             U, S, Vt = np.linalg.svd(P_interp, full_matrices=False)
             P_B = U @ Vt

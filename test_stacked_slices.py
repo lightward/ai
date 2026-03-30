@@ -17,11 +17,7 @@ Hmm. Let's check what we actually get.
 """
 
 import numpy as np
-
-
-def make_slice(d, rng):
-    Q = np.linalg.qr(rng.standard_normal((d, 3)))[0]
-    return Q[:, :3].T  # (3, d) real
+from foam import random_slice
 
 
 def complex_write(d_re, d_im, m_re, m_im):
@@ -117,8 +113,8 @@ def test_stacked():
         dim_su = d * d - 1
         dim_u = d * d
 
-        P_re = make_slice(d, rng)
-        P_im = make_slice(d, rng)
+        P_re = random_slice(d, rng=rng)
+        P_im = random_slice(d, rng=rng)
 
         # Real-only writes (single R³)
         real_gens = []
@@ -204,8 +200,8 @@ def test_stacked_with_trace_subtraction():
     for d in [3, 4, 6]:
         dim_su = d * d - 1
 
-        P_re = make_slice(d, rng)
-        P_im = make_slice(d, rng)
+        P_re = random_slice(d, rng=rng)
+        P_im = random_slice(d, rng=rng)
 
         # Generate complex writes, project to su(d)
         gens = []

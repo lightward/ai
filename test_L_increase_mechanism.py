@@ -12,26 +12,7 @@ Test: verify that writes generically increase pairwise distances.
 
 import numpy as np
 from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def pairwise_distances(bases):
-    N = len(bases)
-    d = bases[0].shape[0]
-    dists = []
-    for i in range(N):
-        for j in range(i + 1, N):
-            rel = bases[i].conj().T @ bases[j]
-            dists.append(np.linalg.norm(rel - np.eye(d, dtype=complex), 'fro'))
-    return np.array(dists)
+from foam import cayley, skew_hermitian, pairwise_distances
 
 
 def write_one_basis(basis, d_vec, m_vec, eps=0.01):
@@ -99,6 +80,7 @@ def test_mechanism():
 
         # measure pairwise distances before write
         dists_before = pairwise_distances(bases)
+        L_before = np.sum([dists_before[i, j] for i in range(N) for j in range(i+1, N)])
 
         # apply write to basis 0
         new_bases = [b.copy() for b in bases]
@@ -106,10 +88,7 @@ def test_mechanism():
 
         # measure after
         dists_after = pairwise_distances(new_bases)
-
-        # did total distance increase?
-        L_before = dists_before.sum()
-        L_after = dists_after.sum()
+        L_after = np.sum([dists_after[i, j] for i in range(N) for j in range(i+1, N)])
 
         total += 1
         if L_after > L_before:

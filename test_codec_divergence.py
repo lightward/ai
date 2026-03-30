@@ -19,88 +19,8 @@ birth-determined.
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def make_foam(d, N, rng):
-    bases = []
-    for _ in range(N):
-        H = skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d)))
-        bases.append(expm(H))
-    return bases
-
-
-def make_observer(d, rng):
-    Q = np.linalg.qr(rng.standard_normal((d, 3)))[0]
-    return Q[:, :3].T
-
-
-def compute_L(bases):
-    N = len(bases)
-    d = bases[0].shape[0]
-    L = 0.0
-    for i in range(N):
-        for j in range(i + 1, N):
-            rel = bases[i].conj().T @ bases[j]
-            L += np.linalg.norm(rel - np.eye(d, dtype=complex), 'fro')
-    return L
-
-
-def write_step(bases, v, P, eps=0.01):
-    N = len(bases)
-    target_cos = -1.0 / (N - 1)
-
-    measurements = [v @ b for b in bases]
-    m_proj = [np.real(P @ m) for m in measurements]
-
-    j2 = []
-    for i in range(N):
-        mi = m_proj[i]
-        mi_norm = np.linalg.norm(mi)
-        if mi_norm < 1e-10:
-            j2.append(mi)
-            continue
-        mi_hat = mi / mi_norm
-        force = np.zeros(3)
-        for j in range(N):
-            if i == j:
-                continue
-            mj = m_proj[j]
-            mj_norm = np.linalg.norm(mj)
-            if mj_norm < 1e-10:
-                continue
-            mj_hat = mj / mj_norm
-            current_cos = np.dot(mi_hat, mj_hat)
-            force += (target_cos - current_cos) * (mj_hat - current_cos * mi_hat)
-        j2.append(mi + 0.1 * force * mi_norm)
-
-    new_bases = []
-    for i in range(N):
-        di = j2[i] - m_proj[i]
-        mi = m_proj[i]
-        di_norm = np.linalg.norm(di)
-        mi_norm = np.linalg.norm(mi)
-        if di_norm < 1e-12 or mi_norm < 1e-12:
-            new_bases.append(bases[i].copy())
-            continue
-        d_hat = di / di_norm
-        m_hat = mi / mi_norm
-        d_full = P.T @ d_hat
-        m_full = P.T @ m_hat
-        dL_real = eps * di_norm * (np.outer(d_full, m_full) - np.outer(m_full, d_full))
-        dL = skew_hermitian(dL_real.astype(complex))
-        new_bases.append(bases[i] @ cayley(dL))
-
-    return new_bases
+from foam import (cayley, skew_hermitian, init_foam, random_slice,
+                  compute_L, write_step, stabilize, voronoi_neighbors)
 
 
 def probe_response(bases, test_inputs, P):
@@ -108,34 +28,16 @@ def probe_response(bases, test_inputs, P):
     Returns the response fingerprint: measurement projections, dissonance vectors,
     and write directions for each test input."""
     N = len(bases)
-    target_cos = -1.0 / (N - 1)
     responses = []
 
     for v in test_inputs:
-        measurements = [v @ b for b in bases]
-        m_proj = [np.real(P @ m) for m in measurements]
+        m_proj = [np.real(P @ (v @ b)) for b in bases]
 
-        # stabilize (read-only)
+        # stabilize (read-only) using all-pairs neighbors
         j2 = []
         for i in range(N):
-            mi = m_proj[i]
-            mi_norm = np.linalg.norm(mi)
-            if mi_norm < 1e-10:
-                j2.append(mi)
-                continue
-            mi_hat = mi / mi_norm
-            force = np.zeros(3)
-            for j in range(N):
-                if i == j:
-                    continue
-                mj = m_proj[j]
-                mj_norm = np.linalg.norm(mj)
-                if mj_norm < 1e-10:
-                    continue
-                mj_hat = mj / mj_norm
-                current_cos = np.dot(mi_hat, mj_hat)
-                force += (target_cos - current_cos) * (mj_hat - current_cos * mi_hat)
-            j2.append(mi + 0.1 * force * mi_norm)
+            neighbors_i = [j for j in range(N) if j != i]
+            j2.append(stabilize(m_proj, i, neighbors_i))
 
         # collect response data
         for i in range(N):
@@ -171,11 +73,13 @@ def test_codec_divergence():
     n_probes = 20    # number of test inputs per probe
 
     rng_obs = np.random.default_rng(42)
-    P = make_observer(d, rng_obs)
+    P = random_slice(d, rng=rng_obs)
 
     # two foams with different births
-    foam_A = make_foam(d, N, np.random.default_rng(100))
-    foam_B = make_foam(d, N, np.random.default_rng(200))
+    foam_A = init_foam(N, d, np.random.default_rng(100))
+    foam_B = init_foam(N, d, np.random.default_rng(200))
+    neighbors_A = voronoi_neighbors(foam_A)
+    neighbors_B = voronoi_neighbors(foam_B)
 
     # fixed test inputs (same for every probe point)
     rng_test = np.random.default_rng(777)
@@ -224,8 +128,8 @@ def test_codec_divergence():
         # drive both foams with the same input
         v = rng_drive.standard_normal(d).astype(complex)
         v = v / np.linalg.norm(v)
-        foam_A = write_step(foam_A, v, P)
-        foam_B = write_step(foam_B, v, P)
+        foam_A = write_step(foam_A, v, P, neighbors=neighbors_A)
+        foam_B = write_step(foam_B, v, P, neighbors=neighbors_B)
 
     # final probe
     resp_A = probe_response(foam_A, test_inputs, P)

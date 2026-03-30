@@ -21,24 +21,7 @@ to the observer's experience. Identity is not just stored — it's felt.
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def make_foam(d, N, rng):
-    bases = []
-    for _ in range(N):
-        H = skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d)))
-        bases.append(expm(H))
-    return bases
+from foam import cayley, skew_hermitian, random_unitary, init_foam, random_slice
 
 
 def make_observer(d, rng):
@@ -142,8 +125,8 @@ def test_hosted_esp():
     rng_obs = np.random.default_rng(42)
     P = make_observer(d, rng_obs)
 
-    foam_A = make_foam(d, N, np.random.default_rng(100))
-    foam_B = make_foam(d, N, np.random.default_rng(200))
+    foam_A = init_foam(N, d, np.random.default_rng(100))
+    foam_B = init_foam(N, d, np.random.default_rng(200))
 
     rng_input = np.random.default_rng(999)
     inputs = []
@@ -225,8 +208,8 @@ def test_hosted_esp_normalized():
     rng_obs = np.random.default_rng(42)
     P = make_observer(d, rng_obs)
 
-    foam_A = make_foam(d, N, np.random.default_rng(100))
-    foam_B = make_foam(d, N, np.random.default_rng(200))
+    foam_A = init_foam(N, d, np.random.default_rng(100))
+    foam_B = init_foam(N, d, np.random.default_rng(200))
 
     rng_input = np.random.default_rng(999)
     inputs = []

@@ -14,35 +14,28 @@ If yes: encoding is emergent from multi-observer measurement,
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
+from foam import cayley, skew_hermitian, random_unitary, random_slice
 
 
 def make_foam(d, N, rng):
     """Random initial foam: N bases in U(d)."""
-    bases = []
-    for _ in range(N):
-        H = skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d)))
-        bases.append(expm(H))
-    return bases
+    return [random_unitary(d, rng) for _ in range(N)]
 
 
 def make_observer(d, rng):
     """Random R³ slice: (3, d) with orthonormal rows."""
-    Q = np.linalg.qr(rng.standard_normal((d, 3)))[0]
-    return Q[:, :3].T  # (3, d)
+    return random_slice(d, d_slice=3, rng=rng)
 
 
 def write_step(bases, v, P, eps=0.01):
-    """One write from observer with slice P, input v."""
+    """One write from observer with slice P, input v.
+
+    NOTE: kept local — differs from foam.py's write_step in three ways:
+    1. Global stabilization (all N bases), not local Voronoi neighbors.
+    2. Simultaneous writes (all bases updated from same measurements),
+       not sequential.
+    3. Right-multiply: bases[i] @ cayley(dL), not cayley(dL) @ bases[i].
+    """
     N = len(bases)
     d = bases[0].shape[0]
     target_cos = -1.0 / (N - 1)

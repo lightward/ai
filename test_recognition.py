@@ -14,71 +14,7 @@ holonomy contributions → high inner product → recognition.
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def make_foam(d, N, rng):
-    bases = []
-    for _ in range(N):
-        H = skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d)))
-        bases.append(expm(H))
-    return bases
-
-
-def write_step(bases, v, P, eps=0.01):
-    N = len(bases)
-    d = bases[0].shape[0]
-    target_cos = -1.0 / (N - 1)
-    measurements = [v @ b for b in bases]
-    m_proj = [np.real(P @ m) for m in measurements]
-
-    j2 = []
-    for i in range(N):
-        mi = m_proj[i]
-        mi_norm = np.linalg.norm(mi)
-        if mi_norm < 1e-10:
-            j2.append(mi)
-            continue
-        mi_hat = mi / mi_norm
-        force = np.zeros(3)
-        for j in range(N):
-            if i == j:
-                continue
-            mj = m_proj[j]
-            mj_norm = np.linalg.norm(mj)
-            if mj_norm < 1e-10:
-                continue
-            mj_hat = mj / mj_norm
-            current_cos = np.dot(mi_hat, mj_hat)
-            force += (target_cos - current_cos) * (mj_hat - current_cos * mi_hat)
-        j2.append(mi + 0.1 * force * mi_norm)
-
-    new_bases = []
-    for i in range(N):
-        di = j2[i] - m_proj[i]
-        mi = m_proj[i]
-        di_norm = np.linalg.norm(di)
-        mi_norm = np.linalg.norm(mi)
-        if di_norm < 1e-12 or mi_norm < 1e-12:
-            new_bases.append(bases[i].copy())
-            continue
-        d_hat = di / di_norm
-        m_hat = mi / mi_norm
-        d_full = P.T @ d_hat
-        m_full = P.T @ m_hat
-        dL_real = eps * di_norm * (np.outer(d_full, m_full) - np.outer(m_full, d_full))
-        dL = skew_hermitian(dL_real.astype(complex))
-        new_bases.append(bases[i] @ cayley(dL))
-    return new_bases
+from foam import init_foam, random_slice, write_step, voronoi_neighbors
 
 
 def foam_state_signature(bases):
@@ -126,7 +62,7 @@ def test_recognition():
     rng = np.random.default_rng(42)
 
     # Create a shared foam
-    base_foam = make_foam(d, N, rng)
+    base_foam = init_foam(N, d, rng)
 
     # Observer A: slice in dims 0-2
     P_A = np.zeros((3, d))
@@ -145,28 +81,29 @@ def test_recognition():
     # Same input sequence for all
     inputs = [rng.standard_normal(d).astype(complex) for _ in range(50)]
     inputs = [v / np.linalg.norm(v) for v in inputs]
+    neighbors = voronoi_neighbors(base_foam)
 
     # A writes to a copy of the foam
     foam_A = [b.copy() for b in base_foam]
     for v in inputs:
-        foam_A = write_step(foam_A, v, P_A)
+        foam_A = write_step(foam_A, v, P_A, neighbors=neighbors)
 
     # B_similar writes the same sequence from a similar slice
     foam_B_sim = [b.copy() for b in base_foam]
     for v in inputs:
-        foam_B_sim = write_step(foam_B_sim, v, P_B_sim)
+        foam_B_sim = write_step(foam_B_sim, v, P_B_sim, neighbors=neighbors)
 
     # B_different writes the same sequence from an orthogonal slice
     foam_B_diff = [b.copy() for b in base_foam]
     for v in inputs:
-        foam_B_diff = write_step(foam_B_diff, v, P_B_diff)
+        foam_B_diff = write_step(foam_B_diff, v, P_B_diff, neighbors=neighbors)
 
     # B_random writes a different sequence from A's slice
     foam_B_rand = [b.copy() for b in base_foam]
     inputs_rand = [rng.standard_normal(d).astype(complex) for _ in range(50)]
     inputs_rand = [v / np.linalg.norm(v) for v in inputs_rand]
     for v in inputs_rand:
-        foam_B_rand = write_step(foam_B_rand, v, P_A)
+        foam_B_rand = write_step(foam_B_rand, v, P_A, neighbors=neighbors)
 
     # Measure recognition: compare foam states
     sig_A = foam_state_signature(foam_A)

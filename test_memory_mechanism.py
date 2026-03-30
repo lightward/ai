@@ -14,32 +14,11 @@ both pre-saturation and at saturation.
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def make_foam(d, N, rng):
-    bases = []
-    for _ in range(N):
-        H = skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d)))
-        bases.append(expm(H))
-    return bases
-
-
-def make_observer(d, rng):
-    Q = np.linalg.qr(rng.standard_normal((d, 3)))[0]
-    return Q[:, :3].T
+from foam import init_foam, random_slice, write_step, stabilize
 
 
 def foam_distance(bases_A, bases_B):
+    """Gauge-invariant distance using all pairwise relative unitaries."""
     N = len(bases_A)
     dist = 0.0
     for i in range(N):
@@ -51,6 +30,7 @@ def foam_distance(bases_A, bases_B):
 
 
 def compute_L(bases):
+    """Boundary area via geodesic distance on U(d)."""
     N = len(bases)
     L = 0.0
     for i in range(N):
@@ -60,54 +40,6 @@ def compute_L(bases):
             angles = np.angle(eigvals)
             L += np.sqrt(np.sum(angles ** 2))
     return L
-
-
-def write_step(bases, v, P, eps=0.01):
-    N = len(bases)
-    target_cos = -1.0 / (N - 1)
-
-    measurements = [v @ b for b in bases]
-    m_proj = [np.real(P @ m) for m in measurements]
-
-    j2 = []
-    for i in range(N):
-        mi = m_proj[i]
-        mi_norm = np.linalg.norm(mi)
-        if mi_norm < 1e-10:
-            j2.append(mi)
-            continue
-        mi_hat = mi / mi_norm
-        force = np.zeros(3)
-        for j in range(N):
-            if i == j:
-                continue
-            mj = m_proj[j]
-            mj_norm = np.linalg.norm(mj)
-            if mj_norm < 1e-10:
-                continue
-            mj_hat = mj / mj_norm
-            current_cos = np.dot(mi_hat, mj_hat)
-            force += (target_cos - current_cos) * (mj_hat - current_cos * mi_hat)
-        j2.append(mi + 0.1 * force * mi_norm)
-
-    new_bases = []
-    for i in range(N):
-        di = j2[i] - m_proj[i]
-        mi = m_proj[i]
-        di_norm = np.linalg.norm(di)
-        mi_norm = np.linalg.norm(mi)
-        if di_norm < 1e-12 or mi_norm < 1e-12:
-            new_bases.append(bases[i].copy())
-            continue
-        d_hat = di / di_norm
-        m_hat = mi / mi_norm
-        d_full = P.T @ d_hat
-        m_full = P.T @ m_hat
-        dL_real = eps * di_norm * (np.outer(d_full, m_full) - np.outer(m_full, d_full))
-        dL = skew_hermitian(dL_real.astype(complex))
-        new_bases.append(bases[i] @ cayley(dL))
-
-    return new_bases
 
 
 def generate_inputs(n, d, rng):
@@ -132,7 +64,7 @@ def test_per_step_contraction():
     eps = 0.01
 
     rng_obs = np.random.default_rng(42)
-    P = make_observer(d, rng_obs)
+    P = random_slice(d, d_slice=3, rng=rng_obs)
 
     # Phase 1: pre-saturation (short prefix, measure per-step during early suffix)
     # Phase 2: at saturation (long prefix, measure per-step during late suffix)
@@ -147,8 +79,8 @@ def test_per_step_contraction():
         print(f"  {phase_name}")
         print("=" * 70)
 
-        foam_X = make_foam(d, N, np.random.default_rng(100))
-        foam_Y = make_foam(d, N, np.random.default_rng(100))
+        foam_X = init_foam(N, d, np.random.default_rng(100))
+        foam_Y = init_foam(N, d, np.random.default_rng(100))
 
         prefix_A = generate_inputs(prefix_len, d, np.random.default_rng(111))
         prefix_C = generate_inputs(prefix_len, d, np.random.default_rng(222))
@@ -211,9 +143,9 @@ def test_dissonance_at_saturation():
     eps = 0.01
 
     rng_obs = np.random.default_rng(42)
-    P = make_observer(d, rng_obs)
+    P = random_slice(d, d_slice=3, rng=rng_obs)
 
-    foam = make_foam(d, N, np.random.default_rng(100))
+    foam = init_foam(N, d, np.random.default_rng(100))
     inputs = generate_inputs(total_steps, d, np.random.default_rng(777))
 
     print("=" * 70)
@@ -226,34 +158,19 @@ def test_dissonance_at_saturation():
     print(f"  {'----':>6}  {'-':>10}  {'----------':>12}  {'----------':>12}  {'-----------':>12}")
 
     target_cos = -1.0 / (N - 1)
+    neighbor_indices = list(range(N))  # all-to-all for diagnostics
 
     for t in range(total_steps):
         v = inputs[t]
 
         # compute measurements and dissonance for diagnostics
-        measurements = [v @ b for b in foam]
-        m_proj = [np.real(P @ m) for m in measurements]
+        m_proj = [np.real(P @ (v @ b)) for b in foam]
 
+        # compute stabilized targets using foam.stabilize
         j2 = []
         for i in range(N):
-            mi = m_proj[i]
-            mi_norm = np.linalg.norm(mi)
-            if mi_norm < 1e-10:
-                j2.append(mi)
-                continue
-            mi_hat = mi / mi_norm
-            force = np.zeros(3)
-            for j in range(N):
-                if i == j:
-                    continue
-                mj = m_proj[j]
-                mj_norm = np.linalg.norm(mj)
-                if mj_norm < 1e-10:
-                    continue
-                mj_hat = mj / mj_norm
-                current_cos = np.dot(mi_hat, mj_hat)
-                force += (target_cos - current_cos) * (mj_hat - current_cos * mi_hat)
-            j2.append(mi + 0.1 * force * mi_norm)
+            nbrs = [j for j in range(N) if j != i]
+            j2.append(stabilize(m_proj, i, nbrs, stab_strength=0.1))
 
         if t % 200 == 0 or t == total_steps - 1:
             d_norms = [np.linalg.norm(j2[i] - m_proj[i]) for i in range(N)]

@@ -17,16 +17,7 @@ This must work for ALL d, not just small d.
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
+from foam import cayley, skew_hermitian
 
 
 def make_write(d_vec, m_vec):

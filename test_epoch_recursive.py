@@ -35,35 +35,17 @@ Probe C — hierarchical saturation:
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def random_unitary(d, rng):
-    return expm(skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d))))
-
-
-def compute_L(bases):
-    N = len(bases)
-    d = bases[0].shape[0]
-    L = 0.0
-    for i in range(N):
-        for j in range(i + 1, N):
-            rel = bases[i].conj().T @ bases[j]
-            L += np.linalg.norm(rel - np.eye(d, dtype=complex), 'fro')
-    return L
+from foam import (cayley, skew_hermitian, random_unitary, random_slice,
+                  compute_L)
 
 
 def foam_step(bases, P, v, N, eps):
-    """One write step. Returns new bases and the Lie algebra writes."""
+    """One write step. Returns new bases and the Lie algebra writes.
+
+    This is a test-specific write variant that uses centroid-based
+    stabilization and returns Lie algebra elements, unlike the shared
+    write_step which uses simplex-target stabilization.
+    """
     d = bases[0].shape[0]
     all_m = []
     all_m_hat = []
@@ -108,7 +90,7 @@ def foam_step(bases, P, v, N, eps):
 
 
 def det_phases(bases):
-    """Phase of det(U_i) for each basis. Returns array of angles in (-π, π]."""
+    """Phase of det(U_i) for each basis. Returns array of angles in (-pi, pi]."""
     return np.array([np.angle(np.linalg.det(U)) for U in bases])
 
 
@@ -118,9 +100,9 @@ def total_phase(bases):
 
 
 def winding_number_proxy(phase_history):
-    """Cumulative winding: track total phase change, normalized by 2π."""
+    """Cumulative winding: track total phase change, normalized by 2pi."""
     phases = np.array(phase_history)
-    # unwrap to handle 2π jumps
+    # unwrap to handle 2pi jumps
     unwrapped = np.unwrap(phases)
     winding = (unwrapped - unwrapped[0]) / (2 * np.pi)
     return unwrapped, winding
@@ -136,9 +118,7 @@ def probe_phase_tracking(d, N, eps, n_steps, rng_seed=42):
     bases = [random_unitary(d, rng) for _ in range(N)]
 
     # two slices stacked as C³
-    Q1 = np.linalg.qr(rng.standard_normal((d, 3)))[0][:, :3].T  # 3×d
-    Q2 = np.linalg.qr(rng.standard_normal((d, 3)))[0][:, :3].T  # 3×d
-    slices = [Q1, Q2]
+    slices = [random_slice(d, rng=rng), random_slice(d, rng=rng)]
 
     input_rng = np.random.default_rng(rng_seed + 1000)
 
@@ -173,8 +153,7 @@ def probe_saturation_onset(d, N, eps, n_steps, rng_seed=42):
     rng = np.random.default_rng(rng_seed)
     bases = [random_unitary(d, rng) for _ in range(N)]
 
-    Q = np.linalg.qr(rng.standard_normal((d, 3)))[0]
-    P = Q[:, :3].T
+    P = random_slice(d, rng=rng)
 
     input_rng = np.random.default_rng(rng_seed + 1000)
 
@@ -221,8 +200,7 @@ def probe_hierarchical(d, N, eps, n_steps, n_foams, rng_seed=42):
 
     # shared slice
     slice_rng = np.random.default_rng(rng_seed + 6000)
-    Q = np.linalg.qr(slice_rng.standard_normal((d, 3)))[0]
-    P = Q[:, :3].T
+    P = random_slice(d, rng=slice_rng)
 
     all_L_histories = []
     final_bases = []
@@ -273,10 +251,7 @@ def probe_L_sign_ratio(d, N, eps, n_steps, rng_seed=42):
     rng = np.random.default_rng(rng_seed)
     bases = [random_unitary(d, rng) for _ in range(N)]
 
-    slices = []
-    for _ in range(2):
-        Q = np.linalg.qr(rng.standard_normal((d, 3)))[0]
-        slices.append(Q[:, :3].T)
+    slices = [random_slice(d, rng=rng), random_slice(d, rng=rng)]
 
     input_rng = np.random.default_rng(rng_seed + 1000)
 
@@ -321,7 +296,7 @@ if __name__ == "__main__":
     print("=" * 70)
     print()
 
-    # ── PROBE A: Phase tracking ──
+    # -- PROBE A: Phase tracking --
     print("PROBE A: Phase evolution (stacked slices, d=6, N=3)")
     print("-" * 50)
     L_h, ph, obs_ph = probe_phase_tracking(d=6, N=3, eps=0.1, n_steps=3000)
@@ -345,7 +320,7 @@ if __name__ == "__main__":
     print(f"  Large winding jumps:  {len(big_jumps)} (threshold: 0.1 turns/step)")
     print()
 
-    # ── PROBE B: Saturation onset ──
+    # -- PROBE B: Saturation onset --
     print("PROBE B: Saturation onset detection")
     print("-" * 50)
     for d_val in [4, 6, 8]:
@@ -356,7 +331,7 @@ if __name__ == "__main__":
         print(f"  d={d_val}: onset at step {onset}, L_sat/L_max = {L_sat/L_max:.3f}")
     print()
 
-    # ── PROBE C: Hierarchical saturation ──
+    # -- PROBE C: Hierarchical saturation --
     print("PROBE C: Hierarchical — 8 foams, same inputs, different births")
     print("-" * 50)
     all_L, L_sats, distances, final = probe_hierarchical(
@@ -365,10 +340,10 @@ if __name__ == "__main__":
     L_mean = np.mean(L_sats)
     L_std = np.std(L_sats)
     L_max = 3 * 2 * np.sqrt(6)
-    print(f"  Individual L_sat:     {L_mean:.3f} ± {L_std:.4f}")
+    print(f"  Individual L_sat:     {L_mean:.3f} +/- {L_std:.4f}")
     print(f"  L_sat / L_max:        {L_mean / L_max:.3f}")
     print(f"  CV of L_sat:          {L_std / L_mean:.4f}")
-    print(f"  Mean pairwise dist:   {np.mean(distances):.3f} ± {np.std(distances):.3f}")
+    print(f"  Mean pairwise dist:   {np.mean(distances):.3f} +/- {np.std(distances):.3f}")
     print(f"  Max pairwise dist:    {np.max(distances):.3f}")
     # super-foam: treat the 8 foams as "observers" in a higher foam
     # their pairwise distances form a super-L
@@ -381,7 +356,7 @@ if __name__ == "__main__":
     print(f"  Mean pair distance:   {super_L / n_super_pairs:.3f}")
     print()
 
-    # ── PROBE D: L sign ratio ──
+    # -- PROBE D: L sign ratio --
     print("PROBE D: L increase/decrease ratio")
     print("-" * 50)
     for d_val in [4, 6, 8]:

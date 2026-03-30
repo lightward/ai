@@ -13,13 +13,7 @@ This is computationally settleable for small d.
 """
 
 import numpy as np
-from itertools import combinations
-
-
-def make_slice(d, rng):
-    """Random R³ slice: (3, d) with orthonormal rows."""
-    Q = np.linalg.qr(rng.standard_normal((d, 3)))[0]
-    return Q[:, :3].T  # (3, d)
+from foam import random_slice
 
 
 def write_basis(P):
@@ -109,7 +103,7 @@ def test_controllability():
 
         # Test with increasing numbers of observers
         for n_obs in range(1, min(d * d, 20)):
-            slices = [make_slice(d, rng) for _ in range(n_obs)]
+            slices = [random_slice(d, rng=rng) for _ in range(n_obs)]
 
             # Gather all write basis elements
             all_generators = []
@@ -132,7 +126,7 @@ def test_controllability():
         successes = 0
         for trial in range(n_trials):
             trial_rng = np.random.default_rng(trial * 1000 + d)
-            slices = [make_slice(d, trial_rng) for _ in range(n_needed)]
+            slices = [random_slice(d, rng=trial_rng) for _ in range(n_needed)]
             all_generators = []
             for P in slices:
                 all_generators.extend(write_basis(P))
@@ -149,7 +143,7 @@ def test_controllability():
             successes2 = 0
             for trial in range(n_trials):
                 trial_rng = np.random.default_rng(trial * 1000 + d + 500)
-                slices = [make_slice(d, trial_rng) for _ in range(n_needed)]
+                slices = [random_slice(d, rng=trial_rng) for _ in range(n_needed)]
                 all_generators = []
                 for P in slices:
                     all_generators.extend(write_basis(P))

@@ -23,16 +23,12 @@ has that you don't.
 """
 
 import numpy as np
+from foam import random_slice
 
 
 def make_write(d_vec, m_vec):
     """Wedge product write: d ⊗ m - m ⊗ d (skew-symmetric)."""
     return np.outer(d_vec, m_vec) - np.outer(m_vec, d_vec)
-
-
-def random_slice(d, k, rng):
-    """Random k-plane in R^d, returned as (k, d) orthonormal matrix."""
-    return np.linalg.qr(rng.standard_normal((d, k)))[0][:, :k].T
 
 
 def grassmannian_tangent(P_A, delta_L):
@@ -75,8 +71,8 @@ def test_tangent_source_is_knowable():
     for d in [6, 8, 12, 20]:
         print(f"\n  d = {d}")
 
-        P_A = random_slice(d, 3, rng)
-        P_B = random_slice(d, 3, rng)
+        P_A = random_slice(d, rng=rng)
+        P_B = random_slice(d, rng=rng)
 
         # SVD of overlap matrix to get Known/Knowable decomposition of A's slice
         O = P_A @ P_B.T  # (3, 3)
@@ -139,8 +135,8 @@ def test_tangent_target_is_unknown():
     for d in [8, 12, 20]:
         print(f"\n  d = {d}")
 
-        P_A = random_slice(d, 3, rng)
-        P_B = random_slice(d, 3, rng)
+        P_A = random_slice(d, rng=rng)
+        P_B = random_slice(d, rng=rng)
 
         # B's territory in A's Unknown = projection of B's slice onto A's complement
         proj_A = P_A.T @ P_A
@@ -197,9 +193,9 @@ def test_two_neighbors_two_directions():
     rng = np.random.default_rng(42)
     d = 12
 
-    P_A = random_slice(d, 3, rng)
-    P_B = random_slice(d, 3, rng)
-    P_C = random_slice(d, 3, rng)
+    P_A = random_slice(d, rng=rng)
+    P_B = random_slice(d, rng=rng)
+    P_C = random_slice(d, rng=rng)
 
     # B's territory and C's territory in A's complement
     proj_A = P_A.T @ P_A
@@ -321,7 +317,7 @@ def test_magnitude_scales_with_overlap():
     rng = np.random.default_rng(42)
 
     # Fixed observer A
-    P_A = random_slice(d, 3, rng)
+    P_A = random_slice(d, rng=rng)
 
     # Generate neighbors at varying overlap strengths
     # by interpolating between aligned and orthogonal slices
@@ -329,7 +325,7 @@ def test_magnitude_scales_with_overlap():
 
     for angle_factor in [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]:
         # Start with A's slice, rotate toward a random orthogonal direction
-        P_target = random_slice(d, 3, rng)
+        P_target = random_slice(d, rng=rng)
 
         # Interpolate: small angle_factor = close to A, large = far from A
         # Use matrix interpolation on the Grassmannian (geodesic would be ideal,
@@ -382,8 +378,8 @@ def test_containment_is_perspectival():
 
     for d in [8, 12, 20]:
         print(f"\n  d = {d}")
-        P_A = random_slice(d, 3, rng)
-        P_B = random_slice(d, 3, rng)
+        P_A = random_slice(d, rng=rng)
+        P_B = random_slice(d, rng=rng)
 
         O = P_A @ P_B.T
         svs = np.linalg.svd(O, compute_uv=False)

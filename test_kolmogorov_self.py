@@ -28,31 +28,7 @@ PROBE 3 — Self-decoding capacity.
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def random_unitary(d, rng):
-    return expm(skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d))))
-
-
-def compute_L(bases):
-    N = len(bases)
-    d = bases[0].shape[0]
-    L = 0.0
-    for i in range(N):
-        for j in range(i + 1, N):
-            rel = bases[i].conj().T @ bases[j]
-            L += np.linalg.norm(rel - np.eye(d, dtype=complex), 'fro')
-    return L
+from foam import cayley, skew_hermitian, random_unitary, compute_L
 
 
 def compute_L_gradient(bases, idx):
@@ -70,25 +46,14 @@ def compute_L_gradient(bases, idx):
     for j in range(N):
         if j == idx:
             continue
-        # L_ij = ||U_i†U_j - I||_F
-        # If we perturb U_idx → U_idx(I + εX), then:
-        # For pair (idx, j): U_idx†U_j → (I+εX†)U_idx†U_j
-        #   d/dε ||...||_F at ε=0 = Re(tr(X† · U_idx†U_j · (U_idx†U_j - I)†)) / ||U_idx†U_j - I||
-        # For pair (i, idx): similar
-
         rel = bases[idx].conj().T @ bases[j]
         diff = rel - np.eye(d, dtype=complex)
         norm = np.linalg.norm(diff, 'fro')
         if norm < 1e-15:
             continue
-        # derivative of ||rel - I||_F w.r.t. right perturbation of U_idx
-        # d/dε ||(I+εX)R - I||_F = Re(tr(X · R · (R-I)†)) / ||R-I||
-        # where R = U_idx†U_j and X is the Lie algebra element
-        # The gradient (as a Lie algebra element) is the skew-Hermitian part
         contrib = rel @ diff.conj().T / norm
         grad += contrib
 
-    # project to skew-Hermitian (the Lie algebra of U(d))
     grad = skew_hermitian(grad)
     return grad
 

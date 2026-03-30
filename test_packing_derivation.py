@@ -37,31 +37,7 @@ Let's compute:
 """
 
 import numpy as np
-from scipy.linalg import expm
-
-
-def cayley(A):
-    I = np.eye(A.shape[0], dtype=complex)
-    return np.linalg.solve((I + A).T, (I - A).T).T
-
-
-def skew_hermitian(A):
-    return (A - A.conj().T) / 2
-
-
-def random_unitary(d, rng):
-    return expm(skew_hermitian(rng.standard_normal((d, d)) + 1j * rng.standard_normal((d, d))))
-
-
-def compute_L(bases):
-    N = len(bases)
-    d = bases[0].shape[0]
-    L = 0.0
-    for i in range(N):
-        for j in range(i + 1, N):
-            rel = bases[i].conj().T @ bases[j]
-            L += np.linalg.norm(rel - np.eye(d, dtype=complex), 'fro')
-    return L
+from foam import cayley, skew_hermitian, random_unitary, compute_L
 
 
 def compute_L_pair(U, V):
@@ -185,13 +161,7 @@ def ito_drift_empirical(bases, P, eps, n_samples=1000, rng_seed=None):
                 L_ij = np.linalg.norm(diff, 'fro')
                 if L_ij < 1e-15:
                     continue
-                # perturbation of U_i → U_i @ exp(X_i)
-                # L_ij' = ||exp(-X_i)R_ij - I|| ≈ ||(R_ij - X_i R_ij) - I||
-                # first order: -Re(tr(X_i R_ij diff†)) / L_ij
                 fo -= np.real(np.trace(writes[i] @ R @ diff.conj().T)) / L_ij
-                # perturbation of U_j → U_j @ exp(X_j)
-                # L_ij' = ||R_ij exp(X_j) - I|| ≈ ||(R_ij + R_ij X_j) - I||
-                # first order: Re(tr(R_ij X_j diff†)) / L_ij
                 fo += np.real(np.trace(R @ writes[j] @ diff.conj().T)) / L_ij
         first_order.append(fo)
 
