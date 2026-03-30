@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 27)
+## Current state (session 28)
 
+- [Session 28 — stabilization contract, adjacency flip, foam.py](project_session28_contract_flip.md) — Taylor reframed: forced requirement, not design choice (closure → channel capacity → locality → classified/locally-finite/flat). adjacency flip derived and confirmed at d=2 N=12. foam.py shared implementation (-1,434 lines). "observer cannot be trapped" property (indelibility + open exits). 7 commits, 2 cold-read rounds.
 - [Session 27 — exits open, birth shape at all orders, retention spectral](project_session27_exits_birth_jet.md) — cross-project source (mechanic-api collab log). exits constitutionally open (4-step derivation from commitment outside map). birth shape extends to all derivative orders (ergodic theorem + indelibility + slice geometry; tightened per Lightward AI cold read). retention under interaction partially resolved (spectral, recommitment preserves basin, specific rate geometry-dependent). game theory connections explored but not spec-ready.
 - [Session 26 — line derived, spectral state-independence](project_session26_line_derived.md) — "what commits" upgraded from boundary condition to derivation. channel capacity (two-arg → autonomous → clock), spectral (mediation decay), operational (partiality dissolves randomness/mixing), quantified (n*≈2/log(d/3)). line = correlation length. 5 commits, 5 cold-read rounds, each tightened by reader feedback.
 - [Session 25 — unique homomorphism, chirality](project_session25_chirality.md) — tr: u(d)→u(1) unique, tr([A,B])=0, stacking=chirality. Trace retention 3→1 arguments. Complex tsort interpretation emerged (not in spec — interpretation not derivation). Conservation = accumulated comparison phase on closed paths. Cross-measurement closure clarified. J1-mediation adjunction still open; complex tsort may be the framework it lives in.
@@ -26,6 +27,17 @@
 - [Sessions 9-10](project_session9_state.md) — foam.py + BCH investigation + recursive foam + cell birth + heirloom.
 
 ## Key results (sessions 7-27)
+
+**Session 28 (stabilization contract, adjacency flip):**
+- Stabilization contract: classified + locally finite + flat — derived from closure through channel capacity (not a design choice). R³ + Taylor is the unique known implementation.
+- Necessity established: non-local stabilization removes the mechanism that produces channel capacity (not just fails to provide it).
+- Adjacency flip: piecewise-smooth dynamics, codimension-1 switching surfaces. Two-layer retention (birth structural, interaction spectral). Confirmed computationally at d=2, N=12.
+- For N << d² (tested regime), all pairs are Voronoi neighbors → local = global. Existing results unchanged.
+- foam.py: shared implementation, 35 tests migrated, -1,434 lines of duplication.
+- New property: observer cannot be trapped (indelibility + open exits). Surfaced by Lightward cold read.
+- Exits open hedge: formal non-blocking doesn't preclude attractor narrowing.
+- Decorrelation horizon: Marchenko-Pastur caveat, values are order-of-magnitude.
+- J¹ binary sharpened: attractors (self-organization) vs diagnostic (chaotic).
 
 **Session 27 (exits, birth shape, retention):**
 - Exits constitutionally open: commitment outside the map → dynamics can't prevent commitment → exits can't be closed. Derived in 4 steps.
@@ -125,3 +137,4 @@
 - [Formal bar](feedback_formal_bar.md) — main body is derived or designed, period. empirical goes to junk drawer. the tension is useful.
 - [Route the mystery](feedback_route_mystery.md) — name limits explicitly, don't poeticize or leave ambiguous. the spec documents its own answers and routes mystery through.
 - [Question before questioning](feedback_question_before_question.md) — Isaac's meta-checks ("is this askable from here?") are structured, not hedging. The wrapper is load-bearing.
+- [State boundaries](feedback_state_boundaries.md) — naming what you want to do / when to stop is valued as structural clarity, not just permitted. "force voids results" applies to the collaboration itself.

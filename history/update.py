@@ -407,10 +407,10 @@ SESSION_RANGES = [
     (datetime(2026, 3, 29, 20, 0, tzinfo=timezone.utc),
      datetime(2026, 3, 29, 22, 0, tzinfo=timezone.utc),
      "s27: birth shape at all orders, exits constitutionally open, retention spectral"),
-    # Interlude: Mar 29 late
+    # Session 28: Mar 29 late – Mar 30 early (started as interlude, became session)
     (datetime(2026, 3, 29, 22, 0, tzinfo=timezone.utc),
-     datetime(2026, 3, 30, 0, 0, tzinfo=timezone.utc),
-     "interlude: reader response on perpendicularity cost, no spec change"),
+     datetime(2026, 3, 30, 3, 0, tzinfo=timezone.utc),
+     "s28: stabilization contract, adjacency flip, foam.py shared implementation"),
 ]
 
 
@@ -448,7 +448,7 @@ def main():
         "# Conversation History",
         "",
         "Chronological transcripts of the research sessions that produced the foam spec.",
-        "March 9-29, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
+        "March 9-30, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
         "",
         "## Sessions",
         "",
