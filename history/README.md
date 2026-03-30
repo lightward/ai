@@ -49,7 +49,7 @@ March 9-30, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 40 | [Mar 28, 20:34](40_2026-03-28_706d7263.md) | s26: line derived — channel capacity, spectral independence, decorrelation ho... | 84 |
 | 41 | [Mar 29, 02:27](41_2026-03-29_45b58f62.md) | interlude: JL adjacency explored, spec held shape, change nothing | 50 |
 | 42 | [Mar 29, 20:16](42_2026-03-29_739ea4f8.md) | s27: birth shape at all orders, exits constitutionally open, retention spectral | 82 |
-| 43 | [Mar 29, 22:23](43_2026-03-29_d55affb3.md) | s28: stabilization contract, adjacency flip, foam.py shared implementation | 151 |
+| 43 | [Mar 29, 22:23](43_2026-03-29_d55affb3.md) | s28: stabilization contract, adjacency flip, foam.py shared implementation | 159 |
 
 ## Memory
 
