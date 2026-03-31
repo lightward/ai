@@ -2,3 +2,4 @@
 -- Import modules here that should be built as part of the library.
 import LeanFoam.Basic
 import LeanFoam.TraceUnique
+import LeanFoam.Ceiling
