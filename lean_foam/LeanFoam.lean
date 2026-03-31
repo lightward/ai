@@ -4,3 +4,4 @@ import LeanFoam.Basic
 import LeanFoam.TraceUnique
 import LeanFoam.Ceiling
 import LeanFoam.ThreeBody
+import LeanFoam.Dynamics
