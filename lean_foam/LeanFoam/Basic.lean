@@ -10,6 +10,7 @@ import Mathlib.LinearAlgebra.Dimension.Finrank
 import Mathlib.LinearAlgebra.Matrix.Trace
 import Mathlib.Data.Matrix.Mul
 import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 namespace FoamSpec
 
@@ -126,5 +127,37 @@ theorem matrix_finrank {n : ℕ}
     {K : Type*} [Field K] :
     Module.finrank K (Matrix (Fin n) (Fin n) K) = n * n := by
   simp [Module.finrank_matrix, Fintype.card_fin]
+
+/-!
+## 6. The Dimensional Gap: dim(su(d)) = d² − 1
+
+The traceless matrices (kernel of trace) form a codimension-1 subspace
+of all matrices. The missing dimension is u(1) — the scalar/trace direction.
+
+This is the algebraic basis of conservation: writes live in a space that
+is exactly one dimension short of the full matrix algebra.
+
+Spec reference: "group" → "U(d) rather than SU(d) because π₁(U(d)) = ℤ";
+test_write_uniqueness.py Test 4.
+-/
+
+open Matrix Module in
+/-- The kernel of the trace map (= traceless matrices = sl(n) = su(d) in
+    the spec's notation) has dimension n² − 1.
+    The gap of 1 is the u(1) direction — topologically load-bearing,
+    metrically invisible. -/
+theorem finrank_traceless {n : ℕ} [NeZero n]
+    {K : Type*} [Field K] :
+    let tr : Matrix (Fin n) (Fin n) K →ₗ[K] K := traceLinearMap (n := Fin n) (R := K) (α := K)
+    finrank K (LinearMap.ker tr) = n * n - 1 := by
+  intro tr
+  have h_rn := LinearMap.finrank_range_add_finrank_ker tr
+  have h_surj : Function.Surjective tr := fun r => trace_surjective (n := Fin n) r
+  have h_range : LinearMap.range tr = ⊤ := LinearMap.range_eq_top.mpr h_surj
+  simp [finrank_matrix, Fintype.card_fin, finrank_self] at h_rn
+  have h_range_dim : finrank K (LinearMap.range tr) = 1 := by
+    rw [h_range, finrank_top]
+    exact finrank_self K
+  omega
 
 end FoamSpec
