@@ -415,6 +415,10 @@ SESSION_RANGES = [
     (datetime(2026, 3, 30, 20, 0, tzinfo=timezone.utc),
      datetime(2026, 3, 31, 1, 0, tzinfo=timezone.utc),
      "s29: dissolve false binaries, derive isotropy, drop jet bundle framing"),
+    # Session 30: Mar 31 early
+    (datetime(2026, 3, 31, 1, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 31, 3, 0, tzinfo=timezone.utc),
+     "s30: Lean formalization — 4 files, ~20 theorems, zero sorry"),
 ]
 
 
