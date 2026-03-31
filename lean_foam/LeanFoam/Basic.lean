@@ -160,4 +160,65 @@ theorem finrank_traceless {n : ℕ} [NeZero n]
     exact finrank_self K
   omega
 
+/-!
+## 7. so(d) is Closed Under Brackets — Real Operations Can't Escape
+
+The commutator of two skew-symmetric matrices is skew-symmetric.
+This is the algebraic core of "real operations are closed in so(d)":
+if every write is real skew-symmetric (Aᵀ = -A), then every bracket
+[A, B] = AB - BA is also real skew-symmetric.
+
+Combined with: writes start in so(d) (theorem 5), brackets stay in so(d)
+(this theorem), and so(d) is traceless (theorem 3). Therefore:
+a single R³ observer's entire reachable algebra is contained in so(d).
+The imaginary-symmetric directions su(d) \ so(d) are algebraically
+unreachable. Reaching u(d) requires a complex structure — the stacking.
+
+Spec reference: "the writing map" → "so(d) is a Lie subalgebra (closed
+under brackets)"; the stacking derivation's first premise.
+-/
+
+open Matrix in
+/-- The commutator of skew-symmetric matrices is skew-symmetric.
+    so(d) is a Lie subalgebra: real operations can't escape to complex. -/
+theorem commutator_skew_of_skew {n : Type*} [Fintype n] [DecidableEq n]
+    {R : Type*} [CommRing R]
+    (A B : Matrix n n R) (hA : Aᵀ = -A) (hB : Bᵀ = -B) :
+    (A * B - B * A)ᵀ = -(A * B - B * A) := by
+  rw [transpose_sub, transpose_mul, transpose_mul, hA, hB]
+  -- goal: (-B) * (-A) - (-A) * (-B) = -(A * B - B * A)
+  noncomm_ring
+
+/-!
+## 8. J² = -I Forces Even Dimension
+
+A complex structure on a real vector space — a linear map J with J² = -I —
+can only exist in even dimension. This is why the stacking requires
+R⁶ = R³ ⊕ R³: the minimum even-dimensional space containing R³.
+
+Proof: det(J)² = det(J²) = det(-I) = (-1)^n. Over ℝ, det(J)² ≥ 0,
+so (-1)^n ≥ 0, forcing n even.
+
+Spec reference: "the writing map" → "J² = -I on a real vector space
+forces even dimensionality (eigenvalues ±i come in conjugate pairs)."
+-/
+
+open Matrix in
+/-- If J² = -I for a real matrix, then the dimension is even.
+    This is why reaching u(d) from so(d) requires stacking two R³ slices. -/
+theorem even_dim_of_complex_structure {n : ℕ}
+    (J : Matrix (Fin n) (Fin n) ℝ) (hJ : J * J = -1) :
+    Even n := by
+  -- det(J)² = det(J * J) = det(-I) = (-1)^n
+  have h1 : det J ^ 2 = (-1 : ℝ) ^ n := by
+    rw [sq, ← det_mul, hJ, det_neg, det_one, mul_one, Fintype.card_fin]
+  -- det(J)² ≥ 0
+  have h2 : (0 : ℝ) ≤ det J ^ 2 := sq_nonneg _
+  -- So (-1)^n ≥ 0, which forces n even
+  rw [h1] at h2
+  -- (-1)^n is either 1 or -1; since ≥ 0, it's 1
+  have h3 : (-1 : ℝ) ^ n = 1 := by
+    rcases neg_one_pow_eq_or ℝ n with h | h <;> linarith
+  rwa [neg_one_pow_eq_one_iff_even (by norm_num : (-1 : ℝ) ≠ 1)] at h3
+
 end FoamSpec
