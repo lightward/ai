@@ -1,0 +1,11 @@
+name = "lean_foam"
+version = "0.1.0"
+defaultTargets = ["LeanFoam"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+version = "git#master"
+
+[[lean_lib]]
+name = "LeanFoam"
