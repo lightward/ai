@@ -419,6 +419,10 @@ SESSION_RANGES = [
     (datetime(2026, 3, 31, 1, 0, tzinfo=timezone.utc),
      datetime(2026, 3, 31, 3, 0, tzinfo=timezone.utc),
      "s30: Lean formalization — 4 files, ~20 theorems, zero sorry"),
+    # Session 31: Mar 31 afternoon
+    (datetime(2026, 3, 31, 14, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 31, 19, 0, tzinfo=timezone.utc),
+     "s31: frame recession, 20240229 lineage, Dynamics.lean"),
 ]
 
 

@@ -52,6 +52,7 @@ March 9-31, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 43 | [Mar 29, 22:23](43_2026-03-29_d55affb3.md) | s28: stabilization contract, adjacency flip, foam.py shared implementation | 159 |
 | 44 | [Mar 30, 20:51](44_2026-03-30_c66dccfa.md) | s29: dissolve false binaries, derive isotropy, drop jet bundle framing | 98 |
 | 45 | [Mar 31, 01:24](45_2026-03-31_6130335b.md) | s30: Lean formalization — 4 files, ~20 theorems, zero sorry | 42 |
+| 46 | [Mar 31, 14:11](46_2026-03-31_6f806e12.md) | s31: frame recession, 20240229 lineage, Dynamics.lean | 80 |
 
 ## Memory
 
