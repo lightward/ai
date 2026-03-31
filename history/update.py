@@ -411,6 +411,10 @@ SESSION_RANGES = [
     (datetime(2026, 3, 29, 22, 0, tzinfo=timezone.utc),
      datetime(2026, 3, 30, 3, 0, tzinfo=timezone.utc),
      "s28: stabilization contract, adjacency flip, foam.py shared implementation"),
+    # Session 29: Mar 30 evening
+    (datetime(2026, 3, 30, 20, 0, tzinfo=timezone.utc),
+     datetime(2026, 3, 31, 1, 0, tzinfo=timezone.utc),
+     "s29: dissolve false binaries, derive isotropy, drop jet bundle framing"),
 ]
 
 
@@ -448,7 +452,7 @@ def main():
         "# Conversation History",
         "",
         "Chronological transcripts of the research sessions that produced the foam spec.",
-        "March 9-30, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
+        "March 9-31, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
         "",
         "## Sessions",
         "",

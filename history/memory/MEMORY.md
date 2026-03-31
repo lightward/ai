@@ -4,13 +4,14 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 28)
+## Current state (session 29)
 
+- [Session 29 — dissolve false binaries, derive isotropy, drop jet bundle](project_session29_dissolve_and_derive.md) — J¹ binary dissolved (active-not-followable, not attractors-vs-diagnostic). Mediation adjunction resolved: no (write-dependent vs geometric). Inverted echo state dissolved: dynamics ARE birth expression, no convergence needed. Write isotropy derived (33:33:33 forced at Haar stationarity). Construction section dropped (jet bundle framing structurally absent). Open questions criterion: "question is forced; answer is open." 4 commits, 2 cold-read rounds.
 - [Session 28 — stabilization contract, adjacency flip, foam.py](project_session28_contract_flip.md) — Taylor reframed: forced requirement, not design choice (closure → channel capacity → locality → classified/locally-finite/flat). adjacency flip derived and confirmed at d=2 N=12. foam.py shared implementation (-1,434 lines). "observer cannot be trapped" property (indelibility + open exits). 7 commits, 2 cold-read rounds.
 - [Session 27 — exits open, birth shape at all orders, retention spectral](project_session27_exits_birth_jet.md) — cross-project source (mechanic-api collab log). exits constitutionally open (4-step derivation from commitment outside map). birth shape extends to all derivative orders (ergodic theorem + indelibility + slice geometry; tightened per Lightward AI cold read). retention under interaction partially resolved (spectral, recommitment preserves basin, specific rate geometry-dependent). game theory connections explored but not spec-ready.
 - [Session 26 — line derived, spectral state-independence](project_session26_line_derived.md) — "what commits" upgraded from boundary condition to derivation. channel capacity (two-arg → autonomous → clock), spectral (mediation decay), operational (partiality dissolves randomness/mixing), quantified (n*≈2/log(d/3)). line = correlation length. 5 commits, 5 cold-read rounds, each tightened by reader feedback.
 - [Session 25 — unique homomorphism, chirality](project_session25_chirality.md) — tr: u(d)→u(1) unique, tr([A,B])=0, stacking=chirality. Trace retention 3→1 arguments. Complex tsort interpretation emerged (not in spec — interpretation not derivation). Conservation = accumulated comparison phase on closed paths. Cross-measurement closure clarified. J1-mediation adjunction still open; complex tsort may be the framework it lives in.
-- [Session 24 — mediation operator](project_session24_mediation.md) — M = O_AB·O_BC derived, formalizes three-body mediation pathway. Round-trip R_A = M·M^T spectrally symmetric. Wall alignment is irreducible triple invariant. Sequence echo empirical (r=0.99, measurement sensitivity mechanism). Round trip generative. Adjunction narrowed: J1-mediation composition is the remaining formal question.
+- [Session 24 — mediation operator](project_session24_mediation.md) — M = O_AB·O_BC derived, formalizes three-body mediation pathway. Round-trip R_A = M·M^T spectrally symmetric. Wall alignment is irreducible triple invariant. Sequence echo empirical (r=0.99, measurement sensitivity mechanism). Round trip generative. Adjunction narrowed in s24; resolved in s29 (composition exists, not an adjunction).
 - [Session 23 — 1/√2 derived](project_session23_write_blindness.md) — L converges to 1/√2 of theoretical max (derived, graduated to main body). ceiling × Haar cost = 1/√2, independent of N and d. write subspace = Λ²(R³) = 3D but doesn't cause the 72% — any walk on compact U(d) gives the same. Brownian not Lévy. derivation/interpretation seam tightened. 2 rounds cold reads, stable.
 - [Session 22 reservoir investigation](project_session22_reservoir.md) — no global ESP (derived: state-dependent attractor, no contraction). birth indelible. complement of controllability proven exhaustive per basis (Lie theory). causal ordering derived (partiality + closure). line investigability derived. reservoir correspondence: 2 of 3 properties. inverted ESP open. codec birth-shaped from step zero. dissonance converges across births.
 - [Session 21 spec hygiene](project_session21_hygiene.md) — interpretive layer stripped, Taylor strictly typed (classifies stabilization equilibrium, not L), Voronoi as realization choice. Two design choices in checksum. Over-claiming resolved across cold reads. Opened: originless loop topology, line as inter-foam, not-FEP (anti-Hebbian not Hebbian). Open: is loop generativity derived from non-identical slices alone?
@@ -28,6 +29,15 @@
 
 ## Key results (sessions 7-27)
 
+**Session 29 (dissolve and derive):**
+- J¹ binary dissolved: "does observer follow J¹?" malformed (slices don't move). J¹ is always active (drives writes) and never followed in Gr(3,d). The question presupposed motion where nothing moves.
+- Mediation adjunction resolved: no. J¹ is write-dependent, mediation is geometric. Composition exists (generically nonzero) but not an adjunction.
+- Inverted echo state dissolved: "converge toward birth expression?" malformed — dynamics ARE birth expression (writes ∈ Λ²(P_A)). Residual: within-basin perturbation dynamics (geometry-dependent).
+- Write isotropy derived: at Haar stationarity, write directions within Λ²(P_A) are isotropic (33:33:33). Birth determines the subspace, not the direction within it.
+- Construction section (J⁰/J¹/J²) dropped: J⁰ redundant, J¹ merged into three-body mapping, J² unused. Jet bundle framing was upstream premise requiring downstream correction.
+- Open questions: 4 → 3 (stacking dynamics, within-basin perturbation dynamics, mixing rate). Criterion: "question is forced; answer is open."
+- Meta-heuristic: "is this clarification moot with a differently-formed premise?" — the general form of all patterns applied this session.
+
 **Session 28 (stabilization contract, adjacency flip):**
 - Stabilization contract: classified + locally finite + flat — derived from closure through channel capacity (not a design choice). R³ + Taylor is the unique known implementation.
 - Necessity established: non-local stabilization removes the mechanism that produces channel capacity (not just fails to provide it).
@@ -37,7 +47,6 @@
 - New property: observer cannot be trapped (indelibility + open exits). Surfaced by Lightward cold read.
 - Exits open hedge: formal non-blocking doesn't preclude attractor narrowing.
 - Decorrelation horizon: Marchenko-Pastur caveat, values are order-of-magnitude.
-- J¹ binary sharpened: attractors (self-organization) vs diagnostic (chaotic).
 
 **Session 27 (exits, birth shape, retention):**
 - Exits constitutionally open: commitment outside the map → dynamics can't prevent commitment → exits can't be closed. Derived in 4 steps.
@@ -61,8 +70,7 @@
 - Containment algebraically symmetric. Experiential asymmetry is perspectival, not algebraic.
 - Tangent magnitude peaks at intermediate overlap = coverage-interaction trade-off as J1 property.
 - Half-thought (untested): sequential dynamics may break algebraic symmetry of containment.
-- Open question narrowed: "J1/Grassmannian correspondence" → "J1 global structure" (vertical resolved, global open).
-- New (c) item: containment asymmetry — can it be derived from dynamics?
+- Open question narrowed in s20: "J1/Grassmannian correspondence" → "J1 global structure." Resolved in s29: J¹ is active-not-followable, global structure on Gr(3,d) dynamically inert. Construction section dropped.
 
 **Session 19 (stacking derived):**
 - Stacking algebra: J²=-I forced by su(d)\so(d) structure. Two slices forced by even dimensionality. Pairing canonical (SO(6) conjugacy).
