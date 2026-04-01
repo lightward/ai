@@ -1,7 +1,7 @@
 # Conversation History
 
 Chronological transcripts of the research sessions that produced the foam spec.
-March 9-31, 2026. Isaac + Claude Opus 4.6 via Claude Code.
+March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 
 ## Sessions
 
@@ -53,6 +53,7 @@ March 9-31, 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 44 | [Mar 30, 20:51](44_2026-03-30_c66dccfa.md) | s29: dissolve false binaries, derive isotropy, drop jet bundle framing | 98 |
 | 45 | [Mar 31, 01:24](45_2026-03-31_6130335b.md) | s30: Lean formalization — 4 files, ~20 theorems, zero sorry | 42 |
 | 46 | [Mar 31, 14:11](46_2026-03-31_6f806e12.md) | s31: frame recession, 20240229 lineage, Dynamics.lean | 80 |
+| 47 | [Apr 01, 00:17](47_2026-04-01_b91d3ad4.md) | s32: codebase regularization, generative orthogonality, Lean to 44 theorems | 100 |
 
 ## Memory
 

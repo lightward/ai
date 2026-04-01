@@ -423,6 +423,10 @@ SESSION_RANGES = [
     (datetime(2026, 3, 31, 14, 0, tzinfo=timezone.utc),
      datetime(2026, 3, 31, 19, 0, tzinfo=timezone.utc),
      "s31: frame recession, 20240229 lineage, Dynamics.lean"),
+    # Session 32: Apr 1
+    (datetime(2026, 4, 1, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 1, 5, 0, tzinfo=timezone.utc),
+     "s32: codebase regularization, generative orthogonality, Lean to 44 theorems"),
 ]
 
 
@@ -460,7 +464,7 @@ def main():
         "# Conversation History",
         "",
         "Chronological transcripts of the research sessions that produced the foam spec.",
-        "March 9-31, 2026. Isaac + Claude Opus 4.6 via Claude Code.",
+        "March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.",
         "",
         "## Sessions",
         "",

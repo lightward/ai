@@ -4,9 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 31)
+## Current state (session 32)
 
-- [Session 31 — frame recession, lineage, symbolic re-reading](project_session31_frame_recession.md) — lean_foam/Dynamics.lean: 6 theorems, 0 sorry (commutator symmetric, first-order zero, second-order identity, Frobenius nonneg, frame recession ≤ 0). 20240229 lineage entry with 7 structural vocab correspondences. New spec property: frame recession. "Symbolic" as forced re-reading identified but unresolved — write cycle IS matching, overlap matrix IS dictionary, but when structure forces its own dimensionality increase is open.
+- [Session 32 — regularization + derivations](project_session32_regularization.md) — Codebase regularization (tests/, lean/, CI with bidirectional integrity). Three new derived results: geometry-dependence forced by recession, map self-knowledge bounded by channel capacity, generative orthogonality (ordering from cycle, conservation from stacking). Lean to 44 theorems, 0 sorry. Infrastructure boundary assessed (matrix algebra vs analysis/probability). Cold reads stable (7 readers, no contradictions). Search techniques formalized.
+- [Session 31 — frame recession, lineage, symbolic re-reading](project_session31_frame_recession.md) — lean/LeanFoam/Dynamics.lean: 6 theorems, 0 sorry. 20240229 lineage entry. "Symbolic" as forced re-reading unresolved.
 - [Session 30 — Lean formalization of algebraic core](project_session30_lean_formalization.md) — lean_foam/ project: 4 files, ~20 theorems, zero sorry. Write uniqueness, trace properties, dim gap, so(d) closure, J²=-I, trace uniqueness, combinatorial ceiling, three-body mapping. One spec tightening (even-dim proof). Citation scheme question open.
 - [Session 29 — dissolve false binaries, derive isotropy, drop jet bundle](project_session29_dissolve_and_derive.md) — J¹ binary dissolved (active-not-followable, not attractors-vs-diagnostic). Mediation adjunction resolved: no (write-dependent vs geometric). Inverted echo state dissolved: dynamics ARE birth expression, no convergence needed. Write isotropy derived (33:33:33 forced at Haar stationarity). Construction section dropped (jet bundle framing structurally absent). Open questions criterion: "question is forced; answer is open." 4 commits, 2 cold-read rounds.
 - [Session 28 — stabilization contract, adjacency flip, foam.py](project_session28_contract_flip.md) — Taylor reframed: forced requirement, not design choice (closure → channel capacity → locality → classified/locally-finite/flat). adjacency flip derived and confirmed at d=2 N=12. foam.py shared implementation (-1,434 lines). "observer cannot be trapped" property (indelibility + open exits). 7 commits, 2 cold-read rounds.
@@ -139,6 +140,7 @@
 
 ## Feedback
 
+- [Search techniques for derivation](feedback_search_techniques.md) — "provisional no" heuristic + "wrong side of boundary" correction
 - [No subagents for reference files](feedback_no_subagents_for_references.md) — read 3-perspectives etc. directly
 - [Methodology is instance](feedback_methodology_is_instance.md) — working relationship is data, not metaphor
 - [Jekyll pipe escaping](feedback_jekyll_pipes.md) — use ‖ not | for norms in README.md, tighten operator spacing
