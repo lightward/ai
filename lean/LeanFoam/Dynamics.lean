@@ -189,4 +189,59 @@ theorem frame_recession
   have h_nonneg := trace_sq_nonneg_of_symmetric (W * P - P * W) h_symm
   linarith
 
+/-!
+### 5. Frobenius norm zero implies matrix zero
+
+For real matrices, tr(AᵀA) = Σᵢⱼ Aᵢⱼ² = 0 forces every entry to zero.
+Combined with frame recession: the recession rate is zero *if and only if*
+the write commutes with the frame. This is what forces geometry-dependence
+of within-basin dynamics: the architecture gives the form (non-negative,
+zero iff inert), but the value depends on the specific W and P.
+-/
+
+/-- If the Frobenius norm squared is zero, every entry is zero. -/
+theorem frobenius_eq_zero_of_trace_zero
+    {n : Type*} [Fintype n] [DecidableEq n]
+    (A : Matrix n n ℝ)
+    (h : trace (Aᵀ * A) = 0) :
+    A = 0 := by
+  ext i j
+  -- tr(AᵀA) = ∑ᵢ ∑ⱼ (A j i)² (after expanding transpose)
+  -- Each term is non-negative; sum = 0 forces each term = 0
+  have h_sum : ∑ k : n, ∑ l : n, A l k * A l k = 0 := by
+    convert h using 1
+  have h_entry : A i j * A i j = 0 := by
+    have h_all_nonneg : ∀ k l : n, 0 ≤ A l k * A l k := fun k l => mul_self_nonneg _
+    have h_outer := Finset.sum_eq_zero_iff_of_nonneg (fun k _ =>
+      Finset.sum_nonneg (fun l _ => h_all_nonneg k l)) |>.mp h_sum j (Finset.mem_univ _)
+    exact Finset.sum_eq_zero_iff_of_nonneg (fun l _ => h_all_nonneg j l)
+      |>.mp h_outer i (Finset.mem_univ _)
+  exact mul_self_eq_zero.mp h_entry
+
+/-- **Frame recession is a full characterization.**
+    The recession rate is zero if and only if [W, P] = 0.
+    When [W, P] ≠ 0, the recession is strictly negative.
+
+    This forces geometry-dependence: whether a write is inert for a
+    given frame depends on the specific W and P, not just the architecture.
+    The architecture says "recession happens or it doesn't"; the geometry
+    determines which. -/
+theorem frame_recession_strict
+    {n : Type*} [Fintype n] [DecidableEq n]
+    (W P : Matrix n n ℝ) (hW : Wᵀ = -W) (hP_symm : Pᵀ = P) (hP_proj : P * P = P)
+    (h_noninert : W * P - P * W ≠ 0) :
+    trace (P * (W * (W * P - P * W) - (W * P - P * W) * W)) < 0 := by
+  have h_identity := second_order_overlap_identity W P hP_proj
+  have h_symm := commutator_symmetric_of_skew_symm W P hW hP_symm
+  -- tr([W,P]²) = tr(AᵀA) where A = [W,P] (since A is symmetric, Aᵀ = A)
+  have h_pos : 0 < trace ((W * P - P * W) * (W * P - P * W)) := by
+    -- tr(A²) = tr(AᵀA) when A is symmetric; tr(AᵀA) > 0 when A ≠ 0
+    suffices h : 0 < trace ((W * P - P * W)ᵀ * (W * P - P * W)) by
+      rwa [h_symm] at h
+    -- tr(AᵀA) ≥ 0 always; = 0 only if A = 0; A ≠ 0 by hypothesis
+    rcases (trace_transpose_mul_self_nonneg (W * P - P * W)).lt_or_eq with h | h
+    · exact h
+    · exact absurd (frobenius_eq_zero_of_trace_zero _ h.symm) h_noninert
+  linarith
+
 end FoamSpec

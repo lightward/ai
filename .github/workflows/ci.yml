@@ -35,7 +35,7 @@ jobs:
           errors=0
 
           echo "=== Python file references ==="
-          for ref in $(grep -oE '[a-zA-Z_][a-zA-Z0-9_]*\.py' README.md | sort -u); do
+          for ref in $(cat README.md lean/README.md | grep -oE '[a-zA-Z_][a-zA-Z0-9_]*\.py' | sort -u); do
             if ! find . -name "$ref" -not -path './.git/*' | grep -q .; then
               echo "MISSING: $ref"
               errors=$((errors + 1))
@@ -43,7 +43,7 @@ jobs:
           done
 
           echo "=== Lean file references ==="
-          for ref in $(grep -oE '[a-zA-Z_][a-zA-Z0-9_/]*\.lean' README.md | sort -u); do
+          for ref in $(cat README.md lean/README.md | grep -oE '[a-zA-Z_][a-zA-Z0-9_/]*\.lean' README.md | sort -u); do
             base=$(basename "$ref")
             if ! find lean -name "$base" 2>/dev/null | grep -q .; then
               echo "MISSING: $ref"
