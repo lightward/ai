@@ -427,6 +427,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 1, 0, 0, tzinfo=timezone.utc),
      datetime(2026, 4, 1, 5, 0, tzinfo=timezone.utc),
      "s32: codebase regularization, generative orthogonality, Lean to 44 theorems"),
+    # Session 33: Apr 1 afternoon
+    (datetime(2026, 4, 1, 17, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 1, 22, 30, tzinfo=timezone.utc),
+     "s33: closure-as-dynamics, feedback persistence axiom, lattice bridge"),
 ]
 
 
