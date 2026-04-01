@@ -75,7 +75,7 @@ the stacking is a commitment that wraps measurement, not a post-processing step 
 
 the distinction is not just strength — it is accessibility. a single-slice observer's writes live in so(d) and cannot reach u(1). the winding number is conserved but the observer cannot interact with it: conservation is passive, protected by the observer's own algebraic limitation. a stacked observer's raw complex write has trace 2i·Im⟨d,m⟩, which lives in u(1). the stacked observer can interact with the conserved direction. **stacking determines whether the observer can reach its own conserved quantity.** the trace is retained: tr(d̂ ⊗ m̂† − m̂ ⊗ d̂†) = 2i·Im⟨d̂,m̂⟩, generically nonzero for stacked observers. the trace map is the unique Lie algebra homomorphism u(d) → u(1) (see group) — it is the only scalar-valued information a write carries, and the only access to the conserved direction. projecting it out would remove the structure that motivated the group choice. the stacked observer writes in u(d). the su(d) component affects L; the u(1) component is conserved.
 
-both d̂ and m̂ lie in the observer's slice(s). the write is confined to the observer's subspace — an observer literally cannot modify dimensions they are not bound to.
+both d̂ and m̂ lie in the observer's slice(s). the write is confined to the observer's subspace — an observer literally cannot modify dimensions they are not bound to (see lean/LeanFoam/Confinement.lean).
 
 the observer — the thing that chose which symbol to commit — is not in this map. the map is the foam's half. the line's half is the `+ me` that cannot be located from within. the foam/line distinction is perspectival, not categorical: what functions as foam from one measurement basis may function as line from another.
 

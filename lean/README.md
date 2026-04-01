@@ -19,6 +19,12 @@ Mechanically verified results from [the measurement solution](../README.md). Eac
 | `subspace_lattice_modular` | ground: lattice properties | the subspace lattice satisfies the modular law |
 | `subspace_lattice_ground_properties` | ground: lattice properties | complemented and modular (combined) |
 
+**Confinement.lean** — writes are confined to the observer's birth subspace.
+
+| theorem | spec reference | statement |
+|---------|---------------|-----------|
+| `write_confined_to_slice` | writing map: confinement | d, m ∈ P implies d∧m ∈ Λ²(P) — observer cannot write outside slice |
+
 **WriteMap.lean** — the write d⊗m - m⊗d is unique, traceless, and skew-symmetric.
 
 | theorem | spec reference | statement |

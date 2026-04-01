@@ -2,6 +2,7 @@
 -- Import modules here that should be built as part of the library.
 import LeanFoam.Ground
 import LeanFoam.Lattice
+import LeanFoam.Confinement
 import LeanFoam.WriteMap
 import LeanFoam.Algebra
 import LeanFoam.TraceUnique
