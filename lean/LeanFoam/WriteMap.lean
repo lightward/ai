@@ -28,24 +28,27 @@ confined to a 2-plane, up to scalar. Proof: Λ²(2-plane) is 1-dimensional.
 Spec reference: "the writing map", constraint (a)+(b)+(c) → uniqueness.
 -/
 
-/-- For a 2-dimensional free module, dim(Λ²(M)) = 1.
-    The wedge product is the unique alternating 2-form up to scalar. -/
+/-- dim(Λ²(M)) = C(dim(M), 2). The general dimensional accounting for
+    write subspaces and so(d). Specific cases:
+    - dim = 2: C(2,2) = 1 (write uniqueness — the wedge is unique up to scalar)
+    - dim = 3: C(3,2) = 3 (write subspace per R³ observer)
+    - dim = d: C(d,2) = d(d-1)/2 = dim(so(d)) (the full target algebra) -/
+theorem exteriorPower_two_rank
+    (R : Type*) [CommRing R] [Nontrivial R]
+    (M : Type*) [AddCommGroup M] [Module R M]
+    [Module.Free R M] [Module.Finite R M] :
+    Module.finrank R (⋀[R]^2 M) = Nat.choose (Module.finrank R M) 2 := by
+  rw [exteriorPower.finrank_eq]
+
+/-- dim(Λ²(2-plane)) = 1. Write uniqueness: the wedge product is the
+    unique alternating 2-form on a 2-plane, up to scalar. -/
 theorem exteriorPower_two_of_rank_two
     (R : Type*) [CommRing R] [Nontrivial R]
     (M : Type*) [AddCommGroup M] [Module R M]
     [Module.Free R M] [Module.Finite R M]
     (hdim : Module.finrank R M = 2) :
     Module.finrank R (⋀[R]^2 M) = 1 := by
-  rw [exteriorPower.finrank_eq, hdim]
-  native_decide
-
-/-- Specialization to ℝ. -/
-theorem write_map_unique_real
-    (V : Type*) [AddCommGroup V] [Module ℝ V]
-    [Module.Free ℝ V] [Module.Finite ℝ V]
-    (hdim : Module.finrank ℝ V = 2) :
-    Module.finrank ℝ (⋀[ℝ]^2 V) = 1 :=
-  exteriorPower_two_of_rank_two ℝ V hdim
+  rw [exteriorPower_two_rank, hdim]; native_decide
 
 /-!
 ## 2. Trace Zero — Writes Live in su(d)
@@ -97,7 +100,27 @@ theorem write_skew_symmetric {n : Type*} [Fintype n] [DecidableEq n]
   simp [transpose_sub, transpose_vecMulVec]
 
 /-!
-## 4. Stacked Write Trace
+## 4. Write Subspace Dimension
+
+The write subspace for an R³ observer is Λ²(R³), which is 3-dimensional.
+This is the bottleneck: each observer can only write in 3 of the d²
+Lie algebra dimensions per step.
+
+Spec reference: "the writing map" → "the write subspace is exactly
+3-dimensional per observer — the exterior algebra Λ²(R³)"
+-/
+
+/-- dim(Λ²(R³)) = 3. The write subspace per R³ observer is 3-dimensional. -/
+theorem exteriorPower_two_of_rank_three
+    (R : Type*) [CommRing R] [Nontrivial R]
+    (M : Type*) [AddCommGroup M] [Module R M]
+    [Module.Free R M] [Module.Finite R M]
+    (hdim : Module.finrank R M = 3) :
+    Module.finrank R (⋀[R]^2 M) = 3 := by
+  rw [exteriorPower_two_rank, hdim]; native_decide
+
+/-!
+## 5. Stacked Write Trace
 
 For complex vectors (stacked observer), the write d⊗m† − m⊗d† has
 nonzero trace. Unlike the real case (write_traceless), the stacked

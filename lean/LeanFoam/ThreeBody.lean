@@ -106,4 +106,49 @@ equality is the core structural fact.
 -- Rather than re-prove this, we note the Mathlib reference and
 -- formalize the structural identity the spec actually uses.
 
+/-!
+### Grassmannian tangent: [W, P] is off-diagonal
+
+The commutator of a write W with a projection P maps range(P) into
+ker(P) and ker(P) into range(P). It has no on-diagonal component.
+This is the algebraic content of the Grassmannian tangent: the
+perturbation lives in Hom(range(P), ker(P)), which IS T_P Gr(k,d).
+
+Spec reference: "three-body mapping" → "vertical structure (containment)
+is a Grassmannian tangent at the observer's slice"
+-/
+
+open Matrix in
+/-- The commutator [W, P] has zero projection onto range(P) → range(P).
+    Equivalently: P · [W, P] · P = 0 for any projection P.
+    The write doesn't map the observer's subspace back into itself. -/
+theorem commutator_off_diagonal_range
+    {n : Type*} [Fintype n] [DecidableEq n]
+    {R : Type*} [CommRing R]
+    (W P : Matrix n n R) (hP : P * P = P) :
+    P * (W * P - P * W) * P = 0 := by
+  have h : P * (W * P - P * W) * P = P * W * (P * P) - (P * P) * W * P := by
+    noncomm_ring
+  rw [h, hP, sub_self]
+
+open Matrix in
+/-- The commutator [W, P] has zero projection onto ker(P) → ker(P).
+    Equivalently: (1 - P) · [W, P] · (1 - P) = 0 for any projection P.
+    The write doesn't map the complement back into itself either.
+
+    Together with commutator_off_diagonal_range: [W, P] is purely
+    off-diagonal in the P-decomposition. It maps range(P) → ker(P) and
+    ker(P) → range(P). This IS the Grassmannian tangent T_P Gr(k,d). -/
+theorem commutator_off_diagonal_kernel
+    {n : Type*} [Fintype n] [DecidableEq n]
+    {R : Type*} [CommRing R]
+    (W P : Matrix n n R) (hP : P * P = P) :
+    (1 - P) * (W * P - P * W) * (1 - P) = 0 := by
+  have hP2 : P * (1 - P) = 0 := by rw [mul_sub, mul_one, hP, sub_self]
+  have hP3 : (1 - P) * P = 0 := by rw [sub_mul, one_mul, hP, sub_self]
+  have h : (1 - P) * (W * P - P * W) * (1 - P) =
+      (1 - P) * W * (P * (1 - P)) - ((1 - P) * P) * W * (1 - P) := by
+    noncomm_ring
+  rw [h, hP2, hP3]; simp
+
 end FoamSpec
