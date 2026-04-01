@@ -12,6 +12,8 @@ Mechanically verified results from [the measurement solution](../README.md). Eac
 | `write_map_unique_real` | writing map: uniqueness | specialization to R |
 | `write_traceless` | writing map: su(d) | tr(d⊗m - m⊗d) = 0 |
 | `write_skew_symmetric` | writing map: Lie algebra | (d⊗m - m⊗d)^T = -(d⊗m - m⊗d) |
+| `stacked_write_trace` | group: generative orthogonality | tr(d⊗m† - m⊗d†) = cross dot-product difference |
+| `dotProduct_star_conj` | group: generative orthogonality | conj(d·m*) = m·d* (trace is purely imaginary → u(1)) |
 
 **Algebra.lean** — Lie algebra structure following from the group choice U(d).
 

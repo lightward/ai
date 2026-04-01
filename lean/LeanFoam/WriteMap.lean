@@ -96,4 +96,35 @@ theorem write_skew_symmetric {n : Type*} [Fintype n] [DecidableEq n]
     (vecMulVec d m - vecMulVec m d)ᵀ = -(vecMulVec d m - vecMulVec m d) := by
   simp [transpose_sub, transpose_vecMulVec]
 
+/-!
+## 4. Stacked Write Trace
+
+For complex vectors (stacked observer), the write d⊗m† − m⊗d† has
+nonzero trace. Unlike the real case (write_traceless), the stacked
+write accesses u(1). The trace comes entirely from the stacking
+cross-terms — the simultaneous fusion of two real measurements.
+
+Spec reference: "group" → "the orthogonality is generative";
+"the writing map" → "tr: 2i·Im⟨d̂,m̂⟩, generically nonzero"
+-/
+
+open Matrix in
+/-- The trace of a stacked write (complex vectors with conjugate transpose)
+    equals the cross dot-product difference. Unlike write_traceless (real),
+    this is generically nonzero — the stacking cross-terms produce it. -/
+theorem stacked_write_trace {n : Type*} [Fintype n] [DecidableEq n]
+    (d m : n → ℂ) :
+    trace (vecMulVec d (star m) - vecMulVec m (star d)) =
+    dotProduct d (star m) - dotProduct m (star d) := by
+  simp [trace_sub, trace_vecMulVec]
+
+open Matrix in
+/-- Conjugating dotProduct d (star m) gives dotProduct m (star d).
+    This means the stacked write trace is z − conj(z) — purely imaginary,
+    placing it in i·ℝ ≅ u(1). The conservation direction. -/
+theorem dotProduct_star_conj {n : Type*} [Fintype n] [DecidableEq n]
+    (d m : n → ℂ) :
+    starRingEnd ℂ (dotProduct d (star m)) = dotProduct m (star d) := by
+  simp [dotProduct, map_sum, mul_comm]
+
 end FoamSpec
