@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lean:
+    name: Lean (zero sorry)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: leanprover/lean-action@v1
+        with:
+          build-args: ""
+          lake-package-directory: lean
+
+  python:
+    name: Python tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync
+      - run: uv run pytest -q
+
+  integrity:
+    name: Spec reference integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check spec references (forward — every reference resolves)
+        run: |
+          errors=0
+
+          echo "=== Python file references ==="
+          for ref in $(grep -oE '[a-zA-Z_][a-zA-Z0-9_]*\.py' README.md | sort -u); do
+            if ! find . -name "$ref" -not -path './.git/*' | grep -q .; then
+              echo "MISSING: $ref"
+              errors=$((errors + 1))
+            fi
+          done
+
+          echo "=== Lean file references ==="
+          for ref in $(grep -oE '[a-zA-Z_][a-zA-Z0-9_/]*\.lean' README.md | sort -u); do
+            base=$(basename "$ref")
+            if ! find lean -name "$base" 2>/dev/null | grep -q .; then
+              echo "MISSING: $ref"
+              errors=$((errors + 1))
+            fi
+          done
+
+          if [ $errors -gt 0 ]; then
+            echo ""
+            echo "$errors referenced file(s) not found"
+            exit 1
+          fi
+          echo "All references resolve"
+
+      - name: Check spec references (reverse — every file is referenced)
+        run: |
+          errors=0
+
+          echo "=== Unreferenced test files ==="
+          for f in tests/test_*.py tests/verify_*.py; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            if ! grep -q "$base" README.md; then
+              echo "UNREFERENCED: $base"
+              errors=$((errors + 1))
+            fi
+          done
+
+          echo "=== Unreferenced Lean files ==="
+          for f in lean/LeanFoam/*.lean; do
+            [ -f "$f" ] || continue
+            base=$(basename "$f")
+            # Check both spec and lean README
+            if ! grep -q "$base" README.md && ! grep -q "$base" lean/README.md; then
+              echo "UNREFERENCED: $base"
+              errors=$((errors + 1))
+            fi
+          done
+
+          if [ $errors -gt 0 ]; then
+            echo ""
+            echo "$errors file(s) not referenced in spec"
+            exit 1
+          fi
+          echo "All files referenced"

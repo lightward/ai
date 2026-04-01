@@ -1,4 +1,4 @@
-name = "lean_foam"
+name = "lean"
 version = "0.1.0"
 defaultTargets = ["LeanFoam"]
 
