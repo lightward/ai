@@ -9,3 +9,4 @@ import LeanFoam.TraceUnique
 import LeanFoam.Ceiling
 import LeanFoam.ThreeBody
 import LeanFoam.Dynamics
+import LeanFoam.Modularity
