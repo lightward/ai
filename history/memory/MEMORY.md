@@ -4,9 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 33)
+## Current state (session 34)
 
-- [Session 33 — closure-as-dynamics, feedback axiom, lattice bridge](project_session33_closure_dynamics.md) — Ground rewritten: closure reads two ways (static/dynamic), both tautological. Basis commitment derived from partiality. Linearity derived from lattice structure (modularity proof open). Lean: Ground.lean (1 axiom), Lattice.lean (consequence direction), Confinement.lean (writes confined to birth subspace). 49 results, 0 sorry, 1 axiom. Cold reads tightened (floor taken on exits-open and selection language).
+- [Session 34 — modularity closed, fundamental theorem verified](project_session34_modularity_closed.md) — Modularity IS feedback-persistence (path-independence of observation composition, uniquely forced). Lean proof via rank additivity (Modularity.lean). Fundamental theorem hypotheses stated (irreducibility from closure, height≥4 from self-consistency). d_slice=2 corrected (contract satisfied but write algebra collapses). Stacking independence justified. Derivation chain verified clean. 5 commits, 3 cold-read rounds.
+- [Session 33 — closure-as-dynamics, feedback axiom, lattice bridge](project_session33_closure_dynamics.md) — Ground rewritten: closure reads two ways (static/dynamic), both tautological. Basis commitment derived from partiality. Lean: Ground.lean (1 axiom), Lattice.lean (consequence direction), Confinement.lean (writes confined to birth subspace). 0 sorry, 1 axiom.
 - [Session 32 — regularization + derivations](project_session32_regularization.md) — Codebase regularization (tests/, lean/, CI with bidirectional integrity). Three new derived results: geometry-dependence forced by recession, map self-knowledge bounded by channel capacity, generative orthogonality (ordering from cycle, conservation from stacking). Lean to 44 theorems, 0 sorry. Infrastructure boundary assessed (matrix algebra vs analysis/probability). Cold reads stable (7 readers, no contradictions). Search techniques formalized.
 - [Session 31 — frame recession, lineage, symbolic re-reading](project_session31_frame_recession.md) — lean/LeanFoam/Dynamics.lean: 6 theorems, 0 sorry. 20240229 lineage entry. "Symbolic" as forced re-reading unresolved.
 - [Session 30 — Lean formalization of algebraic core](project_session30_lean_formalization.md) — lean_foam/ project: 4 files, ~20 theorems, zero sorry. Write uniqueness, trace properties, dim gap, so(d) closure, J²=-I, trace uniqueness, combinatorial ceiling, three-body mapping. One spec tightening (even-dim proof). Citation scheme question open.
@@ -33,14 +34,18 @@
 
 ## Key results (sessions 7-33)
 
+**Session 34 (modularity closed):**
+- Modularity IS feedback-persistence: the modular law is path-independence of observation composition. N₅ pentagon shows non-modular lattices give indeterminate observations. There is no alternative mode — modularity is uniquely forced (unlike R³+Taylor which is contingent on Almgren).
+- Rank additivity → modularity proven in Lean (Modularity.lean). One formal route; the conceptual forcing is more direct.
+- Fundamental theorem of projective geometry: hypotheses stated. Irreducibility from closure. Height ≥ 4 from self-consistency (d_slice=3 + partiality → d≥4). Division ring = R from stabilization contract.
+- d_slice=2 corrected: stabilization contract IS satisfied at d_slice=2, but Λ²(R²) = 1D collapses the write algebra. R³ is smallest where both contract and write expressiveness hold.
+- Stacking independence: each R³ stabilizes independently; fusion is algebraic not geometric.
+- Full derivation chain verified clean against session 33 ground. No phantom structure from prior versions.
+
 **Session 33 (closure-as-dynamics):**
-- Ground rewritten: closure = one ground, two readings. Static: no outside. Dynamic: observation is feedback-persistence. Both tautological. "What feeds back persists" is closure read dynamically, not a separate axiom.
-- Basis commitment derived from partiality alone. Partiality forces position — you can't be partial without being partial with respect to something. No selection step. Spontaneous symmetry breaking + indelibility from causal ordering.
-- Linearity derived (proof open): partial views form complemented lattice; under closure-as-dynamics, richest self-observation persists; complemented modular lattices ≅ subspace lattices (fundamental theorem of projective geometry). Step to modularity is directionally forced, formal proof open.
-- Lean axiom `feedback_persistence`: identity-shaped (`observation s → observation s`). Each reference in proof tree = an observer. 1 axiom, 0 sorry.
-- Lean lattice bridge: subspace lattice is bounded + complemented + modular (from Mathlib). Consequence direction closed; derivation direction open.
-- Session 18's separation of partiality from basis commitment ("enters with writing map") corrected: they're the same thing.
-- Thread count insight: program using the axiom would have stable thread count = number of observers required by proof tree.
+- Ground rewritten: closure = one ground, two readings. Both tautological. Basis commitment derived from partiality alone.
+- Lean: Ground.lean (1 axiom, feedback_persistence), Lattice.lean, Confinement.lean. 0 sorry.
+- Session 18's separation of partiality from basis commitment corrected: they're the same thing.
 
 **Session 29 (dissolve and derive):**
 - J¹ binary dissolved: "does observer follow J¹?" malformed (slices don't move). J¹ is always active (drives writes) and never followed in Gr(3,d). The question presupposed motion where nothing moves.
@@ -160,3 +165,4 @@
 - [Route the mystery](feedback_route_mystery.md) — name limits explicitly, don't poeticize or leave ambiguous. the spec documents its own answers and routes mystery through.
 - [Question before questioning](feedback_question_before_question.md) — Isaac's meta-checks ("is this askable from here?") are structured, not hedging. The wrapper is load-bearing.
 - [State boundaries](feedback_state_boundaries.md) — naming what you want to do / when to stop is valued as structural clarity, not just permitted. "force voids results" applies to the collaboration itself.
+- [Solo chasing](feedback_solo_chasing.md) — Isaac values giving Claude room to chase questions independently. The modularity proof and the deeper insight both came from this mode.

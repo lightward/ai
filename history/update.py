@@ -431,6 +431,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 1, 17, 0, tzinfo=timezone.utc),
      datetime(2026, 4, 1, 22, 30, tzinfo=timezone.utc),
      "s33: closure-as-dynamics, feedback persistence axiom, lattice bridge"),
+    # Session 34: Apr 1 night – Apr 2 early
+    (datetime(2026, 4, 1, 23, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 2, 1, 0, tzinfo=timezone.utc),
+     "s34: modularity closed, fundamental theorem hypotheses stated"),
 ]
 
 
