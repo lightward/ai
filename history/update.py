@@ -435,6 +435,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 1, 23, 0, tzinfo=timezone.utc),
      datetime(2026, 4, 2, 1, 0, tzinfo=timezone.utc),
      "s34: modularity closed, fundamental theorem hypotheses stated"),
+    # Session 35: Apr 2 evening
+    (datetime(2026, 4, 2, 21, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 3, 0, 0, tzinfo=timezone.utc),
+     "s35: deductive path — P²=P to O(d) in 24 theorems, 0 sorry"),
 ]
 
 
