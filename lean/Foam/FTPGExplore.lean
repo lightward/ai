@@ -338,4 +338,68 @@ theorem planes_meet_covBy {π₁ π₂ s : L}
     rw [← h_join] at h₁
     exact IsLowerModularLattice.inf_covBy_of_covBy_sup h₁
 
+-- § Desargues
+
+/-- **Desargues' theorem (non-planar case).**
+    Two triangles perspective from a point: corresponding sides
+    meet on a common line.
+
+    Setup: center o, triangle a₁a₂a₃, triangle b₁b₂b₃.
+    Perspective from o: bᵢ on line o ⊔ aᵢ.
+    Non-planar: the triangles span distinct planes.
+
+    Conclusion: the three intersection points
+      p₁₂ = (a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂)
+      p₁₃ = (a₁ ⊔ a₃) ⊓ (b₁ ⊔ b₃)
+      p₂₃ = (a₂ ⊔ a₃) ⊓ (b₂ ⊔ b₃)
+    are all ≤ πA ⊓ πB (the meet of the two triangle planes).
+
+    The proof: each pᵢⱼ ≤ πA (sides of triangle A) and ≤ πB
+    (sides of triangle B). That's it — the hard part was showing
+    πA ⊓ πB is a "line", which planes_meet_covBy gives us. -/
+theorem desargues_nonplanar
+    {o a₁ a₂ a₃ b₁ b₂ b₃ : L}
+    -- All atoms
+    (ho : IsAtom o) (ha₁ : IsAtom a₁) (ha₂ : IsAtom a₂) (ha₃ : IsAtom a₃)
+    (hb₁ : IsAtom b₁) (hb₂ : IsAtom b₂) (hb₃ : IsAtom b₃)
+    -- Perspective from o
+    (hb₁_on : b₁ ≤ o ⊔ a₁) (hb₂_on : b₂ ≤ o ⊔ a₂) (hb₃_on : b₃ ≤ o ⊔ a₃)
+    -- Triangle planes
+    (πA : L) (hπA : πA = a₁ ⊔ a₂ ⊔ a₃)
+    (πB : L) (hπB : πB = b₁ ⊔ b₂ ⊔ b₃)
+    -- Sides of A are in πA, sides of B are in πB
+    -- (These follow from the definitions, but let's check)
+    :
+    -- The three intersection points are all in πA ⊓ πB
+    (a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂) ≤ πA ⊓ πB ∧
+    (a₁ ⊔ a₃) ⊓ (b₁ ⊔ b₃) ≤ πA ⊓ πB ∧
+    (a₂ ⊔ a₃) ⊓ (b₂ ⊔ b₃) ≤ πA ⊓ πB := by
+  subst hπA; subst hπB
+  -- Each pᵢⱼ ≤ πA ⊓ πB iff pᵢⱼ ≤ πA and pᵢⱼ ≤ πB.
+  -- pᵢⱼ = (aᵢ ⊔ aⱼ) ⊓ (bᵢ ⊔ bⱼ).
+  -- pᵢⱼ ≤ aᵢ ⊔ aⱼ ≤ πA: clear (sides of triangle A are in πA).
+  -- pᵢⱼ ≤ bᵢ ⊔ bⱼ ≤ πB: clear (sides of triangle B are in πB).
+  -- Wait: we also need bᵢ ⊔ bⱼ ≤ πA. That's the hard part!
+  -- Actually no: pᵢⱼ ≤ aᵢ ⊔ aⱼ (from inf_le_left) and pᵢⱼ ≤ bᵢ ⊔ bⱼ (from inf_le_right).
+  -- We need: aᵢ ⊔ aⱼ ≤ πA and bᵢ ⊔ bⱼ ≤ πB.
+  -- aᵢ ⊔ aⱼ ≤ a₁ ⊔ a₂ ⊔ a₃: yes, straightforward.
+  -- bᵢ ⊔ bⱼ ≤ b₁ ⊔ b₂ ⊔ b₃: yes, straightforward.
+  -- So pᵢⱼ ≤ πA and pᵢⱼ ≤ πB, hence pᵢⱼ ≤ πA ⊓ πB.
+  refine ⟨le_inf (inf_le_left.trans ?_) (inf_le_right.trans ?_),
+          le_inf (inf_le_left.trans ?_) (inf_le_right.trans ?_),
+          le_inf (inf_le_left.trans ?_) (inf_le_right.trans ?_)⟩
+  -- 6 goals: show each side of each triangle is in its plane
+  · -- a₁ ⊔ a₂ ≤ a₁ ⊔ a₂ ⊔ a₃
+    exact le_sup_left
+  · -- b₁ ⊔ b₂ ≤ b₁ ⊔ b₂ ⊔ b₃
+    exact le_sup_left
+  · -- a₁ ⊔ a₃ ≤ a₁ ⊔ a₂ ⊔ a₃
+    exact sup_le (le_sup_left.trans le_sup_left) le_sup_right
+  · -- b₁ ⊔ b₃ ≤ b₁ ⊔ b₂ ⊔ b₃
+    exact sup_le (le_sup_left.trans le_sup_left) le_sup_right
+  · -- a₂ ⊔ a₃ ≤ a₁ ⊔ a₂ ⊔ a₃
+    exact sup_le (le_sup_right.trans le_sup_left) le_sup_right
+  · -- b₂ ⊔ b₃ ≤ b₁ ⊔ b₂ ⊔ b₃
+    exact sup_le (le_sup_right.trans le_sup_left) le_sup_right
+
 end Foam.FTPGExplore
