@@ -447,6 +447,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 3, 3, 30, tzinfo=timezone.utc),
      datetime(2026, 4, 3, 6, 0, tzinfo=timezone.utc),
      "s37: derivations/, README as build artifact, three epistemic layers"),
+    # Session 38: Apr 3 afternoon
+    (datetime(2026, 4, 3, 14, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 3, 18, 0, tzinfo=timezone.utc),
+     "s38: FTPG projective geometry from modular law — 18 theorems, 0 sorry"),
 ]
 
 
