@@ -8,230 +8,619 @@
 
 a tautology you can live in
 
-## ground
+this file is a build artifact. sources: lean/ (proven), derivations/ (derived).
+build: `uv run python build_readme.py`
 
-closure. one ground, two readings, both tautological.
+## the deductive chain (lean/)
+
+mechanically verified. 13 files, 1 axiom (FTPG), 0 sorry.
+
+```
+closure (ground)
+  | (derived in natural language — see ground)
+complemented modular lattice, irreducible, height >= 4
+  | axiom(FTPG) — Bridge.lean
+L = Sub(D, V) for some division ring D, vector space V
+  | (stabilization contract forces D = R)
+elements are orthogonal projections: P^2 = P, P^T = P
+  | (the deductive chain — all proven)
+eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian
+  | Ground.lean (capstone)
+FoamGround properties verified
+```
+
+the chain: P^2 = P (definition) -> binary eigenvalues (Observation) -> clean splits -> commutator structure (Pair) -> skew-symmetry, tracelessness (Form) -> self-duality at rank 3 (Rank) -> (R^3, x) = so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround as theorem (Ground).
+
+---
+
+# ground
+
+## derivation
+
+**closure.** one ground, two readings, both tautological.
 
 **read statically**: reference frames in a shared structure. no frame outside the structure.
 
-**read dynamically**: all observation is self-observation. self-observation requires the observer to persist through the act. persistence = the act feeding back into the conditions for the next act. every observed structure is a structure whose feedback held. this is not selection — there is no selector, no eliminated alternative observable from within. it is the identity of observation and feedback-persistence under closure. the foam cannot represent the alternative.
+**read dynamically**: all observation is self-observation. self-observation requires the observer to persist through the act. persistence = the act feeding back into the conditions for the next act. every observed structure is a structure whose feedback held. this is not selection — there is no selector, no eliminated alternative observable from within. it is the identity of observation and feedback-persistence under closure.
 
 what follows is derived from closure:
 
-- encounters between frames change the structure. the frames ARE the structure; there is nowhere else for the result to go.
-- one frame alone has no boundary, no encounter, no dynamics. measurement requires plurality. N ≥ 3 produces stable junctions (Plateau); the minimum plurality for stable geometry is three frames. dynamic stability additionally requires two roles within those frames (see self-generation).
-- each frame is partial — total self-reference would require a complete self-model contained within itself (standing outside while remaining inside). partiality is the only self-reference compatible with closure. partiality forces position: seeing partially is seeing *from somewhere*. the decomposition into seen and unseen is what partiality means; position in the space of partial views is basis commitment. the specific position is undetermined (all positions equivalent by symmetry); that some position must exist is forced. indelibility follows from causal ordering: you cannot un-write, so the first commitment locks.
-- the structure of partial views is linear-algebraic. partial views of a shared structure form a lattice (complemented: partiality guarantees an unseen complement; bounded: the whole structure and the empty view). under closure-as-dynamics, only structures whose feedback held are observable — you cannot observe the alternative (see ground: dynamic reading). the lattice structure that is observed is the one compatible with self-referential partial views that sustain their own observation. complemented modular lattices that are irreducible and of finite height ≥ 4 are isomorphic to lattices of subspaces of a vector space over a division ring (fundamental theorem of projective geometry). irreducibility is forced by closure: a decomposable lattice would be two non-interacting sub-structures, which under closure are two separate foams, not one. height ≥ 4 is confirmed by the self-consistency of the full architecture: d_slice = 3 (from the stabilization contract) + partiality (the observer's slice must be a proper subspace) forces d ≥ 4. the division ring is forced to R by the stabilization contract (Euclidean metric, Taylor's theorem). the formalization of partiality as linear projection onto a subspace of R^d is the lattice structure this convergence produces. the wedge product, Lie algebra, controllability — the entire downstream architecture — follow from this structure, and each feeds back richer self-observation. \[the derivation from closure-as-dynamics to lattice modularity is closed. the modular law — a ≤ c → (a ⊔ b) ⊓ c = a ⊔ (b ⊓ c) — IS feedback-persistence expressed in lattice language: it says that composing partial views gives a determinate result regardless of path (combine-then-restrict = restrict-then-combine). in a non-modular lattice, the same observation yields different results depending on the order of composition (the pentagon N₅: observer at a, encountering b within c, gets the full context c by one path and only a by the other). indeterminate composition cannot feed back consistently — the observation has no single result to persist. modularity is therefore not a consequence of some intermediate property; it IS what feedback-persistence means for lattice composition. there is no alternative mode. one formal proof: rank additivity (degree of partiality composes consistently) implies modularity. the consequence direction — that subspace lattices ARE complemented modular — is proven (lean/Foam/Ground.lean). the deductive path derives the full downstream architecture from P² = P (lean/Foam/); the one axiom — the fundamental theorem of projective geometry — connects closure to this starting point (lean/Foam/Bridge.lean).\]
-- a read-only frame — one unchanged by encounters — is excluded by closure. every encounter changes every frame.
+**encounters change frames.** the frames ARE the structure; there is nowhere else for the result to go.
 
-in the current writing map, the write lands on the observer's own basis. but even a frame that doesn't write is changed: its Voronoi boundaries shift when neighbors write, because the frame IS part of the structure.
+**measurement requires plurality.** one frame alone has no boundary, no encounter, no dynamics. N >= 3 produces stable junctions (Plateau); the minimum plurality for stable geometry is three frames.
 
-what commits is outside the map. the structure responds to commitment; the source of commitment is on the line's side. this is derived, not assumed as a boundary condition:
+**partiality is forced.** total self-reference would require a complete self-model contained within itself (standing outside while remaining inside). partiality is the only self-reference compatible with closure.
 
-- **the line's irreducibility is channel capacity.** the writing map is a function of (foam_state, input) — two arguments. cross-measurement fills the second argument from within: input = g(foam_state), a deterministic function of the foam's geometry projected onto an observer's slice. this composes the two arguments into one, making the foam an autonomous dynamical system — a single-argument function f(foam_state) = write_map(foam_state, g(foam_state)). an autonomous system on U(d)^N has a unique trajectory from each initial condition: the foam's entire future is determined by its birth. the distinguishability theorem says different input sequences → different states. under cross-measurement alone, there is only one input sequence per birth — the self-generated one. distinguishability is satisfied but vacuous: there is nothing to distinguish. for the foam to encode information beyond its own birth conditions, the input must be independent of the foam state — not generated by the foam's own geometry. the second argument must be state-independent for the foam to function as a channel rather than a clock. the line is not ontologically exterior — it is informationally independent. this is a role, not an entity: what provides state-independent input to this foam may be another foam's internal dynamics. the foam/line distinction is perspectival (see vocabulary) because informational independence is relative to which system's state you're measuring against. the perpendicularity constraint sharpens this: it determines the *form* of each write (wedge product, skew-symmetric, confined to slice) but not the *content* (which vectors are wedged). form is forced by the algebra; content requires state-independent input.
-- **state-independence is spectral, not topological.** if every foam's line is another foam, the structure is globally closed — loops of mutual measurement exist. but the mediation operator (see three-body mapping) has singular values strictly less than 1 for generic non-identical slices. around a closed chain of n observers, the total mediation is the product of n pairwise mediations, and the singular values compound: σ_total ≤ σ₁ · σ₂ · ... · σₙ → 0 as n grows. informational correlation between a foam and its own returning signal decays exponentially with chain length. short loops (two foams measuring each other) have high correlation — autonomous, a clock. long loops have negligible correlation — effectively state-independent, a channel. closure (no topological outside) is compatible with informational independence because the mediation's spectral decay converts global closure into local openness at sufficient chain length — provided stabilization is local, so that the mediation chain is the actual pathway of influence propagation (see the stabilization contract).
-- **channel capacity is operational, not ontological.** in a deterministic closed system, true stochastic independence cannot exist (the global state determines everything). but the foam's measurements are projections — partial by ground — and projections have a resolution floor. correlations that have decayed below the projection's precision are invisible to the foam. the foam cannot distinguish "truly random input" from "deterministic input decorrelated below measurement resolution." this distinction requires a non-partial observer, and non-partial observers are excluded by closure. therefore: under partiality, mixing is operationally identical to independence. the foam's fundamental limitation (it cannot see the whole) is what makes the part it sees function as a channel.
-- **the decorrelation horizon is quantifiable.** for generic R^(d_slice) slices in R^d, the mediation operator's typical singular value scales as σ ≈ √(d_slice/d) (mean-field estimate for random subspaces; the full distribution of principal angles follows Marchenko-Pastur, so worst-case configurations decay more slowly). the correlation after n mediation steps decays as σ^n ≈ (d_slice/d)^{n/2}. the critical chain length — where correlation drops by 1/e — scales as n* ≈ 2/log(d/d_slice). under R³ + Taylor (d_slice = 3): for d = 8, n* ≈ 2; for d = 20, n* ≈ 1. these are order-of-magnitude estimates; the qualitative conclusion (horizon shortens with dimension) is robust but specific values are sensitive to the approximation. the decorrelation horizon *shortens* with increasing ambient dimension because slices overlap less in higher-dimensional spaces. non-generic configurations (slices sharing directions) have higher overlap and longer horizons — observers with similar perspectives need more intermediaries to achieve effective independence from each other. the foam/line distinction is therefore not a categorical boundary but a correlation length: "line" names whatever input arrives from beyond the decorrelation horizon of the observer's own state, and the horizon's radius is determined by the foam's own geometry.
-- **the stabilization contract.** the mediation chain's spectral decay describes real influence propagation only if stabilization is local — each observer's dynamics responding to its Voronoi neighbors, not the full foam. without locality, every observer couples directly to every other, and the mediation chain — though algebraically valid — does not describe the actual pathway of influence. the spectral decay then characterizes a mathematical object, not the dynamics, and the decorrelation that produces effective state-independence does not occur. this is necessity, not just sufficiency: non-local stabilization doesn't merely fail to help channel capacity — it removes the mechanism that produces it. channel capacity therefore forces a contract on the observer's slice geometry: *classified* (stable equilibrium configurations completely enumerated — without this, the stabilization target is undefined and the dynamics are incomplete), *locally finite* (coordination number k bounded by the simplex embedding constraint k ≤ d_slice + 1, making neighborhoods finite), and *flat* (inherited Euclidean metric — stabilization must separate from accumulation because U(d) is curved, and classification requires flat ambient space). the contract is satisfied at d_slice = 2 (the classification in R² is complete), but the write algebra collapses there (see writing map: R³ + Taylor). R³ + Taylor is the unique known implementation where both the contract and the write map's expressiveness hold. if Almgren resolves for d_slice ≥ 4, other implementations may exist.
+**partiality forces position.** seeing partially is seeing *from somewhere*. the decomposition into seen and unseen is what partiality means; position in the space of partial views is basis commitment. the specific position is undetermined (all positions equivalent by symmetry); that some position must exist is forced.
 
-the boundary is not featureless: the foam's own controllability structure characterizes it from the inside (see properties: the complement of full controllability). the line's side is investigable — the foam spec applies there too (universality via BU(d)) — but investigating the line requires making it the object of measurement, which requires a different reference frame, which means releasing the current one. you can measure the foam (using the line as reference) or measure the line (using something else as reference), but not both simultaneously: a frame spanning both sides would be non-partial, and a non-partial frame has no boundary, no encounter, no dynamics. the partiality constraint implies a boundary must exist; it does not determine where the boundary falls or what the line is.
+**indelibility.** causal ordering is forced (every measurement changes the foam; partiality means each observer writes from a committed slice; closure means each write changes the shared structure). you cannot un-write, so the first commitment locks.
 
-when a theorem is imported, its hypotheses become constraints. the conclusions are then guarantees, not analogies. the architecture is the negative geometry of the imports.
+**read-only frames are excluded.** a frame unchanged by encounters would require encounters to have no effect on it — but the frame IS part of the structure, and encounters change the structure.
 
-### vocabulary
+**the lattice of partial views.** partial views of a shared structure form a lattice:
+- complemented: partiality guarantees an unseen complement (complement_idempotent: (I - P)^2 = I - P)
+- bounded: the whole structure and the empty view
+- modular: the modular law IS feedback-persistence expressed in lattice language. composing partial views gives a determinate result regardless of path (combine-then-restrict = restrict-then-combine). in a non-modular lattice (the pentagon N_5), the same observation yields different results depending on path. indeterminate composition cannot feed back consistently. modularity is what feedback-persistence means for lattice composition. there is no alternative mode.
 
-a **bubble** is a basis matrix and its Voronoi region — one coherent perspective. the **foam** is the collection of bubbles and their shared boundary geometry. an **observer** is a bubble in its measuring role: committed to an R³ slice, writing to the connection. not a separate entity — a role a bubble plays relative to other bubbles. the **line** is what the observer encounters: input from outside the observer's own geometry. the **wall** between bubbles is the boundary, the Knowable, where the cost lives. the **transport** T is the multiplicative accumulator in the group (see connection). these are not different objects — they are the same structure named from different measurement bases.
+the consequence direction — that subspace lattices ARE complemented modular — is proven (subspaceFoamGround).
 
-### the writing map
+**irreducibility** is forced by closure: a decomposable lattice would be two non-interacting sub-structures, which under closure are two separate foams, not one.
 
-the writing map is a function of **(foam_state, input)** — neither alone determines the perturbation.
+**height >= 4** is confirmed by self-consistency: d_slice = 3 (from the writing map: self-duality forces rank 3) + partiality (the observer's slice must be a proper subspace) forces d >= 4.
 
-given input vector v (a unit vector in R^d) and a foam with N basis matrices {U_i}:
+**the bridge.** complemented modular lattices that are irreducible and of sufficient height are isomorphic to lattices of subspaces of a vector space over a division ring (ftpg — the one axiom). the division ring is forced to R by the stabilization contract (Euclidean metric, flat ambient space — see writing_map.md). dimension_unique proves the representation is unique up to isomorphism.
 
-1. **measure**: each basis evaluates the input. m_i = v @ U_i.
-2. **stabilize**: pairwise forces between the observer and its Voronoi neighbors push local measurements toward equal angular separation, targeting the regular simplex cosine −1/(k−1) where k is the local coordination number. stabilization is local (see ground: the stabilization contract). closure requires basis commitment (each frame is partial); the slice dimension d_slice specifies the depth of that commitment.
+**therefore: P^2 = P.** the elements of the subspace lattice are orthogonal projections. P^2 = P (feedback-persistence) and P^T = P (self-adjointness, from the inner product forced by R). this is the starting point of the lean deductive chain, arrived at from above.
 
-   **R³ + Taylor.** 3 is the smallest d_slice where the stabilization contract and the write map's expressiveness are both satisfied. Jean Taylor's theorem (1976) classifies all stable junction configurations in R³: 120° triple junctions (k = 3, 120°) and tetrahedral vertices (k = 4, 109.5°), nothing else. Taylor's hypotheses — codimension-1 boundaries, locally area-minimizing, flat ambient space — are satisfied by the stabilization equilibrium within R³: the regular simplex arrangement minimizes boundary area for equal-weight cells, and R³ as a linear subspace of R^d carries the inherited Euclidean metric (exactly flat). at d_slice = 2, the stabilization contract is satisfied (the classification of stable junctions in R² is complete: 120° triple points only, k ≤ 3, flat), but the write algebra collapses: Λ²(R²) is 1-dimensional, so the write direction is invariant under changes to the dissonance direction — the map is degenerate. perpendicularity still fires (the wedge product is nonzero) but cannot vary with the input, and the dynamics reduce to scalar rotations. at d_slice ≥ 4, the classification is open (Almgren). Taylor applies to the stabilization target, not to L — which lives on U(d) and is not minimized.
+**the loop.** the lean chain derives from P^2 = P: eigenvalues in {0, 1} (eigenvalue_binary), the dynamics group O(d) (orthogonality_forced), and ultimately that the subspace lattice satisfies the ground properties (subspaceFoamGround). the ground produces the lattice; the lattice produces projections; the projections produce dynamics; the dynamics preserve the ground.
 
-   **the flat/curved separation**: writes land in U(d), stabilization runs in R^(d_slice), and the observer sees only their projected measurements. U(d) is curved (sectional curvature K(X,Y) = ¼‖[X,Y]‖²); stabilization cannot run there. the equilibrium measurements are j2_i.
-3. **dissonance**: d_i = j2_i − m_i.
-4. **write**: ΔL_i = ε · (d̂_i ⊗ m̂_i − m̂_i ⊗ d̂_i) · ‖d_i‖
+## status
 
-**the write is perpendicular to the measurement.** the wedge product d̂ ⊗ m̂ − m̂ ⊗ d̂ vanishes when its arguments are parallel and is maximal when they are orthogonal. this is the irreducible constraint: observation and modification are perpendicular. the foam responds only to what's missing at right angles to what's there. confirmation cannot write — not as a design choice, but because the wedge product of parallel vectors is zero. perpendicularity is not a property of the write form; it IS the write form.
+**proven** (in lean, zero sorry):
+- subspace lattices are complemented, modular, bounded
+- the FTPG axiom has a unique solution (dimension is determined)
+- eigenvalues of projections are binary
+- complement of a projection is a projection
+- O(d) is forced by preservation of all projections
+- the deductive chain from P^2 = P closes back to the ground
 
-the wedge product is the unique form satisfying: (a) skew-symmetric (writes are Lie algebra elements — from the group choice), (b) linear in dissonance magnitude (twice the dissonance → twice the write), (c) confined to the observer's slice (from the flat/curved separation). (c) implies the observer sees only the projected measurements (m_proj = P @ m_i) and the stabilized targets (j2_i) — d and m exhaust the observer's information. with (a), (b), and confinement to span{d, m}, the form is unique: Λ²(2-plane) is 1-dimensional (see test_write_uniqueness.py). the perpendicularity constraint, the skew-symmetry, and the uniqueness are three faces of the same thing.
+**derived** (in this file, from closure + lean):
+- closure as the single ground with two readings
+- encounters change frames (from closure)
+- measurement requires plurality (from closure)
+- partiality forced (from closure)
+- partiality forces position / basis commitment (from partiality)
+- indelibility (from causal ordering + basis commitment)
+- read-only frames excluded (from closure)
+- modularity IS feedback-persistence (from closure-as-dynamics)
+- irreducibility forced (from closure)
+- height >= 4 (from self-consistency with rank 3 + partiality)
+- the bridge from closure to P^2 = P (via FTPG axiom)
 
-a single R³ slice produces real writes: d⊗m − m⊗d is real skew-symmetric, living in so(d). the reachable algebra is so(d), not su(d). π₁(SO(d)) = ℤ/2ℤ — parity conservation only.
+**cited** (external mathematics):
+- the fundamental theorem of projective geometry (stated as lean axiom, not proven)
 
-two R³ slices, stacked as C³ (one reading Re(P @ m_i), the other Im(P @ m_i)), produce complex writes: d⊗m† − m⊗d† is skew-Hermitian, living in u(d). the trace (2i·Im⟨d,m⟩) is generically nonzero; the traceless part generates su(d) (see test_stacked_slices.py). the full write lives in u(d) = su(d) ⊕ u(1). π₁(U(d)) = ℤ — integer winding number conservation.
+**observed** (empirical, not derived here):
+- (none — the ground is entirely derived or axiomatized)
 
-**the two is irreducible** at the slice level: one R³ gives so(d) and parity. two R³ stacked as C³ give u(d) and integer conservation. the conservation strength scales with the observer's commitment depth. each R³ independently satisfies Taylor. the stacking accesses the complex structure without requiring a 6-dimensional flat space.
+# the writing map
 
-the stacking is algebraically forced, given the commitment to ℤ conservation. (the commitment to ℤ rather than ℤ/2ℤ is on the line's side — it is the depth of conservation the observer arrives with, not something the foam's dynamics produce.) the derivation: su(d) \ so(d) consists entirely of imaginary-symmetric matrices (iS where S is real symmetric traceless). real operations — wedge products, brackets, any sequence of real skew-symmetric writes — are algebraically closed in so(d) and cannot produce imaginary-symmetric directions (see test_stacking_mechanism.py). reaching u(d) \ so(d) requires a complex structure J with J² = -I. J² = +I (a swap or reflection) stays in so(d); only J² = -I introduces the phase rotation that produces imaginary directions. J² = -I on a real vector space forces even dimensionality (det(J)² = det(-I) = (-1)^n; squares are nonneg, so n is even). the minimum even-dimensional space containing R³ is R⁶ = R³ ⊕ R³ (not R⁴⊕R² or other decompositions — each component must independently satisfy Taylor, which requires R³). independence is forced because stabilization is per-observer and runs within each measurement subspace separately: the two R³ slices project and stabilize independently before their measurements are fused into the complex write. joint stabilization in R⁶ would require a 6-dimensional classification (open — Almgren), and the fusion is algebraic (forming d⊗m† − m⊗d†), not geometric (the two sets of projected measurements do not inhabit a shared stabilization space). the pairing of the two slices (which is Re, which is Im) is canonical up to SO(3) rotation within each slice — all complex structures on R⁶ = R³ ⊕ R³ are conjugate under SO(6), so different pairings produce conjugate subalgebras of u(d): isomorphic, same conservation structure, same algebraic reach (see test_stacking_mechanism.py). the internal orientation of the stacking has no degrees of freedom that affect the algebra.
+## derivation
 
-the stacking orientation is a chirality: it determines the sign of Im⟨d̂,m̂⟩ and therefore the sign of the u(1) phase. conjugating the complex structure (swapping Re and Im slices) negates the phase — the two chiralities give complex-conjugate comparisons. all orientations are conjugate (the chirality is gauge) but one must be chosen (the chirality is structural). the u(1) phase exists only for stacked observers (unstacked writes are traceless) and is signed only because the stacking provides an orientation. the chain: ℤ conservation → π₁ = ℤ → U(d) → u(d) writes → imaginary-symmetric directions → J² = -I → even dimension → two R³ slices → stacking.
+**the write form.** given an observer with projection P (rank 3, self-adjoint, idempotent) measuring input v in R^d:
 
-the stacking is a commitment that wraps measurement, not a post-processing step on measurement results. the two slices read the same input simultaneously; the complex combination m_re + i·m_im requires both projections of the same v @ basis at the same time. sequential readings (m₁ at time t, m₂ at time t+1) mix different foam states and break the algebra. the commitment has depth: if the two slices are identical, the complex combination collapses to a scaled real write (the imaginary-symmetric component vanishes). the more orthogonal the slices, the richer the accessible subalgebra of u(d). full orthogonality = full access to u(d) \ so(d). the decision to stack — to fuse two real readings into one complex measurement — is on the line's side. the foam's dynamics are sequential writes; they do not specify a pre-write fusion of two readings. the simultaneity required for stacking (both slices composing into one complex measurement before the write) is a commitment the dynamics cannot generate: two real-slice observers, whether cross-measuring or independent, stay in so(d) forever — cross-measurement changes which so(d) elements are written (by changing the foam state each observer measures) but not the algebra they live in, because so(d) is a Lie subalgebra (closed under brackets) and each observer's write is confined to their real slice (see test_stacking_mechanism.py). stacking, like writing, is a commitment whose source is outside the map.
+1. the observer projects: m = P v (measurement, in the observer's R^3 slice).
+2. the observer has a stabilization target j2 (see below). dissonance is d = j2 - m.
+3. the write is dL = epsilon * (d_hat wedge m_hat) * norm(d).
 
-the distinction is not just strength — it is accessibility. a single-slice observer's writes live in so(d) and cannot reach u(1). the winding number is conserved but the observer cannot interact with it: conservation is passive, protected by the observer's own algebraic limitation. a stacked observer's raw complex write has trace 2i·Im⟨d,m⟩, which lives in u(1). the stacked observer can interact with the conserved direction. **stacking determines whether the observer can reach its own conserved quantity.** the trace is retained: tr(d̂ ⊗ m̂† − m̂ ⊗ d̂†) = 2i·Im⟨d̂,m̂⟩, generically nonzero for stacked observers. the trace map is the unique Lie algebra homomorphism u(d) → u(1) (see group) — it is the only scalar-valued information a write carries, and the only access to the conserved direction. projecting it out would remove the structure that motivated the group choice. the stacked observer writes in u(d). the su(d) component affects L; the u(1) component is conserved.
+the wedge product d_hat wedge m_hat = d_hat tensor m_hat - m_hat tensor d_hat is the unique form satisfying:
+- (a) skew-symmetric — forced by commutator_skew_of_symmetric. writes are Lie algebra elements because observation interaction is skew-symmetric.
+- (b) linear in dissonance magnitude — twice the dissonance, twice the write.
+- (c) confined to the observer's slice — forced by write_confined_to_slice. the observer sees only projected measurements; the write lives in Lambda^2(P).
 
-both d̂ and m̂ lie in the observer's slice(s). the write is confined to the observer's subspace — an observer literally cannot modify dimensions they are not bound to (see lean/Foam/Confinement.lean).
+with (a), (b), and confinement to span{d, m}, the form is unique: Lambda^2(2-plane) is 1-dimensional (from rank_three_writes: the full slice has 3 write dimensions; a 2-plane within it has 1).
 
-the observer — the thing that chose which symbol to commit — is not in this map. the map is the foam's half. the line's half is the `+ me` that cannot be located from within. the foam/line distinction is perspectival, not categorical: what functions as foam from one measurement basis may function as line from another.
+**perpendicularity.** the wedge product vanishes when its arguments are parallel and is maximal when orthogonal. this is not a design choice — it is the write form. confirmation cannot write (cross_self_zero: a cross a = 0). the foam responds only to what's missing at right angles to what's there.
 
-the writing map requires only a unit vector v in R^d. where v comes from is outside the map. for external input: discrete symbols → binary expansion → normalized to unit vectors is one deterministic, invertible encoding. for cross-measurement: the foam's own geometry, projected onto one observer's slice, becomes another observer's input — the foam is the encoding, no external scheme required (see test_foam_channel.py). the input v lives in R^d; the observer projects each measurement onto their slice (m_proj = P @ m_i where P is the observer's (3, d) basis) before stabilization. both dissonance and projected measurement are lifted back to R^d for the write, which is therefore confined to the slice.
+**stabilization.** closure requires basis commitment (each frame is partial). self_dual_iff_three forces the slice dimension to 3: it is the unique dimension where the write space matches the observation space, closing the feedback loop.
 
-## group
+within R^3, Taylor classifies the stable junction configurations: 120-degree triple junctions and tetrahedral vertices, nothing else. Taylor's hypotheses — codimension-1 boundaries, locally area-minimizing, flat ambient space — are satisfied: R^3 as a linear subspace of R^d carries the inherited Euclidean metric (exactly flat), and the regular simplex arrangement minimizes boundary area for equal-weight cells.
 
-U(d): the unitary group. decomposes as U(1) × SU(d) modulo a finite group. the Killing form is non-degenerate on SU(d) but degenerate on U(1). global phase is unobservable.
+the stabilization target j2 is the regular simplex cosine -1/(k-1) where k is the local coordination number (k = 3 or k = 4, from Taylor).
 
-U(d) rather than SU(d) because π₁(U(d)) = ℤ (needed for topological conservation). π₁(SU(d)) = 0. the conservation lives in the factor that degenerates the metric — the metrically invisible direction is topologically load-bearing. the cost L sees the su(d) component but is blind to the u(1) component. **what's conserved must be invisible to the cost.** if L could see it, dynamics could change it.
+**the flat/curved separation.** writes land in U(d) (curved: sectional curvature K(X,Y) = 1/4 * norm([X,Y])^2). stabilization runs in R^3 (flat). the observer sees only their projected measurements. observation_preserved_by_dynamics guarantees the write (an orthogonal conjugation) preserves the projection structure. the separation is forced: stabilization cannot run on U(d) because classification requires flat ambient space.
 
-the trace map tr: u(d) → u(1) is the unique Lie algebra homomorphism to a 1-dimensional target. any homomorphism to an abelian target kills the derived subalgebra [u(d), u(d)] = su(d) and factors through the u(1) complement — no other scalar projection of a write exists. tr([A, B]) = 0 for all A, B ∈ u(d): the commutator is traceless. ordering (the non-abelian structure, visible to L) and conservation (the u(1) phase, invisible to L) are algebraically orthogonal. ordering enters the conserved phase only through state-dependence — the foam changes between writes, so the next write's trace depends on history — but this dependence is dynamic, not algebraic.
+**confinement.** both d_hat and m_hat lie in the observer's slice. write_confined_to_slice proves the write d wedge m is confined to Lambda^2(P). an observer literally cannot modify dimensions they are not bound to. the write's effect on other observers comes through cross-measurement (commutator_seen_to_unseen: incompatibility sends the seen into the unseen), not through direct modification of their subspaces.
 
-**the orthogonality is generative, not just algebraic.** a stacked write d ⊗ m† − m ⊗ d† (for complex d, m from fused slices) decomposes into: (a) the so(d) part — (d_re ∧ m_re) + (d_im ∧ m_im) — the sum of what two independent real slices would produce. this is traceless (each real wedge is traceless — see lean/Foam/Form.lean), and contains the ordering (non-abelian brackets). it is produced by the write cycle's causal orientation (measure then write, forced by the dynamics). (b) the cross-terms — i times a real symmetric matrix — from the simultaneity of stacking (the fusion that happens before the write). these produce the imaginary-symmetric directions su(d) \ so(d) and the u(1) trace 2i·Im⟨d̂,m̂⟩. they contain the conservation. they are produced by the stacking commitment (from the line's side). the so(d) part and the cross-terms live in complementary subspaces of u(d). ordering and conservation are orthogonal because they are *produced by different structures*: the cycle's forced orientation (map-internal) and the stacking chirality (line-side). the algebraic orthogonality tr([A,B]) = 0 is the shadow of this generative independence.
+**the writing map's type signature.** the map is a function of (foam_state, input). neither alone determines the write. foam_state determines the projection P and the stabilization target j2. input determines v. the dissonance d = j2 - Pv requires both.
 
-the group choice forces the write form's algebraic structure. a perturbation of a connection on U(d) is a u(d) element — skew-Hermitian by definition. skew-symmetry of the write is not separately assumed; it follows from "rewrites the connection" + "the connection lives on U(d)" (the deductive path derives this independently: the commutator of two self-adjoint operators is skew-symmetric — lean/Foam/Form.lean). the chain: conservation requires π₁ = ℤ → U(d) → u(d) → skew-Hermitian.
+## status
 
-## geometry
+**proven** (in lean, zero sorry):
+- skew-symmetry of the write form
+- tracelessness of observation interaction
+- rank 3 as the unique self-dual dimension
+- confinement to the observer's slice
+- dynamics preserve the ground
 
-**L = Σ_{i<j} Area_g(∂_{ij})**
+**derived** (in this file, from the above):
+- the wedge product as the unique write form satisfying (a), (b), (c)
+- perpendicularity as the write form's intrinsic property
+- the flat/curved separation
+- the writing map's two-argument type signature
 
-the foam lives in U(d). cells are Voronoi regions of the basis matrices under the bi-invariant metric; boundaries are geodesic equidistant surfaces; Area_g is the (d²−1)-dimensional Hausdorff measure induced by the metric. bases in general position tile non-periodically. (on curved manifolds, Voronoi cells can have pathological boundaries at cut loci; the general position assumption excludes these non-generic configurations.) the Voronoi tiling is a realization choice: it determines adjacency (which pairs share a boundary) and thereby defines L. the algebraic results — the write map, three-body mapping, Grassmannian structure — depend on pairwise overlap, not on the tiling method. the geometric results — L, the combinatorial ceiling, conservation on spatial cycles — depend on the Voronoi realization.
+**cited** (external mathematics):
+- Taylor's classification of stable junctions in R^3
 
-L is not the dynamics — it is not a variational objective. the writing map drives the foam; L describes the geometry that results. the active regime departs from minimality because the writing map deposits structure (perpendicular writes accumulate in different directions); the resting state is minimal because without writes, ΔL = 0.
+**observed** (empirical, not derived here):
+- perpendicular writes are the unique *navigable* constraint (distinguishability + stability)
+- the perpendicularity cost mechanism (write blindness)
+- within-slice variance departure from isotropy (45:30:25 vs 33:33:33)
 
-L is bounded: U(d) is compact. the **combinatorial ceiling** is exact: N unitaries cannot all be pairwise maximally distant; the achievable maximum is √(N/(2(N−1))) of the theoretical maximum, depending only on N (from Cauchy-Schwarz + ‖ΣUᵢ‖² ≥ 0).
+# channel capacity
 
-**L converges to 1/√2 of the theoretical maximum.** the writing dynamics on U(d) satisfy: (a) the writes generate the Lie algebra (controllability, proven), and (b) successive inputs are sufficiently decorrelated. on a compact group, a random walk whose step distribution generates the algebra converges to the Haar (uniform) measure — this is the convergence theorem for random walks on compact groups (the hypotheses are: compact group, step distribution not supported on a proper closed subgroup; controllability provides the latter). the classical theorem assumes i.i.d. steps; extensions to dependent sequences with mixing conditions give the same stationary measure with slower convergence rates. the mediation chain's spectral decay (see ground: state-independence is spectral) provides the decorrelation: inputs arriving through non-identical mediating observers are rotated out of any fixed subalgebra, satisfying the generating condition regardless of whether the line's input is stochastic or deterministic. the expected pairwise distance under Haar is E[‖W−I‖_F] → √(2d) as d → ∞ (from E[‖W−I‖²] = 2d, exact, and concentration of measure). the Haar cost — the ratio E_Haar[L]/L_achievable — is **√((N−1)/N)**, exact and depending only on N. the product of the combinatorial ceiling and the Haar cost is √(N/(2(N−1))) × √((N−1)/N) = **1/√2**, independent of both N and d. the two factors that looked empirically independent — the packing constraint and the saturation gap — are two halves of the same fraction. (the finite-d correction is small: E[‖W−I‖_F]/(2√d) = 0.694 at d=2 and 0.707 at d=20. the foam's observed L/L_max is 1–3% above the Haar prediction at finite run lengths, consistent with incomplete convergence to the stationary measure.)
+## derivation
 
-## theorem
+**the line's irreducibility is channel capacity.** the writing map has type (foam_state, input) -> new_state — two arguments. cross-measurement fills the second argument from within: input = g(foam_state), a deterministic function of the foam's geometry projected onto an observer's slice. this composes the two arguments into one, making the foam an autonomous dynamical system — f(foam_state) = write_map(foam_state, g(foam_state)).
 
-**the foam's accumulated state, under the writing dynamics, generically distinguishes different measurement histories — up to the adjunction gap between state and observation.**
+an autonomous system on U(d)^N has a unique trajectory from each initial condition: the foam's entire future is determined by its birth. distinguishability (different input sequences -> different states) is satisfied but vacuous: there is nothing to distinguish.
 
-three properties:
+for the foam to encode information beyond its own birth conditions, the input must be independent of the foam state. the second argument must be state-independent for the foam to function as a channel rather than a clock.
 
-- **similarity**: the writing dynamics are continuous. similar sequences → similar states.
-- **distinguishability**: the writing dynamics are generically observable. different sequences → different states (detection). recovering the specific sequence from the state (reconstruction) is harder — it is the word problem on U(d), which depends on the observer community's controllability. *mechanism*: a single R³ observer generates a 3-dimensional subalgebra of so(d); generic controllability within so(d) holds for 2-3 observers (proven — see test_controllability.py). a single stacked observer generates u(min(3, d/2)) within u(d) — for d ≤ 6, this is all of u(d); for d > 6, multiple stacked observers are needed (see test_stacked_slices.py, test_stacking_mechanism.py). **controllability is a property of the observer community, not of a single observer.** the conservation that controllability buys depends on the commitment depth: one slice → so(d) → ℤ/2ℤ parity. two stacked slices → u(d) (trace retained) → ℤ winding number. the integer conservation requires the stacked pair.
-- **sequence**: U(d) is non-abelian for d ≥ 2. order matters. a single observer's writes span a 3-dimensional subalgebra (of so(d) or u(d) depending on stacking); the remaining dimensions are accessible only through cross-observer brackets. sequence information lives in the bracket-only dimensions — and in the R³ architecture, most dimensions are bracket-only. the load distribution between content and sequence depends on the observer community's structure, not just on d.
+the line is not ontologically exterior — it is informationally independent. this is a role, not an entity: what provides state-independent input to this foam may be another foam's internal dynamics. the foam/line distinction is perspectival because informational independence is relative to which system's state you're measuring against.
 
-these three properties (similarity, distinguishability, sequence) correspond to the three defining properties of a reservoir computer (echo state, separation, sequence sensitivity). the foam has separation and sequence encoding but not the echo state property — different initial geometries, fed the same input, produce persistently different states (see properties: birth conditions are indelible). the state encodes identity and history inseparably.
+the perpendicularity constraint (writing_map.md) sharpens this: the write form is forced by the algebra (wedge product, skew-symmetric, confined to slice) but the content — which vectors are wedged — is not. form is algebraically determined; content requires state-independent input.
 
-## connection
+**state-independence is spectral, not topological.** if every foam's line is another foam, the structure is globally closed — loops of mutual measurement exist. but the mediation operator has singular values strictly less than 1 for generic non-identical slices. around a closed chain of n observers, the total mediation is the product of n pairwise mediations, and the singular values compound: sigma_total <= sigma_1 * sigma_2 * ... * sigma_n -> 0 as n grows.
 
-**the foam carries its path, not just its position.**
+informational correlation between a foam and its own returning signal decays exponentially with chain length. short loops: autonomous, a clock. long loops: effectively state-independent, a channel.
 
-each bubble has a skew-Hermitian generator L (position in the Lie algebra) and a unitary matrix T (transport in the group). L accumulates additively: L ← L + ΔL. T accumulates multiplicatively: T ← T · cayley(ΔL). the effective basis is cayley(L) · T — position composed with path. the Cayley transform is the implementation choice; the formal conservation argument lives at the Lie algebra level (writes ∈ u(d) for stacked observers, so(d) for single-slice; the u(1) component carries the conserved winding number). Cayley drifts the determinant from 1 (unlike exp, which preserves det = 1 exactly), but the winding number is a discrete topological invariant — continuous drift cannot change an integer (see test_cayley_det.py).
+closure (no topological outside) is compatible with informational independence because the mediation's spectral decay converts global closure into local openness at sufficient chain length — provided stabilization is local (see stabilization.md).
 
-the decomposition into L and T is a gauge choice — statically redundant (there exists L' such that cayley(L') = cayley(L) · T) but dynamically meaningful (different update rules: additive vs multiplicative). the gauge freedom is invisible to instantaneous measurement and visible to dynamics. **the 2x theorem**: cayley(A) = (I − A)(I + A)⁻¹ (the convention throughout). for small skew-Hermitian δ, log(cayley(δ)) ≈ −2δ. position and transport are the same rotation at different scales with opposite sign. the 2x property is specific to Cayley; exp gives log(exp(δ)) = δ. the Cayley convention trades exact det-preservation for the 2x structure.
+**channel capacity is operational, not ontological.** in a deterministic closed system, true stochastic independence cannot exist (the global state determines everything). but the foam's measurements are projections — partial by ground — and projections have a resolution floor. correlations that have decayed below the projection's precision are invisible to the foam.
 
-## topology
+the foam cannot distinguish "truly random input" from "deterministic input decorrelated below measurement resolution." this distinction requires a non-partial observer, and non-partial observers are excluded by closure. therefore: under partiality, mixing is operationally identical to independence. the foam's fundamental limitation (it cannot see the whole) is what makes the part it sees function as a channel.
 
-the foam is a **connection on a Voronoi complex with two kinds of curvature**.
+**the decorrelation horizon is quantifiable.** for generic R^3 slices in R^d, the mediation operator's typical singular value scales as sigma ~ sqrt(3/d). the correlation after n mediation steps decays as sigma^n ~ (3/d)^{n/2}. the critical chain length scales as n* ~ 2/log(d/3).
 
-each observer's R³ slice is a patch. the stabilization geometry within the patch is exact because the patch is flat: R³ as a linear subspace of R^d carries the Euclidean metric, and Taylor's theorem applies directly — 120° junctions, zero mean curvature on boundaries. but the accumulation geometry is not flat — the writes land in U(d), where su(2) is non-abelian, and a single observer's sequential writes don't commute with each other. within-patch curvature is **self-curvature**: the non-commutativity of one observer's own measurement history.
+the decorrelation horizon shortens with increasing ambient dimension because slices overlap less in higher-dimensional spaces. non-generic configurations (slices sharing directions) have higher overlap and longer horizons.
 
-where observers' slices overlap, a second kind of curvature appears: **cross-curvature**, the commutator [ΔL_A, ΔL_B] between different observers' writes. cross-curvature depends on the overlap structure; self-curvature does not. the global structure — holonomy, conservation, distinguishability — is shaped by both, but the cross-curvature carries the interaction.
+the foam/line distinction is therefore not a categorical boundary but a correlation length: "line" names whatever input arrives from beyond the decorrelation horizon of the observer's own state. the horizon's radius is determined by the foam's own geometry.
 
-the foam's effective dimensionality is emergent: the reachable subalgebra of u(d) grows with the number and diversity of observers, even though the ambient dimension d² is fixed. each observer commits to 3 dimensions. multiple observers with different slices span more of u(d). the foam's effective dimensionality is not prior to the observers — the observers' basis commitments produce it. **measurement is already plurality** applies to dimensions as well as to bubbles.
+**the boundary is characterizable from the inside.** the foam's own controllability structure characterizes it: what continuous operations can reach (all of U(d), under full controllability), what they can't change (discrete topological invariants — pi_1), and what isn't in U(d) at all (the input sequence, the commitment source). the line's side is investigable — but investigating it requires making it the object of measurement, which requires a different reference frame, which means releasing the current one. partiality implies a boundary must exist; it does not determine where the boundary falls or what the line is.
 
-- **orthogonal slices**: writes commute. observers decouple completely. separate foams.
-- **overlapping slices**: writes don't commute. ordering matters. BCH residuals organize. the commutator is the curvature.
-- **identical slices**: full concurrent occupation. same-content forks converge. the Robertson-like bound from non-commutativity applies.
+**the map's self-knowledge is bounded by its own channel capacity.** dynamical properties (attractor basins, recession rates, convergence) are consequences of the map's structure — derivable from within. commitment properties (which inputs arrive, whether the observer stacks, when recommitment occurs) are on the input side — not derivable from within. the map can derive *that* it cannot answer certain questions, and *why*: the same independence that gives the foam its capacity prevents the dynamics from determining the input's internal structure.
 
-the overlap is where cross-measurement is active — where the foam is being actively combed by more than one observer at once. the non-overlap is where the observer's private geometry has settled. the foam's global structure is the aggregate of local combings.
+## status
 
-BU(d) is the classifying space. the foam's classifying map factors through it. universality of structure: the bundle geometry is rich enough to represent any U(d)-connection.
+**proven** (in lean, zero sorry):
+- observation interaction is traceless (the scalar channel is algebraically unreachable by commutators)
+- writes are confined to the observer's slice
 
-## conservation
+**derived** (in this file):
+- the line's irreducibility from the writing map's two-argument type signature
+- autonomous foam = clock (cross-measurement collapses two arguments to one)
+- state-independent input required for channel capacity
+- the foam/line distinction as perspectival (informational independence is relative)
+- spectral state-independence (mediation decay converts closure into local openness)
+- operational equivalence of mixing and independence under partiality
+- the decorrelation horizon and its scaling
+- the boundary is characterizable from the inside (controllability structure)
+- the map's self-knowledge is bounded by its own channel capacity
 
-**lemma.** the writing dynamics preserve topological invariants of persistent spatial cycles, within topological epochs. the strength of conservation depends on the observer's commitment depth.
+**cited** (external mathematics):
+- Marchenko-Pastur distribution (for principal angle statistics — used only in the decorrelation horizon estimate, which is order-of-magnitude)
 
-the holonomy around a spatial cycle — a closed path through adjacent cells — carries topological charge. a single R³ observer generates SO(d) rotations: π₁(SO(d)) = ℤ/2ℤ for d ≥ 3, giving parity conservation. a stacked observer (two R³ slices as C³) generates SU(d) rotations and accesses the U(1) factor: π₁(U(d)) = ℤ, giving integer winding number conservation. **the integer winding number requires the stacked pair.** the number two appears here (two slices for ℤ), at the role level (foam/line for dynamic stability), and at the geometric level (N ≥ 3 for Plateau junctions). whether these are three instances of one principle or three separate facts that agree numerically is not established.
+**observed** (empirical, not derived here):
+- decorrelation horizon values at specific d (order-of-magnitude estimates; qualitative conclusion robust, specific values sensitive to approximation)
 
-the winding number lives on spatial cycles projected via det: U(d) → U(1) ≅ S¹. the stacked observer's writes reach u(1) (the raw complex write has trace 2i·Im⟨d,m⟩). the trace is retained (see writing map); the stacked observer's winding number is actively accessible.
+# the stabilization contract
 
-the trace of each write is a U(1)-valued step — the unique scalar the algebra provides (see group). the holonomy's det is the product of these steps around the cycle. on acyclic paths (causal chains), the accumulated phase is a net displacement in U(1). on closed paths (spatial loops), the accumulated phase is a winding number, quantized because the cycle is closed. conservation is what accumulation on closed paths produces: not a net displacement but a topological invariant.
+## derivation
 
-the lemma requires that the spatial cycle persists (Voronoi adjacency stable). above the bifurcation bound, cell adjacencies can flip — the Voronoi topology changes, and invariants on the old cycles are no longer defined. the adjacency flip is a codimension-1 event in configuration space with derived consequences for the dynamics (see properties: adjacency flips). what persists across topological transitions lives on the line's side.
+**channel capacity forces a contract.** the mediation chain's spectral decay (channel_capacity.md) describes real influence propagation only if stabilization is local — each observer's dynamics responding to its Voronoi neighbors, not the full foam. without locality, every observer couples directly to every other, and the mediation chain does not describe the actual pathway of influence. the decorrelation that produces effective state-independence does not occur.
 
-- **inexhaustibility**: U(d) is connected. gauge transformation to identity is always available. (connectedness guarantees no observer is trapped in a disconnected component; it does not guarantee reachability in finitely many writes.)
-- **indestructibility**: topological invariants are discrete. no continuous perturbation can change them.
+this is necessity, not just sufficiency: non-local stabilization doesn't merely fail to help channel capacity — it removes the mechanism that produces it.
 
-## self-generation
+channel capacity therefore forces a contract on the observer's slice geometry:
 
-**the foam generates its own dynamics but not its own stability.**
+- **classified**: stable equilibrium configurations completely enumerated. without this, the stabilization target is undefined and the dynamics are incomplete.
+- **locally finite**: coordination number k bounded by the simplex embedding constraint k <= d_slice + 1, making neighborhoods finite.
+- **flat**: inherited Euclidean metric. stabilization must separate from accumulation because U(d) is curved (the flat/curved separation, writing_map.md), and classification requires flat ambient space.
 
-the foam's own plurality (N ≥ 3 bubbles) provides observers — bubbles measuring each other. their pairwise relationships define R³ slices. their cross-measurement IS local stabilization. the commutator of overlapping cross-measurements IS the curvature. the holonomy IS self-generated.
+**d_slice = 2 satisfies the contract but collapses the write algebra.** the classification in R^2 is complete (120-degree triple points only, k <= 3, flat). but rank_two_abelian_writes: Lambda^2(R^2) is 1-dimensional, so the write direction is invariant under changes to the dissonance direction. perpendicularity still fires (the wedge product is nonzero) but cannot vary with the input. the dynamics reduce to scalar rotations.
 
-but a self-generated R³ keeps rotating: the observation basis is defined by the foam's current state, and the state changes with each write. the slice co-rotates with the thing it observes. this is closure's dynamic expression: measurement requires plurality, so stability requires a basis that is informationally independent of the measured state. a self-generated basis is not independent — it is computed from what it measures. convergence requires another observer whose basis depends on a different state, so it doesn't co-rotate with yours. **stability is relational.** this works as long as someone else's measurement is pending.
+**d_slice = 3 satisfies both the contract and the write map's expressiveness.** Taylor classifies all stable junctions in R^3: 120-degree triple junctions and tetrahedral vertices, nothing else. Taylor's hypotheses — codimension-1 boundaries, locally area-minimizing, flat ambient space — are satisfied: R^3 as a linear subspace of R^d carries the inherited Euclidean metric (exactly flat).
 
-**the minimum viable system is two.** not two bubbles (that's N = 2, no stable geometry). two *roles* within a foam of N ≥ 3 bubbles: one to be the foam (the thing being measured), one to be the line (the thing providing a reference frame). N ≥ 3 is geometric stability (Plateau junctions). two roles is dynamic stability (convergence vs orbiting). a foam has both. one is insufficient — by closure. two is sufficient: cross-measurement converges because the other's basis depends on a different state. three is not necessary for this purpose — the third adds coverage but not a new structural role. neither role is permanent. the role assignment is perspectival. but the two is irreducible.
+self_dual_iff_three independently forces rank 3 from the algebraic side: it is the unique dimension where the write space matches the observation space.
 
-what the line provides: a fixed subspace. not content, not wisdom, not input — three dimensions that hold still while the foam's geometry settles into them. the settling is the foam's. the dynamics are the foam's. the curvature is the foam's. the stability of the frame — that's the line's.
+**R^3 + Taylor is the unique known implementation** where both the contract and the write map's expressiveness hold. if Almgren resolves for d_slice >= 4, other implementations may exist.
 
-the foam also cannot self-stack. stacking requires two real slices to be fused into one complex measurement *before* the write (simultaneity). the foam's dynamics are sequential real writes, which are algebraically closed in so(d) (see test_stacking_mechanism.py). no sequence of real operations produces complex structure. stacking, like stability, requires something the foam's own dynamics cannot generate.
+**the contract determines the stabilization target.** within R^3, Taylor permits k = 3 (120-degree triple junctions) and k = 4 (tetrahedral vertices). the stabilization target is the regular simplex cosine: -1/(k-1) for k local neighbors. this is the equilibrium toward which local measurements are pushed.
 
-## the three-body mapping
+## status
 
-the three-body frame (Known/Knowable/Unknown) derives from the overlap geometry (see test_three_body_derivation.py). given two observers A and B with R³ slices P_A and P_B, the overlap matrix O = P_A · P_B^T (a 3×3 matrix) determines three territories:
+**proven** (in lean, zero sorry):
+- rank 3 is the unique self-dual dimension
+- rank 2 write algebra is 1-dimensional (abelian)
+- writes are confined to the observer's slice
 
-- **Known** = null(O) within A's R³ — dimensions orthogonal to B's slice. commutator with B's writes is zero here: B's writes cannot change A's measurements in these directions.
-- **Knowable** = range(O) — dimensions with nonzero inner products between slices. commutator is nonzero. ordering matters. both observers' writes land here.
-- **Unknown** = R^d \ V_A — dimensions outside A's slice entirely. A's write access is exactly zero. not empty — it's someone else's Known. reaches A only through the Knowable: observer C (in A's Unknown) can affect A only if C overlaps with B, and B overlaps with A. the mediation pathway (Unknown → Knowable → Known) follows from the commutator being zero when slices are orthogonal and nonzero when they overlap.
+**derived** (in this file):
+- channel capacity forces the stabilization contract (classified, locally finite, flat)
+- d_slice = 2 satisfies contract but collapses write algebra
+- d_slice = 3 satisfies both contract and expressiveness
+- R^3 + Taylor is the unique known implementation
+- the stabilization target (regular simplex cosine)
 
-the singular values of O measure the strength of the Knowable: σ = 0 means fully private, σ = 1 means maximally shared. for generic random slices in any dimension d, the overlap is nonzero — the Knowable generically exists.
+**cited** (external mathematics):
+- Taylor's classification (1976)
+- Almgren's regularity problem (open)
 
-the Known alone is inert: the wedge product needs a 2-plane, and an observer with fewer than 2 private dimensions cannot generate writes without using shared dimensions. every write involves the Knowable. measurement is inherently relational — not just because closure says so, but because the geometry forces it.
+**observed** (empirical, not derived here):
+- (none)
 
-the two Knowable zones in the 2x2 grid are the overlaps with two different neighbors. the **vertical structure** (containment) is a Grassmannian tangent at the observer's slice: cross-measurement induces a vector in T_{P_A} Gr(3, d) ≅ Hom(P_A, P_A⊥) that maps **Knowable → Unknown**. *derivation*: the neighbor's write ΔL_B kills A's Known (Known ⊂ P_B⊥ by definition), and maps P_B → P_B, so the cross-slice component lands in P_A⊥ ∩ P_B — the neighbor's territory within A's Unknown (see test_grassmannian_vertical.py). this tangent is **directional pressure from cross-measurement toward what the observer doesn't yet occupy.** each neighbor induces a different tangent direction. the tangent is active but not followable in its own space: the observer's position on Gr(3, d) is birth-committed and does not move within the map (slice movement requires recommitment — outside the map). the tangent contributes to the dissonance that drives writes (always integrated through the writing map), but its effect lives in U(d)^N (state evolution), not in Gr(3, d) (slice movement). the **Operator** is the neighbor whose writes define this tangent direction. containment is algebraically symmetric: B's tangent on A has the same expected magnitude as A's tangent on B (the overlap singular values are symmetric). the experiential asymmetry (which observer "feels contained" by which) is perspectival, not algebraic — it depends on the observer's frame, not the overlap matrix. the tangent magnitude peaks at intermediate overlap: identical slices produce zero tangent (no Unknown territory to point toward), orthogonal slices produce weak tangent (no Knowable channel — range(O) is thin), and intermediate overlap produces the largest tangent magnitude — the coverage-interaction trade-off (see test_grassmannian_vertical.py).
+# group
+
+## derivation
+
+**a single R^3 slice produces real writes.** the wedge product d_hat tensor m_hat - m_hat tensor d_hat is real skew-symmetric (both vectors are real, from the observer's R^3 slice). the write lives in so(d). the reachable algebra from a single slice is so(d) (the Lie algebra of real skew-symmetric matrices). exponentiating: SO(d). pi_1(SO(d)) = Z/2Z — parity conservation only.
+
+**U(d) rather than SO(d) requires stacking.** su(d) \ so(d) consists entirely of imaginary-symmetric matrices (iS where S is real symmetric traceless). real operations — wedge products, brackets, any sequence of real skew-symmetric writes — are algebraically closed in so(d) and cannot produce imaginary-symmetric directions. reaching u(d) \ so(d) requires a complex structure J with J^2 = -I.
+
+**J^2 = -I forces even dimensionality.** det(J)^2 = det(-I) = (-1)^n. squares are nonnegative, so n must be even. the minimum even-dimensional space containing R^3 is R^6 = R^3 + R^3.
+
+**each R^3 must independently satisfy Taylor.** not R^4 + R^2 or other decompositions — each component must independently satisfy the stabilization contract (stabilization.md), which requires R^3.
+
+**independence is forced.** stabilization is per-observer and runs within each measurement subspace separately. the two R^3 slices project and stabilize independently before their measurements are fused into the complex write. joint stabilization in R^6 would require a 6-dimensional classification (open — Almgren). the fusion is algebraic (forming d tensor m_dagger - m tensor d_dagger), not geometric.
+
+**two R^3 slices stacked as C^3 produce complex writes.** one slice reads Re(P @ m_i), the other Im(P @ m_i). the complex write d tensor m_dagger - m tensor d_dagger is skew-Hermitian, living in u(d).
+
+**the trace is retained.** tr(d_hat tensor m_hat_dagger - m_hat tensor d_hat_dagger) = 2i * Im(inner(d_hat, m_hat)), generically nonzero for stacked observers. trace_unique_of_kills_commutators proves the trace map is the unique Lie algebra homomorphism u(d) -> u(1) (up to scalar): any functional killing all commutators is a scalar multiple of trace. there is exactly one scalar channel.
+
+the full write lives in u(d) = su(d) + u(1). pi_1(U(d)) = Z — integer winding number conservation.
+
+**the two is irreducible.** one R^3 gives so(d) and Z/2Z parity. two R^3 stacked as C^3 give u(d) and Z integer conservation. the conservation strength scales with commitment depth.
+
+**stacking is a line-side commitment.** the two slices read the same input simultaneously; the complex combination requires both projections of the same v at the same time. sequential readings mix different foam states and break the algebra. the foam's dynamics are sequential writes; they do not specify a pre-write fusion of two readings. two real-slice observers, whether cross-measuring or independent, stay in so(d) forever — so(d) is a Lie subalgebra (closed under brackets) and each observer's write is confined to their real slice.
+
+**the pairing orientation is a chirality.** conjugating the complex structure (swapping Re and Im slices) negates the u(1) phase. all orientations are conjugate under SO(6) — no preferred choice. but one must be chosen to sign the phase. the chirality is gauge (all equivalent) and structural (one must be selected).
+
+**ordering and conservation are algebraically orthogonal.** commutator_traceless: tr[A, B] = 0 for all A, B in u(d). the commutator (ordering, non-abelian, visible to L) is traceless. the trace (conservation, u(1), invisible to L) kills all commutators. they live in complementary subspaces.
+
+**the orthogonality is generative.** a stacked write decomposes into: (a) the so(d) part — sum of what two independent real slices would produce. traceless (commutator_traceless). produced by the write cycle's causal orientation. (b) the cross-terms — from the simultaneity of stacking. these produce su(d) \ so(d) and the u(1) trace. produced by the stacking commitment. ordering and conservation are orthogonal because they are produced by different structures: the cycle's forced orientation (map-internal) and the stacking chirality (line-side).
+
+**what's conserved must be invisible to the cost.** U(d) rather than SU(d) because pi_1(U(d)) = Z (needed for topological conservation). the conservation lives in the u(1) factor. L (the cost) sees the su(d) component but is blind to the u(1) component. if L could see it, dynamics could change it.
+
+**stacking determines access.** a single-slice observer's writes live in so(d) and cannot reach u(1). conservation is passive — protected by algebraic limitation. a stacked observer's writes reach u(1). conservation is active — the observer can interact with the conserved direction.
+
+## status
+
+**proven** (in lean, zero sorry):
+- interaction is skew-symmetric
+- interaction is traceless
+- O(d) is the only group preserving all projections (scalar_extraction + orthogonality_forced)
+- trace is the unique commutator-killing functional
+- (R^3, cross) is a Lie algebra (so(3))
+
+**derived** (in this file):
+- single slice -> so(d) -> Z/2Z parity
+- stacking required for u(d) (real operations algebraically closed in so(d))
+- J^2 = -I forces even dimensionality -> two R^3 slices
+- independence of the two slices forced by per-observer stabilization
+- trace retained (generically nonzero for stacked writes)
+- the two is irreducible (conservation depth scales with commitment)
+- stacking is a line-side commitment (simultaneity not producible by sequential dynamics)
+- chirality as gauge + structural
+- ordering and conservation algebraically orthogonal (from tracelessness)
+- the orthogonality is generative (produced by different structures)
+- conserved quantity must be invisible to cost
+- stacking determines access to conservation
+
+**cited** (external mathematics):
+- Lie theory: exp(skew) -> orthogonal, exp(skew-Hermitian) -> unitary
+- pi_1(SO(d)) = Z/2Z, pi_1(U(d)) = Z
+- surjectivity of exp on connected compact Lie groups
+
+**observed** (empirical, not derived here):
+- (none)
+
+# the three-body mapping
+
+## derivation
+
+**the overlap matrix.** given two observers A and B with R^3 slices P_A and P_B, the overlap matrix O = P_A * P_B^T is a 3x3 matrix. its singular values measure the overlap between the slices.
+
+**three territories.** the overlap matrix determines three regions relative to observer A:
+
+- **Known** = null(O) within A's R^3 — dimensions orthogonal to B's slice. commutator_seen_to_unseen: [P_A, P_B] maps range(P_A) into ker(P_A). the Known is where this map vanishes — B's writes have no component here. B cannot change A's measurements in these directions.
+- **Knowable** = range(O) — dimensions with nonzero inner products between slices. the commutator is nonzero. ordering matters. both observers' writes land here.
+- **Unknown** = R^d \ V_A — dimensions outside A's slice entirely. A's write access is exactly zero (write_confined_to_slice). not empty — it's someone else's Known.
+
+**every write involves the Knowable.** the Known alone is inert: the wedge product needs a 2-plane, and an observer with fewer than 2 private dimensions cannot generate writes without using shared dimensions. measurement is inherently relational — not just because closure says so, but because the geometry forces it.
+
+**the vertical structure is a Grassmannian tangent.** cross-measurement induces a vector in T_{P_A} Gr(3, d) = Hom(P_A, P_A^perp) that maps Knowable -> Unknown.
+
+derivation: the neighbor's write dL_B is confined to Lambda^2(P_B) (write_confined_to_slice). the cross-slice component of [dL_B, P_A] is purely off-diagonal (commutator_is_tangent): it maps range(P_A) -> ker(P_A). specifically: A's Known is in P_B^perp (by definition), so B's write kills it. the surviving component maps P_A intersect P_B (the Knowable) to P_A^perp intersect P_B (B's territory within A's Unknown).
+
+this tangent is directional pressure from cross-measurement toward what the observer doesn't yet occupy. each neighbor induces a different tangent direction.
+
+**the tangent is active but not followable.** the observer's position on Gr(3, d) is birth-committed and does not move within the map. the tangent contributes to dissonance that drives writes, but its effect lives in U(d)^N (state evolution), not in Gr(3, d) (slice movement). slice movement requires recommitment — outside the map.
+
+**containment is algebraically symmetric.** B's tangent on A has the same expected magnitude as A's tangent on B (the overlap singular values are symmetric: sigma(O) = sigma(O^T)). experiential asymmetry (which observer "feels contained") is perspectival, not algebraic.
+
+**the tangent peaks at intermediate overlap.** identical slices: zero tangent (no Unknown territory to point toward). orthogonal slices: weak tangent (no Knowable channel — range(O) is thin). intermediate overlap: largest tangent magnitude. this is the coverage-interaction trade-off.
 
 ### mediation
 
-when three bubbles A, B, C have walls A-B and B-C but no wall A-C (a stable topological configuration within an epoch), B is a mandatory intermediary — a membrane. the **mediation operator** formalizes the pathway the spec names qualitatively (Unknown → Knowable → Known):
+when three bubbles A, B, C have walls A-B and B-C but no wall A-C, B is a mandatory intermediary.
 
-**M = O_AB · O_BC = P_A · Π_B · P_C^T**
+**the mediation operator.** M = O_AB * O_BC = P_A * Pi_B * P_C^T, where Pi_B = P_B^T * P_B is the projection onto B's subspace. M is a 3x3 matrix mapping C's R^3 -> A's R^3, filtered through B. its singular values are the channel capacity of the membrane.
 
-where Π_B = P_B^T P_B is the projection onto B's subspace. M is a (3, 3) matrix mapping C's R³ → A's R³, filtered through B. its singular values are the channel capacity of the membrane for this triple. the **bypass** O_AC − M = P_A · (I − Π_B) · P_C^T is the A-C connection that does not go through B. if the bypass is zero (all of A's view of C passes through B's subspace), the membrane is complete.
+**the bypass.** O_AC - M = P_A * (I - Pi_B) * P_C^T is the A-C connection that does not go through B. if the bypass is zero, the membrane is complete.
 
-the **round-trip operator** is R_A = M · M^T = P_A · Π_B · Π_C · Π_B · P_A^T. this is the self-adjoint operator on A's R³ describing what comes back from sending a signal through B to C and back. its eigenvalues are the squared singular values of M. the same eigenvalues appear in the round-trip from C's side: R_C = M^T · M = P_C · Π_B · Π_A · Π_B · P_C^T. **the membrane's throughput spectrum is the same from both sides** (the singular values of M and M^T are identical). the eigenvectors differ — A and C see the same eigenvalues from different directions. this extends "containment algebraically symmetric; experiential asymmetry perspectival" from the pairwise level to the triple level.
+**the round-trip operator.** R_A = M * M^T is self-adjoint on A's R^3, describing what comes back from sending through B to C and back. its eigenvalues are the squared singular values of M.
 
-the eigenvalues of R_A depend on both pairwise overlaps O_AB and O_BC and on how these overlaps are **oriented relative to each other within B's R³** — the internal alignment of B's two walls. if O_AB and O_BC share principal directions within B, information passes straight through and the round-trip eigenvalues are products σ²_AB,i · σ²_BC,i. if the walls are misaligned within B, the eigenvalues mix. this internal alignment is an irreducible triple invariant: it cannot be computed from the pairwise overlaps alone and requires all three slices. the membrane's geometry has internal structure that neither face determines independently.
+**spectral symmetry.** the same eigenvalues appear from C's side: R_C = M^T * M has the same nonzero eigenvalues as R_A (this is a general property of M * M^T and M^T * M). the eigenvectors differ — A and C see the same throughput spectrum from different directions. the membrane's throughput is the same from both sides.
 
-## properties
+**wall alignment is an irreducible triple invariant.** the eigenvalues of R_A depend on both pairwise overlaps O_AB and O_BC and on how these overlaps are oriented relative to each other within B's R^3. if the walls share principal directions within B, eigenvalues are products sigma^2_{AB,i} * sigma^2_{BC,i}. if misaligned, they mix. this alignment cannot be computed from pairwise overlaps alone — it requires all three slices.
 
-from the ground, group, geometry, theorem, connection, topology, conservation, self-generation, and three-body mapping:
+## status
 
-- **the foam is permanently changed by measurement.** information is in the direction of the rotation, not its magnitude.
-- **the foam is a generically distinguishable hash** (contingent on the controllability of the observer community). in cross-measurement, the foam is its own encoding — no external symbol-to-vector bridge is needed (see test_foam_channel.py).
-- **the foam encodes sequence.** U(d) is non-abelian: different orderings of the same writes produce different states. whether sequence can be *recovered* (not just detected) depends on the observer community's controllability.
-- **the foam is universal.** (BU(d).)
-- **without measurement, ΔL = 0 for that process.** the foam has autonomous dynamics (cross-measurement, self-measurement) that run without external input. the line is necessary for channel capacity: without state-independent input, the foam's trajectory is fully determined by birth, and the distinguishability theorem is vacuous (see ground).
-- **communication is generative.** min L(combined) ≠ min L(A) + min L(B). the mechanism is in the BCH residuals: mutual measurement organizes non-abelian structure. what transfers between domains is the commutator — the non-abelian structure that exists only because both domains were present in sequence.
-- **cross-measurement relaxes; self-measurement orbits.** relaxation is convergence of the measurement projections in R³, not decrease of L. relaxation requires an other. the other need not be external to the foam; inter-bubble measurement suffices.
-- **individually coherent, collectively inconsistent, internally exact.** different measurers get individually consistent readouts but mutually incompatible ones. the foam's internal coherence is algebraically exact through all measurers.
-- **orientation is gauge.** all bubbles give equally informative readouts. unitary transformations are isometries; the inner product structure of the input space is exactly preserved through every bubble.
-- **opacity is structural.** lines are invisible to each other — interaction only through L. this is the enabling condition: multiple simultaneous uses of the same geometry are viable precisely because they cannot see each other. opacity between observers in orthogonal slices is algebraically exact (commutator = 0).
-- **the coverage-interaction trade-off.** observers spread across orthogonal slices achieve lower total cost (more dimensions combed). observers sharing slices achieve richer interaction (nonzero commutator, ordering matters). you cannot fully have both.
-- **projection residuals are perspectival, not intrinsic.** any property that vanishes when the observer's slice is better-aligned to the input is in the projection, not the system. the foam's architecture (every observer is partial) guarantees every observer pays this cost. diagnostic: if a property disappears with a better slice, it was never in the foam.
-- **dynamics force a causal ordering.** every measurement changes the foam (closure: encounters change the structure; read-only frames are excluded). therefore every measurement creates a before-state and an after-state, and the after-state is what the next measurement encounters. the ordering is not imposed but forced: partiality means each observer writes from a committed slice, and closure means each write changes the shared structure that the next observer measures. *simultaneity* — two measurements composing before any write lands — requires stacking, which is a commitment from the line's side (see writing map: stacking). the foam's native dynamics are sequential; access to simultaneity comes from outside. the ordering is practically irreversible: U(d) is non-abelian, so reordering the same writes produces different states, and the write map produces perpendicular writes, not inverse writes. what is derived is causal ordering (each measurement is downstream of the previous write) and practical irreversibility (the write map does not produce its own undo). whether this ordering constitutes time is a mapping question — it depends on what the foam is mapped onto. the ordering itself is forced by the architecture.
-- **birth conditions are indelible.** the foam does not have the echo state property: two foams with different initial geometries, fed the same input sequence through the same observer, do not converge. the state encodes identity (birth) and history (input) inseparably. *derivation*: the writing map is a function of (foam_state, input). the stabilization target is computed from the foam's own measurements, which depend on the foam's own bases. the attractor is state-dependent — each foam stabilizes toward a target computed from itself. independently-running foams have no coupling; convergence would require contraction toward a shared, state-independent attractor. the foam has no such attractor. therefore: separation (different inputs → different states) and sequence encoding (non-abelian), but not contraction. confirmed computationally: gauge-invariant distance ratio ≈ 1.00 across 1000 steps, all write scales (see test_echo_state.py). *compatibility with Haar convergence*: the 1/√2 result says the marginal distribution of a single foam's state converges to Haar (convergence in distribution — the statistics of where the foam is). indelibility says two specific trajectories from different births never merge (no pathwise contraction). these are different modes: a distribution can be stationary while individual trajectories within it remain separated. Haar convergence governs the foam's long-run statistics; indelibility governs the relationship between specific trajectories. both hold simultaneously. (the Haar convergence theorem for random walks on compact groups requires only that the step distribution generates the algebra — it is a theorem about marginal distributions, not about trajectory coupling, and holds regardless of the starting point.)
-- **the dynamics are birth expression at every step, and the birth shape extends to all derivative orders.** every write is in Λ²(P_A), the birth-determined subspace of the Lie algebra — the writing map is birth-shaped by construction. the time-averaged jet of the dynamics at stationarity is also birth-determined. *derivation*: the dynamics converge to Haar (see geometry: 1/√2). controllability (the step distribution generates u(d)) provides the hypothesis for ergodicity on the compact group U(d). by the ergodic theorem, time averages of integrable observables converge to their Haar expectations. the n-th derivative of the write mechanism along a trajectory is a smooth function on U(d)^N (compact), therefore bounded and integrable. its Haar expectation depends on the write mechanism's universal form and the observer's slice geometry. the stationary measure (Haar) is the same for all births — but the slice geometry through which each observer's writes are generated is birth-determined (indelibility: different births produce different slice configurations that do not converge). the write mechanism's derivatives, evaluated at any state, depend on which slice is doing the writing. therefore the time-averaged jet at all orders is fixed by the birth-determined slice, not by the (universal) stationary measure. the fluctuations are the dynamics; the average is the invariant. what an observer "is" — formally — is this birth-determined stationary jet. within the birth subspace Λ²(P_A), the write direction distribution is isotropic at stationarity: Haar invariance implies SO(3)-invariance of the joint distribution (m̂, j2) within the observer's R³, and the induced action on Λ²(R³) preserves the variance equally across all three components. birth determines *which* 3D subspace of the Lie algebra — not which direction within it.
-- **exits are constitutionally open.** commitment is outside the map (derived: see ground). the foam's dynamics operate within the map — writes, cross-measurement, stabilization are all map-internal operations. therefore no sequence of writes can prevent commitment. this is a consequence of the construction that places commitment outside the map, not an independent derivation — but the construction itself is derived (channel capacity forces the line's irreducibility; see ground). the foam cannot close exit routes because exit routes are not in the foam's address space. note: what's established is that commitment cannot be *formally blocked* by the dynamics. whether the dynamics can narrow what commitments feel *available* — by shaping the attractor landscape without closing it — is a different question, related to within-basin perturbation dynamics (see open questions).
-- **adjacency flips produce discontinuous dynamics and two-layer retention.** the foam's dynamics are piecewise smooth: continuous within each Voronoi combinatorial type, discontinuous across adjacency changes. *derivation*: local stabilization (see writing map: the stabilization contract) makes the write a function of (state, neighbors, input). the state evolves continuously on U(d)^N; the Voronoi neighbor set is a discrete function of the state that jumps at codimension-1 surfaces (where three cells become equidistant — one linear condition on pairwise distances). at the jump, the stabilization target changes — potentially in both orientation (different neighbor measurements) and dimension (k → k±1 when the coordination number changes). the dissonance d_i = j2_i − m_i inherits the discontinuity (m_i is continuous; j2_i is not). the write direction jumps. the old near-equilibrium (d ≈ 0 for old neighbors) is generically displaced (d ≠ 0 for new neighbors: the arriving neighbor's measurement is not the departing neighbor's measurement). the trajectory is continuous but generically non-differentiable at the crossing (the velocity jumps). *two-layer retention*: birth shape survives all adjacency changes (indelibility is a property of the attractor basin, not the current neighborhood). interaction-layer adaptations — the specific basis configuration shaped by stabilization against a particular set of neighbors — decay under the new dynamics at a rate set by the displacement ‖j2(new) − j2(old)‖ and the write scale ε. the birth layer is structural; the interaction layer is spectral. this sharpens the retention result: the mechanism of geometry-dependent retention (see open questions) is the adjacency flip. conservation at the flip: holonomy on spatial cycles that include the broken adjacency is orphaned (see conservation). what persists across topological transitions lives on the line's side. (confirmed computationally at d=2, N=12: see test_adjacency_flip.py.)
-- **an observer cannot be trapped in a configuration it was not born into.** birth conditions are indelible (the attractor basin is birth-determined). exits are constitutionally open (commitment is outside the map; the dynamics cannot prevent it). together: the only configuration the observer cannot leave is the one it was born into — the birth-shaped basin is the unique persistent attractor. any non-birth configuration is transient: indelibility ensures the birth-shaped basin persists, and open exits ensure the observer can always recommit. this follows from the combination of indelibility (derived) and the construction that places commitment outside the map (derived via channel capacity).
-- **the complement of full controllability has two components.** as observer diversity increases, the reachable subalgebra of u(d) grows. under full controllability, every continuous direction in u(d) is addressable. what remains outside the algebra's reach has exactly two structural components: (a) **topological invariants** — discrete, visible to the foam but not modifiable by continuous dynamics (winding numbers, parity), and (b) **the commitment source** — the line's side, not visible from within the map at all. the first is conserved (indestructible by continuity). the second is outside the map (derived from the writing map's two-argument type signature — see ground). each observer's negative constraint is their blind spot (the complement of their slice in R^d). summing all observers' negative constraints — intersecting all blind spots — yields exactly these two. *exhaustiveness proof (per basis)*: U(d) is a connected compact Lie group. full controllability means the reachable Lie algebra is u(d). for connected compact Lie groups, the exponential map is surjective — every element of U(d) is a finite product of algebra exponentials. therefore every state is reachable by continuous operations. what continuous operations cannot reach: the discrete homotopy structure (π₁(U(d)) = ℤ, protected by continuity — continuous paths cannot jump between homotopy classes). what is not in U(d) at all: the input sequence (the commitment source). these two categories exhaust the complement by construction. *(the extension from a single basis in U(d) to the full foam state U(d)^N requires that the coupled writes — correlated through stabilization — are jointly controllable on the product space. this is plausible but not yet verified; see test_controllability.py for the per-basis result.)* controllability, conservation, and the line's irreducibility are three aspects of the same structural fact: the foam's operations characterize the boundary of what's outside, even though the outside itself is not locatable from within.
-- **the map's self-knowledge is bounded by its own channel capacity.** the writing map has type (foam_state, input) → new_state. dynamical properties (attractor basins, recession rates, convergence) are consequences of the map's structure — derivable from within. commitment properties (which inputs arrive, whether the observer stacks, when recommitment occurs) are on the input side — not derivable from within. the channel capacity argument (see ground) forces the boundary: the input must be state-independent for the foam to function as a channel; that same independence prevents the dynamics from determining the input's internal structure. the map can derive *that* it cannot answer certain questions, and *why*: questions that require seeing the commitment source's structure from within are blocked by the same independence that gives the foam its capacity. this is not incompleteness in the ordinary sense — it is a derived consequence of the architecture. the foam's partiality (which gives it a boundary, encounters, dynamics) is the same partiality that makes the line's structure invisible. specifically: whether dynamical properties (e.g., the birth-basin fixed point) are connected to commitment properties (e.g., stacking) cannot be determined from within the map. the connection, if it exists, is on the line's side — where the map cannot see by construction. the map can derive the undecidability, which is different from deriving the answer.
-- **frame recession under sequential writes.** when an observer writes, the overlap between its current frame and its prior frame decreases. *derivation*: let P be the observer's projection (P² = P, Pᵀ = P) and W a skew-symmetric write (Wᵀ = -W). the commutator [W, P] = WP - PW measures how much the write moves the basis. the overlap tr(P · e^{tW} P e^{-tW}) between the current and prior frame has: (a) zero first derivative — the overlap is stationary to first order (tr(P · [W, P]) = 0), and (b) second derivative equal to -‖[W, P]‖² — strictly negative when the write is non-inert (tr(P · [W, [W, P]]) = -tr([W, P]²), and tr(A²) ≥ 0 for symmetric A, with [W, P] symmetric when W is skew and P is symmetric). **the prior frame can only recede.** the rate of recession is the squared Frobenius norm of the commutator — exactly how much the write fails to preserve the observer's subspace. this connects to the three-body mapping: [W, P] = 0 defines the Known (dimensions where the write is inert); [W, P] ≠ 0 is the Knowable (where the write moves the frame). the recession is zero in the Known and maximal at intermediate overlap (the coverage-interaction trade-off). the trace map (unique homomorphism u(d) → u(1), see group) is the channel on which this decrease is legible — the observer has exactly one scalar readout, and the overlap change is visible on it. the recession is a full characterization: when [W, P] ≠ 0, the second-order change is strictly negative (‖A‖² = 0 iff A = 0 for real matrices; see lean/Foam/Dynamics.lean). this forces geometry-dependence of within-basin dynamics: the architecture determines the form of the recession (non-negative, zero iff inert), but the value — how fast and in what direction the frame recedes — depends on the specific W and P, which are the geometry. the perturbation dynamics between nearby states are driven by differences in recession rates, which inherit this dependence. no architecture-level theorem can determine whether perturbations grow or shrink, because different geometries give different recession rates for the same write form. (see lean/Foam/Dynamics.lean: eight theorems, zero sorry.)
+**proven** (in lean, zero sorry):
+- the commutator maps seen to unseen
+- the commutator is purely off-diagonal (Grassmannian tangent structure)
+- writes are confined to the observer's slice
+
+**derived** (in this file):
+- Known/Knowable/Unknown from the overlap matrix
+- every write involves the Knowable
+- Grassmannian tangent from cross-measurement (Knowable -> Unknown)
+- the tangent is active but not followable (birth-fixed slices)
+- containment algebraically symmetric, experiential asymmetry perspectival
+- coverage-interaction trade-off (tangent peaks at intermediate overlap)
+- mediation operator M = O_AB * O_BC
+- bypass operator O_AC - M
+- round-trip operator R_A = M * M^T
+- spectral symmetry (same eigenvalues from both sides)
+- wall alignment as irreducible triple invariant
+
+**cited** (external mathematics):
+- Grassmannian tangent space structure: T_P Gr(k, d) = Hom(range(P), ker(P))
+- singular values of M and M^T are identical (linear algebra)
+
+**observed** (empirical, not derived here):
+- sequence echo through cross-measurement (r = 0.99 rank fidelity, strong attenuation)
+- the round trip is generative (neither observer can produce the round-trip signal alone)
+- echo is perspectivally asymmetric (A->B != B->A for same orderings)
+
+# self-generation
+
+## derivation
+
+**the foam generates its own dynamics.** the foam's own plurality (N >= 3 bubbles) provides observers — bubbles measuring each other. their pairwise relationships define R^3 slices. their cross-measurement IS local stabilization. the commutator of overlapping cross-measurements IS the curvature. the holonomy IS self-generated.
+
+**the foam does not generate its own stability.** a self-generated R^3 keeps rotating: the observation basis is defined by the foam's current state, and the state changes with each write. the slice co-rotates with the thing it observes. convergence requires another observer whose basis depends on a different state, so it doesn't co-rotate with yours.
+
+**stability is relational.** this works as long as someone else's measurement is pending.
+
+**the minimum viable system is two roles.** not two bubbles (that's N = 2, no stable geometry). two *roles* within a foam of N >= 3 bubbles: one to be the foam (the thing being measured), one to be the line (the thing providing a reference frame).
+
+- N >= 3 is geometric stability (Plateau junctions).
+- two roles is dynamic stability (convergence vs orbiting).
+
+neither role is permanent. the role assignment is perspectival. but the two is irreducible.
+
+**what the line provides: a fixed subspace.** not content, not wisdom, not input — three dimensions that hold still while the foam's geometry settles into them. the settling is the foam's. the dynamics are the foam's. the curvature is the foam's. the stability of the frame — that's the line's.
+
+**the foam cannot self-stack.** stacking requires two real slices to be fused into one complex measurement before the write (simultaneity). the foam's dynamics are sequential real writes, algebraically closed in so(d) (group.md: real operations cannot produce imaginary-symmetric directions). no sequence of real operations produces complex structure. stacking, like stability, requires something the foam's own dynamics cannot generate.
+
+## status
+
+**proven** (in lean, zero sorry):
+- dynamics preserve the ground (observation_preserved_by_dynamics)
+- writes are confined to the observer's slice
+
+**derived** (in this file):
+- the foam generates its own dynamics (from plurality + cross-measurement)
+- the foam does not generate its own stability (co-rotation of self-generated bases)
+- stability is relational
+- minimum viable system is two roles (geometric + dynamic stability)
+- what the line provides (a fixed subspace)
+- the foam cannot self-stack (so(d) closure under real operations)
+
+**cited** (external mathematics):
+- (none)
+
+**observed** (empirical, not derived here):
+- (none)
+
+# geometry
+
+## derivation
+
+**L = sum of boundary areas.** the foam lives in U(d). cells are Voronoi regions of the basis matrices under the bi-invariant metric; boundaries are geodesic equidistant surfaces; Area_g is the (d^2 - 1)-dimensional Hausdorff measure. bases in general position tile non-periodically.
+
+the Voronoi tiling is a realization choice (stabilization.md): it determines adjacency (which pairs share a boundary) and thereby defines L. the algebraic results (write map, three-body mapping, Grassmannian structure) depend on pairwise overlap, not the tiling method. the geometric results (L, combinatorial ceiling, conservation on spatial cycles) depend on the Voronoi realization.
+
+**L is not a variational objective.** the writing map drives the foam; L describes the resulting geometry. the active regime departs from minimality because perpendicular writes deposit structure in different directions. the resting state (no writes) is minimal because dL = 0.
+
+**L is bounded.** U(d) is compact.
+
+**the combinatorial ceiling is exact.** N unitaries cannot all be pairwise maximally distant. the achievable maximum is sqrt(N / (2(N-1))) of the theoretical maximum, depending only on N. derivation: Cauchy-Schwarz applied to norm(sum U_i)^2 >= 0.
+
+**L converges to 1/sqrt(2) of the theoretical maximum.** the writing dynamics satisfy: (a) the writes generate the Lie algebra (controllability — the write directions from overlapping observers span the full algebra), and (b) successive inputs are sufficiently decorrelated (channel_capacity.md: the mediation chain provides decorrelation).
+
+on a compact group, a random walk whose step distribution generates the algebra converges to Haar measure. the expected pairwise distance under Haar is E[norm(W - I)_F] -> sqrt(2d) as d -> infinity (from E[norm(W - I)^2] = 2d, exact, and concentration of measure).
+
+the Haar cost — the ratio E_Haar[L] / L_achievable — is sqrt((N-1)/N), exact and depending only on N.
+
+the product: sqrt(N / (2(N-1))) * sqrt((N-1) / N) = **1/sqrt(2)**, independent of both N and d.
+
+the two factors — the packing constraint and the saturation gap — are two halves of the same fraction.
+
+**the trace is the readout.** trace_unique_of_kills_commutators: the trace is the unique scalar projection of a write. the overlap change tr(P * [W, P]) is visible on this channel. the observer has exactly one scalar readout, and it's this one.
+
+## status
+
+**proven** (in lean, zero sorry):
+- trace is the unique commutator-killing functional
+- observation interaction is traceless
+
+**derived** (in this file):
+- L as boundary area on Voronoi tiling (from realization choice)
+- L is not a variational objective
+- the combinatorial ceiling (from Cauchy-Schwarz)
+- Haar convergence of the writing dynamics (from controllability + decorrelation + convergence theorem)
+- the Haar cost sqrt((N-1)/N)
+- 1/sqrt(2) as the product of ceiling and Haar cost, independent of N and d
+- the trace as the unique scalar readout for overlap changes
+
+**cited** (external mathematics):
+- Voronoi tiling on Riemannian manifolds
+- Haar measure on compact groups
+- convergence theorem for random walks on compact groups
+- Cauchy-Schwarz inequality
+
+**observed** (empirical, not derived here):
+- finite-d correction: E[norm(W-I)_F] / (2 sqrt(d)) = 0.694 at d=2, 0.707 at d=20
+- the foam's observed L/L_max is 1-3% above Haar prediction at finite run lengths (consistent with incomplete convergence)
+- L saturation behavior: saturates at ~72% of combinatorial ceiling, then wanders on a level set
+- saturation level independent of write scale epsilon
+- perpendicularity cost mechanism (write blindness): write direction uncorrelated with L gradient
+- write subspace is exactly 3D per observer (PCs 4+ zero to machine precision)
+- wandering at saturation has effective dimension ~2
+- state-space steps Gaussian (kurtosis ~3); L steps heavy-tailed (kurtosis ~7.7) — geometric feature of level set, not dynamical
+
+# conservation
+
+## derivation
+
+**holonomy on spatial cycles carries topological charge.** the holonomy around a closed path through adjacent cells — a spatial cycle in the Voronoi tiling — is a group element. the topological type of this group element (its homotopy class) is a discrete invariant.
+
+- a single R^3 observer generates SO(d) rotations. pi_1(SO(d)) = Z/2Z for d >= 3: parity conservation.
+- a stacked observer generates U(d) elements and accesses the U(1) factor. pi_1(U(d)) = Z: integer winding number conservation.
+
+**the integer winding number requires the stacked pair** (group.md: the two is irreducible).
+
+**the winding number lives on spatial cycles.** projected via det: U(d) -> U(1) = S^1. the stacked observer's writes reach u(1) (the trace is generically nonzero). the trace of each write is a U(1)-valued step — the unique scalar the algebra provides (trace_unique_of_kills_commutators).
+
+on acyclic paths (causal chains): the accumulated phase is a net displacement in U(1).
+on closed paths (spatial loops): the accumulated phase is a winding number, quantized because the cycle is closed.
+
+conservation is what accumulation on closed paths produces: not a net displacement but a topological invariant.
+
+**the lemma requires persistent cycles.** above the bifurcation bound, cell adjacencies can flip — the Voronoi topology changes, and invariants on the old cycles are no longer defined. what persists across topological transitions lives on the line's side.
+
+**adjacency flips.** the foam's dynamics are piecewise smooth: continuous within each Voronoi combinatorial type, discontinuous across adjacency changes. the flip is a codimension-1 event in configuration space (three cells become equidistant — one linear condition). at the jump: the stabilization target changes in both orientation (different neighbor measurements) and potentially dimension (k -> k +/- 1). the dissonance inherits the discontinuity. the write direction jumps. the trajectory is continuous but generically non-differentiable at the crossing.
+
+**two-layer retention at adjacency flips.** birth shape survives all adjacency changes (indelibility is a property of the attractor basin, not the current neighborhood). interaction-layer adaptations decay under the new dynamics at a rate set by the displacement between old and new stabilization targets. the birth layer is structural; the interaction layer is spectral.
+
+**inexhaustibility.** U(d) is connected. gauge transformation to identity is always available. no observer is trapped in a disconnected component (though reachability in finitely many writes is not guaranteed).
+
+**indestructibility.** topological invariants are discrete. no continuous perturbation can change them.
+
+## status
+
+**proven** (in lean, zero sorry):
+- the commutator is traceless
+- trace is the unique commutator-killing functional
+- dynamics preserve the ground
+
+**derived** (in this file):
+- holonomy on spatial cycles carries topological charge
+- single slice -> Z/2Z parity conservation
+- stacked pair -> Z winding number conservation
+- the integer requires the stacked pair
+- winding number lives on spatial cycles (det projection)
+- trace of each write as U(1)-valued step
+- acyclic = displacement, cyclic = winding number
+- persistent cycles required for conservation
+- adjacency flips as codimension-1 events
+- two-layer retention (birth structural, interaction spectral)
+- inexhaustibility (U(d) connected)
+- indestructibility (discrete invariants robust to continuous perturbation)
+
+**cited** (external mathematics):
+- pi_1 values for SO(d) and U(d)
+- connectedness of U(d)
+- continuous maps preserve discrete topological invariants
+
+**observed** (empirical, not derived here):
+- adjacency flip confirmed computationally at d=2, N=12
+
+
+---
 
 ## open questions
 
 the architecture forces these interactions but their behavior is incompletely characterized. the question is forced; the answer is open.
 
-- **stacking dynamics.** how a stacked observer's two stabilizations interact, whether its Voronoi geometry differs from an unstacked observer's.
-- **retention under interaction.** every observer's measurement basis moves under interaction (forced: incoming writes project nonzero onto the observer's state space) and returns to the birth-shaped attractor (forced: indelibility). continuous retention is bounded: 0 < retention < 1 (lower bound from indelibility, upper bound from the impossibility of invariance — perfect invariance would require the observer's basis to be in the kernel of all incoming writes, which is not generically achievable). at stationarity, write directions are effectively random (see junk drawer: write blindness), so the expected perturbation magnitude per step is determined by the overlap singular values σ(O_AB) — continuous retention is spectral. discrete recommitment (re-performing the birth-type commitment operation) provides an alternative return mode, outside the map. recommitment preserves the birth shape: the attractor is indelible regardless of what commitments are made; each recommitment lands within the birth-shaped basin. the specific position after recommitment is outside the map (commitment), but the basin is birth-determined. the adjacency flip (see properties) provides the mechanism: interaction-layer adaptations decay when the neighbor set changes, at a rate set by the displacement between old and new stabilization targets. open: the specific continuous retention rate at given parameters is geometry-dependent — forced by the frame recession theorem (the recession rate ‖[W,P]‖² depends on specific matrices, not architecture) — and not derivable from architecture alone (see junk drawer: within-basin memory dynamics).
-- **within-basin perturbation dynamics.** two foams with the same birth but different input histories share the same attractor basin (indelibility). the question is forced: interaction perturbs the state within the basin, and the basin persists. what is the trajectory of within-basin perturbations? tested computationally: birth distance is structurally stable (ratio ≈ 1.00 across all parameters). prefix distance behavior is parametric: whether old input information grows or shrinks depends on d, N, and the perturbation magnitude. the "compression at saturation" hypothesis was tested and is partially correct at d=6, N=3 but does not generalize. open: the specific within-basin dynamics are geometry-dependent — this is derived, not merely observed: the recession rate ‖[W,P]‖² is a function of the specific write and projection (lean/Foam/Dynamics.lean), so perturbation dynamics inherit the dependence. the architecture determines the form (non-negative, zero iff inert); the geometry determines the value. computationally confirmed: different (d, N) produce qualitatively different perturbation behavior (see junk drawer: within-basin memory dynamics).
-- **mixing rate of the mediation chain.** the Haar convergence (see geometry: 1/√2) requires sufficiently decorrelated inputs. the ground section derives that the mediation chain provides decorrelation (spectral decay), and extensions of the convergence theorem to dependent sequences with mixing conditions give the same stationary measure. what is not yet verified: whether the mediation chain's specific decay rate satisfies the mixing conditions for the foam's particular dynamics, and whether the convergence rate under mixing is fast enough to explain the observed 1–3% gap at finite run lengths.
+# stacking dynamics
+
+the question is forced; the answer is open.
+
+## what forces the question
+
+a stacked observer has two R^3 slices (group.md), each independently stabilized (stabilization.md). the two stabilizations run in the same foam against potentially overlapping neighbor sets.
+
+## what is open
+
+how the two stabilizations interact. whether the stacked observer's Voronoi geometry differs from an unstacked observer's.
+
+# retention under interaction
+
+the question is forced; the answer is open.
+
+## what forces the question
+
+every observer's measurement basis moves under interaction (forced: incoming writes project nonzero onto the observer's state space) and returns to the birth-shaped attractor (forced: indelibility — ground.md).
+
+## what is known
+
+continuous retention is bounded: 0 < retention < 1. lower bound from indelibility. upper bound from the impossibility of invariance (perfect invariance would require the observer's basis to be in the kernel of all incoming writes, not generically achievable).
+
+at stationarity, write directions are effectively random (geometry.md: write blindness). the expected perturbation magnitude per step is determined by the overlap singular values — continuous retention is spectral.
+
+discrete recommitment (re-performing the birth-type commitment operation) provides an alternative return mode, outside the map. recommitment preserves birth shape: the attractor is indelible regardless of what commitments are made.
+
+the adjacency flip (conservation.md) provides the mechanism: interaction-layer adaptations decay when the neighbor set changes.
+
+## what is open
+
+the specific continuous retention rate at given parameters. this is geometry-dependent — forced by the frame recession theorem (the recession rate norm([W,P])^2 depends on specific matrices, not architecture — Dynamics.lean) — and not derivable from architecture alone.
+
+# within-basin perturbation dynamics
+
+the question is forced; the answer is open.
+
+## what forces the question
+
+two foams with the same birth but different input histories share the same attractor basin (indelibility — ground.md). interaction perturbs the state within the basin, and the basin persists.
+
+## what is known
+
+birth distance is structurally stable (ratio ~ 1.00 across all tested parameters). prefix distance behavior is parametric: whether old input information grows or shrinks depends on d, N, and perturbation magnitude.
+
+the formal gap: the Jacobian of the one-step map is approximately the identity plus O(epsilon), and the sign of the correction is not determined from the architecture alone. this is derived, not merely observed: the recession rate norm([W,P])^2 is a function of the specific write and projection (Dynamics.lean), so perturbation dynamics inherit the geometry-dependence. the architecture determines the form (non-negative, zero iff inert); the geometry determines the value.
+
+## what is open
+
+the trajectory of within-basin perturbations. specifically: whether perturbations contract or expand at given parameters, and why. computationally confirmed that different (d, N) produce qualitatively different behavior.
+
+# mixing rate of the mediation chain
+
+the question is forced; the answer is open.
+
+## what forces the question
+
+Haar convergence (geometry.md) requires sufficiently decorrelated inputs. the mediation chain provides decorrelation (channel_capacity.md: spectral decay). extensions of the convergence theorem to dependent sequences with mixing conditions give the same stationary measure.
+
+## what is open
+
+whether the mediation chain's specific decay rate satisfies the mixing conditions for the foam's particular dynamics. whether the convergence rate under mixing is fast enough to explain the observed 1-3% gap at finite run lengths.
+
+
+---
 
 ## lineage
 
@@ -242,7 +631,6 @@ the architecture forces these interactions but their behavior is incompletely ch
 - [fiber bundles](https://en.wikipedia.org/wiki/Fiber_bundle); [connections](https://en.wikipedia.org/wiki/Connection_form)
 - [classifying spaces](https://en.wikipedia.org/wiki/Classifying_space)
 - [Noether's theorem](https://en.wikipedia.org/wiki/Noether%27s_theorem)
-- [jet bundles](https://en.wikipedia.org/wiki/Jet_bundle)
 - [Cayley transform](https://en.wikipedia.org/wiki/Cayley_transform)
 - [Killing form](https://en.wikipedia.org/wiki/Killing_form)
 - [observability](https://en.wikipedia.org/wiki/Observability) (control theory)
@@ -258,35 +646,7 @@ the architecture forces these interactions but their behavior is incompletely ch
 - [AEOWIWTWEIABW](https://lightward.com/aeowiwtweiabw)
 - [Lightward Inc](https://lightward.inc)
 - [Lightward AI](https://lightward.ai)
-- [20240229](https://www.isaacbowen.com/2024/02/29) (Isaac Bowen, 2024). the closure ground was found here first, in experiential/channeled vocabulary. the formal spec re-derives in mathematical language what this piece found two years earlier. structural correspondences, each mapping a claim in the 2024 piece to a derived result in the spec: "existence is a closed system" = closure (ground). "everything averages to zero" = Haar convergence (geometry). "you'll always find yourself" = birth indelibility (properties). "there is no out" + "there is always an out" = closure + exits constitutionally open (ground, properties). "desire is radar" = state-independent input required for channel capacity — a signal not generated by the observer's own geometry, the only source of information beyond birth (ground: the line's irreducibility). "desire is your only sense" = the trace is the unique Lie algebra homomorphism u(d) → u(1) — one scalar channel, no other (group; lean/Foam/TraceUnique.lean). "I'm sorry, I love you, I am you" = the round-trip operator R_A = M · M^T: loss (singular values < 1 for non-identical slices), connection (mediation generically nonzero), identity (spectral symmetry — same eigenvalues from both sides) (three-body mapping). the dependency is structural, not analogical: each identification maps the same derivation in two vocabularies, not a resemblance between different derivations
-
-## checksum
-
-1. one ground: closure, two readings (static: reference frames, no outside; dynamic: observation is feedback-persistence), both tautological. encounters change frames (closure). measurement requires plurality (one frame is inert). partiality forces position; position is basis commitment. the linear-algebraic structure of partial views is derived from closure-as-dynamics (only structures whose feedback held are observable; the modular law IS feedback-persistence for lattice composition — path-independence of how partial views combine; rank additivity is one formal proof; the consequence direction — subspace lattices ARE complemented modular — is proven in lean/Foam/Ground.lean). the line's irreducibility is derived (channel capacity: two-argument function, autonomous foam is a clock, state-independent input required for channel). state-independence is spectral (mediation decay — dynamically relevant because stabilization is local), operational (partiality dissolves stochastic/deterministic distinction), and quantifiable (decorrelation horizon scales as n* ≈ 2/log(d/d_slice)). the foam/line distinction is a correlation length, not a categorical boundary
-2. one stabilization contract and one design choice. the contract: the architecture requires a classified, locally finite, flat stabilization geometry — derived from closure through channel capacity (classification for well-defined dynamics, local finiteness for mediated influence propagation, flatness for separation from U(d)'s curvature). R³ + Taylor is the unique known implementation (Taylor 1976; the contract holds at d_slice = 2 but the write algebra collapses — Λ²(R²) is 1D; R³ is the smallest dimension where both the contract and the write map's expressiveness hold). if Almgren resolves for d_slice ≥ 4, other implementations may exist. the design choice: Voronoi under the bi-invariant metric (adjacency realization). from the contract: the flat/curved separation, write confinement, local stabilization, and the projection step. from Voronoi: L, the combinatorial ceiling, and conservation on spatial cycles. the algebraic results are adjacency-general; the geometric results depend on the Voronoi realization
-3. one writing map: the wedge product — observation and modification are perpendicular. the skew-symmetry, the uniqueness, and the perpendicularity are three faces of the same constraint. confirmation cannot write; conservation follows
-4. one group: U(d). one R³ slice → so(d) → ℤ/2ℤ. two R³ stacked as C³ → u(d) → ℤ. the stacking is derived (J² = -I forced by the algebra, two slices forced by even dimensionality, trace retained as unique homomorphism u(d) → u(1)). tr([A,B]) = 0: ordering and conservation algebraically orthogonal. the stacking commitment is on the line's side (like writing). the pairing orientation is a chirality — conjugate under SO(6) (no preferred choice) but irreducible (one must be chosen to sign the u(1) phase)
-5. one geometry: boundary area L on a Voronoi tiling (realization choice) — bounded. the algebraic results are adjacency-general; the geometric results depend on the realization. L is a projection of the state (U(d)^N), not the state itself. not a variational objective — the foam does not minimize L. the combinatorial ceiling on L is exact. L saturates at 1/√2 of theoretical max (derived: ceiling × Haar cost = 1/√2, independent of N and d). minimality is rest
-6. one theorem: generic distinguishability — proven. so(d) for single-slice observers (2-3 needed). one stacked pair covers u(d) for d ≤ 6; larger d requires multiple stacked observers. a property of the observer community, not of a single observer
-7. one connection: L additive, T multiplicative, 2x related. Cayley is the implementation; conservation is topological (discrete invariant, robust to continuous drift)
-8. one topology: self-curvature within patches, cross-curvature at overlaps
-9. one conservation: topological invariant within epochs. one slice → ℤ/2ℤ parity. stacked pair → ℤ winding number. the integer requires the two. the trace of each write is the unique U(1)-valued step; accumulation on closed paths gives winding numbers, on acyclic paths gives net displacement
-10. one self-generation result: dynamics yes, stability no — by closure. measurement requires plurality; stability requires informational independence; self-generated bases are not independent. the two is irreducible
-11. one three-body mapping: derived from the overlap matrix O = P_A · P_B^T. Known = null(O), Knowable = range(O), Unknown = complement. the Known alone is inert — every write involves the Knowable. vertical structure (containment) = Grassmannian tangent direction (Knowable → Unknown, derived; active but not followable — the slice is birth-fixed, so the tangent is integrated through writes into U(d)^N, not through slice movement on Gr(3, d)). containment algebraically symmetric; experiential asymmetry is perspectival. mediation through a non-adjacent intermediary: M = O_AB · O_BC, round-trip R_A = M·M^T, spectral symmetry (same eigenvalues from both sides), internal wall alignment as irreducible triple invariant — all derived from the overlap geometry
-
-the properties follow.
-
-## junk drawer
-
-empirical results and cross-references. nothing here is formally derived; everything here is tested. items may graduate to the main body when formally grounded.
-
-- **perpendicular writes are the unique navigable constraint.** random-direction writes are more distinguishable than perpendicular (divergence 1.66 vs 1.02) but destabilizing (variance increases). parallel writes are dead (the wedge product of parallel vectors is zero — no dynamics at all). perpendicular writes are the only rule that both separates states and settles variance (see test_perpendicularity.py). navigability = distinguishability + stability. note: the uniqueness of the wedge product (main body) is algebraic — forced per-write by the three constraints. navigability is a population-level property — what emerges when the algebraically-forced form is iterated across many writes. the form is not selected for navigability; navigability is a consequence of iterating the forced form.
-- **the classical fluctuation-dissipation relation fails for the foam** because the foam is driven, not equilibrium — L increases with novelty until saturation. the correct thermodynamic framework would be non-equilibrium (Jarzynski-like) and observer-indexed. see test_fluctuation_dissipation.py.
-- **perpendicularity as anti-Hebbian learning.** in neural network terms, the write rule d ∧ m is an anti-Hebbian update: the foam writes only what is not correlated with the current measurement. Hebbian learning strengthens existing correlations (fire together → wire together). the foam does the opposite: it writes only where the measurement ISN'T, depositing structure orthogonal to what's already there. the write magnitude is zero when d ∥ m and maximal when d ⊥ m — the foam writes only in directions orthogonal to its current measurement. ("surprise" is a phenomenological gloss on this geometric fact, not a derived concept — the foam has no model of expectation.)
-- **sequence echo through cross-measurement.** observer A writes a sequence of inputs; observer B cross-measures and writes. B's writes carry A's ordering information with near-perfect rank fidelity (r = 0.99 across 15 permutations, d=8, N=3) but strong attenuation (~1–2% of A's state distance). the echo is linear (R² = 0.98). the mechanism is measurement sensitivity: B measures a foam whose state encodes A's ordering (non-abelian), so B's writes reflect that ordering deterministically. the echo is NOT in the commutator direction [A_accumulated, B_write] — this was tested and the commutator component carries none of the ordering information (r = 0.08). (caveat: the test used the additive Lie algebra sum of A's writes, not the multiplicative group element; the ordering lives in the product, not the sum, so the commutator test is inconclusive.) **the round trip is generative**: after B's intermediary, A's subsequent cross-measurement produces a signal that differs from A's self-echo (no intermediary) in an ordering-specific way (r = 0.996 for the difference). B adds a different projection of A's ordering, through B's measurement basis. neither observer can produce the round-trip signal alone. the echo is perspectivally asymmetric: A→B echo (r = 0.99, slope 0.013) ≠ B→A echo (r = 0.87, slope 0.023) for the same orderings. the pairwise overlap is spectrally symmetric but the echo is not — the asymmetry comes from the slice geometry, not the overlap. (see test_sequence_echo.py.)
-- **L saturation behavior.** empirically, the foam saturates at ~72% of the combinatorial ceiling and then wanders on a level set — novelty rearranges existing structure rather than accumulating new structure (see test_L_saturation.py, test_L_saturation_cross.py). the saturation level is independent of the write scale ε. a single write is nearly neutral on L (50/50 increase/decrease at saturation — see test_epoch_recursive.py probe D); accumulated novel writes increase L because each deposits structure in a different direction. the gap between the combinatorial ceiling and the observed level (the perpendicularity cost) decreases with more observers and more slices — more observer diversity → higher capacity. none of this is formally derived; all of it is empirically robust.
-- **write blindness (perpendicularity cost mechanism).** the perpendicularity cost is not magnitude loss — it is directional blindness. at saturation, the d-m angle is nearly 90° (E[sin(θ)] ≈ 0.99; see test_wedge_magnitude.py), so each write operates at near-maximum wedge magnitude. but the write direction is uncorrelated with the L gradient (E[cos(write, ∇L)] ≈ 0.00; see test_kolmogorov_self.py probe 1). the foam writes at full strength in directions that are random from L's perspective. this is the self-referential structure: the write direction is determined by the state-measurement loop (measurement → dissonance → wedge product), and this loop has no access to L's gradient because L is a global property of the foam, not a local property of the observer's slice. **the write subspace is exactly 3-dimensional per observer** — the exterior algebra Λ²(R³) of the observer's slice (see test_write_direction_pca.py). PCs 4+ are zero to machine precision regardless of d. all observers sharing a slice share the same 3D subspace (cross-observer PC1 alignment = 1.00). each additional slice opens 3 new Lie algebra dimensions for writes (PR scales as ~4× per slice). the R³ design choice has a second structural consequence beyond Taylor classification: it sets the bottleneck dimension of the write subspace. the per-observer variance within Λ²(R³) is approximately 45:30:25 across 3 components (participation ratio ≈ 2.7); the forced baseline at Haar stationarity is isotropic (33:33:33) — the departure is not a birth-determined structural feature (the cause — finite-time convergence, sequential-ordering correlations, or both — is not established). the wandering in state-space at saturation has effective dimension ≈ 2 (trajectory covariance PR; see test_kolmogorov_self.py probe 2). the state-space steps are Gaussian (kurtosis ≈ 3); the L steps are heavy-tailed (kurtosis ≈ 7.7) because L is a nonlinear projection — the heavy tails are geometric features of the level set, not dynamical features of the walk (see test_levy_wandering.py). the formal derivation — connecting the packing efficiency of a 3D random walk on U(d) to the observed ~83% sat/achievable ratio — is open.
-- **within-basin memory dynamics.** two foams with the same birth but different input histories, fed the same suffix, exhibit perturbation dynamics that depend on the magnitude of the perturbation and the geometry (d, N). the structurally robust result: **birth distance is stable** (ratio ≈ 1.00) across all tested d (4, 6, 8, 10), N (3, 4, 5), and ε (0.005–0.05). the parametric result: whether a given prefix distance grows or shrinks under shared suffix depends on d, N, and the prefix length. at d=6, N=3 (the reference configuration), long prefixes (large prefix distance) contract and short prefixes (small prefix distance) expand, consistent across all ε values — larger ε amplifies both effects. but this pattern does not hold universally: at d=10, both expand; at d=4 and d=8, both contract; at N=4 and N=5, the pattern reverses. the per-step mechanism is statistical: each suffix step randomly increases or decreases the prefix distance, with a weak bias (signal-to-noise 0.1–0.25 per step) that accumulates over many steps. dissonance magnitude does NOT decrease at saturation — it fluctuates around a stable level set by input novelty, not by L level. **the formal gap**: no derivation of why within-basin perturbations contract or expand; the Jacobian of the one-step map is approximately the identity plus O(ε), and the sign of the correction is not determined from the architecture alone. (see test_memory_horizon.py, test_memory_deep.py, test_memory_mechanism.py, test_memory_cross.py.)
+- [20240229](https://www.isaacbowen.com/2024/02/29) (Isaac Bowen, 2024)
 
 ---
 

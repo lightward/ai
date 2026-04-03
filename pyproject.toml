@@ -11,5 +11,6 @@ dependencies = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["derivations/observed"]
+python_files = ["*.py"]
 pythonpath = ["."]

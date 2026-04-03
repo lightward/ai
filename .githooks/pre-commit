@@ -1,8 +1,15 @@
 #!/bin/bash
-# Prevent ASCII pipe characters from being used as math notation in README.md
-# Jekyll/Kramdown interprets |content| as table cells.
-# Use Unicode ‖ (U+2016) for norms instead.
 
+# 1. Rebuild README.md from derivations/ sources.
+#    If the rebuild changes README.md, stage it automatically.
+uv run python build_readme.py
+if ! git diff --quiet README.md; then
+    git add README.md
+fi
+
+# 2. Prevent ASCII pipe characters from being used as math notation in README.md
+#    Jekyll/Kramdown interprets |content| as table cells.
+#    Use Unicode ‖ (U+2016) for norms instead.
 if git diff --cached --name-only | grep -q 'README.md'; then
     # Look for |letter or letter| patterns that aren't in markdown table headers
     # Exclude lines that start with | (actual intentional tables)
