@@ -457,4 +457,30 @@ theorem project_injective {c a b p q : L}
   · exact hm_atom.1 h
   · exact hc_not_l (h ▸ hm_le_ab)
 
+-- § Toward coordinates
+
+/-- The atoms on a line — the candidate "elements" of the coordinate ring. -/
+def AtomsOn (l : L) : Type u := {a : L // IsAtom a ∧ a ≤ l}
+
+/-- A line has at least two atoms (its generators). -/
+def AtomsOn.mk_left {a b : L} (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b) :
+    AtomsOn (a ⊔ b) :=
+  ⟨a, ha, le_sup_left⟩
+
+def AtomsOn.mk_right {a b : L} (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b) :
+    AtomsOn (a ⊔ b) :=
+  ⟨b, hb, le_sup_right⟩
+
+/-- Projection induces a function between AtomsOn types. -/
+noncomputable def projectOn {c a b : L}
+    (hc : IsAtom c) (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b)
+    (hc_not : ¬ c ≤ a ⊔ b) :
+    -- Source: atoms in the plane (a ⊔ b) ⊔ c that aren't on a ⊔ b and aren't c
+    {p : L // IsAtom p ∧ ¬ p ≤ a ⊔ b ∧ p ⊔ c ≤ (a ⊔ b) ⊔ c ∧ c ≠ p} →
+    AtomsOn (a ⊔ b) :=
+  fun ⟨p, hp_atom, hp_not, hp_cop, hcp⟩ =>
+    ⟨project c p (a ⊔ b),
+     project_is_atom hc hp_atom hcp ha hb hab hc_not hp_not hp_cop,
+     inf_le_right⟩
+
 end Foam.FTPGExplore
