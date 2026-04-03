@@ -807,29 +807,181 @@ theorem CoordSystem.atom_on_both_eq_U {p : L} (hp : IsAtom p)
   rw [Γ.l_inf_m_eq_U] at hp_le
   exact (Γ.hU.le_iff.mp hp_le).resolve_left hp.1
 
-/-- Addition on the coordinate line. Given atoms a, b on l (both ≠ U),
-    with a third point on line b ⊔ E guaranteed by irreducibility:
+/-- E is on m. -/
+theorem CoordSystem.hE_on_m : Γ.E ≤ Γ.U ⊔ Γ.V := by
+  unfold CoordSystem.E CoordSystem.m; exact inf_le_right
+
+/-- E is not on the coordinate line l. -/
+theorem CoordSystem.hE_not_l : ¬ Γ.E ≤ Γ.O ⊔ Γ.U :=
+  fun hE_l => absurd (Γ.atom_on_both_eq_U Γ.hE_atom hE_l CoordSystem.hE_on_m)
+    CoordSystem.hEU
+
+/-- O ≠ E (O is not on m, but E is). -/
+theorem CoordSystem.hOE : Γ.O ≠ Γ.E :=
+  fun h => Γ.hO_not_m (h ▸ CoordSystem.hE_on_m)
+
+/-- E ≤ O ⊔ C (E is on the line through O and C). -/
+theorem CoordSystem.hE_le_OC : Γ.E ≤ Γ.O ⊔ Γ.C := by
+  unfold CoordSystem.E CoordSystem.m; exact inf_le_left
+
+/-- O ⊔ E = O ⊔ C: E is on line O ⊔ C and E ≠ O, so they span the same line. -/
+theorem CoordSystem.OE_eq_OC : Γ.O ⊔ Γ.E = Γ.O ⊔ Γ.C := by
+  have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+  have h_le : Γ.O ⊔ Γ.E ≤ Γ.O ⊔ Γ.C := sup_le le_sup_left CoordSystem.hE_le_OC
+  exact ((atom_covBy_join Γ.hO Γ.hC hOC).eq_or_eq
+    (atom_covBy_join Γ.hO Γ.hE_atom CoordSystem.hOE).lt.le h_le).resolve_left
+    (ne_of_gt (atom_covBy_join Γ.hO Γ.hE_atom CoordSystem.hOE).lt)
+
+/-- E ⊔ U = m: E and U are distinct atoms on m, generating it. -/
+theorem CoordSystem.EU_eq_m : Γ.E ⊔ Γ.U = Γ.U ⊔ Γ.V := by
+  rw [sup_comm Γ.E Γ.U]
+  have hUV : Γ.U ≠ Γ.V := fun h => Γ.hV_off (h ▸ le_sup_right)
+  have h_le : Γ.U ⊔ Γ.E ≤ Γ.U ⊔ Γ.V := sup_le le_sup_left CoordSystem.hE_on_m
+  have h_lt : Γ.U < Γ.U ⊔ Γ.E := by
+    apply lt_of_le_of_ne le_sup_left; intro h
+    have : Γ.E ≤ Γ.U := h ▸ le_sup_right
+    exact absurd ((Γ.hU.le_iff.mp this).resolve_left Γ.hE_atom.1) CoordSystem.hEU
+  exact ((atom_covBy_join Γ.hU Γ.hV hUV).eq_or_eq h_lt.le h_le).resolve_left
+    (ne_of_gt h_lt)
+
+/-- O is not on line U ⊔ C. -/
+theorem CoordSystem.hO_not_UC : ¬ Γ.O ≤ Γ.U ⊔ Γ.C := by
+  intro h
+  have hUC : Γ.U ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_right)
+  have h_le : Γ.U ⊔ Γ.O ≤ Γ.U ⊔ Γ.C := sup_le le_sup_left h
+  have h_eq := ((atom_covBy_join Γ.hU Γ.hC hUC).eq_or_eq
+    (atom_covBy_join Γ.hU Γ.hO Γ.hOU.symm).lt.le h_le).resolve_left
+    (ne_of_gt (atom_covBy_join Γ.hU Γ.hO Γ.hOU.symm).lt)
+  -- U ⊔ O = U ⊔ C, so C ≤ U ⊔ C = U ⊔ O.
+  -- U ⊔ O = O ⊔ U = l, so C ≤ l. Contradiction.
+  have : Γ.C ≤ Γ.U ⊔ Γ.O := h_eq ▸ le_sup_right
+  exact Γ.hC_not_l (this.trans (by rw [sup_comm]))
+
+/-- (O ⊔ C) ⊓ (U ⊔ C) = C: two distinct lines through C meet at C. -/
+theorem CoordSystem.OC_inf_UC : (Γ.O ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.C) = Γ.C := by
+  rw [sup_comm Γ.O Γ.C, sup_comm Γ.U Γ.C]
+  have hCO : Γ.C ≠ Γ.O := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+  have hCU : Γ.C ≠ Γ.U := fun h => Γ.hC_not_l (h ▸ le_sup_right)
+  have hU_not_CO : ¬ Γ.U ≤ Γ.C ⊔ Γ.O := by
+    intro h
+    have hU_le_OC : Γ.U ≤ Γ.O ⊔ Γ.C := le_trans h (by rw [sup_comm Γ.C Γ.O])
+    have h_le : Γ.O ⊔ Γ.U ≤ Γ.O ⊔ Γ.C := sup_le le_sup_left hU_le_OC
+    have h_eq := ((atom_covBy_join Γ.hO Γ.hC hCO.symm).eq_or_eq
+      (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt.le h_le).resolve_left
+      (ne_of_gt (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt)
+    exact Γ.hC_not_l (h_eq ▸ le_sup_right)
+  exact modular_intersection Γ.hC Γ.hO Γ.hU hCO hCU Γ.hOU hU_not_CO
+
+/-- Addition on the coordinate line.
 
     a + b = ((a ⊔ C) ⊓ m ⊔ D) ⊓ l
 
-    where D is the third point on b ⊔ E (the center for the return trip). -/
-noncomputable def coord_add
-    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
-      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q)
-    (Γ : CoordSystem L)
-    (a b : L) (ha : IsAtom a) (hb : IsAtom b)
-    (_ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U)
-    (hb_ne_U : b ≠ Γ.U) : L :=
-  have hbE : b ≠ Γ.E := by
-    intro h
-    exact hb_ne_U (Γ.atom_on_both_eq_U hb hb_on (by
-      unfold CoordSystem.E CoordSystem.m at h
-      exact h ▸ inf_le_right))
-  -- D: third point on line b ⊔ E (from irreducibility)
-  let D := (h_irred b Γ.E hb Γ.hE_atom hbE).choose
-  -- a' = (a ⊔ C) ⊓ m (projection of a onto m via C)
-  let a' := (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V)
-  -- a + b = (a' ⊔ D) ⊓ l (projection of a' back to l via D)
-  (a' ⊔ D) ⊓ (Γ.O ⊔ Γ.U)
+    where D = (b ⊔ E) ⊓ (U ⊔ C) is the canonical center for the
+    return perspectivity, determined by b. The forward perspectivity
+    projects a from l to m via center C; the return projects from m
+    back to l via D. Since D lies on b ⊔ E, the return perspectivity
+    sends E ↦ b. -/
+noncomputable def coord_add (Γ : CoordSystem L) (a b : L) : L :=
+  ((a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ⊓ (Γ.O ⊔ Γ.U)
+
+/-- O is a left additive identity: O + b = b.
+
+    With a = O, the forward perspectivity gives a' = E.
+    By the modular law, E ⊔ D = (E ⊔ U ⊔ C) ⊓ (b ⊔ E) = π ⊓ (b ⊔ E) = b ⊔ E.
+    Then (b ⊔ E) ⊓ l = b since b ≤ l and E ≰ l. -/
+theorem coord_add_left_zero (Γ : CoordSystem L)
+    (b : L) (hb : IsAtom b) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hb_ne_U : b ≠ Γ.U) :
+    coord_add Γ Γ.O b = b := by
+  -- After unfolding, (O⊔C)⊓(U⊔V) = E definitionally. Fold it.
+  unfold coord_add
+  change (Γ.E ⊔ (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ⊓ (Γ.O ⊔ Γ.U) = b
+  -- E ⊔ D = b ⊔ E by the modular law.
+  have hbE_le_π : b ⊔ Γ.E ≤ Γ.O ⊔ Γ.U ⊔ Γ.V :=
+    sup_le (hb_on.trans le_sup_left)
+      (CoordSystem.hE_on_m.trans (sup_le (le_sup_right.trans le_sup_left) le_sup_right))
+  have hED : Γ.E ⊔ (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C) = b ⊔ Γ.E :=
+    calc Γ.E ⊔ (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)
+        = Γ.E ⊔ (Γ.U ⊔ Γ.C) ⊓ (b ⊔ Γ.E) := by
+            rw [@inf_comm L _ (b ⊔ Γ.E) (Γ.U ⊔ Γ.C)]
+      _ = (Γ.E ⊔ (Γ.U ⊔ Γ.C)) ⊓ (b ⊔ Γ.E) :=
+            (sup_inf_assoc_of_le (Γ.U ⊔ Γ.C) le_sup_right).symm
+      _ = (Γ.E ⊔ Γ.U ⊔ Γ.C) ⊓ (b ⊔ Γ.E) := by rw [sup_assoc]
+      _ = (Γ.U ⊔ Γ.V ⊔ Γ.C) ⊓ (b ⊔ Γ.E) := by rw [CoordSystem.EU_eq_m]
+      _ = (Γ.O ⊔ Γ.U ⊔ Γ.V) ⊓ (b ⊔ Γ.E) := by rw [Γ.m_sup_C_eq_π]
+      _ = b ⊔ Γ.E := inf_eq_right.mpr hbE_le_π
+  rw [hED]
+  -- (b ⊔ E) ⊓ l = b: b ≤ both sides, E ≰ l, so the meet is an atom = b.
+  have hb_le : b ≤ (b ⊔ Γ.E) ⊓ (Γ.O ⊔ Γ.U) := le_inf le_sup_left hb_on
+  have hbE : b ≠ Γ.E := fun he => hb_ne_U
+    (Γ.atom_on_both_eq_U hb hb_on (he ▸ CoordSystem.hE_on_m))
+  have h_lt : (b ⊔ Γ.E) ⊓ (Γ.O ⊔ Γ.U) < Γ.O ⊔ Γ.U := by
+    apply lt_of_le_of_ne inf_le_right; intro h
+    -- h: (b⊔E) ⊓ l = l, so l ≤ b⊔E.
+    -- b ⋖ b⊔E and b < l ≤ b⊔E, so l = b⊔E.
+    -- Then E ≤ l, contradicting hE_not_l.
+    have hl_le : Γ.O ⊔ Γ.U ≤ b ⊔ Γ.E := inf_eq_right.mp h
+    have h_eq := ((atom_covBy_join hb Γ.hE_atom hbE).eq_or_eq
+      (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU hb hb_on).lt.le hl_le).resolve_left
+      (ne_of_gt (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU hb hb_on).lt)
+    exact CoordSystem.hE_not_l (le_sup_right.trans (le_of_eq h_eq.symm))
+  exact ((line_height_two Γ.hO Γ.hU Γ.hOU (lt_of_lt_of_le hb.bot_lt hb_le) h_lt
+    |>.le_iff.mp hb_le).resolve_left hb.1).symm
+
+/-- O is a right additive identity: a + O = a.
+
+    With b = O, D = (O ⊔ E) ⊓ (U ⊔ C) = (O ⊔ C) ⊓ (U ⊔ C) = C.
+    Then a' ⊔ C = a ⊔ C (covering), and (a ⊔ C) ⊓ l = a. -/
+theorem coord_add_right_zero (Γ : CoordSystem L)
+    (a : L) (ha : IsAtom a) (ha_on : a ≤ Γ.O ⊔ Γ.U) :
+    coord_add Γ a Γ.O = a := by
+  unfold coord_add
+  -- D = (O ⊔ E) ⊓ (U ⊔ C). Rewrite: O ⊔ E = O ⊔ C, (O⊔C) ⊓ (U⊔C) = C.
+  rw [CoordSystem.OE_eq_OC, CoordSystem.OC_inf_UC]
+  -- Goal: ((a ⊔ C) ⊓ m ⊔ C) ⊓ l = a.
+  -- a' ⊔ C = a ⊔ C: a' ≤ a ⊔ C (inf_le_left), C ≤ a ⊔ C (le_sup_right),
+  -- so a' ⊔ C ≤ a ⊔ C. And C < a' ⊔ C (since a' ≰ C: a' ≤ m, C ≰ m).
+  -- By covering C ⋖ a ⊔ C, we get a' ⊔ C = a ⊔ C.
+  have hAC : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
+  have ha'C_le : (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ Γ.C ≤ a ⊔ Γ.C :=
+    sup_le inf_le_left le_sup_right
+  -- a' ≠ ⊥: lines a ⊔ C and m are coplanar and distinct, so they meet.
+  have ha_lt_aC : a < a ⊔ Γ.C := by
+    apply lt_of_le_of_ne le_sup_left; intro h
+    have hC_le_a : Γ.C ≤ a := by rw [h]; exact le_sup_right
+    exact Γ.hC_not_l ((ha.le_iff.mp hC_le_a).resolve_left Γ.hC.1 ▸ ha_on)
+  have ha'_ne_bot : (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ≠ ⊥ := by
+    have h_meet := lines_meet_if_coplanar Γ.m_covBy_π
+      (sup_le (ha_on.trans le_sup_left) Γ.hC_plane)
+      (fun h => Γ.hC_not_m (le_trans le_sup_right h))
+      ha ha_lt_aC
+    rwa [@inf_comm L _] at h_meet
+  have hC_lt : Γ.C < (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ Γ.C := by
+    apply lt_of_le_of_ne le_sup_right; intro h
+    -- a' ⊔ C = C means a' ≤ C. Then a' ≤ C ⊓ m = ⊥. So a' = ⊥.
+    have ha'_le_C : (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ≤ Γ.C := le_sup_left.trans h.symm.le
+    have ha'_le_m : (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ≤ Γ.U ⊔ Γ.V := inf_le_right
+    have hCm : Γ.C ⊓ (Γ.U ⊔ Γ.V) = ⊥ := by
+      rcases Γ.hC.le_iff.mp inf_le_left with h | h
+      · exact h
+      · exact absurd (h ▸ inf_le_right) Γ.hC_not_m
+    have : (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ≤ ⊥ := hCm ▸ le_inf ha'_le_C ha'_le_m
+    exact ha'_ne_bot (le_antisymm this bot_le)
+  have h_cov_Ca : Γ.C ⋖ a ⊔ Γ.C := by
+    have := atom_covBy_join Γ.hC ha hAC.symm; rwa [sup_comm] at this
+  have ha'C_eq : (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ Γ.C = a ⊔ Γ.C :=
+    (h_cov_Ca.eq_or_eq hC_lt.le ha'C_le).resolve_left (ne_of_gt hC_lt)
+  rw [ha'C_eq]
+  -- (a ⊔ C) ⊓ l = a.
+  have ha_le : a ≤ (a ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) := le_inf le_sup_left ha_on
+  have h_lt : (a ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) < Γ.O ⊔ Γ.U := by
+    apply lt_of_le_of_ne inf_le_right; intro h
+    have hl_le := inf_eq_right.mp h  -- l ≤ a ⊔ C
+    -- a ⋖ a ⊔ C, a < l ≤ a ⊔ C ⟹ l = a ⊔ C ⟹ C ≤ l.
+    have h_eq := ((atom_covBy_join ha Γ.hC hAC).eq_or_eq
+      (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU ha ha_on).lt.le hl_le).resolve_left
+      (ne_of_gt (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU ha ha_on).lt)
+    exact Γ.hC_not_l (le_sup_right.trans (le_of_eq h_eq.symm))
+  exact ((line_height_two Γ.hO Γ.hU Γ.hOU (lt_of_lt_of_le ha.bot_lt ha_le) h_lt
+    |>.le_iff.mp ha_le).resolve_left ha.1).symm
 
 end Foam.FTPGExplore
