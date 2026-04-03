@@ -984,4 +984,396 @@ theorem coord_add_right_zero (Γ : CoordSystem L)
   exact ((line_height_two Γ.hO Γ.hU Γ.hOU (lt_of_lt_of_le ha.bot_lt ha_le) h_lt
     |>.le_iff.mp ha_le).resolve_left ha.1).symm
 
+/-- If R is an atom not in π and s ≤ π, then π ⊓ (R ⊔ s) = s.
+    The modular law gives (s ⊔ R) ⊓ π = s ⊔ (R ⊓ π) = s ⊔ ⊥ = s,
+    using the fact that an atom outside π meets π trivially. -/
+theorem inf_sup_of_atom_not_le {s π R : L}
+    (hR : IsAtom R) (hR_not : ¬ R ≤ π) (hs_le : s ≤ π) :
+    π ⊓ (R ⊔ s) = s := by
+  have hR_inf : R ⊓ π = ⊥ :=
+    (hR.le_iff.mp inf_le_left).resolve_right (fun h => hR_not (h ▸ inf_le_right))
+  have key : (s ⊔ R) ⊓ π = s ⊔ R ⊓ π := sup_inf_assoc_of_le R hs_le
+  rw [hR_inf, sup_bot_eq] at key  -- key : (s ⊔ R) ⊓ π = s
+  rw [sup_comm, inf_comm] at key   -- key : π ⊓ (R ⊔ s) = s
+  exact key
+
+
+/-- **Lifting preserves side intersections.**
+
+    When a triangle side b₁ ⊔ b₂ is "lifted" to b₁' ⊔ b₂' (with
+    b_i' on both o' ⊔ a_i and R ⊔ b_i), the lifted side meets
+    a₁ ⊔ a₂ at the same point as the original side.
+
+    Proof: both lines are in o' ⊔ a₁ ⊔ a₂ (a plane), so they meet
+    at an atom T. Then T ≤ π (from a₁ ⊔ a₂ ≤ π) and T ≤ R ⊔ b₁ ⊔ b₂
+    (from lifting). The modular law gives π ⊓ (R ⊔ b₁ ⊔ b₂) = b₁ ⊔ b₂.
+    So T ≤ (a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂) = S, and since both are atoms, T = S. -/
+theorem lift_side_intersection
+    {a₁ a₂ b₁ b₂ R o' b₁' b₂' π : L}
+    (ha₁ : IsAtom a₁) (ha₂ : IsAtom a₂) (ha₁₂ : a₁ ≠ a₂)
+    (hb₁ : IsAtom b₁) (hb₂ : IsAtom b₂) (hb₁₂ : b₁ ≠ b₂)
+    (hb₁' : IsAtom b₁') (hb₂' : IsAtom b₂') (hb₁₂' : b₁' ≠ b₂')
+    (hR : IsAtom R) (ho' : IsAtom o')
+    (ha_le : a₁ ⊔ a₂ ≤ π) (hb_le : b₁ ⊔ b₂ ≤ π)
+    (h_sides : a₁ ⊔ a₂ ≠ b₁ ⊔ b₂)
+    (hR_not : ¬ R ≤ π) (ho'_not : ¬ o' ≤ π)
+    (hb₁'_oa : b₁' ≤ o' ⊔ a₁) (hb₂'_oa : b₂' ≤ o' ⊔ a₂)
+    (hb₁'_Rb : b₁' ≤ R ⊔ b₁) (hb₂'_Rb : b₂' ≤ R ⊔ b₂)
+    (hb₁'_not : ¬ b₁' ≤ π) :
+    (a₁ ⊔ a₂) ⊓ (b₁' ⊔ b₂') = (a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂) := by
+  -- Both lines are in τ = o' ⊔ a₁ ⊔ a₂.
+  have hb'_le_τ : b₁' ⊔ b₂' ≤ o' ⊔ a₁ ⊔ a₂ :=
+    sup_le (hb₁'_oa.trans (sup_le (le_sup_left.trans le_sup_left)
+      (le_sup_right.trans le_sup_left)))
+    (hb₂'_oa.trans (sup_le (le_sup_left.trans le_sup_left) le_sup_right))
+  -- a₁ ⊔ a₂ ⋖ τ
+  have ho'_disj : o' ⊓ (a₁ ⊔ a₂) = ⊥ :=
+    (ho'.le_iff.mp inf_le_left).resolve_right
+      (fun h => ho'_not (le_trans (h ▸ inf_le_right) ha_le))
+  have h_cov_τ : a₁ ⊔ a₂ ⋖ o' ⊔ a₁ ⊔ a₂ := by
+    have h := covBy_sup_of_inf_covBy_left (ho'_disj ▸ ho'.bot_covBy)
+    rw [← sup_assoc] at h; exact h
+  -- b₁' ⊔ b₂' ≰ a₁ ⊔ a₂
+  have hb'_not : ¬ b₁' ⊔ b₂' ≤ a₁ ⊔ a₂ :=
+    fun h => hb₁'_not (le_trans le_sup_left (le_trans h ha_le))
+  -- T ≠ ⊥: two lines in a plane meet.
+  have hT_ne : (a₁ ⊔ a₂) ⊓ (b₁' ⊔ b₂') ≠ ⊥ :=
+    lines_meet_if_coplanar h_cov_τ hb'_le_τ hb'_not hb₁'
+      (atom_covBy_join hb₁' hb₂' hb₁₂').lt
+  -- T < a₁ ⊔ a₂
+  have hT_lt : (a₁ ⊔ a₂) ⊓ (b₁' ⊔ b₂') < a₁ ⊔ a₂ := by
+    apply lt_of_le_of_ne inf_le_left; intro h
+    have h_le : a₁ ⊔ a₂ ≤ b₁' ⊔ b₂' := inf_eq_left.mp h
+    rcases h_cov_τ.eq_or_eq h_le hb'_le_τ with heq | heq
+    · -- b₁' ⊔ b₂' = a₁ ⊔ a₂: then b₁' ≤ π, contradiction
+      exact hb₁'_not (le_trans le_sup_left (heq ▸ ha_le))
+    · -- b₁' ⊔ b₂' = τ (plane): impossible, a₁ ⊔ a₂ is between ⊥ and b₁'⊔b₂'
+      -- but not an atom (a₁ is strictly between)
+      have h_aa_lt : a₁ ⊔ a₂ < b₁' ⊔ b₂' :=
+        lt_of_lt_of_le h_cov_τ.lt (le_of_eq heq.symm)
+      have h_aa_atom := line_height_two hb₁' hb₂' hb₁₂'
+        (lt_of_lt_of_le ha₁.bot_lt le_sup_left) h_aa_lt
+      -- a₁ ⊔ a₂ is an atom but ⊥ < a₁ < a₁ ⊔ a₂ — violates covering
+      exact h_aa_atom.bot_covBy.2 ha₁.bot_lt (atom_covBy_join ha₁ ha₂ ha₁₂).lt
+  -- T is an atom.
+  have hT_atom : IsAtom ((a₁ ⊔ a₂) ⊓ (b₁' ⊔ b₂')) :=
+    line_height_two ha₁ ha₂ ha₁₂ (bot_lt_iff_ne_bot.mpr hT_ne) hT_lt
+  -- T ≤ b₁ ⊔ b₂ via modular law.
+  have hT_le_bb : (a₁ ⊔ a₂) ⊓ (b₁' ⊔ b₂') ≤ b₁ ⊔ b₂ := by
+    have hT_le_π : (a₁ ⊔ a₂) ⊓ (b₁' ⊔ b₂') ≤ π := le_trans inf_le_left ha_le
+    have hT_le_Rbb : (a₁ ⊔ a₂) ⊓ (b₁' ⊔ b₂') ≤ R ⊔ (b₁ ⊔ b₂) :=
+      le_trans inf_le_right (sup_le
+        (hb₁'_Rb.trans (sup_le le_sup_left (le_sup_left.trans le_sup_right)))
+        (hb₂'_Rb.trans (sup_le le_sup_left (le_sup_right.trans le_sup_right))))
+    calc (a₁ ⊔ a₂) ⊓ (b₁' ⊔ b₂')
+        ≤ π ⊓ (R ⊔ (b₁ ⊔ b₂)) := le_inf hT_le_π hT_le_Rbb
+      _ = b₁ ⊔ b₂ := inf_sup_of_atom_not_le hR hR_not hb_le
+  -- T ≤ S.
+  have hT_le_S : (a₁ ⊔ a₂) ⊓ (b₁' ⊔ b₂') ≤ (a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂) :=
+    le_inf inf_le_left hT_le_bb
+  -- S is an atom.
+  have hS_lt : (a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂) < a₁ ⊔ a₂ := by
+    apply lt_of_le_of_ne inf_le_left; intro h
+    have h_le : a₁ ⊔ a₂ ≤ b₁ ⊔ b₂ := inf_eq_left.mp h
+    have ha₁_cov := line_covers_its_atoms hb₁ hb₂ hb₁₂ ha₁ (le_sup_left.trans h_le)
+    exact h_sides ((ha₁_cov.eq_or_eq (atom_covBy_join ha₁ ha₂ ha₁₂).lt.le h_le).resolve_left
+      (ne_of_gt (atom_covBy_join ha₁ ha₂ ha₁₂).lt))
+  have hS_atom : IsAtom ((a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂)) :=
+    line_height_two ha₁ ha₂ ha₁₂ (lt_of_lt_of_le hT_atom.bot_lt hT_le_S) hS_lt
+  exact (hS_atom.le_iff.mp hT_le_S).resolve_left hT_atom.1
+
+/-- **Desargues' theorem (planar case).**
+
+    Two triangles in a plane π, perspective from a point o, have
+    their three pairs of corresponding sides meeting on a common
+    line — provided the lattice has height ≥ 4 (an atom outside π
+    exists) and irreducibility (lines have ≥ 3 points).
+
+    The proof lifts one triangle out of the plane using an external
+    point R, applies the non-planar Desargues theorem, and uses
+    lift_side_intersection to transfer collinearity back.
+
+    This is the theorem that makes dimension matter: the algebra of
+    the plane inherits its structure from the space it sits in. -/
+theorem desargues_planar
+    {o a₁ a₂ a₃ b₁ b₂ b₃ π : L}
+    -- All atoms in the plane
+    (ho : IsAtom o) (ha₁ : IsAtom a₁) (ha₂ : IsAtom a₂) (ha₃ : IsAtom a₃)
+    (hb₁ : IsAtom b₁) (hb₂ : IsAtom b₂) (hb₃ : IsAtom b₃)
+    -- All in π
+    (ho_le : o ≤ π) (ha₁_le : a₁ ≤ π) (ha₂_le : a₂ ≤ π) (ha₃_le : a₃ ≤ π)
+    (hb₁_le : b₁ ≤ π) (hb₂_le : b₂ ≤ π) (hb₃_le : b₃ ≤ π)
+    -- Perspective from o: b_i on line o ⊔ a_i
+    (hb₁_on : b₁ ≤ o ⊔ a₁) (hb₂_on : b₂ ≤ o ⊔ a₂) (hb₃_on : b₃ ≤ o ⊔ a₃)
+    -- Distinct triangle vertices
+    (ha₁₂ : a₁ ≠ a₂) (ha₁₃ : a₁ ≠ a₃) (ha₂₃ : a₂ ≠ a₃)
+    (hb₁₂ : b₁ ≠ b₂) (hb₁₃ : b₁ ≠ b₃) (hb₂₃ : b₂ ≠ b₃)
+    -- Distinct corresponding sides
+    (h_sides₁₂ : a₁ ⊔ a₂ ≠ b₁ ⊔ b₂)
+    (h_sides₁₃ : a₁ ⊔ a₃ ≠ b₁ ⊔ b₃)
+    (h_sides₂₃ : a₂ ⊔ a₃ ≠ b₂ ⊔ b₃)
+    -- Triangle planes (both in π)
+    (hπA : a₁ ⊔ a₂ ⊔ a₃ = π) (hπB : b₁ ⊔ b₂ ⊔ b₃ = π)
+    -- o ≠ a_i (center is off the triangle)
+    (hoa₁ : o ≠ a₁) (hoa₂ : o ≠ a₂) (hoa₃ : o ≠ a₃)
+    -- o ≠ b_i (center is off both triangles)
+    (hob₁ : o ≠ b₁) (hob₂ : o ≠ b₂) (hob₃ : o ≠ b₃)
+    -- Corresponding vertices are distinct
+    (ha₁b₁ : a₁ ≠ b₁) (ha₂b₂ : a₂ ≠ b₂) (ha₃b₃ : a₃ ≠ b₃)
+    -- Height ≥ 4: an atom outside π
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ π)
+    -- Irreducibility: third atom on each line
+    (h_irred : ∀ (a b : L), IsAtom a → IsAtom b → a ≠ b →
+      ∃ c : L, IsAtom c ∧ c ≤ a ⊔ b ∧ c ≠ a ∧ c ≠ b)
+    -- Sides are lines covered by π
+    (h_cov₁₂ : a₁ ⊔ a₂ ⋖ π) (h_cov₁₃ : a₁ ⊔ a₃ ⋖ π) (h_cov₂₃ : a₂ ⊔ a₃ ⋖ π) :
+    -- All three intersection points lie on a common line
+    ∃ (axis : L),
+      (a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂) ≤ axis ∧
+      (a₁ ⊔ a₃) ⊓ (b₁ ⊔ b₃) ≤ axis ∧
+      (a₂ ⊔ a₃) ⊓ (b₂ ⊔ b₃) ≤ axis := by
+  -- Step 1: Pick o' on line R ⊔ o, distinct from R and o.
+  have hRo : R ≠ o := fun h => hR_not (h ▸ ho_le)
+  obtain ⟨o', ho'_atom, ho'_le, ho'_ne_R, ho'_ne_o⟩ := h_irred R o hR ho hRo
+  have ho'_not : ¬ o' ≤ π := by
+    intro h
+    -- o' ≤ π and o' ≤ R ⊔ o. So o' ≤ π ⊓ (R ⊔ o) = o (modular law).
+    have := inf_sup_of_atom_not_le hR hR_not ho_le
+    have ho'_le_o : o' ≤ o := this ▸ le_inf h ho'_le
+    exact ho'_ne_o ((ho.le_iff.mp ho'_le_o).resolve_left ho'_atom.1)
+  -- Step 2: Define lifted vertices b_i' = (o' ⊔ a_i) ⊓ (R ⊔ b_i).
+  set b₁' := (o' ⊔ a₁) ⊓ (R ⊔ b₁) with hb₁'_def
+  set b₂' := (o' ⊔ a₂) ⊓ (R ⊔ b₂) with hb₂'_def
+  set b₃' := (o' ⊔ a₃) ⊓ (R ⊔ b₃) with hb₃'_def
+
+  -- Step 3: Mechanical properties of lifted vertices.
+
+  -- Helpers: R ⊔ o' = R ⊔ o (o' is a third point on line R ⊔ o).
+  have ho'_not_R : ¬ o' ≤ R := fun h =>
+    ho'_ne_R ((hR.le_iff.mp h).resolve_left ho'_atom.1)
+  have hRo'_eq : R ⊔ o' = R ⊔ o := by
+    have h_cov := atom_covBy_join hR ho hRo
+    have h_lt : R < R ⊔ o' := lt_of_le_of_ne le_sup_left
+      (fun h => ho'_not_R (h ▸ le_sup_right))
+    exact (h_cov.eq_or_eq h_lt.le (sup_le le_sup_left ho'_le)).resolve_left (ne_of_gt h_lt)
+  -- o ≤ R ⊔ o' (since R ⊔ o' = R ⊔ o)
+  have ho_le_Ro' : o ≤ R ⊔ o' := hRo'_eq ▸ (le_sup_right : o ≤ R ⊔ o)
+  -- b_i ≱ R ⊔ o (if so, modular law gives b_i ≤ o, so b_i = o)
+  have hb₁_not_Ro : ¬ b₁ ≤ R ⊔ o := fun h =>
+    hob₁ ((ho.le_iff.mp (inf_sup_of_atom_not_le hR hR_not ho_le ▸
+      le_inf hb₁_le h)).resolve_left hb₁.1).symm
+  have hb₂_not_Ro : ¬ b₂ ≤ R ⊔ o := fun h =>
+    hob₂ ((ho.le_iff.mp (inf_sup_of_atom_not_le hR hR_not ho_le ▸
+      le_inf hb₂_le h)).resolve_left hb₂.1).symm
+  have hb₃_not_Ro : ¬ b₃ ≤ R ⊔ o := fun h =>
+    hob₃ ((ho.le_iff.mp (inf_sup_of_atom_not_le hR hR_not ho_le ▸
+      le_inf hb₃_le h)).resolve_left hb₃.1).symm
+  -- R ≠ b_i (since b_i ≤ π and R ≱ π)
+  have hR_ne_b₁ : R ≠ b₁ := fun h => hR_not (h ▸ hb₁_le)
+  have hR_ne_b₂ : R ≠ b₂ := fun h => hR_not (h ▸ hb₂_le)
+  have hR_ne_b₃ : R ≠ b₃ := fun h => hR_not (h ▸ hb₃_le)
+  -- o ⊔ b_i = o ⊔ a_i (since b_i ≤ o ⊔ a_i and o ≠ b_i, covering gives equality)
+  have hob₁_eq : o ⊔ b₁ = o ⊔ a₁ :=
+    ((atom_covBy_join ho ha₁ hoa₁).eq_or_eq le_sup_left
+      (sup_le le_sup_left hb₁_on)).resolve_left
+      (ne_of_gt (atom_covBy_join ho hb₁ hob₁).lt)
+  have hob₂_eq : o ⊔ b₂ = o ⊔ a₂ :=
+    ((atom_covBy_join ho ha₂ hoa₂).eq_or_eq le_sup_left
+      (sup_le le_sup_left hb₂_on)).resolve_left
+      (ne_of_gt (atom_covBy_join ho hb₂ hob₂).lt)
+  have hob₃_eq : o ⊔ b₃ = o ⊔ a₃ :=
+    ((atom_covBy_join ho ha₃ hoa₃).eq_or_eq le_sup_left
+      (sup_le le_sup_left hb₃_on)).resolve_left
+      (ne_of_gt (atom_covBy_join ho hb₃ hob₃).lt)
+  -- a_i ≤ (R ⊔ b_i) ⊔ o': the plane through R, b_i, o' also contains a_i.
+  -- Proof: o ⊔ b_i = o ⊔ a_i (since b_i ≤ o ⊔ a_i, covering).
+  -- o ⊔ b_i ≤ (R ⊔ b_i) ⊔ o' (since o ≤ R ⊔ o' and b_i ≤ R ⊔ b_i).
+  -- So a_i ≤ o ⊔ a_i = o ⊔ b_i ≤ (R ⊔ b_i) ⊔ o'.
+  have hob_le₁ : o ⊔ b₁ ≤ (R ⊔ b₁) ⊔ o' :=
+    sup_le (ho_le_Ro'.trans (sup_le (le_sup_left.trans le_sup_left) le_sup_right))
+      (le_sup_right.trans le_sup_left)
+  have hob_le₂ : o ⊔ b₂ ≤ (R ⊔ b₂) ⊔ o' :=
+    sup_le (ho_le_Ro'.trans (sup_le (le_sup_left.trans le_sup_left) le_sup_right))
+      (le_sup_right.trans le_sup_left)
+  have hob_le₃ : o ⊔ b₃ ≤ (R ⊔ b₃) ⊔ o' :=
+    sup_le (ho_le_Ro'.trans (sup_le (le_sup_left.trans le_sup_left) le_sup_right))
+      (le_sup_right.trans le_sup_left)
+  have ha₁_in : a₁ ≤ (R ⊔ b₁) ⊔ o' := by
+    calc a₁ ≤ o ⊔ a₁ := le_sup_right
+      _ = o ⊔ b₁ := hob₁_eq.symm
+      _ ≤ (R ⊔ b₁) ⊔ o' := hob_le₁
+  have ha₂_in : a₂ ≤ (R ⊔ b₂) ⊔ o' := by
+    calc a₂ ≤ o ⊔ a₂ := le_sup_right
+      _ = o ⊔ b₂ := hob₂_eq.symm
+      _ ≤ (R ⊔ b₂) ⊔ o' := hob_le₂
+  have ha₃_in : a₃ ≤ (R ⊔ b₃) ⊔ o' := by
+    calc a₃ ≤ o ⊔ a₃ := le_sup_right
+      _ = o ⊔ b₃ := hob₃_eq.symm
+      _ ≤ (R ⊔ b₃) ⊔ o' := hob_le₃
+  -- o' ≱ R ⊔ b_i: if o' ≤ R ⊔ b_i, then o' ≤ (R ⊔ o) ⊓ (R ⊔ b_i).
+  -- Since b_i ≱ R ⊔ o, lines R ⊔ o and R ⊔ b_i are distinct through R.
+  -- Modular intersection: (R ⊔ o) ⊓ (R ⊔ b_i) = R. So o' ≤ R, o' = R. Contradiction.
+  have ho'_not_Rb₁ : ¬ o' ≤ R ⊔ b₁ := by
+    intro h
+    have h_meet := modular_intersection hR ho hb₁ hRo hR_ne_b₁ hob₁ hb₁_not_Ro
+    exact ho'_ne_R ((hR.le_iff.mp (h_meet ▸ le_inf ho'_le h)).resolve_left ho'_atom.1)
+  have ho'_not_Rb₂ : ¬ o' ≤ R ⊔ b₂ := by
+    intro h
+    have h_meet := modular_intersection hR ho hb₂ hRo hR_ne_b₂ hob₂ hb₂_not_Ro
+    exact ho'_ne_R ((hR.le_iff.mp (h_meet ▸ le_inf ho'_le h)).resolve_left ho'_atom.1)
+  have ho'_not_Rb₃ : ¬ o' ≤ R ⊔ b₃ := by
+    intro h
+    have h_meet := modular_intersection hR ho hb₃ hRo hR_ne_b₃ hob₃ hb₃_not_Ro
+    exact ho'_ne_R ((hR.le_iff.mp (h_meet ▸ le_inf ho'_le h)).resolve_left ho'_atom.1)
+  -- a_i ≠ o' (since a_i ≤ π and o' ≱ π)
+  have ha₁_ne_o' : a₁ ≠ o' := fun h => ho'_not (h ▸ ha₁_le)
+  have ha₂_ne_o' : a₂ ≠ o' := fun h => ho'_not (h ▸ ha₂_le)
+  have ha₃_ne_o' : a₃ ≠ o' := fun h => ho'_not (h ▸ ha₃_le)
+
+  -- 3a: Each b_i' is an atom (perspect_atom with p=a_i, c=o', line=R ⊔ b_i).
+  have hb₁'_atom : IsAtom b₁' := by
+    rw [hb₁'_def, show o' ⊔ a₁ = a₁ ⊔ o' from sup_comm _ _]
+    exact perspect_atom ho'_atom ha₁ ha₁_ne_o' hR hb₁ hR_ne_b₁
+      ho'_not_Rb₁ (sup_le ha₁_in le_sup_right)
+  have hb₂'_atom : IsAtom b₂' := by
+    rw [hb₂'_def, show o' ⊔ a₂ = a₂ ⊔ o' from sup_comm _ _]
+    exact perspect_atom ho'_atom ha₂ ha₂_ne_o' hR hb₂ hR_ne_b₂
+      ho'_not_Rb₂ (sup_le ha₂_in le_sup_right)
+  have hb₃'_atom : IsAtom b₃' := by
+    rw [hb₃'_def, show o' ⊔ a₃ = a₃ ⊔ o' from sup_comm _ _]
+    exact perspect_atom ho'_atom ha₃ ha₃_ne_o' hR hb₃ hR_ne_b₃
+      ho'_not_Rb₃ (sup_le ha₃_in le_sup_right)
+
+  -- 3b: b_i' ≱ π. If b_i' ≤ π, then b_i' ≤ π ⊓ (R ⊔ b_i) = b_i,
+  -- so b_i' = b_i. Then b_i ≤ o' ⊔ a_i, so b_i ≤ π ⊓ (o' ⊔ a_i) = a_i,
+  -- hence b_i = a_i. Contradiction with a_i ≠ b_i.
+  have hb₁'_not : ¬ b₁' ≤ π := by
+    intro h
+    -- b₁' ≤ π ⊓ (R ⊔ b₁) = b₁
+    have hb₁'_le_b₁ : b₁' ≤ b₁ := by
+      have := inf_sup_of_atom_not_le hR hR_not hb₁_le
+      exact this ▸ le_inf h inf_le_right
+    have hb₁'_eq_b₁ : b₁' = b₁ :=
+      (hb₁.le_iff.mp hb₁'_le_b₁).resolve_left hb₁'_atom.1
+    -- Then b₁ ≤ o' ⊔ a₁, so b₁ ≤ π ⊓ (o' ⊔ a₁) = a₁
+    have hb₁_le_o'a₁ : b₁ ≤ o' ⊔ a₁ := hb₁'_eq_b₁ ▸ (inf_le_left : b₁' ≤ o' ⊔ a₁)
+    have hb₁_le_a₁ : b₁ ≤ a₁ := by
+      have := inf_sup_of_atom_not_le ho'_atom ho'_not ha₁_le
+      exact this ▸ le_inf hb₁_le hb₁_le_o'a₁
+    exact ha₁b₁ ((ha₁.le_iff.mp hb₁_le_a₁).resolve_left hb₁.1).symm
+  have hb₂'_not : ¬ b₂' ≤ π := by
+    intro h
+    have hb₂'_le_b₂ : b₂' ≤ b₂ := by
+      have := inf_sup_of_atom_not_le hR hR_not hb₂_le
+      exact this ▸ le_inf h inf_le_right
+    have hb₂'_eq_b₂ : b₂' = b₂ :=
+      (hb₂.le_iff.mp hb₂'_le_b₂).resolve_left hb₂'_atom.1
+    have hb₂_le_o'a₂ : b₂ ≤ o' ⊔ a₂ := hb₂'_eq_b₂ ▸ (inf_le_left : b₂' ≤ o' ⊔ a₂)
+    have hb₂_le_a₂ : b₂ ≤ a₂ := by
+      have := inf_sup_of_atom_not_le ho'_atom ho'_not ha₂_le
+      exact this ▸ le_inf hb₂_le hb₂_le_o'a₂
+    exact ha₂b₂ ((ha₂.le_iff.mp hb₂_le_a₂).resolve_left hb₂.1).symm
+
+  -- 3c: Lifted vertices are distinct.
+  -- If b₁' = b₂', then b₁' ≤ (o' ⊔ a₁) ⊓ (o' ⊔ a₂) = o' (modular intersection,
+  -- since a₂ ≱ o' ⊔ a₁ — otherwise o' ≤ a₁ ⊔ a₂ ≤ π, contradiction).
+  -- Then o' ≤ R ⊔ b₁ (since b₁' ≤ R ⊔ b₁). But o' ≱ R ⊔ b₁. Contradiction.
+  -- (o' ⊔ a_i) ⊓ (o' ⊔ a_j) = o' for distinct i,j.
+  -- Non-collinearity: if a_j ≤ o' ⊔ a_i, then a_i ⊔ a_j ≤ o' ⊔ a_i.
+  -- Covering a_i ⋖ o' ⊔ a_i (rewritten from a_i ⋖ a_i ⊔ o') gives
+  -- o' ⊔ a_i = a_i ⊔ a_j, so o' ≤ a_i ⊔ a_j ≤ π, contradiction.
+  have h_not_coll₁₂ : ¬ a₂ ≤ o' ⊔ a₁ := by
+    intro h
+    have h_le : a₁ ⊔ a₂ ≤ o' ⊔ a₁ := sup_le le_sup_right h
+    have h_cov : a₁ ⋖ o' ⊔ a₁ := by
+      rw [show o' ⊔ a₁ = a₁ ⊔ o' from sup_comm _ _]
+      exact atom_covBy_join ha₁ ho'_atom ha₁_ne_o'
+    have h_eq : a₁ ⊔ a₂ = o' ⊔ a₁ :=
+      (h_cov.eq_or_eq (atom_covBy_join ha₁ ha₂ ha₁₂).lt.le h_le).resolve_left
+        (ne_of_gt (atom_covBy_join ha₁ ha₂ ha₁₂).lt)
+    exact ho'_not (calc o' ≤ o' ⊔ a₁ := le_sup_left
+      _ = a₁ ⊔ a₂ := h_eq.symm
+      _ ≤ π := sup_le ha₁_le ha₂_le)
+  have h_not_coll₁₃ : ¬ a₃ ≤ o' ⊔ a₁ := by
+    intro h
+    have h_le : a₁ ⊔ a₃ ≤ o' ⊔ a₁ := sup_le le_sup_right h
+    have h_cov : a₁ ⋖ o' ⊔ a₁ := by
+      rw [show o' ⊔ a₁ = a₁ ⊔ o' from sup_comm _ _]
+      exact atom_covBy_join ha₁ ho'_atom ha₁_ne_o'
+    have h_eq : a₁ ⊔ a₃ = o' ⊔ a₁ :=
+      (h_cov.eq_or_eq (atom_covBy_join ha₁ ha₃ ha₁₃).lt.le h_le).resolve_left
+        (ne_of_gt (atom_covBy_join ha₁ ha₃ ha₁₃).lt)
+    exact ho'_not (calc o' ≤ o' ⊔ a₁ := le_sup_left
+      _ = a₁ ⊔ a₃ := h_eq.symm
+      _ ≤ π := sup_le ha₁_le ha₃_le)
+  have h_not_coll₂₃ : ¬ a₃ ≤ o' ⊔ a₂ := by
+    intro h
+    have h_le : a₂ ⊔ a₃ ≤ o' ⊔ a₂ := sup_le le_sup_right h
+    have h_cov : a₂ ⋖ o' ⊔ a₂ := by
+      rw [show o' ⊔ a₂ = a₂ ⊔ o' from sup_comm _ _]
+      exact atom_covBy_join ha₂ ho'_atom ha₂_ne_o'
+    have h_eq : a₂ ⊔ a₃ = o' ⊔ a₂ :=
+      (h_cov.eq_or_eq (atom_covBy_join ha₂ ha₃ ha₂₃).lt.le h_le).resolve_left
+        (ne_of_gt (atom_covBy_join ha₂ ha₃ ha₂₃).lt)
+    exact ho'_not (calc o' ≤ o' ⊔ a₂ := le_sup_left
+      _ = a₂ ⊔ a₃ := h_eq.symm
+      _ ≤ π := sup_le ha₂_le ha₃_le)
+  have h_meet_o'₁₂ : (o' ⊔ a₁) ⊓ (o' ⊔ a₂) = o' :=
+    modular_intersection ho'_atom ha₁ ha₂ ha₁_ne_o'.symm ha₂_ne_o'.symm ha₁₂ h_not_coll₁₂
+  have h_meet_o'₁₃ : (o' ⊔ a₁) ⊓ (o' ⊔ a₃) = o' :=
+    modular_intersection ho'_atom ha₁ ha₃ ha₁_ne_o'.symm ha₃_ne_o'.symm ha₁₃ h_not_coll₁₃
+  have h_meet_o'₂₃ : (o' ⊔ a₂) ⊓ (o' ⊔ a₃) = o' :=
+    modular_intersection ho'_atom ha₂ ha₃ ha₂_ne_o'.symm ha₃_ne_o'.symm ha₂₃ h_not_coll₂₃
+  have hb₁₂' : b₁' ≠ b₂' := by
+    intro h
+    -- b₁' = b₂' ≤ (o' ⊔ a₁) ⊓ (o' ⊔ a₂) = o'
+    have hb₁'_le_o' : b₁' ≤ o' :=
+      h_meet_o'₁₂ ▸ le_inf inf_le_left (h ▸ inf_le_left)
+    -- So b₁' = o' (both atoms).
+    have hb₁'_eq : b₁' = o' :=
+      (ho'_atom.le_iff.mp hb₁'_le_o').resolve_left hb₁'_atom.1
+    -- But b₁' ≤ R ⊔ b₁, so o' ≤ R ⊔ b₁. Contradiction.
+    exact ho'_not_Rb₁ (hb₁'_eq ▸ inf_le_right)
+  have hb₁₃' : b₁' ≠ b₃' := by
+    intro h
+    have hb₁'_le_o' : b₁' ≤ o' :=
+      h_meet_o'₁₃ ▸ le_inf inf_le_left (h ▸ inf_le_left)
+    have hb₁'_eq : b₁' = o' :=
+      (ho'_atom.le_iff.mp hb₁'_le_o').resolve_left hb₁'_atom.1
+    exact ho'_not_Rb₁ (hb₁'_eq ▸ inf_le_right)
+  have hb₂₃' : b₂' ≠ b₃' := by
+    intro h
+    have hb₂'_le_o' : b₂' ≤ o' :=
+      h_meet_o'₂₃ ▸ le_inf inf_le_left (h ▸ inf_le_left)
+    have hb₂'_eq : b₂' = o' :=
+      (ho'_atom.le_iff.mp hb₂'_le_o').resolve_left hb₂'_atom.1
+    exact ho'_not_Rb₂ (hb₂'_eq ▸ inf_le_right)
+
+  -- Step 4: Apply non-planar Desargues to a₁a₂a₃ and b₁'b₂'b₃'.
+  -- (Perspective from o': b_i' ≤ o' ⊔ a_i by definition.)
+  have h_des := desargues_nonplanar ho'_atom ha₁ ha₂ ha₃
+    hb₁'_atom hb₂'_atom hb₃'_atom
+    (inf_le_left : b₁' ≤ o' ⊔ a₁)
+    (inf_le_left : b₂' ≤ o' ⊔ a₂)
+    (inf_le_left : b₃' ≤ o' ⊔ a₃)
+    π hπA.symm (b₁' ⊔ b₂' ⊔ b₃') rfl
+
+  -- Step 5: Apply lift_side_intersection three times.
+  have h_lift₁₂ := lift_side_intersection ha₁ ha₂ ha₁₂ hb₁ hb₂ hb₁₂
+    hb₁'_atom hb₂'_atom hb₁₂' hR ho'_atom
+    (sup_le ha₁_le ha₂_le) (sup_le hb₁_le hb₂_le) h_sides₁₂ hR_not ho'_not
+    inf_le_left inf_le_left inf_le_right inf_le_right hb₁'_not
+  have h_lift₁₃ := lift_side_intersection ha₁ ha₃ ha₁₃ hb₁ hb₃ hb₁₃
+    hb₁'_atom hb₃'_atom hb₁₃' hR ho'_atom
+    (sup_le ha₁_le ha₃_le) (sup_le hb₁_le hb₃_le) h_sides₁₃ hR_not ho'_not
+    inf_le_left inf_le_left inf_le_right inf_le_right hb₁'_not
+  have h_lift₂₃ := lift_side_intersection ha₂ ha₃ ha₂₃ hb₂ hb₃ hb₂₃
+    hb₂'_atom hb₃'_atom hb₂₃' hR ho'_atom
+    (sup_le ha₂_le ha₃_le) (sup_le hb₂_le hb₃_le) h_sides₂₃ hR_not ho'_not
+    inf_le_left inf_le_left inf_le_right inf_le_right hb₂'_not
+
+  -- Step 6: Combine. The axis is π ⊓ (b₁' ⊔ b₂' ⊔ b₃').
+  obtain ⟨h₁₂, h₁₃, h₂₃⟩ := h_des
+  exact ⟨π ⊓ (b₁' ⊔ b₂' ⊔ b₃'), h_lift₁₂ ▸ h₁₂, h_lift₁₃ ▸ h₁₃, h_lift₂₃ ▸ h₂₃⟩
+
 end Foam.FTPGExplore
