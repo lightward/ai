@@ -402,4 +402,59 @@ theorem desargues_nonplanar
   · -- b₂ ⊔ b₃ ≤ b₁ ⊔ b₂ ⊔ b₃
     exact sup_le (le_sup_right.trans le_sup_left) le_sup_right
 
+/-- Projection is injective: distinct points project to distinct points. -/
+theorem project_injective {c a b p q : L}
+    (hc : IsAtom c) (hp : IsAtom p) (hq : IsAtom q)
+    (ha : IsAtom a) (hb : IsAtom b)
+    (hcp : c ≠ p) (hcq : c ≠ q) (hpq : p ≠ q) (hab : a ≠ b)
+    (hc_not_l : ¬ c ≤ a ⊔ b)
+    (hp_not_l : ¬ p ≤ a ⊔ b) (hq_not_l : ¬ q ≤ a ⊔ b)
+    (hp_coplanar : p ⊔ c ≤ (a ⊔ b) ⊔ c)
+    (hq_coplanar : q ⊔ c ≤ (a ⊔ b) ⊔ c)
+    -- p and q are on different lines through c (not both on c's line)
+    (hpq_diff : p ⊔ c ≠ q ⊔ c) :
+    project c p (a ⊔ b) ≠ project c q (a ⊔ b) := by
+  unfold project
+  intro heq
+  -- (p ⊔ c) ⊓ (a ⊔ b) = (q ⊔ c) ⊓ (a ⊔ b)
+  -- Call this point m. m is on line a ⊔ b and on both p ⊔ c and q ⊔ c.
+  -- m ≤ p ⊔ c and m ≤ q ⊔ c, so m ≤ (p ⊔ c) ⊓ (q ⊔ c).
+  -- Now: p ⊔ c and q ⊔ c are two lines through c.
+  -- Their meet (p ⊔ c) ⊓ (q ⊔ c) should be just c
+  -- (by modular_intersection, if p, q, c are non-collinear).
+  -- So m ≤ c. But m is on line a ⊔ b, and c is not on a ⊔ b.
+  -- If m is an atom, m ≤ c means m = c (since c is an atom).
+  -- But m ≤ a ⊔ b and c ≰ a ⊔ b. Contradiction.
+  -- If m = ⊥... but m is an atom (project_is_atom).
+  have hm_atom := project_is_atom hc hp hcp ha hb hab hc_not_l hp_not_l hp_coplanar
+  unfold project at hm_atom
+  -- m ≤ p ⊔ c and m ≤ q ⊔ c
+  have hm_le_pc : (p ⊔ c) ⊓ (a ⊔ b) ≤ p ⊔ c := inf_le_left
+  have hm_le_qc : (p ⊔ c) ⊓ (a ⊔ b) ≤ q ⊔ c := heq ▸ inf_le_left
+  have hm_le_ab : (p ⊔ c) ⊓ (a ⊔ b) ≤ a ⊔ b := inf_le_right
+  -- m ≤ (p ⊔ c) ⊓ (q ⊔ c)
+  have hm_le_meet : (p ⊔ c) ⊓ (a ⊔ b) ≤ (p ⊔ c) ⊓ (q ⊔ c) :=
+    le_inf hm_le_pc hm_le_qc
+  -- (p ⊔ c) ⊓ (q ⊔ c) ≤ c: need p, q not collinear with c on a single line
+  -- This is where we need hpq_diff (the lines through c are distinct)
+  -- q is not on line p ⊔ c (otherwise p ⊔ c = q ⊔ c by line_eq_of_atom_le)
+  have hq_not_pc : ¬ q ≤ p ⊔ c := by
+    intro hle
+    apply hpq_diff
+    rw [sup_comm p c, sup_comm q c]
+    exact line_eq_of_atom_le hc hp hq hcp hcq hpq (sup_comm p c ▸ hle)
+  -- modular_intersection: (c ⊔ p) ⊓ (c ⊔ q) = c
+  have h_meet_eq : (c ⊔ p) ⊓ (c ⊔ q) = c :=
+    modular_intersection hc hp hq hcp hcq hpq (sup_comm c p ▸ hq_not_pc)
+  -- m ≤ c via the chain: m ≤ (p⊔c) ⊓ (q⊔c) = (c⊔p) ⊓ (c⊔q) = c
+  have hm_le_c : (p ⊔ c) ⊓ (a ⊔ b) ≤ c := by
+    calc (p ⊔ c) ⊓ (a ⊔ b)
+        ≤ (p ⊔ c) ⊓ (q ⊔ c) := hm_le_meet
+      _ = (c ⊔ p) ⊓ (c ⊔ q) := by rw [sup_comm p c, sup_comm q c]
+      _ = c := h_meet_eq
+  -- m is an atom, c is an atom, m ≤ c ⟹ m = ⊥ or m = c
+  rcases hc.le_iff.mp hm_le_c with h | h
+  · exact hm_atom.1 h
+  · exact hc_not_l (h ▸ hm_le_ab)
+
 end Foam.FTPGExplore
