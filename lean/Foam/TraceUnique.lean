@@ -1,19 +1,18 @@
 /-
-# Trace Uniqueness
+# Trace Uniqueness — One Scalar Readout
 
 The trace map is the unique linear functional (up to scalar) that
 vanishes on all commutators.
 
-## The claim (from spec, "group" section)
+This connects to Form.lean: the commutator [P,Q] is traceless.
+Trace uniqueness says trace is the ONLY functional with this
+property. Combined: there is exactly one scalar channel, and
+observation interaction is invisible to it.
 
-"the trace map tr: u(d) → u(1) is the unique Lie algebra homomorphism
-to a 1-dimensional target."
-
-## What this establishes
-
-The u(1) direction is not merely unreachable by writes — it is the
-*only* scalar-valued information a write carries. Conservation is
-singular, not one-of-many.
+The deductive chain:
+  P² = P → [P,Q] traceless (Form.lean)
+  Matrix algebras → trace unique (THIS FILE)
+  Combined: the conserved direction is singular, not one-of-many
 -/
 
 import Mathlib.LinearAlgebra.Matrix.Trace
@@ -22,7 +21,7 @@ import Mathlib.Analysis.InnerProductSpace.Basic
 
 set_option linter.unusedSimpArgs false
 
-namespace FoamSpec
+namespace Foam
 
 open Matrix
 
@@ -101,13 +100,6 @@ theorem zero_on_offdiag_of_kills_commutators {n : Type*} [Fintype n] [DecidableE
 
 /-!
 ### Capstone: trace uniqueness
-
-The lemmas above show that any commutator-killing functional is constant
-on diagonal entries and zero on off-diagonal entries. The capstone puts
-these together: any such functional is a scalar multiple of trace.
-
-This is the algebraic content of "the trace is the unique Lie algebra
-homomorphism u(d) → u(1)" — one scalar readout, no other.
 -/
 
 /-- Any matrix decomposes into scaled elementary matrices. -/
@@ -132,12 +124,11 @@ private lemma matrix_sum_single {n : Type*} [Fintype n] [DecidableEq n]
     is a scalar multiple of the trace. The trace is the unique such
     functional up to scalar.
 
-    Combined with commutator_traceless (Basic.lean): trace itself kills
+    Combined with commutator_traceless (Form.lean): trace itself kills
     all commutators. So the commutator-killing functionals are exactly
     the scalar multiples of trace — a 1-dimensional space.
 
-    Spec reference: "the trace map tr: u(d) → u(1) is the unique
-    Lie algebra homomorphism to a 1-dimensional target." -/
+    There is one scalar readout. Not two. Not zero. One. -/
 theorem trace_unique_of_kills_commutators
     {n : Type*} [Fintype n] [DecidableEq n] [Nonempty n]
     {R : Type*} [CommRing R]
@@ -152,10 +143,8 @@ theorem trace_unique_of_kills_commutators
     by_cases h : i = i₀
     · subst h; rfl
     · exact eq_on_diag_of_kills_commutators φ hφ i i₀ h
-  -- Decompose A and distribute φ by linearity (only rewrite LHS to preserve trace A)
   conv_lhs => rw [matrix_sum_single A]
   simp only [map_sum, LinearMap.map_smul, smul_eq_mul]
-  -- Collapse: off-diagonal vanishes, diagonal is constant
   have step : ∀ i : n, ∑ j : n, A i j * φ (single i j 1) =
       A i i * φ (single i₀ i₀ 1) := by
     intro i
@@ -170,4 +159,4 @@ theorem trace_unique_of_kills_commutators
   rw [← Finset.sum_mul, mul_comm, Matrix.trace]
   simp only [Matrix.diag_apply]
 
-end FoamSpec
+end Foam

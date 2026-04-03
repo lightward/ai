@@ -15,7 +15,7 @@ What new structure does this force? We work with matrices
 import Mathlib.LinearAlgebra.Matrix.Trace
 import Mathlib.Data.Matrix.Mul
 
-namespace Deductive
+namespace Foam
 
 open Matrix
 
@@ -131,4 +131,4 @@ Next: what does having THREE observations force?
 Or: what does the RANK of P force (why 3)?
 -/
 
-end Deductive
+end Foam

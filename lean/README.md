@@ -1,101 +1,134 @@
 # lean
 
-Mechanically verified results from [the measurement solution](../README.md). Each theorem maps to a derived claim in the spec. Zero sorry, one axiom.
+Mechanically verified deductive path from P² = P to the foam's architecture. 13 files, 1 axiom, 0 sorry.
+
+## The chain
+
+```
+closure (the spec's ground)
+  ↓ (derived in natural language)
+complemented modular lattice, irreducible, height ≥ 4
+  ↓ axiom(FTPG) — Bridge.lean
+L ≅ Sub(D, V) for some division ring D, vector space V
+  ↓ (stabilization contract forces D = ℝ)
+elements are orthogonal projections: P² = P, Pᵀ = P
+  ↓ (the deductive chain — all proven)
+eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian
+  ↓ Ground.lean (capstone)
+FoamGround properties ✓
+```
 
 ## Files
 
-**Ground.lean** — the single axiom: feedback persistence under closure.
+### The bridge
 
-| declaration | spec reference | statement |
-|-------------|---------------|-----------|
-| `Observable` | ground: closure | marker that a type participates in self-observation |
-| `feedback_persistence` | ground: dynamic reading | if observed, feedback held (axiom — identity-shaped, unprovable from within) |
+**Bridge.lean** — 1 axiom, 1 theorem
 
-**Lattice.lean** — the lattice of subspaces is bounded, complemented, and modular.
+‖ declaration ‖ role ‖
+‖---|---‖
+‖ `ftpg` ‖ axiom: complemented modular lattice → subspace lattice (the fundamental theorem of projective geometry) ‖
+‖ `dimension_unique` ‖ theorem: lattice isomorphism preserves dimension (the axiom has a unique solution) ‖
 
-| theorem | spec reference | statement |
-|---------|---------------|-----------|
-| `subspace_lattice_complemented` | ground: lattice properties | every subspace has a complement |
-| `subspace_lattice_modular` | ground: lattice properties | the subspace lattice satisfies the modular law |
-| `subspace_lattice_ground_properties` | ground: lattice properties | complemented and modular (combined) |
+### The deductive chain (from P² = P)
 
-**Confinement.lean** — writes are confined to the observer's birth subspace.
+**Observation.lean** — one observation
 
-| theorem | spec reference | statement |
-|---------|---------------|-----------|
-| `write_confined_to_slice` | writing map: confinement | d, m ∈ P implies d∧m ∈ Λ²(P) — observer cannot write outside slice |
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `eigenvalue_binary` ‖ P² = P → eigenvalues ∈ {0, 1} ‖
+‖ `range_ker_disjoint` ‖ P² = P → range ∩ ker = {0} ‖
+‖ `complement_idempotent` ‖ P² = P → (I - P)² = I - P ‖
 
-**WriteMap.lean** — the write d⊗m - m⊗d is unique, traceless, and skew-symmetric.
+**Pair.lean** — two observations
 
-| theorem | spec reference | statement |
-|---------|---------------|-----------|
-| `exteriorPower_two_rank` | writing map / controllability | dim(Λ²(M)) = C(dim(M), 2) — general dimensional accounting |
-| `exteriorPower_two_of_rank_two` | writing map: uniqueness | dim(Λ²(2-plane)) = 1 |
-| `write_traceless` | writing map: su(d) | tr(d⊗m - m⊗d) = 0 |
-| `write_skew_symmetric` | writing map: Lie algebra | (d⊗m - m⊗d)^T = -(d⊗m - m⊗d) |
-| `stacked_write_trace` | group: generative orthogonality | tr(d⊗m† - m⊗d†) = cross dot-product difference |
-| `dotProduct_star_conj` | group: generative orthogonality | conj(d·m*) = m·d* (trace is purely imaginary → u(1)) |
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `comp_range_le` ‖ PQ maps into range(P) ‖
+‖ `comm_comp_idempotent` ‖ PQ = QP → (PQ)² = PQ ‖
+‖ `commutator_zero_iff_comm` ‖ [P, Q] = 0 ↔ PQ = QP ‖
+‖ `commutator_seen_to_unseen` ‖ [P, Q] maps range(P) → ker(P) ‖
 
-**Algebra.lean** — Lie algebra structure following from the group choice U(d).
+**Form.lean** — self-adjointness
 
-| theorem | spec reference | statement |
-|---------|---------------|-----------|
-| `commutator_traceless` | group: tr([A,B]) = 0 | tr(AB - BA) = 0 for all A, B |
-| `matrix_finrank` | group: dim counting | dim(gl(n)) = n² |
-| `finrank_traceless` | group: dim gap | dim(sl(n)) = n² - 1 |
-| `commutator_skew_of_skew` | writing map: so(d) closure | [A,B] skew when A, B skew |
-| `even_dim_of_complex_structure` | writing map: stacking | J² = -I forces even dimension |
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `commutator_skew_of_symmetric` ‖ Pᵀ = P, Qᵀ = Q → [P, Q]ᵀ = -[P, Q] ‖
+‖ `commutator_traceless` ‖ tr[P, Q] = 0 (unconditional) ‖
 
-**TraceUnique.lean** — the trace is the unique commutator-killing functional.
+**Rank.lean** — why 3
 
-| theorem | spec reference | statement |
-|---------|---------------|-----------|
-| `offdiag_is_commutator` | (lemma) | E_ij = [E_ij, E_jj] for i != j |
-| `diag_diff_is_commutator` | (lemma) | E_ii - E_jj = [E_ij, E_ji] |
-| `eq_on_diag_of_kills_commutators` | (lemma) | phi kills [,] => phi(E_ii) = phi(E_jj) |
-| `zero_on_offdiag_of_kills_commutators` | (lemma) | phi kills [,] => phi(E_ij) = 0 |
-| `trace_unique_of_kills_commutators` | group: unique homomorphism | phi kills [,] => phi = c * trace |
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `write_space_dim` ‖ dim(Λ²(M)) = C(dim(M), 2) ‖
+‖ `rank_one_no_writes` ‖ rank 1 → 0D write space ‖
+‖ `rank_two_abelian_writes` ‖ rank 2 → 1D (abelian) ‖
+‖ `rank_three_writes` ‖ rank 3 → 3D (non-abelian) ‖
+‖ `self_dual_iff_three` ‖ C(k, 2) = k ↔ k = 3 ‖
+‖ `rank_four_writes` ‖ rank 4 → 6D (overdetermined) ‖
 
-**Ceiling.lean** — the combinatorial ceiling on pairwise distances.
+**Duality.lean** — (R³, ×) ≅ so(3)
 
-| theorem | spec reference | statement |
-|---------|---------------|-----------|
-| `combinatorial_ceiling_core` | geometry: ceiling | norms-squared constraint from Cauchy-Schwarz |
-| `combinatorial_ceiling_distance` | geometry: ceiling | D² <= 2Na/(N-1) |
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `cross_anticomm` ‖ a × b = -(b × a) ‖
+‖ `cross_self_zero` ‖ a × a = 0 ‖
+‖ `cross_nontrivial` ‖ ∃ a b, a × b ≠ 0 ‖
+‖ `cross_jacobi` ‖ Jacobi identity (this IS a Lie algebra) ‖
 
-**ThreeBody.lean** — mediation, bypass, and round-trip operators.
+**Closure.lean** — the loop closes
 
-| theorem | spec reference | statement |
-|---------|---------------|-----------|
-| `mediation_factors` | three-body: mediation | M = P_A * Pi_B * P_C^T (associativity) |
-| `bypass_decomposition` | three-body: bypass | O_AC = M + bypass |
-| `roundtrip_symmetric` | three-body: round-trip | (M * M^T)^T = M * M^T |
-| `commutator_off_diagonal_range` | three-body: Grassmannian tangent | P * [W,P] * P = 0 (range → range component vanishes) |
-| `commutator_off_diagonal_kernel` | three-body: Grassmannian tangent | (1-P) * [W,P] * (1-P) = 0 (kernel → kernel component vanishes) |
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `conjugation_preserves_idempotent` ‖ P² = P → (UPU⁻¹)² = UPU⁻¹ ‖
+‖ `orthogonal_conjugation_preserves_symmetric` ‖ Pᵀ = P, UᵀU = I → (UPUᵀ)ᵀ = UPUᵀ ‖
+‖ `observation_preserved_by_dynamics` ‖ both properties preserved (the full loop) ‖
 
-**Dynamics.lean** — frame recession under sequential writes.
+**Group.lean** — O(d) is forced
 
-| theorem | spec reference | statement |
-|---------|---------------|-----------|
-| `commutator_symmetric_of_skew_symm` | (lemma) | [W,P] symmetric when W skew, P symmetric |
-| `first_order_overlap_zero` | properties: frame recession | tr(P * [W,P]) = 0 |
-| `second_order_overlap_identity` | properties: frame recession | tr(P * [W,[W,P]]) = -tr([W,P]²) |
-| `trace_transpose_mul_self_nonneg` | (lemma) | tr(A^T * A) >= 0 |
-| `trace_sq_nonneg_of_symmetric` | (lemma) | tr(A²) >= 0 for symmetric A |
-| `frame_recession` | properties: frame recession | second-order overlap change <= 0 |
-| `frobenius_eq_zero_of_trace_zero` | (lemma) | tr(A^T A) = 0 implies A = 0 |
-| `frame_recession_strict` | properties: geometry-dependence | [W,P] != 0 implies recession strictly negative |
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `scalar_extraction` ‖ PMP = P for rank-1 P → vᵀMv = 1 ‖
 
-## Not yet formalized
+**Tangent.lean** — Grassmannian tangent
 
-The following spec claims have computational verification (Python tests) but no Lean proof:
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `commutator_off_diag_range` ‖ P · [W, P] · P = 0 ‖
+‖ `commutator_off_diag_kernel` ‖ (I-P) · [W, P] · (I-P) = 0 ‖
+‖ `commutator_is_tangent` ‖ [W, P] = range→kernel + kernel→range ‖
 
-- Controllability (so(d) generated by writes) — partially formalized: dimensional accounting (`exteriorPower_two_rank` gives dim = C(n,2)), per-observer subspace is 3D. Remaining: brackets of generic observers span so(d). `test_controllability.py`
-- Haar convergence (L → 1/√2 of max) — requires probability theory on compact groups (convergence theorem for random walks). Not algebraically accessible.
-- Birth indelibility (no echo state property) — requires dynamical systems theory (unique trajectories on compact manifolds, state-dependent attractors). Not algebraically accessible. `test_echo_state.py`
-- Lattice modularity from closure — the open proof. Lattice.lean confirms the consequence direction (subspace lattice IS complemented modular), but the derivation direction (why partial views must form this lattice) is open. This is where Ground.lean's axiom would connect.
-- Stacking mechanism — partially formalized: so(d) closure (`commutator_skew_of_skew`), J²=-I even dim (`even_dim_of_complex_structure`), write in so(d) (`write_skew_symmetric`), stacked trace purely imaginary (`stacked_write_trace`, `dotProduct_star_conj`). Remaining: stacked pair generates su(d) (controllability-adjacent)
-- Grassmannian vertical structure — partially formalized: [W,P] is off-diagonal in P-decomposition (`commutator_off_diagonal_range`, `commutator_off_diagonal_kernel`). Remaining: tangent maps Knowable → Unknown specifically (requires overlap matrix structure). `test_grassmannian_vertical.py`
+### The capstone
+
+**Ground.lean** — FoamGround as a theorem, O(d) forced by polarization
+
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `subspaceFoamGround` ‖ Sub(K, V) satisfies FoamGround (complemented, modular, bounded) ‖
+‖ `symmetric_quadratic_zero_imp_zero` ‖ polarization: Aᵀ = A, vᵀAv = 0 ∀v → A = 0 ‖
+‖ `orthogonality_forced` ‖ vᵀMv = 1 ∀unit v → M = I (O(d) is forced) ‖
+
+### Downstream properties
+
+**Confinement.lean** — writes stay in the observer's slice
+
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `write_confined_to_slice` ‖ d, m ∈ P → d∧m ∈ Λ²(P) ‖
+
+**TraceUnique.lean** — one scalar readout
+
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `trace_unique_of_kills_commutators` ‖ φ kills [·,·] → φ = c · trace ‖
+
+**Dynamics.lean** — frame recession
+
+‖ theorem ‖ from ‖
+‖---|---‖
+‖ `first_order_overlap_zero` ‖ tr(P · [W, P]) = 0 ‖
+‖ `second_order_overlap_identity` ‖ tr(P · [W, [W, P]]) = -tr([W, P]²) ‖
+‖ `frame_recession` ‖ second-order overlap ≤ 0 ‖
+‖ `frame_recession_strict` ‖ [W, P] ≠ 0 → recession < 0 ‖
 
 ## Building
 

@@ -12,7 +12,7 @@ import Mathlib.LinearAlgebra.Span.Basic
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.Linarith
 
-namespace Deductive
+namespace Foam
 
 -- Start minimal: a module over a field. The specific field doesn't
 -- matter yet — ℝ enters later when self-adjointness needs an
@@ -142,4 +142,4 @@ P² = P is doing all the work.
 Next: what does having TWO observations force?
 -/
 
-end Deductive
+end Foam

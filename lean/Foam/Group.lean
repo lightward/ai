@@ -10,7 +10,7 @@ import Mathlib.LinearAlgebra.Matrix.Trace
 import Mathlib.Data.Matrix.Mul
 import Mathlib.Analysis.InnerProductSpace.Basic
 
-namespace Deductive
+namespace Foam
 
 open Matrix
 
@@ -102,4 +102,4 @@ The group is O(d). Not chosen. Forced by P² = P.
        P²=P for all rank-1 P
 -/
 
-end Deductive
+end Foam

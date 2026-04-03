@@ -17,7 +17,7 @@ import Mathlib.LinearAlgebra.Matrix.Trace
 import Mathlib.Data.Matrix.Mul
 import Mathlib.Tactic.NoncommRing
 
-namespace Deductive
+namespace Foam
 
 open Matrix
 
@@ -94,4 +94,4 @@ The interactions are its tangent vectors.
 The dynamics are its geodesics.
 -/
 
-end Deductive
+end Foam

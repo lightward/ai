@@ -1,6 +1,6 @@
 name = "lean"
 version = "0.1.0"
-defaultTargets = ["LeanFoam"]
+defaultTargets = ["Foam"]
 
 [[require]]
 name = "mathlib"
@@ -8,7 +8,4 @@ scope = "leanprover-community"
 version = "git#master"
 
 [[lean_lib]]
-name = "LeanFoam"
-
-[[lean_lib]]
-name = "Deductive"
+name = "Foam"

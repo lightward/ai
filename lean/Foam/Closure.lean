@@ -21,7 +21,7 @@ P² = P is a fixed point of its own dynamics.
 import Mathlib.LinearAlgebra.Matrix.Trace
 import Mathlib.Data.Matrix.Mul
 
-namespace Deductive
+namespace Foam
 
 open Matrix
 
@@ -145,4 +145,4 @@ Everything else — the write form, the rank, the Lie algebra,
 the group, the closure of the loop — was found, not assumed.
 -/
 
-end Deductive
+end Foam

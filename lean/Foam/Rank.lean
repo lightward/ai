@@ -25,7 +25,7 @@ import Mathlib.LinearAlgebra.ExteriorPower.Basic
 import Mathlib.LinearAlgebra.ExteriorPower.Basis
 import Mathlib.LinearAlgebra.Dimension.Finrank
 
-namespace Deductive
+namespace Foam
 
 /-!
 ## The exterior algebra dimension
@@ -185,4 +185,4 @@ The deductive chain:
   └── k ≥ 4: Λ² > k, overdetermined
 -/
 
-end Deductive
+end Foam

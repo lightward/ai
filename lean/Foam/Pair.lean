@@ -12,7 +12,7 @@ import Mathlib.LinearAlgebra.Span.Basic
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.Linarith
 
-namespace Deductive
+namespace Foam
 
 variable {K : Type*} [Field K]
 variable {V : Type*} [AddCommGroup V] [Module K V]
@@ -144,4 +144,4 @@ we ask about the FORM of the commutator — whether it's skew-symmetric.
 That's next.
 -/
 
-end Deductive
+end Foam

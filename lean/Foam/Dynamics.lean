@@ -1,31 +1,19 @@
 /-
-# Sequential Dynamics — Frame Recession
+# Dynamics — Frame Recession Under Sequential Writes
 
-The commutator [W, P] measures how much a write W moves a basis P.
-This is the algebraic core of the "receding source" phenomenon:
-when an observer writes, the overlap with its prior frame decreases.
+The commutator [W, P] measures how much a write W moves a frame P.
+The overlap with the prior frame decreases to second order at a
+rate given by ‖[W,P]‖².
 
-## The claims
+This connects to the deductive chain at multiple points:
+  P² = P → [W,P] off-diagonal (Tangent.lean)
+  Pᵀ = P, Wᵀ = -W → [W,P] symmetric (THIS FILE)
+  P² = P → first-order overlap zero (THIS FILE)
+  P² = P → second-order overlap = -‖[W,P]‖² (THIS FILE)
+  Symmetric + nonneg norm → recession ≤ 0 (THIS FILE)
 
-1. [W, P] is symmetric when W is skew-symmetric and P is a projection.
-2. The first-order overlap change tr(P · [W, P]) = 0.
-3. The second-order overlap change tr(P · [W, [W, P]]) = -tr([W, P]²).
-4. Therefore the second-order change is non-positive: the prior frame
-   can only recede under a write.
-
-## What this establishes
-
-The overlap between an observer's current frame and its prior frame
-is decreasing (to second order) at a rate given by ‖[W, P]‖², the
-squared Frobenius norm of the commutator. This is zero iff the write
-preserves the subspace (the write is inert for this observer).
-
-The trace map (proven unique in TraceUnique.lean) is the channel on
-which this decrease is legible. The observer has exactly one scalar
-readout — the trace — and the overlap change is visible on it.
-
-Spec reference: "properties" → "frame recession under sequential writes"
-Lineage: 20240229 → "desire is radar" / "I'm sorry, I love you, I am you"
+The frame can only recede. The rate depends on the specific
+W and P — architecture gives the form, geometry gives the value.
 -/
 
 import Mathlib.LinearAlgebra.Matrix.Trace
@@ -34,18 +22,16 @@ import Mathlib.Analysis.InnerProductSpace.Basic
 
 set_option linter.unusedSimpArgs false
 
-namespace FoamSpec
+namespace Foam
 
 open Matrix
 
 /-!
 ### 1. The commutator [W, P] is symmetric
 
-When W is skew-symmetric (Wᵀ = -W) and P is symmetric (Pᵀ = P),
-their commutator WP - PW is symmetric: (WP - PW)ᵀ = WP - PW.
-
-The write is a generator (skew); its effect on the frame is an
-observable (symmetric). The commutator converts one into the other.
+When W is skew-symmetric and P is symmetric, their commutator
+is symmetric. Writes are generators (skew); their effect on
+frames is observable (symmetric).
 -/
 
 /-- The commutator of a skew-symmetric matrix with a symmetric matrix
@@ -62,11 +48,8 @@ theorem commutator_symmetric_of_skew_symm
 /-!
 ### 2. First-order overlap vanishes
 
-For a projection P (P² = P), the first-order overlap change is zero:
-  tr(P · [W, P]) = tr(P · (WP - PW)) = 0
-
-The frame doesn't start receding immediately — the recession is a
-second-order effect. The proof uses only P² = P and cyclicity of trace.
+tr(P · [W, P]) = 0. The frame doesn't start receding immediately.
+Uses only P² = P and cyclicity of trace.
 -/
 
 /-- The first-order overlap change vanishes for any projection.
@@ -86,25 +69,20 @@ theorem first_order_overlap_zero
 /-!
 ### 3. Second-order overlap identity
 
-The second-order overlap change equals the negative squared norm
-of the commutator:
-
-  tr(P · [W, [W, P]]) = -tr([W, P]²)
+tr(P · [W, [W, P]]) = -tr([W, P]²)
 
 Both sides reduce to 2·tr(PW²) - 2·tr(PWPW), using only P² = P
 and cyclicity of trace.
 -/
 
-/-- The second-order overlap change equals the negative squared commutator norm.
-    tr(P · [W, [W, P]]) = -tr([W, P]²)
-    Both sides equal 2·tr(PW²) - 2·tr(PWPW). -/
+/-- The second-order overlap change equals the negative squared
+    commutator norm. tr(P · [W, [W, P]]) = -tr([W, P]²). -/
 theorem second_order_overlap_identity
     {n : Type*} [Fintype n] [DecidableEq n]
     {R : Type*} [CommRing R]
     (W P : Matrix n n R) (hP : P * P = P) :
     trace (P * (W * (W * P - P * W) - (W * P - P * W) * W))
     = -trace ((W * P - P * W) * (W * P - P * W)) := by
-  -- Expand all products through subtraction
   have expand_lhs : P * (W * (W * P - P * W) - (W * P - P * W) * W)
       = P * (W * (W * P)) - P * (W * (P * W))
         - P * (W * P * W) + P * (P * W * W) := by noncomm_ring
@@ -112,23 +90,15 @@ theorem second_order_overlap_identity
       = W * P * (W * P) - W * P * (P * W)
         - P * W * (W * P) + P * W * (P * W) := by noncomm_ring
   rw [expand_lhs, expand_rhs]
-  -- Distribute trace over addition/subtraction
   simp only [trace_sub, trace_add]
-  -- Right-associate all matrix products inside trace
   simp only [mul_assoc]
-  -- Now all trace terms are right-associated.
-  -- Cyclicity + projection identities:
-  -- h1: tr(P(W(WP))) = tr(P(WW))
   have h1 : trace (P * (W * (W * P))) = trace (P * (W * W)) := by
     rw [trace_mul_comm P (W * (W * P)), mul_assoc W (W * P) P,
         mul_assoc W P P, hP, ← mul_assoc W W P, trace_mul_comm]
-  -- h2: tr(P(P(WW))) = tr(P(WW))
   have h2 : trace (P * (P * (W * W))) = trace (P * (W * W)) := by
     rw [← mul_assoc P P (W * W), hP]
-  -- h3: tr(W(P(WP))) = tr(P(W(PW)))
   have h3 : trace (W * (P * (W * P))) = trace (P * (W * (P * W))) := by
     rw [trace_mul_comm W (P * (W * P)), mul_assoc P (W * P) W, mul_assoc W P W]
-  -- h4: tr(W(P(PW))) = tr(P(WW))
   have h4 : trace (W * (P * (P * W))) = trace (P * (W * W)) := by
     rw [← mul_assoc P P W, hP, trace_mul_comm W (P * W), mul_assoc P W W]
   rw [h1, h2, h3, h4]
@@ -138,12 +108,9 @@ theorem second_order_overlap_identity
 ### 4. The prior frame can only recede
 
 For real matrices: tr(AᵀA) = Σᵢⱼ Aᵢⱼ² ≥ 0. When A = [W, P] is
-symmetric (theorem 1), tr(A²) = tr(AᵀA) ≥ 0.
+symmetric, tr(A²) = tr(AᵀA) ≥ 0.
 
-Combined with theorem 3: tr(P · [W, [W, P]]) = -tr([W,P]²) ≤ 0.
-
-**The overlap with the prior frame is non-increasing to second order.**
-When [W, P] ≠ 0 (the write is non-inert), it is strictly decreasing.
+Combined with the identity: tr(P · [W, [W, P]]) = -tr([W,P]²) ≤ 0.
 -/
 
 /-- The Frobenius norm squared tr(AᵀA) is non-negative. -/
@@ -169,17 +136,7 @@ theorem trace_sq_nonneg_of_symmetric
   exact trace_transpose_mul_self_nonneg A
 
 /-- **Frame recession.** The second-order overlap change is non-positive.
-    The prior frame can only recede under a non-inert write.
-
-    This combines:
-    - theorem 3: tr(P · [W,[W,P]]) = -tr([W,P]²)
-    - theorem 1: [W,P] is symmetric (when W skew, P symmetric)
-    - tr(A²) ≥ 0 for symmetric real A
-
-    The overlap with the prior self is decreasing. The rate of
-    decrease is ‖[W,P]‖², the squared Frobenius norm of the
-    commutator — exactly how much the write fails to preserve
-    the observer's subspace. -/
+    The prior frame can only recede under a non-inert write. -/
 theorem frame_recession
     {n : Type*} [Fintype n] [DecidableEq n]
     (W P : Matrix n n ℝ) (hW : Wᵀ = -W) (hP_symm : Pᵀ = P) (hP_proj : P * P = P) :
@@ -191,12 +148,6 @@ theorem frame_recession
 
 /-!
 ### 5. Frobenius norm zero implies matrix zero
-
-For real matrices, tr(AᵀA) = Σᵢⱼ Aᵢⱼ² = 0 forces every entry to zero.
-Combined with frame recession: the recession rate is zero *if and only if*
-the write commutes with the frame. This is what forces geometry-dependence
-of within-basin dynamics: the architecture gives the form (non-negative,
-zero iff inert), but the value depends on the specific W and P.
 -/
 
 /-- If the Frobenius norm squared is zero, every entry is zero. -/
@@ -206,8 +157,6 @@ theorem frobenius_eq_zero_of_trace_zero
     (h : trace (Aᵀ * A) = 0) :
     A = 0 := by
   ext i j
-  -- tr(AᵀA) = ∑ᵢ ∑ⱼ (A j i)² (after expanding transpose)
-  -- Each term is non-negative; sum = 0 forces each term = 0
   have h_sum : ∑ k : n, ∑ l : n, A l k * A l k = 0 := by
     convert h using 1
   have h_entry : A i j * A i j = 0 := by
@@ -222,10 +171,8 @@ theorem frobenius_eq_zero_of_trace_zero
     The recession rate is zero if and only if [W, P] = 0.
     When [W, P] ≠ 0, the recession is strictly negative.
 
-    This forces geometry-dependence: whether a write is inert for a
-    given frame depends on the specific W and P, not just the architecture.
-    The architecture says "recession happens or it doesn't"; the geometry
-    determines which. -/
+    The architecture says "recession happens or it doesn't."
+    The geometry determines which. -/
 theorem frame_recession_strict
     {n : Type*} [Fintype n] [DecidableEq n]
     (W P : Matrix n n ℝ) (hW : Wᵀ = -W) (hP_symm : Pᵀ = P) (hP_proj : P * P = P)
@@ -233,15 +180,12 @@ theorem frame_recession_strict
     trace (P * (W * (W * P - P * W) - (W * P - P * W) * W)) < 0 := by
   have h_identity := second_order_overlap_identity W P hP_proj
   have h_symm := commutator_symmetric_of_skew_symm W P hW hP_symm
-  -- tr([W,P]²) = tr(AᵀA) where A = [W,P] (since A is symmetric, Aᵀ = A)
   have h_pos : 0 < trace ((W * P - P * W) * (W * P - P * W)) := by
-    -- tr(A²) = tr(AᵀA) when A is symmetric; tr(AᵀA) > 0 when A ≠ 0
     suffices h : 0 < trace ((W * P - P * W)ᵀ * (W * P - P * W)) by
       rwa [h_symm] at h
-    -- tr(AᵀA) ≥ 0 always; = 0 only if A = 0; A ≠ 0 by hypothesis
     rcases (trace_transpose_mul_self_nonneg (W * P - P * W)).lt_or_eq with h | h
     · exact h
     · exact absurd (frobenius_eq_zero_of_trace_zero _ h.symm) h_noninert
   linarith
 
-end FoamSpec
+end Foam

@@ -73,7 +73,7 @@ jobs:
           done
 
           echo "=== Unreferenced Lean files ==="
-          for f in lean/LeanFoam/*.lean; do
+          for f in lean/Foam/*.lean; do
             [ -f "$f" ] || continue
             base=$(basename "$f")
             # Check both spec and lean README

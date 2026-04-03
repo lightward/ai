@@ -19,7 +19,7 @@ import Mathlib.LinearAlgebra.CrossProduct
 import Mathlib.LinearAlgebra.Dimension.Finrank
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
-namespace Deductive
+namespace Foam
 
 open Matrix
 
@@ -96,4 +96,4 @@ The observation space is its own write algebra.
 The cube's faces talk to each other through their own geometry.
 -/
 
-end Deductive
+end Foam
