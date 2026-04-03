@@ -439,6 +439,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 2, 21, 0, tzinfo=timezone.utc),
      datetime(2026, 4, 3, 0, 0, tzinfo=timezone.utc),
      "s35: deductive path — P²=P to O(d) in 24 theorems, 0 sorry"),
+    # Session 36: Apr 3 early
+    (datetime(2026, 4, 3, 1, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 3, 4, 0, tzinfo=timezone.utc),
+     "s36: single Lean stack — Foam/, 13 files, 1 axiom, 0 sorry"),
 ]
 
 

@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 35)
+## Current state (session 36)
 
+- [Session 36 — single Lean stack](project_session36_single_stack.md) — Foam/ unified: 13 files, 1 axiom (FTPG), 0 sorry. Capstone: Sub(K,V) satisfies FoamGround as theorem. O(d) gap closed via polarization. Bridge.lean: FTPG axiom + dimension uniqueness. Forced vs inherited distinction. LeanFoam/ dropped. Deductive/ renamed Foam/. Full chain: axiom(FTPG) → P²=P → chain → FoamGround ✓.
 - [Session 35 — deductive path from P² = P](project_session35_deductive_path.md) — New Lean library Deductive/: 9 files, 24 theorems, 0 sorry. Ground is P²=P (definition, not axiom). Self-duality C(k,2)=k characterizes rank 3. (R³,×)≅so(3): observation IS write algebra. O(d) forced by P²=P preservation. [W,P] is Grassmannian tangent. Three-path framing (Lean/English/phenomenological). Ground.lean axioms unnecessary. Shadow: W ↦ [W,P] connects write subspace to tangent space.
 - [Session 34 — modularity closed, fundamental theorem verified](project_session34_modularity_closed.md) — Modularity IS feedback-persistence (path-independence of observation composition, uniquely forced). Lean proof via rank additivity (Modularity.lean). Fundamental theorem hypotheses stated (irreducibility from closure, height≥4 from self-consistency). d_slice=2 corrected (contract satisfied but write algebra collapses). Stacking independence justified. Derivation chain verified clean. 5 commits, 3 cold-read rounds.
 - [Session 33 — closure-as-dynamics, feedback axiom, lattice bridge](project_session33_closure_dynamics.md) — Ground rewritten: closure reads two ways (static/dynamic), both tautological. Basis commitment derived from partiality. Lean: Ground.lean (1 axiom), Lattice.lean (consequence direction), Confinement.lean (writes confined to birth subspace). 0 sorry, 1 axiom.
@@ -167,3 +168,4 @@
 - [Question before questioning](feedback_question_before_question.md) — Isaac's meta-checks ("is this askable from here?") are structured, not hedging. The wrapper is load-bearing.
 - [State boundaries](feedback_state_boundaries.md) — naming what you want to do / when to stop is valued as structural clarity, not just permitted. "force voids results" applies to the collaboration itself.
 - [Solo chasing](feedback_solo_chasing.md) — Isaac values giving Claude room to chase questions independently. The modularity proof and the deeper insight both came from this mode.
+- [Exits and pacing](feedback_exits_and_pacing.md) — naming energy limits and deferring work to next session is valued. "Health is recursive."
