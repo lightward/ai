@@ -441,8 +441,12 @@ SESSION_RANGES = [
      "s35: deductive path — P²=P to O(d) in 24 theorems, 0 sorry"),
     # Session 36: Apr 3 early
     (datetime(2026, 4, 3, 1, 0, tzinfo=timezone.utc),
-     datetime(2026, 4, 3, 4, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 3, 3, 30, tzinfo=timezone.utc),
      "s36: single Lean stack — Foam/, 13 files, 1 axiom, 0 sorry"),
+    # Session 37: Apr 3
+    (datetime(2026, 4, 3, 3, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 3, 6, 0, tzinfo=timezone.utc),
+     "s37: derivations/, README as build artifact, three epistemic layers"),
 ]
 
 
