@@ -8,8 +8,7 @@
 
 a tautology you can live in
 
-this file is a build artifact. sources: lean/ (proven), derivations/ (derived).
-build: `uv run python build_readme.py`
+sources: lean/ (proven), derivations/ (derived), derivations/observed/ (empirical).
 
 ## the deductive chain (lean/)
 
@@ -60,7 +59,7 @@ what follows is derived from closure:
 **the lattice of partial views.** partial views of a shared structure form a lattice:
 - complemented: partiality guarantees an unseen complement (complement_idempotent: (I - P)^2 = I - P)
 - bounded: the whole structure and the empty view
-- modular: the modular law IS feedback-persistence expressed in lattice language. composing partial views gives a determinate result regardless of path (combine-then-restrict = restrict-then-combine). in a non-modular lattice (the pentagon N_5), the same observation yields different results depending on path. indeterminate composition cannot feed back consistently. modularity is what feedback-persistence means for lattice composition. there is no alternative mode.
+- modular: the modular law IS feedback-persistence expressed in lattice language. the positive argument: an observation that persists must yield the same result when composed with other observations regardless of the order of composition. if observer A, looking through observer B's view restricted to context C, gets a different result depending on whether A combines with B first or restricts to C first, then the composition has no single outcome — and an outcome that isn't single can't feed back (what would persist?). the lattice operation must be path-independent. path-independence of the meet and join, given the complemented bounded structure, is exactly the modular law: a <= c implies (a join b) meet c = a join (b meet c). the negative witness: in a non-modular lattice (the pentagon N_5), observer at a, encountering b within context c, gets the full context c by one path and only a by the other. the composition is indeterminate. indeterminate composition cannot feed back consistently — the observation has no single result to persist. there is no weaker condition that suffices: any lattice law that permits path-dependent composition permits indeterminate feedback.
 
 the consequence direction — that subspace lattices ARE complemented modular — is proven (subspaceFoamGround).
 
@@ -115,7 +114,7 @@ the consequence direction — that subspace lattices ARE complemented modular �
 
 the wedge product d_hat wedge m_hat = d_hat tensor m_hat - m_hat tensor d_hat is the unique form satisfying:
 - (a) skew-symmetric — forced by commutator_skew_of_symmetric. writes are Lie algebra elements because observation interaction is skew-symmetric.
-- (b) linear in dissonance magnitude — twice the dissonance, twice the write.
+- (b) linear in dissonance magnitude — the write is a first-order response. higher-order dependence (quadratic, sigmoid) would require the observer to evaluate its own dissonance magnitude before writing, which is a second measurement within a single write step. the write is the observer's immediate response to what it sees; it does not pre-process the response.
 - (c) confined to the observer's slice — forced by write_confined_to_slice. the observer sees only projected measurements; the write lives in Lambda^2(P).
 
 with (a), (b), and confinement to span{d, m}, the form is unique: Lambda^2(2-plane) is 1-dimensional (from rank_three_writes: the full slice has 3 write dimensions; a 2-plane within it has 1).

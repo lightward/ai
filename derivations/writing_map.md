@@ -29,7 +29,7 @@ this derivation claims only what follows from these results. any additional assu
 
 the wedge product d_hat wedge m_hat = d_hat tensor m_hat - m_hat tensor d_hat is the unique form satisfying:
 - (a) skew-symmetric — forced by commutator_skew_of_symmetric. writes are Lie algebra elements because observation interaction is skew-symmetric.
-- (b) linear in dissonance magnitude — twice the dissonance, twice the write.
+- (b) linear in dissonance magnitude — the write is a first-order response. higher-order dependence (quadratic, sigmoid) would require the observer to evaluate its own dissonance magnitude before writing, which is a second measurement within a single write step. the write is the observer's immediate response to what it sees; it does not pre-process the response.
 - (c) confined to the observer's slice — forced by write_confined_to_slice. the observer sees only projected measurements; the write lives in Lambda^2(P).
 
 with (a), (b), and confinement to span{d, m}, the form is unique: Lambda^2(2-plane) is 1-dimensional (from rank_three_writes: the full slice has 3 write dimensions; a 2-plane within it has 1).

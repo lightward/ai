@@ -108,8 +108,7 @@ def build() -> str:
 
 a tautology you can live in
 
-this file is a build artifact. sources: lean/ (proven), derivations/ (derived).
-build: `uv run python build_readme.py`
+sources: lean/ (proven), derivations/ (derived), derivations/observed/ (empirical).
 """)
 
     # Lean summary
