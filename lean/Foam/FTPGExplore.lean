@@ -302,4 +302,40 @@ theorem project_is_atom {c p a b : L}
     · exact ne_of_gt (atom_covBy_join ha hb hab |>.lt) h
     · exact hp_not_l (h ▸ le_sup_left)
 
+/-!
+## The diamond isomorphism: dimension by structure, not counting
+
+Mathlib's `infIccOrderIsoIccSup` gives us `[a ⊓ b, a] ≃o [b, a ⊔ b]`
+in any modular lattice. This is the structural version of
+"dim(a) + dim(b) = dim(a ⊔ b) + dim(a ⊓ b)".
+
+We don't need a rank function. We need interval isomorphisms.
+Let's see what falls out.
+-/
+
+/-- Two planes in a common space: if both are covered by the space,
+    their meet is covered by each of them. (Diamond isomorphism
+    gives the structural dimension argument.) -/
+theorem planes_meet_covBy {π₁ π₂ s : L}
+    (h₁ : π₁ ⋖ s) (h₂ : π₂ ⋖ s) (h_ne : π₁ ≠ π₂) :
+    (π₁ ⊓ π₂) ⋖ π₁ ∧ (π₁ ⊓ π₂) ⋖ π₂ := by
+  have h₂_not_le : ¬ π₂ ≤ π₁ := by
+    intro hle
+    rcases h₂.eq_or_eq hle h₁.le with h | h
+    · exact h_ne h
+    · exact ne_of_lt h₁.lt h
+  have h_join : π₁ ⊔ π₂ = s := by
+    have h_lt : π₁ < π₁ ⊔ π₂ := lt_of_le_of_ne le_sup_left
+      (fun h => h₂_not_le (le_trans le_sup_right (ge_of_eq h)))
+    exact (h₁.eq_or_eq h_lt.le (sup_le h₁.le h₂.le)).resolve_left (ne_of_gt h_lt)
+  constructor
+  · -- π₁ ⊓ π₂ ⋖ π₁: from π₂ ⋖ π₁ ⊔ π₂ via dual covering
+    rw [← h_join] at h₂
+    rw [sup_comm] at h₂
+    have := IsLowerModularLattice.inf_covBy_of_covBy_sup h₂
+    rwa [inf_comm] at this
+  · -- π₁ ⊓ π₂ ⋖ π₂: from π₁ ⋖ π₁ ⊔ π₂ via dual covering
+    rw [← h_join] at h₁
+    exact IsLowerModularLattice.inf_covBy_of_covBy_sup h₁
+
 end Foam.FTPGExplore
