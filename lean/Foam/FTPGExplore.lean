@@ -1567,24 +1567,63 @@ theorem coord_add_comm (Γ : CoordSystem L)
   set D_a := (a ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)
   set D_b := (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)
   set W := (a' ⊔ D_b) ⊓ (b' ⊔ D_a)
-  -- The core: W lies on l (from the two chained Desargues applications)
+  -- Atom properties
+  have h_in_π : ∀ x, x ≤ Γ.O ⊔ Γ.U → x ≤ (Γ.U ⊔ Γ.V) ⊔ Γ.C :=
+    fun x hx => hx.trans (le_sup_left.trans (le_of_eq Γ.m_sup_C_eq_π.symm))
+  have hUV : Γ.U ≠ Γ.V := fun h => Γ.hV_off (h ▸ le_sup_right)
+  have ha'_atom : IsAtom a' :=
+    perspect_atom Γ.hC ha (fun h => Γ.hC_not_l (h ▸ ha_on)) Γ.hU Γ.hV hUV Γ.hC_not_m
+      (sup_le (h_in_π a ha_on) le_sup_right)
+  have hb'_atom : IsAtom b' :=
+    perspect_atom Γ.hC hb (fun h => Γ.hC_not_l (h ▸ hb_on)) Γ.hU Γ.hV hUV Γ.hC_not_m
+      (sup_le (h_in_π b hb_on) le_sup_right)
+  have hDa_atom : IsAtom D_a := by sorry
+  have hDb_atom : IsAtom D_b := by sorry
+  -- Distinctness facts
+  have ha_ne_C : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
+  have hb_ne_C : b ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ hb_on)
+  have ha_ne_E : a ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ ha_on)
+  have hb_ne_E : b ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ hb_on)
+  have ha'_ne_a : a' ≠ a := fun h => ha_ne_U
+    (Γ.atom_on_both_eq_U ha ha_on (h ▸ (inf_le_right : a' ≤ Γ.U ⊔ Γ.V)))
+  have hb'_ne_b : b' ≠ b := fun h => hb_ne_U
+    (Γ.atom_on_both_eq_U hb hb_on (h ▸ (inf_le_right : b' ≤ Γ.U ⊔ Γ.V)))
+  -- === The Desargues chain ===
+  -- Join equalities: a ⊔ a' = a ⊔ C (covering argument)
+  have haa' : a ⊔ a' = a ⊔ Γ.C := by
+    have h_lt : a < a ⊔ a' := lt_of_le_of_ne le_sup_left
+      (fun h => ha'_ne_a ((ha.le_iff.mp (h ▸ le_sup_right)).resolve_left ha'_atom.1))
+    exact ((atom_covBy_join ha Γ.hC ha_ne_C).eq_or_eq h_lt.le
+      (sup_le le_sup_left inf_le_left)).resolve_left (ne_of_gt h_lt)
+  have hbb' : b ⊔ b' = b ⊔ Γ.C := by
+    have h_lt : b < b ⊔ b' := lt_of_le_of_ne le_sup_left
+      (fun h => hb'_ne_b ((hb.le_iff.mp (h ▸ le_sup_right)).resolve_left hb'_atom.1))
+    exact ((atom_covBy_join hb Γ.hC hb_ne_C).eq_or_eq h_lt.le
+      (sup_le le_sup_left inf_le_left)).resolve_left (ne_of_gt h_lt)
+  -- Side intersection 1: (a⊔a') ⊓ (b⊔b') = C
+  have hS₁ : (a ⊔ a') ⊓ (b ⊔ b') = Γ.C := by
+    rw [haa', hbb']; exact CoordSystem.lines_through_C_meet Γ ha hb hab ha_on hb_on
+  -- Join equalities for return centers: a ⊔ D_a = a ⊔ E
+  have haDa : a ⊔ D_a = a ⊔ Γ.E := by sorry  -- same covering pattern
+  have hbDb : b ⊔ D_b = b ⊔ Γ.E := by sorry
+  -- Side intersection 2: (a⊔D_a) ⊓ (b⊔D_b) = E
+  have hS₂ : (a ⊔ D_a) ⊓ (b ⊔ D_b) = Γ.E := by
+    rw [haDa, hbDb]; exact CoordSystem.lines_through_E_meet Γ ha hb hab ha_on hb_on
+  -- First Desargues: P₁ = (a'⊔D_a) ⊓ (b'⊔D_b) ≤ O⊔C
+  have hP₁_le : (a' ⊔ D_a) ⊓ (b' ⊔ D_b) ≤ Γ.O ⊔ Γ.C := by
+    sorry  -- desargues_planar + collinear_of_common_bound + OC_covBy_π
+  -- Second Desargues: W ≤ l (the core result)
   have hW_on_l : W ≤ Γ.O ⊔ Γ.U := by
-    sorry  -- Two Desargues applications (to be filled in)
-  -- W is an atom (intersection of two lines in the plane)
-  have hW_atom : IsAtom W := by
-    sorry  -- lines_meet + line_height_two
-  -- coord_add values are atoms
-  have hab_atom : IsAtom (coord_add Γ a b) := by
-    sorry  -- project_is_atom or similar
-  have hba_atom : IsAtom (coord_add Γ b a) := by
-    sorry  -- project_is_atom or similar
-  -- W ≤ coord_add Γ a b (W on first addition line and on l)
+    sorry  -- desargues_planar + collinear_of_common_bound
+  -- Remaining atom facts
+  have hW_atom : IsAtom W := by sorry
+  have hab_atom : IsAtom (coord_add Γ a b) := by sorry
+  have hba_atom : IsAtom (coord_add Γ b a) := by sorry
+  -- Combination: W on both addition lines and on l → W = a+b = b+a
   have hW_le_ab : W ≤ coord_add Γ a b :=
     le_inf (inf_le_left : W ≤ a' ⊔ D_b) hW_on_l
-  -- W ≤ coord_add Γ b a (W on second addition line and on l)
   have hW_le_ba : W ≤ coord_add Γ b a :=
     le_inf (inf_le_right : W ≤ b' ⊔ D_a) hW_on_l
-  -- Both are atoms, W is atom ≤ both → W = both → equal
   exact ((hab_atom.le_iff.mp hW_le_ab).resolve_left hW_atom.1).symm.trans
     ((hba_atom.le_iff.mp hW_le_ba).resolve_left hW_atom.1)
 
