@@ -1691,12 +1691,92 @@ theorem coord_add_comm (Γ : CoordSystem L)
   -- Remaining atom facts
   -- a' not on l (a' on m, a' ≤ l → a' ≤ l⊓m = U → a' = U → contradiction)
   -- Helper facts (all provable, some need covering/modular arguments)
-  have ha'_not_l : ¬ a' ≤ Γ.O ⊔ Γ.U := by sorry
-  have hb'_not_l : ¬ b' ≤ Γ.O ⊔ Γ.U := by sorry
-  have hDb_not_l : ¬ D_b ≤ Γ.O ⊔ Γ.U := by sorry
-  have hDa_not_l : ¬ D_a ≤ Γ.O ⊔ Γ.U := by sorry
-  have ha'Db : a' ≠ D_b := by sorry
-  have hb'Da : b' ≠ D_a := by sorry
+  have ha'_not_l : ¬ a' ≤ Γ.O ⊔ Γ.U := by
+    intro h
+    have ha'_le_U : a' ≤ Γ.U := by
+      have := le_inf h (inf_le_right : a' ≤ Γ.U ⊔ Γ.V)
+      rwa [Γ.l_inf_m_eq_U] at this
+    have ha'_eq_U := (Γ.hU.le_iff.mp ha'_le_U).resolve_left ha'_atom.1
+    have hU_le_a : Γ.U ≤ a := by
+      have hU_le_aC : Γ.U ≤ a ⊔ Γ.C := ha'_eq_U ▸ (inf_le_left : a' ≤ a ⊔ Γ.C)
+      have : (Γ.O ⊔ Γ.U) ⊓ (Γ.C ⊔ a) = a :=
+        inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l ha_on
+      calc Γ.U ≤ (Γ.O ⊔ Γ.U) ⊓ (Γ.C ⊔ a) :=
+        le_inf le_sup_right (hU_le_aC.trans (sup_comm a Γ.C).le)
+        _ = a := this
+    exact ha_ne_U ((ha.le_iff.mp hU_le_a).resolve_left Γ.hU.1).symm
+  have hb'_not_l : ¬ b' ≤ Γ.O ⊔ Γ.U := by
+    intro h
+    have hb'_le_U : b' ≤ Γ.U := by
+      have := le_inf h (inf_le_right : b' ≤ Γ.U ⊔ Γ.V)
+      rwa [Γ.l_inf_m_eq_U] at this
+    have hb'_eq_U := (Γ.hU.le_iff.mp hb'_le_U).resolve_left hb'_atom.1
+    have hU_le_b : Γ.U ≤ b := by
+      have hU_le_bC : Γ.U ≤ b ⊔ Γ.C := hb'_eq_U ▸ (inf_le_left : b' ≤ b ⊔ Γ.C)
+      have : (Γ.O ⊔ Γ.U) ⊓ (Γ.C ⊔ b) = b :=
+        inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l hb_on
+      calc Γ.U ≤ (Γ.O ⊔ Γ.U) ⊓ (Γ.C ⊔ b) :=
+        le_inf le_sup_right (hU_le_bC.trans (sup_comm b Γ.C).le)
+        _ = b := this
+    exact hb_ne_U ((hb.le_iff.mp hU_le_b).resolve_left Γ.hU.1).symm
+  have hDb_not_l : ¬ D_b ≤ Γ.O ⊔ Γ.U := by
+    intro h
+    have hDb_le_U : D_b ≤ Γ.U := by
+      have := le_inf h (inf_le_right : D_b ≤ Γ.U ⊔ Γ.C)
+      rwa [hl_inf_UC] at this
+    have hDb_eq_U := (Γ.hU.le_iff.mp hDb_le_U).resolve_left hDb_atom.1
+    have hU_le_b : Γ.U ≤ b := by
+      have hU_le_bE : Γ.U ≤ b ⊔ Γ.E := hDb_eq_U ▸ (inf_le_left : D_b ≤ b ⊔ Γ.E)
+      have : (Γ.O ⊔ Γ.U) ⊓ (Γ.E ⊔ b) = b :=
+        inf_sup_of_atom_not_le Γ.hE_atom CoordSystem.hE_not_l hb_on
+      calc Γ.U ≤ (Γ.O ⊔ Γ.U) ⊓ (Γ.E ⊔ b) :=
+        le_inf le_sup_right (hU_le_bE.trans (sup_comm b Γ.E).le)
+        _ = b := this
+    exact hb_ne_U ((hb.le_iff.mp hU_le_b).resolve_left Γ.hU.1).symm
+  have hDa_not_l : ¬ D_a ≤ Γ.O ⊔ Γ.U := by
+    intro h
+    have hDa_le_U : D_a ≤ Γ.U := by
+      have := le_inf h (inf_le_right : D_a ≤ Γ.U ⊔ Γ.C)
+      rwa [hl_inf_UC] at this
+    have hDa_eq_U := (Γ.hU.le_iff.mp hDa_le_U).resolve_left hDa_atom.1
+    have hU_le_a : Γ.U ≤ a := by
+      have hU_le_aE : Γ.U ≤ a ⊔ Γ.E := hDa_eq_U ▸ (inf_le_left : D_a ≤ a ⊔ Γ.E)
+      have : (Γ.O ⊔ Γ.U) ⊓ (Γ.E ⊔ a) = a :=
+        inf_sup_of_atom_not_le Γ.hE_atom CoordSystem.hE_not_l ha_on
+      calc Γ.U ≤ (Γ.O ⊔ Γ.U) ⊓ (Γ.E ⊔ a) :=
+        le_inf le_sup_right (hU_le_aE.trans (sup_comm a Γ.E).le)
+        _ = a := this
+    exact ha_ne_U ((ha.le_iff.mp hU_le_a).resolve_left Γ.hU.1).symm
+  have ha'Db : a' ≠ D_b := by
+    intro h_eq
+    have ha'_le_UC : a' ≤ Γ.U ⊔ Γ.C := h_eq ▸ (inf_le_right : D_b ≤ Γ.U ⊔ Γ.C)
+    have ha'_le_U : a' ≤ Γ.U := by
+      have := le_inf ha'_le_UC (inf_le_right : a' ≤ Γ.U ⊔ Γ.V)
+      rwa [hUC_inf_m] at this
+    have ha'_eq_U := (Γ.hU.le_iff.mp ha'_le_U).resolve_left ha'_atom.1
+    have hU_le_a : Γ.U ≤ a := by
+      have hU_le_aC : Γ.U ≤ a ⊔ Γ.C := ha'_eq_U ▸ (inf_le_left : a' ≤ a ⊔ Γ.C)
+      have : (Γ.O ⊔ Γ.U) ⊓ (Γ.C ⊔ a) = a :=
+        inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l ha_on
+      calc Γ.U ≤ (Γ.O ⊔ Γ.U) ⊓ (Γ.C ⊔ a) :=
+        le_inf le_sup_right (hU_le_aC.trans (sup_comm a Γ.C).le)
+        _ = a := this
+    exact ha_ne_U ((ha.le_iff.mp hU_le_a).resolve_left Γ.hU.1).symm
+  have hb'Da : b' ≠ D_a := by
+    intro h_eq
+    have hb'_le_UC : b' ≤ Γ.U ⊔ Γ.C := h_eq ▸ (inf_le_right : D_a ≤ Γ.U ⊔ Γ.C)
+    have hb'_le_U : b' ≤ Γ.U := by
+      have := le_inf hb'_le_UC (inf_le_right : b' ≤ Γ.U ⊔ Γ.V)
+      rwa [hUC_inf_m] at this
+    have hb'_eq_U := (Γ.hU.le_iff.mp hb'_le_U).resolve_left hb'_atom.1
+    have hU_le_b : Γ.U ≤ b := by
+      have hU_le_bC : Γ.U ≤ b ⊔ Γ.C := hb'_eq_U ▸ (inf_le_left : b' ≤ b ⊔ Γ.C)
+      have : (Γ.O ⊔ Γ.U) ⊓ (Γ.C ⊔ b) = b :=
+        inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l hb_on
+      calc Γ.U ≤ (Γ.O ⊔ Γ.U) ⊓ (Γ.C ⊔ b) :=
+        le_inf le_sup_right (hU_le_bC.trans (sup_comm b Γ.C).le)
+        _ = b := this
+    exact hb_ne_U ((hb.le_iff.mp hU_le_b).resolve_left Γ.hU.1).symm
   -- coord_add values and W are atoms
   have hab_atom : IsAtom (coord_add Γ a b) := by sorry
   have hba_atom : IsAtom (coord_add Γ b a) := by sorry
