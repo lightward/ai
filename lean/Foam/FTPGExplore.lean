@@ -1605,7 +1605,34 @@ theorem coord_add_comm (Γ : CoordSystem L)
   -- Return centers are atoms (perspect_atom with center E, target U⊔C)
   have hUC : Γ.U ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_right)
   -- Coplanarity: (U⊔C)⊔E = π (since C⊔E = O⊔C, so U⊔C⊔E = U⊔O⊔C = π)
-  have hUCE_eq_π : (Γ.U ⊔ Γ.C) ⊔ Γ.E = Γ.O ⊔ Γ.U ⊔ Γ.V := by sorry
+  have hUCE_eq_π : (Γ.U ⊔ Γ.C) ⊔ Γ.E = Γ.O ⊔ Γ.U ⊔ Γ.V := by
+    -- C ⊔ E = O ⊔ C (E ≤ O⊔C, C ≤ O⊔C, covering gives C⊔E = O⊔C)
+    have hCE : Γ.C ≠ Γ.E := fun h => Γ.hC_not_m (h ▸ CoordSystem.hE_on_m)
+    have hCE_eq : Γ.C ⊔ Γ.E = Γ.O ⊔ Γ.C := by
+      have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+      have h_le : Γ.C ⊔ Γ.E ≤ Γ.O ⊔ Γ.C := sup_le le_sup_right CoordSystem.hE_le_OC
+      have h_lt : Γ.C < Γ.C ⊔ Γ.E := by
+        apply lt_of_le_of_ne le_sup_left; intro h
+        exact hCE ((Γ.hC.le_iff.mp (h ▸ le_sup_right : Γ.E ≤ Γ.C)).resolve_left
+          Γ.hE_atom.1).symm
+      rw [show Γ.O ⊔ Γ.C = Γ.C ⊔ Γ.O from sup_comm _ _]
+      exact (atom_covBy_join Γ.hC Γ.hO hOC.symm |>.eq_or_eq h_lt.le
+        (sup_comm Γ.C Γ.O ▸ h_le)).resolve_left (ne_of_gt h_lt)
+    -- (U⊔C)⊔E = U⊔(C⊔E) = U⊔(O⊔C) = O⊔U⊔C
+    rw [show (Γ.U ⊔ Γ.C) ⊔ Γ.E = Γ.U ⊔ (Γ.C ⊔ Γ.E) from sup_assoc _ _ _, hCE_eq,
+        show Γ.U ⊔ (Γ.O ⊔ Γ.C) = Γ.O ⊔ Γ.U ⊔ Γ.C from by rw [← sup_assoc, sup_comm Γ.U Γ.O]]
+    -- O⊔U⊔C = O⊔U⊔V (= π): O⊔C ⋖ π and O⊔C < O⊔U⊔C ≤ π gives O⊔U⊔C = π
+    have h_lt_OC : Γ.O ⊔ Γ.C < Γ.O ⊔ Γ.U ⊔ Γ.C := by
+      apply lt_of_le_of_ne (sup_le (le_sup_left.trans le_sup_left) le_sup_right)
+      intro h
+      -- O⊔C = O⊔U⊔C → O⊔U ≤ O⊔C → U ≤ O⊔C → O⊔U = O⊔C → C ≤ l
+      have hOU_le := h.symm ▸ (le_sup_left : Γ.O ⊔ Γ.U ≤ Γ.O ⊔ Γ.U ⊔ Γ.C)
+      exact Γ.hC_not_l (((atom_covBy_join Γ.hO Γ.hC
+        (fun h => Γ.hC_not_l (h ▸ le_sup_left))).eq_or_eq
+        (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt.le hOU_le).resolve_left
+        (ne_of_gt (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt) ▸ le_sup_right)
+    exact ((CoordSystem.OC_covBy_π Γ).eq_or_eq h_lt_OC.le
+      (sup_le le_sup_left Γ.hC_plane)).resolve_left (ne_of_gt h_lt_OC)
   have hDa_atom : IsAtom D_a :=
     perspect_atom Γ.hE_atom ha ha_ne_E Γ.hU Γ.hC hUC hE_not_UC
       (sup_le (ha_on.trans (le_sup_left.trans (le_of_eq hUCE_eq_π.symm))) le_sup_right)
