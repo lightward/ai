@@ -1446,4 +1446,94 @@ theorem desargues_planar
   exact ⟨π ⊓ (b₁' ⊔ b₂' ⊔ b₃'), inf_le_left, haxis_ne,
     h_lift₁₂ ▸ h₁₂, h_lift₁₃ ▸ h₁₃, h_lift₂₃ ▸ h₂₃⟩
 
+/-- **Collinearity from Desargues.** If three points lie on a common
+    element strictly below π, and two of them span a line covered by π,
+    the third lies on that line.
+
+    This is the extraction step: desargues_planar gives ∃ axis with
+    axis ≤ π ∧ axis ≠ π, and two known side-intersections S₁₂, S₁₃
+    span a line ℓ ⋖ π. Then ℓ ≤ axis < π, and ℓ ⋖ π forces axis = ℓ.
+    The third point S₂₃ ≤ axis = ℓ. -/
+theorem collinear_of_common_bound {s₁ s₂ s₃ axis π : L}
+    (h_cov : s₁ ⊔ s₂ ⋖ π)
+    (h_axis_le : axis ≤ π) (h_axis_ne : axis ≠ π)
+    (h₁ : s₁ ≤ axis) (h₂ : s₂ ≤ axis) (h₃ : s₃ ≤ axis) :
+    s₃ ≤ s₁ ⊔ s₂ := by
+  have h12_le : s₁ ⊔ s₂ ≤ axis := sup_le h₁ h₂
+  have h_axis_lt : axis < π := lt_of_le_of_ne h_axis_le h_axis_ne
+  -- s₁ ⊔ s₂ ≤ axis < π, with s₁ ⊔ s₂ ⋖ π: axis = s₁ ⊔ s₂
+  have h_eq : axis = s₁ ⊔ s₂ :=
+    (h_cov.eq_or_eq h12_le h_axis_lt.le).resolve_right (ne_of_lt h_axis_lt)
+  exact h_eq ▸ h₃
+
+
+-- § Helpers for coord_add commutativity
+
+variable (Γ : CoordSystem L)
+
+/-- Two lines through C from distinct points on l meet at C. -/
+theorem CoordSystem.lines_through_C_meet {a b : L}
+    (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) :
+    (a ⊔ Γ.C) ⊓ (b ⊔ Γ.C) = Γ.C := by
+  rw [sup_comm a Γ.C, sup_comm b Γ.C]
+  apply modular_intersection Γ.hC ha hb
+    (fun h => Γ.hC_not_l (h ▸ ha_on))
+    (fun h => Γ.hC_not_l (h ▸ hb_on)) hab
+  intro hle
+  have hb_le_a : b ≤ a := by
+    have := le_inf hb_on hle
+    rw [inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l ha_on] at this
+    exact this
+  exact hab ((ha.le_iff.mp hb_le_a).resolve_left hb.1).symm
+
+/-- Two lines through E from distinct points on l meet at E. -/
+theorem CoordSystem.lines_through_E_meet {a b : L}
+    (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) :
+    (a ⊔ Γ.E) ⊓ (b ⊔ Γ.E) = Γ.E := by
+  rw [sup_comm a Γ.E, sup_comm b Γ.E]
+  apply modular_intersection Γ.hE_atom ha hb
+    (fun h => CoordSystem.hE_not_l (h ▸ ha_on))
+    (fun h => CoordSystem.hE_not_l (h ▸ hb_on)) hab
+  intro hle
+  have hb_le_a : b ≤ a := by
+    have := le_inf hb_on hle
+    rw [inf_sup_of_atom_not_le Γ.hE_atom CoordSystem.hE_not_l ha_on] at this
+    exact this
+  exact hab ((ha.le_iff.mp hb_le_a).resolve_left hb.1).symm
+
+/-- O ⊔ C is covered by the plane π = O ⊔ U ⊔ V. -/
+theorem CoordSystem.OC_covBy_π : Γ.O ⊔ Γ.C ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by
+  -- U ⊓ (O ⊔ C) = ⊥ (U not on line O ⊔ C, since that would give C on l)
+  have hU_disj : Γ.U ⊓ (Γ.O ⊔ Γ.C) = ⊥ := by
+    rcases Γ.hU.le_iff.mp inf_le_left with h | h
+    · exact h
+    · exfalso
+      have hU_le := h ▸ inf_le_right  -- U ≤ O ⊔ C
+      have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+      exact Γ.hC_not_l (((atom_covBy_join Γ.hO Γ.hC hOC).eq_or_eq
+        (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt.le (sup_le le_sup_left hU_le)).resolve_left
+        (ne_of_gt (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt) ▸ le_sup_right)
+  -- O ⊔ C ⋖ U ⊔ (O ⊔ C)
+  have h := covBy_sup_of_inf_covBy_left (hU_disj ▸ Γ.hU.bot_covBy)
+  -- Rewrite: U ⊔ (O ⊔ C) = O ⊔ U ⊔ C
+  have h_assoc : Γ.U ⊔ (Γ.O ⊔ Γ.C) = Γ.O ⊔ Γ.U ⊔ Γ.C := by
+    rw [← sup_assoc, sup_comm Γ.U Γ.O]
+  rw [h_assoc] at h
+  -- O ⊔ U ⊔ C = O ⊔ U ⊔ V (both = π)
+  -- (O ⊔ U) ⊔ V = π by def. (O ⊔ U) ⋖ (O ⊔ U) ⊔ V (V off l).
+  -- (O ⊔ U) < (O ⊔ U) ⊔ C ≤ (O ⊔ U) ⊔ V by CovBy.
+  have hV_disj : Γ.V ⊓ (Γ.O ⊔ Γ.U) = ⊥ :=
+    (Γ.hV.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hV_off (h ▸ inf_le_right))
+  have h_l_cov : Γ.O ⊔ Γ.U ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by
+    have := covBy_sup_of_inf_covBy_left (hV_disj ▸ Γ.hV.bot_covBy)
+    rwa [show Γ.V ⊔ (Γ.O ⊔ Γ.U) = Γ.O ⊔ Γ.U ⊔ Γ.V from by rw [sup_comm]] at this
+  have h_lt : Γ.O ⊔ Γ.U < Γ.O ⊔ Γ.U ⊔ Γ.C := lt_of_le_of_ne le_sup_left
+    (fun heq => Γ.hC_not_l (heq ▸ le_sup_right))
+  have h_le : Γ.O ⊔ Γ.U ⊔ Γ.C ≤ Γ.O ⊔ Γ.U ⊔ Γ.V :=
+    sup_le le_sup_left Γ.hC_plane
+  rw [(h_l_cov.eq_or_eq h_lt.le h_le).resolve_left (ne_of_gt h_lt)] at h
+  exact h
+
 end Foam.FTPGExplore
