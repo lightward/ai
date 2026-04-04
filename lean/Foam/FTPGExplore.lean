@@ -1537,6 +1537,42 @@ theorem CoordSystem.OC_covBy_π : Γ.O ⊔ Γ.C ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by
   exact h
 
 
+/-- **First Desargues for addition.** The point
+    (a'⊔D_a) ⊓ (b'⊔D_b) lies on the line O⊔C.
+    Proved by applying desargues_planar to triangles
+    (a, a', D_a) and (b, b', D_b) perspective from U. -/
+theorem coord_first_desargues (Γ : CoordSystem L) {a b : L}
+    (ha : IsAtom a) (hb : IsAtom b)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O)
+    (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U)
+    (hab : a ≠ b)
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
+    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
+      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
+    ((a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (a ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ⊓
+    ((b ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ≤ Γ.O ⊔ Γ.C := by
+  sorry
+
+/-- **Second Desargues for addition.** Given P₁ ≤ O⊔C (from the first),
+    the point W = (a'⊔D_b) ⊓ (b'⊔D_a) lies on l = O⊔U.
+    Proved by applying desargues_planar to triangles
+    (C, a', D_b) and (E, D_a, b') perspective from P₁. -/
+theorem coord_second_desargues (Γ : CoordSystem L) {a b : L}
+    (ha : IsAtom a) (hb : IsAtom b)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O)
+    (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U)
+    (hab : a ≠ b)
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
+    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
+      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q)
+    (hP₁ : ((a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (a ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ⊓
+            ((b ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ≤ Γ.O ⊔ Γ.C) :
+    ((a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ⊓
+    ((b ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (a ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ≤ Γ.O ⊔ Γ.U := by
+  sorry
+
 /-- **Commutativity of von Staudt addition.**
 
     The proof chains two applications of Desargues' theorem:
@@ -1683,11 +1719,11 @@ theorem coord_add_comm (Γ : CoordSystem L)
   have hS₂ : (a ⊔ D_a) ⊓ (b ⊔ D_b) = Γ.E := by
     rw [haDa, hbDb]; exact CoordSystem.lines_through_E_meet Γ ha hb hab ha_on hb_on
   -- First Desargues: P₁ = (a'⊔D_a) ⊓ (b'⊔D_b) ≤ O⊔C
-  have hP₁_le : (a' ⊔ D_a) ⊓ (b' ⊔ D_b) ≤ Γ.O ⊔ Γ.C := by
-    sorry  -- desargues_planar + collinear_of_common_bound + OC_covBy_π
+  have hP₁_le : (a' ⊔ D_a) ⊓ (b' ⊔ D_b) ≤ Γ.O ⊔ Γ.C :=
+    coord_first_desargues Γ ha hb ha_on hb_on ha_ne_O hb_ne_O ha_ne_U hb_ne_U hab R hR hR_not h_irred
   -- Second Desargues: W ≤ l (the core result)
-  have hW_on_l : W ≤ Γ.O ⊔ Γ.U := by
-    sorry  -- desargues_planar + collinear_of_common_bound
+  have hW_on_l : W ≤ Γ.O ⊔ Γ.U :=
+    coord_second_desargues Γ ha hb ha_on hb_on ha_ne_O hb_ne_O ha_ne_U hb_ne_U hab R hR hR_not h_irred hP₁_le
   -- Remaining atom facts
   -- a' not on l (a' on m, a' ≤ l → a' ≤ l⊓m = U → a' = U → contradiction)
   -- Helper facts (all provable, some need covering/modular arguments)
