@@ -1127,8 +1127,8 @@ theorem desargues_planar
       ∃ c : L, IsAtom c ∧ c ≤ a ⊔ b ∧ c ≠ a ∧ c ≠ b)
     -- Sides are lines covered by π
     (h_cov₁₂ : a₁ ⊔ a₂ ⋖ π) (h_cov₁₃ : a₁ ⊔ a₃ ⋖ π) (h_cov₂₃ : a₂ ⊔ a₃ ⋖ π) :
-    -- All three intersection points lie on a common line
-    ∃ (axis : L),
+    -- All three intersection points lie on a common line (strictly below π)
+    ∃ (axis : L), axis ≤ π ∧ axis ≠ π ∧
       (a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂) ≤ axis ∧
       (a₁ ⊔ a₃) ⊓ (b₁ ⊔ b₃) ≤ axis ∧
       (a₂ ⊔ a₃) ⊓ (b₂ ⊔ b₃) ≤ axis := by
@@ -1372,8 +1372,78 @@ theorem desargues_planar
     (sup_le ha₂_le ha₃_le) (sup_le hb₂_le hb₃_le) h_sides₂₃ hR_not ho'_not
     inf_le_left inf_le_left inf_le_right inf_le_right hb₂'_not
 
-  -- Step 6: Combine. The axis is π ⊓ (b₁' ⊔ b₂' ⊔ b₃').
+
+  -- Step 6: The axis is π ⊓ (b₁' ⊔ b₂' ⊔ b₃'), strictly below π.
   obtain ⟨h₁₂, h₁₃, h₂₃⟩ := h_des
-  exact ⟨π ⊓ (b₁' ⊔ b₂' ⊔ b₃'), h_lift₁₂ ▸ h₁₂, h_lift₁₃ ▸ h₁₃, h_lift₂₃ ▸ h₂₃⟩
+  have haxis_ne : π ⊓ (b₁' ⊔ b₂' ⊔ b₃') ≠ π := by
+    intro h_eq
+    have hπ_le : π ≤ b₁' ⊔ b₂' ⊔ b₃' := inf_eq_left.mp h_eq
+    have hπB_le : b₁' ⊔ b₂' ⊔ b₃' ≤ o' ⊔ π :=
+      sup_le (sup_le
+        ((inf_le_left : b₁' ≤ o' ⊔ a₁).trans (sup_le le_sup_left (ha₁_le.trans le_sup_right)))
+        ((inf_le_left : b₂' ≤ o' ⊔ a₂).trans (sup_le le_sup_left (ha₂_le.trans le_sup_right))))
+        ((inf_le_left : b₃' ≤ o' ⊔ a₃).trans (sup_le le_sup_left (ha₃_le.trans le_sup_right)))
+    have ho'_disj : π ⊓ o' = ⊥ := by
+      rcases ho'_atom.le_iff.mp inf_le_right with h | h
+      · exact h
+      · exfalso; exact ho'_not (le_of_eq h.symm |>.trans inf_le_left)
+    have hπ_cov_s : π ⋖ o' ⊔ π := by
+      have h := covBy_sup_of_inf_covBy_right (ho'_disj ▸ ho'_atom.bot_covBy)
+      rwa [sup_comm] at h
+    rcases hπ_cov_s.eq_or_eq hπ_le hπB_le with hcase | hcase
+    · exact hb₁'_not (le_sup_left.trans (le_sup_left.trans (le_of_eq hcase)))
+    · rw [← hcase] at hπ_cov_s
+      have hb_cov : b₁' ⋖ b₁' ⊔ b₂' := atom_covBy_join hb₁'_atom hb₂'_atom hb₁₂'
+      by_cases hb₃'_col : b₃' ≤ b₁' ⊔ b₂'
+      · -- Collinear case: πB = b₁'⊔b₂'. a₁ ⋖ line, so a₁⊔a₂ = line, π ≤ a₁⊔a₂ < π.
+        rw [show b₁' ⊔ b₂' ⊔ b₃' = b₁' ⊔ b₂' from
+          le_antisymm (sup_le le_rfl hb₃'_col) le_sup_left] at hπ_le
+        have ha₁_cov_line : a₁ ⋖ b₁' ⊔ b₂' :=
+          line_covers_its_atoms hb₁'_atom hb₂'_atom hb₁₂' ha₁ (ha₁_le.trans hπ_le)
+        have h12_eq : a₁ ⊔ a₂ = b₁' ⊔ b₂' :=
+          (ha₁_cov_line.eq_or_eq le_sup_left (h_cov₁₂.le.trans hπ_le)).resolve_left
+            (ne_of_gt (atom_covBy_join ha₁ ha₂ ha₁₂).lt)
+        exact lt_irrefl _ (lt_of_lt_of_le h_cov₁₂.lt (h12_eq ▸ hπ_le))
+      · -- Non-collinear: b₁'⊔b₂' and π both ⋖ πB. Meet ⋖ π is impossible.
+        have hb₃'_disj : b₃' ⊓ (b₁' ⊔ b₂') = ⊥ :=
+          (hb₃'_atom.le_iff.mp inf_le_left).resolve_right
+            (fun h => hb₃'_col (h ▸ inf_le_right))
+        have hline_cov : b₁' ⊔ b₂' ⋖ b₁' ⊔ b₂' ⊔ b₃' := by
+          rw [show b₁' ⊔ b₂' ⊔ b₃' = b₃' ⊔ (b₁' ⊔ b₂') from sup_comm _ _]
+          exact covBy_sup_of_inf_covBy_left (hb₃'_disj ▸ hb₃'_atom.bot_covBy)
+        have hline_ne : b₁' ⊔ b₂' ≠ π :=
+          fun h => hb₁'_not (le_sup_left.trans (le_of_eq h))
+        obtain ⟨hmeet_cov_line, hmeet_cov_π⟩ :=
+          planes_meet_covBy hline_cov hπ_cov_s hline_ne
+        -- p := (b₁'⊔b₂') ⊓ π is an atom (via diamond with b₁')
+        have hp_ne_b₁ : (b₁' ⊔ b₂') ⊓ π ≠ b₁' :=
+          fun h => hb₁'_not (h ▸ inf_le_right)
+        obtain ⟨hpb_cov_p, hpb_cov_b₁⟩ :=
+          planes_meet_covBy hmeet_cov_line hb_cov hp_ne_b₁
+        have : (b₁' ⊔ b₂') ⊓ π ⊓ b₁' = ⊥ := by
+          rcases hb₁'_atom.le_iff.mp hpb_cov_b₁.le with h | h
+          · exact h
+          · exfalso; exact hb₁'_not
+              ((le_of_eq h.symm).trans (inf_le_left.trans inf_le_right))
+        rw [this] at hpb_cov_p  -- ⊥ ⋖ p
+        have hp_atom := line_height_two hb₁'_atom hb₂'_atom hb₁₂'
+          hpb_cov_p.lt hmeet_cov_line.lt
+        -- p ⋖ π, but a₁ < a₁⊔a₂ < π: CovBy contradiction
+        by_cases ha₁p : a₁ = (b₁' ⊔ b₂') ⊓ π
+        · exact (ha₁p ▸ hmeet_cov_π).2
+            (atom_covBy_join ha₁ ha₂ ha₁₂).lt h_cov₁₂.lt
+        · have hp_lt : (b₁' ⊔ b₂') ⊓ π < (b₁' ⊔ b₂') ⊓ π ⊔ a₁ :=
+            lt_of_le_of_ne le_sup_left (fun h => ha₁p
+              ((hp_atom.le_iff.mp (h ▸ le_sup_right)).resolve_left ha₁.1))
+          have hp_eq : (b₁' ⊔ b₂') ⊓ π ⊔ a₁ = π :=
+            (hmeet_cov_π.eq_or_eq hp_lt.le
+              (sup_le hmeet_cov_π.le ha₁_le)).resolve_left (ne_of_gt hp_lt)
+          have ha₁_cov_π : a₁ ⋖ π := by
+            rw [← hp_eq, sup_comm]
+            exact atom_covBy_join ha₁ hp_atom ha₁p
+          exact ha₁_cov_π.2
+            (atom_covBy_join ha₁ ha₂ ha₁₂).lt h_cov₁₂.lt
+  exact ⟨π ⊓ (b₁' ⊔ b₂' ⊔ b₃'), inf_le_left, haxis_ne,
+    h_lift₁₂ ▸ h₁₂, h_lift₁₃ ▸ h₁₃, h_lift₂₃ ▸ h₂₃⟩
 
 end Foam.FTPGExplore
