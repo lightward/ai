@@ -1689,9 +1689,18 @@ theorem coord_add_comm (Γ : CoordSystem L)
   have hW_on_l : W ≤ Γ.O ⊔ Γ.U := by
     sorry  -- desargues_planar + collinear_of_common_bound
   -- Remaining atom facts
-  have hW_atom : IsAtom W := by sorry
+  -- a' not on l (a' on m, a' ≤ l → a' ≤ l⊓m = U → a' = U → contradiction)
+  -- Helper facts (all provable, some need covering/modular arguments)
+  have ha'_not_l : ¬ a' ≤ Γ.O ⊔ Γ.U := by sorry
+  have hb'_not_l : ¬ b' ≤ Γ.O ⊔ Γ.U := by sorry
+  have hDb_not_l : ¬ D_b ≤ Γ.O ⊔ Γ.U := by sorry
+  have hDa_not_l : ¬ D_a ≤ Γ.O ⊔ Γ.U := by sorry
+  have ha'Db : a' ≠ D_b := by sorry
+  have hb'Da : b' ≠ D_a := by sorry
+  -- coord_add values and W are atoms
   have hab_atom : IsAtom (coord_add Γ a b) := by sorry
   have hba_atom : IsAtom (coord_add Γ b a) := by sorry
+  have hW_atom : IsAtom W := by sorry
   -- Combination: W on both addition lines and on l → W = a+b = b+a
   have hW_le_ab : W ≤ coord_add Γ a b :=
     le_inf (inf_le_left : W ≤ a' ⊔ D_b) hW_on_l
