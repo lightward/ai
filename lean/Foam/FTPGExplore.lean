@@ -1536,4 +1536,56 @@ theorem CoordSystem.OC_covBy_π : Γ.O ⊔ Γ.C ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by
   rw [(h_l_cov.eq_or_eq h_lt.le h_le).resolve_left (ne_of_gt h_lt)] at h
   exact h
 
+
+/-- **Commutativity of von Staudt addition.**
+
+    The proof chains two applications of Desargues' theorem:
+
+    1. Triangles (a, a', D_a) and (b, b', D_b), perspective from U.
+       Side intersections are C and E (computed by lines_through_C/E_meet).
+       Desargues + collinearity → P₁ = (a'⊔D_a) ⊓ (b'⊔D_b) ∈ O⊔C.
+
+    2. Triangles (C, a', D_b) and (E, D_a, b'), perspective from P₁.
+       Side intersections are a and U.
+       Desargues + collinearity → W = (a'⊔D_b) ⊓ (b'⊔D_a) ∈ a⊔U = l.
+
+    W is an atom on both addition lines and on l, so W = a+b = b+a. -/
+theorem coord_add_comm (Γ : CoordSystem L)
+    (a b : L) (ha : IsAtom a) (hb : IsAtom b)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O)
+    (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U)
+    (hab : a ≠ b)
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
+    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
+      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
+    coord_add Γ a b = coord_add Γ b a := by
+  -- Name the key objects
+  set π := Γ.O ⊔ Γ.U ⊔ Γ.V
+  set a' := (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V)
+  set b' := (b ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V)
+  set D_a := (a ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)
+  set D_b := (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)
+  set W := (a' ⊔ D_b) ⊓ (b' ⊔ D_a)
+  -- The core: W lies on l (from the two chained Desargues applications)
+  have hW_on_l : W ≤ Γ.O ⊔ Γ.U := by
+    sorry  -- Two Desargues applications (to be filled in)
+  -- W is an atom (intersection of two lines in the plane)
+  have hW_atom : IsAtom W := by
+    sorry  -- lines_meet + line_height_two
+  -- coord_add values are atoms
+  have hab_atom : IsAtom (coord_add Γ a b) := by
+    sorry  -- project_is_atom or similar
+  have hba_atom : IsAtom (coord_add Γ b a) := by
+    sorry  -- project_is_atom or similar
+  -- W ≤ coord_add Γ a b (W on first addition line and on l)
+  have hW_le_ab : W ≤ coord_add Γ a b :=
+    le_inf (inf_le_left : W ≤ a' ⊔ D_b) hW_on_l
+  -- W ≤ coord_add Γ b a (W on second addition line and on l)
+  have hW_le_ba : W ≤ coord_add Γ b a :=
+    le_inf (inf_le_right : W ≤ b' ⊔ D_a) hW_on_l
+  -- Both are atoms, W is atom ≤ both → W = both → equal
+  exact ((hab_atom.le_iff.mp hW_le_ab).resolve_left hW_atom.1).symm.trans
+    ((hba_atom.le_iff.mp hW_le_ba).resolve_left hW_atom.1)
+
 end Foam.FTPGExplore
