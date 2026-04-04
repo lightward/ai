@@ -1778,9 +1778,149 @@ theorem coord_add_comm (Γ : CoordSystem L)
         _ = b := this
     exact hb_ne_U ((hb.le_iff.mp hU_le_b).resolve_left Γ.hU.1).symm
   -- coord_add values and W are atoms
-  have hab_atom : IsAtom (coord_add Γ a b) := by sorry
-  have hba_atom : IsAtom (coord_add Γ b a) := by sorry
-  have hW_atom : IsAtom W := by sorry
+  -- l ⋖ π (needed for coplanarity arguments)
+  have hV_disj : Γ.V ⊓ (Γ.O ⊔ Γ.U) = ⊥ :=
+    (Γ.hV.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hV_off (h ▸ inf_le_right))
+  have hl_covBy_π : Γ.O ⊔ Γ.U ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by
+    have := covBy_sup_of_inf_covBy_left (hV_disj ▸ Γ.hV.bot_covBy)
+    rwa [show Γ.V ⊔ (Γ.O ⊔ Γ.U) = Γ.O ⊔ Γ.U ⊔ Γ.V from by rw [sup_comm]] at this
+  -- Helper: (O⊔U) ⊔ x = π when x is an atom in π but not on l
+  have l_sup_eq_π : ∀ x : L, IsAtom x → x ≤ Γ.O ⊔ Γ.U ⊔ Γ.V → ¬ x ≤ Γ.O ⊔ Γ.U →
+      (Γ.O ⊔ Γ.U) ⊔ x = Γ.O ⊔ Γ.U ⊔ Γ.V := by
+    intro x hx hx_le hx_not
+    have h_lt : Γ.O ⊔ Γ.U < (Γ.O ⊔ Γ.U) ⊔ x :=
+      lt_of_le_of_ne le_sup_left (fun h => hx_not (h ▸ le_sup_right))
+    exact (hl_covBy_π.eq_or_eq h_lt.le (sup_le le_sup_left hx_le)).resolve_left
+      (ne_of_gt h_lt)
+  -- Atoms ≤ π
+  have hDb_le_π : D_b ≤ Γ.O ⊔ Γ.U ⊔ Γ.V :=
+    (inf_le_right : D_b ≤ Γ.U ⊔ Γ.C).trans
+      (sup_le (le_sup_right.trans le_sup_left) Γ.hC_plane)
+  have hDa_le_π : D_a ≤ Γ.O ⊔ Γ.U ⊔ Γ.V :=
+    (inf_le_right : D_a ≤ Γ.U ⊔ Γ.C).trans
+      (sup_le (le_sup_right.trans le_sup_left) Γ.hC_plane)
+  have ha'_le_π : a' ≤ Γ.O ⊔ Γ.U ⊔ Γ.V :=
+    (inf_le_right : a' ≤ Γ.U ⊔ Γ.V).trans
+      (sup_le (le_sup_right.trans le_sup_left) le_sup_right)
+  have hb'_le_π : b' ≤ Γ.O ⊔ Γ.U ⊔ Γ.V :=
+    (inf_le_right : b' ≤ Γ.U ⊔ Γ.V).trans
+      (sup_le (le_sup_right.trans le_sup_left) le_sup_right)
+  -- hab_atom: perspect_atom with center D_b, point a', target line O⊔U
+  have hab_atom : IsAtom (coord_add Γ a b) := by
+    show IsAtom ((a' ⊔ D_b) ⊓ (Γ.O ⊔ Γ.U))
+    exact perspect_atom hDb_atom ha'_atom ha'Db Γ.hO Γ.hU Γ.hOU hDb_not_l
+      (by rw [l_sup_eq_π D_b hDb_atom hDb_le_π hDb_not_l]; exact sup_le ha'_le_π hDb_le_π)
+  -- hba_atom: perspect_atom with center D_a, point b', target line O⊔U
+  have hba_atom : IsAtom (coord_add Γ b a) := by
+    show IsAtom ((b' ⊔ D_a) ⊓ (Γ.O ⊔ Γ.U))
+    exact perspect_atom hDa_atom hb'_atom hb'Da Γ.hO Γ.hU Γ.hOU hDa_not_l
+      (by rw [l_sup_eq_π D_a hDa_atom hDa_le_π hDa_not_l]; exact sup_le hb'_le_π hDa_le_π)
+  -- hW_atom: W is the meet of two lines in π, use line_height_two on l = O⊔U
+  have hW_atom : IsAtom W := by
+    -- Strategy: W ≤ l (from hW_on_l), show ⊥ < W and W < l, apply line_height_two
+    have ha'Db_le_π : a' ⊔ D_b ≤ Γ.O ⊔ Γ.U ⊔ Γ.V := sup_le ha'_le_π hDb_le_π
+    have hb'Da_le_π : b' ⊔ D_a ≤ Γ.O ⊔ Γ.U ⊔ Γ.V := sup_le hb'_le_π hDa_le_π
+    -- l ⊔ (a'⊔D_b) = π
+    have hl_sup_a'Db : (Γ.O ⊔ Γ.U) ⊔ (a' ⊔ D_b) = Γ.O ⊔ Γ.U ⊔ Γ.V := by
+      have h_lt : Γ.O ⊔ Γ.U < (Γ.O ⊔ Γ.U) ⊔ (a' ⊔ D_b) :=
+        lt_of_le_of_ne le_sup_left
+          (fun h => hDb_not_l (h ▸ (le_sup_right.trans le_sup_right)))
+      exact (hl_covBy_π.eq_or_eq h_lt.le (sup_le le_sup_left ha'Db_le_π)).resolve_left
+        (ne_of_gt h_lt)
+    -- Lower mod: l ⊓ (a'⊔D_b) ⋖ a'⊔D_b, i.e., coord_add ⋖ a'⊔D_b
+    have h_inf_covBy : (Γ.O ⊔ Γ.U) ⊓ (a' ⊔ D_b) ⋖ a' ⊔ D_b :=
+      IsLowerModularLattice.inf_covBy_of_covBy_sup (hl_sup_a'Db ▸ hl_covBy_π)
+    -- a'⊔D_b < π (if equal, coord_add = l, but l is not an atom)
+    have ha'Db_lt_π : a' ⊔ D_b < Γ.O ⊔ Γ.U ⊔ Γ.V := by
+      apply lt_of_le_of_ne ha'Db_le_π; intro h_eq
+      have h_coord_eq : coord_add Γ a b = Γ.O ⊔ Γ.U :=
+        le_antisymm (inf_le_right) (le_inf (h_eq ▸ le_sup_left) le_rfl)
+      rw [h_coord_eq] at hab_atom
+      -- hab_atom : IsAtom (O⊔U). O ≤ O⊔U → O = ⊥ ∨ O = O⊔U → O = O⊔U → U ≤ O → U = O
+      have h1 : Γ.O = Γ.O ⊔ Γ.U :=
+        (hab_atom.le_iff.mp le_sup_left).resolve_left Γ.hO.1
+      have h2 : Γ.U = Γ.O ⊔ Γ.U :=
+        (hab_atom.le_iff.mp le_sup_right).resolve_left Γ.hU.1
+      exact Γ.hOU (h1.trans h2.symm)
+    -- a'⊔D_b ⋖ π
+    have ha'Db_covBy_π : a' ⊔ D_b ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by
+      refine ⟨ha'Db_lt_π, fun z hz_lt hz_lt2 => ?_⟩
+      have hl_sup_z : (Γ.O ⊔ Γ.U) ⊔ z = Γ.O ⊔ Γ.U ⊔ Γ.V :=
+        le_antisymm (sup_le le_sup_left hz_lt2.le)
+          (hl_sup_a'Db ▸ sup_le_sup_left hz_lt.le _)
+      have h_inf_z_covBy : (Γ.O ⊔ Γ.U) ⊓ z ⋖ z :=
+        IsLowerModularLattice.inf_covBy_of_covBy_sup (hl_sup_z ▸ hl_covBy_π)
+      have hab_le_inf_z : coord_add Γ a b ≤ (Γ.O ⊔ Γ.U) ⊓ z :=
+        le_inf (show coord_add Γ a b ≤ Γ.O ⊔ Γ.U from inf_le_right)
+          ((show coord_add Γ a b ≤ a' ⊔ D_b from inf_le_left).trans hz_lt.le)
+      by_cases h_lz_lt : (Γ.O ⊔ Γ.U) ⊓ z < Γ.O ⊔ Γ.U
+      · -- l⊓z < l: l⊓z is atom = coord_add, so coord_add ⋖ z
+        have h_lz_atom := line_height_two Γ.hO Γ.hU Γ.hOU
+          (lt_of_lt_of_le hab_atom.bot_lt hab_le_inf_z) h_lz_lt
+        have h_lz_eq : (Γ.O ⊔ Γ.U) ⊓ z = coord_add Γ a b :=
+          ((h_lz_atom.le_iff.mp hab_le_inf_z).resolve_left hab_atom.1).symm
+        rw [h_lz_eq] at h_inf_z_covBy
+        -- a'⊔D_b between coord_add and z: coord_add ≤ a'⊔D_b ≤ z, with coord_add ⋖ z
+        rcases h_inf_z_covBy.eq_or_eq
+          (show coord_add Γ a b ≤ a' ⊔ D_b from inf_le_left) hz_lt.le with h | h
+        · -- a'⊔D_b = coord_add: then a' ≤ coord_add ≤ l, contradicting ha'_not_l
+          exact ha'_not_l (h ▸ le_sup_left |>.trans (inf_le_right : coord_add Γ a b ≤ Γ.O ⊔ Γ.U))
+        · -- a'⊔D_b = z: contradicts hz_lt
+          exact absurd h hz_lt.ne
+      · -- l⊓z = l (since l⊓z ≤ l and ¬(l⊓z < l)), so l ≤ z
+        have h_inf_eq : (Γ.O ⊔ Γ.U) ⊓ z = Γ.O ⊔ Γ.U :=
+          eq_of_le_of_not_lt inf_le_left h_lz_lt
+        have h_l_le_z : Γ.O ⊔ Γ.U ≤ z := h_inf_eq ▸ inf_le_right
+        exact absurd (le_antisymm hz_lt2.le (hl_sup_a'Db ▸
+          sup_le h_l_le_z hz_lt.le)) hz_lt2.ne
+    -- ⊥ < W: if W = ⊥, the two lines are disjoint in π, impossible
+    have hW_pos : ⊥ < W := by
+      rw [bot_lt_iff_ne_bot]; intro hW_bot
+      change (a' ⊔ D_b) ⊓ (b' ⊔ D_a) = ⊥ at hW_bot
+      by_cases h_le : b' ⊔ D_a ≤ a' ⊔ D_b
+      · -- b'⊔D_a ≤ a'⊔D_b: then inf = b'⊔D_a, so b'⊔D_a = ⊥, contradicting b' atom
+        exact absurd (le_bot_iff.mp (le_sup_left.trans
+          ((inf_eq_right.mpr h_le).symm.trans hW_bot).le)) hb'_atom.1
+      · -- b'⊔D_a ≰ a'⊔D_b: by covBy_inf_disjoint_atom, ⊥ ⋖ b'⊔D_a
+        -- but b' < b'⊔D_a (from atom_covBy_join), contradicting nothing between ⊥ and b'⊔D_a
+        exact absurd (atom_covBy_join hb'_atom hDa_atom hb'Da).lt
+          ((covBy_inf_disjoint_atom ha'Db_covBy_π hb'Da_le_π h_le hW_bot).2
+            hb'_atom.bot_lt)
+    -- W < l: if W = l then l ≤ b'⊔D_a, and line_eq_of_atom_le forces b' on l
+    have hW_lt : W < Γ.O ⊔ Γ.U := by
+      apply lt_of_le_of_ne hW_on_l; intro h_eq
+      have hl_le : Γ.O ⊔ Γ.U ≤ b' ⊔ D_a := h_eq ▸ (inf_le_right : W ≤ b' ⊔ D_a)
+      -- O ≠ b' (O not on m, b' on m) and O ≠ D_a (if so, O ≤ U⊔C, O ≤ l⊓(U⊔C) = U)
+      have hOb' : Γ.O ≠ b' := fun h => Γ.hO_not_m (h ▸ (inf_le_right : b' ≤ Γ.U ⊔ Γ.V))
+      have hODa : Γ.O ≠ D_a := fun h => Γ.hOU ((Γ.hU.le_iff.mp
+        (show Γ.O ≤ Γ.U from hl_inf_UC ▸
+          le_inf (le_sup_left : Γ.O ≤ Γ.O ⊔ Γ.U)
+                (h ▸ (inf_le_right : D_a ≤ Γ.U ⊔ Γ.C)))
+        ).resolve_left Γ.hO.1)
+      -- O ≤ b'⊔D_a, so b'⊔D_a = b'⊔O (line_eq_of_atom_le)
+      have h1 := line_eq_of_atom_le hb'_atom hDa_atom Γ.hO hb'Da hOb'.symm hODa.symm
+        (le_sup_left.trans hl_le)
+      -- U ≠ b' (b' not on l, U on l) and U ≠ D_a (handled by hDa_not_l: if U = D_a ...)
+      have hUb' : Γ.U ≠ b' := fun h => hb'_not_l (h ▸ le_sup_right)
+      have hUDa : Γ.U ≠ D_a := fun h => hDa_not_l (h ▸ le_sup_right)
+      -- U ≤ b'⊔D_a = b'⊔O, so b'⊔O = b'⊔U (line_eq_of_atom_le)
+      have h2 := line_eq_of_atom_le hb'_atom Γ.hO Γ.hU hOb'.symm hUb'.symm Γ.hOU
+        (h1 ▸ le_sup_right.trans hl_le)
+      -- U ⋖ U⊔b', O⊔U ≤ U⊔b' = b'⊔U. From covering: O⊔U = U or O⊔U = U⊔b'.
+      -- O⊔U ≤ b'⊔D_a = b'⊔O = b'⊔U
+      have hOU_le_bU : Γ.O ⊔ Γ.U ≤ b' ⊔ Γ.U :=
+        hl_le.trans (h1.le.trans h2.le)
+      -- From U ⋖ U⊔b' = b'⊔U and O⊔U ≤ b'⊔U: eq_or_eq gives O⊔U = U or O⊔U = U⊔b'
+      have hUb'_cov := atom_covBy_join Γ.hU hb'_atom hUb'
+      have hOU_le' : Γ.O ⊔ Γ.U ≤ Γ.U ⊔ b' := by rwa [sup_comm b' Γ.U] at hOU_le_bU
+      rcases hUb'_cov.eq_or_eq
+        (show Γ.U ≤ Γ.O ⊔ Γ.U from le_sup_right) hOU_le' with h3 | h3
+      · -- O⊔U = U → O ≤ U → O = U, contradiction
+        have hO_le_U : Γ.O ≤ Γ.U := h3 ▸ le_sup_left
+        exact Γ.hOU ((Γ.hU.le_iff.mp hO_le_U).resolve_left Γ.hO.1)
+      · -- O⊔U = U⊔b' → b' ≤ O⊔U, contradicting hb'_not_l
+        exact hb'_not_l (h3.symm ▸ le_sup_right)
+    exact line_height_two Γ.hO Γ.hU Γ.hOU hW_pos hW_lt
   -- Combination: W on both addition lines and on l → W = a+b = b+a
   have hW_le_ab : W ≤ coord_add Γ a b :=
     le_inf (inf_le_left : W ≤ a' ⊔ D_b) hW_on_l
