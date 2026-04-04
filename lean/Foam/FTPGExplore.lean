@@ -1577,13 +1577,44 @@ theorem coord_add_comm (Γ : CoordSystem L)
   have hb'_atom : IsAtom b' :=
     perspect_atom Γ.hC hb (fun h => Γ.hC_not_l (h ▸ hb_on)) Γ.hU Γ.hV hUV Γ.hC_not_m
       (sup_le (h_in_π b hb_on) le_sup_right)
-  have hDa_atom : IsAtom D_a := by sorry
-  have hDb_atom : IsAtom D_b := by sorry
+  have ha_ne_E : a ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ ha_on)
+  have hb_ne_E : b ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ hb_on)
+  -- (U⊔C)⊓m = U (needed for return center facts)
+  have hUC_inf_m : (Γ.U ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) = Γ.U := by
+    have hCV : Γ.C ≠ Γ.V := fun h => Γ.hC_not_m (h ▸ le_sup_right)
+    have hV_not_UC : ¬ Γ.V ≤ Γ.U ⊔ Γ.C := by
+      intro hle
+      exact Γ.hC_not_m (((atom_covBy_join Γ.hU Γ.hC
+        (fun h => Γ.hC_not_l (h ▸ le_sup_right))).eq_or_eq
+        (atom_covBy_join Γ.hU Γ.hV hUV).lt.le (sup_le le_sup_left hle)).resolve_left
+        (ne_of_gt (atom_covBy_join Γ.hU Γ.hV hUV).lt) ▸ le_sup_right)
+    exact modular_intersection Γ.hU Γ.hC Γ.hV
+      (fun h => Γ.hC_not_l (h ▸ le_sup_right)) hUV hCV hV_not_UC
+  -- E is not on U⊔C
+  have hE_not_UC : ¬ Γ.E ≤ Γ.U ⊔ Γ.C := by
+    intro h
+    exact CoordSystem.hEU (Γ.hU.le_iff.mp
+      (hUC_inf_m ▸ le_inf h CoordSystem.hE_on_m) |>.resolve_left Γ.hE_atom.1)
+  -- l ⊓ (U⊔C) = U
+  have hl_inf_UC : (Γ.O ⊔ Γ.U) ⊓ (Γ.U ⊔ Γ.C) = Γ.U := by
+    rw [sup_comm Γ.O Γ.U]
+    exact modular_intersection Γ.hU Γ.hO Γ.hC Γ.hOU.symm
+      (fun h => Γ.hC_not_l (h ▸ le_sup_right))
+      (fun h => Γ.hC_not_l (h ▸ le_sup_left))
+      (fun h => Γ.hC_not_l (by rwa [sup_comm] at h))
+  -- Return centers are atoms (perspect_atom with center E, target U⊔C)
+  have hUC : Γ.U ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_right)
+  -- Coplanarity: (U⊔C)⊔E = π (since C⊔E = O⊔C, so U⊔C⊔E = U⊔O⊔C = π)
+  have hUCE_eq_π : (Γ.U ⊔ Γ.C) ⊔ Γ.E = Γ.O ⊔ Γ.U ⊔ Γ.V := by sorry
+  have hDa_atom : IsAtom D_a :=
+    perspect_atom Γ.hE_atom ha ha_ne_E Γ.hU Γ.hC hUC hE_not_UC
+      (sup_le (ha_on.trans (le_sup_left.trans (le_of_eq hUCE_eq_π.symm))) le_sup_right)
+  have hDb_atom : IsAtom D_b :=
+    perspect_atom Γ.hE_atom hb hb_ne_E Γ.hU Γ.hC hUC hE_not_UC
+      (sup_le (hb_on.trans (le_sup_left.trans (le_of_eq hUCE_eq_π.symm))) le_sup_right)
   -- Distinctness facts
   have ha_ne_C : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
   have hb_ne_C : b ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ hb_on)
-  have ha_ne_E : a ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ ha_on)
-  have hb_ne_E : b ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ hb_on)
   have ha'_ne_a : a' ≠ a := fun h => ha_ne_U
     (Γ.atom_on_both_eq_U ha ha_on (h ▸ (inf_le_right : a' ≤ Γ.U ⊔ Γ.V)))
   have hb'_ne_b : b' ≠ b := fun h => hb_ne_U
@@ -1604,8 +1635,23 @@ theorem coord_add_comm (Γ : CoordSystem L)
   have hS₁ : (a ⊔ a') ⊓ (b ⊔ b') = Γ.C := by
     rw [haa', hbb']; exact CoordSystem.lines_through_C_meet Γ ha hb hab ha_on hb_on
   -- Join equalities for return centers: a ⊔ D_a = a ⊔ E
-  have haDa : a ⊔ D_a = a ⊔ Γ.E := by sorry  -- same covering pattern
-  have hbDb : b ⊔ D_b = b ⊔ Γ.E := by sorry
+  -- D_a ≠ a: if D_a = a, then a ≤ U⊔C, so a ≤ l⊓(U⊔C) = U, a = U.
+  have hDa_ne_a : D_a ≠ a := fun h_eq => ha_ne_U (Γ.hU.le_iff.mp
+    (hl_inf_UC ▸ le_inf ha_on (h_eq ▸ (inf_le_right : D_a ≤ Γ.U ⊔ Γ.C)))
+    |>.resolve_left ha.1)
+  have hDb_ne_b : D_b ≠ b := fun h_eq => hb_ne_U (Γ.hU.le_iff.mp
+    (hl_inf_UC ▸ le_inf hb_on (h_eq ▸ (inf_le_right : D_b ≤ Γ.U ⊔ Γ.C)))
+    |>.resolve_left hb.1)
+  have haDa : a ⊔ D_a = a ⊔ Γ.E := by
+    have h_lt : a < a ⊔ D_a := lt_of_le_of_ne le_sup_left
+      (fun h => hDa_ne_a ((ha.le_iff.mp (h ▸ le_sup_right)).resolve_left hDa_atom.1))
+    exact ((atom_covBy_join ha Γ.hE_atom ha_ne_E).eq_or_eq h_lt.le
+      (sup_le le_sup_left inf_le_left)).resolve_left (ne_of_gt h_lt)
+  have hbDb : b ⊔ D_b = b ⊔ Γ.E := by
+    have h_lt : b < b ⊔ D_b := lt_of_le_of_ne le_sup_left
+      (fun h => hDb_ne_b ((hb.le_iff.mp (h ▸ le_sup_right)).resolve_left hDb_atom.1))
+    exact ((atom_covBy_join hb Γ.hE_atom hb_ne_E).eq_or_eq h_lt.le
+      (sup_le le_sup_left inf_le_left)).resolve_left (ne_of_gt h_lt)
   -- Side intersection 2: (a⊔D_a) ⊓ (b⊔D_b) = E
   have hS₂ : (a ⊔ D_a) ⊓ (b ⊔ D_b) = Γ.E := by
     rw [haDa, hbDb]; exact CoordSystem.lines_through_E_meet Γ ha hb hab ha_on hb_on
