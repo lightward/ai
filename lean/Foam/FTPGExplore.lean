@@ -727,6 +727,38 @@ theorem small_desargues'
     (h_par_AC : (A ⊔ C) ⊓ m = (A' ⊔ C') ⊓ m) :
     -- ══ Conclusion: third parallelism ══
     (B ⊔ C) ⊓ m = (B' ⊔ C') ⊓ m := by
+  -- Step 1: Apply desargues_planar with center U.
+  obtain ⟨axis, h_axis_le, h_axis_ne, h₁₂, h₁₃, h₂₃⟩ :=
+    desargues_planar hU hA hB hC hA' hB' hC'
+      hU_le hA_le hB_le hC_le hA'_le hB'_le hC'_le
+      hA'_on hB'_on hC'_on
+      hAB hAC hBC hA'B' hA'C' hB'C'
+      h_sides_AB h_sides_AC h_sides_BC
+      hπA hπB
+      hUA hUB hUC hUA' hUB' hUC'
+      hAA' hBB' hCC'
+      R hR hR_not h_irred
+      h_cov_AB h_cov_AC h_cov_BC
+  -- Step 2: Side intersections 1,2 lie on m (from parallelism hypotheses).
+  -- Key: (A⊔B)⊓m = (A'⊔B')⊓m means both lines share an "ideal point" on m.
+  -- That shared point ≤ (A⊔B)⊓(A'⊔B'). By covering (A⊔B ⋖ π, m ⋖ π),
+  -- the meet (A⊔B)⊓(A'⊔B') equals this shared point, hence ≤ m.
+  have h₁₂_on_m : (A ⊔ B) ⊓ (A' ⊔ B') ≤ m := by sorry
+  have h₁₃_on_m : (A ⊔ C) ⊓ (A' ⊔ C') ≤ m := by sorry
+  -- Step 3: axis = m (both side intersections on m and axis, m ⋖ π, axis < π).
+  -- The axis contains h₁₂ and h₁₃, both ≤ m. Since m ⋖ π and axis ≤ π, axis ≠ π:
+  -- the two points span m, and axis ≥ m. Since axis < π and m ⋖ π, axis = m.
+  have h₂₃_on_m : (B ⊔ C) ⊓ (B' ⊔ C') ≤ m := by
+    have h₁₂_on_both : (A ⊔ B) ⊓ (A' ⊔ B') ≤ axis ⊓ m := le_inf h₁₂ h₁₂_on_m
+    have h₁₃_on_both : (A ⊔ C) ⊓ (A' ⊔ C') ≤ axis ⊓ m := le_inf h₁₃ h₁₃_on_m
+    -- axis ⊓ m ≤ axis ≤ π, axis ⊓ m ≤ m ⋖ π.
+    -- If axis ≥ m, then axis = m (since axis < π and m ⋖ π gives axis = m or axis = π).
+    -- Then h₂₃ ≤ axis = m. ✓
+    -- If axis ≱ m, then axis ⊓ m < m, and axis ⊓ m ⋖ m ... TBD
+    sorry
+  -- Step 4: Extract the parallelism conclusion.
+  -- (B⊔C)⊓(B'⊔C') ≤ m, so (B⊔C)⊓(B'⊔C') ≤ (B⊔C)⊓m and ≤ (B'⊔C')⊓m.
+  -- The shared point on m determines both intersections.
   sorry
 
 end Foam.FTPGExplore
