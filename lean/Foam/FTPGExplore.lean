@@ -3323,4 +3323,162 @@ theorem coord_add_comm (Γ : CoordSystem L)
   exact ((hab_atom.le_iff.mp hW_le_ab).resolve_left hW_atom.1).symm.trans
     ((hba_atom.le_iff.mp hW_le_ba).resolve_left hW_atom.1)
 
+/-- **Associativity of coordinate addition.**
+
+    (a + b) + c = a + (b + c)
+
+    Proof outline (two Desargues applications):
+
+    1. **First Desargues.** Triangles (s, C, a') and (t, D_c, E) are
+       perspective from U.  Side intersections:
+       - B₁ = (s⊔C) ⊓ (b'⊔D_c)   [since t⊔D_c = b'⊔D_c]
+       - B₂ = (a'⊔D_b) ⊓ (t⊔E)   [since s⊔a' = a'⊔D_b]
+       - P₃ = (a⊔C) ⊓ (c⊔E)      [since C⊔a' = a⊔C, D_c⊔E = c⊔E]
+       Desargues gives B₁, B₂, P₃ collinear.
+
+    2. **Key step.** U ≤ B₁ ⊔ B₂  (numerically verified, proof TBD).
+
+    3. **Second Desargues.** Given U ≤ B₁⊔B₂, triangles (s', B₁, D_c)
+       and (a', B₂, D_t) are perspective from U.  Side intersections:
+       - (s'⊔B₁) ⊓ (a'⊔B₂) = (s⊔C) ⊓ (a'⊔D_b) = s  ∈ l
+       - (B₁⊔D_c) ⊓ (B₂⊔D_t) = (b'⊔D_c) ⊓ (t⊔E) = t  ∈ l
+       - (s'⊔D_c) ⊓ (a'⊔D_t) = W
+       Since s, t ∈ l and l ⋖ π, the axis = l, so W ∈ l.
+
+    4. **Conclude.** W is an atom on both result lines and on l,
+       so (a+b)+c = W = a+(b+c). -/
+theorem coord_add_assoc (Γ : CoordSystem L)
+    (a b c : L) (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O) (hc_ne_O : c ≠ Γ.O)
+    (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U) (hc_ne_U : c ≠ Γ.U)
+    (hab : a ≠ b) (hbc : b ≠ c) (hac : a ≠ c)
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
+    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
+      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
+    coord_add Γ (coord_add Γ a b) c = coord_add Γ a (coord_add Γ b c) := by
+  -- ═══ Setup: name the intermediate points ═══
+  set π := Γ.O ⊔ Γ.U ⊔ Γ.V
+  set l := Γ.O ⊔ Γ.U
+  set m := Γ.U ⊔ Γ.V
+  -- Forward projections (l → m via center C)
+  set a' := (a ⊔ Γ.C) ⊓ m
+  set b' := (b ⊔ Γ.C) ⊓ m
+  -- Return centers (l → U⊔C via center E)
+  set D_b := (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)
+  set D_c := (c ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)
+  -- Intermediate sums
+  set s := coord_add Γ a b  -- = (a' ⊔ D_b) ⊓ l
+  set t := coord_add Γ b c  -- = (b' ⊔ D_c) ⊓ l
+  -- Second-level projections
+  set s' := (s ⊔ Γ.C) ⊓ m   -- σ_C(s) = σ_C(a+b)
+  set D_t := (t ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)  -- ρ_E(t) = ρ_E(b+c)
+  -- Auxiliary points for the two Desargues applications
+  set B₁ := (s ⊔ Γ.C) ⊓ (b' ⊔ D_c)
+  set B₂ := (a' ⊔ D_b) ⊓ (t ⊔ Γ.E)
+  -- The witness: intersection of the two result lines
+  set W := (s' ⊔ D_c) ⊓ (a' ⊔ D_t)
+  -- ═══ Basic infrastructure ═══
+  have hUV : Γ.U ≠ Γ.V := fun h => Γ.hV_off (h ▸ le_sup_right)
+  have hUC : Γ.U ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_right)
+  have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+  have hCE : Γ.C ≠ Γ.E := fun h => Γ.hC_not_m (h ▸ CoordSystem.hE_on_m)
+  -- ── modular intersections ──
+  have hUC_inf_m : (Γ.U ⊔ Γ.C) ⊓ m = Γ.U :=
+    modular_intersection Γ.hU Γ.hC Γ.hV hUC hUV
+      (fun h => Γ.hC_not_m (h ▸ le_sup_right))
+      (fun hle => Γ.hC_not_m (((atom_covBy_join Γ.hU Γ.hC hUC).eq_or_eq
+        (atom_covBy_join Γ.hU Γ.hV hUV).lt.le (sup_le le_sup_left hle)).resolve_left
+        (ne_of_gt (atom_covBy_join Γ.hU Γ.hV hUV).lt) ▸ le_sup_right))
+  have hE_not_UC : ¬ Γ.E ≤ Γ.U ⊔ Γ.C := fun h =>
+    CoordSystem.hEU (Γ.hU.le_iff.mp (hUC_inf_m ▸ le_inf h CoordSystem.hE_on_m)
+      |>.resolve_left Γ.hE_atom.1)
+  have hl_inf_UC : l ⊓ (Γ.U ⊔ Γ.C) = Γ.U := by
+    rw [show l = Γ.O ⊔ Γ.U from rfl, sup_comm Γ.O Γ.U]
+    exact modular_intersection Γ.hU Γ.hO Γ.hC Γ.hOU.symm hUC
+      (fun h => Γ.hC_not_l (h ▸ le_sup_right))
+      (fun h => Γ.hC_not_l (h ▸ le_sup_left))
+      (fun h => Γ.hC_not_l (by rwa [sup_comm] at h))
+  -- ── E properties ──
+  have ha_ne_E : a ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ ha_on)
+  have hb_ne_E : b ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ hb_on)
+  have hc_ne_E : c ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ hc_on)
+  have ha_ne_C : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
+  have hb_ne_C : b ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ hb_on)
+  have hc_ne_C : c ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ hc_on)
+  -- ── coplanarity: UC⊔E = π ──
+  have hUCE_eq_π : (Γ.U ⊔ Γ.C) ⊔ Γ.E = π := by
+    have hCE_eq : Γ.C ⊔ Γ.E = Γ.O ⊔ Γ.C := by
+      have h_le : Γ.C ⊔ Γ.E ≤ Γ.O ⊔ Γ.C := sup_le le_sup_right CoordSystem.hE_le_OC
+      have h_lt : Γ.C < Γ.C ⊔ Γ.E := by
+        apply lt_of_le_of_ne le_sup_left; intro h
+        exact hCE ((Γ.hC.le_iff.mp (h ▸ le_sup_right : Γ.E ≤ Γ.C)).resolve_left
+          Γ.hE_atom.1).symm
+      rw [show Γ.O ⊔ Γ.C = Γ.C ⊔ Γ.O from sup_comm _ _]
+      exact (atom_covBy_join Γ.hC Γ.hO hOC.symm |>.eq_or_eq h_lt.le
+        (sup_comm Γ.C Γ.O ▸ h_le)).resolve_left (ne_of_gt h_lt)
+    rw [show (Γ.U ⊔ Γ.C) ⊔ Γ.E = Γ.U ⊔ (Γ.C ⊔ Γ.E) from sup_assoc _ _ _, hCE_eq,
+        show Γ.U ⊔ (Γ.O ⊔ Γ.C) = Γ.O ⊔ Γ.U ⊔ Γ.C from by rw [← sup_assoc, sup_comm Γ.U Γ.O]]
+    have h_lt_OC : Γ.O ⊔ Γ.C < Γ.O ⊔ Γ.U ⊔ Γ.C := by
+      apply lt_of_le_of_ne (sup_le (le_sup_left.trans le_sup_left) le_sup_right)
+      intro h
+      have hOU_le := h.symm ▸ (le_sup_left : Γ.O ⊔ Γ.U ≤ Γ.O ⊔ Γ.U ⊔ Γ.C)
+      exact Γ.hC_not_l (((atom_covBy_join Γ.hO Γ.hC hOC).eq_or_eq
+        (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt.le hOU_le).resolve_left
+        (ne_of_gt (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt) ▸ le_sup_right)
+    exact ((CoordSystem.OC_covBy_π Γ).eq_or_eq h_lt_OC.le
+      (sup_le le_sup_left Γ.hC_plane)).resolve_left (ne_of_gt h_lt_OC)
+  -- ── atoms on m and U⊔C ──
+  have h_in_π : ∀ x, x ≤ l → x ≤ m ⊔ Γ.C :=
+    fun x hx => hx.trans (le_sup_left.trans (le_of_eq Γ.m_sup_C_eq_π.symm))
+  have ha'_atom : IsAtom a' :=
+    perspect_atom Γ.hC ha (fun h => Γ.hC_not_l (h ▸ ha_on)) Γ.hU Γ.hV hUV Γ.hC_not_m
+      (sup_le (h_in_π a ha_on) le_sup_right)
+  have hb'_atom : IsAtom b' :=
+    perspect_atom Γ.hC hb (fun h => Γ.hC_not_l (h ▸ hb_on)) Γ.hU Γ.hV hUV Γ.hC_not_m
+      (sup_le (h_in_π b hb_on) le_sup_right)
+  have hDb_atom : IsAtom D_b :=
+    perspect_atom Γ.hE_atom hb hb_ne_E Γ.hU Γ.hC hUC hE_not_UC
+      (sup_le (hb_on.trans (le_sup_left.trans (le_of_eq hUCE_eq_π.symm))) le_sup_right)
+  have hDc_atom : IsAtom D_c :=
+    perspect_atom Γ.hE_atom hc hc_ne_E Γ.hU Γ.hC hUC hE_not_UC
+      (sup_le (hc_on.trans (le_sup_left.trans (le_of_eq hUCE_eq_π.symm))) le_sup_right)
+  -- ── coplanarity bounds ──
+  have ha'_le_π : a' ≤ π :=
+    (inf_le_right : a' ≤ m).trans (sup_le (le_sup_right.trans le_sup_left) le_sup_right)
+  have hb'_le_π : b' ≤ π :=
+    (inf_le_right : b' ≤ m).trans (sup_le (le_sup_right.trans le_sup_left) le_sup_right)
+  have hDb_le_π : D_b ≤ π :=
+    (inf_le_right : D_b ≤ Γ.U ⊔ Γ.C).trans
+      (sup_le (le_sup_right.trans le_sup_left) Γ.hC_plane)
+  have hDc_le_π : D_c ≤ π :=
+    (inf_le_right : D_c ≤ Γ.U ⊔ Γ.C).trans
+      (sup_le (le_sup_right.trans le_sup_left) Γ.hC_plane)
+  -- ── l ⋖ π ──
+  have hV_disj : Γ.V ⊓ l = ⊥ :=
+    (Γ.hV.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hV_off (h ▸ inf_le_right))
+  have hl_covBy_π : l ⋖ π := by
+    have := covBy_sup_of_inf_covBy_left (hV_disj ▸ Γ.hV.bot_covBy)
+    rwa [show Γ.V ⊔ l = π from by rw [sup_comm]; rfl] at this
+  -- ═══ Key geometric claim (Desargues) ═══
+  -- Step 2: U ≤ B₁ ⊔ B₂ (numerically verified, proof TBD)
+  have hU_on_B : Γ.U ≤ B₁ ⊔ B₂ := by
+    sorry
+  -- Step 3: W lies on l via second Desargues
+  -- Given hU_on_B, triangles (s', B₁, D_c) and (a', B₂, D_t)
+  -- are perspective from U. Desargues gives s, t, W collinear.
+  -- Since s, t ∈ l and l ⋖ π, axis = l, so W ∈ l.
+  have hW_on_l : W ≤ l := by
+    sorry
+  -- ═══ Final: W on both result lines and on l → equality ═══
+  -- W ≤ s'⊔D_c (from inf_le_left) and W ≤ l (from hW_on_l)
+  -- so W ≤ (s'⊔D_c) ⊓ l = coord_add Γ (coord_add Γ a b) c
+  -- Similarly W ≤ (a'⊔D_t) ⊓ l = coord_add Γ a (coord_add Γ b c)
+  -- Both are atoms, W is an atom, so they're equal.
+  have hW_le_lhs : W ≤ (s' ⊔ D_c) ⊓ l := le_inf inf_le_left hW_on_l
+  have hW_le_rhs : W ≤ (a' ⊔ D_t) ⊓ l := le_inf inf_le_right hW_on_l
+  -- The LHS and RHS are atoms (from perspect_atom, as in coord_add_comm)
+  -- and W is an atom (from line_height_two), giving equality.
+  sorry
+
 end Foam.FTPGExplore
