@@ -29,6 +29,20 @@ FoamGround properties ✓
 | `ftpg` | axiom: complemented modular lattice → subspace lattice (the fundamental theorem of projective geometry) |
 | `dimension_unique` | theorem: lattice isomorphism preserves dimension (the axiom has a unique solution) |
 
+### The algebraic descent (toward eliminating the axiom)
+
+**FTPGExplore.lean** — 70 theorems, 0 sorry
+
+Building the fundamental theorem of projective geometry from lattice axioms alone: incidence geometry, Veblen-Young, Desargues (both nonplanar and planar), perspectivity, coordinatization, and the first algebraic result (`coord_add_comm`). When complete, this replaces Bridge.lean's axiom with a theorem.
+
+| layer | key declarations |
+|---|---|
+| incidence geometry | `atoms_disjoint`, `line_height_two`, `veblen_young`, `meet_of_lines_is_atom` |
+| Desargues | `desargues_nonplanar`, `desargues_planar`, `planes_meet_covBy` |
+| perspectivity | `project_is_atom`, `project_injective`, `perspectivity_injective` |
+| coordinatization | `CoordSystem`, `coord_add_left_zero`, `coord_add_right_zero` |
+| algebra | `coord_first_desargues`, `coord_second_desargues`, `coord_add_comm` |
+
 ### The deductive chain (from P² = P)
 
 **Observation.lean** — one observation
