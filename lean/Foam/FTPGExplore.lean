@@ -674,6 +674,61 @@ theorem perspect_fixes_intersection {p c a₁ b₁ a₂ b₂ : L}
   -- p ≤ atom and p is atom → p = atom.
   exact (h_atom.le_iff.mp hp_le_meet |>.resolve_left hp.1).symm
 
+-- § Small Desargues (A5a)
+
+/-- **Small Desargues (A5a).** Three lines through a common point U in a plane π,
+    with six atoms satisfying two "parallelism" conditions. Desargues gives the third.
+
+    "Parallel" means: the two lines meet the base line m at the same point.
+
+    Concretely: three lines l₁ = A⊔U, l₂ = B⊔U, l₃ = C⊔U through U,
+    with A' on l₁, B' on l₂, C' on l₃.
+    If (A⊔B)⊓m = (A'⊔B')⊓m and (A⊔C)⊓m = (A'⊔C')⊓m,
+    then (B⊔C)⊓m = (B'⊔C')⊓m.
+
+    This is desargues_planar with center U, extracting the third axis point on m. -/
+theorem small_desargues'
+    {U A B C A' B' C' m π : L}
+    -- Atoms
+    (hU : IsAtom U) (hA : IsAtom A) (hB : IsAtom B) (hC : IsAtom C)
+    (hA' : IsAtom A') (hB' : IsAtom B') (hC' : IsAtom C')
+    -- All in π
+    (hU_le : U ≤ π) (hA_le : A ≤ π) (hB_le : B ≤ π) (hC_le : C ≤ π)
+    (hA'_le : A' ≤ π) (hB'_le : B' ≤ π) (hC'_le : C' ≤ π)
+    -- m is a line in π through U
+    (hm_le : m ≤ π) (hm_ne : m ≠ π) (hU_on_m : U ≤ m)
+    -- Lines through U: A' on U⊔A, B' on U⊔B, C' on U⊔C
+    (hA'_on : A' ≤ U ⊔ A) (hB'_on : B' ≤ U ⊔ B) (hC'_on : C' ≤ U ⊔ C)
+    -- Distinct vertices (A ≠ B etc.)
+    (hAB : A ≠ B) (hAC : A ≠ C) (hBC : B ≠ C)
+    (hA'B' : A' ≠ B') (hA'C' : A' ≠ C') (hB'C' : B' ≠ C')
+    -- Distinct sides
+    (h_sides_AB : A ⊔ B ≠ A' ⊔ B')
+    (h_sides_AC : A ⊔ C ≠ A' ⊔ C')
+    (h_sides_BC : B ⊔ C ≠ B' ⊔ C')
+    -- Triangles span π
+    (hπA : A ⊔ B ⊔ C = π) (hπB : A' ⊔ B' ⊔ C' = π)
+    -- Center off both triangles
+    (hUA : U ≠ A) (hUB : U ≠ B) (hUC : U ≠ C)
+    (hUA' : U ≠ A') (hUB' : U ≠ B') (hUC' : U ≠ C')
+    -- Corresponding vertices distinct
+    (hAA' : A ≠ A') (hBB' : B ≠ B') (hCC' : C ≠ C')
+    -- Height ≥ 4
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ π)
+    -- Irreducibility
+    (h_irred : ∀ (a b : L), IsAtom a → IsAtom b → a ≠ b →
+      ∃ c : L, IsAtom c ∧ c ≤ a ⊔ b ∧ c ≠ a ∧ c ≠ b)
+    -- Sides covered by π
+    (h_cov_AB : A ⊔ B ⋖ π) (h_cov_AC : A ⊔ C ⋖ π) (h_cov_BC : B ⊔ C ⋖ π)
+    -- m covered by π (m is a line)
+    (hm_cov : m ⋖ π)
+    -- ══ Parallelism hypotheses ══
+    (h_par_AB : (A ⊔ B) ⊓ m = (A' ⊔ B') ⊓ m)
+    (h_par_AC : (A ⊔ C) ⊓ m = (A' ⊔ C') ⊓ m) :
+    -- ══ Conclusion: third parallelism ══
+    (B ⊔ C) ⊓ m = (B' ⊔ C') ⊓ m := by
+  sorry
+
 -- § Coordinate system
 
 /-- A coordinate system for the von Staudt construction.
