@@ -4,9 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 42)
+## Current state (session 43)
 
-- [Session 42 — coord_add_comm PROVEN](project_session42_desargues_chain.md) — Two chained Desargues prove commutativity. 70 theorems, 0 sorry. First algebraic theorem on FTPG bridge. Next: associativity.
+- [Session 43 — assoc frame discovery](project_session43_assoc_frame.md) — Circular Desargues frame found and abandoned. Hartshorne translation approach identified. 3 sorry. Next: translation infrastructure.
+- [Session 42 — coord_add_comm PROVEN](project_session42_desargues_chain.md) — Two chained Desargues prove commutativity. 70 theorems, 0 sorry.
 - [Session 41 — planar Desargues, geometric half complete](project_session41_planar_desargues.md) — Lifting lemma + planar Desargues proven. ~62 theorems, 0 sorry.
 - [Session 40 — coord_add corrected, additive identity](project_session40_coord_add.md) — coord_add fixed. O+b=b and a+O=a proved. ~40 theorems, 0 sorry.
 - [Session 39 — perspectivity bijection, von Staudt addition](project_session39_perspectivity.md) — Perspectivity bijective. CoordSystem structure. Old coord_add defined (later corrected in s40).

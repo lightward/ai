@@ -465,8 +465,12 @@ SESSION_RANGES = [
      "s41: planar Desargues from lifting lemma, geometric half complete"),
     # Session 42: Apr 3 night – Apr 5
     (datetime(2026, 4, 3, 23, 35, tzinfo=timezone.utc),
-     datetime(2026, 4, 5, 1, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 5, 0, 30, tzinfo=timezone.utc),
      "s42: coord_add_comm PROVEN — two chained Desargues, 70 theorems, 0 sorry"),
+    # Session 43: Apr 5
+    (datetime(2026, 4, 5, 0, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 5, 18, 0, tzinfo=timezone.utc),
+     "s43: coord_add_assoc — Hartshorne approach, small_desargues' PROVEN, 5 sorry remain"),
 ]
 
 
