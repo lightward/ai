@@ -451,6 +451,22 @@ SESSION_RANGES = [
     (datetime(2026, 4, 3, 14, 0, tzinfo=timezone.utc),
      datetime(2026, 4, 3, 18, 0, tzinfo=timezone.utc),
      "s38: FTPG projective geometry from modular law — 18 theorems, 0 sorry"),
+    # Session 39: Apr 3 evening
+    (datetime(2026, 4, 3, 18, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 3, 19, 40, tzinfo=timezone.utc),
+     "s39: perspectivity bijection, von Staudt addition defined"),
+    # Session 40: Apr 3 late afternoon
+    (datetime(2026, 4, 3, 19, 40, tzinfo=timezone.utc),
+     datetime(2026, 4, 3, 21, 30, tzinfo=timezone.utc),
+     "s40: coord_add corrected, additive identity proved"),
+    # Session 41: Apr 3 evening
+    (datetime(2026, 4, 3, 21, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 3, 23, 35, tzinfo=timezone.utc),
+     "s41: planar Desargues from lifting lemma, geometric half complete"),
+    # Session 42: Apr 3 night – Apr 5
+    (datetime(2026, 4, 3, 23, 35, tzinfo=timezone.utc),
+     datetime(2026, 4, 5, 1, 0, tzinfo=timezone.utc),
+     "s42: coord_add_comm PROVEN — two chained Desargues, 70 theorems, 0 sorry"),
 ]
 
 

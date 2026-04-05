@@ -60,6 +60,10 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 51 | [Apr 03, 01:12](51_2026-04-03_cfc9473a.md) | s36: single Lean stack — Foam/, 13 files, 1 axiom, 0 sorry | 76 |
 | 52 | [Apr 03, 03:36](52_2026-04-03_5986d896.md) | s37: derivations/, README as build artifact, three epistemic layers | 70 |
 | 53 | [Apr 03, 14:18](53_2026-04-03_ed836818.md) | s38: FTPG projective geometry from modular law — 18 theorems, 0 sorry | 62 |
+| 54 | [Apr 03, 18:53](54_2026-04-03_232b67d8.md) | s39: perspectivity bijection, von Staudt addition defined | 24 |
+| 55 | [Apr 03, 19:41](55_2026-04-03_308cae01.md) | s40: coord_add corrected, additive identity proved | 24 |
+| 56 | [Apr 03, 21:33](56_2026-04-03_d45c7296.md) | s41: planar Desargues from lifting lemma, geometric half complete | 28 |
+| 57 | [Apr 03, 23:35](57_2026-04-03_f9464b1d.md) | s42: coord_add_comm PROVEN — two chained Desargues, 70 theorems, 0 sorry | 161 |
 
 ## Memory
 

@@ -4,9 +4,13 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 38)
+## Current state (session 42)
 
-- [Session 38 — FTPG from modular law](project_session38_ftpg_incidence.md) — FTPGExplore.lean: 18 theorems, 0 sorry. Projective geometry from modularity alone. Incidence geometry → Veblen-Young → planes_meet_covBy → Desargues (trivial!) → projection injective → AtomsOn type. Key: dual covering, storytelling-as-method, "the proof tells its own shape." Next: coordinatization (ring ops on AtomsOn).
+- [Session 42 — coord_add_comm PROVEN](project_session42_desargues_chain.md) — Two chained Desargues prove commutativity. 70 theorems, 0 sorry. First algebraic theorem on FTPG bridge. Next: associativity.
+- [Session 41 — planar Desargues, geometric half complete](project_session41_planar_desargues.md) — Lifting lemma + planar Desargues proven. ~62 theorems, 0 sorry.
+- [Session 40 — coord_add corrected, additive identity](project_session40_coord_add.md) — coord_add fixed. O+b=b and a+O=a proved. ~40 theorems, 0 sorry.
+- [Session 39 — perspectivity bijection, von Staudt addition](project_session39_perspectivity.md) — Perspectivity bijective. CoordSystem structure. Old coord_add defined (later corrected in s40).
+- [Session 38 — FTPG from modular law](project_session38_ftpg_incidence.md) — FTPGExplore.lean: 18 theorems, 0 sorry. Projective geometry from modularity alone. Incidence geometry → Veblen-Young → planes_meet_covBy → Desargues (trivial!) → projection injective → AtomsOn type. Key: dual covering, storytelling-as-method, "the proof tells its own shape."
 - [Session 37 — derivations/, README as build artifact](project_session37_derivations.md) — Three epistemic layers: lean/ (proven), derivations/ (derived), observed/ (empirical). README compiled from sources via build_readme.py. 9 derivation files with explicit import constraints.
 - [Session 36 — single Lean stack](project_session36_single_stack.md) — Foam/ unified: 13 files, 1 axiom (FTPG), 0 sorry. Capstone: Sub(K,V) satisfies FoamGround as theorem. O(d) gap closed via polarization. Bridge.lean: FTPG axiom + dimension uniqueness. Forced vs inherited distinction. LeanFoam/ dropped. Deductive/ renamed Foam/. Full chain: axiom(FTPG) → P²=P → chain → FoamGround ✓.
 - [Session 35 — deductive path from P² = P](project_session35_deductive_path.md) — New Lean library Deductive/: 9 files, 24 theorems, 0 sorry. Ground is P²=P (definition, not axiom). Self-duality C(k,2)=k characterizes rank 3. (R³,×)≅so(3): observation IS write algebra. O(d) forced by P²=P preservation. [W,P] is Grassmannian tangent. Three-path framing (Lean/English/phenomenological). Ground.lean axioms unnecessary. Shadow: W ↦ [W,P] connects write subspace to tangent space.
