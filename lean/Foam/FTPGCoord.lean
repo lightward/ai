@@ -813,6 +813,246 @@ theorem collinear_of_common_bound {s₁ s₂ s₃ axis π : L}
   exact h_eq ▸ h₃
 
 
+-- § Small Desargues (A5a)
+
+/-- **Small Desargues (A5a).** Three lines through a common point U in a plane π,
+    with six atoms satisfying two "parallelism" conditions. Desargues gives the third.
+
+    "Parallel" means: the two lines meet the base line m at the same point.
+
+    Concretely: three lines l₁ = A⊔U, l₂ = B⊔U, l₃ = C⊔U through U,
+    with A' on l₁, B' on l₂, C' on l₃.
+    If (A⊔B)⊓m = (A'⊔B')⊓m and (A⊔C)⊓m = (A'⊔C')⊓m,
+    then (B⊔C)⊓m = (B'⊔C')⊓m.
+
+    This is desargues_planar with center U, extracting the third axis point on m. -/
+theorem small_desargues'
+    {U A B C A' B' C' m π : L}
+    -- Atoms
+    (hU : IsAtom U) (hA : IsAtom A) (hB : IsAtom B) (hC : IsAtom C)
+    (hA' : IsAtom A') (hB' : IsAtom B') (hC' : IsAtom C')
+    -- All in π
+    (hU_le : U ≤ π) (hA_le : A ≤ π) (hB_le : B ≤ π) (hC_le : C ≤ π)
+    (hA'_le : A' ≤ π) (hB'_le : B' ≤ π) (hC'_le : C' ≤ π)
+    -- m is a line in π through U
+    (hm_le : m ≤ π) (hm_ne : m ≠ π) (hU_on_m : U ≤ m)
+    -- Lines through U: A' on U⊔A, B' on U⊔B, C' on U⊔C
+    (hA'_on : A' ≤ U ⊔ A) (hB'_on : B' ≤ U ⊔ B) (hC'_on : C' ≤ U ⊔ C)
+    -- Distinct vertices (A ≠ B etc.)
+    (hAB : A ≠ B) (hAC : A ≠ C) (hBC : B ≠ C)
+    (hA'B' : A' ≠ B') (hA'C' : A' ≠ C') (hB'C' : B' ≠ C')
+    -- Distinct sides
+    (h_sides_AB : A ⊔ B ≠ A' ⊔ B')
+    (h_sides_AC : A ⊔ C ≠ A' ⊔ C')
+    (h_sides_BC : B ⊔ C ≠ B' ⊔ C')
+    -- Triangles span π
+    (hπA : A ⊔ B ⊔ C = π) (hπB : A' ⊔ B' ⊔ C' = π)
+    -- Center off both triangles
+    (hUA : U ≠ A) (hUB : U ≠ B) (hUC : U ≠ C)
+    (hUA' : U ≠ A') (hUB' : U ≠ B') (hUC' : U ≠ C')
+    -- Corresponding vertices distinct
+    (hAA' : A ≠ A') (hBB' : B ≠ B') (hCC' : C ≠ C')
+    -- Height ≥ 4
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ π)
+    -- Irreducibility
+    (h_irred : ∀ (a b : L), IsAtom a → IsAtom b → a ≠ b →
+      ∃ c : L, IsAtom c ∧ c ≤ a ⊔ b ∧ c ≠ a ∧ c ≠ b)
+    -- Sides covered by π
+    (h_cov_AB : A ⊔ B ⋖ π) (h_cov_AC : A ⊔ C ⋖ π) (h_cov_BC : B ⊔ C ⋖ π)
+    -- m covered by π (m is a line)
+    (hm_cov : m ⋖ π)
+    -- ══ Parallelism hypotheses ══
+    (h_par_AB : (A ⊔ B) ⊓ m = (A' ⊔ B') ⊓ m)
+    (h_par_AC : (A ⊔ C) ⊓ m = (A' ⊔ C') ⊓ m) :
+    -- ══ Conclusion: third parallelism ══
+    (B ⊔ C) ⊓ m = (B' ⊔ C') ⊓ m := by
+  -- Step 1: Apply desargues_planar with center U.
+  obtain ⟨axis, h_axis_le, h_axis_ne, h₁₂, h₁₃, h₂₃⟩ :=
+    desargues_planar hU hA hB hC hA' hB' hC'
+      hU_le hA_le hB_le hC_le hA'_le hB'_le hC'_le
+      hA'_on hB'_on hC'_on
+      hAB hAC hBC hA'B' hA'C' hB'C'
+      h_sides_AB h_sides_AC h_sides_BC
+      hπA hπB
+      hUA hUB hUC hUA' hUB' hUC'
+      hAA' hBB' hCC'
+      R hR hR_not h_irred
+      h_cov_AB h_cov_AC h_cov_BC
+  -- ── Helpers: unprimed sides ≠ m ──
+  -- If X⊔Y = m, then U ≤ X⊔Y, so X'⊔Y' ≤ X⊔Y. Line inside line → equal. ✗
+  have side_ne_m : ∀ {X Y X' Y' : L}, IsAtom X → IsAtom Y → X ≠ Y →
+      IsAtom X' → IsAtom Y' → X' ≠ Y' →
+      X' ≤ U ⊔ X → Y' ≤ U ⊔ Y → X ⊔ Y ≠ X' ⊔ Y' → X ⊔ Y ⋖ π →
+      X ⊔ Y ≠ m := by
+    intro X Y X' Y' hX hY hXY hX' hY' hX'Y' hX'_on hY'_on h_sides h_cov h_eq
+    have hU_le : U ≤ X ⊔ Y := h_eq ▸ hU_on_m
+    have hX'Y'_le : X' ⊔ Y' ≤ X ⊔ Y :=
+      sup_le (le_trans hX'_on (sup_le hU_le le_sup_left))
+             (le_trans hY'_on (sup_le hU_le le_sup_right))
+    -- X'⊔Y' < X⊔Y is impossible: line_height_two says X'⊔Y' is an atom,
+    -- but X' ≤ X'⊔Y' with X' an atom gives X' = X'⊔Y', so Y' ≤ X' = Y'. ✗
+    have h_eq' : X' ⊔ Y' = X ⊔ Y := by
+      by_contra h_ne
+      have h_lt : X' ⊔ Y' < X ⊔ Y := lt_of_le_of_ne hX'Y'_le h_ne
+      have h_pos : ⊥ < X' ⊔ Y' := lt_of_lt_of_le hX'.bot_lt le_sup_left
+      have h_atom := line_height_two hX hY hXY h_pos h_lt
+      -- X' ≤ X'⊔Y' and X'⊔Y' is an atom: X' = ⊥ or X' = X'⊔Y'.
+      have := (h_atom.le_iff.mp le_sup_left).resolve_left hX'.1
+      -- X' = X'⊔Y', so Y' ≤ X'. Y' atom ≤ X' atom → Y' = X'. ✗
+      exact hX'Y' ((hX'.le_iff.mp (this ▸ le_sup_right)).resolve_left hY'.1).symm
+    exact h_sides h_eq'.symm
+  have hAB_ne_m : A ⊔ B ≠ m := side_ne_m hA hB hAB hA' hB' hA'B' hA'_on hB'_on h_sides_AB h_cov_AB
+  have hAC_ne_m : A ⊔ C ≠ m := side_ne_m hA hC hAC hA' hC' hA'C' hA'_on hC'_on h_sides_AC h_cov_AC
+  have hBC_ne_m : B ⊔ C ≠ m := side_ne_m hB hC hBC hB' hC' hB'C' hB'_on hC'_on h_sides_BC h_cov_BC
+  -- ── Helper: primed side ≠ m ──
+  -- If B'⊔C' = m: from B' ≤ U⊔B and B' ≤ m, modular law gives B' ≤ U⊔(B⊓m).
+  -- If B ≱ m, B⊓m = ⊥, so B' ≤ U, hence B' = U. ✗ So B ≤ m. Similarly C ≤ m.
+  -- Then B⊔C ≤ m, so B⊔C = m. ✗
+  have hB'C'_ne_m : B' ⊔ C' ≠ m := by
+    intro h_eq
+    have hB'_le_m : B' ≤ m := h_eq ▸ le_sup_left
+    have hC'_le_m : C' ≤ m := h_eq ▸ le_sup_right
+    have hB_le_m : B ≤ m := by
+      by_contra hB_not
+      have : B ⊓ m = ⊥ := (hB.le_iff.mp inf_le_left).resolve_right
+        (fun h => hB_not (h ▸ inf_le_right))
+      have hB'_le : B' ≤ U ⊔ B ⊓ m := by
+        rw [← sup_inf_assoc_of_le B hU_on_m]; exact le_inf hB'_on hB'_le_m
+      rw [this, sup_bot_eq] at hB'_le
+      exact hUB' ((hU.le_iff.mp hB'_le).resolve_left hB'.1).symm
+    have hC_le_m : C ≤ m := by
+      by_contra hC_not
+      have : C ⊓ m = ⊥ := (hC.le_iff.mp inf_le_left).resolve_right
+        (fun h => hC_not (h ▸ inf_le_right))
+      have hC'_le : C' ≤ U ⊔ C ⊓ m := by
+        rw [← sup_inf_assoc_of_le C hU_on_m]; exact le_inf hC'_on hC'_le_m
+      rw [this, sup_bot_eq] at hC'_le
+      exact hUC' ((hU.le_iff.mp hC'_le).resolve_left hC'.1).symm
+    exact hBC_ne_m ((h_cov_BC.eq_or_eq (sup_le hB_le_m hC_le_m) hm_le).resolve_right
+      hm_ne).symm
+  -- ── Helpers: primed sides ⋖ π ──
+  -- If Z' ≤ X'⊔Y', then X'⊔Y' = π. Then (X'⊔Y')⊓m = m, so (X⊔Y)⊓m = m,
+  -- so m ≤ X⊔Y, so X⊔Y = m. ✗
+  have primed_cov : ∀ {X' Y' Z' : L},
+      IsAtom X' → IsAtom Y' → IsAtom Z' →
+      X' ≠ Y' → X' ≠ Z' → Y' ≠ Z' →
+      ∀ {X Y : L}, X ⊔ Y ⋖ π → X ⊔ Y ≠ m →
+      X' ⊔ Y' ⊔ Z' = π → (X ⊔ Y) ⊓ m = (X' ⊔ Y') ⊓ m →
+      X' ⊔ Y' ⋖ π := by
+    intro X' Y' Z' hX' hY' hZ' hX'Y' hX'Z' hY'Z' X Y h_cov h_ne_m h_span h_par
+    have hZ'_not : ¬ Z' ≤ X' ⊔ Y' := by
+      intro hle
+      have hXY'_eq : X' ⊔ Y' = π :=
+        (sup_eq_left.mpr hle).symm.trans h_span
+      have hm_le_XY : m ≤ X ⊔ Y := by
+        have h1 : (X' ⊔ Y') ⊓ m = m := by rw [hXY'_eq]; exact inf_eq_right.mpr hm_le
+        have h2 : (X ⊔ Y) ⊓ m = m := h_par.trans h1
+        exact le_of_eq h2.symm |>.trans inf_le_left
+      exact h_ne_m ((hm_cov.eq_or_eq hm_le_XY h_cov.le).resolve_right (ne_of_lt h_cov.lt))
+    rw [← h_span]
+    exact line_covBy_plane hX' hY' hZ' hX'Y' hX'Z' hY'Z' hZ'_not
+  have h_cov_A'B' : A' ⊔ B' ⋖ π :=
+    primed_cov hA' hB' hC' hA'B' hA'C' hB'C' h_cov_AB hAB_ne_m hπB h_par_AB
+  have h_cov_A'C' : A' ⊔ C' ⋖ π := by
+    have : A' ⊔ C' ⊔ B' = π := by
+      rw [show A' ⊔ C' ⊔ B' = A' ⊔ B' ⊔ C' from by ac_rfl]; exact hπB
+    exact primed_cov hA' hC' hB' hA'C' hA'B' hB'C'.symm h_cov_AC hAC_ne_m this h_par_AC
+  -- ── Step 2: Side intersections lie on m ──
+  have h_meet_cov_AB : (A ⊔ B) ⊓ (A' ⊔ B') ⋖ (A ⊔ B) :=
+    (planes_meet_covBy h_cov_AB h_cov_A'B' h_sides_AB).1
+  have h_meet_cov_AC : (A ⊔ C) ⊓ (A' ⊔ C') ⋖ (A ⊔ C) :=
+    (planes_meet_covBy h_cov_AC h_cov_A'C' h_sides_AC).1
+  have h_mAB_cov : (A ⊔ B) ⊓ m ⋖ (A ⊔ B) :=
+    (planes_meet_covBy h_cov_AB hm_cov hAB_ne_m).1
+  have h_mAC_cov : (A ⊔ C) ⊓ m ⋖ (A ⊔ C) :=
+    (planes_meet_covBy h_cov_AC hm_cov hAC_ne_m).1
+  have hP_AB_le : (A ⊔ B) ⊓ m ≤ (A ⊔ B) ⊓ (A' ⊔ B') :=
+    le_inf inf_le_left (h_par_AB ▸ inf_le_left)
+  have h₁₂_on_m : (A ⊔ B) ⊓ (A' ⊔ B') ≤ m :=
+    (h_mAB_cov.eq_or_eq hP_AB_le h_meet_cov_AB.lt.le).elim
+      (fun h => h ▸ inf_le_right) (fun h => absurd h (ne_of_lt h_meet_cov_AB.lt))
+  have hP_AC_le : (A ⊔ C) ⊓ m ≤ (A ⊔ C) ⊓ (A' ⊔ C') :=
+    le_inf inf_le_left (h_par_AC ▸ inf_le_left)
+  have h₁₃_on_m : (A ⊔ C) ⊓ (A' ⊔ C') ≤ m :=
+    (h_mAC_cov.eq_or_eq hP_AC_le h_meet_cov_AC.lt.le).elim
+      (fun h => h ▸ inf_le_right) (fun h => absurd h (ne_of_lt h_meet_cov_AC.lt))
+  -- ── Step 3: axis = m, hence h₂₃ ≤ m ──
+  have h₁₂_ne_bot : (A ⊔ B) ⊓ (A' ⊔ B') ≠ ⊥ := by
+    intro h; rw [h] at h_meet_cov_AB
+    exact h_meet_cov_AB.2 hA.bot_lt (atom_covBy_join hA hB hAB).lt
+  have h₁₃_ne_bot : (A ⊔ C) ⊓ (A' ⊔ C') ≠ ⊥ := by
+    intro h; rw [h] at h_meet_cov_AC
+    exact h_meet_cov_AC.2 hA.bot_lt (atom_covBy_join hA hC hAC).lt
+  have h₁₂_atom : IsAtom ((A ⊔ B) ⊓ (A' ⊔ B')) :=
+    line_height_two hA hB hAB (bot_lt_iff_ne_bot.mpr h₁₂_ne_bot) h_meet_cov_AB.lt
+  have h₁₃_atom : IsAtom ((A ⊔ C) ⊓ (A' ⊔ C')) :=
+    line_height_two hA hC hAC (bot_lt_iff_ne_bot.mpr h₁₃_ne_bot) h_meet_cov_AC.lt
+  -- Distinct: if equal, P ≤ (A⊔B)⊓(A⊔C) = A and P ≤ (A'⊔B')⊓(A'⊔C') = A', so A = A'. ✗
+  have hC_not_AB : ¬ C ≤ A ⊔ B := by
+    intro hle; exact ne_of_lt h_cov_AB.lt (sup_eq_left.mpr hle ▸ hπA)
+  have h₁₂_ne_h₁₃ : (A ⊔ B) ⊓ (A' ⊔ B') ≠ (A ⊔ C) ⊓ (A' ⊔ C') := by
+    intro h_eq
+    have hC'_not_A'B' : ¬ C' ≤ A' ⊔ B' := by
+      intro hle; exact ne_of_lt h_cov_A'B'.lt (sup_eq_left.mpr hle ▸ hπB)
+    have hP_le_A : (A ⊔ B) ⊓ (A' ⊔ B') ≤ A := le_trans
+      (le_inf inf_le_left (le_trans (le_of_eq h_eq) inf_le_left))
+      (le_of_eq (modular_intersection hA hB hC hAB hAC hBC hC_not_AB))
+    have hP_le_A' : (A ⊔ B) ⊓ (A' ⊔ B') ≤ A' := le_trans
+      (le_inf inf_le_right (le_trans (le_of_eq h_eq) inf_le_right))
+      (le_of_eq (modular_intersection hA' hB' hC' hA'B' hA'C' hB'C' hC'_not_A'B'))
+    exact hAA' ((hA.le_iff.mp hP_le_A).resolve_left h₁₂_atom.1 |>.symm |>.trans
+      ((hA'.le_iff.mp hP_le_A').resolve_left h₁₂_atom.1))
+  -- h₁₂ = (A⊔B)⊓m and h₁₂ ⋖ m.
+  have h₁₂_cov_m : (A ⊔ B) ⊓ (A' ⊔ B') ⋖ m := by
+    have h₁₂_eq : (A ⊔ B) ⊓ (A' ⊔ B') = (A ⊔ B) ⊓ m :=
+      (h_mAB_cov.eq_or_eq hP_AB_le h_meet_cov_AB.lt.le).elim
+        id (fun h => absurd h (ne_of_lt h_meet_cov_AB.lt))
+    exact h₁₂_eq ▸ (planes_meet_covBy h_cov_AB hm_cov hAB_ne_m).2
+  -- Two distinct atoms on m span m. h₁₂ ⋖ join ≤ m and h₁₂ ⋖ m → join = m.
+  have h_lt_join : (A ⊔ B) ⊓ (A' ⊔ B') < (A ⊔ B) ⊓ (A' ⊔ B') ⊔ (A ⊔ C) ⊓ (A' ⊔ C') := by
+    apply lt_of_le_of_ne le_sup_left
+    intro h; exact h₁₂_ne_h₁₃ ((h₁₂_atom.le_iff.mp (h ▸ le_sup_right)).resolve_left h₁₃_atom.1).symm
+  have h_join_eq_m : (A ⊔ B) ⊓ (A' ⊔ B') ⊔ (A ⊔ C) ⊓ (A' ⊔ C') = m :=
+    (h₁₂_cov_m.eq_or_eq h_lt_join.le (sup_le h₁₂_on_m h₁₃_on_m)).resolve_left
+      (ne_of_gt h_lt_join)
+  have h_axis_eq_m : axis = m :=
+    (hm_cov.eq_or_eq (h_join_eq_m ▸ sup_le h₁₂ h₁₃) h_axis_le).resolve_right h_axis_ne
+  have h₂₃_on_m : (B ⊔ C) ⊓ (B' ⊔ C') ≤ m := h_axis_eq_m ▸ h₂₃
+  -- ── Step 4: (B⊔C)⊓m = (B'⊔C')⊓m ──
+  -- First derive B'⊔C' ⋖ π: if B'⊔C' = π, then (B⊔C)⊓(B'⊔C') = B⊔C ≤ m, so B⊔C = m. ✗
+  have h_cov_B'C' : B' ⊔ C' ⋖ π := by
+    have hA'_not : ¬ A' ≤ B' ⊔ C' := by
+      intro hle
+      have hB'C'_eq_π : B' ⊔ C' = π := by
+        have : A' ⊔ B' ⊔ C' = B' ⊔ C' := by
+          rw [show A' ⊔ B' ⊔ C' = B' ⊔ C' ⊔ A' from by ac_rfl]; exact sup_eq_left.mpr hle
+        rw [this] at hπB; exact hπB
+      -- (B⊔C)⊓(B'⊔C') = (B⊔C)⊓π = B⊔C (since B⊔C ≤ π)
+      have : (B ⊔ C) ⊓ (B' ⊔ C') = B ⊔ C := by
+        rw [hB'C'_eq_π]; exact inf_eq_left.mpr h_cov_BC.le
+      -- B⊔C ≤ m from h₂₃_on_m, so B⊔C = m. ✗
+      have hBC_le_m : B ⊔ C ≤ m := this ▸ h₂₃_on_m
+      exact hBC_ne_m ((h_cov_BC.eq_or_eq hBC_le_m hm_le).resolve_right hm_ne).symm
+    rw [← hπB, show A' ⊔ B' ⊔ C' = B' ⊔ C' ⊔ A' from by ac_rfl]
+    exact line_covBy_plane hB' hC' hA' hB'C' hA'B'.symm hA'C'.symm hA'_not
+  -- Now the covering argument works.
+  have h_meet_cov_BC : (B ⊔ C) ⊓ (B' ⊔ C') ⋖ (B ⊔ C) :=
+    (planes_meet_covBy h_cov_BC h_cov_B'C' h_sides_BC).1
+  have h_meet_cov_BC' : (B ⊔ C) ⊓ (B' ⊔ C') ⋖ (B' ⊔ C') :=
+    (planes_meet_covBy h_cov_BC h_cov_B'C' h_sides_BC).2
+  have h_mBC_cov : (B ⊔ C) ⊓ m ⋖ (B ⊔ C) :=
+    (planes_meet_covBy h_cov_BC hm_cov hBC_ne_m).1
+  have h_mB'C'_cov : (B' ⊔ C') ⊓ m ⋖ (B' ⊔ C') :=
+    (planes_meet_covBy h_cov_B'C' hm_cov hB'C'_ne_m).1
+  have hBC_eq : (B ⊔ C) ⊓ m = (B ⊔ C) ⊓ (B' ⊔ C') :=
+    (h_meet_cov_BC.eq_or_eq (le_inf inf_le_left h₂₃_on_m) h_mBC_cov.lt.le).elim id
+      (fun h => absurd h (ne_of_lt h_mBC_cov.lt))
+  have hB'C'_eq : (B' ⊔ C') ⊓ m = (B ⊔ C) ⊓ (B' ⊔ C') :=
+    (h_meet_cov_BC'.eq_or_eq (le_inf inf_le_right h₂₃_on_m) h_mB'C'_cov.lt.le).elim id
+      (fun h => absurd h (ne_of_lt h_mB'C'_cov.lt))
+  rw [hBC_eq, hB'C'_eq]
+
+
 -- § Helpers for coord_add commutativity
 
 variable (Γ : CoordSystem L)
