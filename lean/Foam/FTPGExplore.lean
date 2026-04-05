@@ -3327,26 +3327,31 @@ theorem coord_add_comm (Γ : CoordSystem L)
 
     (a + b) + c = a + (b + c)
 
-    Proof outline (two Desargues applications):
+    Proof via translation consistency (four A5a / Desargues applications):
 
-    1. **First Desargues.** Triangles (s, C, a') and (t, D_c, E) are
-       perspective from U.  Side intersections:
-       - B₁ = (s⊔C) ⊓ (b'⊔D_c)   [since t⊔D_c = b'⊔D_c]
-       - B₂ = (a'⊔D_b) ⊓ (t⊔E)   [since s⊔a' = a'⊔D_b]
-       - P₃ = (a⊔C) ⊓ (c⊔E)      [since C⊔a' = a⊔C, D_c⊔E = c⊔E]
-       Desargues gives B₁, B₂, P₃ collinear.
+    The key idea: coord_add x b is the parallelogram construction with
+    auxiliary point C. Using a DIFFERENT auxiliary point gives the same
+    result (translation well-definedness). By choosing auxiliary points
+    that "absorb" the intermediate sum, the two sides of associativity
+    are revealed as two computations of the same translation.
 
-    2. **Key step.** U ≤ B₁ ⊔ B₂  (numerically verified, proof TBD).
+    **Setup:**  s = a+b, t = b+c, s' = σ_C(s), a' = σ_C(a).
+    LHS = (s'⊔D_c) ⊓ l,  RHS = (a'⊔D_t) ⊓ l.
 
-    3. **Second Desargues.** Given U ≤ B₁⊔B₂, triangles (s', B₁, D_c)
-       and (a', B₂, D_t) are perspective from U.  Side intersections:
-       - (s'⊔B₁) ⊓ (a'⊔B₂) = (s⊔C) ⊓ (a'⊔D_b) = s  ∈ l
-       - (B₁⊔D_c) ⊓ (B₂⊔D_t) = (b'⊔D_c) ⊓ (t⊔E) = t  ∈ l
-       - (s'⊔D_c) ⊓ (a'⊔D_t) = W
-       Since s, t ∈ l and l ⋖ π, the axis = l, so W ∈ l.
+    **Step 1.** Construct F on O⊔C with F ≠ O, F ≠ C, F ≠ E (by h_irred).
+    F is off l, m, n. Compute F' = (c⊔E)⊓(F⊔U) = τ_c(F).
 
-    4. **Conclude.** W is an atom on both result lines and on l,
-       so (a+b)+c = W = a+(b+c). -/
+    **Step 2.** (A5a pair #1) Three parallel lines l, F⊔F', n through U:
+    - 1st A5a: O⊔F ∥ c⊔F' and O⊔C ∥ c⊔D_c → F⊔C ∥ F'⊔D_c
+    - 2nd A5a: F⊔C ∥ F'⊔D_c and F⊔s ∥ F'⊔τ(s) → C⊔s ∥ D_c⊔τ(s)
+    Hence τ_{F,F'}(s) = (D_c⊔s')⊓l = LHS.
+
+    **Step 3.** (A5a pair #2) Same three lines, different cross-connections:
+    - 1st A5a: O⊔F ∥ c⊔F' and O⊔D_b ∥ c⊔D_t → F⊔D_b ∥ F'⊔D_t
+    - 2nd A5a: F⊔D_b ∥ F'⊔D_t and F⊔s ∥ F'⊔τ(s) → D_b⊔s ∥ D_t⊔τ(s)
+    Hence τ_{F,F'}(s) = (D_t⊔a')⊓l = RHS.
+
+    **Step 4.** LHS = τ_{F,F'}(s) = RHS. -/
 theorem coord_add_assoc (Γ : CoordSystem L)
     (a b c : L) (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
     (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
@@ -3460,25 +3465,32 @@ theorem coord_add_assoc (Γ : CoordSystem L)
   have hl_covBy_π : l ⋖ π := by
     have := covBy_sup_of_inf_covBy_left (hV_disj ▸ Γ.hV.bot_covBy)
     rwa [show Γ.V ⊔ l = π from by rw [sup_comm]; rfl] at this
-  -- ═══ Key geometric claim (Desargues) ═══
-  -- Step 2: U ≤ B₁ ⊔ B₂ (numerically verified, proof TBD)
-  have hU_on_B : Γ.U ≤ B₁ ⊔ B₂ := by
-    sorry
-  -- Step 3: W lies on l via second Desargues
-  -- Given hU_on_B, triangles (s', B₁, D_c) and (a', B₂, D_t)
-  -- are perspective from U. Desargues gives s, t, W collinear.
-  -- Since s, t ∈ l and l ⋖ π, axis = l, so W ∈ l.
-  have hW_on_l : W ≤ l := by
-    sorry
-  -- ═══ Final: W on both result lines and on l → equality ═══
-  -- W ≤ s'⊔D_c (from inf_le_left) and W ≤ l (from hW_on_l)
-  -- so W ≤ (s'⊔D_c) ⊓ l = coord_add Γ (coord_add Γ a b) c
-  -- Similarly W ≤ (a'⊔D_t) ⊓ l = coord_add Γ a (coord_add Γ b c)
-  -- Both are atoms, W is an atom, so they're equal.
-  have hW_le_lhs : W ≤ (s' ⊔ D_c) ⊓ l := le_inf inf_le_left hW_on_l
-  have hW_le_rhs : W ≤ (a' ⊔ D_t) ⊓ l := le_inf inf_le_right hW_on_l
-  -- The LHS and RHS are atoms (from perspect_atom, as in coord_add_comm)
-  -- and W is an atom (from line_height_two), giving equality.
+  -- ═══ Step 1: Construct auxiliary point F ═══
+  -- F on O⊔C, F ≠ O, F ≠ C, F ≠ E. Then F ∉ l, F ∉ m, F ∉ n.
+  -- (O⊔C meets l at O, meets m at E, meets n at C, so F avoids all three.)
+  obtain ⟨F, hF_atom, hF_le, hF_ne_O, hF_ne_C⟩ := h_irred Γ.O Γ.C Γ.hO Γ.hC hOC
+  -- F' = τ_c(F) = (c ⊔ ((O⊔F)⊓m)) ⊓ (F⊔U)
+  -- Since F ∈ O⊔C, we have (O⊔F)⊓m = (O⊔C)⊓m = E.
+  -- And F⊔U is a line through F and U.
+  set F' := (c ⊔ Γ.E) ⊓ (F ⊔ Γ.U)
+  -- ═══ Step 2 (A5a pair #1): τ_{F,F'}(s) = LHS ═══
+  -- Three parallel lines through U on m: l, F⊔F', n = C⊔D_c
+  -- 1st A5a: O⊔F ∥ c⊔F' (ideal pt E) and O⊔C ∥ c⊔D_c (ideal pt E)
+  --          → F⊔C ∥ F'⊔D_c
+  -- 2nd A5a: F⊔C ∥ F'⊔D_c and F⊔s ∥ F'⊔result (def of τ_{F,F'})
+  --          → C⊔s ∥ D_c⊔result, i.e. s' is ideal pt of D_c⊔result
+  --          → result = (D_c⊔s')⊓l = LHS
+  have hLHS : sorry := sorry  -- τ_{F,F'}(s) = (s'⊔D_c)⊓l
+  -- ═══ Step 3 (A5a pair #2): τ_{F,F'}(s) = RHS ═══
+  -- Same three lines. Different cross-connections:
+  -- 1st A5a: O⊔F ∥ c⊔F' and O⊔D_b ∥ c⊔D_t → F⊔D_b ∥ F'⊔D_t
+  --   (needs: (O⊔D_b)⊓m = (c⊔D_t)⊓m — the "parallel return centers" lemma)
+  -- 2nd A5a: F⊔D_b ∥ F'⊔D_t and F⊔s ∥ F'⊔result
+  --          → D_b⊔s ∥ D_t⊔result, i.e. a' is ideal pt of D_t⊔result
+  --          → result = (D_t⊔a')⊓l = RHS
+  have hRHS : sorry := sorry  -- τ_{F,F'}(s) = (a'⊔D_t)⊓l
+  -- ═══ Step 4: Conclude ═══
+  -- LHS = τ_{F,F'}(s) = RHS, so (s'⊔D_c)⊓l = (a'⊔D_t)⊓l.
   sorry
 
 end Foam.FTPGExplore
