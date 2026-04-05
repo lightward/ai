@@ -31,17 +31,26 @@ FoamGround properties ✓
 
 ### The algebraic descent (toward eliminating the axiom)
 
-**FTPGExplore.lean** — 70 theorems, 0 sorry
+**FTPGExplore.lean** — projective geometry from lattice axioms (0 sorry)
 
-Building the fundamental theorem of projective geometry from lattice axioms alone: incidence geometry, Veblen-Young, Desargues (both nonplanar and planar), perspectivity, coordinatization, and the first algebraic result (`coord_add_comm`). When complete, this replaces Bridge.lean's axiom with a theorem.
+Incidence geometry, Veblen-Young, Desargues (nonplanar + planar), perspectivity, and Small Desargues (A5a). Pure geometry — no coordinates.
 
 | layer | key declarations |
 |---|---|
 | incidence geometry | `atoms_disjoint`, `line_height_two`, `veblen_young`, `meet_of_lines_is_atom` |
 | Desargues | `desargues_nonplanar`, `desargues_planar`, `planes_meet_covBy` |
 | perspectivity | `project_is_atom`, `project_injective`, `perspectivity_injective` |
-| coordinatization | `CoordSystem`, `coord_add_left_zero`, `coord_add_right_zero` |
-| algebra | `coord_first_desargues`, `coord_second_desargues`, `coord_add_comm` |
+| Small Desargues | `small_desargues'` (A5a: parallelism from Desargues) |
+
+**FTPGCoord.lean** — von Staudt coordinatization (3 sorry in `coord_add_assoc`)
+
+Coordinate system, addition via perspectivities, ring axioms. Imports FTPGExplore.
+
+| layer | key declarations |
+|---|---|
+| coordinate system | `CoordSystem`, `coord_add`, `coord_add_left_zero`, `coord_add_right_zero` |
+| commutativity | `coord_first_desargues`, `coord_second_desargues`, `coord_add_comm` |
+| associativity | `coord_add_assoc` (in progress: translation consistency via four A5a applications) |
 
 ### The deductive chain (from P² = P)
 
