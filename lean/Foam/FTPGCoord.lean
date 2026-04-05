@@ -3109,7 +3109,10 @@ theorem coord_add_assoc (Γ : CoordSystem L)
   -- there's no such F. So this proof strategy needs |k| ≥ 3, i.e., at least 4 points per line.
   --
   -- For now: we assume we have F with all needed properties. This may need an extra hypothesis
-  -- (|k| ≥ 3, or equivalently: ∃ 4 atoms on every line). We use sorry for hF_ne_C.
+  -- BLOCKED: Needs |k| ≥ 3 (4 atoms per line). h_irred only guarantees 3 atoms per line.
+  -- Over F₂ (3 atoms per line: O, C, E on O⊔C), no F with F ≠ O, C, E exists.
+  -- Fix: either add hypothesis (∃ 4 atoms on every line) or restructure to handle |k|=2 separately.
+  -- The standard algebraic proof of associativity via Desargues requires this.
   have hF_ne_C : F ≠ Γ.C := sorry
   -- F' = τ_c(F) = (c ⊔ ((O⊔F)⊓m)) ⊓ (F⊔U)
   -- Since F ∈ O⊔C, we have (O⊔F)⊓m = (O⊔C)⊓m = E.
@@ -3311,8 +3314,31 @@ theorem coord_add_assoc (Γ : CoordSystem L)
         (ne_of_gt (lt_of_le_of_ne le_sup_left (fun h => hDb_not_l (h ▸ le_sup_right))))];
        exact sup_le ha'_le_π hDb_le_π)
   have hs_on : s ≤ l := inf_le_right
-  have hs_ne_O : s ≠ Γ.O := sorry -- O + b ≠ O when b ≠ O (need: s = coord_add a b ≠ O)
-  have hs_ne_U : s ≠ Γ.U := sorry -- similar
+  have hs_ne_U : s ≠ Γ.U := by
+    intro h_eq
+    -- If s = U, then U ≤ (a'⊔D_b)⊓m (since U ≤ m and U = s ≤ a'⊔D_b).
+    -- (a'⊔D_b)⊓m = a' (since a' ≤ m, D_b ∉ m, covering).
+    -- So U ≤ a', i.e., a' = U. Then U ≤ a⊔C, so U ≤ l⊓(C⊔a) = a, contradicting a ≠ U.
+    have hDb_not_m : ¬ D_b ≤ m := by
+      intro h; have := le_inf h (inf_le_right : D_b ≤ Γ.U ⊔ Γ.C)
+      rw [hUC_inf_m] at this
+      exact hDb_ne_U ((Γ.hU.le_iff.mp this).resolve_left hDb_atom.1)
+    have ha'Db_inf_m : (a' ⊔ D_b) ⊓ m = a' := by
+      have h_le : a' ≤ (a' ⊔ D_b) ⊓ m := le_inf le_sup_left (inf_le_right : a' ≤ m)
+      have h_lt : (a' ⊔ D_b) ⊓ m < a' ⊔ D_b :=
+        lt_of_le_of_ne inf_le_left (fun h => hDb_not_m (h ▸ inf_le_right |>.trans le_sup_right))
+      exact le_antisymm (((atom_covBy_join ha'_atom hDb_atom ha'Db).eq_or_eq h_le h_lt.le).resolve_right
+        (ne_of_lt h_lt) ▸ le_rfl) h_le
+    have hU_le_a' : Γ.U ≤ a' := by
+      have : Γ.U ≤ (a' ⊔ D_b) ⊓ m := le_inf (h_eq ▸ (inf_le_left : s ≤ a' ⊔ D_b)) le_sup_right
+      rwa [ha'Db_inf_m] at this
+    have ha'_eq_U := (Γ.hU.le_iff.mp hU_le_a').resolve_left ha'_atom.1
+    have hU_le_aC : Γ.U ≤ a ⊔ Γ.C := ha'_eq_U.symm ▸ (inf_le_left : a' ≤ a ⊔ Γ.C)
+    have : l ⊓ (Γ.C ⊔ a) = a := inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l ha_on
+    have hU_le_a : Γ.U ≤ a :=
+      calc Γ.U ≤ l ⊓ (Γ.C ⊔ a) := le_inf le_sup_right (hU_le_aC.trans (sup_comm a Γ.C).le)
+        _ = a := this
+    exact ha_ne_U ((ha.le_iff.mp hU_le_a).resolve_left Γ.hU.1).symm
   -- ── s' properties ──
   have hs'_atom : IsAtom s' :=
     perspect_atom Γ.hC hs_atom (fun h => Γ.hC_not_l (h ▸ hs_on)) Γ.hU Γ.hV hUV Γ.hC_not_m
@@ -3340,8 +3366,30 @@ theorem coord_add_assoc (Γ : CoordSystem L)
         (ne_of_gt (lt_of_le_of_ne le_sup_left (fun h => hDc_not_l (h ▸ le_sup_right))))];
        exact sup_le hb'_le_π hDc_le_π)
   have ht_on : t ≤ l := inf_le_right
-  have ht_ne_O : t ≠ Γ.O := sorry
-  have ht_ne_U : t ≠ Γ.U := sorry
+  have ht_ne_U : t ≠ Γ.U := by
+    intro h_eq
+    -- If t = U, then U ≤ (b'⊔D_c)⊓m = b' (since b' ≤ m, D_c ∉ m).
+    -- So b' = U. Then U ≤ b⊔C, so U ≤ l⊓(C⊔b) = b, contradicting b ≠ U.
+    have hDc_not_m : ¬ D_c ≤ m := by
+      intro h; have := le_inf h (inf_le_right : D_c ≤ Γ.U ⊔ Γ.C)
+      rw [hUC_inf_m] at this
+      exact hDc_ne_U ((Γ.hU.le_iff.mp this).resolve_left hDc_atom.1)
+    have hb'Dc_inf_m : (b' ⊔ D_c) ⊓ m = b' := by
+      have h_le : b' ≤ (b' ⊔ D_c) ⊓ m := le_inf le_sup_left (inf_le_right : b' ≤ m)
+      have h_lt : (b' ⊔ D_c) ⊓ m < b' ⊔ D_c :=
+        lt_of_le_of_ne inf_le_left (fun h => hDc_not_m (h ▸ inf_le_right |>.trans le_sup_right))
+      exact le_antisymm (((atom_covBy_join hb'_atom hDc_atom hb'Dc).eq_or_eq h_le h_lt.le).resolve_right
+        (ne_of_lt h_lt) ▸ le_rfl) h_le
+    have hU_le_b' : Γ.U ≤ b' := by
+      have : Γ.U ≤ (b' ⊔ D_c) ⊓ m := le_inf (h_eq ▸ (inf_le_left : t ≤ b' ⊔ D_c)) le_sup_right
+      rwa [hb'Dc_inf_m] at this
+    have hb'_eq_U := (Γ.hU.le_iff.mp hU_le_b').resolve_left hb'_atom.1
+    have hU_le_bC : Γ.U ≤ b ⊔ Γ.C := hb'_eq_U.symm ▸ (inf_le_left : b' ≤ b ⊔ Γ.C)
+    have : l ⊓ (Γ.C ⊔ b) = b := inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l hb_on
+    have hU_le_b : Γ.U ≤ b :=
+      calc Γ.U ≤ l ⊓ (Γ.C ⊔ b) := le_inf le_sup_right (hU_le_bC.trans (sup_comm b Γ.C).le)
+        _ = b := this
+    exact hb_ne_U ((hb.le_iff.mp hU_le_b).resolve_left Γ.hU.1).symm
   -- ── D_t properties ──
   have hDt_atom : IsAtom D_t :=
     perspect_atom Γ.hE_atom ht_atom (fun h => CoordSystem.hE_not_l (h ▸ ht_on))
@@ -3445,10 +3493,61 @@ theorem coord_add_assoc (Γ : CoordSystem L)
     -- Line l₁ = l = O⊔U. Points: A = O, A' = c.
     -- Line l₂ = F⊔U (= F⊔F'). Points: B = F, B' = F'.
     -- Line l₃ = U⊔C. Points: C_pt = C, C' = D_c.
-    -- Parallelism 1: (O⊔F)⊓m = (c⊔F')⊓m [= E]
-    -- Parallelism 2: (O⊔C)⊓m = (c⊔D_c)⊓m [= E]
-    -- Conclusion: (F⊔C)⊓m = (F'⊔D_c)⊓m
-    sorry
+    -- Direct proof: O, F, C all lie on O⊔C, so F⊔C = O⊔C (collinear).
+    -- Similarly F', D_c both lie on c⊔E, so F'⊔D_c = c⊔E.
+    -- Both (O⊔C)⊓m = E and (c⊔E)⊓m = E.
+    -- (F⊔C)⊓m:
+    have hFC_eq_OC : F ⊔ Γ.C = Γ.O ⊔ Γ.C := by
+      have h_le : F ⊔ Γ.C ≤ Γ.O ⊔ Γ.C := sup_le hF_le le_sup_right
+      have h_lt : Γ.C < F ⊔ Γ.C := lt_of_le_of_ne le_sup_right
+        (fun h => hF_ne_C ((Γ.hC.le_iff.mp (h ▸ le_sup_left)).resolve_left hF_atom.1).symm)
+      exact ((atom_covBy_join Γ.hC Γ.hO (fun h => Γ.hC_not_l (h ▸ le_sup_left))).eq_or_eq h_lt.le
+        (sup_comm Γ.C Γ.O ▸ h_le.trans (sup_comm Γ.O Γ.C).le)).resolve_left
+        (ne_of_gt h_lt) |>.trans (sup_comm Γ.C Γ.O)
+    -- (F'⊔D_c)⊓m:
+    have hF'Dc_ne : F' ≠ D_c := by
+      intro h_eq
+      -- F' ≤ F⊔U and D_c ≤ U⊔C. If F' = D_c, then F' ≤ (F⊔U) ⊓ (U⊔C).
+      -- (F⊔U) ⊓ (U⊔C): F ∉ U⊔C (hF_not_UC), so by modular_intersection = U.
+      -- F' ≤ U → F' = U → F' ≤ m. Contradiction with hF'_not_m.
+      have hFU_inf_UC : (F ⊔ Γ.U) ⊓ (Γ.U ⊔ Γ.C) = Γ.U := by
+        exact modular_intersection Γ.hU hF_atom Γ.hC hFU.symm hUC
+          (fun h => hF_ne_C ((Γ.hC.le_iff.mp (h ▸ le_sup_left)).resolve_left hF_atom.1).symm)
+          (fun hle => hF_not_UC (by rwa [sup_comm] at hle))
+      have hF'_le_U : F' ≤ Γ.U := hFU_inf_UC ▸ le_inf hF'_on_FU (h_eq ▸ (inf_le_right : D_c ≤ Γ.U ⊔ Γ.C))
+      exact hF'_not_m ((Γ.hU.le_iff.mp hF'_le_U).resolve_left hF'_atom.1 ▸ le_sup_left)
+    have hF'Dc_eq_cE : F' ⊔ D_c = c ⊔ Γ.E := by
+      have h_le : F' ⊔ D_c ≤ c ⊔ Γ.E := sup_le hF'_on_cE (inf_le_left : D_c ≤ c ⊔ Γ.E)
+      have h_lt : Γ.E < F' ⊔ D_c := by
+        -- D_c ≤ c⊔E (inf_le_left). E ≤ c⊔E. If D_c = E, that contradicts D_c ∉ m? No, E is on m.
+        -- Actually D_c ≠ E: D_c on U⊔C, E on O⊔C. D_c on U⊔C and E on m. If D_c = E, then E ≤ U⊔C, contradicting hE_not_UC.
+        have hDc_ne_E : D_c ≠ Γ.E := fun h => hE_not_UC (h ▸ (inf_le_right : D_c ≤ Γ.U ⊔ Γ.C))
+        have hE_le : Γ.E ≤ F' ⊔ D_c := by
+          -- E ≤ c⊔E = c⊔F' (if these are equal) ... no, we need E ≤ F'⊔D_c.
+          -- F' and D_c are both on c⊔E. F' ≠ D_c. F'⊔D_c ≤ c⊔E. If F'⊔D_c = c⊔E, done.
+          -- F' < F'⊔D_c ≤ c⊔E. atom_covBy_join of F' and D_c gives covering.
+          -- Since D_c ≤ c⊔E and F' ≤ c⊔E, F'⊔D_c ≤ c⊔E.
+          -- F' ⋖ F'⊔D_c ≤ c⊔E. And c ⋖ c⊔E. If c ≤ F'⊔D_c, then c⊔E ≤ F'⊔D_c⊔E = F'⊔D_c (since D_c ≤ c⊔E, F' ≤ c⊔E).
+          -- So c⊔E ≤ F'⊔D_c ≤ c⊔E → equal. Then E ≤ c⊔E = F'⊔D_c. ✓
+          -- But if c ≰ F'⊔D_c, then F'⊔D_c ≠ c⊔E. F'⊔D_c is a line < c⊔E (proper).
+          -- But c⊔E is also a line (c and E atoms, c ≠ E). F'⊔D_c ≤ c⊔E, both lines → F'⊔D_c = c⊔E.
+          -- (by covering: F' < F'⊔D_c ≤ c⊔E, and c ⋖ c⊔E, so F'⊔D_c = c⊔E or F'⊔D_c = c.)
+          -- Actually: F'⊔D_c is a line (rank 2). c⊔E is a line (rank 2). F'⊔D_c ≤ c⊔E, both rank 2 → equal.
+          -- In covering terms: F' < F'⊔D_c, so F' ⋖ F'⊔D_c. F'⊔D_c ≤ c⊔E. E ≤ c⊔E.
+          -- E ⋖ c⊔E (since c ≠ E). F'⊔D_c ≤ c⊔E and E ≤ c⊔E. Both cover E.
+          -- If F'⊔D_c < c⊔E, that means ⊥ < F'⊔D_c < c⊔E, but c⊔E has rank 2,
+          -- so F'⊔D_c has rank ≤ 1 = atom. But F' < F'⊔D_c means F'⊔D_c has rank ≥ 2. Contradiction.
+          have h_lt_F' : F' < F' ⊔ D_c := lt_of_le_of_ne le_sup_left
+            (fun h => hF'Dc_ne ((hF'_atom.le_iff.mp (h ▸ le_sup_right)).resolve_left hDc_atom.1).symm)
+          have h_eq : F' ⊔ D_c = c ⊔ Γ.E :=
+            ((atom_covBy_join hc Γ.hE_atom hc_ne_E).eq_or_eq h_lt_F'.le
+              (sup_le hF'_on_cE (inf_le_left : D_c ≤ c ⊔ Γ.E))).resolve_left (ne_of_gt h_lt_F')
+          exact h_eq ▸ le_sup_right
+        exact lt_of_lt_of_le Γ.hE_atom.bot_lt hE_le
+      exact ((atom_covBy_join Γ.hE_atom hc hc_ne_E.symm).eq_or_eq h_lt.le
+        (sup_comm c Γ.E ▸ h_le.trans (sup_comm c Γ.E).le)).resolve_left (ne_of_gt h_lt)
+        |>.symm.trans (sup_comm Γ.E c)
+    rw [hFC_eq_OC, hF'Dc_eq_cE, hcE_inf_m]
   -- Sub-step 2b: second small_desargues' → (C⊔s)⊓m = (D_c⊔τ_s)⊓m
   -- But we need (F⊔s)⊓m = (F'⊔τ_s)⊓m as a hypothesis. By construction of τ_s,
   -- this should follow from σ_s = (F⊔s)⊓m and τ_s = (F'⊔σ_s)⊓l.
@@ -3515,18 +3614,78 @@ theorem coord_add_assoc (Γ : CoordSystem L)
     exact CoordSystem.hE_not_l (((atom_covBy_join hc Γ.hE_atom hc_ne_E).eq_or_eq
       (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt.le (hl_le_cE.trans (sup_comm c Γ.E).le)).resolve_left
       (ne_of_gt (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt) ▸ le_sup_right)
+  have hFs_ne : F ≠ s := fun h => hF_not_l (h ▸ hs_on)
+  have hσ_atom : IsAtom σ_s := by
+    show IsAtom ((F ⊔ s) ⊓ m)
+    rw [sup_comm]
+    exact perspect_atom hF_atom hs_atom hFs_ne.symm Γ.hU Γ.hV hUV hF_not_m
+      (sup_le (hs_on.trans (le_sup_left.trans (le_of_eq Γ.m_sup_C_eq_π.symm)))
+              (hF_le_π.trans (le_of_eq Γ.m_sup_C_eq_π.symm)))
+  have hσ_on_m : σ_s ≤ m := inf_le_right
+  have hσ_ne_F' : σ_s ≠ F' := fun h_eq => hF'_not_m (h_eq ▸ hσ_on_m)
+  have hσ_not_l : ¬ σ_s ≤ l := by
+    intro h
+    have hσ_le_U : σ_s ≤ Γ.U := by
+      have := le_inf h hσ_on_m; rwa [Γ.l_inf_m_eq_U] at this
+    have hσ_eq_U := (Γ.hU.le_iff.mp hσ_le_U).resolve_left hσ_atom.1
+    -- U = σ_s ≤ F⊔s. s on l, s ≠ U → s⊔U = l. So l ≤ F⊔s. F⊔s is a line, l is a line → l = F⊔s → F ≤ l.
+    have hU_le_Fs : Γ.U ≤ F ⊔ s := hσ_eq_U.symm ▸ (inf_le_left : σ_s ≤ F ⊔ s)
+    have hsU_eq_l : s ⊔ Γ.U = l := by
+      rw [show l = Γ.O ⊔ Γ.U from rfl, sup_comm s Γ.U]
+      exact ((atom_covBy_join Γ.hU Γ.hO Γ.hOU.symm).eq_or_eq
+        (lt_of_le_of_ne le_sup_left (fun h => hs_ne_U ((Γ.hU.le_iff.mp (h ▸ le_sup_right)).resolve_left hs_atom.1).symm)).le
+        (sup_le le_sup_left hs_on)).resolve_left
+        (ne_of_gt (lt_of_le_of_ne le_sup_left (fun h => hs_ne_U ((Γ.hU.le_iff.mp (h ▸ le_sup_right)).resolve_left hs_atom.1).symm)))
+    have hl_le_Fs : l ≤ F ⊔ s := hsU_eq_l ▸ sup_le (hs_on.trans le_sup_right) hU_le_Fs
+    exact hF_not_l (((atom_covBy_join hF_atom hs_atom hFs_ne).eq_or_eq
+      (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt.le
+      (sup_comm F s ▸ hl_le_Fs.trans (sup_comm F s).le)).resolve_left
+      (ne_of_gt (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt) ▸ le_sup_left)
+  -- F' not on l: if F' ≤ l = O⊔U and F' ≤ F⊔U, then F' ≤ (O⊔U)⊓(F⊔U) = U → F' = U → F' ≤ m. Contradiction.
+  have hF'_not_l : ¬ F' ≤ l := by
+    intro h
+    have hFU_inf_l : (F ⊔ Γ.U) ⊓ l = Γ.U := by
+      rw [show l = Γ.O ⊔ Γ.U from rfl, inf_comm]
+      exact modular_intersection Γ.hU Γ.hO hF_atom Γ.hOU.symm hFU.symm
+        (fun h => hF_ne_O ((Γ.hO.le_iff.mp (h ▸ le_sup_left)).resolve_left hF_atom.1).symm)
+        (fun hle => hF_not_l (by rwa [sup_comm] at hle))
+    have hF'_le_U : F' ≤ Γ.U := hFU_inf_l ▸ le_inf hF'_on_FU h
+    exact hF'_not_m ((Γ.hU.le_iff.mp hF'_le_U).resolve_left hF'_atom.1 ▸ le_sup_left)
+  -- τ_s is an atom: use perspect_atom with c = σ_s, p = F', a₂⊔b₂ = l.
+  -- Need: σ_s not on l (proved), F'⊔σ_s ≤ l⊔σ_s = π (since σ_s ∉ l and l ⋖ π).
+  have hτ_atom : IsAtom τ_s := by
+    show IsAtom ((F' ⊔ σ_s) ⊓ l)
+    have hF'σ_le : F' ⊔ σ_s ≤ l ⊔ σ_s := by
+      -- σ_s ∉ l and σ_s ≤ π and l ⋖ π → l⊔σ_s = π.
+      have hl_sup_σ : l ⊔ σ_s = π := by
+        have h_lt : l < l ⊔ σ_s := lt_of_le_of_ne le_sup_left
+          (fun h => hσ_not_l (h ▸ le_sup_right))
+        exact (hl_covBy_π.eq_or_eq h_lt.le (sup_le le_sup_left
+          (hσ_on_m.trans (sup_le (le_sup_right.trans le_sup_left) le_sup_right)))).resolve_left
+          (ne_of_gt h_lt)
+      rw [hl_sup_σ]; exact sup_le hF'_le_π
+        (hσ_on_m.trans (sup_le (le_sup_right.trans le_sup_left) le_sup_right))
+    exact perspect_atom hσ_atom hF'_atom hσ_ne_F'.symm Γ.hO Γ.hU Γ.hOU hσ_not_l
+      (sup_comm F' σ_s ▸ hF'σ_le)
+  have hτ_on_l : τ_s ≤ l := inf_le_right
+  -- F' ≠ τ_s: if F' = τ_s, then F' ≤ l. Contradiction.
+  have hF'_ne_τ : F' ≠ τ_s := fun h => hF'_not_l (h ▸ hτ_on_l)
   have h_par_Fs : (F ⊔ s) ⊓ m = (F' ⊔ τ_s) ⊓ m := by
-    -- σ_s ≤ m, so (F'⊔σ_s)⊓m ≥ σ_s.
-    -- Goal: σ_s = (F' ⊔ τ_s) ⊓ m. We show (F'⊔σ_s)⊓m = σ_s, and F'⊔τ_s = F'⊔σ_s.
-    -- σ_s ≤ m and σ_s ≤ F'⊔σ_s, so σ_s ≤ (F'⊔σ_s)⊓m.
-    -- (F'⊔σ_s)⊓m < F'⊔σ_s (since F' ∉ m, so F'⊔σ_s ≰ m).
-    -- σ_s ≤ (F'⊔σ_s)⊓m < F'⊔σ_s. By covering (σ_s ⋖ F'⊔σ_s from atom_covBy_join):
-    -- (F'⊔σ_s)⊓m = σ_s or (F'⊔σ_s)⊓m = F'⊔σ_s. Second excluded. So = σ_s.
-    -- Then F'⊔τ_s = F'⊔σ_s (both lines through F', τ_s ≤ F'⊔σ_s).
-    -- So (F'⊔τ_s)⊓m = (F'⊔σ_s)⊓m = σ_s.
-    -- This all requires σ_s to be an atom and ≠ F'.
-    -- σ_s = (F⊔s)⊓m: F not on m, s on l, F in π, s in π. perspect_atom.
-    sorry
+    -- (F'⊔σ_s)⊓m = σ_s (by covering, F' not on m)
+    have hF'σ_inf_m : (F' ⊔ σ_s) ⊓ m = σ_s := by
+      have h_le : σ_s ≤ (F' ⊔ σ_s) ⊓ m := le_inf le_sup_right hσ_on_m
+      have h_lt : (F' ⊔ σ_s) ⊓ m < F' ⊔ σ_s :=
+        lt_of_le_of_ne inf_le_left (fun h => hF'_not_m (h ▸ inf_le_right |>.trans le_sup_left))
+      exact le_antisymm (((atom_covBy_join hσ_atom hF'_atom hσ_ne_F').eq_or_eq h_le
+        (sup_comm σ_s F' ▸ h_lt.le)).resolve_right (ne_of_lt (sup_comm σ_s F' ▸ h_lt)) ▸ le_rfl) h_le
+    -- F'⊔τ_s = F'⊔σ_s (τ_s ≤ F'⊔σ_s, covering gives equality)
+    have hF'τ_eq : F' ⊔ τ_s = F' ⊔ σ_s := by
+      have h_le : F' ⊔ τ_s ≤ F' ⊔ σ_s := sup_le le_sup_left (inf_le_left : τ_s ≤ F' ⊔ σ_s)
+      have h_lt : F' < F' ⊔ τ_s := lt_of_le_of_ne le_sup_left
+        (fun h => hF'_ne_τ ((hF'_atom.le_iff.mp (h ▸ le_sup_right)).resolve_left hτ_atom.1).symm)
+      exact ((atom_covBy_join hF'_atom hσ_atom hσ_ne_F'.symm).eq_or_eq h_lt.le h_le).resolve_left
+        (ne_of_gt h_lt)
+    rw [hF'τ_eq, hF'σ_inf_m]
   have h_par_Cs : (Γ.C ⊔ s) ⊓ m = (D_c ⊔ τ_s) ⊓ m := by
     -- Apply small_desargues' with:
     -- Line l₁ = F⊔U (= F⊔F'). Points: A = F, A' = F'.
@@ -3535,15 +3694,16 @@ theorem coord_add_assoc (Γ : CoordSystem L)
     -- Parallelism 1: (F⊔C)⊓m = (F'⊔D_c)⊓m [from h_par_FC]
     -- Parallelism 2: (F⊔s)⊓m = (F'⊔τ_s)⊓m [from h_par_Fs]
     -- Conclusion: (C⊔s)⊓m = (D_c⊔τ_s)⊓m
+    -- Needs small_desargues' with center U, triangles (F,C,s) and (F',D_c,τ_s).
+    -- BLOCKED: requires s ≠ O (for non-degenerate triangle F⊔C⊔s = π).
+    -- When s = O (i.e., a+b = O), F⊔C⊔s = F⊔C⊔O = O⊔C (degenerate).
+    -- This case should be handled separately (coord_add_left_zero gives the result directly).
     sorry
   -- Now: s' = (s⊔C)⊓m = (C⊔s)⊓m (by sup_comm).
   -- And h_par_Cs says (C⊔s)⊓m = (D_c⊔τ_s)⊓m.
   -- So s' = (D_c⊔τ_s)⊓m. This means τ_s ≤ D_c⊔τ_s and s' ≤ D_c⊔τ_s.
   -- So s'⊔D_c ≤ D_c⊔τ_s, and τ_s ≤ l ∩ (D_c⊔τ_s) = l ∩ (s'⊔D_c ... ).
   -- We conclude τ_s = (s'⊔D_c) ⊓ l.
-  -- τ_s is an atom (on l, as perspect_atom)
-  have hτ_atom : IsAtom τ_s := sorry  -- perspect_atom for (F'⊔σ_s)⊓l
-  have hτ_on_l : τ_s ≤ l := inf_le_right
   have hLHS : τ_s = (s' ⊔ D_c) ⊓ l := by
     -- From h_par_Cs: s' = (D_c⊔τ_s)⊓m
     have hs'_eq2 : s' = (D_c ⊔ τ_s) ⊓ m := by rw [show s' = (Γ.C ⊔ s) ⊓ m from by rw [sup_comm]]; exact h_par_Cs
@@ -3595,6 +3755,12 @@ theorem coord_add_assoc (Γ : CoordSystem L)
   -- O⊔D_b = O⊔(b⊔E)⊓(U⊔C). Since b ≤ l and E ≤ m, and O ≤ l...
   -- Actually: O and D_b are both in π. O is on l. D_b is on U⊔C.
   -- The line O⊔D_b meets m at some point. We claim this point is the same as (c⊔D_t)⊓m.
+  -- h_par_return: "parallel return centers" — the lines O-D_b and c-D_t have the same
+  -- ideal point on m. D_b = (b⊔E)⊓(U⊔C), D_t = (t⊔E)⊓(U⊔C), t = coord_add b c.
+  -- Key approach: both ideal points should equal (b⊔C)⊓m = b' via a perspectivity argument.
+  -- Alternative: use small_desargues' with center E, triangles (b,O,c) and (D_b,?,D_t)
+  -- where the perspectivity from l to U⊔C with center E maps b↦D_b, c↦D_c, etc.
+  -- This is the most technically involved remaining sorry.
   have h_par_return : (Γ.O ⊔ D_b) ⊓ m = (c ⊔ D_t) ⊓ m := sorry
   -- Sub-step 3b: first small_desargues' → (F⊔D_b)⊓m = (F'⊔D_t)⊓m
   have h_par_FDb : (F ⊔ D_b) ⊓ m = (F' ⊔ D_t) ⊓ m := by
@@ -3605,6 +3771,10 @@ theorem coord_add_assoc (Γ : CoordSystem L)
     -- Par 1: (O⊔F)⊓m = (c⊔F')⊓m [= E, from hOF_inf_m and hcF'_inf_m_eq_E]
     -- Par 2: (O⊔D_b)⊓m = (c⊔D_t)⊓m [from h_par_return]
     -- Conclusion: (F⊔D_b)⊓m = (F'⊔D_t)⊓m
+    -- BLOCKED on h_par_return (which needs its own proof).
+    -- When h_par_return is available, this follows from small_desargues' with:
+    -- center=U, A=O, B=F, C=D_b, A'=c, B'=F', C'=D_t.
+    -- Triangles are non-degenerate: O⊔F⊔D_b = (O⊔C)⊔D_b = π (D_b ∉ O⊔C).
     sorry
   -- Sub-step 3c: second small_desargues' → (D_b⊔s)⊓m = (D_t⊔τ_s)⊓m
   have h_par_Dbs : (D_b ⊔ s) ⊓ m = (D_t ⊔ τ_s) ⊓ m := by
@@ -3615,6 +3785,9 @@ theorem coord_add_assoc (Γ : CoordSystem L)
     -- Par 1: (F⊔D_b)⊓m = (F'⊔D_t)⊓m [from h_par_FDb]
     -- Par 2: (F⊔s)⊓m = (F'⊔τ_s)⊓m [from h_par_Fs]
     -- Conclusion: (D_b⊔s)⊓m = (D_t⊔τ_s)⊓m
+    -- Follows from small_desargues' with center=U, A=F, B=D_b, C=s, A'=F', B'=D_t, C'=τ_s.
+    -- Triangles are non-degenerate: F⊔D_b⊔s = π (F on O⊔C, D_b on U⊔C, s on l; no two collinear).
+    -- This call is well-defined even when s = O (triangle still non-degenerate because D_b provides third direction).
     sorry
   -- Now: (a'⊔D_b)⊓l = s (definition of s = coord_add a b).
   -- So s ≤ a'⊔D_b. Thus D_b⊔s ≤ a'⊔D_b (D_b ≤ a'⊔D_b and s ≤ a'⊔D_b).
