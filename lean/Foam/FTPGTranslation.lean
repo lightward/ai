@@ -361,15 +361,63 @@ theorem parallelogram_completion_well_defined
     sorry
   -- ═══ Step 2: Show R₁ = parallelogram_completion Q Q' R m ═══
   -- parallelogram_completion Q Q' R m = (R ⊔ d') ⊓ (Q' ⊔ f)
-  -- where d' = (Q ⊔ Q') ⊓ m and f = (Q ⊔ R) ⊓ m.
-  -- We need d' = d (QQ' has same direction as PP') and then show
-  -- R₁ = (R ⊔ d) ⊓ (Q' ⊔ f).
-  -- R₁ ≤ R ⊔ d (from first completion: R₁ = (R⊔d) ⊓ (P'⊔g) ≤ R⊔d).
-  -- From h_third_par: (Q'⊔R₁)⊓m = f, so R₁ is on a line through Q' with direction f,
-  -- meaning Q'⊔R₁ = Q'⊔f (same line). So R₁ ≤ Q'⊔f.
-  -- Therefore R₁ ≤ (R⊔d) ⊓ (Q'⊔f) = parallelogram_completion Q Q' R m.
-  -- Both atoms → equal.
-  sorry
+  -- where d' = (Q ⊔ Q') ⊓ m. We need d' = d.
+  have hQ'_not_m : ¬ Q' ≤ m := by
+    intro h
+    -- Q' is an atom on m. But Q' = (Q⊔d)⊓(P'⊔e), and Q' ≤ Q⊔d.
+    -- If Q' ≤ m, then Q' ≤ (Q⊔d)⊓m = d (by line_direction).
+    -- Q' atom, d atom, Q' ≤ d → Q' = d. But then d ≤ P'⊔e (Q' ≤ P'⊔e).
+    -- This contradicts hd_not_P'e... but we don't have that here. Use sorry for now.
+    sorry
+  have hR₁_not_m : ¬ R₁ ≤ m := by sorry
+  -- d' = (Q ⊔ Q') ⊓ m = d (QQ' has same direction as PP')
+  have hQ'_ne_Q : Q' ≠ Q := by
+    intro h; exact hQ_not (by rw [← h] at hQ'_not_m ⊢; sorry)
+  have hd_eq_d' : d = (Q ⊔ Q') ⊓ m :=
+    parallelogram_parallel_direction hQ hQ_not hd_atom hQ'_atom hQ'_ne_Q
+  -- R₁ ≤ R ⊔ d (from first parallelogram completion)
+  have hR₁_le_Rd : R₁ ≤ R ⊔ d := by
+    show R₁ ≤ R ⊔ (P ⊔ P') ⊓ m
+    unfold parallelogram_completion; exact inf_le_left
+  -- f ≤ Q' ⊔ R₁ (from third parallelism: (Q'⊔R₁)⊓m = f)
+  have hf_le_Q'R₁ : f ≤ Q' ⊔ R₁ := by
+    have : (Q' ⊔ R₁) ⊓ m = f := h_third_par.symm
+    calc f = (Q' ⊔ R₁) ⊓ m := this.symm
+      _ ≤ Q' ⊔ R₁ := inf_le_left
+  -- Q' ⊔ f ≤ Q' ⊔ R₁ (f ≤ Q'⊔R₁ and Q' ≤ Q'⊔R₁)
+  have hQ'f_le : Q' ⊔ f ≤ Q' ⊔ R₁ := sup_le le_sup_left hf_le_Q'R₁
+  -- Q' ≠ R₁ (from R ∉ Q⊔Q' and the construction)
+  have hQ'_ne_R₁ : Q' ≠ R₁ := by sorry
+  -- Q' ⋖ Q' ⊔ R₁ (atom_covBy_join). Q' < Q' ⊔ f ≤ Q' ⊔ R₁.
+  -- By CovBy.eq_or_eq: Q' ⊔ f = Q' or Q' ⊔ f = Q' ⊔ R₁.
+  -- Can't be Q' (f is an atom ≠ Q'). So Q' ⊔ f = Q' ⊔ R₁.
+  have hf_atom : IsAtom f := line_meets_m_at_atom hQ hR hQR
+    (sup_le hQ_le hR_le) hm_le hm_cov hQ_not
+  have hQ'_ne_f : Q' ≠ f := fun h => hQ'_not_m (h ▸ inf_le_right)
+  have hQ'f_eq : Q' ⊔ f = Q' ⊔ R₁ := by
+    have h_cov : Q' ⋖ Q' ⊔ R₁ := atom_covBy_join hQ'_atom hR₁_atom hQ'_ne_R₁
+    have hQ'_lt : Q' < Q' ⊔ f := lt_of_le_of_ne le_sup_left
+      (fun h => hQ'_ne_f ((hQ'_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+        hf_atom.1))
+    exact (h_cov.eq_or_eq hQ'_lt.le hQ'f_le).resolve_left (ne_of_gt hQ'_lt)
+  -- R₁ ≤ Q' ⊔ f (= Q' ⊔ R₁, trivially)
+  have hR₁_le_Q'f : R₁ ≤ Q' ⊔ f := hQ'f_eq ▸ le_sup_right
+  -- R₁ ≤ (R ⊔ d) ⊓ (Q' ⊔ f)
+  have hR₁_le_completion : R₁ ≤ (R ⊔ d) ⊓ (Q' ⊔ f) := le_inf hR₁_le_Rd hR₁_le_Q'f
+  -- The RHS, when unfolded, is parallelogram_completion Q Q' R m
+  -- (since d = d' = (Q⊔Q')⊓m and f = (Q⊔R)⊓m).
+  -- R₁ atom ≤ completion atom → R₁ = completion.
+  have hR₁_not_bot : R₁ ≠ ⊥ := hR₁_atom.1
+  -- Need: parallelogram_completion Q Q' R m = (R ⊔ (Q⊔Q')⊓m) ⊓ (Q' ⊔ (Q⊔R)⊓m)
+  -- And (R ⊔ d) ⊓ (Q' ⊔ f) = (R ⊔ (Q⊔Q')⊓m) ⊓ (Q' ⊔ (Q⊔R)⊓m) when d = (Q⊔Q')⊓m.
+  show R₁ = parallelogram_completion Q Q' R m
+  unfold parallelogram_completion
+  -- Goal: R₁ = (R ⊔ (Q ⊔ Q') ⊓ m) ⊓ (Q' ⊔ (Q ⊔ R) ⊓ m)
+  -- We have R₁ ≤ (R ⊔ d) ⊓ (Q' ⊔ f) and d = (Q ⊔ Q') ⊓ m, f = (Q ⊔ R) ⊓ m.
+  -- So R₁ ≤ the target. Both atoms → equal.
+  rw [← hd_eq_d']
+  have hR₁_le : R₁ ≤ (R ⊔ d) ⊓ (Q' ⊔ f) := hR₁_le_completion
+  sorry -- need target is an atom, then R₁ atom ≤ atom → equal
 
 /-!
 ## Part V: Translations (to be built)
