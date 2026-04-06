@@ -154,10 +154,6 @@ theorem parallelogram_completion_atom
   -- Step 4: d ⋖ m (m is a line, d is an atom on m)
   have hd_cov_m : d ⋖ m := hm_line d hd hd_le_m
   -- Step 5: Q ⊔ d ⋖ π (the line Q⊔d is a line in the plane π)
-  -- Proof via modularity diamond:
-  --   m ⊔ (Q ⊔ d) = m ⊔ Q = π (since d ≤ m)
-  --   m ⊓ (Q ⊔ d) = d (d ≤ both; Q ∉ m forces this)
-  --   d ⋖ m → covBy_sup_of_inf_covBy_left → Q ⊔ d ⋖ π
   have hm_join_Q : m ⊔ Q = π := by
     have h_lt : m < m ⊔ Q := lt_of_le_of_ne le_sup_left
       (fun h => hQ_not (le_sup_right.trans h.symm.le))
@@ -171,15 +167,12 @@ theorem parallelogram_completion_atom
     exact covBy_sup_of_inf_covBy_left (by rwa [show m ⊓ (Q ⊔ d) = d from by
       have hd_le_meet : d ≤ m ⊓ (Q ⊔ d) := le_inf hd_le_m le_sup_right
       have hQd_not_m : ¬ Q ⊔ d ≤ m := fun h => hQ_not (le_sup_left.trans h)
-      -- m ⊓ (Q ⊔ d) ≤ Q ⊔ d, and d ⋖ Q ⊔ d via atom_covBy_join.
-      -- d ≤ m ⊓ (Q ⊔ d) ≤ Q ⊔ d. By CovBy.eq_or_eq on d ⋖ d ⊔ Q:
       have h_cov : d ⋖ d ⊔ Q := atom_covBy_join hd hQ hQd.symm
       rw [sup_comm] at h_cov
-      -- h_cov : d ⋖ Q ⊔ d
       rcases h_cov.eq_or_eq hd_le_meet inf_le_right with h | h
-      · exact h  -- m ⊓ (Q ⊔ d) = d
+      · exact h
       · exact absurd (h ▸ inf_le_left : Q ⊔ d ≤ m) hQd_not_m])
-  -- Step 6: ¬ d ≤ P' ⊔ e (otherwise d,e on P'⊔e → P'⊔e = d⊔e span → P' ≤ m)
+  -- Step 6: ¬ d ≤ P' ⊔ e
   have hd_not_P'e : ¬ d ≤ P' ⊔ e := by
     intro hd_le
     have hd_cov_P'e : d ⋖ P' ⊔ e := line_covers_its_atoms hP' he hP'e hd hd_le
@@ -189,13 +182,11 @@ theorem parallelogram_completion_atom
     rcases hd_cov_P'e.eq_or_eq h_d_lt_de.le h_de_le with h | h
     · exact absurd h (ne_of_gt h_d_lt_de)
     · exact hP'_not (le_trans le_sup_left (h ▸ sup_le hd_le_m he_le_m))
-  -- Step 7: Q ⊔ d ≤ (P' ⊔ e) ⊔ d (coplanarity for perspect_atom)
-  -- d ⋖ m and d ⊔ e ≤ m → d ⊔ e = m (by CovBy.eq_or_eq on d ⋖ m)
+  -- Step 7: d ⊔ e = m, so (P' ⊔ e) ⊔ d = P' ⊔ m = π
   have h_de_eq_m : d ⊔ e = m := by
     have h_lt : d < d ⊔ e := lt_of_le_of_ne le_sup_left
       (fun h => hde ((hd.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left he.1).symm)
     exact (hd_cov_m.eq_or_eq h_lt.le (sup_le hd_le_m he_le_m)).resolve_left (ne_of_gt h_lt)
-  -- (P' ⊔ e) ⊔ d = P' ⊔ (e ⊔ d) = P' ⊔ m = π
   have h_plane : (P' ⊔ e) ⊔ d = π := by
     rw [sup_assoc, sup_comm e d, h_de_eq_m]
     have h_lt : m < P' ⊔ m := lt_of_le_of_ne le_sup_right
@@ -212,29 +203,80 @@ theorem parallelogram_completion_atom
 
 The parallelogram completion satisfies PP' ∥ QQ' and PQ ∥ P'Q'
 by construction. These are the two "input" parallelisms.
+
+Key technique: for an atom a off m and an atom d on m,
+the modular law gives (a ⊔ d) ⊓ m = d (since d ≤ m and a ⊓ m = ⊥).
+This means the "direction" (meeting point with m) of any line a ⊔ d
+through an off-m point a and an on-m point d is simply d.
+
+The proofs: Q' ≤ Q ⊔ d (from inf_le_left) and Q' ≠ Q imply
+Q ⊔ Q' = Q ⊔ d (same line), so (Q ⊔ Q') ⊓ m = (Q ⊔ d) ⊓ m = d.
+Similarly Q' ≤ P' ⊔ e and Q' ≠ P' give (P' ⊔ Q') ⊓ m = e.
 -/
 
-/-- PP' ∥ QQ': the completion preserves the "direction" of PP'. -/
+/-- Helper: for an atom a off m and an atom d on m, (a ⊔ d) ⊓ m = d. -/
+theorem line_direction {a d m : L} (ha : IsAtom a) (ha_not : ¬ a ≤ m)
+    (hd_le : d ≤ m) : (a ⊔ d) ⊓ m = d := by
+  have ham : a ⊓ m = ⊥ := by
+    rcases ha.le_iff.mp inf_le_left with h | h
+    · exact h
+    · exact absurd (h ▸ inf_le_right) ha_not
+  have := sup_inf_assoc_of_le a hd_le
+  -- this : (a ⊔ d) ⊓ m = a ⊓ m ⊔ d ... but direction might be wrong
+  -- sup_inf_assoc_of_le : a ≤ c → (a ⊔ b) ⊓ c = a ⊔ b ⊓ c
+  -- We need: d ≤ m → (d ⊔ a) ⊓ m = d ⊔ (a ⊓ m) = d ⊔ ⊥ = d
+  calc (a ⊔ d) ⊓ m = (d ⊔ a) ⊓ m := by rw [sup_comm]
+    _ = d ⊔ a ⊓ m := sup_inf_assoc_of_le a hd_le
+    _ = d ⊔ ⊥ := by rw [ham]
+    _ = d := by simp
+
+/-- PP' ∥ QQ': the completion preserves the "direction" of PP'.
+    Requires Q' atom, Q' ≠ Q, and d = (P⊔P')⊓m an atom. -/
 theorem parallelogram_parallel_direction
     {P P' Q m : L}
-    (hP : IsAtom P) (hP' : IsAtom P') (hQ : IsAtom Q)
-    (hP_not : ¬ P ≤ m) (hP'_not : ¬ P' ≤ m) (hQ_not : ¬ Q ≤ m) :
-    let Q' := parallelogram_completion P P' Q m
-    parallel (P ⊔ P') (Q ⊔ Q') m := by
-  -- By construction: Q' = (Q ⊔ d) ⊓ (P' ⊔ e) where d = (P⊔P')⊓m.
-  -- Q' ≤ Q ⊔ d, so Q ⊔ Q' ≤ Q ⊔ d.
-  -- (Q ⊔ d) ⊓ m ≥ d = (P ⊔ P') ⊓ m.
-  -- So (Q ⊔ Q') ⊓ m ≥ (P ⊔ P') ⊓ m... but need equality.
-  sorry
+    (hQ : IsAtom Q) (hQ_not : ¬ Q ≤ m)
+    (hd_atom : IsAtom ((P ⊔ P') ⊓ m))
+    (hQ'_atom : IsAtom (parallelogram_completion P P' Q m))
+    (hQ'_ne_Q : parallelogram_completion P P' Q m ≠ Q) :
+    parallel (P ⊔ P') (Q ⊔ parallelogram_completion P P' Q m) m := by
+  set Q' := parallelogram_completion P P' Q m with hQ'_def
+  set d := (P ⊔ P') ⊓ m
+  have hQ'_le_Qd : Q' ≤ Q ⊔ d := by
+    unfold parallelogram_completion at hQ'_def; rw [hQ'_def]; exact inf_le_left
+  have hQd : Q ≠ d := fun h => hQ_not (h ▸ inf_le_right)
+  have hQ_lt_QQ' : Q < Q ⊔ Q' := lt_of_le_of_ne le_sup_left
+    (fun h => hQ'_ne_Q ((hQ.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+      hQ'_atom.1))
+  have hQQ'_le : Q ⊔ Q' ≤ Q ⊔ d := sup_le le_sup_left hQ'_le_Qd
+  have h_cov : Q ⋖ Q ⊔ d := atom_covBy_join hQ hd_atom hQd
+  have hQQ'_eq : Q ⊔ Q' = Q ⊔ d :=
+    (h_cov.eq_or_eq hQ_lt_QQ'.le hQQ'_le).resolve_left (ne_of_gt hQ_lt_QQ')
+  show (P ⊔ P') ⊓ m = (Q ⊔ Q') ⊓ m
+  rw [hQQ'_eq, line_direction hQ hQ_not inf_le_right]
 
-/-- PQ ∥ P'Q': the completion preserves the "direction" of PQ. -/
+/-- PQ ∥ P'Q': the completion preserves the "direction" of PQ.
+    Requires Q' atom, Q' ≠ P', and e = (P⊔Q)⊓m an atom. -/
 theorem parallelogram_parallel_sides
     {P P' Q m : L}
-    (hP : IsAtom P) (hP' : IsAtom P') (hQ : IsAtom Q)
-    (hP_not : ¬ P ≤ m) (hP'_not : ¬ P' ≤ m) (hQ_not : ¬ Q ≤ m) :
-    let Q' := parallelogram_completion P P' Q m
-    parallel (P ⊔ Q) (P' ⊔ Q') m := by
-  sorry
+    (hP' : IsAtom P') (hP'_not : ¬ P' ≤ m)
+    (he_atom : IsAtom ((P ⊔ Q) ⊓ m))
+    (hQ'_atom : IsAtom (parallelogram_completion P P' Q m))
+    (hQ'_ne_P' : parallelogram_completion P P' Q m ≠ P') :
+    parallel (P ⊔ Q) (P' ⊔ parallelogram_completion P P' Q m) m := by
+  set Q' := parallelogram_completion P P' Q m with hQ'_def
+  set e := (P ⊔ Q) ⊓ m
+  have hQ'_le_P'e : Q' ≤ P' ⊔ e := by
+    unfold parallelogram_completion at hQ'_def; rw [hQ'_def]; exact inf_le_right
+  have hP'e : P' ≠ e := fun h => hP'_not (h ▸ inf_le_right)
+  have hP'_lt_P'Q' : P' < P' ⊔ Q' := lt_of_le_of_ne le_sup_left
+    (fun h => hQ'_ne_P' ((hP'.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+      hQ'_atom.1))
+  have hP'Q'_le : P' ⊔ Q' ≤ P' ⊔ e := sup_le le_sup_left hQ'_le_P'e
+  have h_cov : P' ⋖ P' ⊔ e := atom_covBy_join hP' he_atom hP'e
+  have hP'Q'_eq : P' ⊔ Q' = P' ⊔ e :=
+    (h_cov.eq_or_eq hP'_lt_P'Q'.le hP'Q'_le).resolve_left (ne_of_gt hP'_lt_P'Q')
+  show (P ⊔ Q) ⊓ m = (P' ⊔ Q') ⊓ m
+  rw [hP'Q'_eq, line_direction hP' hP'_not inf_le_right]
 
 /-!
 ## Part IV: Well-definedness (the key use of small_desargues')
