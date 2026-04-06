@@ -29,9 +29,6 @@ algebraic identities. The algebra falls out from the group structure.
 -/
 
 import Foam.FTPGCoord
--- Note: small_desargues' lives in Foam.FTPGCoord but that file currently has
--- type errors (lines 2990+) preventing import. Once FTPGCoord compiles,
--- uncomment: import Foam.FTPGCoord
 
 namespace Foam.FTPGExplore
 
@@ -358,40 +355,7 @@ theorem parallelogram_completion_well_defined
   have hR₁_atom : IsAtom R₁ := parallelogram_completion_atom hP hP' hR hPP' hPR hP'R
     hP_le hP'_le hR_le hm_le hm_cov hm_line hP_not hP'_not hR_not hR_not_PP'
   have hd_le_m : d ≤ m := inf_le_right
-  -- ═══ Step 1: Apply small_desargues' ═══
-  -- Center: d. Triangles: PQR and P'Q'R₁.
-  -- Inputs: PQ ∥ P'Q' and PR ∥ P'R₁.
-  -- Output: QR ∥ Q'R₁.
-  -- TODO: discharge all 37 hypotheses of small_desargues'
-  have h_third_par : (Q ⊔ R) ⊓ m = (Q' ⊔ R₁) ⊓ m := by
-    -- This applies small_desargues' (from Foam.FTPGCoord) with:
-    --   U = d, A = P, B = Q, C = R, A' = P', B' = Q', C' = R₁
-    -- Input parallelisms (from parallelogram_parallel_sides):
-    --   (P⊔Q)⊓m = (P'⊔Q')⊓m  and  (P⊔R)⊓m = (P'⊔R₁)⊓m
-    -- Output: (Q⊔R)⊓m = (Q'⊔R₁)⊓m
-    --
-    -- All hypotheses of small_desargues' are dischargeable:
-    -- - Atoms: hd_atom, hP, hQ, hR, hP', hQ'_atom, hR₁_atom
-    -- - In π: trivial (d ≤ m ≤ π, others given)
-    -- - Q', R₁ ≤ π: from Q' ≤ Q⊔d ≤ π, R₁ ≤ R⊔d ≤ π
-    -- - Perspectivity: P' ≤ d⊔P (d⊔P = P⊔P' by CovBy), Q' ≤ d⊔Q, R₁ ≤ d⊔R
-    -- - Q'/R₁ not on m: line_direction + d_not_on_P'_line argument
-    -- - Distinct vertices: P'≠Q' and P'≠R₁ from parallelism (if equal, e or g = ⊥)
-    --   Q'≠R₁ from two-lines-through-d argument
-    -- - Distinct sides: CovBy argument (if PQ = P'Q', then P' ≤ PQ → Q ≤ PP')
-    -- - Triangles span π: h_span given; second triangle via e⊔g = m ≤ P'⊔Q'⊔R₁
-    -- - Sides CovBy π: line_covBy_plane with hR_not_PQ, hQ_not_PR
-    -- - R≠R₁: if R=R₁ then R ≤ P'⊔g → P' ≤ P⊔R → R ≤ P⊔P'
-    -- - Q'≠Q: if Q'=Q then Q ≤ P'⊔e → P' ≤ P⊔Q → Q ≤ P⊔P'
-    --
-    -- BLOCKED: FTPGCoord.lean has type errors (lines 2990+) preventing import.
-    -- Once FTPGCoord compiles, import it and replace this sorry with the
-    -- application of small_desargues'.
-    sorry
-  -- ═══ Step 2: Show R₁ = parallelogram_completion Q Q' R m ═══
-  -- parallelogram_completion Q Q' R m = (R ⊔ d') ⊓ (Q' ⊔ f)
-  -- where d' = (Q ⊔ Q') ⊓ m. We need d' = d.
-  -- Helper: d ≠ e (same as in parallelogram_completion_atom)
+  -- ═══ Helpers (needed by Step 1 and Step 2) ═══
   have hde_ne : d ≠ e := by
     intro h_eq
     have hd_le_PQ : d ≤ P ⊔ Q := h_eq ▸ (inf_le_left : e ≤ P ⊔ Q)
@@ -489,6 +453,260 @@ theorem parallelogram_completion_well_defined
       rcases h_cov_PQ.eq_or_eq hP_lt_PP'.le hPP'_le_PQ with h_eq2 | h_eq2
       · exact absurd h_eq2 (ne_of_gt hP_lt_PP')
       · exact hQ_not_PP' (le_sup_right.trans h_eq2.symm.le)
+  -- ═══ Step 1: Apply small_desargues' ═══
+  have h_third_par : (Q ⊔ R) ⊓ m = (Q' ⊔ R₁) ⊓ m := by
+    -- Basic containments
+    have hQ'_le_Qd : Q' ≤ Q ⊔ d := by
+      show Q' ≤ Q ⊔ (P ⊔ P') ⊓ m
+      have : Q' = (Q ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ Q) ⊓ m) := rfl; rw [this]; exact inf_le_left
+    have hR₁_le_Rd : R₁ ≤ R ⊔ d := by
+      show R₁ ≤ R ⊔ (P ⊔ P') ⊓ m
+      have : R₁ = (R ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ R) ⊓ m) := rfl; rw [this]; exact inf_le_left
+    have hQ'_le_P'e : Q' ≤ P' ⊔ e := by
+      show Q' ≤ P' ⊔ (P ⊔ Q) ⊓ m
+      have : Q' = (Q ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ Q) ⊓ m) := rfl; rw [this]; exact inf_le_right
+    have hR₁_le_P'g : R₁ ≤ P' ⊔ g := by
+      show R₁ ≤ P' ⊔ (P ⊔ R) ⊓ m
+      have : R₁ = (R ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ R) ⊓ m) := rfl; rw [this]; exact inf_le_right
+    have hd_le_π : d ≤ π := hd_le_m.trans hm_le
+    have hQ'_le_π : Q' ≤ π := hQ'_le_Qd.trans (sup_le hQ_le (hd_le_m.trans hm_le))
+    have hR₁_le_π : R₁ ≤ π := hR₁_le_Rd.trans (sup_le hR_le (hd_le_m.trans hm_le))
+    -- m ≠ π
+    have hm_ne_π : m ≠ π := fun h => hP_not (h ▸ hP_le)
+    -- Atom-on-m vs atom-off-m
+    have hd_ne_P : d ≠ P := fun h => hP_not (h ▸ hd_le_m)
+    have hd_ne_Q : d ≠ Q := fun h => hQ_not (h ▸ hd_le_m)
+    have hd_ne_R : d ≠ R := fun h => hR_not (h ▸ hd_le_m)
+    have hd_ne_P' : d ≠ P' := fun h => hP'_not (h ▸ hd_le_m)
+    have hd_ne_Q' : d ≠ Q' := fun h => hQ'_not_m (h ▸ hd_le_m)
+    have hd_ne_R₁ : d ≠ R₁ := fun h => hR₁_not_m (h ▸ hd_le_m)
+    -- Perspectivity: d⊔P = P⊔P'
+    have hdP_eq_PP' : d ⊔ P = P ⊔ P' := by
+      have hd_le_PP' : d ≤ P ⊔ P' := (inf_le_left : d ≤ P ⊔ P')
+      have hP_lt_dP : P < d ⊔ P := lt_of_le_of_ne le_sup_right
+        (fun h => hd_ne_P ((hP.le_iff.mp (le_sup_left.trans h.symm.le)).resolve_left hd_atom.1))
+      exact ((atom_covBy_join hP hP' hPP').eq_or_eq hP_lt_dP.le
+        (sup_le hd_le_PP' le_sup_left)).resolve_left (ne_of_gt hP_lt_dP)
+    have hP'_on_dP : P' ≤ d ⊔ P := hdP_eq_PP' ▸ le_sup_right
+    have hQ'_on_dQ : Q' ≤ d ⊔ Q := by rw [sup_comm]; exact hQ'_le_Qd
+    have hR₁_on_dR : R₁ ≤ d ⊔ R := by rw [sup_comm]; exact hR₁_le_Rd
+    -- P' ≠ Q' (two-lines-through-d)
+    have hP'_ne_Q' : P' ≠ Q' := by
+      intro h
+      have hP'_le_Qd : P' ≤ Q ⊔ d := h ▸ hQ'_le_Qd
+      by_cases hlines : Q ⊔ d = d ⊔ P
+      · exact hQ_not_PP' ((le_sup_left : Q ≤ Q ⊔ d).trans (hlines.trans hdP_eq_PP').le)
+      · have hP'_le_inf : P' ≤ (Q ⊔ d) ⊓ (d ⊔ P) := le_inf hP'_le_Qd hP'_on_dP
+        have hd_le_inf : d ≤ (Q ⊔ d) ⊓ (d ⊔ P) := le_inf le_sup_right le_sup_left
+        have h_inf_lt : (Q ⊔ d) ⊓ (d ⊔ P) < Q ⊔ d := by
+          refine lt_of_le_of_ne inf_le_left ?_
+          intro h_eq
+          -- h_eq : (Q⊔d) ⊓ (d⊔P) = Q⊔d, i.e. Q⊔d ≤ d⊔P
+          have h_le : Q ⊔ d ≤ d ⊔ P := inf_eq_left.mp h_eq
+          -- d ⋖ d⊔P. d < Q⊔d (since Q ≠ d). Q⊔d ≤ d⊔P. CovBy → Q⊔d = d⊔P.
+          have h_d_lt_Qd : d < Q ⊔ d := by
+            have := (atom_covBy_join hd_atom hQ hd_ne_Q).lt; rwa [sup_comm] at this
+          have h_or := (atom_covBy_join hd_atom hP hd_ne_P).eq_or_eq h_d_lt_Qd.le h_le
+          exact hlines (h_or.resolve_left (ne_of_gt h_d_lt_Qd))
+        have h_pos : ⊥ < (Q ⊔ d) ⊓ (d ⊔ P) := lt_of_lt_of_le hd_atom.bot_lt hd_le_inf
+        have h_inf_atom := line_height_two hQ hd_atom hd_ne_Q.symm h_pos h_inf_lt
+        have h_inf_eq := ((h_inf_atom.le_iff.mp hd_le_inf).resolve_left hd_atom.1).symm
+        exact hd_ne_P' ((hd_atom.le_iff.mp (h_inf_eq ▸ hP'_le_inf)).resolve_left hP'.1).symm
+    -- P' ≠ R₁
+    have hP'_ne_R₁ : P' ≠ R₁ := by
+      intro h
+      have hP'_le_Rd : P' ≤ R ⊔ d := h ▸ hR₁_le_Rd
+      by_cases hlines : R ⊔ d = d ⊔ P
+      · exact hR_not_PP' ((le_sup_left : R ≤ R ⊔ d).trans (hlines.trans hdP_eq_PP').le)
+      · have hP'_le_inf : P' ≤ (R ⊔ d) ⊓ (d ⊔ P) := le_inf hP'_le_Rd hP'_on_dP
+        have hd_le_inf : d ≤ (R ⊔ d) ⊓ (d ⊔ P) := le_inf le_sup_right le_sup_left
+        have h_inf_lt : (R ⊔ d) ⊓ (d ⊔ P) < R ⊔ d := by
+          refine lt_of_le_of_ne inf_le_left ?_
+          intro h_eq
+          have h_le : R ⊔ d ≤ d ⊔ P := inf_eq_left.mp h_eq
+          have h_d_lt_Rd : d < R ⊔ d := by
+            have := (atom_covBy_join hd_atom hR hd_ne_R).lt; rwa [sup_comm] at this
+          have h_or := (atom_covBy_join hd_atom hP hd_ne_P).eq_or_eq h_d_lt_Rd.le h_le
+          exact hlines (h_or.resolve_left (ne_of_gt h_d_lt_Rd))
+        have h_pos : ⊥ < (R ⊔ d) ⊓ (d ⊔ P) := lt_of_lt_of_le hd_atom.bot_lt hd_le_inf
+        have h_inf_atom := line_height_two hR hd_atom hd_ne_R.symm h_pos h_inf_lt
+        have h_inf_eq := ((h_inf_atom.le_iff.mp hd_le_inf).resolve_left hd_atom.1).symm
+        exact hd_ne_P' ((hd_atom.le_iff.mp (h_inf_eq ▸ hP'_le_inf)).resolve_left hP'.1).symm
+    -- Q' ≠ R₁
+    have hQ'_ne_R₁ : Q' ≠ R₁ := by
+      intro h
+      have hQ'_le_Rd : Q' ≤ R ⊔ d := h ▸ hR₁_le_Rd
+      by_cases hlines : Q ⊔ d = R ⊔ d
+      · have hR_le_Qd : R ≤ Q ⊔ d := le_sup_left.trans hlines.symm.le
+        have h_cov_Qd : Q ⋖ Q ⊔ d := atom_covBy_join hQ hd_atom (Ne.symm hd_ne_Q)
+        have hQ_lt_QR : Q < Q ⊔ R := lt_of_le_of_ne le_sup_left
+          (fun h => hQR ((hQ.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hR.1).symm)
+        have hQR_eq_Qd := (h_cov_Qd.eq_or_eq hQ_lt_QR.le (sup_le le_sup_left hR_le_Qd)).resolve_left
+          (ne_of_gt hQ_lt_QR)
+        have hQ_lt_QQ' : Q < Q ⊔ Q' := lt_of_le_of_ne le_sup_left
+          (fun h => hQ'_ne_Q.symm ((hQ.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+            hQ'_atom.1).symm)
+        have hQQ'_eq_Qd := (h_cov_Qd.eq_or_eq hQ_lt_QQ'.le (sup_le le_sup_left hQ'_le_Qd)).resolve_left
+          (ne_of_gt hQ_lt_QQ')
+        exact hR_not_QQ' (hR_le_Qd.trans (hQQ'_eq_Qd ▸ le_refl _))
+      · have hQ'_le_inf : Q' ≤ (Q ⊔ d) ⊓ (R ⊔ d) := le_inf hQ'_le_Qd hQ'_le_Rd
+        have hd_le_inf : d ≤ (Q ⊔ d) ⊓ (R ⊔ d) := le_inf le_sup_right le_sup_right
+        have h_inf_lt : (Q ⊔ d) ⊓ (R ⊔ d) < Q ⊔ d := by
+          refine lt_of_le_of_ne inf_le_left ?_
+          intro h_eq
+          have h_le : Q ⊔ d ≤ R ⊔ d := inf_eq_left.mp h_eq
+          have h_d_lt_Qd : d < Q ⊔ d := by
+            have := (atom_covBy_join hd_atom hQ hd_ne_Q).lt; rwa [sup_comm] at this
+          have h_d_cov_Rd : d ⋖ R ⊔ d := by
+            have := atom_covBy_join hd_atom hR hd_ne_R; rwa [sup_comm] at this
+          exact hlines ((h_d_cov_Rd.eq_or_eq h_d_lt_Qd.le h_le).resolve_left (ne_of_gt h_d_lt_Qd))
+        have h_pos : ⊥ < (Q ⊔ d) ⊓ (R ⊔ d) := lt_of_lt_of_le hd_atom.bot_lt hd_le_inf
+        have h_inf_atom := line_height_two hQ hd_atom hd_ne_Q.symm h_pos h_inf_lt
+        have h_inf_eq := ((h_inf_atom.le_iff.mp hd_le_inf).resolve_left hd_atom.1).symm
+        exact hd_ne_Q' ((hd_atom.le_iff.mp (h_inf_eq ▸ hQ'_le_inf)).resolve_left hQ'_atom.1).symm
+    -- R ≠ R₁
+    have hR_ne_R₁ : R ≠ R₁ := by
+      intro h
+      have hR_le_P'g : R ≤ P' ⊔ g := h ▸ hR₁_le_P'g
+      have hRg_ne : R ≠ g := fun h => hR_not (h ▸ (inf_le_right : g ≤ m))
+      have hP'g_ne : P' ≠ g := fun h => hP'_not (h ▸ (inf_le_right : g ≤ m))
+      have hg_le_PR : g ≤ P ⊔ R := (inf_le_left : g ≤ P ⊔ R)
+      have h_cov_P'g : g ⋖ P' ⊔ g := by
+        have := atom_covBy_join hg_atom hP' (Ne.symm hP'g_ne); rwa [sup_comm] at this
+      have h_g_lt_Rg : g < R ⊔ g := by
+        have := (atom_covBy_join hg_atom hR (Ne.symm hRg_ne)).lt; rwa [sup_comm] at this
+      have hRg_le_P'g : R ⊔ g ≤ P' ⊔ g := sup_le hR_le_P'g le_sup_right
+      rcases h_cov_P'g.eq_or_eq h_g_lt_Rg.le hRg_le_P'g with h_eq | h_eq
+      · exact absurd h_eq (ne_of_gt h_g_lt_Rg)
+      · have hP'_le_PR : P' ≤ P ⊔ R :=
+          (le_sup_left : P' ≤ P' ⊔ g).trans (h_eq.symm ▸ sup_le le_sup_right hg_le_PR)
+        have hP_lt_PP' : P < P ⊔ P' := lt_of_le_of_ne le_sup_left
+          (fun h => hPP' ((hP.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hP'.1).symm)
+        rcases (atom_covBy_join hP hR hPR).eq_or_eq hP_lt_PP'.le
+          (sup_le le_sup_left hP'_le_PR) with h_eq2 | h_eq2
+        · exact absurd h_eq2 (ne_of_gt hP_lt_PP')
+        · exact hR_not_PP' (le_sup_right.trans h_eq2.symm.le)
+    -- Side distinctness
+    have h_sides_PQ : P ⊔ Q ≠ P' ⊔ Q' := by
+      intro h
+      have hP'_le_PQ : P' ≤ P ⊔ Q := le_sup_left.trans h.symm.le
+      have hP_lt_PP' : P < P ⊔ P' := lt_of_le_of_ne le_sup_left
+        (fun h => hPP' ((hP.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hP'.1).symm)
+      rcases (atom_covBy_join hP hQ hPQ).eq_or_eq hP_lt_PP'.le
+        (sup_le le_sup_left hP'_le_PQ) with h_eq | h_eq
+      · exact absurd h_eq (ne_of_gt hP_lt_PP')
+      · exact hQ_not_PP' (le_sup_right.trans h_eq.symm.le)
+    have h_sides_PR : P ⊔ R ≠ P' ⊔ R₁ := by
+      intro h
+      have hP'_le_PR : P' ≤ P ⊔ R := le_sup_left.trans h.symm.le
+      have hP_lt_PP' : P < P ⊔ P' := lt_of_le_of_ne le_sup_left
+        (fun h => hPP' ((hP.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hP'.1).symm)
+      rcases (atom_covBy_join hP hR hPR).eq_or_eq hP_lt_PP'.le
+        (sup_le le_sup_left hP'_le_PR) with h_eq | h_eq
+      · exact absurd h_eq (ne_of_gt hP_lt_PP')
+      · exact hR_not_PP' (le_sup_right.trans h_eq.symm.le)
+    have h_sides_QR : Q ⊔ R ≠ Q' ⊔ R₁ := by
+      intro h
+      have hQ'_le_QR : Q' ≤ Q ⊔ R := le_sup_left.trans h.symm.le
+      have hQ_lt_QQ' : Q < Q ⊔ Q' := lt_of_le_of_ne le_sup_left
+        (fun h => hQ'_ne_Q.symm ((hQ.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hQ'_atom.1).symm)
+      rcases (atom_covBy_join hQ hR hQR).eq_or_eq hQ_lt_QQ'.le
+        (sup_le le_sup_left hQ'_le_QR) with h_eq | h_eq
+      · exact absurd h_eq (ne_of_gt hQ_lt_QQ')
+      · exact hR_not_QQ' (le_sup_right.trans h_eq.symm.le)
+    -- Second triangle spans π
+    have h_span' : P' ⊔ Q' ⊔ R₁ = π := by
+      -- e ≤ P'⊔Q' (since Q' ≤ P'⊔e, Q' ≠ P', CovBy → P'⊔Q' = P'⊔e)
+      have he_le_P'Q' : e ≤ P' ⊔ Q' := by
+        have hQ'_ne_e : Q' ≠ e := fun h => hQ'_not_m (h ▸ (inf_le_right : e ≤ m))
+        have hP'_ne_e : P' ≠ e := fun h => hP'_not (h ▸ (inf_le_right : e ≤ m))
+        have hP'_lt : P' < P' ⊔ Q' := lt_of_le_of_ne le_sup_left
+          (fun h => hP'_ne_Q' ((hP'.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hQ'_atom.1).symm)
+        have hP'Q'_eq : P' ⊔ Q' = P' ⊔ e :=
+          ((atom_covBy_join hP' he_atom hP'_ne_e).eq_or_eq hP'_lt.le
+            (sup_le le_sup_left hQ'_le_P'e)).resolve_left (ne_of_gt hP'_lt)
+        exact le_sup_right.trans hP'Q'_eq.symm.le
+      -- g ≤ P'⊔R₁ (same argument)
+      have hg_le_P'R₁ : g ≤ P' ⊔ R₁ := by
+        have hR₁_ne_g : R₁ ≠ g := fun h => hR₁_not_m (h ▸ (inf_le_right : g ≤ m))
+        have hP'_ne_g : P' ≠ g := fun h => hP'_not (h ▸ (inf_le_right : g ≤ m))
+        have hP'_lt : P' < P' ⊔ R₁ := lt_of_le_of_ne le_sup_left
+          (fun h => hP'_ne_R₁ ((hP'.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hR₁_atom.1).symm)
+        have hP'R₁_eq : P' ⊔ R₁ = P' ⊔ g :=
+          ((atom_covBy_join hP' hg_atom hP'_ne_g).eq_or_eq hP'_lt.le
+            (sup_le le_sup_left hR₁_le_P'g)).resolve_left (ne_of_gt hP'_lt)
+        exact le_sup_right.trans hP'R₁_eq.symm.le
+      -- e ≠ g
+      have heg_ne : e ≠ g := by
+        intro h_eq
+        have he_le_PR : e ≤ P ⊔ R := by
+          have : g ≤ P ⊔ R := inf_le_left
+          rwa [← h_eq] at this
+        have he_le_PQ : e ≤ P ⊔ Q := inf_le_left
+        have he_le_P : e ≤ P := by
+          have := le_inf he_le_PQ he_le_PR
+          rwa [modular_intersection hP hQ hR hPQ hPR hQR hR_not_PQ] at this
+        have hPm : P ⊓ m = ⊥ := by
+          rcases hP.le_iff.mp inf_le_left with h | h
+          · exact h
+          · exact absurd (h ▸ inf_le_right) hP_not
+        exact he_atom.1 (le_antisymm (hPm ▸ le_inf he_le_P (inf_le_right : e ≤ m)) bot_le)
+      -- e⊔g = m
+      have heg_eq_m : e ⊔ g = m := by
+        have he_lt_eg : e < e ⊔ g := lt_of_le_of_ne le_sup_left
+          (fun h => heg_ne ((he_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hg_atom.1).symm)
+        exact ((hm_line e he_atom (inf_le_right : e ≤ m)).eq_or_eq he_lt_eg.le
+          (sup_le (inf_le_right : e ≤ m) (inf_le_right : g ≤ m))).resolve_left (ne_of_gt he_lt_eg)
+      -- m ≤ P'⊔Q'⊔R₁
+      have hm_le_target : m ≤ P' ⊔ Q' ⊔ R₁ := by
+        rw [← heg_eq_m]
+        exact sup_le (he_le_P'Q'.trans le_sup_left)
+          (hg_le_P'R₁.trans (sup_le (le_sup_left.trans le_sup_left) le_sup_right))
+      -- P'⊔m = π, so π ≤ P'⊔Q'⊔R₁
+      have hP'm_eq_π : P' ⊔ m = π := by
+        have h_lt : m < P' ⊔ m := lt_of_le_of_ne le_sup_right
+          (fun h => hP'_not (le_sup_left.trans h.symm.le))
+        exact (hm_cov.eq_or_eq h_lt.le (sup_le hP'_le hm_le)).resolve_left (ne_of_gt h_lt)
+      apply le_antisymm (sup_le (sup_le hP'_le hQ'_le_π) hR₁_le_π)
+      calc π = P' ⊔ m := hP'm_eq_π.symm
+        _ ≤ P' ⊔ Q' ⊔ R₁ := sup_le (le_sup_left.trans le_sup_left) hm_le_target
+    -- Sides CovBy π
+    have h_cov_PQ : P ⊔ Q ⋖ π := h_span ▸ line_covBy_plane hP hQ hR hPQ hPR hQR hR_not_PQ
+    have h_cov_PR : P ⊔ R ⋖ π := by
+      have : P ⊔ R ⊔ Q = π := by rw [← h_span]; ac_rfl
+      rw [← this]; exact line_covBy_plane hP hR hQ hPR hPQ hQR.symm hQ_not_PR
+    have hP_not_QR : ¬ P ≤ Q ⊔ R := by
+      intro hP_le_QR
+      have hQ_lt_PQ : Q < P ⊔ Q := lt_of_le_of_ne le_sup_right
+        (fun h => hPQ ((hQ.le_iff.mp (le_sup_left.trans h.symm.le)).resolve_left hP.1))
+      rcases (atom_covBy_join hQ hR hQR).eq_or_eq hQ_lt_PQ.le (sup_le hP_le_QR le_sup_left) with h_eq | h_eq
+      · exact absurd h_eq (ne_of_gt hQ_lt_PQ)
+      · exact hR_not_PQ (le_sup_right.trans h_eq.symm.le)
+    have h_cov_QR : Q ⊔ R ⋖ π := by
+      have : Q ⊔ R ⊔ P = π := by rw [← h_span]; ac_rfl
+      rw [← this]; exact line_covBy_plane hQ hR hP hQR hPQ.symm hPR.symm hP_not_QR
+    -- Input parallelisms
+    have hQ'_ne_P' : Q' ≠ P' := hP'_ne_Q'.symm
+    have h_par_PQ : (P ⊔ Q) ⊓ m = (P' ⊔ Q') ⊓ m :=
+      parallelogram_parallel_sides hP' hP'_not he_atom hQ'_atom hQ'_ne_P'
+    have hR₁_ne_P' : R₁ ≠ P' := hP'_ne_R₁.symm
+    have h_par_PR : (P ⊔ R) ⊓ m = (P' ⊔ R₁) ⊓ m :=
+      parallelogram_parallel_sides hP' hP'_not hg_atom hR₁_atom hR₁_ne_P'
+    -- Apply small_desargues'
+    exact small_desargues' hd_atom hP hQ hR hP' hQ'_atom hR₁_atom
+      hd_le_π hP_le hQ_le hR_le hP'_le hQ'_le_π hR₁_le_π
+      hm_le hm_ne_π hd_le_m
+      hP'_on_dP hQ'_on_dQ hR₁_on_dR
+      hPQ hPR hQR hP'_ne_Q' hP'_ne_R₁ hQ'_ne_R₁
+      h_sides_PQ h_sides_PR h_sides_QR
+      h_span h_span'
+      hd_ne_P hd_ne_Q hd_ne_R hd_ne_P' hd_ne_Q' hd_ne_R₁
+      hPP' hQ'_ne_Q.symm hR_ne_R₁
+      W hW hW_not h_irred
+      h_cov_PQ h_cov_PR h_cov_QR
+      hm_cov
+      h_par_PQ h_par_PR
+  -- ═══ Step 2: Show R₁ = parallelogram_completion Q Q' R m ═══
   have hd_eq_d' : d = (Q ⊔ Q') ⊓ m :=
     parallelogram_parallel_direction hQ hQ_not hd_atom hQ'_atom hQ'_ne_Q
   -- R₁ ≤ R ⊔ d (from first parallelogram completion)
