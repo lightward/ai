@@ -52,6 +52,16 @@ Coordinate system, addition via perspectivities, ring axioms. Imports FTPGExplor
 | commutativity | `coord_first_desargues`, `coord_second_desargues`, `coord_add_comm` |
 | associativity | `coord_add_assoc` (in progress: translation consistency via four A5a applications) |
 
+**FTPGTranslation.lean** — Hartshorne translation approach (4 sorry)
+
+Alternative path to associativity via the translation group (Hartshorne §7). Defines parallelism, parallelogram completion, and the infrastructure for proving translations form an abelian group — from which associativity follows as a structural consequence rather than diagram-chasing.
+
+| layer | key declarations |
+|---|---|
+| parallelism | `parallel`, `parallel_refl`, `parallel_symm`, `parallel_trans` |
+| construction | `parallelogram_completion`, `line_meets_m_at_atom` |
+| properties | `parallelogram_completion_atom`, `parallelogram_parallel_direction`, `parallelogram_parallel_sides` |
+
 ### The deductive chain (from P² = P)
 
 **Observation.lean** — one observation
