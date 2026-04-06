@@ -297,9 +297,79 @@ defining the same translation (i.e., PP' ∥ RR' and PR ∥ P'R'),
 then the completions of any Q agree. This uses small_desargues'.
 -/
 
--- The well-definedness theorem will go here.
--- It will invoke small_desargues' to show that the parallelogram
--- completion is independent of the choice of base pair.
+/-- **Well-definedness of translations (Hartshorne Theorem 7.6, Step 2).**
+
+    If Q' = parallelogram_completion P P' Q m and
+    R₁ = parallelogram_completion P P' R m, then
+    R₁ = parallelogram_completion Q Q' R m.
+
+    In words: the translation defined by base pair (P,P') can equivalently
+    be computed using any other pair (Q,Q') in its orbit.
+
+    Proof sketch:
+    1. From Part III: PQ ∥ P'Q' and PR ∥ P'R₁
+    2. Apply small_desargues' to get QR ∥ Q'R₁
+    3. R₁ is on line R⊔d (from first completion) and on line Q'⊔f
+       where f = (Q⊔R)⊓m (from step 2). These are exactly the
+       two lines whose intersection defines parallelogram_completion Q Q' R m.
+    4. Since both are atoms, R₁ = parallelogram_completion Q Q' R m. -/
+theorem parallelogram_completion_well_defined
+    {P P' Q R m π : L}
+    (hP : IsAtom P) (hP' : IsAtom P') (hQ : IsAtom Q) (hR : IsAtom R)
+    (hPP' : P ≠ P') (hPQ : P ≠ Q) (hPR : P ≠ R) (hP'Q : P' ≠ Q)
+    (hP'R : P' ≠ R) (hQR : Q ≠ R)
+    -- All in π
+    (hP_le : P ≤ π) (hP'_le : P' ≤ π) (hQ_le : Q ≤ π) (hR_le : R ≤ π)
+    -- m is a line in π
+    (hm_le : m ≤ π) (hm_cov : m ⋖ π)
+    (hm_line : ∀ x, IsAtom x → x ≤ m → x ⋖ m)
+    -- None on m
+    (hP_not : ¬ P ≤ m) (hP'_not : ¬ P' ≤ m) (hQ_not : ¬ Q ≤ m) (hR_not : ¬ R ≤ m)
+    -- Non-collinearity
+    (hQ_not_PP' : ¬ Q ≤ P ⊔ P') (hR_not_PP' : ¬ R ≤ P ⊔ P')
+    (hR_not_QQ' : ¬ R ≤ Q ⊔ parallelogram_completion P P' Q m)
+    -- Height ≥ 4 and irreducibility (needed for small_desargues')
+    (W : L) (hW : IsAtom W) (hW_not : ¬ W ≤ π)
+    (h_irred : ∀ (a b : L), IsAtom a → IsAtom b → a ≠ b →
+      ∃ c : L, IsAtom c ∧ c ≤ a ⊔ b ∧ c ≠ a ∧ c ≠ b) :
+    parallelogram_completion P P' R m =
+    parallelogram_completion Q (parallelogram_completion P P' Q m) R m := by
+  set d := (P ⊔ P') ⊓ m   -- shared direction
+  set e := (P ⊔ Q) ⊓ m    -- direction of PQ
+  set g := (P ⊔ R) ⊓ m    -- direction of PR
+  set f := (Q ⊔ R) ⊓ m    -- direction of QR (for the conclusion)
+  set Q' := parallelogram_completion P P' Q m
+  set R₁ := parallelogram_completion P P' R m
+  -- ═══ Step 0: Establish atoms and basic properties ═══
+  have hd_atom : IsAtom d := line_meets_m_at_atom hP hP' hPP'
+    (sup_le hP_le hP'_le) hm_le hm_cov hP_not
+  have he_atom : IsAtom e := line_meets_m_at_atom hP hQ hPQ
+    (sup_le hP_le hQ_le) hm_le hm_cov hP_not
+  have hg_atom : IsAtom g := line_meets_m_at_atom hP hR hPR
+    (sup_le hP_le hR_le) hm_le hm_cov hP_not
+  have hQ'_atom : IsAtom Q' := parallelogram_completion_atom hP hP' hQ hPP' hPQ hP'Q
+    hP_le hP'_le hQ_le hm_le hm_cov hm_line hP_not hP'_not hQ_not hQ_not_PP'
+  have hR₁_atom : IsAtom R₁ := parallelogram_completion_atom hP hP' hR hPP' hPR hP'R
+    hP_le hP'_le hR_le hm_le hm_cov hm_line hP_not hP'_not hR_not hR_not_PP'
+  have hd_le_m : d ≤ m := inf_le_right
+  -- ═══ Step 1: Apply small_desargues' ═══
+  -- Center: d. Triangles: PQR and P'Q'R₁.
+  -- Inputs: PQ ∥ P'Q' and PR ∥ P'R₁.
+  -- Output: QR ∥ Q'R₁.
+  -- TODO: discharge all 37 hypotheses of small_desargues'
+  have h_third_par : (Q ⊔ R) ⊓ m = (Q' ⊔ R₁) ⊓ m := by
+    sorry
+  -- ═══ Step 2: Show R₁ = parallelogram_completion Q Q' R m ═══
+  -- parallelogram_completion Q Q' R m = (R ⊔ d') ⊓ (Q' ⊔ f)
+  -- where d' = (Q ⊔ Q') ⊓ m and f = (Q ⊔ R) ⊓ m.
+  -- We need d' = d (QQ' has same direction as PP') and then show
+  -- R₁ = (R ⊔ d) ⊓ (Q' ⊔ f).
+  -- R₁ ≤ R ⊔ d (from first completion: R₁ = (R⊔d) ⊓ (P'⊔g) ≤ R⊔d).
+  -- From h_third_par: (Q'⊔R₁)⊓m = f, so R₁ is on a line through Q' with direction f,
+  -- meaning Q'⊔R₁ = Q'⊔f (same line). So R₁ ≤ Q'⊔f.
+  -- Therefore R₁ ≤ (R⊔d) ⊓ (Q'⊔f) = parallelogram_completion Q Q' R m.
+  -- Both atoms → equal.
+  sorry
 
 /-!
 ## Part V: Translations (to be built)
