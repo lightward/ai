@@ -29,6 +29,9 @@ algebraic identities. The algebra falls out from the group structure.
 -/
 
 import Foam.FTPGExplore
+-- Note: small_desargues' lives in Foam.FTPGCoord but that file currently has
+-- type errors (lines 2990+) preventing import. Once FTPGCoord compiles,
+-- uncomment: import Foam.FTPGCoord
 
 namespace Foam.FTPGExplore
 
@@ -325,9 +328,12 @@ theorem parallelogram_completion_well_defined
     (hm_line : ∀ x, IsAtom x → x ≤ m → x ⋖ m)
     -- None on m
     (hP_not : ¬ P ≤ m) (hP'_not : ¬ P' ≤ m) (hQ_not : ¬ Q ≤ m) (hR_not : ¬ R ≤ m)
-    -- Non-collinearity
+    -- Non-collinearity: P, Q, R are in general position
     (hQ_not_PP' : ¬ Q ≤ P ⊔ P') (hR_not_PP' : ¬ R ≤ P ⊔ P')
+    (hR_not_PQ : ¬ R ≤ P ⊔ Q) (hQ_not_PR : ¬ Q ≤ P ⊔ R)
     (hR_not_QQ' : ¬ R ≤ Q ⊔ parallelogram_completion P P' Q m)
+    -- P⊔Q⊔R spans π (follows from the above + π being a plane, but stated for convenience)
+    (h_span : P ⊔ Q ⊔ R = π)
     -- Height ≥ 4 and irreducibility (needed for small_desargues')
     (W : L) (hW : IsAtom W) (hW_not : ¬ W ≤ π)
     (h_irred : ∀ (a b : L), IsAtom a → IsAtom b → a ≠ b →
@@ -358,27 +364,137 @@ theorem parallelogram_completion_well_defined
   -- Output: QR ∥ Q'R₁.
   -- TODO: discharge all 37 hypotheses of small_desargues'
   have h_third_par : (Q ⊔ R) ⊓ m = (Q' ⊔ R₁) ⊓ m := by
+    -- This applies small_desargues' (from Foam.FTPGCoord) with:
+    --   U = d, A = P, B = Q, C = R, A' = P', B' = Q', C' = R₁
+    -- Input parallelisms (from parallelogram_parallel_sides):
+    --   (P⊔Q)⊓m = (P'⊔Q')⊓m  and  (P⊔R)⊓m = (P'⊔R₁)⊓m
+    -- Output: (Q⊔R)⊓m = (Q'⊔R₁)⊓m
+    --
+    -- All hypotheses of small_desargues' are dischargeable:
+    -- - Atoms: hd_atom, hP, hQ, hR, hP', hQ'_atom, hR₁_atom
+    -- - In π: trivial (d ≤ m ≤ π, others given)
+    -- - Q', R₁ ≤ π: from Q' ≤ Q⊔d ≤ π, R₁ ≤ R⊔d ≤ π
+    -- - Perspectivity: P' ≤ d⊔P (d⊔P = P⊔P' by CovBy), Q' ≤ d⊔Q, R₁ ≤ d⊔R
+    -- - Q'/R₁ not on m: line_direction + d_not_on_P'_line argument
+    -- - Distinct vertices: P'≠Q' and P'≠R₁ from parallelism (if equal, e or g = ⊥)
+    --   Q'≠R₁ from two-lines-through-d argument
+    -- - Distinct sides: CovBy argument (if PQ = P'Q', then P' ≤ PQ → Q ≤ PP')
+    -- - Triangles span π: h_span given; second triangle via e⊔g = m ≤ P'⊔Q'⊔R₁
+    -- - Sides CovBy π: line_covBy_plane with hR_not_PQ, hQ_not_PR
+    -- - R≠R₁: if R=R₁ then R ≤ P'⊔g → P' ≤ P⊔R → R ≤ P⊔P'
+    -- - Q'≠Q: if Q'=Q then Q ≤ P'⊔e → P' ≤ P⊔Q → Q ≤ P⊔P'
+    --
+    -- BLOCKED: FTPGCoord.lean has type errors (lines 2990+) preventing import.
+    -- Once FTPGCoord compiles, import it and replace this sorry with the
+    -- application of small_desargues'.
     sorry
   -- ═══ Step 2: Show R₁ = parallelogram_completion Q Q' R m ═══
   -- parallelogram_completion Q Q' R m = (R ⊔ d') ⊓ (Q' ⊔ f)
   -- where d' = (Q ⊔ Q') ⊓ m. We need d' = d.
+  -- Helper: d ≠ e (same as in parallelogram_completion_atom)
+  have hde_ne : d ≠ e := by
+    intro h_eq
+    have hd_le_PQ : d ≤ P ⊔ Q := h_eq ▸ (inf_le_left : e ≤ P ⊔ Q)
+    have hd_le_P : d ≤ P := by
+      have := le_inf (inf_le_left : d ≤ P ⊔ P') hd_le_PQ
+      rwa [modular_intersection hP hP' hQ hPP' hPQ hP'Q hQ_not_PP'] at this
+    have hPm : P ⊓ m = ⊥ := by
+      rcases hP.le_iff.mp inf_le_left with h | h
+      · exact h
+      · exact absurd (h ▸ inf_le_right) hP_not
+    exact hd_atom.1 (le_antisymm (hPm ▸ le_inf hd_le_P hd_le_m) bot_le)
+  -- Helper: d ≠ g
+  have hdg_ne : d ≠ g := by
+    intro h_eq
+    have hd_le_PR : d ≤ P ⊔ R := h_eq ▸ (inf_le_left : g ≤ P ⊔ R)
+    have hd_le_P : d ≤ P := by
+      have := le_inf (inf_le_left : d ≤ P ⊔ P') hd_le_PR
+      rwa [modular_intersection hP hP' hR hPP' hPR hP'R hR_not_PP'] at this
+    have hPm : P ⊓ m = ⊥ := by
+      rcases hP.le_iff.mp inf_le_left with h | h
+      · exact h
+      · exact absurd (h ▸ inf_le_right) hP_not
+    exact hd_atom.1 (le_antisymm (hPm ▸ le_inf hd_le_P hd_le_m) bot_le)
+  -- Helper: if an atom d on m is ≤ P'⊔x for atom x on m with P'≠x, then P' ≤ m (contradiction)
+  have d_not_on_P'_line : ∀ {x : L}, IsAtom x → x ≤ m → d ≠ x → P' ≠ x →
+      d ≤ P' ⊔ x → False := by
+    intro x hx hx_le hdx hP'x hd_le
+    have h_d_lt_dx : d < d ⊔ x := lt_of_le_of_ne le_sup_left
+      (fun h => hdx ((hd_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hx.1).symm)
+    have h_dx_le : d ⊔ x ≤ P' ⊔ x := sup_le hd_le le_sup_right
+    have hd_cov : d ⋖ P' ⊔ x := line_covers_its_atoms hP' hx hP'x hd_atom hd_le
+    rcases hd_cov.eq_or_eq h_d_lt_dx.le h_dx_le with h_eq | h_eq
+    · exact absurd h_eq (ne_of_gt h_d_lt_dx)
+    · exact hP'_not (le_trans le_sup_left (h_eq ▸ sup_le hd_le_m hx_le))
   have hQ'_not_m : ¬ Q' ≤ m := by
     intro h
-    -- Q' is an atom on m. But Q' = (Q⊔d)⊓(P'⊔e), and Q' ≤ Q⊔d.
-    -- If Q' ≤ m, then Q' ≤ (Q⊔d)⊓m = d (by line_direction).
-    -- Q' atom, d atom, Q' ≤ d → Q' = d. But then d ≤ P'⊔e (Q' ≤ P'⊔e).
-    -- This contradicts hd_not_P'e... but we don't have that here. Use sorry for now.
-    sorry
-  have hR₁_not_m : ¬ R₁ ≤ m := by sorry
+    have hQ'_le_Qd : Q' ≤ Q ⊔ d := by
+      have : Q' = (Q ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ Q) ⊓ m) := rfl
+      rw [this]; exact inf_le_left
+    have hQ'_le_d : Q' ≤ d := by
+      calc Q' ≤ (Q ⊔ d) ⊓ m := le_inf hQ'_le_Qd h
+        _ = d := line_direction hQ hQ_not hd_le_m
+    have hQ'_eq_d : Q' = d := (hd_atom.le_iff.mp hQ'_le_d).resolve_left hQ'_atom.1
+    have hQ'_le_P'e : Q' ≤ P' ⊔ e := by
+      have : Q' = (Q ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ Q) ⊓ m) := rfl
+      rw [this]; exact inf_le_right
+    exact d_not_on_P'_line he_atom inf_le_right hde_ne
+      (fun h => hP'_not (h ▸ inf_le_right)) (hQ'_eq_d ▸ hQ'_le_P'e)
+  have hR₁_not_m : ¬ R₁ ≤ m := by
+    intro h
+    have hR₁_le_Rd : R₁ ≤ R ⊔ d := by
+      have : R₁ = (R ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ R) ⊓ m) := rfl
+      rw [this]; exact inf_le_left
+    have hR₁_le_d : R₁ ≤ d := by
+      calc R₁ ≤ (R ⊔ d) ⊓ m := le_inf hR₁_le_Rd h
+        _ = d := line_direction hR hR_not hd_le_m
+    have hR₁_eq_d : R₁ = d := (hd_atom.le_iff.mp hR₁_le_d).resolve_left hR₁_atom.1
+    have hR₁_le_P'g : R₁ ≤ P' ⊔ g := by
+      have : R₁ = (R ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ R) ⊓ m) := rfl
+      rw [this]; exact inf_le_right
+    exact d_not_on_P'_line hg_atom inf_le_right hdg_ne
+      (fun h => hP'_not (h ▸ inf_le_right)) (hR₁_eq_d ▸ hR₁_le_P'g)
   -- d' = (Q ⊔ Q') ⊓ m = d (QQ' has same direction as PP')
   have hQ'_ne_Q : Q' ≠ Q := by
-    intro h; exact hQ_not (by rw [← h] at hQ'_not_m ⊢; sorry)
+    intro h
+    -- If Q' = Q, then Q ≤ P'⊔e (since Q' ≤ P'⊔e from the completion)
+    have hQ'_le_P'e : Q' ≤ P' ⊔ e := by
+      have : Q' = (Q ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ Q) ⊓ m) := rfl
+      rw [this]; exact inf_le_right
+    have hQ_le_P'e : Q ≤ P' ⊔ e := h ▸ hQ'_le_P'e
+    -- e ≤ P⊔Q, so Q⊔e ≤ P⊔Q. Also Q⊔e ≤ P'⊔e.
+    have he_le_PQ : e ≤ P ⊔ Q := inf_le_left
+    have hQe_ne : Q ≠ e := fun h => hQ_not (h ▸ inf_le_right)
+    -- Q⊔e ≤ P'⊔e (from Q ≤ P'⊔e)
+    have hQe_le_P'e : Q ⊔ e ≤ P' ⊔ e := sup_le hQ_le_P'e le_sup_right
+    -- By CovBy: e ⋖ Q⊔e, e ⋖ P'⊔e. So Q⊔e = e or Q⊔e = P'⊔e.
+    have hP'e_ne' : P' ≠ e := fun h => hP'_not (h ▸ inf_le_right)
+    have h_cov_P'e : e ⋖ P' ⊔ e := by
+      have := atom_covBy_join he_atom hP' (Ne.symm hP'e_ne')
+      rwa [sup_comm] at this
+    have h_e_lt_Qe : e < Q ⊔ e := by
+      have := (atom_covBy_join he_atom hQ (Ne.symm hQe_ne)).lt
+      rwa [sup_comm] at this
+    rcases h_cov_P'e.eq_or_eq h_e_lt_Qe.le hQe_le_P'e with h_eq | h_eq
+    · exact absurd h_eq (ne_of_gt h_e_lt_Qe)
+    · -- Q⊔e = P'⊔e, so P' ≤ Q⊔e ≤ P⊔Q
+      have hQe_le_PQ : Q ⊔ e ≤ P ⊔ Q := sup_le le_sup_right he_le_PQ
+      have hP'_le_PQ : P' ≤ P ⊔ Q :=
+        (le_sup_left : P' ≤ P' ⊔ e).trans (h_eq.symm ▸ hQe_le_PQ)
+      -- P⊔P' ≤ P⊔Q. CovBy → P⊔P' = P⊔Q → Q ≤ P⊔P'. Contradiction.
+      have hPP'_le_PQ : P ⊔ P' ≤ P ⊔ Q := sup_le le_sup_left hP'_le_PQ
+      have h_cov_PQ : P ⋖ P ⊔ Q := atom_covBy_join hP hQ hPQ
+      have hP_lt_PP' : P < P ⊔ P' := lt_of_le_of_ne le_sup_left
+        (fun h => hPP' ((hP.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hP'.1).symm)
+      rcases h_cov_PQ.eq_or_eq hP_lt_PP'.le hPP'_le_PQ with h_eq2 | h_eq2
+      · exact absurd h_eq2 (ne_of_gt hP_lt_PP')
+      · exact hQ_not_PP' (le_sup_right.trans h_eq2.symm.le)
   have hd_eq_d' : d = (Q ⊔ Q') ⊓ m :=
     parallelogram_parallel_direction hQ hQ_not hd_atom hQ'_atom hQ'_ne_Q
   -- R₁ ≤ R ⊔ d (from first parallelogram completion)
   have hR₁_le_Rd : R₁ ≤ R ⊔ d := by
-    show R₁ ≤ R ⊔ (P ⊔ P') ⊓ m
-    unfold parallelogram_completion; exact inf_le_left
+    have : R₁ = (R ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ R) ⊓ m) := rfl
+    rw [this]; exact inf_le_left
   -- f ≤ Q' ⊔ R₁ (from third parallelism: (Q'⊔R₁)⊓m = f)
   have hf_le_Q'R₁ : f ≤ Q' ⊔ R₁ := by
     have : (Q' ⊔ R₁) ⊓ m = f := h_third_par.symm
@@ -387,7 +503,74 @@ theorem parallelogram_completion_well_defined
   -- Q' ⊔ f ≤ Q' ⊔ R₁ (f ≤ Q'⊔R₁ and Q' ≤ Q'⊔R₁)
   have hQ'f_le : Q' ⊔ f ≤ Q' ⊔ R₁ := sup_le le_sup_left hf_le_Q'R₁
   -- Q' ≠ R₁ (from R ∉ Q⊔Q' and the construction)
-  have hQ'_ne_R₁ : Q' ≠ R₁ := by sorry
+  have hQ'_ne_R₁ : Q' ≠ R₁ := by
+    intro h
+    -- If Q' = R₁, then Q' ≤ Q⊔d and Q' ≤ R⊔d (both from completions).
+    -- Case 1: Q⊔d ≠ R⊔d → (Q⊔d)⊓(R⊔d) = d → Q' ≤ d → Q' = d → Q' on m. Contradiction.
+    -- Case 2: Q⊔d = R⊔d → R ≤ Q⊔d. CovBy → Q⊔R = Q⊔d → Q⊔Q' ≤ Q⊔d.
+    --         CovBy → Q⊔Q' = Q⊔d. R ≤ Q⊔d = Q⊔Q'. Contradicts hR_not_QQ'.
+    have hQ'_le_Qd : Q' ≤ Q ⊔ d := by
+      have : Q' = (Q ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ Q) ⊓ m) := rfl
+      rw [this]; exact inf_le_left
+    have hR₁_le_Rd' : R₁ ≤ R ⊔ d := hR₁_le_Rd
+    have hQ'_le_Rd : Q' ≤ R ⊔ d := h ▸ hR₁_le_Rd'
+    have hQd_ne : Q ≠ d := fun h => hQ_not (h ▸ hd_le_m)
+    have hRd_ne : R ≠ d := fun h => hR_not (h ▸ hd_le_m)
+    by_cases hlines : Q ⊔ d = R ⊔ d
+    · -- Case 2: Q⊔d = R⊔d, so R ≤ Q⊔d
+      have hR_le_Qd : R ≤ Q ⊔ d := le_sup_left.trans hlines.symm.le
+      -- Q⊔R ≤ Q⊔d
+      have hQR_le_Qd : Q ⊔ R ≤ Q ⊔ d := sup_le le_sup_left hR_le_Qd
+      -- Q ⋖ Q⊔d and Q < Q⊔R → Q⊔R = Q⊔d
+      have h_cov_Qd : Q ⋖ Q ⊔ d := atom_covBy_join hQ hd_atom hQd_ne
+      have hQ_lt_QR : Q < Q ⊔ R := lt_of_le_of_ne le_sup_left
+        (fun h => hQR ((hQ.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hR.1).symm)
+      have hQR_eq_Qd : Q ⊔ R = Q ⊔ d :=
+        (h_cov_Qd.eq_or_eq hQ_lt_QR.le hQR_le_Qd).resolve_left (ne_of_gt hQ_lt_QR)
+      -- Q' ≤ Q⊔d = Q⊔R. Q⊔Q' ≤ Q⊔R. CovBy → Q⊔Q' = Q⊔R.
+      -- Then R ≤ Q⊔R = Q⊔Q', contradicting hR_not_QQ'.
+      have hQQ'_le_Qd : Q ⊔ Q' ≤ Q ⊔ d := sup_le le_sup_left hQ'_le_Qd
+      have hQ_lt_QQ' : Q < Q ⊔ Q' := lt_of_le_of_ne le_sup_left
+        (fun h => hQ'_ne_Q.symm ((hQ.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hQ'_atom.1).symm)
+      have hQQ'_eq_Qd : Q ⊔ Q' = Q ⊔ d :=
+        (h_cov_Qd.eq_or_eq hQ_lt_QQ'.le hQQ'_le_Qd).resolve_left (ne_of_gt hQ_lt_QQ')
+      exact hR_not_QQ' (hR_le_Qd.trans (hQQ'_eq_Qd ▸ le_refl _))
+    · -- Case 1: Q⊔d ≠ R⊔d. Both are lines through d in π.
+      -- Their inf contains d. In a plane, two distinct lines meet at a point.
+      -- So (Q⊔d)⊓(R⊔d) = d.
+      have hQ'_le_inf : Q' ≤ (Q ⊔ d) ⊓ (R ⊔ d) := le_inf hQ'_le_Qd hQ'_le_Rd
+      have hd_le_inf : d ≤ (Q ⊔ d) ⊓ (R ⊔ d) := le_inf le_sup_right le_sup_right
+      -- (Q⊔d)⊓(R⊔d) ≤ Q⊔d, and since Q⊔d is a line (height 2), the inf is ⊥ or an atom.
+      -- It's ≥ d > ⊥, so it's an atom. Being an atom ≥ d atom → it equals d.
+      have hQd_cov : Q ⋖ Q ⊔ d := atom_covBy_join hQ hd_atom hQd_ne
+      have hRd_cov : R ⋖ R ⊔ d := atom_covBy_join hR hd_atom hRd_ne
+      have h_inf_lt : (Q ⊔ d) ⊓ (R ⊔ d) < Q ⊔ d := by
+        refine lt_of_le_of_ne inf_le_left ?_
+        intro h_eq
+        -- h_eq: (Q⊔d) ⊓ (R⊔d) = Q⊔d, i.e. Q⊔d ≤ R⊔d
+        have : Q ⊔ d ≤ R ⊔ d := inf_eq_left.mp h_eq
+        -- Also R⊔d ≤ Q⊔d... no, we need the other direction.
+        -- R ≤ Q⊔d: R ≤ R⊔d and R⊔d... hmm.
+        -- From Q⊔d ≤ R⊔d and Q ⋖ Q⊔d, R ⋖ R⊔d:
+        -- R⊔d is a line. Q⊔d ≤ R⊔d. Q⊔d is a line. Line ≤ line → equal (both height 2).
+        -- d ⋖ R⊔d (both atoms, distinct). d ≤ Q⊔d ≤ R⊔d. CovBy → Q⊔d = d or R⊔d.
+        have h_d_cov_Rd : d ⋖ R ⊔ d := by
+          have := atom_covBy_join hd_atom hR hRd_ne.symm
+          rwa [sup_comm] at this
+        have h_d_lt_Qd : d < Q ⊔ d := by
+          have := (atom_covBy_join hd_atom hQ hQd_ne.symm).lt
+          rwa [sup_comm] at this
+        rcases h_d_cov_Rd.eq_or_eq h_d_lt_Qd.le this with h | h
+        · exact absurd h (ne_of_gt h_d_lt_Qd)
+        · exact hlines h
+      have h_pos : ⊥ < (Q ⊔ d) ⊓ (R ⊔ d) := lt_of_lt_of_le hd_atom.bot_lt hd_le_inf
+      have h_inf_atom : IsAtom ((Q ⊔ d) ⊓ (R ⊔ d)) :=
+        line_height_two hQ hd_atom hQd_ne h_pos h_inf_lt
+      have h_inf_eq_d : (Q ⊔ d) ⊓ (R ⊔ d) = d :=
+        ((h_inf_atom.le_iff.mp hd_le_inf).resolve_left hd_atom.1).symm
+      have hQ'_le_d : Q' ≤ d := h_inf_eq_d ▸ hQ'_le_inf
+      have hQ'_eq_d : Q' = d := (hd_atom.le_iff.mp hQ'_le_d).resolve_left hQ'_atom.1
+      exact hQ'_not_m (hQ'_eq_d.symm ▸ hd_le_m)
   -- Q' ⋖ Q' ⊔ R₁ (atom_covBy_join). Q' < Q' ⊔ f ≤ Q' ⊔ R₁.
   -- By CovBy.eq_or_eq: Q' ⊔ f = Q' or Q' ⊔ f = Q' ⊔ R₁.
   -- Can't be Q' (f is an atom ≠ Q'). So Q' ⊔ f = Q' ⊔ R₁.
@@ -398,7 +581,7 @@ theorem parallelogram_completion_well_defined
     have h_cov : Q' ⋖ Q' ⊔ R₁ := atom_covBy_join hQ'_atom hR₁_atom hQ'_ne_R₁
     have hQ'_lt : Q' < Q' ⊔ f := lt_of_le_of_ne le_sup_left
       (fun h => hQ'_ne_f ((hQ'_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
-        hf_atom.1))
+        hf_atom.1).symm)
     exact (h_cov.eq_or_eq hQ'_lt.le hQ'f_le).resolve_left (ne_of_gt hQ'_lt)
   -- R₁ ≤ Q' ⊔ f (= Q' ⊔ R₁, trivially)
   have hR₁_le_Q'f : R₁ ≤ Q' ⊔ f := hQ'f_eq ▸ le_sup_right
@@ -411,13 +594,22 @@ theorem parallelogram_completion_well_defined
   -- Need: parallelogram_completion Q Q' R m = (R ⊔ (Q⊔Q')⊓m) ⊓ (Q' ⊔ (Q⊔R)⊓m)
   -- And (R ⊔ d) ⊓ (Q' ⊔ f) = (R ⊔ (Q⊔Q')⊓m) ⊓ (Q' ⊔ (Q⊔R)⊓m) when d = (Q⊔Q')⊓m.
   show R₁ = parallelogram_completion Q Q' R m
-  unfold parallelogram_completion
-  -- Goal: R₁ = (R ⊔ (Q ⊔ Q') ⊓ m) ⊓ (Q' ⊔ (Q ⊔ R) ⊓ m)
-  -- We have R₁ ≤ (R ⊔ d) ⊓ (Q' ⊔ f) and d = (Q ⊔ Q') ⊓ m, f = (Q ⊔ R) ⊓ m.
-  -- So R₁ ≤ the target. Both atoms → equal.
-  rw [← hd_eq_d']
-  have hR₁_le : R₁ ≤ (R ⊔ d) ⊓ (Q' ⊔ f) := hR₁_le_completion
-  sorry -- need target is an atom, then R₁ atom ≤ atom → equal
+  have hQ'_le_π : Q' ≤ π := by
+    have hQ'_le_Qd : Q' ≤ Q ⊔ d := by
+      have : Q' = (Q ⊔ (P ⊔ P') ⊓ m) ⊓ (P' ⊔ (P ⊔ Q) ⊓ m) := rfl
+      rw [this]; exact inf_le_left
+    exact hQ'_le_Qd.trans (sup_le hQ_le (hd_le_m.trans hm_le))
+  have hQ'R_ne : Q' ≠ R := by
+    intro h; exact hR_not_QQ' (h ▸ le_sup_right)
+  have hQQ'_ne : Q ≠ Q' := hQ'_ne_Q.symm
+  have h_target_atom : IsAtom (parallelogram_completion Q Q' R m) :=
+    parallelogram_completion_atom hQ hQ'_atom hR hQQ'_ne hQR hQ'R_ne
+      hQ_le hQ'_le_π hR_le hm_le hm_cov hm_line hQ_not hQ'_not_m hR_not hR_not_QQ'
+  -- R₁ ≤ parallelogram_completion Q Q' R m
+  have hR₁_le_target : R₁ ≤ parallelogram_completion Q Q' R m := by
+    show R₁ ≤ (R ⊔ (Q ⊔ Q') ⊓ m) ⊓ (Q' ⊔ (Q ⊔ R) ⊓ m)
+    exact le_inf (hd_eq_d' ▸ hR₁_le_Rd) hR₁_le_Q'f
+  exact (h_target_atom.le_iff.mp hR₁_le_target).resolve_left hR₁_atom.1
 
 /-!
 ## Part V: Translations (to be built)
