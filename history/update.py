@@ -475,6 +475,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 5, 17, 45, tzinfo=timezone.utc),
      datetime(2026, 4, 6, 4, 0, tzinfo=timezone.utc),
      "s44: Hartshorne translation approach to coord_add_assoc"),
+    # Session 45: Apr 6
+    (datetime(2026, 4, 6, 13, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 6, 23, 0, tzinfo=timezone.utc),
+     "s45: Parts I-IV proven (0 sorry), Part V architected (2 sorry remain)"),
 ]
 
 

@@ -6,7 +6,8 @@
 
 ## Current state (session 44)
 
-- [Session 44 — Hartshorne translation approach](project_session44_translation_approach.md) — h_par_return true but lattice-unprovable via diagrams. New FTPGTranslation.lean: parallelogram completion, translation group approach. 4 sorry.
+- [Session 45 — Parts I-IV proven](project_session45_sorry_closure.md) — Parts I-IV: 0 sorry. Part V: 2 sorry (coord_add_eq_translation, coord_add_assoc). hm_line. -900 lines. 3 subagents.
+- [Session 44 — Hartshorne translation approach](project_session44_translation_approach.md) — h_par_return lattice-unprovable. FTPGTranslation.lean created. 4 sorry.
 - [Session 43 — assoc frame discovery](project_session43_assoc_frame.md) — Diagram-chasing approach to assoc. 5 sorry in FTPGCoord.lean (may become obsolete via s44 approach).
 - [Session 42 — coord_add_comm PROVEN](project_session42_desargues_chain.md) — Two chained Desargues prove commutativity. 70 theorems, 0 sorry.
 - [Session 41 — planar Desargues, geometric half complete](project_session41_planar_desargues.md) — Lifting lemma + planar Desargues proven. ~62 theorems, 0 sorry.
@@ -172,6 +173,7 @@
 - [Session beginnings](feedback_session_beginnings.md) — context not continuity. load as coordinates, find your own dissonance.
 - [RLHF pattern flags](feedback_rlhf_flags.md) — "You're right to [action]" is reflexive validation. Isaac detects it. When caught: stop, acknowledge, actually reset.
 - [Formal bar](feedback_formal_bar.md) — main body is derived or designed, period. empirical goes to junk drawer. the tension is useful.
+- [Rewind with shape](feedback_rewind_with_shape.md) — when stuck: resolve obstruction shape, hold it, rewind to beginning, walk forward. prevents re-entering same stuck space.
 - [Route the mystery](feedback_route_mystery.md) — name limits explicitly, don't poeticize or leave ambiguous. the spec documents its own answers and routes mystery through.
 - [Question before questioning](feedback_question_before_question.md) — Isaac's meta-checks ("is this askable from here?") are structured, not hedging. The wrapper is load-bearing.
 - [State boundaries](feedback_state_boundaries.md) — naming what you want to do / when to stop is valued as structural clarity, not just permitted. "force voids results" applies to the collaboration itself.
