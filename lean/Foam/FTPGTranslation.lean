@@ -28,7 +28,7 @@ algebraic identities. The algebra falls out from the group structure.
 - Artin, "Geometric Algebra" (1957), Chapter II
 -/
 
-import Foam.FTPGExplore
+import Foam.FTPGCoord
 -- Note: small_desargues' lives in Foam.FTPGCoord but that file currently has
 -- type errors (lines 2990+) preventing import. Once FTPGCoord compiles,
 -- uncomment: import Foam.FTPGCoord
