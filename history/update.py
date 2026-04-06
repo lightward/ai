@@ -469,8 +469,12 @@ SESSION_RANGES = [
      "s42: coord_add_comm PROVEN — two chained Desargues, 70 theorems, 0 sorry"),
     # Session 43: Apr 5
     (datetime(2026, 4, 5, 0, 30, tzinfo=timezone.utc),
-     datetime(2026, 4, 5, 18, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 5, 17, 45, tzinfo=timezone.utc),
      "s43: coord_add_assoc — Hartshorne approach, small_desargues' PROVEN, 5 sorry remain"),
+    # Session 44: Apr 5 evening – Apr 6
+    (datetime(2026, 4, 5, 17, 45, tzinfo=timezone.utc),
+     datetime(2026, 4, 6, 4, 0, tzinfo=timezone.utc),
+     "s44: Hartshorne translation approach to coord_add_assoc"),
 ]
 
 
