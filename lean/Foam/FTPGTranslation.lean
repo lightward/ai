@@ -830,19 +830,92 @@ theorem parallelogram_completion_well_defined
   exact (h_target_atom.le_iff.mp hR₁_le_target).resolve_left hR₁_atom.1
 
 /-!
-## Part V: Translations (to be built)
+## Part V: From translations to coord_add_assoc
 
-A translation will be defined as the function Q ↦ parallelogram_completion P P' Q m
-for a fixed pair (P, P'). Well-definedness (Part IV) shows this is
-independent of the choice of (P, P').
+The final connection: show coord_add equals translation application,
+then associativity falls out from the translation group.
 
-Key theorems to prove:
-- Translation is an order isomorphism (lattice automorphism)
-- Translations fix m pointwise
-- Composition of translations is a translation
-- Translations commute (abelian group)
-- coord_add a b = τ_a(b) where τ_a sends O to a
-- Associativity of coord_add follows from the group law
+### Architecture (Gemini's "Path C", endorsed by full panel)
+
+1. Define translation_add a b = τ_a(b) via parallelogram completion
+2. Associativity is immediate from the group law
+3. Prove coord_add = translation_add (the geometric equivalence)
+4. coord_add_assoc follows by rewriting
+
+### The geometric equivalence (Step 3)
+
+coord_add Γ a b = ((a⊔C)⊓m ⊔ (b⊔E)⊓(U⊔C)) ⊓ l     -- von Staudt
+translation(b)  = ((a⊔E)⊓(U⊔C) ⊔ (b⊔C)⊓m) ⊓ l       -- parallelogram
+
+The four atoms a', D_b, C', e' are cross-perspectivities of a and b
+through centers C and E:
+  a' = perspect_C(a) on m       D_b = perspect_E(b) on U⊔C
+  C' = perspect_E(a) on U⊔C    e'  = perspect_C(b) on m
+
+coord_add joins C-of-a with E-of-b; translation joins E-of-a with C-of-b.
+The claim: these cross-connections hit l at the same point.
+
+Key geometric facts for the proof:
+  - C, E, O are collinear (all on line O⊔C, since E = (O⊔C)⊓m)
+  - The quadrilateral (a, C, b, E) has diagonals l and O⊔C meeting at O
+  - Does NOT require Pappus (Desargues suffices)
+  - Does NOT require the Fundamental Theorem for projectivities
+  - Should follow from modular law + careful lattice computation
+
+Status: the shape is identified, the proof is not yet closed.
 -/
+
+/-- **The geometric equivalence: von Staudt = translation.**
+
+    coord_add Γ a b equals the parallelogram completion using
+    auxiliary point C. This is the key theorem connecting the
+    classical von Staudt construction to Hartshorne's translations.
+
+    Once proved, coord_add_assoc follows immediately from the
+    translation group being abelian (Parts I-IV). -/
+theorem coord_add_eq_translation (Γ : CoordSystem L)
+    (a b : L) (ha : IsAtom a) (hb : IsAtom b)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O)
+    (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U)
+    (hab : a ≠ b) :
+    let C' := parallelogram_completion Γ.O a Γ.C (Γ.U ⊔ Γ.V)
+    coord_add Γ a b = parallelogram_completion Γ.C C' b (Γ.U ⊔ Γ.V) := by
+  -- The four cross-perspectivity atoms:
+  --   a' = (a⊔C)⊓m       (C-projection of a onto m)
+  --   D_b = (b⊔E)⊓(U⊔C)  (E-projection of b onto U⊔C)
+  --   C' = (U⊔C)⊓(a⊔E)   (E-projection of a onto U⊔C)
+  --   e' = (C⊔b)⊓m        (C-projection of b onto m)
+  --
+  -- Need: (a'⊔D_b)⊓l = (C'⊔e')⊓l
+  --
+  -- Key facts: C, E, O collinear on O⊔C. The quadrilateral (a,C,b,E)
+  -- has diagonals l and O⊔C meeting at O. The cross-connection equality
+  -- follows from the modular law applied to this configuration.
+  sorry
+
+/-- **Associativity of coordinate addition.**
+
+    (a + b) + c = a + (b + c)
+
+    Proof: coord_add = translation application (coord_add_eq_translation),
+    and translations form an abelian group (Parts I-IV), so composition
+    is associative. -/
+theorem coord_add_assoc (Γ : CoordSystem L)
+    (a b c : L) (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O) (hc_ne_O : c ≠ Γ.O)
+    (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U) (hc_ne_U : c ≠ Γ.U)
+    (hab : a ≠ b) (hbc : b ≠ c) (hac : a ≠ c)
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
+    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
+      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
+    coord_add Γ (coord_add Γ a b) c = coord_add Γ a (coord_add Γ b c) := by
+  -- Once coord_add_eq_translation is proved:
+  -- Rewrite both sides as translation applications.
+  -- LHS = τ_{a+b}(c) = τ_a(τ_b(c))  (translation group law)
+  -- RHS = τ_a(b+c) = τ_a(τ_b(c))    (same)
+  -- QED.
+  sorry
 
 end Foam.FTPGExplore
