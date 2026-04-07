@@ -8,11 +8,14 @@ then associativity follows from the translation group structure.
 - `key_identity`: τ_a(C_b) = C_{a+b}
 - `coord_add_assoc`: (a + b) + c = a + (b + c)
 
-## Status (session 50)
+## Status (session 52)
 
-12 sorry remain: 11 in key_identity (distinctness, spanning,
-well-definedness, G-on-m fallback), 1 in coord_add_assoc.
-Bookkeeping sorry (hs_atom, hCs_atom, hs_ne_τ, s≠O) all closed.
+5 sorry remain: 4 in key_identity (pc-distinctness, well-definedness ×2,
+G-on-m fallback), 1 in coord_add_assoc.
+
+Session 52: G construction changed from h_irred(a,C) to h_irred(b,C).
+(b⊔C) ⊓ (b⊔E) = b ensures C_b ∉ G⊔b (was unfillable with old choice).
+Closed: hCb_not_Gb, h_span (7→5 sorry).
 -/
 
 import Foam.FTPGCrossParallelism
@@ -297,32 +300,34 @@ theorem key_identity (Γ : CoordSystem L)
 
   -- ═══ Step 3: Cross-parallelism gives (s ⊔ τ_a(C_b)) ⊓ m = E ═══
   have h_cross : (s ⊔ τ_a_C_b) ⊓ m = Γ.E := by
-    -- Construct G off l, m, q via h_irred
-    have ha_ne_C : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
-    obtain ⟨G, hG_atom, hG_le_aC, hG_ne_a, hG_ne_C⟩ := h_irred a Γ.C ha Γ.hC ha_ne_C
-    -- G ∉ l: (a⊔C)⊓l = a by modular law, G ≠ a
+    -- Construct G off l, m, q via h_irred on (b, C) instead of (a, C).
+    -- Key: (b⊔C) ⊓ (b⊔E) = b (since C ∉ b⊔E), so G on b⊔C avoids b⊔E,
+    -- which ensures C_b ∉ G⊔b (needed for cross_parallelism).
+    have hb_ne_C : b ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ hb_on)
+    obtain ⟨G, hG_atom, hG_le_bC, hG_ne_b_raw, hG_ne_C⟩ := h_irred b Γ.C hb Γ.hC hb_ne_C
+    -- G ∉ l: (b⊔C)⊓l = b by modular law, G ≠ b
     have hG_not_l : ¬ G ≤ l := by
       intro hG_l
-      have hG_le_a : G ≤ a := by
-        have h_inf : G ≤ (a ⊔ Γ.C) ⊓ l := le_inf hG_le_aC hG_l
-        rwa [show (a ⊔ Γ.C) ⊓ l = a from by
-          rw [sup_comm, inf_comm]; exact inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l ha_on] at h_inf
-      exact hG_ne_a ((ha.le_iff.mp hG_le_a).resolve_left hG_atom.1)
-    -- G ∉ q: (a⊔C)⊓q = C by modular law, G ≠ C
+      have hG_le_b : G ≤ b := by
+        have h_inf : G ≤ (b ⊔ Γ.C) ⊓ l := le_inf hG_le_bC hG_l
+        rwa [show (b ⊔ Γ.C) ⊓ l = b from by
+          rw [sup_comm, inf_comm]; exact inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l hb_on] at h_inf
+      exact hG_ne_b_raw ((hb.le_iff.mp hG_le_b).resolve_left hG_atom.1)
+    -- G ∉ q: (b⊔C)⊓q = C by modular law, G ≠ C
     have hG_not_q : ¬ G ≤ q := by
       intro hG_q
       have hG_le_C : G ≤ Γ.C := by
-        have h_inf : G ≤ (a ⊔ Γ.C) ⊓ q := le_inf hG_le_aC hG_q
+        have h_inf : G ≤ (b ⊔ Γ.C) ⊓ q := le_inf hG_le_bC hG_q
         rw [show q = Γ.C ⊔ Γ.U from sup_comm Γ.U Γ.C] at h_inf
-        rwa [show (a ⊔ Γ.C) ⊓ (Γ.C ⊔ Γ.U) = Γ.C from by
+        rwa [show (b ⊔ Γ.C) ⊓ (Γ.C ⊔ Γ.U) = Γ.C from by
           rw [inf_comm]
-          have ha_not_CU : ¬ a ≤ Γ.C ⊔ Γ.U := by
+          have hb_not_CU : ¬ b ≤ Γ.C ⊔ Γ.U := by
             intro hle
-            have hle' : a ≤ q := hle.trans (sup_comm Γ.C Γ.U).le
-            have : a ≤ l ⊓ q := le_inf ha_on hle'
+            have hle' : b ≤ q := hle.trans (sup_comm Γ.C Γ.U).le
+            have : b ≤ l ⊓ q := le_inf hb_on hle'
             rw [hlq_eq_U] at this
-            exact ha_ne_U ((Γ.hU.le_iff.mp this).resolve_left ha.1)
-          exact inf_sup_of_atom_not_le ha ha_not_CU
+            exact hb_ne_U ((Γ.hU.le_iff.mp this).resolve_left hb.1)
+          exact inf_sup_of_atom_not_le hb hb_not_CU
             (le_sup_left : Γ.C ≤ Γ.C ⊔ Γ.U)] at h_inf
       exact hG_ne_C ((Γ.hC.le_iff.mp hG_le_C).resolve_left hG_atom.1)
     -- G might be on m. Handle with by_cases.
@@ -330,9 +335,9 @@ theorem key_identity (Γ : CoordSystem L)
     · -- G off l, m, q. Proceed.
       -- G' = pc(O, a, G, m): the image of G under τ_a
       set G' := parallelogram_completion Γ.O a G m
-      -- G is in π (G ≤ a⊔C ≤ π)
+      -- G is in π (G ≤ b⊔C ≤ l⊔C = π)
       have hG_le_π : G ≤ π :=
-        hG_le_aC.trans (sup_le (ha_on.trans le_sup_left) Γ.hC_plane)
+        hG_le_bC.trans (sup_le (hb_on.trans le_sup_left) Γ.hC_plane)
       -- G' is an atom
       have hG'_atom : IsAtom G' := by
         exact parallelogram_completion_atom Γ.hO ha hG_atom
@@ -476,10 +481,55 @@ theorem key_identity (Γ : CoordSystem L)
         rw [sup_comm G _, sup_inf_assoc_of_le G (le_sup_left : Γ.U ≤ q),
             hG_inf_q, sup_bot_eq] at this
         exact hCb_not_m ((Γ.hU.le_iff.mp this).resolve_left hCb_atom.1 ▸ le_sup_left)
-      -- C_b not on G ⊔ b: C_b ≤ G⊔b → C_b ≤ (G⊔b)⊓q. b∉q (b on l, b≠U), G∉q.
-      -- (G⊔b)⊓q: use modular. Neither G nor b is in q, so we need another approach.
-      -- G ≤ a⊔C, b on l. If C_b ≤ G⊔b then G, b, C_b collinear → can't span π.
-      have hCb_not_Gb : ¬ C_b ≤ G ⊔ b := by sorry
+      -- C ∉ b⊔E: if C ≤ b⊔E then C⊔E = O⊔C ≤ b⊔E, so O ≤ (b⊔E)⊓l = b, O = b.
+      have hC_not_bE : ¬ Γ.C ≤ b ⊔ Γ.E := by
+        intro hC_le
+        have hCE_eq : Γ.C ⊔ Γ.E = Γ.O ⊔ Γ.C := by
+          have : Γ.E ≤ Γ.O ⊔ Γ.C := Γ.hE_le_OC
+          have hCE_le : Γ.C ⊔ Γ.E ≤ Γ.O ⊔ Γ.C := sup_le le_sup_right this
+          have hCE_cov : Γ.C ⋖ Γ.C ⊔ Γ.E := atom_covBy_join Γ.hC Γ.hE_atom
+            (fun h => Γ.hC_not_m (h ▸ Γ.hE_on_m))
+          have hOC_cov : Γ.C ⋖ Γ.C ⊔ Γ.O := atom_covBy_join Γ.hC Γ.hO
+            (fun h => Γ.hC_not_l (h ▸ le_sup_left))
+          rw [sup_comm] at hOC_cov
+          exact (hOC_cov.eq_or_eq hCE_cov.lt.le hCE_le).resolve_left
+            (ne_of_gt hCE_cov.lt)
+        have hO_le_bE : Γ.O ≤ b ⊔ Γ.E := by
+          have : Γ.O ⊔ Γ.C ≤ b ⊔ Γ.E := hCE_eq ▸ sup_le hC_le le_sup_right
+          exact le_sup_left.trans this
+        have hbE_inf_l : (b ⊔ Γ.E) ⊓ l = b := by
+          rw [sup_comm, inf_comm]
+          exact inf_sup_of_atom_not_le Γ.hE_atom Γ.hE_not_l hb_on
+        have hO_le_b : Γ.O ≤ b := by
+          have : Γ.O ≤ (b ⊔ Γ.E) ⊓ l := le_inf hO_le_bE le_sup_left
+          rwa [hbE_inf_l] at this
+        exact hb_ne_O ((hb.le_iff.mp hO_le_b).resolve_left Γ.hO.1).symm
+      -- C_b not on G ⊔ b: if C_b ≤ G⊔b, then since C_b ≤ b⊔E and C_b ≠ b,
+      -- G⊔b = b⊔E (CovBy). But G ≤ b⊔C, so G ≤ (b⊔C) ⊓ (b⊔E) = b (modular,
+      -- since C ∉ b⊔E). Then G = b, contradicting G ≠ b.
+      have hCb_not_Gb : ¬ C_b ≤ G ⊔ b := by
+        intro hCb_le
+        -- C_b ≤ G ⊔ b and C_b ≤ b ⊔ E, both cover b (C_b ≠ b), so G ⊔ b = b ⊔ E
+        have hCb_le_Gb : b ⊔ C_b ≤ G ⊔ b := sup_le le_sup_right hCb_le
+        have hCb_le_bE' : b ⊔ C_b ≤ b ⊔ Γ.E := h_bCb_eq_bE ▸ le_refl _
+        have hGb_eq_bE : G ⊔ b = b ⊔ Γ.E := by
+          have hcov1 := atom_covBy_join hb hG_atom hG_ne_b_raw.symm
+          rw [sup_comm] at hcov1
+          have hcov2 := atom_covBy_join hb Γ.hE_atom
+            (fun h => Γ.hE_not_l (h ▸ hb_on))
+          have hbCb_cov : b ⋖ b ⊔ C_b := atom_covBy_join hb hCb_atom hb_ne_Cb
+          exact (hcov1.eq_or_eq hbCb_cov.lt.le hCb_le_Gb).resolve_left
+            (ne_of_gt hbCb_cov.lt) |>.symm.trans
+            ((hcov2.eq_or_eq hbCb_cov.lt.le hCb_le_bE').resolve_left
+              (ne_of_gt hbCb_cov.lt))
+        -- G ≤ b ⊔ C and G ≤ G ⊔ b = b ⊔ E, so G ≤ (b⊔C) ⊓ (b⊔E) = b
+        have hG_le_bE : G ≤ b ⊔ Γ.E := hGb_eq_bE ▸ le_sup_left
+        have hG_le_meet : G ≤ (b ⊔ Γ.C) ⊓ (b ⊔ Γ.E) := le_inf hG_le_bC hG_le_bE
+        rw [sup_inf_assoc_of_le Γ.C (le_sup_left : b ≤ b ⊔ Γ.E)] at hG_le_meet
+        have hC_inf_bE : Γ.C ⊓ (b ⊔ Γ.E) = ⊥ :=
+          (Γ.hC.le_iff.mp inf_le_left).resolve_right (fun h => hC_not_bE (h ▸ inf_le_right))
+        rw [hC_inf_bE, sup_bot_eq] at hG_le_meet
+        exact hG_ne_b_raw ((hb.le_iff.mp hG_le_meet).resolve_left hG_atom.1)
 
       -- G' ≠ pc(G,G',b,m): if equal, G' ≤ b ⊔ (G⊔G')⊓m.
       -- Intersect with G⊔G': modular + b∉G⊔G' gives G' ≤ m. Contradiction.
@@ -511,7 +561,71 @@ theorem key_identity (Γ : CoordSystem L)
                          parallelogram_completion G G' C_b m := by sorry
 
       -- Spanning: G ⊔ b ⊔ C_b = π
-      have h_span : G ⊔ b ⊔ C_b = π := by sorry
+      -- G ≤ b⊔C, so G⊔b⊔C_b ≥ b⊔C. And C_b ≤ q = U⊔C, C_b ≠ C, so C⊔C_b = q.
+      -- Then G⊔b⊔C_b ≥ b⊔C⊔C_b ≥ C⊔C_b = q ≥ U. Also ≥ b. So ≥ b⊔U = l.
+      -- Then ≥ l⊔C = π (C ∉ l).
+      have h_span : G ⊔ b ⊔ C_b = π := by
+        apply le_antisymm
+        · exact sup_le (sup_le hG_le_π (hb_on.trans le_sup_left)) hCb_le_π
+        · -- Show π ≤ G ⊔ b ⊔ C_b
+          -- C ≤ G ⊔ b ⊔ C_b: G ≤ b⊔C and G ≠ b ⇒ G⊔b = b⊔C ⇒ C ≤ G⊔b
+          have hGb_eq_bC : G ⊔ b = b ⊔ Γ.C := by
+            have hGb_le : G ⊔ b ≤ b ⊔ Γ.C := sup_le hG_le_bC le_sup_left
+            have hcov1 : b ⋖ b ⊔ G := atom_covBy_join hb hG_atom hG_ne_b_raw.symm
+            have hcov2 : b ⋖ b ⊔ Γ.C := atom_covBy_join hb Γ.hC hb_ne_C
+            rw [sup_comm] at hcov1
+            exact (hcov2.eq_or_eq hcov1.lt.le hGb_le).resolve_left (ne_of_gt hcov1.lt)
+          have hC_le : Γ.C ≤ G ⊔ b ⊔ C_b :=
+            (le_sup_right.trans hGb_eq_bC.symm.le).trans le_sup_left
+          -- C ⊔ C_b = q (both atoms on q, C ≠ C_b)
+          have hC_ne_Cb : Γ.C ≠ C_b := by
+            intro h; exact hC_not_bE (h ▸ hCb_le_bE)
+          have hCCb_eq_q : Γ.C ⊔ C_b = q := by
+            have hCCb_le : Γ.C ⊔ C_b ≤ q := sup_le (le_sup_right : Γ.C ≤ Γ.U ⊔ Γ.C) hCb_le_q
+            have hcov1 : Γ.C ⋖ Γ.C ⊔ C_b := atom_covBy_join Γ.hC hCb_atom hC_ne_Cb
+            have hcov2 : Γ.C ⋖ q := by
+              show Γ.C ⋖ Γ.U ⊔ Γ.C; rw [sup_comm]
+              exact atom_covBy_join Γ.hC Γ.hU
+                (fun h => Γ.hC_not_l (h ▸ le_sup_right))
+            exact (hcov2.eq_or_eq hcov1.lt.le hCCb_le).resolve_left (ne_of_gt hcov1.lt)
+          -- U ≤ G ⊔ b ⊔ C_b (since U ≤ q = C ⊔ C_b ≤ G ⊔ b ⊔ C_b)
+          have hU_le : Γ.U ≤ G ⊔ b ⊔ C_b := by
+            have : Γ.U ≤ q := le_sup_left
+            exact this.trans (hCCb_eq_q ▸ sup_le hC_le le_sup_right)
+          -- l = b ⊔ U ≤ G ⊔ b ⊔ C_b
+          have hl_le : l ≤ G ⊔ b ⊔ C_b := by
+            have hb_le : b ≤ G ⊔ b ⊔ C_b := le_sup_right.trans le_sup_left
+            have hbU : b ⊔ Γ.U ≤ G ⊔ b ⊔ C_b := sup_le hb_le hU_le
+            have hbU_eq_l : b ⊔ Γ.U = l := by
+              have hcov1 : Γ.U ⋖ Γ.U ⊔ b := atom_covBy_join Γ.hU hb hb_ne_U.symm
+              have hcov2 : Γ.U ⋖ l := by
+                show Γ.U ⋖ Γ.O ⊔ Γ.U; rw [sup_comm]
+                exact atom_covBy_join Γ.hU Γ.hO Γ.hOU.symm
+              have hbU_le : Γ.U ⊔ b ≤ l := sup_le le_sup_right hb_on
+              exact (sup_comm Γ.U b).symm.trans
+                ((hcov2.eq_or_eq hcov1.lt.le hbU_le).resolve_left (ne_of_gt hcov1.lt))
+            rwa [hbU_eq_l] at hbU
+          -- π = l ⊔ C ≤ G ⊔ b ⊔ C_b (C ∉ l)
+          have hlC_eq_π : l ⊔ Γ.C = π := by
+            have hlC_le : l ⊔ Γ.C ≤ π := sup_le le_sup_left Γ.hC_plane
+            have hl_cov : l ⋖ π := by
+              have hV_inf_l : Γ.V ⊓ l = ⊥ := by
+                exact (Γ.hV.le_iff.mp inf_le_left).resolve_right
+                  (fun h => Γ.hV_off (h ▸ inf_le_right))
+              show l ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V
+              rw [show Γ.O ⊔ Γ.U ⊔ Γ.V = l ⊔ Γ.V from rfl]
+              rw [sup_comm l Γ.V]
+              exact covBy_sup_of_inf_covBy_left (hV_inf_l ▸ Γ.hV.bot_covBy)
+            have hlC_gt : l < l ⊔ Γ.C := by
+              apply lt_of_le_of_ne le_sup_left
+              intro h
+              have hC_le_l : Γ.C ≤ l := by
+                have : l ⊔ Γ.C ≤ l := h.symm.le
+                exact le_sup_right.trans this
+              exact Γ.hC_not_l hC_le_l
+            exact (hl_cov.eq_or_eq hlC_gt.le hlC_le).resolve_left (ne_of_gt hlC_gt)
+          rw [← hlC_eq_π]
+          exact sup_le hl_le hC_le
 
       -- Well-definedness 1: pc(G, G', b, m) = pc(C, C_a, b, m) = s
       -- where C_a = pc(O, a, C, m) and s = coord_add a b = pc(C, C_a, b, m)
