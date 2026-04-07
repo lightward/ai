@@ -23,6 +23,26 @@ jobs:
             echo "Building $mod..."
             lake build "$mod" || exit 1
           done
+      - name: No warnings (sorry excluded)
+        working-directory: lean
+        run: |
+          warns=0
+          for f in Foam/*.lean; do
+            mod="Foam.$(basename "$f" .lean)"
+            touch "$f"
+            # Collect warnings that aren't sorry declarations
+            non_sorry=$(lake build "$mod" 2>&1 | grep "warning:" | grep -v "declaration uses .sorry." || true)
+            if [ -n "$non_sorry" ]; then
+              echo "$non_sorry"
+              warns=$((warns + 1))
+            fi
+          done
+          if [ $warns -gt 0 ]; then
+            echo ""
+            echo "Non-sorry warnings found. Fix before merging."
+            exit 1
+          fi
+          echo "Clean: only sorry warnings (expected)"
 
   python:
     name: Python observations
