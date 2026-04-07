@@ -345,10 +345,10 @@ theorem coord_add_atom (Γ : CoordSystem L)
     have ha'_le_U : a' ≤ Γ.U := by
       have : a' ≤ q := by rw [h_eq]; exact inf_le_right
       rw [← hqm_eq_U]; exact le_inf this inf_le_right
+    have ha'_eq_U := (Γ.hU.le_iff.mp ha'_le_U).resolve_left ha'_atom.1
+    have hU_le_aC : Γ.U ≤ a ⊔ Γ.C := ha'_eq_U ▸ (inf_le_left : a' ≤ a ⊔ Γ.C)
     have hU_le_a : Γ.U ≤ a :=
-      calc Γ.U ≤ l ⊓ (Γ.C ⊔ a) :=
-        le_inf le_sup_right (((Γ.hU.le_iff.mp ha'_le_U).resolve_left ha'_atom.1 ▸
-          (inf_le_left : a' ≤ a ⊔ Γ.C)).trans (sup_comm a Γ.C).le)
+      calc Γ.U ≤ l ⊓ (Γ.C ⊔ a) := le_inf le_sup_right (hU_le_aC.trans (sup_comm a Γ.C).le)
         _ = a := inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l ha_on
     exact ha_ne_U ((ha.le_iff.mp hU_le_a).resolve_left Γ.hU.1).symm
   -- D_b ∉ l
