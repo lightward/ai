@@ -1414,7 +1414,69 @@ theorem key_identity (Γ : CoordSystem L)
 
   -- ═══ Step 3: Cross-parallelism gives (s ⊔ τ_a(C_b)) ⊓ m = E ═══
   have h_cross : (s ⊔ τ_a_C_b) ⊓ m = Γ.E := by
-    sorry -- THE KEY SORRY: cross-parallelism application via general-position G
+    -- Construct G off l, m, q via h_irred
+    have ha_ne_C : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
+    obtain ⟨G, hG_atom, hG_le_aC, hG_ne_a, hG_ne_C⟩ := h_irred a Γ.C ha Γ.hC ha_ne_C
+    -- G ∉ l: (a⊔C)⊓l = a by modular law, G ≠ a
+    have hG_not_l : ¬ G ≤ l := by
+      intro hG_l
+      have hG_le_a : G ≤ a := by
+        have h_inf : G ≤ (a ⊔ Γ.C) ⊓ l := le_inf hG_le_aC hG_l
+        rwa [show (a ⊔ Γ.C) ⊓ l = a from
+          inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l ha_on] at h_inf
+      exact hG_ne_a ((hG_atom.le_iff.mp hG_le_a).resolve_left ha.1)
+    -- G ∉ q: (a⊔C)⊓q = C by modular law, G ≠ C
+    have hG_not_q : ¬ G ≤ q := by
+      intro hG_q
+      have hG_le_C : G ≤ Γ.C := by
+        have h_inf : G ≤ (a ⊔ Γ.C) ⊓ q := le_inf hG_le_aC hG_q
+        rw [show q = Γ.C ⊔ Γ.U from sup_comm Γ.U Γ.C] at h_inf
+        rwa [show (a ⊔ Γ.C) ⊓ (Γ.C ⊔ Γ.U) = Γ.C from
+          inf_sup_of_atom_not_le ha (fun h => Γ.hC_not_l (h ▸ le_sup_left))
+            (le_sup_right : Γ.C ≤ a ⊔ Γ.C)] at h_inf
+      exact hG_ne_C ((hG_atom.le_iff.mp hG_le_C).resolve_left Γ.hC.1)
+    -- G might be on m. Handle with by_cases.
+    by_cases hG_not_m : ¬ G ≤ m
+    · -- G off l, m, q. Proceed.
+      -- G' = pc(O, a, G, m): the image of G under τ_a
+      set G' := parallelogram_completion Γ.O a G m
+      -- G is in π (G ≤ a⊔C ≤ π)
+      have hG_le_π : G ≤ π :=
+        hG_le_aC.trans (sup_le (ha_on.trans le_sup_left) Γ.hC_plane)
+      -- G' is an atom
+      have hG'_atom : IsAtom G' := by
+        exact parallelogram_completion_atom Γ.hO ha hG_atom
+          (fun h => ha_ne_O h.symm)
+          (fun h => hG_not_l (h ▸ le_sup_left))
+          (fun h => hG_not_l (h ▸ ha_on))
+          (le_sup_left.trans le_sup_left) (ha_on.trans le_sup_left) hG_le_π
+          (le_sup_right.trans le_sup_left) hm_cov hm_line
+          Γ.hO_not_m ha_not_m hG_not_m
+          (fun h => hG_not_l (h.trans (hOa_eq_l ▸ le_refl l)))
+      -- Well-definedness 1: pc(G, G', b, m) = pc(C, C_a, b, m) = s
+      -- where C_a = pc(O, a, C, m) and s = coord_add a b = pc(C, C_a, b, m)
+      have hwd1 : parallelogram_completion G G' b m = s := by
+        sorry -- well-definedness rebase from (O, a) to (G, G') then to (C, C_a)
+      -- Well-definedness 2: pc(G, G', C_b, m) = pc(O, a, C_b, m) = τ_a_C_b
+      have hwd2 : parallelogram_completion G G' C_b m = τ_a_C_b := by
+        sorry -- well-definedness rebase from (O, a) to (G, G')
+      -- Apply cross_parallelism: (b⊔C_b)⊓m = (pc(G,G',b,m)⊔pc(G,G',C_b,m))⊓m
+      have hcp := cross_parallelism hG_atom hG'_atom hb hCb_atom
+        sorry sorry sorry sorry -- P₀P₀' P₀P P₀Q PQ distinctness
+        sorry sorry sorry -- P₀'≠P' P₀'≠Q' P'≠Q'
+        hG_le_π sorry hb_on.trans le_sup_left (hCb_le_q.trans sorry) -- in π
+        (le_sup_right.trans le_sup_left) hm_cov hm_line -- m facts
+        hG_not_m sorry hb_not_m hCb_not_m -- off m
+        sorry sorry sorry -- non-collinearity
+        sorry -- spanning
+        R hR hR_not h_irred -- height/irred
+      -- Rewrite: (b⊔C_b)⊓m = (s⊔τ_a_C_b)⊓m
+      rw [hwd1, hwd2] at hcp
+      -- And (b⊔C_b)⊓m = E
+      exact hcp.symm.trans h_bCb_dir
+    · -- G IS on m. Need another atom. Use b and C.
+      push_neg at hG_not_m
+      sorry -- case: G on m. Use h_irred on b⊔C to find G₂ off m.
 
   -- ═══ Step 4: Conclude τ_a(C_b) = C_s ═══
   -- s = coord_add a b is an atom on l
