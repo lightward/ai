@@ -481,10 +481,32 @@ theorem key_identity (Γ : CoordSystem L)
       -- G ≤ a⊔C, b on l. If C_b ≤ G⊔b then G, b, C_b collinear → can't span π.
       have hCb_not_Gb : ¬ C_b ≤ G ⊔ b := by sorry
 
-      -- G' ≠ pc(G, G', b, m): follows from G' not on b⊔G' direction... actually
-      -- this is just G' ≠ parallelogram_completion result, i.e., G' ≠ "image of b"
-      have hG'_ne_b' : G' ≠ parallelogram_completion G G' b m := by sorry
-      have hG'_ne_Cb' : G' ≠ parallelogram_completion G G' C_b m := by sorry
+      -- G' ≠ pc(G,G',b,m): if equal, G' ≤ b ⊔ (G⊔G')⊓m.
+      -- Intersect with G⊔G': modular + b∉G⊔G' gives G' ≤ m. Contradiction.
+      have hG'_ne_b' : G' ≠ parallelogram_completion G G' b m := by
+        intro h_eq
+        have hle : G' ≤ b ⊔ (G ⊔ G') ⊓ m :=
+          h_eq.le.trans (by unfold parallelogram_completion; exact inf_le_left)
+        have h1 : G' ≤ (b ⊔ (G ⊔ G') ⊓ m) ⊓ (G ⊔ G') := le_inf hle le_sup_right
+        rw [sup_comm b _, sup_inf_assoc_of_le b
+          (inf_le_left : (G ⊔ G') ⊓ m ≤ G ⊔ G')] at h1
+        have hb_inf : b ⊓ (G ⊔ G') = ⊥ :=
+          (hb.le_iff.mp inf_le_left).resolve_right (fun h => hb_not_GG' (h ▸ inf_le_right))
+        rw [hb_inf, sup_bot_eq] at h1
+        exact hG'_not_m (h1.trans inf_le_right)
+      -- G' ≠ pc(G,G',C_b,m): same pattern with C_b∉G⊔G'.
+      have hG'_ne_Cb' : G' ≠ parallelogram_completion G G' C_b m := by
+        intro h_eq
+        have hle : G' ≤ C_b ⊔ (G ⊔ G') ⊓ m :=
+          h_eq.le.trans (by unfold parallelogram_completion; exact inf_le_left)
+        have h1 : G' ≤ (C_b ⊔ (G ⊔ G') ⊓ m) ⊓ (G ⊔ G') := le_inf hle le_sup_right
+        rw [sup_comm C_b _, sup_inf_assoc_of_le C_b
+          (inf_le_left : (G ⊔ G') ⊓ m ≤ G ⊔ G')] at h1
+        have hCb_inf : C_b ⊓ (G ⊔ G') = ⊥ :=
+          (hCb_atom.le_iff.mp inf_le_left).resolve_right
+            (fun h => hCb_not_GG' (h ▸ inf_le_right))
+        rw [hCb_inf, sup_bot_eq] at h1
+        exact hG'_not_m (h1.trans inf_le_right)
       have hb'_ne_Cb' : parallelogram_completion G G' b m ≠
                          parallelogram_completion G G' C_b m := by sorry
 
