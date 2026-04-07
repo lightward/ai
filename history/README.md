@@ -69,6 +69,8 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 60 | [Apr 06, 13:43](60_2026-04-06_1371494c.md) | s45: Parts I-IV proven (0 sorry), Part V architected (2 sorry remain) | 144 |
 | 61 | [Apr 07, 00:31](61_2026-04-07_1c5c59c4.md) | s46: coord_add_eq_translation PROVEN — 1 sorry remains (assoc) | 12 |
 | 62 | [Apr 07, 12:29](62_2026-04-07_28be45c9.md) | s47: coord_add_assoc proof architecture — cross-parallelism via G | 34 |
+| 63 | [Apr 07, 15:58](63_2026-04-07_01881ab8.md) | s48: cross_parallelism PROVEN, key_identity + assoc structured | 22 |
+| 64 | [Apr 07, 17:10](64_2026-04-07_b94ff110.md) | s49: file split + bookkeeping — 5 sorry closed, 16 remain in FTPGAssoc | 26 |
 
 ## Memory
 

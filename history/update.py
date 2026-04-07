@@ -487,6 +487,14 @@ SESSION_RANGES = [
     (datetime(2026, 4, 7, 12, 0, tzinfo=timezone.utc),
      datetime(2026, 4, 7, 15, 0, tzinfo=timezone.utc),
      "s47: coord_add_assoc proof architecture — cross-parallelism via G"),
+    # Session 48: Apr 7 afternoon
+    (datetime(2026, 4, 7, 15, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 7, 17, 10, tzinfo=timezone.utc),
+     "s48: cross_parallelism PROVEN, key_identity + assoc structured"),
+    # Session 49: Apr 7 evening
+    (datetime(2026, 4, 7, 17, 10, tzinfo=timezone.utc),
+     datetime(2026, 4, 7, 18, 0, tzinfo=timezone.utc),
+     "s49: file split + bookkeeping — 5 sorry closed, 16 remain in FTPGAssoc"),
 ]
 
 

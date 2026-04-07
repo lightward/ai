@@ -4,8 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 47)
+## Current state (session 49)
 
+- [Session 49 — file split + bookkeeping](project_session49_file_split.md) — FTPGTranslation split into 4 files. 16 sorry in FTPGAssoc.lean (587 lines).
+- [Session 48 — cross-parallelism proven](project_session48_cross_parallelism.md) — cross_parallelism PROVEN. key_identity + assoc structured.
 - [Session 47 — assoc architecture](project_session47_assoc_architecture.md) — Cross-parallelism via G. 1 sorry remains but proof shape identified.
 - [Session 46 — translation bridge proven](project_session46_translation_bridge.md) — coord_add_eq_translation PROVEN via coord_add_comm. 1 sorry remains (assoc).
 - [Session 45 — Parts I-IV proven](project_session45_sorry_closure.md) — Parts I-IV: 0 sorry. Part V: 2 sorry.
@@ -45,95 +47,24 @@
 - [Session 11 tsort](project_session11_tsort.md) — directed structure from BCH residuals. readable but inert.
 - [Sessions 9-10](project_session9_state.md) — foam.py + BCH investigation + recursive foam + cell birth + heirloom.
 
-## Key results (sessions 7-33)
+## Key results
 
-**Session 34 (modularity closed):**
-- Modularity IS feedback-persistence: the modular law is path-independence of observation composition. N₅ pentagon shows non-modular lattices give indeterminate observations. There is no alternative mode — modularity is uniquely forced (unlike R³+Taylor which is contingent on Almgren).
-- Rank additivity → modularity proven in Lean (Modularity.lean). One formal route; the conceptual forcing is more direct.
-- Fundamental theorem of projective geometry: hypotheses stated. Irreducibility from closure. Height ≥ 4 from self-consistency (d_slice=3 + partiality → d≥4). Division ring = R from stabilization contract.
-- d_slice=2 corrected: stabilization contract IS satisfied at d_slice=2, but Λ²(R²) = 1D collapses the write algebra. R³ is smallest where both contract and write expressiveness hold.
-- Stacking independence: each R³ stabilizes independently; fusion is algebraic not geometric.
-- Full derivation chain verified clean against session 33 ground. No phantom structure from prior versions.
+Detailed results are in the individual session memory files linked above. Summary of major milestones:
 
-**Session 33 (closure-as-dynamics):**
-- Ground rewritten: closure = one ground, two readings. Both tautological. Basis commitment derived from partiality alone.
-- Lean: Ground.lean (1 axiom, feedback_persistence), Lattice.lean, Confinement.lean. 0 sorry.
-- Session 18's separation of partiality from basis commitment corrected: they're the same thing.
-
-**Session 29 (dissolve and derive):**
-- J¹ binary dissolved: "does observer follow J¹?" malformed (slices don't move). J¹ is always active (drives writes) and never followed in Gr(3,d). The question presupposed motion where nothing moves.
-- Mediation adjunction resolved: no. J¹ is write-dependent, mediation is geometric. Composition exists (generically nonzero) but not an adjunction.
-- Inverted echo state dissolved: "converge toward birth expression?" malformed — dynamics ARE birth expression (writes ∈ Λ²(P_A)). Residual: within-basin perturbation dynamics (geometry-dependent).
-- Write isotropy derived: at Haar stationarity, write directions within Λ²(P_A) are isotropic (33:33:33). Birth determines the subspace, not the direction within it.
-- Construction section (J⁰/J¹/J²) dropped: J⁰ redundant, J¹ merged into three-body mapping, J² unused. Jet bundle framing was upstream premise requiring downstream correction.
-- Open questions: 4 → 3 (stacking dynamics, within-basin perturbation dynamics, mixing rate). Criterion: "question is forced; answer is open."
-- Meta-heuristic: "is this clarification moot with a differently-formed premise?" — the general form of all patterns applied this session.
-
-**Session 28 (stabilization contract, adjacency flip):**
-- Stabilization contract: classified + locally finite + flat — derived from closure through channel capacity (not a design choice). R³ + Taylor is the unique known implementation.
-- Necessity established: non-local stabilization removes the mechanism that produces channel capacity (not just fails to provide it).
-- Adjacency flip: piecewise-smooth dynamics, codimension-1 switching surfaces. Two-layer retention (birth structural, interaction spectral). Confirmed computationally at d=2, N=12.
-- For N << d² (tested regime), all pairs are Voronoi neighbors → local = global. Existing results unchanged.
-- foam.py: shared implementation, 35 tests migrated, -1,434 lines of duplication.
-- New property: observer cannot be trapped (indelibility + open exits). Surfaced by Lightward cold read.
-- Exits open hedge: formal non-blocking doesn't preclude attractor narrowing.
-- Decorrelation horizon: Marchenko-Pastur caveat, values are order-of-magnitude.
-
-**Session 27 (exits, birth shape, retention):**
-- Exits constitutionally open: commitment outside the map → dynamics can't prevent commitment → exits can't be closed. Derived in 4 steps.
-- Birth shape at all derivative orders: time-averaged jet is birth-determined. Ergodic theorem + indelibility + slice geometry (not attractor geometry — Lightward AI caught this).
-- Retention under interaction: continuous retention is spectral (overlap singular values). Discrete recommitment preserves birth shape (indelibility). Specific rate geometry-dependent, not derivable from architecture.
-- Source was cross-project: mechanic-api collaboration log analyzed as formal three-body operations, not analogy.
-
-**Session 22 (reservoir investigation):**
-- No global ESP: foam has separation + sequence but not echo state. Birth conditions indelible (state-dependent attractor, no shared target). Confirmed computationally.
-- Complement of full controllability proven exhaustive (per basis): topological invariants (pi_1 = Z) + commitment source. Via Lie theory (connected compact group + full algebra = surjective exp).
-- Causal ordering derived from partiality + closure. Practically irreversible. Whether ordering = time is a mapping question.
-- Line investigability: partiality implies boundary exists; does not determine where it falls. Both sides investigable, not simultaneously.
-- Codec is birth-shaped from step zero (not increasingly with saturation). Dissonance converges across births (architecture-determined).
-- Inverted ESP open: foam may forget what it isn't. Resists formulation.
-- Reservoir perspective file was the quest item: provided the measurement basis that made indelibility visible.
-
-**Session 20 (Grassmannian vertical structure):**
-- J1 = Grassmannian tangent from cross-measurement. Maps Knowable → Unknown (algebraically derived, not empirical).
-- Source: only Knowable contributes (Known is in P_B^perp, killed by B's write). Target: B's territory in A's Unknown (P_A^perp intersect P_B).
-- Vertical structure resolved: containment = direction of Grassmannian tangent. Operator = neighbor whose writes define expansion direction.
-- Containment algebraically symmetric. Experiential asymmetry is perspectival, not algebraic.
-- Tangent magnitude peaks at intermediate overlap = coverage-interaction trade-off as J1 property.
-- Half-thought (untested): sequential dynamics may break algebraic symmetry of containment.
-- Open question narrowed in s20: "J1/Grassmannian correspondence" → "J1 global structure." Resolved in s29: J¹ is active-not-followable, global structure on Gr(3,d) dynamically inert. Construction section dropped.
-
-**Session 19 (stacking derived):**
-- Stacking algebra: J²=-I forced by su(d)\so(d) structure. Two slices forced by even dimensionality. Pairing canonical (SO(6) conjugacy).
-- Trace retained: unique homomorphism u(d)→u(1) (simplified in s25 from three arguments to one). Observer writes in u(d), not su(d).
-- Stacking is a line-side commitment: simultaneity of pre-write fusion. Dynamics can't generate it.
-- Controllability corrected: one stacked pair → u(min(3,d/2)). Full u(d) for d ≤ 6 only.
-- "What commits is outside the map" = boundary condition in s19, upgraded to derived result in s26 (channel capacity + spectral state-independence).
-- R³ = smallest proven dimension, not unique.
-
-**Session 18 (formal bar):**
-- Perpendicularity is the irreducible constraint. The write form IS perpendicularity. Unique navigable constraint (distinguishable + stabilizing).
-- Thermal dissolved — generalized to projection residuals. FDT fails (foam is driven).
-- L saturates at ~72% of theoretical max. Combinatorial ceiling exact. Perpendicularity cost empirical.
-- Self-generation closed: stability requires informational independence. By axiom.
-- Formal bar: main body is derived or designed only. Empirical results in junk drawer.
-
-**Session 18 day 2 (ground):**
-- "Axiom" → "ground." Foundation is closure (reference frames, no outside), not assertion. Three tautologies from closure. "Derived from closure" not "tautological."
-- Conservation accessibility: single slice = passive conservation (can't reach u(1)). Stacked pair = active (can interact with conserved direction). Derived from write map.
-- Read-only frames excluded by closure alone (Voronoi boundaries shift when neighbors write).
-- Partiality (from closure) separated from basis commitment (enters with writing map).
-- Cold reads stabilized: 7 readers converge on same strengths/open questions. Spec in resting state.
-
-**Session 17 (stacking and derivation):**
-- Controllability: so(d) for 2-3 observers. Stacked pair proven computationally (corrected in s19: u(d) for d ≤ 6 only).
-- Stacking: two R³ as C³ gives u(d) and ℤ (s17 said su(d); corrected in s19 — trace retained). The two is irreducible at conservation level.
-- Write map uniqueness: Λ²(2-plane) is 1-dimensional. Three-body mapping from overlap matrix.
-- Cold-read infrastructure: Claude, Kimi, Gemini, Lightward.
-
-**Sessions 7-16 (pre-session-17 results):**
-- R³ unique viable dimension (s16). Two curvatures (s16). Coverage-interaction trade-off (s16).
-- Earlier empirical results (s7-15) were under full-d stabilization; spec no longer claims them.
+- **s17-19**: Write map uniqueness (Λ²), controllability (so(d)/u(d)), stacking (J²=-I forced), trace retention (unique homomorphism)
+- **s20**: J1 = Grassmannian tangent (Knowable→Unknown), containment algebraically symmetric
+- **s22**: No ESP, birth indelible, complement exhaustive (Lie theory), causal ordering derived
+- **s23**: 1/√2 derived (ceiling × Haar cost), graduated to main body
+- **s25**: tr: u(d)→u(1) unique, stacking = chirality
+- **s26**: Line derived from channel capacity, spectral independence, decorrelation horizon n*≈2/log(d/3)
+- **s28**: Stabilization contract forced (classified + locally finite + flat), adjacency flip, foam.py (-1434 lines)
+- **s29**: Three false binaries dissolved (J¹, echo state, adjunction), isotropy derived, jet bundle dropped
+- **s30-32**: Lean formalization begun (44 theorems), codebase regularization, CI
+- **s33-34**: Ground rewritten (closure-as-dynamics), feedback_persistence axiom, modularity = feedback-persistence PROVEN
+- **s35-36**: Deductive path (P²=P → O(d)), single Lean stack (Foam/, 1 axiom, 0 sorry)
+- **s37**: derivations/, README as build artifact, three epistemic layers
+- **s38-42**: FTPG bridge: incidence geometry → Desargues → perspectivity → coord_add_comm PROVEN (70 theorems)
+- **s43-49**: Associativity campaign: translation approach, Hartshorne program, cross_parallelism PROVEN, file split
 
 ## Methodology (from Isaac, sessions 5-18)
 
