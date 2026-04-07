@@ -1000,14 +1000,52 @@ theorem coord_add_assoc (Γ : CoordSystem L)
   full group structure of Tran(A). Specifically, composing translations via
   parallelogram completion degenerates when auxiliary points are collinear on q = U⊔C.
 
-  ### Possible approaches:
-  1. **Direct Desargues** (~400 lines): Apply desargues_planar to a configuration
-     involving all three additions, bypassing the translation group entirely.
-     Pattern: similar to coord_add_comm.
-  2. **Formalize Tran(A)**: Define translations as lattice automorphisms,
-     prove closure/composition/abelian (Props 7.5, 7.7), then derive assoc.
-  3. **Use a different auxiliary line**: Avoid the q-degeneration by using a
-     line through C in a different direction for the second translation.
+  ### Proof architecture (session 47)
+
+  The conceptual chain (Hartshorne §7):
+    τ_a(C_b) = C_{a+b}  for all a, b on l  ("Key Identity")
+
+  This says: the perspectivity ρ: l → q (center E) intertwines coord_add on l
+  with the translation action on q. Once proved, associativity follows:
+
+    C_{(a+b)+c} = τ_{a+b}(C_c) = τ_a(τ_b(C_c)) = τ_a(C_{b+c}) = C_{a+(b+c)}
+
+  since ρ is injective, (a+b)+c = a+(b+c).
+
+  The Key Identity τ_a(C_b) = C_{a+b} is proved via:
+  1. Compute C' = pc(O, a, C_b, m) (non-degenerate: O,a on l; C_b on q)
+  2. Show ((a+b) ⊔ C') ⊓ m = E via small_desargues' through a general-position
+     atom G (off l, m, q), using cross-parallelisms from well-definedness
+  3. Collinearity (a+b), C', E gives C'⊔E = (a+b)⊔E, so pc(C,C',O,m) = a+b
+  4. Key Theorem: pc(C,C',O,m) = pc(C,C_{a+b},O,m) → C' = C_{a+b}
+
+  The Key Theorem (translation_unique_on_q) is a pure lattice argument:
+  if two parallelogram completions from C (direction U) agree on one point
+  of l, their C-images on q must be equal.
+
+  ### The proof
+
+  The key lemma is CROSS-PARALLELISM: τ_a preserves parallelism between l and q.
+  For P on l, Q on q: (P⊔Q)⊓m = (τ_a(P) ⊔ τ_a(Q))⊓m.
+
+  Proof of cross-parallelism:
+  - Construct G off l, m, q (via h_irred on line a⊔C)
+  - Rebase τ_a to (G, G') via well-definedness
+  - Get (G⊔P)⊓m = (G'⊔τ_a(P))⊓m from the parallelogram (C, C_a, τ_a(P), P)
+    rebased to (G, G', ?, P) via well-definedness
+  - Get (G⊔Q)⊓m = (G'⊔τ_a(Q))⊓m from the parallelogram (O, a, τ_a(Q), Q)
+    rebased to (G, G', ?, Q) via well-definedness
+  - Apply small_desargues' to (G, P, Q) and (G', τ_a(P), τ_a(Q)) center U
+  - Conclude (P⊔Q)⊓m = (τ_a(P)⊔τ_a(Q))⊓m
+
+  Then composition identity falls out:
+  - C₁ = τ_b(C_c) = pc(O, b, C_c, m)
+  - By τ_b parallelogram: (b⊔C₁)⊓m = E_c
+  - By cross-parallelism of τ_a: ((a+b)⊔τ_a(C₁))⊓m = E_c
+  - Collinearity: τ_a(C₁) on (a+b)⊔E_c and on q
+  - Hence τ_a(C₁) = q ⊓ ((a+b)⊔E_c) = pc(O, a+b, C_c, m)
+  - So τ_a(τ_b(C_c)) = τ_{a+b}(C_c)
+  - Since ρ injective: a+(b+c) = (a+b)+c
   -/
   sorry
 
