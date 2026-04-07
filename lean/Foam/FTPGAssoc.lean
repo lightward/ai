@@ -8,10 +8,16 @@ then associativity follows from the translation group structure.
 - `key_identity`: τ_a(C_b) = C_{a+b}
 - `coord_add_assoc`: (a + b) + c = a + (b + c)
 
-## Status (session 52)
+## Status (session 54)
 
-5 sorry remain: 4 in key_identity (pc-distinctness, well-definedness ×2,
-G-on-m fallback), 1 in coord_add_assoc.
+4 sorry remain: 3 in key_identity (well-definedness ×2, G-on-m fallback),
+1 in coord_add_assoc.
+
+Session 54: pc-distinctness (hb'_ne_Cb') closed via translation injectivity
+argument — push common point onto m via first factors, distinguish via
+second factors through modular_intersection + hCb_not_Gb. line_direction
+is the right tool for modular collapse (not rw with sup_inf_assoc_of_le,
+which breaks on set definitions).
 
 Session 52: G construction changed from h_irred(a,C) to h_irred(b,C).
 (b⊔C) ⊓ (b⊔E) = b ensures C_b ∉ G⊔b (was unfillable with old choice).
@@ -558,7 +564,100 @@ theorem key_identity (Γ : CoordSystem L)
         rw [hCb_inf, sup_bot_eq] at h1
         exact hG'_not_m (h1.trans inf_le_right)
       have hb'_ne_Cb' : parallelogram_completion G G' b m ≠
-                         parallelogram_completion G G' C_b m := by sorry
+                         parallelogram_completion G G' C_b m := by
+        intro h_eq
+        -- d = (G⊔G')⊓m = U
+        have hG_ne_U : G ≠ Γ.U := fun h => hG_not_m (h ▸ le_sup_left)
+        have hGG'_eq_GU : G ⊔ G' = G ⊔ Γ.U :=
+          ((atom_covBy_join hG_atom Γ.hU hG_ne_U).eq_or_eq
+            (atom_covBy_join hG_atom hG'_atom hGG').lt.le hGG'_le_GU).resolve_left
+            (ne_of_gt (atom_covBy_join hG_atom hG'_atom hGG').lt)
+        have hG_inf_m : G ⊓ m = ⊥ :=
+          (hG_atom.le_iff.mp inf_le_left).resolve_right
+            (fun h => hG_not_m (h ▸ inf_le_right))
+        have hd_eq_U : (G ⊔ G') ⊓ m = Γ.U := by
+          rw [hGG'_eq_GU, sup_comm, sup_inf_assoc_of_le G (le_sup_left : Γ.U ≤ m),
+              hG_inf_m, sup_bot_eq]
+        -- C_b not on l
+        have hCb_not_l : ¬ C_b ≤ l := by
+          intro h
+          have : C_b ≤ l ⊓ q := le_inf h hCb_le_q
+          rw [hlq_eq_U] at this
+          exact hCb_not_m ((Γ.hU.le_iff.mp this).resolve_left hCb_atom.1 ▸ le_sup_left)
+        -- b' ≤ b ⊔ U (first factor of pc(G,G',b,m))
+        have hb'_le_bU : parallelogram_completion G G' b m ≤ b ⊔ Γ.U := by
+          have h := show parallelogram_completion G G' b m ≤ b ⊔ (G ⊔ G') ⊓ m from by
+            unfold parallelogram_completion; exact inf_le_left
+          rwa [hd_eq_U] at h
+        -- b' ≤ C_b ⊔ U (first factor of pc(G,G',C_b,m), via h_eq)
+        have hb'_le_CbU : parallelogram_completion G G' b m ≤ C_b ⊔ Γ.U := by
+          have h := show parallelogram_completion G G' C_b m ≤ C_b ⊔ (G ⊔ G') ⊓ m from by
+            unfold parallelogram_completion; exact inf_le_left
+          rw [hd_eq_U] at h; exact h_eq.le.trans h
+        -- b ⊔ U = l
+        have hbU_eq_l : b ⊔ Γ.U = l := by
+          show b ⊔ Γ.U = Γ.O ⊔ Γ.U
+          rw [sup_comm b, sup_comm Γ.O]
+          exact ((atom_covBy_join Γ.hU Γ.hO Γ.hOU.symm).eq_or_eq
+            (atom_covBy_join Γ.hU hb (fun h => hb_ne_U h.symm)).lt.le
+            (sup_le le_sup_left (hb_on.trans (sup_comm Γ.O Γ.U).le))).resolve_left
+            (ne_of_gt (atom_covBy_join Γ.hU hb (fun h => hb_ne_U h.symm)).lt)
+        -- b' ≤ l ⊓ (C_b ⊔ U) = U (line_direction: C_b off l, U on l)
+        have hb'_le_U : parallelogram_completion G G' b m ≤ Γ.U := by
+          have hCbU_inf_l : (C_b ⊔ Γ.U) ⊓ l = Γ.U :=
+            line_direction hCb_atom hCb_not_l (show Γ.U ≤ l from le_sup_right)
+          calc parallelogram_completion G G' b m
+              ≤ l ⊓ (C_b ⊔ Γ.U) := le_inf (hb'_le_bU.trans hbU_eq_l.le) hb'_le_CbU
+            _ = (C_b ⊔ Γ.U) ⊓ l := inf_comm _ _
+            _ = Γ.U := hCbU_inf_l
+        -- b' ≤ m
+        have hb'_le_m : parallelogram_completion G G' b m ≤ m :=
+          hb'_le_U.trans (le_sup_left : Γ.U ≤ m)
+        -- b' ≤ (G⊔b)⊓m: from second factor + b'≤m, line_direction collapse
+        have hb'_le_eb : parallelogram_completion G G' b m ≤ (G ⊔ b) ⊓ m := by
+          have h1 : parallelogram_completion G G' b m ≤ G' ⊔ (G ⊔ b) ⊓ m := by
+            unfold parallelogram_completion; exact inf_le_right
+          have h2 := le_inf h1 hb'_le_m
+          rwa [line_direction hG'_atom hG'_not_m (inf_le_right : (G ⊔ b) ⊓ m ≤ m)] at h2
+        -- b' ≤ (G⊔C_b)⊓m: same via h_eq
+        have hb'_le_eCb : parallelogram_completion G G' b m ≤ (G ⊔ C_b) ⊓ m := by
+          have h1 : parallelogram_completion G G' C_b m ≤ G' ⊔ (G ⊔ C_b) ⊓ m := by
+            unfold parallelogram_completion; exact inf_le_right
+          have h2 := le_inf (h_eq.le.trans h1) hb'_le_m
+          rwa [line_direction hG'_atom hG'_not_m (inf_le_right : (G ⊔ C_b) ⊓ m ≤ m)] at h2
+        -- (G⊔b)⊓m and (G⊔C_b)⊓m are distinct atoms on m
+        have heb_atom : IsAtom ((G ⊔ b) ⊓ m) :=
+          line_meets_m_at_atom hG_atom hb hG_ne_b
+            (sup_le hG_le_π (hb_on.trans le_sup_left)) hm_le_π hm_cov hG_not_m
+        have heCb_atom : IsAtom ((G ⊔ C_b) ⊓ m) :=
+          line_meets_m_at_atom hG_atom hCb_atom hG_ne_Cb
+            (sup_le hG_le_π hCb_le_π) hm_le_π hm_cov hG_not_m
+        have heb_ne_eCb : (G ⊔ b) ⊓ m ≠ (G ⊔ C_b) ⊓ m := by
+          intro h_eq_dir
+          have heb_le_GCb : (G ⊔ b) ⊓ m ≤ G ⊔ C_b := by
+            calc (G ⊔ b) ⊓ m = (G ⊔ C_b) ⊓ m := h_eq_dir
+              _ ≤ G ⊔ C_b := inf_le_left
+          have heb_le_G : (G ⊔ b) ⊓ m ≤ G := by
+            have h := le_inf (inf_le_left : (G ⊔ b) ⊓ m ≤ G ⊔ b) heb_le_GCb
+            rwa [modular_intersection hG_atom hb hCb_atom hG_ne_b hG_ne_Cb hb_ne_Cb hCb_not_Gb] at h
+          exact hG_not_m ((hG_atom.le_iff.mp heb_le_G).resolve_left heb_atom.1 ▸
+            (inf_le_right : (G ⊔ b) ⊓ m ≤ m))
+        -- b' is an atom
+        have hb'_atom : IsAtom (parallelogram_completion G G' b m) :=
+          parallelogram_completion_atom hG_atom hG'_atom hb
+            hGG' hG_ne_b
+            (fun h => hb_not_GG' ((le_of_eq h.symm).trans le_sup_right))
+            hG_le_π hG'_le_π (hb_on.trans le_sup_left)
+            hm_le_π hm_cov hm_line
+            hG_not_m hG'_not_m hb_not_m hb_not_GG'
+        -- b' ≤ two distinct atoms → b' ≤ ⊥ → contradiction
+        have h_meet_bot : (G ⊔ b) ⊓ m ⊓ ((G ⊔ C_b) ⊓ m) = ⊥ := by
+          rcases heb_atom.le_iff.mp (inf_le_left) with h | h
+          · exact h
+          · exact absurd ((heCb_atom.le_iff.mp
+              (le_of_eq h.symm |>.trans inf_le_right)).resolve_left heb_atom.1) heb_ne_eCb
+        exact hb'_atom.1 (le_antisymm
+          (h_meet_bot.symm ▸ le_inf hb'_le_eb hb'_le_eCb) bot_le)
 
       -- Spanning: G ⊔ b ⊔ C_b = π
       -- G ≤ b⊔C, so G⊔b⊔C_b ≥ b⊔C. And C_b ≤ q = U⊔C, C_b ≠ C, so C⊔C_b = q.
