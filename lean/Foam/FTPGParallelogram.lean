@@ -268,4 +268,123 @@ theorem parallelogram_parallel_sides
   show (P ⊔ Q) ⊓ m = (P' ⊔ Q') ⊓ m
   rw [hP'Q'_eq, line_direction hP' hP'_not inf_le_right]
 
+/-- **coord_add produces an atom.**
+
+    If a and b are atoms on the coordinate line l = O ⊔ U,
+    distinct from O and U, then coord_add Γ a b is also an atom on l.
+
+    Proof: the two intermediate atoms a' = (a⊔C)⊓m and D_b = (b⊔E)⊓q
+    form a line whose intersection with l is coord_add. Apply perspect_atom. -/
+theorem coord_add_atom (Γ : CoordSystem L)
+    (a b : L) (ha : IsAtom a) (hb : IsAtom b)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O)
+    (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U) :
+    IsAtom (coord_add Γ a b) := by
+  set l := Γ.O ⊔ Γ.U
+  set m := Γ.U ⊔ Γ.V
+  set q := Γ.U ⊔ Γ.C
+  set π := Γ.O ⊔ Γ.U ⊔ Γ.V
+  show IsAtom (((a ⊔ Γ.C) ⊓ m ⊔ (b ⊔ Γ.E) ⊓ q) ⊓ l)
+  set a' := (a ⊔ Γ.C) ⊓ m
+  set D_b := (b ⊔ Γ.E) ⊓ q
+  have ha_ne_C : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
+  have hb_ne_E : b ≠ Γ.E := fun h => Γ.hE_not_l (h ▸ hb_on)
+  have hUV : Γ.U ≠ Γ.V := fun h => Γ.hV_off (h ▸ le_sup_right)
+  have hUC : Γ.U ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_right)
+  have hm_le_π : m ≤ π := sup_le (le_sup_right.trans le_sup_left) le_sup_right
+  have hm_cov : m ⋖ π := by
+    show Γ.U ⊔ Γ.V ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V
+    have hO_inf_m : Γ.O ⊓ (Γ.U ⊔ Γ.V) = ⊥ :=
+      (Γ.hO.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hO_not_m (h ▸ inf_le_right))
+    rw [show Γ.O ⊔ Γ.U ⊔ Γ.V = Γ.O ⊔ (Γ.U ⊔ Γ.V) from sup_assoc _ _ _]
+    exact covBy_sup_of_inf_covBy_left (hO_inf_m ▸ Γ.hO.bot_covBy)
+  have hlq_eq_U : l ⊓ q = Γ.U := by
+    show (Γ.O ⊔ Γ.U) ⊓ (Γ.U ⊔ Γ.C) = Γ.U
+    rw [sup_comm Γ.O Γ.U]
+    exact modular_intersection Γ.hU Γ.hO Γ.hC Γ.hOU.symm hUC
+      (fun h => Γ.hC_not_l (h ▸ le_sup_left))
+      (fun h => Γ.hC_not_l (le_trans h (by rw [sup_comm])))
+  have hqm_eq_U : q ⊓ m = Γ.U := by
+    show (Γ.U ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) = Γ.U
+    rw [sup_inf_assoc_of_le Γ.C (le_sup_left : Γ.U ≤ Γ.U ⊔ Γ.V)]
+    have : Γ.C ⊓ (Γ.U ⊔ Γ.V) = ⊥ :=
+      (Γ.hC.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hC_not_m (h ▸ inf_le_right))
+    rw [this, sup_bot_eq]
+  have hE_not_q : ¬ Γ.E ≤ q := fun h =>
+    Γ.hEU ((Γ.hU.le_iff.mp (hqm_eq_U ▸ le_inf h Γ.hE_on_m)).resolve_left Γ.hE_atom.1)
+  have hmC_eq_π : m ⊔ Γ.C = π := by
+    have h_lt : m < m ⊔ Γ.C := lt_of_le_of_ne le_sup_left
+      (fun h => Γ.hC_not_m (le_sup_right.trans h.symm.le))
+    exact (hm_cov.eq_or_eq h_lt.le (sup_le hm_le_π Γ.hC_plane)).resolve_left (ne_of_gt h_lt)
+  -- a' atom (line a⊔C meets m)
+  have ha_not_m : ¬ a ≤ m := fun h => ha_ne_U (Γ.atom_on_both_eq_U ha ha_on h)
+  have ha'_atom : IsAtom a' :=
+    line_meets_m_at_atom ha Γ.hC ha_ne_C
+      (sup_le (ha_on.trans le_sup_left) Γ.hC_plane) hm_le_π hm_cov ha_not_m
+  -- q ⋖ π
+  have hq_le_π : q ≤ π := sup_le (le_sup_right.trans le_sup_left) Γ.hC_plane
+  have hq_cov_π : q ⋖ π := by
+    have hV_not_q : ¬ Γ.V ≤ q := fun hle =>
+      hUV ((Γ.hU.le_iff.mp (hqm_eq_U ▸ le_inf hle le_sup_right)).resolve_left Γ.hV.1).symm
+    have hV_disj_q : Γ.V ⊓ q = ⊥ :=
+      (Γ.hV.le_iff.mp inf_le_left).resolve_right (fun h => hV_not_q (h ▸ inf_le_right))
+    exact (by have : Γ.V ⊔ q = m ⊔ Γ.C := by
+                show Γ.V ⊔ (Γ.U ⊔ Γ.C) = (Γ.U ⊔ Γ.V) ⊔ Γ.C; ac_rfl
+              rw [this, hmC_eq_π] : Γ.V ⊔ q = π) ▸
+      covBy_sup_of_inf_covBy_left (hV_disj_q ▸ Γ.hV.bot_covBy)
+  -- D_b atom (line b⊔E meets q)
+  have hb_not_q : ¬ b ≤ q := fun h =>
+    hb_ne_U ((Γ.hU.le_iff.mp (hlq_eq_U ▸ le_inf hb_on h)).resolve_left hb.1)
+  have hDb_atom : IsAtom D_b :=
+    line_meets_m_at_atom hb Γ.hE_atom hb_ne_E
+      (sup_le (hb_on.trans le_sup_left) (Γ.hE_on_m.trans hm_le_π)) hq_le_π hq_cov_π hb_not_q
+  -- a' ≠ D_b
+  have ha'Db : a' ≠ D_b := by
+    intro h_eq
+    have ha'_le_U : a' ≤ Γ.U := by
+      have : a' ≤ q := by rw [h_eq]; exact inf_le_right
+      rw [← hqm_eq_U]; exact le_inf this inf_le_right
+    have hU_le_a : Γ.U ≤ a :=
+      calc Γ.U ≤ l ⊓ (Γ.C ⊔ a) :=
+        le_inf le_sup_right (((Γ.hU.le_iff.mp ha'_le_U).resolve_left ha'_atom.1 ▸
+          (inf_le_left : a' ≤ a ⊔ Γ.C)).trans (sup_comm a Γ.C).le)
+        _ = a := inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l ha_on
+    exact ha_ne_U ((ha.le_iff.mp hU_le_a).resolve_left Γ.hU.1).symm
+  -- D_b ∉ l
+  have hDb_not_l : ¬ D_b ≤ l := by
+    intro h
+    have hU_le_bE : Γ.U ≤ b ⊔ Γ.E :=
+      ((Γ.hU.le_iff.mp (by rw [← hlq_eq_U]; exact le_inf h inf_le_right)).resolve_left
+        hDb_atom.1) ▸ (inf_le_left : D_b ≤ b ⊔ Γ.E)
+    have hl_le_bE : l ≤ b ⊔ Γ.E := by
+      have hbU_eq_l : b ⊔ Γ.U = l := by
+        have h_lt : Γ.U < Γ.U ⊔ b := lt_of_le_of_ne le_sup_left
+          (fun h => hb_ne_U ((Γ.hU.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hb.1))
+        calc b ⊔ Γ.U = Γ.U ⊔ b := sup_comm _ _
+          _ = Γ.U ⊔ Γ.O := ((atom_covBy_join Γ.hU Γ.hO Γ.hOU.symm).eq_or_eq h_lt.le
+              (sup_le le_sup_left (hb_on.trans (sup_comm Γ.O Γ.U).le))).resolve_left
+              (ne_of_gt h_lt)
+          _ = l := sup_comm _ _
+      exact hbU_eq_l ▸ sup_le le_sup_left hU_le_bE
+    rcases (atom_covBy_join hb Γ.hE_atom (fun h => Γ.hE_not_l (h ▸ hb_on))).eq_or_eq
+      hb_on hl_le_bE with h_eq | h_eq
+    · exact hb_ne_O ((hb.le_iff.mp (le_sup_left.trans h_eq.le)).resolve_left Γ.hO.1).symm
+    · exact Γ.hE_not_l (le_sup_right.trans h_eq.symm.le)
+  -- Final: perspect_atom
+  have hDb_le_π : D_b ≤ π := (inf_le_right : D_b ≤ q).trans hq_le_π
+  have hl_cov_π : l ⋖ π := by
+    have hV_disj_l : Γ.V ⊓ l = ⊥ :=
+      (Γ.hV.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hV_off (h ▸ inf_le_right))
+    have h2 : l ⋖ Γ.V ⊔ l := covBy_sup_of_inf_covBy_left (hV_disj_l ▸ Γ.hV.bot_covBy)
+    rwa [sup_comm] at h2
+  have hl_sup_Db : l ⊔ D_b = π :=
+    ((hl_cov_π.eq_or_eq (lt_of_le_of_ne le_sup_left
+      (fun h => hDb_not_l (le_sup_right.trans h.symm.le))).le
+      (sup_le le_sup_left hDb_le_π)).resolve_left
+      (ne_of_gt (lt_of_le_of_ne le_sup_left
+        (fun h => hDb_not_l (le_sup_right.trans h.symm.le)))))
+  exact perspect_atom hDb_atom ha'_atom ha'Db Γ.hO Γ.hU Γ.hOU hDb_not_l
+    (sup_le (((inf_le_right : a' ≤ m).trans hm_le_π).trans hl_sup_Db.symm.le) le_sup_right)
+
 end Foam.FTPGExplore
