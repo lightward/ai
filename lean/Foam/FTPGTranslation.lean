@@ -830,6 +830,364 @@ theorem parallelogram_completion_well_defined
   exact (h_target_atom.le_iff.mp hR₁_le_target).resolve_left hR₁_atom.1
 
 /-!
+## Part IV-B: Cross-parallelism (translations preserve parallelism)
+
+A single translation preserves the "direction" of any line connecting
+two points it acts on. This is the individual-level structural property
+from which composition (and hence associativity) follows.
+
+Statement: if P' = pc(P₀, P₀', P, m) and Q' = pc(P₀, P₀', Q, m),
+then (P⊔Q)⊓m = (P'⊔Q')⊓m.
+
+Proof: one application of small_desargues' with center d = (P₀⊔P₀')⊓m.
+The triangles (P₀, P, Q) and (P₀', P', Q') are perspective from d
+(since P₀⊔P₀', P⊔P', Q⊔Q' all have direction d on m).
+The two input parallelisms come from the parallelogram sides:
+  (P₀⊔P)⊓m = (P₀'⊔P')⊓m  and  (P₀⊔Q)⊓m = (P₀'⊔Q')⊓m.
+The conclusion is the third parallelism: (P⊔Q)⊓m = (P'⊔Q')⊓m.
+-/
+
+/-- **Cross-parallelism: a translation preserves directions.**
+
+    If P' and Q' are the images of P and Q under the translation
+    defined by (P₀, P₀'), then PQ ∥ P'Q' (relative to m).
+
+    This is the key individual-level property: each translation,
+    on its own, preserves the structure of the plane. From this,
+    composition of translations is a translation, and associativity
+    of coord_add follows. -/
+theorem cross_parallelism
+    {P₀ P₀' P Q m π : L}
+    (hP₀ : IsAtom P₀) (hP₀' : IsAtom P₀') (hP : IsAtom P) (hQ : IsAtom Q)
+    (hP₀P₀' : P₀ ≠ P₀') (hP₀P : P₀ ≠ P) (hP₀Q : P₀ ≠ Q) (hPQ : P ≠ Q)
+    (hP₀'_ne_P' : P₀' ≠ parallelogram_completion P₀ P₀' P m)
+    (hP₀'_ne_Q' : P₀' ≠ parallelogram_completion P₀ P₀' Q m)
+    (hP'_ne_Q' : parallelogram_completion P₀ P₀' P m ≠
+                  parallelogram_completion P₀ P₀' Q m)
+    -- All in π
+    (hP₀_le : P₀ ≤ π) (hP₀'_le : P₀' ≤ π) (hP_le : P ≤ π) (hQ_le : Q ≤ π)
+    -- m is a line in π
+    (hm_le : m ≤ π) (hm_cov : m ⋖ π)
+    (hm_line : ∀ x, IsAtom x → x ≤ m → x ⋖ m)
+    -- None on m
+    (hP₀_not : ¬ P₀ ≤ m) (hP₀'_not : ¬ P₀' ≤ m) (hP_not : ¬ P ≤ m) (hQ_not : ¬ Q ≤ m)
+    -- Non-collinearity
+    (hP_not_PP' : ¬ P ≤ P₀ ⊔ P₀') (hQ_not_PP' : ¬ Q ≤ P₀ ⊔ P₀')
+    (hQ_not_P₀P : ¬ Q ≤ P₀ ⊔ P)
+    -- Spanning
+    (h_span : P₀ ⊔ P ⊔ Q = π)
+    -- Height ≥ 4 and irreducibility
+    (W : L) (hW : IsAtom W) (hW_not : ¬ W ≤ π)
+    (h_irred : ∀ (a b : L), IsAtom a → IsAtom b → a ≠ b →
+      ∃ c : L, IsAtom c ∧ c ≤ a ⊔ b ∧ c ≠ a ∧ c ≠ b) :
+    (P ⊔ Q) ⊓ m = (parallelogram_completion P₀ P₀' P m ⊔
+                     parallelogram_completion P₀ P₀' Q m) ⊓ m := by
+  set d := (P₀ ⊔ P₀') ⊓ m
+  set e_P := (P₀ ⊔ P) ⊓ m
+  set e_Q := (P₀ ⊔ Q) ⊓ m
+  set P' := parallelogram_completion P₀ P₀' P m
+  set Q' := parallelogram_completion P₀ P₀' Q m
+  -- ═══ Step 0: Basic atoms ═══
+  have hd_atom : IsAtom d := line_meets_m_at_atom hP₀ hP₀' hP₀P₀'
+    (sup_le hP₀_le hP₀'_le) hm_le hm_cov hP₀_not
+  have he_P_atom : IsAtom e_P := line_meets_m_at_atom hP₀ hP hP₀P
+    (sup_le hP₀_le hP_le) hm_le hm_cov hP₀_not
+  have he_Q_atom : IsAtom e_Q := line_meets_m_at_atom hP₀ hQ hP₀Q
+    (sup_le hP₀_le hQ_le) hm_le hm_cov hP₀_not
+  have hP'_atom : IsAtom P' := parallelogram_completion_atom hP₀ hP₀' hP hP₀P₀' hP₀P
+    (fun h => hP_not_PP' (h ▸ le_sup_right)) hP₀_le hP₀'_le hP_le hm_le hm_cov hm_line
+    hP₀_not hP₀'_not hP_not hP_not_PP'
+  have hQ'_atom : IsAtom Q' := parallelogram_completion_atom hP₀ hP₀' hQ hP₀P₀' hP₀Q
+    (fun h => hQ_not_PP' (h ▸ le_sup_right)) hP₀_le hP₀'_le hQ_le hm_le hm_cov hm_line
+    hP₀_not hP₀'_not hQ_not hQ_not_PP'
+  have hd_le_m : d ≤ m := inf_le_right
+  -- ═══ Step 1: Perspectivity from d ═══
+  -- P₀' is on d ⊔ P₀ (= P₀ ⊔ P₀') since d ≤ P₀⊔P₀'
+  have hP₀'_on_dP₀ : P₀' ≤ d ⊔ P₀ := by
+    rw [sup_comm]; exact le_sup_right
+  -- P' is on d ⊔ P (= P ⊔ P') since P⊔P' = P⊔d (covering argument)
+  have hP'_on_dP : P' ≤ d ⊔ P := by
+    have hP'_le_Pd : P' ≤ P ⊔ d := by
+      have : P' ≤ P ⊔ (P₀ ⊔ P₀') ⊓ m := inf_le_left
+      exact this
+    rw [sup_comm]; exact hP'_le_Pd
+  -- Q' is on d ⊔ Q (same argument)
+  have hQ'_on_dQ : Q' ≤ d ⊔ Q := by
+    have hQ'_le_Qd : Q' ≤ Q ⊔ d := by
+      have : Q' ≤ Q ⊔ (P₀ ⊔ P₀') ⊓ m := inf_le_left
+      exact this
+    rw [sup_comm]; exact hQ'_le_Qd
+  -- ═══ Step 2: Input parallelisms ═══
+  have hP'_not_m : ¬ P' ≤ m := by
+    intro h
+    have hP'_le_Pd : P' ≤ P ⊔ d := by
+      have : P' ≤ P ⊔ (P₀ ⊔ P₀') ⊓ m := inf_le_left; exact this
+    have hP'_le_d : P' ≤ d := by
+      calc P' ≤ (P ⊔ d) ⊓ m := le_inf hP'_le_Pd h
+        _ = d := line_direction hP hP_not hd_le_m
+    have hP'_eq_d : P' = d := (hd_atom.le_iff.mp hP'_le_d).resolve_left hP'_atom.1
+    -- P' ≤ P₀'⊔e_P, so d ≤ P₀'⊔e_P. But d on m, P₀' off m, e_P on m...
+    -- If d = e_P, then P ≤ P₀⊔P₀' (from modular argument). Contradiction.
+    -- If d ≠ e_P, then d⊔e_P = m, and P₀' ≤ d⊔e_P = m. Contradiction.
+    have hP'_le_P₀'e : P' ≤ P₀' ⊔ e_P := by
+      have : P' ≤ P₀' ⊔ (P₀ ⊔ P) ⊓ m := inf_le_right; exact this
+    have hd_le_P₀'e : d ≤ P₀' ⊔ e_P := hP'_eq_d ▸ hP'_le_P₀'e
+    have hde_ne : d ≠ e_P := by
+      intro h_eq
+      have hd_le_P₀P : d ≤ P₀ ⊔ P := h_eq ▸ (inf_le_left : e_P ≤ P₀ ⊔ P)
+      have hd_le_P₀ : d ≤ P₀ := by
+        have := le_inf (inf_le_left : d ≤ P₀ ⊔ P₀') hd_le_P₀P
+        rwa [modular_intersection hP₀ hP₀' hP hP₀P₀' hP₀P
+          (fun h => hP_not_PP' (h ▸ le_sup_right)) hP_not_PP'] at this
+      have hP₀m : P₀ ⊓ m = ⊥ := by
+        rcases hP₀.le_iff.mp inf_le_left with h | h
+        · exact h
+        · exact absurd (h ▸ inf_le_right) hP₀_not
+      exact hd_atom.1 (le_antisymm (hP₀m ▸ le_inf hd_le_P₀ hd_le_m) bot_le)
+    have hP₀'_ne_eP : P₀' ≠ e_P := fun h => hP₀'_not (h ▸ inf_le_right)
+    have h_eP_lt : e_P < P₀' ⊔ e_P := by
+      have := (atom_covBy_join he_P_atom hP₀' (Ne.symm hP₀'_ne_eP)).lt
+      rwa [sup_comm] at this
+    have hd_lt_de : d < d ⊔ e_P := lt_of_le_of_ne le_sup_left
+      (fun h => hde_ne ((hd_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+        he_P_atom.1).symm)
+    have hde_le : d ⊔ e_P ≤ P₀' ⊔ e_P := sup_le hd_le_P₀'e le_sup_right
+    have h_cov : e_P ⋖ P₀' ⊔ e_P := by
+      have := atom_covBy_join he_P_atom hP₀' (Ne.symm hP₀'_ne_eP)
+      rwa [sup_comm] at this
+    rcases h_cov.eq_or_eq hd_lt_de.le hde_le with h_eq | h_eq
+    · exact absurd h_eq (ne_of_gt hd_lt_de)
+    · exact hP₀'_not (le_trans le_sup_left (h_eq ▸ sup_le hd_le_m (inf_le_right : e_P ≤ m)))
+  have hQ'_not_m : ¬ Q' ≤ m := by
+    intro h
+    have hQ'_le_Qd : Q' ≤ Q ⊔ d := by
+      have : Q' ≤ Q ⊔ (P₀ ⊔ P₀') ⊓ m := inf_le_left; exact this
+    have hQ'_le_d : Q' ≤ d := by
+      calc Q' ≤ (Q ⊔ d) ⊓ m := le_inf hQ'_le_Qd h
+        _ = d := line_direction hQ hQ_not hd_le_m
+    have hQ'_eq_d : Q' = d := (hd_atom.le_iff.mp hQ'_le_d).resolve_left hQ'_atom.1
+    have hQ'_le_P₀'e : Q' ≤ P₀' ⊔ e_Q := by
+      have : Q' ≤ P₀' ⊔ (P₀ ⊔ Q) ⊓ m := inf_le_right; exact this
+    have hd_le_P₀'e : d ≤ P₀' ⊔ e_Q := hQ'_eq_d ▸ hQ'_le_P₀'e
+    have hde_ne : d ≠ e_Q := by
+      intro h_eq
+      have hd_le_P₀Q : d ≤ P₀ ⊔ Q := h_eq ▸ (inf_le_left : e_Q ≤ P₀ ⊔ Q)
+      have hd_le_P₀ : d ≤ P₀ := by
+        have := le_inf (inf_le_left : d ≤ P₀ ⊔ P₀') hd_le_P₀Q
+        rwa [modular_intersection hP₀ hP₀' hQ hP₀P₀' hP₀Q
+          (fun h => hQ_not_PP' (h ▸ le_sup_right)) hQ_not_PP'] at this
+      have hP₀m : P₀ ⊓ m = ⊥ := by
+        rcases hP₀.le_iff.mp inf_le_left with h | h
+        · exact h
+        · exact absurd (h ▸ inf_le_right) hP₀_not
+      exact hd_atom.1 (le_antisymm (hP₀m ▸ le_inf hd_le_P₀ hd_le_m) bot_le)
+    have hP₀'_ne_eQ : P₀' ≠ e_Q := fun h => hP₀'_not (h ▸ inf_le_right)
+    have hd_lt_de : d < d ⊔ e_Q := lt_of_le_of_ne le_sup_left
+      (fun h => hde_ne ((hd_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+        he_Q_atom.1).symm)
+    have hde_le : d ⊔ e_Q ≤ P₀' ⊔ e_Q := sup_le hd_le_P₀'e le_sup_right
+    have h_cov : e_Q ⋖ P₀' ⊔ e_Q := by
+      have := atom_covBy_join he_Q_atom hP₀' (Ne.symm hP₀'_ne_eQ)
+      rwa [sup_comm] at this
+    rcases h_cov.eq_or_eq hd_lt_de.le hde_le with h_eq | h_eq
+    · exact absurd h_eq (ne_of_gt hd_lt_de)
+    · exact hP₀'_not (le_trans le_sup_left (h_eq ▸ sup_le hd_le_m (inf_le_right : e_Q ≤ m)))
+  -- Input parallelism 1: (P₀⊔P)⊓m = (P₀'⊔P')⊓m
+  have hP'_ne_P₀' : P' ≠ P₀' := hP₀'_ne_P'.symm
+  have h_par_1 : (P₀ ⊔ P) ⊓ m = (P₀' ⊔ P') ⊓ m :=
+    parallelogram_parallel_sides hP₀' hP₀'_not he_P_atom hP'_atom hP'_ne_P₀'
+  -- Input parallelism 2: (P₀⊔Q)⊓m = (P₀'⊔Q')⊓m
+  have hQ'_ne_P₀' : Q' ≠ P₀' := hP₀'_ne_Q'.symm
+  have h_par_2 : (P₀ ⊔ Q) ⊓ m = (P₀' ⊔ Q') ⊓ m :=
+    parallelogram_parallel_sides hP₀' hP₀'_not he_Q_atom hQ'_atom hQ'_ne_P₀'
+  -- ═══ Step 3: Non-degeneracy for small_desargues' ═══
+  have hP'_le_π : P' ≤ π := by
+    calc P' ≤ P ⊔ d := by
+            have : P' ≤ P ⊔ (P₀ ⊔ P₀') ⊓ m := inf_le_left; exact this
+      _ ≤ π := sup_le hP_le (hd_le_m.trans hm_le)
+  have hQ'_le_π : Q' ≤ π := by
+    calc Q' ≤ Q ⊔ d := by
+            have : Q' ≤ Q ⊔ (P₀ ⊔ P₀') ⊓ m := inf_le_left; exact this
+      _ ≤ π := sup_le hQ_le (hd_le_m.trans hm_le)
+  have hd_le_π : d ≤ π := hd_le_m.trans hm_le
+  have hm_ne_π : m ≠ π := fun h => hP₀_not (h ▸ hP₀_le)
+  -- d ≠ each vertex
+  have hd_ne_P₀ : d ≠ P₀ := fun h => hP₀_not (h ▸ hd_le_m)
+  have hd_ne_P : d ≠ P := fun h => hP_not (h ▸ hd_le_m)
+  have hd_ne_Q : d ≠ Q := fun h => hQ_not (h ▸ hd_le_m)
+  have hd_ne_P₀' : d ≠ P₀' := fun h => hP₀'_not (h ▸ hd_le_m)
+  have hd_ne_P' : d ≠ P' := fun h => hP'_not_m (h ▸ hd_le_m)
+  have hd_ne_Q' : d ≠ Q' := fun h => hQ'_not_m (h ▸ hd_le_m)
+  -- Corresponding vertices distinct
+  have hP₀_ne_P₀' : P₀ ≠ P₀' := hP₀P₀'
+  have hP_ne_P' : P ≠ P' := by
+    intro h
+    have hP_le_P₀'e : P ≤ P₀' ⊔ e_P := by
+      have : P' ≤ P₀' ⊔ (P₀ ⊔ P) ⊓ m := inf_le_right
+      exact h ▸ this
+    have hP_le_P₀P : P ≤ P₀ ⊔ P := le_sup_right
+    have he_P_le_P₀P : e_P ≤ P₀ ⊔ P := inf_le_left
+    -- P₀' ⊔ e_P ≤ P₀' ⊔ (P₀ ⊔ P) = some plane. If P ≤ P₀'⊔e_P, covering gives P₀'⊔e_P = P₀⊔P
+    -- or P = e_P or P = P₀'. Both impossible.
+    by_cases h_lines : P₀' ⊔ e_P = P₀ ⊔ P
+    · exact hP_not_PP' (le_sup_right.trans (by
+        rw [show P₀ ⊔ P = P₀' ⊔ e_P from h_lines.symm]
+        exact sup_le le_sup_left (inf_le_left.trans (sup_le le_sup_left le_sup_right))))
+    · -- P ≤ P₀⊔P and P ≤ P₀'⊔e_P, and these are distinct lines.
+      -- Their intersection is an atom. e_P is also in both. So P = e_P → P on m. ✗
+      have hP_le_inf : P ≤ (P₀ ⊔ P) ⊓ (P₀' ⊔ e_P) := le_inf le_sup_right hP_le_P₀'e
+      have heP_le_inf : e_P ≤ (P₀ ⊔ P) ⊓ (P₀' ⊔ e_P) := le_inf he_P_le_P₀P le_sup_right
+      have h_inf_lt : (P₀ ⊔ P) ⊓ (P₀' ⊔ e_P) < P₀ ⊔ P := by
+        exact lt_of_le_of_ne inf_le_left (fun h_eq => h_lines
+          ((inf_eq_left.mp h_eq).antisymm
+            (sup_le (le_sup_left.trans (inf_eq_left.mp h_eq).le)
+              (he_P_le_P₀P.trans inf_le_left))).symm)
+      have h_pos : ⊥ < (P₀ ⊔ P) ⊓ (P₀' ⊔ e_P) := lt_of_lt_of_le hP.bot_lt hP_le_inf
+      have h_inf_atom := line_height_two hP₀ hP hP₀P h_pos h_inf_lt
+      have hP_eq := (h_inf_atom.le_iff.mp hP_le_inf).resolve_left hP.1
+      have heP_eq := (h_inf_atom.le_iff.mp heP_le_inf).resolve_left he_P_atom.1
+      exact hP_not (hP_eq.trans heP_eq.symm ▸ inf_le_right)
+  have hQ_ne_Q' : Q ≠ Q' := by
+    intro h
+    have hQ_le_P₀'e : Q ≤ P₀' ⊔ e_Q := by
+      have : Q' ≤ P₀' ⊔ (P₀ ⊔ Q) ⊓ m := inf_le_right
+      exact h ▸ this
+    by_cases h_lines : P₀' ⊔ e_Q = P₀ ⊔ Q
+    · exact hQ_not_PP' (le_sup_right.trans (by
+        rw [show P₀ ⊔ Q = P₀' ⊔ e_Q from h_lines.symm]
+        exact sup_le le_sup_left (inf_le_left.trans (sup_le le_sup_left le_sup_right))))
+    · have heQ_le_P₀Q : e_Q ≤ P₀ ⊔ Q := inf_le_left
+      have hQ_le_inf : Q ≤ (P₀ ⊔ Q) ⊓ (P₀' ⊔ e_Q) := le_inf le_sup_right hQ_le_P₀'e
+      have heQ_le_inf : e_Q ≤ (P₀ ⊔ Q) ⊓ (P₀' ⊔ e_Q) := le_inf heQ_le_P₀Q le_sup_right
+      have h_inf_lt : (P₀ ⊔ Q) ⊓ (P₀' ⊔ e_Q) < P₀ ⊔ Q := by
+        exact lt_of_le_of_ne inf_le_left (fun h_eq => h_lines
+          ((inf_eq_left.mp h_eq).antisymm
+            (sup_le (le_sup_left.trans (inf_eq_left.mp h_eq).le)
+              (heQ_le_P₀Q.trans inf_le_left))).symm)
+      have h_pos : ⊥ < (P₀ ⊔ Q) ⊓ (P₀' ⊔ e_Q) := lt_of_lt_of_le hQ.bot_lt hQ_le_inf
+      have h_inf_atom := line_height_two hP₀ hQ hP₀Q h_pos h_inf_lt
+      have hQ_eq := (h_inf_atom.le_iff.mp hQ_le_inf).resolve_left hQ.1
+      have heQ_eq := (h_inf_atom.le_iff.mp heQ_le_inf).resolve_left he_Q_atom.1
+      exact hQ_not (hQ_eq.trans heQ_eq.symm ▸ inf_le_right)
+  -- Side distinctness
+  have h_sides_P₀P : P₀ ⊔ P ≠ P₀' ⊔ P' := by
+    intro h
+    have hP₀'_le : P₀' ≤ P₀ ⊔ P := le_sup_left.trans h.symm.le
+    have hP₀_lt : P₀ < P₀ ⊔ P := lt_of_le_of_ne le_sup_left
+      (fun h => hP₀P ((hP₀.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hP.1).symm)
+    rcases (atom_covBy_join hP₀ hP₀' hP₀P₀').eq_or_eq hP₀_lt.le
+      (sup_le hP₀'_le le_sup_left) with h_eq | h_eq
+    · exact absurd h_eq (ne_of_gt hP₀_lt)
+    · exact hP_not_PP' (le_sup_right.trans h_eq.symm.le)
+  have h_sides_P₀Q : P₀ ⊔ Q ≠ P₀' ⊔ Q' := by
+    intro h
+    have hP₀'_le : P₀' ≤ P₀ ⊔ Q := le_sup_left.trans h.symm.le
+    have hP₀_lt : P₀ < P₀ ⊔ Q := lt_of_le_of_ne le_sup_left
+      (fun h => hP₀Q ((hP₀.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hQ.1).symm)
+    rcases (atom_covBy_join hP₀ hP₀' hP₀P₀').eq_or_eq hP₀_lt.le
+      (sup_le hP₀'_le le_sup_left) with h_eq | h_eq
+    · exact absurd h_eq (ne_of_gt hP₀_lt)
+    · exact hQ_not_PP' (le_sup_right.trans h_eq.symm.le)
+  -- Handle the degenerate case P⊔Q = P'⊔Q' directly (conclusion is trivial)
+  by_cases h_sides_PQ : P ⊔ Q = P' ⊔ Q'
+  · exact congr_arg (· ⊓ m) h_sides_PQ
+  -- P₀ ≠ Q (have hP₀Q)
+  -- P₀' ≠ P' (have hP₀'_ne_P')
+  -- P₀' ≠ Q' (have hP₀'_ne_Q')
+  -- Spanning: P₀ ⊔ P ⊔ Q = π (have h_span)
+  -- Second triangle spans π
+  have h_span' : P₀' ⊔ P' ⊔ Q' = π := by
+    -- e_P ≤ P₀'⊔P' (from the sides parallelism)
+    have he_P_le : e_P ≤ P₀' ⊔ P' := by
+      have hP'_le_P₀'e : P' ≤ P₀' ⊔ e_P := inf_le_right
+      have hP₀'_lt : P₀' < P₀' ⊔ P' := lt_of_le_of_ne le_sup_left
+        (fun h => hP₀'_ne_P' ((hP₀'.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+          hP'_atom.1).symm)
+      have h_eq := ((atom_covBy_join hP₀' he_P_atom
+        (fun h => hP₀'_not (h ▸ inf_le_right))).eq_or_eq hP₀'_lt.le
+        (sup_le le_sup_left hP'_le_P₀'e)).resolve_left (ne_of_gt hP₀'_lt)
+      exact le_sup_right.trans h_eq.symm.le
+    have he_Q_le : e_Q ≤ P₀' ⊔ Q' := by
+      have hQ'_le_P₀'e : Q' ≤ P₀' ⊔ e_Q := inf_le_right
+      have hP₀'_lt : P₀' < P₀' ⊔ Q' := lt_of_le_of_ne le_sup_left
+        (fun h => hP₀'_ne_Q' ((hP₀'.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+          hQ'_atom.1).symm)
+      have h_eq := ((atom_covBy_join hP₀' he_Q_atom
+        (fun h => hP₀'_not (h ▸ inf_le_right))).eq_or_eq hP₀'_lt.le
+        (sup_le le_sup_left hQ'_le_P₀'e)).resolve_left (ne_of_gt hP₀'_lt)
+      exact le_sup_right.trans h_eq.symm.le
+    -- e_P ≠ e_Q (from Q not on P₀⊔P)
+    have hePeQ : e_P ≠ e_Q := by
+      intro h_eq
+      have heP_le_P₀Q : e_P ≤ P₀ ⊔ Q := h_eq ▸ (inf_le_left : e_Q ≤ P₀ ⊔ Q)
+      have heP_le_P₀ : e_P ≤ P₀ := by
+        have := le_inf (inf_le_left : e_P ≤ P₀ ⊔ P) heP_le_P₀Q
+        rwa [modular_intersection hP₀ hP hQ hP₀P hP₀Q hPQ hQ_not_P₀P] at this
+      have hP₀m : P₀ ⊓ m = ⊥ := by
+        rcases hP₀.le_iff.mp inf_le_left with h | h
+        · exact h; · exact absurd (h ▸ inf_le_right) hP₀_not
+      exact he_P_atom.1 (le_antisymm (hP₀m ▸ le_inf heP_le_P₀ (inf_le_right : e_P ≤ m)) bot_le)
+    -- e_P ⊔ e_Q = m
+    have hePeQ_eq_m : e_P ⊔ e_Q = m := by
+      have heP_lt : e_P < e_P ⊔ e_Q := lt_of_le_of_ne le_sup_left
+        (fun h => hePeQ ((he_P_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+          he_Q_atom.1).symm)
+      exact ((hm_line e_P he_P_atom (inf_le_right : e_P ≤ m)).eq_or_eq heP_lt.le
+        (sup_le (inf_le_right : e_P ≤ m) (inf_le_right : e_Q ≤ m))).resolve_left
+        (ne_of_gt heP_lt)
+    -- m ≤ P₀'⊔P'⊔Q'
+    have hm_le_target : m ≤ P₀' ⊔ P' ⊔ Q' := by
+      rw [← hePeQ_eq_m]
+      exact sup_le (he_P_le.trans le_sup_left)
+        (he_Q_le.trans (sup_le (le_sup_left.trans le_sup_left) le_sup_right))
+    have hP₀'m_eq_π : P₀' ⊔ m = π := by
+      have h_lt : m < P₀' ⊔ m := lt_of_le_of_ne le_sup_right
+        (fun h => hP₀'_not (le_sup_left.trans h.symm.le))
+      exact (hm_cov.eq_or_eq h_lt.le (sup_le hP₀'_le hm_le)).resolve_left (ne_of_gt h_lt)
+    apply le_antisymm (sup_le (sup_le hP₀'_le hP'_le_π) hQ'_le_π)
+    calc π = P₀' ⊔ m := hP₀'m_eq_π.symm
+      _ ≤ P₀' ⊔ P' ⊔ Q' := sup_le (le_sup_left.trans le_sup_left) hm_le_target
+  -- Sides CovBy π
+  have hP_not_P₀Q : ¬ P ≤ P₀ ⊔ Q := by
+    intro hP_le_P₀Q
+    have hP₀_lt_P₀P : P₀ < P₀ ⊔ P := lt_of_le_of_ne le_sup_left
+      (fun h => hP₀P ((hP₀.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hP.1).symm)
+    rcases (atom_covBy_join hP₀ hQ hP₀Q).eq_or_eq hP₀_lt_P₀P.le
+      (sup_le le_sup_left hP_le_P₀Q) with h | h
+    · exact absurd h (ne_of_gt hP₀_lt_P₀P)
+    · exact hQ_not_P₀P (le_sup_right.trans h.symm.le)
+  have h_cov_P₀P : P₀ ⊔ P ⋖ π := h_span ▸ line_covBy_plane hP₀ hP hQ hP₀P hP₀Q hPQ hQ_not_P₀P
+  have h_cov_P₀Q : P₀ ⊔ Q ⋖ π := by
+    have : P₀ ⊔ Q ⊔ P = π := by rw [← h_span]; ac_rfl
+    rw [← this]; exact line_covBy_plane hP₀ hQ hP hP₀Q hP₀P hPQ.symm hP_not_P₀Q
+  have h_cov_PQ : P ⊔ Q ⋖ π := by
+    have : P ⊔ Q ⊔ P₀ = π := by rw [← h_span]; ac_rfl
+    rw [← this]
+    have hP₀_not_PQ : ¬ P₀ ≤ P ⊔ Q := by
+      intro hP₀_le
+      have hP_lt : P < P ⊔ Q := lt_of_le_of_ne le_sup_left
+        (fun h => hPQ ((hP.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hQ.1).symm)
+      rcases (atom_covBy_join hP hP₀ hP₀P.symm).eq_or_eq hP_lt.le
+        (sup_le le_sup_left hP₀_le) with h | h
+      · exact absurd h (ne_of_gt hP_lt)
+      · exact hQ_not_P₀P (le_sup_right.trans h.symm.le)
+    exact line_covBy_plane hP hQ hP₀ hPQ hP₀P.symm hP₀Q.symm hP₀_not_PQ
+  -- ═══ Step 4: Apply small_desargues' ═══
+  exact small_desargues' hd_atom hP₀ hP hQ hP₀' hP'_atom hQ'_atom
+    hd_le_π hP₀_le hP_le hQ_le hP₀'_le hP'_le_π hQ'_le_π
+    hm_le hm_ne_π hd_le_m
+    hP₀'_on_dP₀ hP'_on_dP hQ'_on_dQ
+    hP₀P hP₀Q hPQ hP₀'_ne_P' hP₀'_ne_Q' hP'_ne_Q'
+    h_sides_P₀P h_sides_P₀Q h_sides_PQ
+    h_span h_span'
+    hd_ne_P₀ hd_ne_P hd_ne_Q hd_ne_P₀' hd_ne_P' hd_ne_Q'
+    hP₀_ne_P₀' hP_ne_P' hQ_ne_Q'
+    W hW hW_not h_irred
+    h_cov_P₀P h_cov_P₀Q h_cov_PQ
+    hm_cov
+    h_par_1 h_par_2
+
+/-!
 ## Part V: From translations to coord_add_assoc
 
 The final connection: show coord_add equals translation application,
@@ -971,6 +1329,134 @@ theorem coord_add_eq_translation (Γ : CoordSystem L)
   exact coord_add_comm Γ a b ha hb ha_on hb_on ha_ne_O hb_ne_O ha_ne_U hb_ne_U hab
     R hR hR_not h_irred
 
+/-- **Key Identity: the translation τ_a sends C_b to C_{a+b}.**
+
+    pc(O, a, C_b, m) = C_{a+b}, where C_x = pc(O, x, C, m) = q ⊓ (x ⊔ E).
+
+    Proof: cross-parallelism of τ_a on (b, C_b) gives
+    ((a+b) ⊔ τ_a(C_b)) ⊓ m = (b ⊔ C_b) ⊓ m = E.
+    Since τ_a(C_b) is on q, it's on q ⊓ ((a+b) ⊔ E) = C_{a+b}. -/
+theorem key_identity (Γ : CoordSystem L)
+    (a b : L) (ha : IsAtom a) (hb : IsAtom b)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O)
+    (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U)
+    (hab : a ≠ b)
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
+    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
+      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
+    let C_b := parallelogram_completion Γ.O b Γ.C (Γ.U ⊔ Γ.V)
+    let s := coord_add Γ a b
+    let C_s := parallelogram_completion Γ.O s Γ.C (Γ.U ⊔ Γ.V)
+    parallelogram_completion Γ.O a C_b (Γ.U ⊔ Γ.V) = C_s := by
+  intro C_b s C_s
+  -- ═══ Setup ═══
+  set l := Γ.O ⊔ Γ.U
+  set m := Γ.U ⊔ Γ.V
+  set q := Γ.U ⊔ Γ.C
+  set π := Γ.O ⊔ Γ.U ⊔ Γ.V
+  -- The result τ_a(C_b) = pc(O, a, C_b, m)
+  set τ_a_C_b := parallelogram_completion Γ.O a C_b m
+  -- Direction of (O⊔a) on m is U (since O⊔a = l, l⊓m = U)
+  -- C_b ⊔ U = q (C_b on q, U on q, C_b ≠ U)
+  -- So τ_a(C_b) = q ⊓ (a ⊔ (O ⊔ C_b) ⊓ m)
+  -- Goal: τ_a(C_b) = C_s = q ⊓ (s ⊔ E)
+
+  -- ═══ Step 1: Show τ_a(C_b) is on q ═══
+  -- τ_a(C_b) = (C_b ⊔ l⊓m) ⊓ (a ⊔ (O⊔C_b)⊓m)
+  -- = (C_b ⊔ U) ⊓ (a ⊔ (O⊔C_b)⊓m)
+  -- C_b⊔U ≤ q, so τ_a(C_b) ≤ q
+  have h_τ_le_q : τ_a_C_b ≤ q := by
+    show (C_b ⊔ (Γ.O ⊔ a) ⊓ m) ⊓ (a ⊔ (Γ.O ⊔ C_b) ⊓ m) ≤ q
+    have hOa_eq_l : Γ.O ⊔ a = l := by
+      have h_lt : Γ.O < Γ.O ⊔ a := lt_of_le_of_ne le_sup_left
+        (fun h => ha_ne_O ((Γ.hO.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left ha.1))
+      exact ((atom_covBy_join Γ.hO Γ.hU Γ.hOU).eq_or_eq h_lt.le
+        (sup_le le_sup_left ha_on)).resolve_left (ne_of_gt h_lt)
+    rw [hOa_eq_l, Γ.l_inf_m_eq_U]
+    exact inf_le_left.trans (sup_le (le_sup_right : C_b ≤ q) (le_sup_left : Γ.U ≤ q))
+
+  -- ═══ Step 2: Show (b ⊔ C_b) ⊓ m = E ═══
+  -- C_b ≤ b ⊔ E (from the parallelogram completion: C_b ≤ inf_le_right)
+  -- b ⊔ C_b = b ⊔ E (covering argument)
+  -- (b ⊔ E) ⊓ m = E (line_direction: b off m, E on m)
+  have hCb_le_bE : C_b ≤ b ⊔ Γ.E := by
+    show C_b ≤ b ⊔ (Γ.O ⊔ Γ.C) ⊓ m
+    exact inf_le_right
+  -- C_b is an atom (needed for covering arguments)
+  have hCb_atom : IsAtom C_b := by
+    exact parallelogram_completion_atom Γ.hO hb Γ.hC Γ.hOU.symm
+      (fun h => Γ.hC_not_l (h ▸ hb_on)) (fun h => Γ.hC_not_l (h ▸ le_sup_left))
+      le_sup_left hb_on.trans le_sup_left Γ.hC_plane
+      (le_sup_right.trans le_sup_left) (atom_covBy_join Γ.hU Γ.hV
+        (fun h => Γ.hV_off (h ▸ le_sup_right)))
+      (fun h => Γ.hC_not_l (h ▸ le_sup_left)) Γ.hO_not_m Γ.hb_not_m Γ.hC_not_m
+      sorry -- Q not on P⊔P' for parallelogram_completion_atom
+  have hb_ne_Cb : b ≠ C_b := by
+    intro h; exact Γ.hC_not_l (sorry) -- b on l, C_b on q, b = C_b → C_b on l → ...
+  have h_bCb_eq_bE : b ⊔ C_b = b ⊔ Γ.E := by
+    have hb_ne_E : b ≠ Γ.E := fun h => Γ.hE_not_l (h ▸ hb_on)
+    have h_lt : b < b ⊔ C_b := lt_of_le_of_ne le_sup_left
+      (fun h => hb_ne_Cb ((hb.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+        hCb_atom.1).symm)
+    exact ((atom_covBy_join hb Γ.hE_atom hb_ne_E).eq_or_eq h_lt.le
+      (sup_le le_sup_left hCb_le_bE)).resolve_left (ne_of_gt h_lt)
+  have h_bCb_dir : (b ⊔ C_b) ⊓ m = Γ.E := by
+    rw [h_bCb_eq_bE]
+    exact line_direction hb (fun h => hb_ne_U (Γ.hU.le_iff.mp
+      (Γ.l_inf_m_eq_U ▸ le_inf hb_on h) |>.resolve_left hb.1)) Γ.hE_on_m
+
+  -- ═══ Step 3: Cross-parallelism gives (s ⊔ τ_a(C_b)) ⊓ m = E ═══
+  -- Need: a general-position base pair (G, G') for τ_a
+  -- Then cross_parallelism on (b, C_b) gives the result
+  have h_cross : (s ⊔ τ_a_C_b) ⊓ m = Γ.E := by
+    sorry -- cross-parallelism application
+
+  -- ═══ Step 4: Conclude τ_a(C_b) = C_s ═══
+  -- From step 3: (s ⊔ τ_a_C_b) ⊓ m = E
+  -- So E ≤ s ⊔ τ_a_C_b, meaning τ_a_C_b ≤ s ⊔ E (since τ_a_C_b ≤ s⊔τ_a_C_b ∋ E)
+  -- Actually: (s ⊔ τ_a_C_b) passes through E on m.
+  -- s ⊔ E ≤ s ⊔ τ_a_C_b (since E ≤ s ⊔ τ_a_C_b from the direction)
+  -- Both are lines through s. If s ⊔ E = s ⊔ τ_a_C_b: then τ_a_C_b ≤ s ⊔ E.
+  -- Otherwise: τ_a_C_b = s (two lines through s meeting at s). But τ_a_C_b on q, s on l.
+  -- τ_a_C_b = s → s ≤ q → s ≤ l ⊓ q = U → s = U. Contradiction.
+
+  -- E ≤ s ⊔ τ_a_C_b (from the direction computation)
+  have hE_le : Γ.E ≤ s ⊔ τ_a_C_b := by
+    calc Γ.E = (s ⊔ τ_a_C_b) ⊓ m := h_cross.symm
+      _ ≤ s ⊔ τ_a_C_b := inf_le_left
+
+  -- τ_a_C_b ≤ s ⊔ E
+  -- s ⊔ E ≤ s ⊔ τ_a_C_b (since both s and E are ≤ s⊔τ)
+  have hsE_le_sτ : s ⊔ Γ.E ≤ s ⊔ τ_a_C_b := sup_le le_sup_left hE_le
+  -- s is an atom on l, τ_a_C_b is an atom on q, s ≠ τ_a_C_b
+  have hs_ne_τ : s ≠ τ_a_C_b := by
+    intro h; exact sorry -- s on l, τ on q, s = τ → s ≤ l⊓q = U. Contradiction.
+  have hs_ne_E : s ≠ Γ.E := fun h => Γ.hE_not_l (h ▸ sorry) -- s on l
+  -- CovBy: s ⋖ s⊔E. s < s⊔E ≤ s⊔τ. CovBy → s⊔E = s⊔τ.
+  have hs_atom : IsAtom s := by sorry -- coord_add produces atoms
+  have h_sE_eq_sτ : s ⊔ Γ.E = s ⊔ τ_a_C_b := by
+    have h_lt : s < s ⊔ Γ.E := lt_of_le_of_ne le_sup_left
+      (fun h => hs_ne_E ((hs_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+        Γ.hE_atom.1).symm)
+    exact ((atom_covBy_join hs_atom hτ_atom hs_ne_τ).eq_or_eq h_lt.le
+      hsE_le_sτ).resolve_left (ne_of_gt h_lt)
+  have h_τ_le_sE : τ_a_C_b ≤ s ⊔ Γ.E := h_sE_eq_sτ ▸ le_sup_right
+
+  -- τ_a(C_b) ≤ q ⊓ (s ⊔ E) = C_s
+  -- C_s = pc(O, s, C, m) = (C⊔U) ⊓ (s⊔E) [since O⊔s = l, l⊓m = U, (O⊔C)⊓m = E]
+  have h_τ_le_Cs : τ_a_C_b ≤ C_s := by
+    show τ_a_C_b ≤ (Γ.C ⊔ (Γ.O ⊔ s) ⊓ m) ⊓ (s ⊔ (Γ.O ⊔ Γ.C) ⊓ m)
+    have hOs_eq_l : Γ.O ⊔ s = l := by
+      sorry -- s on l, covering argument
+    rw [hOs_eq_l, Γ.l_inf_m_eq_U, sup_comm Γ.C Γ.U]
+    exact le_inf h_τ_le_q h_τ_le_sE
+
+  -- Both are atoms → equal
+  have hτ_atom : IsAtom τ_a_C_b := by sorry -- parallelogram_completion_atom
+  have hCs_atom : IsAtom C_s := by sorry -- parallelogram_completion_atom
+  exact (hCs_atom.le_iff.mp h_τ_le_Cs).resolve_left hτ_atom.1
+
 /-- **Associativity of coordinate addition.**
 
     (a + b) + c = a + (b + c)
@@ -989,63 +1475,18 @@ theorem coord_add_assoc (Γ : CoordSystem L)
       ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
     coord_add Γ (coord_add Γ a b) c = coord_add Γ a (coord_add Γ b c) := by
   /-
-  ## Proof architecture (not yet implemented)
+  ## Proof (session 48)
 
-  The conceptual argument (Hartshorne §7, p.57):
-    a + b = τ_a(b) where τ_a is the unique translation taking O to a.
-    (a+b)+c = τ_{a+b}(c) = (τ_a ∘ τ_b)(c) = τ_a(τ_b(c)) = τ_a(b+c) = a+(b+c).
-
-  The gap: the translation composition τ_{a+b} = τ_a ∘ τ_b is not yet formalized.
-  Parts I-IV prove well-definedness of the parallelogram completion but not the
-  full group structure of Tran(A). Specifically, composing translations via
-  parallelogram completion degenerates when auxiliary points are collinear on q = U⊔C.
-
-  ### Proof architecture (session 47)
-
-  The conceptual chain (Hartshorne §7):
-    τ_a(C_b) = C_{a+b}  for all a, b on l  ("Key Identity")
-
-  This says: the perspectivity ρ: l → q (center E) intertwines coord_add on l
-  with the translation action on q. Once proved, associativity follows:
-
-    C_{(a+b)+c} = τ_{a+b}(C_c) = τ_a(τ_b(C_c)) = τ_a(C_{b+c}) = C_{a+(b+c)}
-
-  since ρ is injective, (a+b)+c = a+(b+c).
-
-  The Key Identity τ_a(C_b) = C_{a+b} is proved via:
-  1. Compute C' = pc(O, a, C_b, m) (non-degenerate: O,a on l; C_b on q)
-  2. Show ((a+b) ⊔ C') ⊓ m = E via small_desargues' through a general-position
-     atom G (off l, m, q), using cross-parallelisms from well-definedness
-  3. Collinearity (a+b), C', E gives C'⊔E = (a+b)⊔E, so pc(C,C',O,m) = a+b
-  4. Key Theorem: pc(C,C',O,m) = pc(C,C_{a+b},O,m) → C' = C_{a+b}
-
-  The Key Theorem (translation_unique_on_q) is a pure lattice argument:
-  if two parallelogram completions from C (direction U) agree on one point
-  of l, their C-images on q must be equal.
-
-  ### The proof
-
-  The key lemma is CROSS-PARALLELISM: τ_a preserves parallelism between l and q.
-  For P on l, Q on q: (P⊔Q)⊓m = (τ_a(P) ⊔ τ_a(Q))⊓m.
-
-  Proof of cross-parallelism:
-  - Construct G off l, m, q (via h_irred on line a⊔C)
-  - Rebase τ_a to (G, G') via well-definedness
-  - Get (G⊔P)⊓m = (G'⊔τ_a(P))⊓m from the parallelogram (C, C_a, τ_a(P), P)
-    rebased to (G, G', ?, P) via well-definedness
-  - Get (G⊔Q)⊓m = (G'⊔τ_a(Q))⊓m from the parallelogram (O, a, τ_a(Q), Q)
-    rebased to (G, G', ?, Q) via well-definedness
-  - Apply small_desargues' to (G, P, Q) and (G', τ_a(P), τ_a(Q)) center U
-  - Conclude (P⊔Q)⊓m = (τ_a(P)⊔τ_a(Q))⊓m
-
-  Then composition identity falls out:
-  - C₁ = τ_b(C_c) = pc(O, b, C_c, m)
-  - By τ_b parallelogram: (b⊔C₁)⊓m = E_c
-  - By cross-parallelism of τ_a: ((a+b)⊔τ_a(C₁))⊓m = E_c
-  - Collinearity: τ_a(C₁) on (a+b)⊔E_c and on q
-  - Hence τ_a(C₁) = q ⊓ ((a+b)⊔E_c) = pc(O, a+b, C_c, m)
-  - So τ_a(τ_b(C_c)) = τ_{a+b}(C_c)
-  - Since ρ injective: a+(b+c) = (a+b)+c
+  Three ingredients:
+  1. Part III parallelism: (C_b ⊔ (b+c)) ⊓ m = (C ⊔ c) ⊓ m = e_c
+  2. Key Identity via cross-parallelism: τ_a(C_b) = C_{a+b}
+     - Cross-parallelism of τ_a on (b, C_b) gives ((a+b) ⊔ τ_a(C_b)) ⊓ m = E
+     - τ_a(C_b) on q and on (a+b)⊔E → τ_a(C_b) = q ⊓ ((a+b)⊔E) = C_{a+b}
+  3. Cross-parallelism of τ_a on ((b+c), C_b) gives
+     ((a+(b+c)) ⊔ C_{a+b}) ⊓ m = e_c
+     → a+(b+c) ≤ C_{a+b} ⊔ e_c
+     → a+(b+c) ≤ l ⊓ (C_{a+b} ⊔ e_c) = (a+b)+c
+     → a+(b+c) = (a+b)+c  (both atoms)
   -/
   sorry
 
