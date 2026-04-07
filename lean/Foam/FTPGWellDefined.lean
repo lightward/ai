@@ -7,10 +7,9 @@ of any R agree. This is the key use of small_desargues'.
 
 - `parallelogram_completion_well_defined`: Hartshorne Theorem 7.6, Step 2
 
-## Status
+## Status (session 50)
 
-Pre-existing type errors in this section (from session 48).
-These need to be resolved but do not affect Parts I–III or Part V.
+0 sorry, 0 errors. Clean.
 -/
 
 import Foam.FTPGParallelogram

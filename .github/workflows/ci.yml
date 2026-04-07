@@ -15,6 +15,14 @@ jobs:
         with:
           build-args: ""
           lake-package-directory: lean
+      - name: Build each Lean file individually (surfaces hidden type errors)
+        working-directory: lean
+        run: |
+          for f in Foam/*.lean; do
+            mod="Foam.$(basename "$f" .lean)"
+            echo "Building $mod..."
+            lake build "$mod" || exit 1
+          done
 
   python:
     name: Python observations

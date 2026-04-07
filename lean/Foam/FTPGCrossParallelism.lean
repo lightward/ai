@@ -6,10 +6,9 @@ two points it acts on.
 
 - `cross_parallelism`: (P⊔Q)⊓m = (P'⊔Q')⊓m
 
-## Status
+## Status (session 50)
 
-Pre-existing type errors in this section (from session 48).
-These need to be resolved but do not affect Parts I–III or Part V.
+0 sorry, 0 errors. All 13 pre-existing type errors resolved.
 -/
 
 import Foam.FTPGWellDefined

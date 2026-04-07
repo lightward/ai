@@ -8,10 +8,11 @@ then associativity follows from the translation group structure.
 - `key_identity`: τ_a(C_b) = C_{a+b}
 - `coord_add_assoc`: (a + b) + c = a + (b + c)
 
-## Status (session 49)
+## Status (session 50)
 
-16 sorry remain, all in key_identity and coord_add_assoc.
-See individual theorems for details.
+12 sorry remain: 11 in key_identity (distinctness, spanning,
+well-definedness, G-on-m fallback), 1 in coord_add_assoc.
+Bookkeeping sorry (hs_atom, hCs_atom, hs_ne_τ, s≠O) all closed.
 -/
 
 import Foam.FTPGCrossParallelism
@@ -539,40 +540,42 @@ theorem key_identity (Γ : CoordSystem L)
     -- (O ⊔ τ) ⊓ m = E (from h_cross with s = O)
     have hE_le_Oτ : Γ.E ≤ Γ.O ⊔ τ_a_C_b := by
       have := h_cross; rw [hs_eq_O] at this; exact this ▸ inf_le_left
-    -- O ⊔ C ≤ O ⊔ τ (since O ⊔ E ≤ O ⊔ τ and O ⊔ E = O ⊔ C)
+    -- O ⊔ E ≤ O ⊔ τ, and O ⊔ E = O ⊔ C, so O ⊔ C ≤ O ⊔ τ
     have hO_ne_τ : Γ.O ≠ τ_a_C_b := fun h => hO_not_q (h ▸ h_τ_le_q)
     have hOC_le_Oτ : Γ.O ⊔ Γ.C ≤ Γ.O ⊔ τ_a_C_b :=
       hOE_eq_OC ▸ sup_le le_sup_left hE_le_Oτ
-    -- O ⊔ C = O ⊔ τ (CovBy)
-    have hOτ_eq_OC : Γ.O ⊔ τ_a_C_b = Γ.O ⊔ Γ.C :=
-      ((atom_covBy_join Γ.hO hτ_atom hO_ne_τ).eq_or_eq le_sup_left hOC_le_Oτ).resolve_left
-        (ne_of_gt (lt_of_le_of_ne le_sup_left
-          (fun h => hOC ((Γ.hO.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
-            Γ.hC.1).symm))).symm
-    -- τ ≤ (O ⊔ C) ⊓ (U ⊔ C) = C (modular law + O ⊓ q = ⊥)
-    have hO_inf_q : Γ.O ⊓ q = ⊥ :=
-      (Γ.hO.le_iff.mp inf_le_left).resolve_right (fun h => hO_not_q (h ▸ inf_le_right))
+    -- O ⊔ τ = O ⊔ C by CovBy
+    have hOτ_eq_OC : Γ.O ⊔ τ_a_C_b = Γ.O ⊔ Γ.C := by
+      have hOC_lt : Γ.O < Γ.O ⊔ Γ.C := lt_of_le_of_ne le_sup_left
+        (fun h => hOC ((Γ.hO.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left Γ.hC.1).symm)
+      exact ((atom_covBy_join Γ.hO hτ_atom hO_ne_τ).eq_or_eq hOC_lt.le
+        hOC_le_Oτ).resolve_left (ne_of_gt hOC_lt) |>.symm
+    -- τ ≤ O ⊔ C and τ ≤ q. (O ⊔ C) ⊓ q = C by modular law.
     have hτ_le_C : τ_a_C_b ≤ Γ.C := by
-      have : τ_a_C_b ≤ (Γ.O ⊔ Γ.C) ⊓ q :=
+      have hτ_le_OC_q : τ_a_C_b ≤ (Γ.O ⊔ Γ.C) ⊓ q :=
         le_inf (hOτ_eq_OC ▸ le_sup_right) h_τ_le_q
-      rwa [show (Γ.O ⊔ Γ.C) ⊓ q = Γ.C from by
-        rw [show q = Γ.C ⊔ Γ.U from by show Γ.U ⊔ Γ.C = Γ.C ⊔ Γ.U; exact sup_comm _ _,
-            inf_comm, sup_inf_assoc_of_le Γ.O (le_sup_left : Γ.C ≤ Γ.C ⊔ Γ.U),
-            show Γ.O ⊓ (Γ.C ⊔ Γ.U) = ⊥ from by rw [show Γ.C ⊔ Γ.U = q from by
-              show Γ.C ⊔ Γ.U = Γ.U ⊔ Γ.C; exact sup_comm _ _; exact hO_inf_q],
-            sup_bot_eq]] at this
+      -- (O ⊔ C) ⊓ q = (O ⊔ C) ⊓ (U ⊔ C) = C ⊔ O ⊓ (U ⊔ C) = C ⊔ ⊥ = C
+      have hOC_inf_q : (Γ.O ⊔ Γ.C) ⊓ q = Γ.C := by
+        have hO_inf_q : Γ.O ⊓ q = ⊥ :=
+          (Γ.hO.le_iff.mp inf_le_left).resolve_right (fun h => hO_not_q (h ▸ inf_le_right))
+        calc (Γ.O ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.C)
+            = (Γ.C ⊔ Γ.O) ⊓ (Γ.C ⊔ Γ.U) := by rw [sup_comm Γ.O Γ.C, sup_comm Γ.U Γ.C]
+          _ = Γ.C ⊔ Γ.O ⊓ (Γ.C ⊔ Γ.U) :=
+              sup_inf_assoc_of_le Γ.O (le_sup_left : Γ.C ≤ Γ.C ⊔ Γ.U)
+          _ = Γ.C ⊔ Γ.O ⊓ q := by rw [show Γ.C ⊔ Γ.U = q from sup_comm Γ.C Γ.U]
+          _ = Γ.C := by rw [hO_inf_q, sup_bot_eq]
+      exact hOC_inf_q ▸ hτ_le_OC_q
     have hτ_eq_C : τ_a_C_b = Γ.C :=
       (Γ.hC.le_iff.mp hτ_le_C).resolve_left hτ_atom.1
-    -- C_s = C when s = O
+    -- C_s = C when s = O: pc(O, O, C, m) = C ⊓ (O ⊔ E) = C ⊓ (O ⊔ C) = C
     have hCs_eq_C : C_s = Γ.C := by
       show parallelogram_completion Γ.O s Γ.C m = Γ.C
       rw [hs_eq_O]; unfold parallelogram_completion
       have hO_inf_m : Γ.O ⊓ m = ⊥ :=
         (Γ.hO.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hO_not_m (h ▸ inf_le_right))
-      rw [sup_idem, hO_inf_m, sup_bot_eq]
+      simp only [sup_idem, hO_inf_m, sup_bot_eq]
       -- Goal: Γ.C ⊓ (Γ.O ⊔ (Γ.O ⊔ Γ.C) ⊓ m) = Γ.C
-      -- (O ⊔ C) ⊓ m = E, O ⊔ E = O ⊔ C, so Γ.C ⊓ (Γ.O ⊔ Γ.E) = Γ.C ⊓ (Γ.O ⊔ Γ.C) = Γ.C
-      rw [hOE_eq_OC.symm, ← hOE_eq_OC]
+      rw [show (Γ.O ⊔ Γ.C) ⊓ m = Γ.E from rfl, hOE_eq_OC]
       exact inf_eq_left.mpr le_sup_right
     exact hτ_eq_C.trans hCs_eq_C.symm
 
@@ -603,12 +606,12 @@ theorem key_identity (Γ : CoordSystem L)
       have hτ_ne_U : τ_a_C_b ≠ Γ.U :=
         fun hτU => hs_ne_τ (hs_eq_U.trans hτU.symm)
       have hUτ_dir : (Γ.U ⊔ τ_a_C_b) ⊓ m = Γ.E := by
-        have := h_cross; rw [hs_eq_U] at this; rwa [sup_comm] at this
+        have := h_cross; rwa [hs_eq_U] at this
       by_cases hτm : τ_a_C_b ≤ m
       · -- τ ≤ m: U ⊔ τ ≤ m, so (U ⊔ τ) ⊓ m = U ⊔ τ = E. But U < E, contradicting E atom.
         rw [inf_eq_left.mpr (sup_le le_sup_left hτm)] at hUτ_dir
         exact Γ.hEU ((Γ.hE_atom.le_iff.mp
-          (hUτ_dir ▸ (atom_covBy_join Γ.hU hτ_atom hτ_ne_U).lt.le)).resolve_left Γ.hU.1).symm
+          (hUτ_dir ▸ (atom_covBy_join Γ.hU hτ_atom hτ_ne_U.symm).lt.le)).resolve_left Γ.hU.1).symm
       · -- τ ∉ m: (τ ⊔ U) ⊓ m = U by line_direction. But = E. So E = U.
         rw [show Γ.U ⊔ τ_a_C_b = τ_a_C_b ⊔ Γ.U from sup_comm _ _,
             line_direction hτ_atom hτm (le_sup_left : Γ.U ≤ m)] at hUτ_dir
@@ -617,7 +620,7 @@ theorem key_identity (Γ : CoordSystem L)
     have hOs_eq_l : Γ.O ⊔ s = l := by
       have h_lt : Γ.O < Γ.O ⊔ s := lt_of_le_of_ne le_sup_left
         (fun h => hs_ne_O ((Γ.hO.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
-          hs_atom.1).symm)
+          hs_atom.1))
       exact ((atom_covBy_join Γ.hO Γ.hU Γ.hOU).eq_or_eq h_lt.le
         (sup_le le_sup_left hs_on_l)).resolve_left (ne_of_gt h_lt)
     have hCs_atom : IsAtom C_s :=
