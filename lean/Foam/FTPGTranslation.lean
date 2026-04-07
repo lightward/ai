@@ -878,21 +878,98 @@ theorem coord_add_eq_translation (Γ : CoordSystem L)
     (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U)
     (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O)
     (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U)
-    (hab : a ≠ b) :
+    (hab : a ≠ b)
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
+    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
+      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
     let C' := parallelogram_completion Γ.O a Γ.C (Γ.U ⊔ Γ.V)
     coord_add Γ a b = parallelogram_completion Γ.C C' b (Γ.U ⊔ Γ.V) := by
-  -- The four cross-perspectivity atoms:
-  --   a' = (a⊔C)⊓m       (C-projection of a onto m)
-  --   D_b = (b⊔E)⊓(U⊔C)  (E-projection of b onto U⊔C)
-  --   C' = (U⊔C)⊓(a⊔E)   (E-projection of a onto U⊔C)
-  --   e' = (C⊔b)⊓m        (C-projection of b onto m)
+  -- ═══ Proof strategy ═══
+  -- After simplification, the goal reduces to (a'⊔D_b)⊓l = (C'⊔e')⊓l.
+  -- Key: coord_first_desargues gives (a'⊔C')⊓(e'⊔D_b) ≤ O⊔C,
+  --       coord_second_desargues gives W = (a'⊔D_b)⊓(e'⊔C') ≤ l.
+  -- Then W ≤ both atoms (a'⊔D_b)⊓l and (C'⊔e')⊓l, so both equal W.
   --
-  -- Need: (a'⊔D_b)⊓l = (C'⊔e')⊓l
-  --
-  -- Key facts: C, E, O collinear on O⊔C. The quadrilateral (a,C,b,E)
-  -- has diagonals l and O⊔C meeting at O. The cross-connection equality
-  -- follows from the modular law applied to this configuration.
-  sorry
+  -- ═══ Setup ═══
+  have hUV : Γ.U ≠ Γ.V := fun h => Γ.hV_off (h ▸ le_sup_right)
+  have hUC : Γ.U ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_right)
+  have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+  have hCE : Γ.C ≠ Γ.E := fun h => Γ.hC_not_m (h ▸ Γ.hE_on_m)
+  have ha_ne_C : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
+  have hb_ne_C : b ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ hb_on)
+  have ha_ne_E : a ≠ Γ.E := fun h => Γ.hE_not_l (h ▸ ha_on)
+  have hb_ne_E : b ≠ Γ.E := fun h => Γ.hE_not_l (h ▸ hb_on)
+  have hUC_inf_m : (Γ.U ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) = Γ.U :=
+    modular_intersection Γ.hU Γ.hC Γ.hV hUC hUV
+      (fun h => Γ.hC_not_m (h ▸ le_sup_right))
+      (fun hle => Γ.hC_not_m (((atom_covBy_join Γ.hU Γ.hC hUC).eq_or_eq
+        (atom_covBy_join Γ.hU Γ.hV hUV).lt.le (sup_le le_sup_left hle)).resolve_left
+        (ne_of_gt (atom_covBy_join Γ.hU Γ.hV hUV).lt) ▸ le_sup_right))
+  have hE_not_UC : ¬ Γ.E ≤ Γ.U ⊔ Γ.C := fun h => Γ.hEU ((Γ.hU.le_iff.mp
+    (hUC_inf_m ▸ le_inf h Γ.hE_on_m)).resolve_left Γ.hE_atom.1)
+  -- ═══ Simplify C' ═══
+  have hOa_eq_l : Γ.O ⊔ a = Γ.O ⊔ Γ.U := by
+    have hO_lt : Γ.O < Γ.O ⊔ a := lt_of_le_of_ne le_sup_left
+      (fun h => ha_ne_O ((Γ.hO.le_iff.mp (le_of_le_of_eq le_sup_right h.symm)).resolve_left ha.1))
+    exact ((atom_covBy_join Γ.hO Γ.hU Γ.hOU).eq_or_eq hO_lt.le
+      (sup_le le_sup_left ha_on)).resolve_left (ne_of_gt hO_lt)
+  have hC'_simp : parallelogram_completion Γ.O a Γ.C (Γ.U ⊔ Γ.V) =
+      (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E) := by
+    show (Γ.C ⊔ (Γ.O ⊔ a) ⊓ (Γ.U ⊔ Γ.V)) ⊓ (a ⊔ (Γ.O ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V)) =
+      (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E)
+    rw [hOa_eq_l, Γ.l_inf_m_eq_U, sup_comm Γ.C Γ.U]; rfl
+  show coord_add Γ a b =
+    parallelogram_completion Γ.C (parallelogram_completion Γ.O a Γ.C (Γ.U ⊔ Γ.V)) b (Γ.U ⊔ Γ.V)
+  rw [hC'_simp]
+  -- ═══ Simplify RHS to (C'⊔e')⊓l ═══
+  have hCE_eq_CO : Γ.C ⊔ Γ.E = Γ.C ⊔ Γ.O := by
+    have hC_lt : Γ.C < Γ.C ⊔ Γ.E := lt_of_le_of_ne le_sup_left
+      (fun h => hCE ((Γ.hC.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left Γ.hE_atom.1).symm)
+    exact ((atom_covBy_join Γ.hC Γ.hO hOC.symm).eq_or_eq hC_lt.le
+      (sup_le le_sup_left (Γ.hE_le_OC.trans (sup_comm Γ.O Γ.C).le))).resolve_left
+      (ne_of_gt hC_lt)
+  have hC_join_C' : Γ.C ⊔ (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E) = Γ.U ⊔ Γ.C := by
+    apply le_antisymm (sup_le le_sup_right inf_le_left)
+    have haEC_ge_UC : Γ.U ⊔ Γ.C ≤ a ⊔ Γ.E ⊔ Γ.C := by
+      suffices Γ.U ≤ a ⊔ Γ.E ⊔ Γ.C from sup_le this le_sup_right
+      calc Γ.U ≤ Γ.O ⊔ Γ.U := le_sup_right
+        _ = Γ.O ⊔ a := hOa_eq_l.symm
+        _ ≤ a ⊔ Γ.E ⊔ Γ.C := sup_le
+            ((le_of_le_of_eq (le_sup_right : Γ.O ≤ Γ.C ⊔ Γ.O) hCE_eq_CO.symm).trans
+              (sup_le le_sup_right (le_sup_right.trans le_sup_left)))
+            (le_sup_left.trans le_sup_left)
+    calc Γ.U ⊔ Γ.C
+        ≤ (Γ.C ⊔ (a ⊔ Γ.E)) ⊓ (Γ.U ⊔ Γ.C) := le_inf
+          (haEC_ge_UC.trans (show a ⊔ Γ.E ⊔ Γ.C = Γ.C ⊔ (a ⊔ Γ.E) from by ac_rfl).le) le_rfl
+      _ = Γ.C ⊔ (a ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C) :=
+          sup_inf_assoc_of_le (a ⊔ Γ.E) (le_sup_right : Γ.C ≤ Γ.U ⊔ Γ.C)
+      _ = Γ.C ⊔ (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E) := by rw [inf_comm]
+  have hRHS_dir : (Γ.C ⊔ (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E)) ⊓ (Γ.U ⊔ Γ.V) = Γ.U := by
+    rw [hC_join_C', hUC_inf_m]
+  have hbU_eq_l : b ⊔ Γ.U = Γ.O ⊔ Γ.U := by
+    have hU_lt : Γ.U < Γ.U ⊔ b := lt_of_le_of_ne le_sup_left
+      (fun h => hb_ne_U ((Γ.hU.le_iff.mp (le_of_le_of_eq le_sup_right h.symm)).resolve_left hb.1))
+    calc b ⊔ Γ.U = Γ.U ⊔ b := sup_comm _ _
+      _ = Γ.U ⊔ Γ.O := ((atom_covBy_join Γ.hU Γ.hO Γ.hOU.symm).eq_or_eq hU_lt.le
+          (sup_le le_sup_left (hb_on.trans (sup_comm Γ.O Γ.U).le))).resolve_left (ne_of_gt hU_lt)
+      _ = Γ.O ⊔ Γ.U := sup_comm _ _
+  show ((a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ⊓ (Γ.O ⊔ Γ.U) =
+    (b ⊔ (Γ.C ⊔ (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E)) ⊓ (Γ.U ⊔ Γ.V)) ⊓
+    ((Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E) ⊔ (Γ.C ⊔ b) ⊓ (Γ.U ⊔ Γ.V))
+  rw [hRHS_dir, hbU_eq_l, sup_comm Γ.C b, inf_comm (Γ.O ⊔ Γ.U)]
+  -- ═══ Key insight: the RHS is coord_add Γ b a (up to inf_comm/sup_comm) ═══
+  -- After simplification, RHS = ((U⊔C)⊓(a⊔E) ⊔ (b⊔C)⊓(U⊔V)) ⊓ (O⊔U)
+  --   = ((a⊔E)⊓(U⊔C) ⊔ (b⊔C)⊓(U⊔V)) ⊓ (O⊔U)  [inf_comm]
+  --   = ((b⊔C)⊓(U⊔V) ⊔ (a⊔E)⊓(U⊔C)) ⊓ (O⊔U)  [sup_comm]
+  --   = coord_add Γ b a
+  -- And LHS = coord_add Γ a b. So the result follows from coord_add_comm.
+  show ((a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ⊓ (Γ.O ⊔ Γ.U) =
+    ((Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E) ⊔ (b ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V)) ⊓ (Γ.O ⊔ Γ.U)
+  conv_rhs => rw [show (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E) = (a ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C) from inf_comm _ _,
+    show (a ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C) ⊔ (b ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) =
+      (b ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (a ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C) from sup_comm _ _]
+  exact coord_add_comm Γ a b ha hb ha_on hb_on ha_ne_O hb_ne_O ha_ne_U hb_ne_U hab
+    R hR hR_not h_irred
 
 /-- **Associativity of coordinate addition.**
 
@@ -911,11 +988,27 @@ theorem coord_add_assoc (Γ : CoordSystem L)
     (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
       ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
     coord_add Γ (coord_add Γ a b) c = coord_add Γ a (coord_add Γ b c) := by
-  -- Once coord_add_eq_translation is proved:
-  -- Rewrite both sides as translation applications.
-  -- LHS = τ_{a+b}(c) = τ_a(τ_b(c))  (translation group law)
-  -- RHS = τ_a(b+c) = τ_a(τ_b(c))    (same)
-  -- QED.
+  /-
+  ## Proof architecture (not yet implemented)
+
+  The conceptual argument (Hartshorne §7, p.57):
+    a + b = τ_a(b) where τ_a is the unique translation taking O to a.
+    (a+b)+c = τ_{a+b}(c) = (τ_a ∘ τ_b)(c) = τ_a(τ_b(c)) = τ_a(b+c) = a+(b+c).
+
+  The gap: the translation composition τ_{a+b} = τ_a ∘ τ_b is not yet formalized.
+  Parts I-IV prove well-definedness of the parallelogram completion but not the
+  full group structure of Tran(A). Specifically, composing translations via
+  parallelogram completion degenerates when auxiliary points are collinear on q = U⊔C.
+
+  ### Possible approaches:
+  1. **Direct Desargues** (~400 lines): Apply desargues_planar to a configuration
+     involving all three additions, bypassing the translation group entirely.
+     Pattern: similar to coord_add_comm.
+  2. **Formalize Tran(A)**: Define translations as lattice automorphisms,
+     prove closure/composition/abelian (Props 7.5, 7.7), then derive assoc.
+  3. **Use a different auxiliary line**: Avoid the q-degeneration by using a
+     line through C in a different direction for the second translation.
+  -/
   sorry
 
 end Foam.FTPGExplore
