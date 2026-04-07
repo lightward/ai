@@ -10,14 +10,15 @@ then associativity follows from the translation group structure.
 
 ## Status (session 54)
 
-4 sorry remain: 3 in key_identity (well-definedness ×2, G-on-m fallback),
-1 in coord_add_assoc.
+3 sorry remain: 2 in key_identity (well-definedness rebase hwd1,
+G-on-m fallback), 1 in coord_add_assoc.
 
 Session 54: pc-distinctness (hb'_ne_Cb') closed via translation injectivity
-argument — push common point onto m via first factors, distinguish via
-second factors through modular_intersection + hCb_not_Gb. line_direction
-is the right tool for modular collapse (not rw with sup_inf_assoc_of_le,
-which breaks on set definitions).
+argument. hwd2 non-collinear case closed via parallelogram_completion_well_defined
+with span proof O⊔G⊔C_b=π from covBy_sup_of_inf_covBy_left + by_cases.
+line_direction is the right tool for modular collapse (not rw with
+sup_inf_assoc_of_le, which breaks on set definitions).
+hOa_eq_l bridges l vs O⊔a gap for theorem application.
 
 Session 52: G construction changed from h_irred(a,C) to h_irred(b,C).
 (b⊔C) ⊓ (b⊔E) = b ensures C_b ∉ G⊔b (was unfillable with old choice).
@@ -802,7 +803,61 @@ theorem key_identity (Γ : CoordSystem L)
             rw [hGCb_eq, hOCb_eq]; exact hG'f_eq_af
           rw [h_dir, h_line]
         · -- Non-collinear case: apply well-definedness theorem directly
-          sorry
+          -- Preconditions
+          have ha_ne_G : a ≠ G := fun h => hG_not_l (h ▸ ha_on)
+          have hCb_not_l' : ¬ C_b ≤ l := by
+            intro h
+            have : C_b ≤ l ⊓ q := le_inf h hCb_le_q
+            rw [hlq_eq_U] at this
+            exact hCb_not_m ((Γ.hU.le_iff.mp this).resolve_left hCb_atom.1 ▸ le_sup_left)
+          have ha_ne_Cb : a ≠ C_b := fun h => hCb_not_l' (h ▸ ha_on)
+          have hG_not_OCb : ¬ G ≤ Γ.O ⊔ C_b := by
+            intro hG_le
+            exact hCb_OG (le_sup_right.trans
+              (((atom_covBy_join Γ.hO hCb_atom hO_ne_Cb).eq_or_eq
+                (atom_covBy_join Γ.hO hG_atom hO_ne_G).lt.le
+                (sup_le le_sup_left hG_le)).resolve_left
+                (ne_of_gt (atom_covBy_join Γ.hO hG_atom hO_ne_G).lt)).symm.le)
+          -- Span: O ⊔ G ⊔ C_b = π
+          have hOG_Cb_span : Γ.O ⊔ G ⊔ C_b = π := by
+            have hCb_inf_OG : C_b ⊓ (Γ.O ⊔ G) = ⊥ :=
+              (hCb_atom.le_iff.mp inf_le_left).resolve_right
+                (fun h => hCb_OG (h ▸ inf_le_right))
+            have hd_atom : IsAtom ((Γ.O ⊔ G) ⊓ m) :=
+              line_meets_m_at_atom Γ.hO hG_atom hO_ne_G
+                (sup_le (le_sup_left.trans le_sup_left) hG_le_π)
+                hm_le_π hm_cov Γ.hO_not_m
+            have hπ_eq_Om : π = Γ.O ⊔ m := sup_assoc Γ.O Γ.U Γ.V
+            have hm_OG_eq_π : m ⊔ (Γ.O ⊔ G) = π := by
+              apply le_antisymm
+              · exact sup_le hm_le_π (sup_le (le_sup_left.trans le_sup_left) hG_le_π)
+              · rw [hπ_eq_Om]
+                exact sup_le (le_sup_left.trans le_sup_right) le_sup_left
+            -- O⊔G ⋖ π
+            have hOG_cov_π : Γ.O ⊔ G ⋖ π := by
+              have hd_cov_m := hm_line _ hd_atom inf_le_right
+              have h := covBy_sup_of_inf_covBy_left
+                (show m ⊓ (Γ.O ⊔ G) ⋖ m from inf_comm m _ ▸ hd_cov_m)
+              rwa [hm_OG_eq_π] at h
+            -- O⊔G < O⊔G⊔C_b ≤ π, CovBy forces =
+            have hOG_lt : Γ.O ⊔ G < Γ.O ⊔ G ⊔ C_b :=
+              lt_of_le_of_ne le_sup_left
+                (fun h => hCb_OG (le_sup_right.trans h.symm.le))
+            exact (hOG_cov_π.eq_or_eq hOG_lt.le
+              (sup_le (sup_le (le_sup_left.trans le_sup_left) hG_le_π) hCb_le_π)).resolve_left
+              hOG_lt.ne'
+          -- Apply well-definedness: pc(O,a,C_b,m) = pc(G,G',C_b,m)
+          show parallelogram_completion G G' C_b m = τ_a_C_b
+          exact (parallelogram_completion_well_defined Γ.hO ha hG_atom hCb_atom
+            (fun h => ha_ne_O h.symm) hO_ne_G hO_ne_Cb ha_ne_G ha_ne_Cb hG_ne_Cb
+            (le_sup_left.trans le_sup_left) (ha_on.trans le_sup_left) hG_le_π hCb_le_π
+            hm_le_π hm_cov hm_line
+            Γ.hO_not_m ha_not_m hG_not_m hCb_not_m
+            (fun h => hG_not_l (hOa_eq_l ▸ h))
+            (fun h => hCb_not_l' (hOa_eq_l ▸ h))
+            hCb_OG hG_not_OCb hCb_not_GG'
+            hOG_Cb_span
+            R hR hR_not h_irred).symm
       -- Apply cross_parallelism
       have hcp := cross_parallelism hG_atom hG'_atom hb hCb_atom
         hGG' hG_ne_b hG_ne_Cb hb_ne_Cb
