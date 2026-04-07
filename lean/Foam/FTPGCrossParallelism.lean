@@ -96,7 +96,15 @@ theorem cross_parallelism
   -- ═══ Step 1: Perspectivity from d ═══
   -- P₀' is on d ⊔ P₀ (= P₀ ⊔ P₀') since d ≤ P₀⊔P₀'
   have hP₀'_on_dP₀ : P₀' ≤ d ⊔ P₀ := by
-    rw [sup_comm]; exact le_sup_right
+    -- d and P₀ are distinct atoms on line P₀⊔P₀', so d⊔P₀ = P₀⊔P₀'
+    have hd_ne_P₀ : d ≠ P₀ := fun h => hP₀_not (h ▸ hd_le_m)
+    have hP₀_lt : P₀ < d ⊔ P₀ := lt_of_le_of_ne le_sup_right
+      (fun h => hd_ne_P₀ ((hP₀.le_iff.mp (le_sup_left.trans h.symm.le)).resolve_left
+        hd_atom.1))
+    have h_eq : d ⊔ P₀ = P₀ ⊔ P₀' :=
+      ((atom_covBy_join hP₀ hP₀' hP₀P₀').eq_or_eq hP₀_lt.le
+        (sup_le (inf_le_left : d ≤ P₀ ⊔ P₀') le_sup_left)).resolve_left (ne_of_gt hP₀_lt)
+    exact le_sup_right.trans h_eq.symm.le
   -- P' is on d ⊔ P (= P ⊔ P') since P⊔P' = P⊔d (covering argument)
   have hP'_on_dP : P' ≤ d ⊔ P := by
     have hP'_le_Pd : P' ≤ P ⊔ d := by
@@ -147,8 +155,8 @@ theorem cross_parallelism
     have h_cov : e_P ⋖ P₀' ⊔ e_P := by
       have := atom_covBy_join he_P_atom hP₀' (Ne.symm hP₀'_ne_eP)
       rwa [sup_comm] at this
-    rcases h_cov.eq_or_eq hd_lt_de.le hde_le with h_eq | h_eq
-    · exact absurd h_eq (ne_of_gt hd_lt_de)
+    rcases h_cov.eq_or_eq le_sup_right hde_le with h_eq | h_eq
+    · exact hde_ne ((he_P_atom.le_iff.mp (le_sup_left.trans h_eq.le)).resolve_left hd_atom.1)
     · exact hP₀'_not (le_trans le_sup_left (h_eq ▸ sup_le hd_le_m (inf_le_right : e_P ≤ m)))
   have hQ'_not_m : ¬ Q' ≤ m := by
     intro h
@@ -181,8 +189,8 @@ theorem cross_parallelism
     have h_cov : e_Q ⋖ P₀' ⊔ e_Q := by
       have := atom_covBy_join he_Q_atom hP₀' (Ne.symm hP₀'_ne_eQ)
       rwa [sup_comm] at this
-    rcases h_cov.eq_or_eq hd_lt_de.le hde_le with h_eq | h_eq
-    · exact absurd h_eq (ne_of_gt hd_lt_de)
+    rcases h_cov.eq_or_eq le_sup_right hde_le with h_eq | h_eq
+    · exact hde_ne ((he_Q_atom.le_iff.mp (le_sup_left.trans h_eq.le)).resolve_left hd_atom.1)
     · exact hP₀'_not (le_trans le_sup_left (h_eq ▸ sup_le hd_le_m (inf_le_right : e_Q ≤ m)))
   -- Input parallelism 1: (P₀⊔P)⊓m = (P₀'⊔P')⊓m
   have hP'_ne_P₀' : P' ≠ P₀' := hP₀'_ne_P'.symm
@@ -222,18 +230,26 @@ theorem cross_parallelism
     -- P₀' ⊔ e_P ≤ P₀' ⊔ (P₀ ⊔ P) = some plane. If P ≤ P₀'⊔e_P, covering gives P₀'⊔e_P = P₀⊔P
     -- or P = e_P or P = P₀'. Both impossible.
     by_cases h_lines : P₀' ⊔ e_P = P₀ ⊔ P
-    · exact hP_not_PP' (le_sup_right.trans (by
-        rw [show P₀ ⊔ P = P₀' ⊔ e_P from h_lines.symm]
-        exact sup_le le_sup_left (inf_le_left.trans (sup_le le_sup_left le_sup_right))))
+    · -- P₀' on line P₀⊔P, so P₀⊔P₀' = P₀⊔P by CovBy, hence P ≤ P₀⊔P₀'
+      have hP₀'_le_P₀P : P₀' ≤ P₀ ⊔ P := le_sup_left.trans h_lines.le
+      rcases (atom_covBy_join hP₀ hP hP₀P).eq_or_eq le_sup_left
+        (sup_le le_sup_left hP₀'_le_P₀P) with h_eq | h_eq
+      · exact hP₀P₀'.symm ((hP₀.le_iff.mp (le_sup_right.trans h_eq.le)).resolve_left hP₀'.1)
+      · exact hP_not_PP' (le_sup_right.trans h_eq.symm.le)
     · -- P ≤ P₀⊔P and P ≤ P₀'⊔e_P, and these are distinct lines.
       -- Their intersection is an atom. e_P is also in both. So P = e_P → P on m. ✗
       have hP_le_inf : P ≤ (P₀ ⊔ P) ⊓ (P₀' ⊔ e_P) := le_inf le_sup_right hP_le_P₀'e
       have heP_le_inf : e_P ≤ (P₀ ⊔ P) ⊓ (P₀' ⊔ e_P) := le_inf he_P_le_P₀P le_sup_right
       have h_inf_lt : (P₀ ⊔ P) ⊓ (P₀' ⊔ e_P) < P₀ ⊔ P := by
-        exact lt_of_le_of_ne inf_le_left (fun h_eq => h_lines
-          ((inf_eq_left.mp h_eq).antisymm
-            (sup_le (le_sup_left.trans (inf_eq_left.mp h_eq).le)
-              (he_P_le_P₀P.trans inf_le_left))).symm)
+        apply lt_of_le_of_ne inf_le_left
+        intro h_eq
+        have h_le : P₀ ⊔ P ≤ P₀' ⊔ e_P := inf_eq_left.1 h_eq
+        have hP₀'_ne_eP : P₀' ≠ e_P := fun h => hP₀'_not (h ▸ inf_le_right)
+        have hP₀'_lt : P₀' < P₀ ⊔ P₀' := lt_of_le_of_ne le_sup_right
+          (fun h => hP₀P₀' ((hP₀'.le_iff.mp (le_sup_left.trans h.symm.le)).resolve_left hP₀.1))
+        have h_PP' := ((atom_covBy_join hP₀' he_P_atom hP₀'_ne_eP).eq_or_eq le_sup_right
+          (sup_le (le_sup_left.trans h_le) le_sup_left)).resolve_left (ne_of_gt hP₀'_lt)
+        exact hP_not_PP' (le_sup_right.trans (h_le.trans h_PP'.symm.le))
       have h_pos : ⊥ < (P₀ ⊔ P) ⊓ (P₀' ⊔ e_P) := lt_of_lt_of_le hP.bot_lt hP_le_inf
       have h_inf_atom := line_height_two hP₀ hP hP₀P h_pos h_inf_lt
       have hP_eq := (h_inf_atom.le_iff.mp hP_le_inf).resolve_left hP.1
@@ -245,17 +261,24 @@ theorem cross_parallelism
       have : Q' ≤ P₀' ⊔ (P₀ ⊔ Q) ⊓ m := inf_le_right
       exact h ▸ this
     by_cases h_lines : P₀' ⊔ e_Q = P₀ ⊔ Q
-    · exact hQ_not_PP' (le_sup_right.trans (by
-        rw [show P₀ ⊔ Q = P₀' ⊔ e_Q from h_lines.symm]
-        exact sup_le le_sup_left (inf_le_left.trans (sup_le le_sup_left le_sup_right))))
+    · have hP₀'_le_P₀Q : P₀' ≤ P₀ ⊔ Q := le_sup_left.trans h_lines.le
+      rcases (atom_covBy_join hP₀ hQ hP₀Q).eq_or_eq le_sup_left
+        (sup_le le_sup_left hP₀'_le_P₀Q) with h_eq | h_eq
+      · exact hP₀P₀'.symm ((hP₀.le_iff.mp (le_sup_right.trans h_eq.le)).resolve_left hP₀'.1)
+      · exact hQ_not_PP' (le_sup_right.trans h_eq.symm.le)
     · have heQ_le_P₀Q : e_Q ≤ P₀ ⊔ Q := inf_le_left
       have hQ_le_inf : Q ≤ (P₀ ⊔ Q) ⊓ (P₀' ⊔ e_Q) := le_inf le_sup_right hQ_le_P₀'e
       have heQ_le_inf : e_Q ≤ (P₀ ⊔ Q) ⊓ (P₀' ⊔ e_Q) := le_inf heQ_le_P₀Q le_sup_right
       have h_inf_lt : (P₀ ⊔ Q) ⊓ (P₀' ⊔ e_Q) < P₀ ⊔ Q := by
-        exact lt_of_le_of_ne inf_le_left (fun h_eq => h_lines
-          ((inf_eq_left.mp h_eq).antisymm
-            (sup_le (le_sup_left.trans (inf_eq_left.mp h_eq).le)
-              (heQ_le_P₀Q.trans inf_le_left))).symm)
+        apply lt_of_le_of_ne inf_le_left
+        intro h_eq
+        have h_le : P₀ ⊔ Q ≤ P₀' ⊔ e_Q := inf_eq_left.1 h_eq
+        have hP₀'_ne_eQ : P₀' ≠ e_Q := fun h => hP₀'_not (h ▸ inf_le_right)
+        have hP₀'_lt : P₀' < P₀ ⊔ P₀' := lt_of_le_of_ne le_sup_right
+          (fun h => hP₀P₀' ((hP₀'.le_iff.mp (le_sup_left.trans h.symm.le)).resolve_left hP₀.1))
+        have h_PP' := ((atom_covBy_join hP₀' he_Q_atom hP₀'_ne_eQ).eq_or_eq le_sup_right
+          (sup_le (le_sup_left.trans h_le) le_sup_left)).resolve_left (ne_of_gt hP₀'_lt)
+        exact hQ_not_PP' (le_sup_right.trans (h_le.trans h_PP'.symm.le))
       have h_pos : ⊥ < (P₀ ⊔ Q) ⊓ (P₀' ⊔ e_Q) := lt_of_lt_of_le hQ.bot_lt hQ_le_inf
       have h_inf_atom := line_height_two hP₀ hQ hP₀Q h_pos h_inf_lt
       have hQ_eq := (h_inf_atom.le_iff.mp hQ_le_inf).resolve_left hQ.1
@@ -265,20 +288,16 @@ theorem cross_parallelism
   have h_sides_P₀P : P₀ ⊔ P ≠ P₀' ⊔ P' := by
     intro h
     have hP₀'_le : P₀' ≤ P₀ ⊔ P := le_sup_left.trans h.symm.le
-    have hP₀_lt : P₀ < P₀ ⊔ P := lt_of_le_of_ne le_sup_left
-      (fun h => hP₀P ((hP₀.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hP.1).symm)
-    rcases (atom_covBy_join hP₀ hP₀' hP₀P₀').eq_or_eq hP₀_lt.le
-      (sup_le hP₀'_le le_sup_left) with h_eq | h_eq
-    · exact absurd h_eq (ne_of_gt hP₀_lt)
+    rcases (atom_covBy_join hP₀ hP hP₀P).eq_or_eq le_sup_left
+      (sup_le le_sup_left hP₀'_le) with h_eq | h_eq
+    · exact hP₀P₀'.symm ((hP₀.le_iff.mp (le_sup_right.trans h_eq.le)).resolve_left hP₀'.1)
     · exact hP_not_PP' (le_sup_right.trans h_eq.symm.le)
   have h_sides_P₀Q : P₀ ⊔ Q ≠ P₀' ⊔ Q' := by
     intro h
     have hP₀'_le : P₀' ≤ P₀ ⊔ Q := le_sup_left.trans h.symm.le
-    have hP₀_lt : P₀ < P₀ ⊔ Q := lt_of_le_of_ne le_sup_left
-      (fun h => hP₀Q ((hP₀.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hQ.1).symm)
-    rcases (atom_covBy_join hP₀ hP₀' hP₀P₀').eq_or_eq hP₀_lt.le
-      (sup_le hP₀'_le le_sup_left) with h_eq | h_eq
-    · exact absurd h_eq (ne_of_gt hP₀_lt)
+    rcases (atom_covBy_join hP₀ hQ hP₀Q).eq_or_eq le_sup_left
+      (sup_le le_sup_left hP₀'_le) with h_eq | h_eq
+    · exact hP₀P₀'.symm ((hP₀.le_iff.mp (le_sup_right.trans h_eq.le)).resolve_left hP₀'.1)
     · exact hQ_not_PP' (le_sup_right.trans h_eq.symm.le)
   -- Handle the degenerate case P⊔Q = P'⊔Q' directly (conclusion is trivial)
   by_cases h_sides_PQ : P ⊔ Q = P' ⊔ Q'
@@ -317,7 +336,8 @@ theorem cross_parallelism
         rwa [modular_intersection hP₀ hP hQ hP₀P hP₀Q hPQ hQ_not_P₀P] at this
       have hP₀m : P₀ ⊓ m = ⊥ := by
         rcases hP₀.le_iff.mp inf_le_left with h | h
-        · exact h; · exact absurd (h ▸ inf_le_right) hP₀_not
+        · exact h
+        · exact absurd (h ▸ inf_le_right) hP₀_not
       exact he_P_atom.1 (le_antisymm (hP₀m ▸ le_inf heP_le_P₀ (inf_le_right : e_P ≤ m)) bot_le)
     -- e_P ⊔ e_Q = m
     have hePeQ_eq_m : e_P ⊔ e_Q = m := by
@@ -357,12 +377,12 @@ theorem cross_parallelism
     rw [← this]
     have hP₀_not_PQ : ¬ P₀ ≤ P ⊔ Q := by
       intro hP₀_le
-      have hP_lt : P < P ⊔ Q := lt_of_le_of_ne le_sup_left
-        (fun h => hPQ ((hP.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hQ.1).symm)
-      rcases (atom_covBy_join hP hP₀ hP₀P.symm).eq_or_eq hP_lt.le
+      rcases (atom_covBy_join hP hQ hPQ).eq_or_eq le_sup_left
         (sup_le le_sup_left hP₀_le) with h | h
-      · exact absurd h (ne_of_gt hP_lt)
-      · exact hQ_not_P₀P (le_sup_right.trans h.symm.le)
+      · exact hP₀P ((hP.le_iff.mp (le_sup_right.trans h.le)).resolve_left hP₀.1)
+      · have : Q ≤ P ⊔ P₀ := le_sup_right.trans h.symm.le
+        rw [sup_comm] at this
+        exact hQ_not_P₀P this
     exact line_covBy_plane hP hQ hP₀ hPQ hP₀P.symm hP₀Q.symm hP₀_not_PQ
   -- ═══ Step 4: Apply small_desargues' ═══
   exact small_desargues' hd_atom hP₀ hP hQ hP₀' hP'_atom hQ'_atom
