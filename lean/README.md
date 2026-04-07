@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 13 files, 1 axiom, 0 sorry.
+Mechanically verified deductive path from P² = P to the foam's architecture. 19 files, 1 axiom, 12 sorry (all in associativity).
 
 ## The chain
 
@@ -42,25 +42,49 @@ Incidence geometry, Veblen-Young, Desargues (nonplanar + planar), perspectivity,
 | perspectivity | `project_is_atom`, `project_injective`, `perspectivity_injective` |
 | Small Desargues | `small_desargues'` (A5a: parallelism from Desargues) |
 
-**FTPGCoord.lean** — von Staudt coordinatization (3 sorry in `coord_add_assoc`)
+**FTPGCoord.lean** — von Staudt coordinatization (0 sorry)
 
-Coordinate system, addition via perspectivities, ring axioms. Imports FTPGExplore.
+Coordinate system, addition via perspectivities, commutativity. Imports FTPGExplore.
 
 | layer | key declarations |
 |---|---|
-| coordinate system | `CoordSystem`, `coord_add`, `coord_add_left_zero`, `coord_add_right_zero` |
+| coordinate system | `CoordSystem`, `coord_add`, `coord_add_atom`, `coord_add_left_zero`, `coord_add_right_zero` |
 | commutativity | `coord_first_desargues`, `coord_second_desargues`, `coord_add_comm` |
-| associativity | `coord_add_assoc` (in progress: translation consistency via four A5a applications) |
 
-**FTPGTranslation.lean** — Hartshorne translation approach (4 sorry)
+**FTPGParallelogram.lean** — parallelogram completion (0 sorry)
 
-Alternative path to associativity via the translation group (Hartshorne §7). Defines parallelism, parallelogram completion, and the infrastructure for proving translations form an abelian group — from which associativity follows as a structural consequence rather than diagram-chasing.
+Infrastructure for the Hartshorne translation approach (§7). Parallelism, parallelogram completion, and Parts I–III properties.
 
 | layer | key declarations |
 |---|---|
 | parallelism | `parallel`, `parallel_refl`, `parallel_symm`, `parallel_trans` |
-| construction | `parallelogram_completion`, `line_meets_m_at_atom` |
-| properties | `parallelogram_completion_atom`, `parallelogram_parallel_direction`, `parallelogram_parallel_sides` |
+| construction | `parallelogram_completion`, `parallelogram_completion_atom`, `line_meets_m_at_atom` |
+| properties | `parallelogram_parallel_direction`, `parallelogram_parallel_sides` |
+
+**FTPGWellDefined.lean** — translation well-definedness (0 sorry)
+
+Part IV: parallelogram completion is independent of base point (Hartshorne Theorem 7.6, Step 2). Key use of `small_desargues'`.
+
+| layer | key declarations |
+|---|---|
+| well-definedness | `parallelogram_completion_well_defined` |
+
+**FTPGCrossParallelism.lean** — cross-parallelism (0 sorry)
+
+Part IV-B: a single translation preserves directions of lines connecting any two points it acts on.
+
+| layer | key declarations |
+|---|---|
+| cross-parallelism | `cross_parallelism` |
+
+**FTPGAssoc.lean** — associativity (12 sorry)
+
+Part V: `coord_add` equals translation application, then associativity from the translation group structure. The final connection.
+
+| layer | key declarations |
+|---|---|
+| key identity | `key_identity` (τ_a(C_b) = C_{a+b}, 11 sorry: distinctness, spanning, well-definedness rebasing) |
+| associativity | `coord_add_assoc` (1 sorry, structurally dependent on `key_identity`) |
 
 ### The deductive chain (from P² = P)
 
