@@ -12,6 +12,7 @@ from pathlib import Path
 DERIVATIONS = [
     "ground",
     "writing_map",
+    "half_type",
     "channel_capacity",
     "stabilization",
     "group",
@@ -37,7 +38,7 @@ def lean_summary() -> str:
     """Summary of the Lean formalization."""
     return """## the deductive chain (lean/)
 
-mechanically verified. 13 files, 1 axiom (FTPG), 0 sorry.
+mechanically verified. 14 files, 1 axiom (FTPG), 0 sorry.
 
 ```
 closure (ground)
@@ -53,7 +54,9 @@ eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian
 FoamGround properties verified
 ```
 
-the chain: P^2 = P (definition) -> binary eigenvalues (Observation) -> clean splits -> commutator structure (Pair) -> skew-symmetry, tracelessness (Form) -> self-duality at rank 3 (Rank) -> (R^3, x) = so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround as theorem (Ground)."""
+the chain: P^2 = P (definition) -> binary eigenvalues (Observation) -> clean splits -> commutator structure (Pair) -> skew-symmetry, tracelessness (Form) -> self-duality at rank 3 (Rank) -> (R^3, x) = so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround as theorem (Ground).
+
+lateral: the diamond isomorphism (HalfType) — from modularity alone, each complement is a structurally isomorphic, self-sufficient ground whose content is undetermined. state-independence is a lattice theorem, pre-bridge."""
 
 
 def read_derivation(name: str) -> str:
