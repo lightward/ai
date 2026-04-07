@@ -2911,7 +2911,8 @@ theorem coord_add_comm (Γ : CoordSystem L)
 
 -- coord_add_assoc: The diagram-chasing approach to associativity (originally here,
 -- ~900 lines) is superseded by the Hartshorne translation approach in
--- FTPGTranslation.lean. The theorem statement and proof now live there,
--- built on the translation group structure rather than direct parallelism chasing.
+-- FTPGAssoc.lean (via FTPGParallelogram → FTPGWellDefined → FTPGCrossParallelism).
+-- The theorem statement and proof now live there, built on the translation
+-- group structure rather than direct parallelism chasing.
 
 end Foam.FTPGExplore
