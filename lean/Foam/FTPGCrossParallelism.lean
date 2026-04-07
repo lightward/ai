@@ -38,6 +38,7 @@ The two input parallelisms come from the parallelogram sides:
 The conclusion is the third parallelism: (P⊔Q)⊓m = (P'⊔Q')⊓m.
 -/
 
+omit [ComplementedLattice L] in
 /-- **Cross-parallelism: a translation preserves directions.**
 
     If P' and Q' are the images of P and Q under the translation

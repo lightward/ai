@@ -330,6 +330,7 @@ theorem coord_add_right_zero (Γ : CoordSystem L)
   exact ((line_height_two Γ.hO Γ.hU Γ.hOU (lt_of_lt_of_le ha.bot_lt ha_le) h_lt
     |>.le_iff.mp ha_le).resolve_left ha.1).symm
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- If R is an atom not in π and s ≤ π, then π ⊓ (R ⊔ s) = s.
     The modular law gives (s ⊔ R) ⊓ π = s ⊔ (R ⊓ π) = s ⊔ ⊥ = s,
     using the fact that an atom outside π meets π trivially. -/
@@ -344,6 +345,7 @@ theorem inf_sup_of_atom_not_le {s π R : L}
   exact key
 
 
+omit [ComplementedLattice L] in
 /-- **Lifting preserves side intersections.**
 
     When a triangle side b₁ ⊔ b₂ is "lifted" to b₁' ⊔ b₂' (with
@@ -428,6 +430,7 @@ theorem lift_side_intersection
     line_height_two ha₁ ha₂ ha₁₂ (lt_of_lt_of_le hT_atom.bot_lt hT_le_S) hS_lt
   exact (hS_atom.le_iff.mp hT_le_S).resolve_left hT_atom.1
 
+omit [ComplementedLattice L] in
 /-- **Desargues' theorem (planar case).**
 
     Two triangles in a plane π, perspective from a point o, have
@@ -459,20 +462,20 @@ theorem desargues_planar
     (h_sides₁₃ : a₁ ⊔ a₃ ≠ b₁ ⊔ b₃)
     (h_sides₂₃ : a₂ ⊔ a₃ ≠ b₂ ⊔ b₃)
     -- Triangle planes (both in π)
-    (hπA : a₁ ⊔ a₂ ⊔ a₃ = π) (hπB : b₁ ⊔ b₂ ⊔ b₃ = π)
+    (hπA : a₁ ⊔ a₂ ⊔ a₃ = π) (_hπB : b₁ ⊔ b₂ ⊔ b₃ = π)
     -- o ≠ a_i (center is off the triangle)
     (hoa₁ : o ≠ a₁) (hoa₂ : o ≠ a₂) (hoa₃ : o ≠ a₃)
     -- o ≠ b_i (center is off both triangles)
     (hob₁ : o ≠ b₁) (hob₂ : o ≠ b₂) (hob₃ : o ≠ b₃)
     -- Corresponding vertices are distinct
-    (ha₁b₁ : a₁ ≠ b₁) (ha₂b₂ : a₂ ≠ b₂) (ha₃b₃ : a₃ ≠ b₃)
+    (ha₁b₁ : a₁ ≠ b₁) (ha₂b₂ : a₂ ≠ b₂) (_ha₃b₃ : a₃ ≠ b₃)
     -- Height ≥ 4: an atom outside π
     (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ π)
     -- Irreducibility: third atom on each line
     (h_irred : ∀ (a b : L), IsAtom a → IsAtom b → a ≠ b →
       ∃ c : L, IsAtom c ∧ c ≤ a ⊔ b ∧ c ≠ a ∧ c ≠ b)
     -- Sides are lines covered by π
-    (h_cov₁₂ : a₁ ⊔ a₂ ⋖ π) (h_cov₁₃ : a₁ ⊔ a₃ ⋖ π) (h_cov₂₃ : a₂ ⊔ a₃ ⋖ π) :
+    (h_cov₁₂ : a₁ ⊔ a₂ ⋖ π) (_h_cov₁₃ : a₁ ⊔ a₃ ⋖ π) (_h_cov₂₃ : a₂ ⊔ a₃ ⋖ π) :
     -- All three intersection points lie on a common line (strictly below π)
     ∃ (axis : L), axis ≤ π ∧ axis ≠ π ∧
       (a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂) ≤ axis ∧
@@ -792,6 +795,7 @@ theorem desargues_planar
   exact ⟨π ⊓ (b₁' ⊔ b₂' ⊔ b₃'), inf_le_left, haxis_ne,
     h_lift₁₂ ▸ h₁₂, h_lift₁₃ ▸ h₁₃, h_lift₂₃ ▸ h₂₃⟩
 
+omit [BoundedOrder L] [IsModularLattice L] [IsAtomistic L] in
 /-- **Collinearity from Desargues.** If three points lie on a common
     element strictly below π, and two of them span a line covered by π,
     the third lies on that line.
@@ -815,6 +819,7 @@ theorem collinear_of_common_bound {s₁ s₂ s₃ axis π : L}
 
 -- § Small Desargues (A5a)
 
+omit [ComplementedLattice L] in
 /-- **Small Desargues (A5a).** Three lines through a common point U in a plane π,
     with six atoms satisfying two "parallelism" conditions. Desargues gives the third.
 

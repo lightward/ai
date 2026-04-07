@@ -40,6 +40,7 @@ defining the same translation (i.e., PP' ∥ RR' and PR ∥ P'R'),
 then the completions of any Q agree. This uses small_desargues'.
 -/
 
+omit [ComplementedLattice L] in
 /-- **Well-definedness of translations (Hartshorne Theorem 7.6, Step 2).**
 
     If Q' = parallelogram_completion P P' Q m and

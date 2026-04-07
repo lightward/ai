@@ -513,7 +513,7 @@ theorem key_identity (Γ : CoordSystem L)
       -- And (b⊔C_b)⊓m = E
       exact hcp.symm.trans h_bCb_dir
     · -- G IS on m. Need another atom. Use b and C.
-      push_neg at hG_not_m
+      push Not at hG_not_m
       sorry -- case: G on m. Use h_irred on b⊔C to find G₂ off m.
 
   -- ═══ Step 4: Conclude τ_a(C_b) = C_s ═══

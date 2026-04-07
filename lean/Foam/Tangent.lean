@@ -23,6 +23,7 @@ open Matrix
 
 variable {n : Type*} [Fintype n] [DecidableEq n]
 
+omit [DecidableEq n] in
 /-- [W, P] has no range-to-range component: P · [W,P] · P = 0.
     The interaction doesn't map the seen back into the seen. -/
 theorem commutator_off_diag_range

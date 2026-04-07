@@ -52,9 +52,9 @@ and height ≥ 4 (chains of length ≥ 4 exist).
 def ftpg_statement : Prop :=
   ∀ (L : Type u) [Lattice L] [BoundedOrder L]
     [ComplementedLattice L] [IsModularLattice L] [IsAtomistic L]
-    (h_irred : ∀ (a b : L), IsAtom a → IsAtom b → a ≠ b →
+    (_h_irred : ∀ (a b : L), IsAtom a → IsAtom b → a ≠ b →
       ∃ c : L, IsAtom c ∧ c ≤ a ⊔ b ∧ c ≠ a ∧ c ≠ b)
-    (h_height : ∃ (a b c d : L), ⊥ < a ∧ a < b ∧ b < c ∧ c < d),
+    (_h_height : ∃ (a b c d : L), ⊥ < a ∧ a < b ∧ b < c ∧ c < d),
     ∃ (D : Type u) (_ : DivisionRing D)
       (V : Type u) (_ : AddCommGroup V) (_ : Module D V),
     Nonempty (L ≃o Submodule D V)
@@ -68,6 +68,7 @@ variable {L : Type u} [Lattice L] [BoundedOrder L]
 
 -- § Atoms
 
+omit [ComplementedLattice L] [IsModularLattice L] [IsAtomistic L] in
 /-- Distinct atoms are disjoint. -/
 theorem atoms_disjoint {a b : L} (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b) :
     a ⊓ b = ⊥ := by
@@ -77,12 +78,14 @@ theorem atoms_disjoint {a b : L} (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b)
     have hab' : a ≤ b := h ▸ inf_le_right
     exact le_antisymm hab' (hb.le_iff.mp hab' |>.resolve_left ha.1 ▸ le_refl b)
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- Distinct atoms: each is covered by their join. -/
 theorem atom_covBy_join {a b : L} (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b) :
     a ⋖ a ⊔ b := by
   have h_meet : a ⊓ b = ⊥ := atoms_disjoint ha hb hab
   exact covBy_sup_of_inf_covBy_of_inf_covBy_left (h_meet ▸ ha.bot_covBy) (h_meet ▸ hb.bot_covBy)
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- Irreducibility gives a third atom on every line, and that atom
     generates the same line. -/
 theorem third_atom_on_line {a b : L} (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b)
@@ -102,6 +105,7 @@ theorem third_atom_on_line {a b : L} (ha : IsAtom a) (hb : IsAtom b) (hab : a �
 
 -- § Lines
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- Any atom on a line is covered by that line. -/
 theorem line_covers_its_atoms {a b c : L}
     (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b)
@@ -123,10 +127,11 @@ theorem line_covers_its_atoms {a b c : L}
     have h_cov_ca := atom_covBy_join hc ha hac.symm
     rwa [sup_comm c a, ← h_eq] at h_cov_ca
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- Lines are determined by any two of their points. -/
 theorem line_eq_of_atom_le {a b c : L}
     (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
-    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+    (hab : a ≠ b) (hac : a ≠ c) (_hbc : b ≠ c)
     (hc_le : c ≤ a ⊔ b) :
     a ⊔ b = a ⊔ c := by
   have h_cov := atom_covBy_join ha hb hab
@@ -137,6 +142,7 @@ theorem line_eq_of_atom_le {a b c : L}
   exact ((h_cov.eq_or_eq h_a_lt_ac.le (sup_le le_sup_left hc_le)).resolve_left
     (ne_of_gt h_a_lt_ac)).symm
 
+omit [ComplementedLattice L] in
 /-- Lines have height 2: anything strictly between ⊥ and a line is an atom. -/
 theorem line_height_two {a b : L} (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b)
     {x : L} (hx_pos : ⊥ < x) (hx_lt : x < a ⊔ b) :
@@ -158,10 +164,11 @@ theorem line_height_two {a b : L} (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b
 
 -- § Planes
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- A line and an off-line atom form a plane that covers the line. -/
 theorem line_covBy_plane {a b c : L}
-    (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
-    (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+    (_ha : IsAtom a) (_hb : IsAtom b) (hc : IsAtom c)
+    (_hab : a ≠ b) (_hac : a ≠ c) (_hbc : b ≠ c)
     (h_not_collinear : ¬ c ≤ a ⊔ b) :
     a ⊔ b ⋖ a ⊔ b ⊔ c := by
   have h_meet : c ⊓ (a ⊔ b) = ⊥ := by
@@ -172,6 +179,7 @@ theorem line_covBy_plane {a b c : L}
   rw [show c ⊔ (a ⊔ b) = a ⊔ b ⊔ c from sup_comm _ _] at h1
   exact h1
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- Two lines through a common atom: the modular law gives their meet. -/
 theorem modular_intersection {a b c : L}
     (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
@@ -189,6 +197,7 @@ theorem modular_intersection {a b c : L}
 
 -- § Veblen-Young
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- Abstract core: if x ⋖ z, y ≤ z, y ≰ x, and x ⊓ y = ⊥, then ⊥ ⋖ y. -/
 theorem covBy_inf_disjoint_atom {x y z : L}
     (h_cov : x ⋖ z) (hy_le : y ≤ z) (hy_not_le : ¬ y ≤ x) (h_disj : x ⊓ y = ⊥) :
@@ -202,6 +211,7 @@ theorem covBy_inf_disjoint_atom {x y z : L}
     exact IsLowerModularLattice.inf_covBy_of_covBy_sup h_cov
   rwa [h_disj] at h_inf_cov
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- Two lines in a plane meet (assuming the second is a genuine line). -/
 theorem lines_meet_if_coplanar {l₁ l₂ z : L}
     (h_cov : l₁ ⋖ z) (hl₂_le : l₂ ≤ z) (hl₂_not : ¬ l₂ ≤ l₁)
@@ -210,13 +220,14 @@ theorem lines_meet_if_coplanar {l₁ l₂ z : L}
   intro h_disj
   exact (covBy_inf_disjoint_atom h_cov hl₂_le hl₂_not h_disj).2 hp.bot_lt hp_lt
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- **Veblen-Young.** Two lines in a plane have non-trivial intersection. -/
 theorem veblen_young {a b c d : L}
     (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c) (hd : IsAtom d)
     (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c) (had : a ≠ d)
     (h_nc : ¬ c ≤ a ⊔ b)
     (hd_le : d ≤ a ⊔ b ⊔ c)
-    (hd_not_bc : ¬ d ≤ b ⊔ c) :
+    (_hd_not_bc : ¬ d ≤ b ⊔ c) :
     (b ⊔ c) ⊓ (a ⊔ d) ≠ ⊥ := by
   have ha_not_bc : ¬ a ≤ b ⊔ c := by
     intro hle; apply h_nc
@@ -252,10 +263,11 @@ theorem veblen_young {a b c d : L}
       exact had (le_antisymm (ha.le_iff.mp (heq ▸ le_sup_right) |>.resolve_left hd.1 ▸ le_refl a)
         (heq ▸ le_sup_right))))
 
+omit [ComplementedLattice L] in
 /-- Meet of two distinct lines (when nonzero) is an atom. -/
 theorem meet_of_lines_is_atom {a b c d : L}
-    (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c) (hd : IsAtom d)
-    (hab : a ≠ b) (hcd : c ≠ d)
+    (ha : IsAtom a) (hb : IsAtom b) (_hc : IsAtom c) (_hd : IsAtom d)
+    (hab : a ≠ b) (_hcd : c ≠ d)
     (h_not_le : ¬ a ⊔ b ≤ c ⊔ d)
     (h_meet_ne : (a ⊔ b) ⊓ (c ⊔ d) ≠ ⊥) :
     IsAtom ((a ⊔ b) ⊓ (c ⊔ d)) :=
@@ -268,6 +280,7 @@ theorem meet_of_lines_is_atom {a b c d : L}
 /-- Project a point through a center onto a target line. -/
 noncomputable def project (c p l : L) : L := (p ⊔ c) ⊓ l
 
+omit [ComplementedLattice L] in
 /-- Central projection gives an atom on the target line. -/
 theorem project_is_atom {c p a b : L}
     (hc : IsAtom c) (hp : IsAtom p) (hcp : c ≠ p)
@@ -313,6 +326,7 @@ We don't need a rank function. We need interval isomorphisms.
 Let's see what falls out.
 -/
 
+omit [BoundedOrder L] [ComplementedLattice L] [IsAtomistic L] in
 /-- Two planes in a common space: if both are covered by the space,
     their meet is covered by each of them. (Diamond isomorphism
     gives the structural dimension argument.) -/
@@ -340,6 +354,7 @@ theorem planes_meet_covBy {π₁ π₂ s : L}
 
 -- § Desargues
 
+omit [ComplementedLattice L] [IsModularLattice L] [IsAtomistic L] in
 /-- **Desargues' theorem (non-planar case).**
     Two triangles perspective from a point: corresponding sides
     meet on a common line.
@@ -360,10 +375,10 @@ theorem planes_meet_covBy {π₁ π₂ s : L}
 theorem desargues_nonplanar
     {o a₁ a₂ a₃ b₁ b₂ b₃ : L}
     -- All atoms
-    (ho : IsAtom o) (ha₁ : IsAtom a₁) (ha₂ : IsAtom a₂) (ha₃ : IsAtom a₃)
-    (hb₁ : IsAtom b₁) (hb₂ : IsAtom b₂) (hb₃ : IsAtom b₃)
+    (_ho : IsAtom o) (_ha₁ : IsAtom a₁) (_ha₂ : IsAtom a₂) (_ha₃ : IsAtom a₃)
+    (_hb₁ : IsAtom b₁) (_hb₂ : IsAtom b₂) (_hb₃ : IsAtom b₃)
     -- Perspective from o
-    (hb₁_on : b₁ ≤ o ⊔ a₁) (hb₂_on : b₂ ≤ o ⊔ a₂) (hb₃_on : b₃ ≤ o ⊔ a₃)
+    (_hb₁_on : b₁ ≤ o ⊔ a₁) (_hb₂_on : b₂ ≤ o ⊔ a₂) (_hb₃_on : b₃ ≤ o ⊔ a₃)
     -- Triangle planes
     (πA : L) (hπA : πA = a₁ ⊔ a₂ ⊔ a₃)
     (πB : L) (hπB : πB = b₁ ⊔ b₂ ⊔ b₃)
@@ -402,15 +417,16 @@ theorem desargues_nonplanar
   · -- b₂ ⊔ b₃ ≤ b₁ ⊔ b₂ ⊔ b₃
     exact sup_le (le_sup_right.trans le_sup_left) le_sup_right
 
+omit [ComplementedLattice L] in
 /-- Projection is injective: distinct points project to distinct points. -/
 theorem project_injective {c a b p q : L}
     (hc : IsAtom c) (hp : IsAtom p) (hq : IsAtom q)
     (ha : IsAtom a) (hb : IsAtom b)
     (hcp : c ≠ p) (hcq : c ≠ q) (hpq : p ≠ q) (hab : a ≠ b)
     (hc_not_l : ¬ c ≤ a ⊔ b)
-    (hp_not_l : ¬ p ≤ a ⊔ b) (hq_not_l : ¬ q ≤ a ⊔ b)
+    (hp_not_l : ¬ p ≤ a ⊔ b) (_hq_not_l : ¬ q ≤ a ⊔ b)
     (hp_coplanar : p ⊔ c ≤ (a ⊔ b) ⊔ c)
-    (hq_coplanar : q ⊔ c ≤ (a ⊔ b) ⊔ c)
+    (_hq_coplanar : q ⊔ c ≤ (a ⊔ b) ⊔ c)
     -- p and q are on different lines through c (not both on c's line)
     (hpq_diff : p ⊔ c ≠ q ⊔ c) :
     project c p (a ⊔ b) ≠ project c q (a ⊔ b) := by
@@ -485,6 +501,7 @@ noncomputable def projectOn {c a b : L}
 
 -- § Perspectivity between lines
 
+omit [ComplementedLattice L] in
 /-- The meet of a line through c with l₂, when c ≰ l₂ and both
     are in the same plane. This is the atomic projection formula
     that works uniformly — even when the source point is on l₂. -/
@@ -537,6 +554,7 @@ noncomputable def perspectivity {c a₁ b₁ a₂ b₂ : L}
      perspect_atom hc hp_atom hpc ha₂ hb₂ hab₂ hc_not_l₂ hp_in_plane,
      inf_le_right⟩
 
+omit [ComplementedLattice L] in
 /-- Perspectivity is injective: distinct atoms map to distinct images.
     The proof splits on whether p ⊔ c = q ⊔ c (same/different lines through c).
     Same line: both land on l₁ ⊓ (p ⊔ c), an atom → p = q.
@@ -604,6 +622,7 @@ theorem perspectivity_injective {c a₁ b₁ a₂ b₂ : L}
     · exact absurd h hm_atom.1
     · exact absurd (h ▸ inf_le_right : c ≤ a₂ ⊔ b₂) hc_not_l₂
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- Projection preserves the line through c: if q = (p ⊔ c) ⊓ l
     then q ⊔ c = p ⊔ c. The geometric content: projecting through c
     doesn't change which line through c you're on. -/
@@ -631,6 +650,7 @@ theorem perspect_line_eq {p c l : L}
     rw [sup_comm]; exact atom_covBy_join hc hp hpc.symm
   exact (hc_cov_pc.eq_or_eq hc_lt_qc.le hqc_le).resolve_left (ne_of_gt hc_lt_qc)
 
+omit [ComplementedLattice L] in
 /-- Round-trip: projecting from l₁ to l₂ and back gives the original point.
     This is the core of perspectivity being a bijection. -/
 theorem perspect_roundtrip {p c a₁ b₁ a₂ b₂ : L}
@@ -658,6 +678,7 @@ theorem perspect_roundtrip {p c a₁ b₁ a₂ b₂ : L}
   -- p ≤ atom → p = atom (both are atoms).
   exact (h_meet_atom.le_iff.mp hp_le_meet |>.resolve_left hp.1).symm
 
+omit [ComplementedLattice L] in
 /-- Perspectivity fixes the intersection: if p is on both lines,
     it maps to itself. -/
 theorem perspect_fixes_intersection {p c a₁ b₁ a₂ b₂ : L}

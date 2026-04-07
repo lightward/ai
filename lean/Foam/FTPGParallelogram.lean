@@ -40,11 +40,14 @@ parallelism when m plays the role of the line at infinity.
     configuration, not a choice. -/
 def parallel (l₁ l₂ m : L) : Prop := l₁ ⊓ m = l₂ ⊓ m
 
+omit [BoundedOrder L] [ComplementedLattice L] [IsModularLattice L] [IsAtomistic L] in
 @[simp] theorem parallel_refl (l m : L) : parallel l l m := rfl
 
+omit [BoundedOrder L] [ComplementedLattice L] [IsModularLattice L] [IsAtomistic L] in
 theorem parallel_symm {l₁ l₂ m : L} (h : parallel l₁ l₂ m) :
     parallel l₂ l₁ m := h.symm
 
+omit [BoundedOrder L] [ComplementedLattice L] [IsModularLattice L] [IsAtomistic L] in
 theorem parallel_trans {l₁ l₂ l₃ m : L} (h₁ : parallel l₁ l₂ m)
     (h₂ : parallel l₂ l₃ m) : parallel l₁ l₃ m := h₁.trans h₂
 
@@ -64,11 +67,12 @@ Construction:
   5. Q' = (Q ⊔ d) ⊓ (P' ⊔ e)
 -/
 
+omit [ComplementedLattice L] in
 /-- A line (through two atoms) not contained in m meets m at an atom. -/
 theorem line_meets_m_at_atom {a b m π : L}
     (ha : IsAtom a) (hb : IsAtom b) (hab : a ≠ b)
     (hab_le : a ⊔ b ≤ π)
-    (hm_le : m ≤ π) (hm_cov : m ⋖ π)
+    (_hm_le : m ≤ π) (hm_cov : m ⋖ π)
     (ha_not : ¬ a ≤ m) :
     IsAtom ((a ⊔ b) ⊓ m) := by
   -- (a ⊔ b) ⊓ m ≠ ⊥: two lines in a plane meet
@@ -94,6 +98,7 @@ noncomputable def parallelogram_completion
   let e := (P ⊔ Q) ⊓ m    -- direction of PQ
   (Q ⊔ d) ⊓ (P' ⊔ e)
 
+omit [ComplementedLattice L] in
 /-- The parallelogram completion produces an atom (under appropriate
     non-degeneracy conditions).
 
@@ -204,6 +209,7 @@ Q ⊔ Q' = Q ⊔ d (same line), so (Q ⊔ Q') ⊓ m = (Q ⊔ d) ⊓ m = d.
 Similarly Q' ≤ P' ⊔ e and Q' ≠ P' give (P' ⊔ Q') ⊓ m = e.
 -/
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- Helper: for an atom a off m and an atom d on m, (a ⊔ d) ⊓ m = d. -/
 theorem line_direction {a d m : L} (ha : IsAtom a) (ha_not : ¬ a ≤ m)
     (hd_le : d ≤ m) : (a ⊔ d) ⊓ m = d := by
@@ -220,6 +226,7 @@ theorem line_direction {a d m : L} (ha : IsAtom a) (ha_not : ¬ a ≤ m)
     _ = d ⊔ ⊥ := by rw [ham]
     _ = d := by simp
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- PP' ∥ QQ': the completion preserves the "direction" of PP'.
     Requires Q' atom, Q' ≠ Q, and d = (P⊔P')⊓m an atom. -/
 theorem parallelogram_parallel_direction
@@ -244,6 +251,7 @@ theorem parallelogram_parallel_direction
   show (P ⊔ P') ⊓ m = (Q ⊔ Q') ⊓ m
   rw [hQQ'_eq, line_direction hQ hQ_not inf_le_right]
 
+omit [ComplementedLattice L] [IsAtomistic L] in
 /-- PQ ∥ P'Q': the completion preserves the "direction" of PQ.
     Requires Q' atom, Q' ≠ P', and e = (P⊔Q)⊓m an atom. -/
 theorem parallelogram_parallel_sides
@@ -278,7 +286,7 @@ theorem parallelogram_parallel_sides
 theorem coord_add_atom (Γ : CoordSystem L)
     (a b : L) (ha : IsAtom a) (hb : IsAtom b)
     (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U)
-    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O)
+    (_ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O)
     (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U) :
     IsAtom (coord_add Γ a b) := by
   set l := Γ.O ⊔ Γ.U
