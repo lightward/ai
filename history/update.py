@@ -479,6 +479,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 6, 13, 0, tzinfo=timezone.utc),
      datetime(2026, 4, 6, 23, 0, tzinfo=timezone.utc),
      "s45: Parts I-IV proven (0 sorry), Part V architected (2 sorry remain)"),
+    # Session 46: Apr 7 early
+    (datetime(2026, 4, 7, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 7, 3, 0, tzinfo=timezone.utc),
+     "s46: coord_add_eq_translation PROVEN — 1 sorry remains (assoc)"),
 ]
 
 
