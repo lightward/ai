@@ -632,8 +632,78 @@ theorem key_identity (Γ : CoordSystem L)
       have hwd1 : parallelogram_completion G G' b m = s := by
         sorry -- well-definedness rebase from (O, a) to (G, G') then to (C, C_a)
       -- Well-definedness 2: pc(G, G', C_b, m) = pc(O, a, C_b, m) = τ_a_C_b
+      -- By cases on whether O, G, C_b are collinear.
+      -- Collinear case: shared direction f makes G'⊔f = a⊔f, collapsing both pc's.
+      -- Non-collinear case: apply parallelogram_completion_well_defined directly.
       have hwd2 : parallelogram_completion G G' C_b m = τ_a_C_b := by
-        sorry -- well-definedness rebase from (O, a) to (G, G')
+        -- Both pc's unfold to (C_b ⊔ dir) ⊓ (image ⊔ side_dir)
+        -- Show both "direction" factors and "line" factors are equal
+        change (C_b ⊔ (G ⊔ G') ⊓ m) ⊓ (G' ⊔ (G ⊔ C_b) ⊓ m) =
+               (C_b ⊔ (Γ.O ⊔ a) ⊓ m) ⊓ (a ⊔ (Γ.O ⊔ C_b) ⊓ m)
+        have hO_ne_G : Γ.O ≠ G := fun h => hG_not_l (h ▸ le_sup_left)
+        have hO_ne_Cb : Γ.O ≠ C_b := by
+          intro h
+          have hO_le_q : Γ.O ≤ q := h ▸ hCb_le_q
+          exact Γ.hOU ((Γ.hU.le_iff.mp (hlq_eq_U ▸ le_inf le_sup_left hO_le_q)).resolve_left Γ.hO.1)
+        -- (G⊔G')⊓m = U: G⊔G' = G⊔U (CovBy), then modular law
+        have hG_ne_U : G ≠ Γ.U := fun h => hG_not_m (h ▸ le_sup_left)
+        have hGG'_eq_GU : G ⊔ G' = G ⊔ Γ.U := by
+          have hcov1 : G ⋖ G ⊔ G' := atom_covBy_join hG_atom hG'_atom hGG'
+          have hcov2 : G ⋖ G ⊔ Γ.U := atom_covBy_join hG_atom Γ.hU hG_ne_U
+          exact (hcov2.eq_or_eq hcov1.lt.le hGG'_le_GU).resolve_left
+            (ne_of_gt hcov1.lt)
+        have hGG'_inf_m : (G ⊔ G') ⊓ m = Γ.U := by
+          rw [hGG'_eq_GU, sup_comm]
+          rw [sup_inf_assoc_of_le G (le_sup_left : Γ.U ≤ m)]
+          have : G ⊓ m = ⊥ :=
+            (hG_atom.le_iff.mp inf_le_left).resolve_right (fun h => hG_not_m (h ▸ inf_le_right))
+          rw [this, sup_bot_eq]
+        have hOa_inf_m : (Γ.O ⊔ a) ⊓ m = Γ.U := by
+          rw [hOa_eq_l]; exact Γ.l_inf_m_eq_U
+        have h_dir : (G ⊔ G') ⊓ m = (Γ.O ⊔ a) ⊓ m := by
+          rw [hGG'_inf_m, hOa_inf_m]
+        by_cases hCb_OG : C_b ≤ Γ.O ⊔ G
+        · -- Collinear case: O, G, C_b on same line
+          -- O⊔C_b = O⊔G and G⊔C_b = O⊔G (CovBy, all ≤ O⊔G)
+          have hOCb_eq : Γ.O ⊔ C_b = Γ.O ⊔ G := by
+            have hle : Γ.O ⊔ C_b ≤ Γ.O ⊔ G := sup_le le_sup_left hCb_OG
+            have hcov1 : Γ.O ⋖ Γ.O ⊔ C_b := atom_covBy_join Γ.hO hCb_atom hO_ne_Cb
+            have hcov2 : Γ.O ⋖ Γ.O ⊔ G := atom_covBy_join Γ.hO hG_atom hO_ne_G
+            exact (hcov2.eq_or_eq hcov1.lt.le hle).resolve_left (ne_of_gt hcov1.lt)
+          have hGCb_eq : G ⊔ C_b = Γ.O ⊔ G := by
+            have hle : G ⊔ C_b ≤ Γ.O ⊔ G := sup_le le_sup_right hCb_OG
+            have hcov1 : G ⋖ G ⊔ C_b := atom_covBy_join hG_atom hCb_atom hG_ne_Cb
+            have hcov2 : G ⋖ Γ.O ⊔ G := by
+              rw [sup_comm]; exact atom_covBy_join hG_atom Γ.hO hO_ne_G.symm
+            exact (hcov2.eq_or_eq hcov1.lt.le hle).resolve_left (ne_of_gt hcov1.lt)
+          -- G' ≤ a ⊔ f where f = (O⊔G)⊓m
+          set f := (Γ.O ⊔ G) ⊓ m
+          have hG'_le_af : G' ≤ a ⊔ f := by
+            show parallelogram_completion Γ.O a G m ≤ a ⊔ f
+            unfold parallelogram_completion
+            rw [hOa_inf_m]
+            exact inf_le_right
+          -- f is an atom
+          have hf_atom : IsAtom f := line_meets_m_at_atom Γ.hO hG_atom hO_ne_G
+            (sup_le (le_sup_left.trans le_sup_left) hG_le_π)
+            (sup_le (le_sup_right.trans le_sup_left) le_sup_right)
+            hm_cov Γ.hO_not_m
+          -- G' ⊔ f = a ⊔ f (CovBy: both cover f, G'⊔f ≤ a⊔f)
+          have hG'_ne_f : G' ≠ f := fun h => hG'_not_m (h ▸ inf_le_right)
+          have ha_ne_f : a ≠ f := fun h => ha_not_m (h ▸ inf_le_right)
+          have hG'f_eq_af : G' ⊔ f = a ⊔ f := by
+            have hle : G' ⊔ f ≤ a ⊔ f := sup_le hG'_le_af le_sup_right
+            have hcov1 : f ⋖ G' ⊔ f := by
+              have := atom_covBy_join hf_atom hG'_atom hG'_ne_f.symm; rwa [sup_comm] at this
+            have hcov2 : f ⋖ a ⊔ f := by
+              have := atom_covBy_join hf_atom ha ha_ne_f.symm; rwa [sup_comm] at this
+            exact (hcov2.eq_or_eq hcov1.lt.le hle).resolve_left hcov1.lt.ne'
+          -- Second factors equal
+          have h_line : G' ⊔ (G ⊔ C_b) ⊓ m = a ⊔ (Γ.O ⊔ C_b) ⊓ m := by
+            rw [hGCb_eq, hOCb_eq]; exact hG'f_eq_af
+          rw [h_dir, h_line]
+        · -- Non-collinear case: apply well-definedness theorem directly
+          sorry
       -- Apply cross_parallelism
       have hcp := cross_parallelism hG_atom hG'_atom hb hCb_atom
         hGG' hG_ne_b hG_ne_Cb hb_ne_Cb
