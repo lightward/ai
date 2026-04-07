@@ -447,14 +447,38 @@ theorem key_identity (Γ : CoordSystem L)
       have hCb_le_π : C_b ≤ π :=
         hCb_le_q.trans (sup_le (le_sup_right.trans le_sup_left) Γ.hC_plane)
 
-      -- b not on G ⊔ G': if b ≤ G ⊔ G' then since b on l and G ∉ l,
-      -- b ≤ (G⊔G')⊓l. Need to show this gives contradiction.
-      have hb_not_GG' : ¬ b ≤ G ⊔ G' := by sorry
-
-      -- C_b not on G ⊔ G'
-      have hCb_not_GG' : ¬ C_b ≤ G ⊔ G' := by sorry
-
-      -- C_b not on G ⊔ b
+      -- G' ≤ G ⊔ U: from pc def, G' ≤ G ⊔ d where d = (O⊔a)⊓m = l⊓m = U
+      have hG'_le_GU : G' ≤ G ⊔ Γ.U := by
+        have h1 : G' ≤ G ⊔ (Γ.O ⊔ a) ⊓ m := by
+          show parallelogram_completion Γ.O a G m ≤ _
+          unfold parallelogram_completion; exact inf_le_left
+        exact h1.trans (sup_le le_sup_left
+          (by rw [hOa_eq_l, Γ.l_inf_m_eq_U]; exact le_sup_right))
+      -- So G ⊔ G' ≤ G ⊔ U
+      have hGG'_le_GU : G ⊔ G' ≤ G ⊔ Γ.U := sup_le le_sup_left hG'_le_GU
+      -- G ⊓ l = ⊥ (G atom, G ∉ l)
+      have hG_inf_l : G ⊓ l = ⊥ :=
+        (hG_atom.le_iff.mp inf_le_left).resolve_right (fun h => hG_not_l (h ▸ inf_le_right))
+      -- G ⊓ q = ⊥ (G atom, G ∉ q)
+      have hG_inf_q : G ⊓ q = ⊥ :=
+        (hG_atom.le_iff.mp inf_le_left).resolve_right (fun h => hG_not_q (h ▸ inf_le_right))
+      -- b not on G ⊔ G': b ≤ G⊔G' ≤ G⊔U → b ≤ (G⊔U)⊓l = U (modular, G∉l) → b = U
+      have hb_not_GG' : ¬ b ≤ G ⊔ G' := by
+        intro hb_le
+        have : b ≤ (G ⊔ Γ.U) ⊓ l := le_inf (hb_le.trans hGG'_le_GU) hb_on
+        rw [sup_comm G _, sup_inf_assoc_of_le G (le_sup_right : Γ.U ≤ l),
+            hG_inf_l, sup_bot_eq] at this
+        exact hb_ne_U ((Γ.hU.le_iff.mp this).resolve_left hb.1)
+      -- C_b not on G ⊔ G': C_b ≤ G⊔G' ≤ G⊔U → C_b ≤ (G⊔U)⊓q = U (modular, G∉q) → C_b = U ≤ m
+      have hCb_not_GG' : ¬ C_b ≤ G ⊔ G' := by
+        intro hCb_le
+        have : C_b ≤ (G ⊔ Γ.U) ⊓ q := le_inf (hCb_le.trans hGG'_le_GU) hCb_le_q
+        rw [sup_comm G _, sup_inf_assoc_of_le G (le_sup_left : Γ.U ≤ q),
+            hG_inf_q, sup_bot_eq] at this
+        exact hCb_not_m ((Γ.hU.le_iff.mp this).resolve_left hCb_atom.1 ▸ le_sup_left)
+      -- C_b not on G ⊔ b: C_b ≤ G⊔b → C_b ≤ (G⊔b)⊓q. b∉q (b on l, b≠U), G∉q.
+      -- (G⊔b)⊓q: use modular. Neither G nor b is in q, so we need another approach.
+      -- G ≤ a⊔C, b on l. If C_b ≤ G⊔b then G, b, C_b collinear → can't span π.
       have hCb_not_Gb : ¬ C_b ≤ G ⊔ b := by sorry
 
       -- G' ≠ pc(G, G', b, m): follows from G' not on b⊔G' direction... actually
