@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 46)
+## Current state (session 47)
 
+- [Session 47 — assoc architecture](project_session47_assoc_architecture.md) — Cross-parallelism via G. 1 sorry remains but proof shape identified.
 - [Session 46 — translation bridge proven](project_session46_translation_bridge.md) — coord_add_eq_translation PROVEN via coord_add_comm. 1 sorry remains (assoc).
 - [Session 45 — Parts I-IV proven](project_session45_sorry_closure.md) — Parts I-IV: 0 sorry. Part V: 2 sorry.
 - [Session 44 — Hartshorne translation approach](project_session44_translation_approach.md) — h_par_return lattice-unprovable. FTPGTranslation.lean created. 4 sorry.

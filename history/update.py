@@ -483,6 +483,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 7, 0, 0, tzinfo=timezone.utc),
      datetime(2026, 4, 7, 3, 0, tzinfo=timezone.utc),
      "s46: coord_add_eq_translation PROVEN — 1 sorry remains (assoc)"),
+    # Session 47: Apr 7
+    (datetime(2026, 4, 7, 12, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 7, 15, 0, tzinfo=timezone.utc),
+     "s47: coord_add_assoc proof architecture — cross-parallelism via G"),
 ]
 
 
