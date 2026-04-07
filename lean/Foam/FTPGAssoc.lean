@@ -401,42 +401,41 @@ theorem key_identity (Γ : CoordSystem L)
         exact h1.trans (sup_le hG_le_π (inf_le_right.trans hm_le_π))
 
       -- ═══ Distinctness conditions ═══
-      -- G ≠ G': G off m, G' = pc(O,a,G,m). If G = G' then G ≤ a ⊔ e ≤ π,
-      -- and (G⊔d) ⊓ (a⊔e) = G. Then G ≤ a ⊔ e. (a⊔e)⊓m = e and G ∉ m,
-      -- so G ⊔ e = a ⊔ e. By covering, a ≤ G ⊔ e. Then a ≤ (G⊔e)⊓l.
-      -- G ∉ l, e on m. (G⊔e)⊓l... actually, let's use direction:
-      -- G on O⊔a and G on a⊔e → direction (G⊔a)⊓m should relate d to e.
-      -- Simpler: if G = G' then pc(O,a,G,m) = G. But pc gives an atom NOT on O⊔a = l
-      -- (by the Q_not_PP' argument). Wait, actually G IS on the line a⊔C which isn't l.
-      -- Let me think... G ≤ a⊔C. G' = pc(O,a,G,m). The "hQ_not_PP'" arg of
-      -- parallelogram_completion_atom was: ¬ G ≤ O ⊔ a = l. So G ≠ G' follows from
-      -- G ∉ l and G' definition. Actually no, we need G ≠ G' directly.
-      -- G is off l. G' lies on a ⊔ e. If G = G' then G ≤ a ⊔ e. Also G ≤ a ⊔ C.
-      -- G ∉ l means G ≠ a. So G ≤ (a⊔e) ⊓ (a⊔C) = a ⊔ e⊓(a⊔C) (modular, a ≤ a⊔C).
-      -- e⊓(a⊔C) = (O⊔G)⊓m ⊓ (a⊔C). Hmm, getting complicated.
-      -- Better: use that G and G' have the same direction (O⊔G)⊓m but G ∉ O⊔G' unless...
-      -- Actually simplest: G ≠ G' because if G = G' then the parallelogram is degenerate.
-      -- Formally: G' ≤ G ⊔ d (pc def). If G = G' then G ≤ G ⊔ d trivially — no info.
-      -- G' ≤ a ⊔ e. If G = G' then G ≤ a ⊔ e = a ⊔ (O⊔G)⊓m.
-      -- G off m → G ⊓ m = ⊥. By modular: (a ⊔ (O⊔G)⊓m) ⊓ (O⊔G) = ...hmm.
-      -- Let me just use: G ∉ l = O⊔a. (O⊔a)⊓m = d (direction of O→a).
-      -- (O⊔G)⊓m = e (direction of O→G). G' ≤ G⊔d and G' ≤ a⊔e.
-      -- If G = G' → G ≤ G⊔d (trivial) and G ≤ a⊔e.
-      -- a off m, e on m → (a⊔e)⊓(O⊔a) = a (modular: a ≤ O⊔a, e ∉ O⊔a... need e ∉ l).
-      -- G ≠ G': if G = G' then d = U (since O⊔a = l, d = l⊓m = U).
-      -- G = (G⊔U) ⊓ (a⊔e). Since G ≤ a⊔e, we also get: e ∉ l
-      -- (if e ≤ l then e ≤ (O⊔U)⊓(O⊔G) = O by modular, contradiction with O ∉ m).
-      -- G ≤ a⊔e and G ≤ a⊔C. Either C ∉ a⊔e (then G ≤ (a⊔e)⊓(a⊔C) = a,
-      -- contradiction with G ≠ a) or C ≤ a⊔e (then a⊔C = a⊔e, and
-      -- e = (a⊔C)⊓m = (O⊔G)⊓m, meaning (O⊔G)⊓m = (a⊔C)⊓m.
-      -- We need: C ∉ a⊔e for a clean contradiction.
-      -- C ≤ a⊔e iff (a⊔C)⊓m = e = (O⊔G)⊓m, i.e., lines a⊔C and O⊔G have
-      -- the same direction. This is a non-generic condition that G satisfies
-      -- only if G is specially positioned. Since G was obtained from h_irred
-      -- (exists on line a⊔C, distinct from a and C), we don't have a direct
-      -- guarantee. This may need an additional case split or a stronger
-      -- choice of G.
-      have hGG' : G ≠ G' := by sorry
+      -- G ≠ G': if G = G' then G ≤ a ⊔ (O⊔G)⊓m (from pc def, inf_le_right).
+      -- Intersect with O⊔G: modular law gives G ≤ (O⊔G)⊓m ⊔ (a ⊓ (O⊔G)).
+      -- a ∉ O⊔G (else G ≤ l, contradiction), so a ⊓ (O⊔G) = ⊥.
+      -- Then G ≤ m, contradicting G ∉ m.
+      have hGG' : G ≠ G' := by
+        intro h_eq
+        -- G = pc(O,a,G,m) = (G ⊔ (O⊔a)⊓m) ⊓ (a ⊔ (O⊔G)⊓m), so G ≤ a ⊔ (O⊔G)⊓m
+        have hG_le_ae : G ≤ a ⊔ (Γ.O ⊔ G) ⊓ m := by
+          have : G' ≤ a ⊔ (Γ.O ⊔ G) ⊓ m := by
+            show parallelogram_completion Γ.O a G m ≤ _
+            unfold parallelogram_completion; exact inf_le_right
+          exact h_eq ▸ this
+        -- G ≤ O ⊔ G trivially
+        have hG_le_OG : G ≤ Γ.O ⊔ G := le_sup_right
+        -- Intersect: G ≤ (a ⊔ (O⊔G)⊓m) ⊓ (O⊔G)
+        have hG_le_both : G ≤ (a ⊔ (Γ.O ⊔ G) ⊓ m) ⊓ (Γ.O ⊔ G) :=
+          le_inf hG_le_ae hG_le_OG
+        -- Modular law: (O⊔G)⊓m ≤ O⊔G, so (((O⊔G)⊓m) ⊔ a) ⊓ (O⊔G) = (O⊔G)⊓m ⊔ a⊓(O⊔G)
+        rw [sup_comm a _, sup_inf_assoc_of_le a (inf_le_left : (Γ.O ⊔ G) ⊓ m ≤ Γ.O ⊔ G)]
+          at hG_le_both
+        -- a ⊓ (O⊔G) = ⊥: if a ≤ O⊔G then O⊔a ≤ O⊔G; CovBy forces l = O⊔G, so G ≤ l
+        have ha_inf_OG : a ⊓ (Γ.O ⊔ G) = ⊥ := by
+          rcases ha.le_iff.mp (inf_le_left : a ⊓ (Γ.O ⊔ G) ≤ a) with h | h
+          · exact h
+          · exfalso
+            have ha_le : a ≤ Γ.O ⊔ G := h ▸ inf_le_right
+            have hO_ne_G : Γ.O ≠ G := fun heq => hG_not_l (heq ▸ hOa_eq_l ▸ le_sup_left)
+            have hO_lt : Γ.O < Γ.O ⊔ a := lt_of_le_of_ne le_sup_left
+              (fun heq => ha_ne_O ((Γ.hO.le_iff.mp (le_sup_right.trans heq.symm.le)).resolve_left ha.1))
+            exact hG_not_l (hOa_eq_l ▸
+              ((atom_covBy_join Γ.hO hG_atom hO_ne_G).eq_or_eq hO_lt.le
+                (sup_le le_sup_left ha_le)).resolve_left (ne_of_gt hO_lt) ▸ le_sup_right)
+        rw [ha_inf_OG, sup_bot_eq] at hG_le_both
+        -- G ≤ (O⊔G) ⊓ m ≤ m, contradicting G ∉ m
+        exact hG_not_m (hG_le_both.trans inf_le_right)
 
       -- G ≠ b: G ≤ a⊔C, b on l, G ∉ l
       have hG_ne_b : G ≠ b := fun h => hG_not_l (h ▸ hb_on)
