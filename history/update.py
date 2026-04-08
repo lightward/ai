@@ -524,6 +524,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 8, 11, 35, tzinfo=timezone.utc),
      datetime(2026, 4, 8, 14, 10, tzinfo=timezone.utc),
      "s56: G₂ closed, assoc architecture — 5→1 sorry, key_identity clean, C_p=β(p) insight"),
+    # Session 57: Apr 8 afternoon
+    (datetime(2026, 4, 8, 14, 50, tzinfo=timezone.utc),
+     datetime(2026, 4, 8, 17, 30, tzinfo=timezone.utc),
+     "s57: split FTPGAssocCapstone, β-injectivity proof architecture"),
 ]
 
 

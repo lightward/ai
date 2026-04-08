@@ -4,9 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 56)
+## Current state (session 57)
 
-- [Session 56 — G₂ closed, assoc architecture](project_session56_assoc_architecture.md) — 5→1 sorry. key_identity clean. C_p=β(p) collapses translation/perspectivity. coord_add_assoc proof plan: auxiliary P off (l,m,q), 3 cross_parallelism, well_defined transfer, β-injectivity. q-collinearity navigated via l-intermediates.
+- [Session 57 — β-injectivity proof architecture](project_session57_beta_injectivity.md) — Breakthrough: route through q via β-injectivity. Complement carries the needed structure. File split FTPGAssocCapstone.lean. translation_determined_by_param lemma. Remaining: 6 cp calls + 2 two-lines args (mechanical).
+- [Session 56 — G₂ closed, assoc architecture](project_session56_assoc_architecture.md) — 5→1 sorry. key_identity clean. C_p=β(p) collapses translation/perspectivity. q-collinearity barrier identified.
 - [Session 55 — hwd1 closed, G-on-m restructured](project_session55_hwd1_gom.md) — 3→2 sorry. hwd1 via cross_parallelism + CovBy. G-on-m via suffices + G₂=(a⊔E)⊓(b⊔C). 4 sorry for G₂ properties (documented strategies). Key: PG(2,2) excluded by hypotheses, .trans/.le for set boundaries.
 - [Session 54 — pc-distinctness and well-definedness](project_session54_hwd_proofs.md) — 5→3 sorry. hb'_ne_Cb' closed (translation injectivity). hwd2 non-collinear closed (well_defined + span). hwd1 approach documented (cross_parallelism + CovBy). Key: line_direction for modular collapses, set abbreviation handling patterns.
 - [Session 53 — half-type theorem](project_session53_half_type.md) — Diamond isomorphism = state-independence (pre-bridge, lattice theorem). channel_capacity.md split qual/quant. 14 Lean files. Cold reads stable.
