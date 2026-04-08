@@ -1426,18 +1426,24 @@ theorem coord_add_assoc (Γ : CoordSystem L)
       ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
     coord_add Γ (coord_add Γ a b) c = coord_add Γ a (coord_add Γ b c) := by
   /-
-  ## Proof (session 48)
+  ## Proof strategy (session 56)
 
-  Three ingredients:
-  1. Part III parallelism: (C_b ⊔ (b+c)) ⊓ m = (C ⊔ c) ⊓ m = e_c
-  2. Key Identity via cross-parallelism: τ_a(C_b) = C_{a+b}
-     - Cross-parallelism of τ_a on (b, C_b) gives ((a+b) ⊔ τ_a(C_b)) ⊓ m = E
-     - τ_a(C_b) on q and on (a+b)⊔E → τ_a(C_b) = q ⊓ ((a+b)⊔E) = C_{a+b}
-  3. Cross-parallelism of τ_a on ((b+c), C_b) gives
-     ((a+(b+c)) ⊔ C_{a+b}) ⊓ m = e_c
-     → a+(b+c) ≤ C_{a+b} ⊔ e_c
-     → a+(b+c) ≤ l ⊓ (C_{a+b} ⊔ e_c) = (a+b)+c
-     → a+(b+c) = (a+b)+c  (both atoms)
+  Key insight: C_p = pc(O, p, C, m) = (C⊔U)⊓(p⊔E) = q⊓(p⊔E) = β(p),
+  where β is the E-perspectivity from l to q. So key_identity says:
+  pc(O, a, β(b), m) = β(a+b), i.e., τ_a preserves the E-perspectivity.
+
+  Both sides unfold to l ⊓ (line from q to m):
+    LHS = l ⊓ (β(s) ⊔ e_c)  where s = a+b, e_c = (C⊔c)⊓m
+    RHS = l ⊓ (β(a) ⊔ e_t)  where t = b+c, e_t = (C⊔t)⊓m
+
+  By key_identity:
+    β((a+b)+c) = pc(O, s, β(c), m)
+    β(a+(b+c)) = pc(O, a, pc(O, b, β(c), m), m)
+
+  So it suffices to show: pc(O, s, β(c), m) = pc(O, a, pc(O, b, β(c), m), m),
+  i.e., τ_s = τ_a ∘ τ_b on β(c). Both agree at C (by key_identity), so by
+  well_defined (changing base from C to an intermediate off q), they agree
+  on β(c).
   -/
   sorry
 
