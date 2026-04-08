@@ -212,6 +212,10 @@ theorem coord_add_assoc (Γ : CoordSystem L)
     (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O) (hc_ne_O : c ≠ Γ.O)
     (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U) (hc_ne_U : c ≠ Γ.U)
     (hab : a ≠ b) (hbc : b ≠ c) (hac : a ≠ c)
+    -- Non-degeneracy of sums (excluded: a+b=0, a+b=∞, etc.)
+    (hs_ne_O : coord_add Γ a b ≠ Γ.O) (hs_ne_U : coord_add Γ a b ≠ Γ.U)
+    (ht_ne_O : coord_add Γ b c ≠ Γ.O) (ht_ne_U : coord_add Γ b c ≠ Γ.U)
+    (hsc : coord_add Γ a b ≠ c) (hat : a ≠ coord_add Γ b c)
     (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
     (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
       ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
@@ -219,6 +223,7 @@ theorem coord_add_assoc (Γ : CoordSystem L)
   set l := Γ.O ⊔ Γ.U
   set m := Γ.U ⊔ Γ.V
   set q := Γ.U ⊔ Γ.C
+  set π := Γ.O ⊔ Γ.U ⊔ Γ.V
   set s := coord_add Γ a b
   set t := coord_add Γ b c
   -- ═══ Step 0: Setup ═══
@@ -226,15 +231,42 @@ theorem coord_add_assoc (Γ : CoordSystem L)
   have ht_atom : IsAtom t := coord_add_atom Γ b c hb hc hb_on hc_on hb_ne_O hc_ne_O hb_ne_U hc_ne_U
   have hs_on : s ≤ l := by show coord_add Γ a b ≤ Γ.O ⊔ Γ.U; exact inf_le_right
   have ht_on : t ≤ l := by show coord_add Γ b c ≤ Γ.O ⊔ Γ.U; exact inf_le_right
-  -- ═══ Step 1: Reduce to O-based composition at C_c via key_identity ═══
-  -- β(LHS) = pc(O, s, C_c, m) by key_identity for (s, c)
-  -- β(RHS) = pc(O, a, pc(O, b, C_c, m), m) by key_identity for (a, t) and (b, c)
-  -- Goal becomes: pc(O, s, C_c, m) = pc(O, a, pc(O, b, C_c, m), m)
-  -- where C_c = pc(O, c, C, m) is on q, OFF l.
-  -- ═══ Step 2: Cross-parallelism chain → β(LHS) = β(RHS) ═══
-  -- Three cp calls at (P, C_c) using X = X' from the (P, C) chain.
-  -- Two-lines argument: both β(LHS) and β(RHS) on q ∩ (X⊔e), unique atom.
-  -- ═══ Step 3: perspectivity_injective → LHS = RHS ═══
+  have hm_le_π : m ≤ π := sup_le (le_sup_right.trans le_sup_left) le_sup_right
+  -- ═══ Step 1: Key identity applications ═══
+  -- C_x = pc(O, x, C, m) = E-perspectivity image of x = β(x)
+  set C_c := parallelogram_completion Γ.O c Γ.C m
+  set C_b := parallelogram_completion Γ.O b Γ.C m
+  set C_s := parallelogram_completion Γ.O s Γ.C m
+  set C_t := parallelogram_completion Γ.O t Γ.C m
+  set C_LHS := parallelogram_completion Γ.O (coord_add Γ s c) Γ.C m
+  set C_RHS := parallelogram_completion Γ.O (coord_add Γ a t) Γ.C m
+  -- key_identity(a, b): τ_a(C_b) = C_s
+  have h_ki_ab : parallelogram_completion Γ.O a C_b m = C_s :=
+    key_identity Γ a b ha hb ha_on hb_on ha_ne_O hb_ne_O ha_ne_U hb_ne_U hab R hR hR_not h_irred
+  -- key_identity(b, c): τ_b(C_c) = C_t
+  have h_ki_bc : parallelogram_completion Γ.O b C_c m = C_t :=
+    key_identity Γ b c hb hc hb_on hc_on hb_ne_O hc_ne_O hb_ne_U hc_ne_U hbc R hR hR_not h_irred
+  -- key_identity(s, c): τ_s(C_c) = C_{s+c} = C_LHS
+  have h_ki_sc : parallelogram_completion Γ.O s C_c m = C_LHS :=
+    key_identity Γ s c hs_atom hc hs_on hc_on hs_ne_O hc_ne_O hs_ne_U hc_ne_U hsc R hR hR_not h_irred
+  -- key_identity(a, t): τ_a(C_t) = C_{a+t} = C_RHS
+  have h_ki_at : parallelogram_completion Γ.O a C_t m = C_RHS :=
+    key_identity Γ a t ha ht_atom ha_on ht_on ha_ne_O ht_ne_O ha_ne_U ht_ne_U hat R hR hR_not h_irred
+  -- ═══ Step 2: Composition law → C_LHS = C_RHS ═══
+  -- Chain: C_LHS = τ_s(C_c) [h_ki_sc]
+  --             = τ_a(τ_b(C_c)) [composition law, to prove]
+  --             = τ_a(C_t) [h_ki_bc]
+  --             = C_RHS [h_ki_at]
+  -- So it suffices to prove: τ_s(C_c) = τ_a(τ_b(C_c))
+  -- i.e., pc(O, s, C_c, m) = pc(O, a, pc(O, b, C_c, m), m)
+  have h_beta_eq : C_LHS = C_RHS := by
+    rw [← h_ki_sc, ← h_ki_at, ← h_ki_bc]
+    -- Goal: pc(O, s, C_c, m) = pc(O, a, pc(O, b, C_c, m), m)
+    -- This is the composition law at C_c, proved by cross-parallelism chain.
+    sorry
+  -- ═══ Step 3: E-perspectivity injectivity → LHS = RHS ═══
+  -- C_x = (x⊔E)⊓q is the E-perspectivity from l to q.
+  -- C_LHS = C_RHS → LHS = RHS by perspectivity_injective.
   sorry
 
 end Foam.FTPGExplore
