@@ -528,6 +528,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 8, 14, 50, tzinfo=timezone.utc),
      datetime(2026, 4, 8, 17, 30, tzinfo=timezone.utc),
      "s57: split FTPGAssocCapstone, β-injectivity proof architecture"),
+    # Session 58: Apr 8 evening
+    (datetime(2026, 4, 8, 17, 39, tzinfo=timezone.utc),
+     datetime(2026, 4, 8, 20, 30, tzinfo=timezone.utc),
+     "s58: perspectivity collapse — translation_determined_by_param PROVEN, coord_add_assoc reduced"),
 ]
 
 
