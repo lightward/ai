@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 19 files, 1 axiom, 1 sorry (associativity capstone).
+Mechanically verified deductive path from P² = P to the foam's architecture. 20 files, 1 axiom, 1 sorry (associativity capstone).
 
 ## The chain
 
@@ -102,15 +102,29 @@ Part IV-B: a single translation preserves directions of lines connecting any two
 |---|---|
 | cross-parallelism | `cross_parallelism` |
 
-**FTPGAssoc.lean** — associativity (1 sorry)
+**FTPGAssoc.lean** — translation infrastructure (0 sorry)
 
-Part V: `coord_add` equals translation application, then associativity from the translation group structure. The final connection.
+Part V: `coord_add` equals translation application, key identity for the translation group.
 
 | layer | key declarations |
 |---|---|
 | translation bridge | `coord_add_eq_translation` (von Staudt addition = apply translation, 0 sorry) |
 | key identity | `key_identity` (τ_a(C_b) = C_{a+b}, 0 sorry) |
+
+**FTPGAssocCapstone.lean** — associativity capstone (1 sorry)
+
+The final connection: associativity via β-injectivity and cross-parallelism.
+
+| layer | key declarations |
+|---|---|
+| parameter rigidity | `translation_determined_by_param` (C-based translation determined by one point, 1 sorry) |
 | associativity | `coord_add_assoc` (1 sorry: the capstone) |
+
+Session 57 proof architecture: route through q via β-injectivity.
+The q-based composition law holds because q-points are off l (where O-based
+translations are well-defined). Three key_identity applications reduce the
+goal to an O-based composition at C_c. A cross-parallelism chain + two-lines
+argument gives β(LHS) = β(RHS). perspectivity_injective finishes.
 
 ### The deductive chain (from P² = P)
 

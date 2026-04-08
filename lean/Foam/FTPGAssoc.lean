@@ -8,10 +8,10 @@ then associativity follows from the translation group structure.
 - `key_identity`: τ_a(C_b) = C_{a+b}
 - `coord_add_assoc`: (a + b) + c = a + (b + c)
 
-## Status (session 56)
+## Status (session 57)
 
-1 sorry remains: coord_add_assoc.
-key_identity is fully proven (0 sorry).
+0 sorry in this file. key_identity and coord_add_eq_translation fully proven.
+coord_add_assoc moved to FTPGAssocCapstone.lean (1 sorry, proof in progress).
 
 Session 56: G₂ properties closed (4 sorry → 0).
 G₂ = (a⊔E)⊓(b⊔C), the intersection of two lines in π.
@@ -1408,127 +1408,6 @@ theorem key_identity (Γ : CoordSystem L)
       exact le_inf h_τ_le_q h_τ_le_sE
     exact (hCs_atom.le_iff.mp h_τ_le_Cs).resolve_left hτ_atom.1
 
-/-- **Associativity of coordinate addition.**
-
-    (a + b) + c = a + (b + c)
-
-    Proof: coord_add = translation application (coord_add_eq_translation),
-    and translations form an abelian group (Parts I-IV), so composition
-    is associative. -/
-theorem coord_add_assoc (Γ : CoordSystem L)
-    (a b c : L) (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
-    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
-    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O) (hc_ne_O : c ≠ Γ.O)
-    (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U) (hc_ne_U : c ≠ Γ.U)
-    (hab : a ≠ b) (hbc : b ≠ c) (hac : a ≠ c)
-    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
-    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
-      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
-    coord_add Γ (coord_add Γ a b) c = coord_add Γ a (coord_add Γ b c) := by
-  /-
-  ## Proof architecture (session 56)
-
-  ### Key identity: C_p = β(p)
-  C_p = pc(O, p, C, m) = (C⊔U)⊓(p⊔E) = q⊓(p⊔E) = β(p),
-  where β is the E-perspectivity from l to q. key_identity says:
-  pc(O, a, β(b), m) = β(a+b), i.e., translation preserves E-perspectivity.
-
-  ### Both sides unfold to l ⊓ (line from q to m):
-  By coord_add_eq_translation:
-    LHS = pc(C, β(s), c, m) = l ⊓ (β(s) ⊔ e_c)  [s = a+b, e_c = (C⊔c)⊓m]
-    RHS = pc(C, β(a), t, m) = l ⊓ (β(a) ⊔ e_t)  [t = b+c, e_t = (C⊔t)⊓m]
-
-  ### Reduction to translation composition:
-  By key_identity applied to (s,c) and (a,t) and (b,c):
-    β((a+b)+c) = pc(O, s, β(c), m)  =: τ_s(β(c))
-    β(a+(b+c)) = pc(O, a, pc(O, b, β(c), m), m)  =: τ_a(τ_b(β(c)))
-  So it suffices to show τ_s(β(c)) = τ_a(τ_b(β(c))), then β-injectivity finishes.
-
-  ### The composition law: τ_s = τ_a ∘ τ_b
-  Direct application fails on q-points (direction is always U, giving no info).
-  Fix: use an auxiliary point P off l, m, q.
-
-  Step 1: Construct P off l, m, q using h_irred on a pair like (O, C) or (a, C).
-    P ≤ a⊔C, P ≠ a, P ≠ C.
-    P ∉ l: (a⊔C)⊓l = a, P ≠ a.
-    P ∉ q: (a⊔C)⊓q = C, P ≠ C.
-    P ∉ m: by_cases; if P on m, use h_irred again to find another point.
-
-  Step 2: Cross-parallelism chain (3 applications).
-    cp₁: τ_s on (P, C) gives  (P⊔C)⊓m = (τ_s(P) ⊔ β(s))⊓m
-    cp₂: τ_b on (P, C) gives  (P⊔C)⊓m = (τ_b(P) ⊔ β(b))⊓m
-    cp₃: τ_a on (τ_b(P), β(b)) gives
-          (τ_b(P)⊔β(b))⊓m = (τ_a(τ_b(P)) ⊔ τ_a(β(b)))⊓m
-                            = (τ_a(τ_b(P)) ⊔ β(s))⊓m  [by key_identity]
-    Chain: (τ_s(P) ⊔ β(s))⊓m = (P⊔C)⊓m = (τ_b(P)⊔β(b))⊓m
-                               = (τ_a(τ_b(P)) ⊔ β(s))⊓m
-    Both τ_s(P) and τ_a(τ_b(P)) are off q (since P ∉ q and translations
-    in direction U preserve "off q"). β(s) is on q. So the lines
-    τ_s(P)⊔β(s) and τ_a(τ_b(P))⊔β(s) meet m at the same non-U atom e.
-    Both τ_s(P) and τ_a(τ_b(P)) lie on P⊔U (direction U from P) and on
-    β(s)⊔e (from the direction equality). P⊔U ≠ β(s)⊔e (since e ≠ U,
-    from P ∉ q). Two distinct lines meet at one point.
-    Therefore τ_s(P) = τ_a(τ_b(P)).
-
-  Step 3: Transfer from P to β(c) via well_defined.
-    X := τ_s(P) = τ_a(τ_b(P)).
-    WD with P₀=P, P₀'=X, Q=O, R=β(c):
-      pc(P, X, β(c), m) = pc(O, pc(P,X,O,m), β(c), m) = pc(O, s, β(c), m) = τ_s(β(c)).
-      [pc(P,X,O,m) = s: the "reverse" parallelogram from X to O lands at s.]
-    WD with P₀=P, P₀'=X, Q=a, R=β(c):
-      pc(P, X, β(c), m) = pc(a, pc(P,X,a,m), β(c), m).
-      [pc(P,X,a,m) is some atom a_X on l.]
-    WD with P₀=τ_b(P), P₀'=X, Q=b, R=β(c):
-      pc(τ_b(P), X, β(c), m) = pc(b, pc(τ_b(P),X,b,m), β(c), m).
-      [pc(τ_b(P),X,b,m) is some atom b_X on l.]
-    Chain these to show τ_s(β(c)) = τ_a(τ_b(β(c))).
-    (Each WD changes base points along l, where preconditions are satisfied
-    because β(c) ∉ l and the "base line" Q⊔Q' ≤ l.)
-
-  Step 4: Conclude.
-    τ_s(β(c)) = τ_a(τ_b(β(c)))
-    → β((a+b)+c) = β(a+(b+c))  [by key_identity]
-    → (a+b)+c = a+(b+c)  [by β-injectivity: perspectivity_injective]
-  -/
-  -- ═══ Setup ═══
-  set l := Γ.O ⊔ Γ.U
-  set m := Γ.U ⊔ Γ.V
-  set q := Γ.U ⊔ Γ.C
-  set π := Γ.O ⊔ Γ.U ⊔ Γ.V
-  set s := coord_add Γ a b
-  set t := coord_add Γ b c
-  -- Both sides, rewritten via coord_add_eq_translation
-  have hs_ne_O : s ≠ Γ.O := sorry
-  have hs_ne_U : s ≠ Γ.U := sorry
-  have ht_ne_O : t ≠ Γ.O := sorry
-  have ht_ne_U : t ≠ Γ.U := sorry
-  have hsc : s ≠ c := sorry
-  have hat : a ≠ t := sorry
-  have hs_atom : IsAtom s := coord_add_atom Γ a b ha hb ha_on hb_on ha_ne_O hb_ne_O ha_ne_U hb_ne_U
-  have ht_atom : IsAtom t := coord_add_atom Γ b c hb hc hb_on hc_on hb_ne_O hc_ne_O hb_ne_U hc_ne_U
-  have hs_on : s ≤ l := by show coord_add Γ a b ≤ Γ.O ⊔ Γ.U; exact inf_le_right
-  have ht_on : t ≤ l := by show coord_add Γ b c ≤ Γ.O ⊔ Γ.U; exact inf_le_right
-  -- LHS = pc(C, C_s, c, m) by coord_add_eq_translation
-  have h_lhs : coord_add Γ s c =
-      parallelogram_completion Γ.C (parallelogram_completion Γ.O s Γ.C m) c m :=
-    coord_add_eq_translation Γ s c hs_atom hc hs_on hc_on hs_ne_O hc_ne_O hs_ne_U hc_ne_U
-      hsc R hR hR_not h_irred
-  -- RHS = pc(C, C_a, t, m) by coord_add_eq_translation
-  have h_rhs : coord_add Γ a t =
-      parallelogram_completion Γ.C (parallelogram_completion Γ.O a Γ.C m) t m :=
-    coord_add_eq_translation Γ a t ha ht_atom ha_on ht_on ha_ne_O ht_ne_O ha_ne_U ht_ne_U
-      hat R hR hR_not h_irred
-  -- Key identity: pc(O, a, C_b, m) = C_s
-  have h_ki : parallelogram_completion Γ.O a
-      (parallelogram_completion Γ.O b Γ.C m) m =
-      parallelogram_completion Γ.O s Γ.C m :=
-    key_identity Γ a b ha hb ha_on hb_on ha_ne_O hb_ne_O ha_ne_U hb_ne_U hab R hR hR_not h_irred
-  -- Now: LHS = pc(C, C_s, c, m) and RHS = pc(C, C_a, t, m)
-  -- where t = coord_add b c = pc(C, C_b, c, m) and C_s = pc(O, a, C_b, m)
-  -- Need: pc(C, C_s, c, m) = pc(C, C_a, pc(C, C_b, c, m), m)
-  rw [h_lhs, h_rhs]
-  -- Goal: pc(C, C_s, c, m) = pc(C, C_a, t, m) where t = pc(C, C_b, c, m)
-  -- and C_s = pc(O, a, C_b, m) = key_identity result
-  sorry
+-- coord_add_assoc moved to FTPGAssocCapstone.lean (session 57 split)
 
 end Foam.FTPGExplore
