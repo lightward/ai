@@ -38,7 +38,7 @@ def lean_summary() -> str:
     """Summary of the Lean formalization."""
     return """## the deductive chain (lean/)
 
-mechanically verified. 14 files, 1 axiom (FTPG), 0 sorry.
+mechanically verified. 21 files, 1 axiom (FTPG), 1 sorry (coord_add_assoc).
 
 ```
 closure (ground)
@@ -48,13 +48,19 @@ complemented modular lattice, irreducible, height >= 4
 L = Sub(D, V) for some division ring D, vector space V
   | (stabilization contract forces D = R)
 elements are orthogonal projections: P^2 = P, P^T = P
-  | (the deductive chain — all proven)
+  | (the deductive chain — 14 files, all proven)
 eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian
   | Ground.lean (capstone)
 FoamGround properties verified
+  | (the FTPG bridge — 7 files, 1 sorry)
+incidence geometry -> Desargues -> perspectivity -> coord_add
+  | FTPGAssocCapstone.lean
+coord_add_comm PROVEN, coord_add_assoc 1 sorry (composition law)
 ```
 
-the chain: P^2 = P (definition) -> binary eigenvalues (Observation) -> clean splits -> commutator structure (Pair) -> skew-symmetry, tracelessness (Form) -> self-duality at rank 3 (Rank) -> (R^3, x) = so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround as theorem (Ground).
+the deductive chain (0 sorry): P^2 = P (definition) -> binary eigenvalues (Observation) -> clean splits -> commutator structure (Pair) -> skew-symmetry, tracelessness (Form) -> self-duality at rank 3 (Rank) -> (R^3, x) = so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround as theorem (Ground).
+
+the FTPG bridge (1 sorry): incidence axioms (FTPGExplore) -> Desargues (planar + lifting) -> perspectivity bijection -> coordinate system -> von Staudt addition (FTPGCoord) -> commutativity via chained Desargues (coord_add_comm PROVEN) -> translations via parallelogram completion (FTPGAssoc) -> cross-parallelism (FTPGCrossParallelism PROVEN) -> key_identity (PROVEN) -> associativity (FTPGAssocCapstone, 1 sorry: the composition law at an off-line point).
 
 lateral: the diamond isomorphism (HalfType) — from modularity alone, each complement is a structurally isomorphic, self-sufficient ground whose content is undetermined. state-independence is a lattice theorem, pre-bridge."""
 

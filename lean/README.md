@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 20 files, 1 axiom, 1 sorry (associativity capstone).
+Mechanically verified deductive path from P² = P to the foam's architecture. 21 files, 1 axiom, 1 sorry (associativity composition law).
 
 ## The chain
 
@@ -42,8 +42,9 @@ coord_add: zero, commutativity
   ↓ Hartshorne translation program             ── FTPGParallelogram,
     parallelism, well-definedness,               FTPGWellDefined,
     cross-parallelism, key identity              FTPGCrossParallelism,
-                                                 FTPGAssoc (1 sorry)
-coord_add: associativity ← WE ARE HERE
+                                                 FTPGAssoc,
+                                                 FTPGAssocCapstone (1 sorry)
+coord_add: associativity ← WE ARE HERE (composition law only)
   ↓ (not yet started)
 coord_mul: definition, properties
   ↓
@@ -118,13 +119,12 @@ The final connection: associativity via β-injectivity and cross-parallelism.
 | layer | key declarations |
 |---|---|
 | parameter rigidity | `translation_determined_by_param` (C-based translation determined by one point, 0 sorry) |
-| associativity | `coord_add_assoc` (1 sorry: the capstone) |
+| associativity | `coord_add_assoc` (1 sorry: the composition law) |
 
-Session 57 proof architecture: route through q via β-injectivity.
-Session 58: `translation_determined_by_param` proven — pc(C, C_i, P, m) IS a
-perspectivity from q to P⊔U through center e_P. The key collapse: C⊔C_i = q
-(since C_i ≤ q, C_i ≠ C), so (C⊔C_i)⊓m = q⊓m = U, turning pc into the
-perspectivity formula (C_i⊔e_P)⊓(P⊔U). perspectivity_injective finishes.
+Three-step proof architecture:
+1. **Key identity reduction** (session 58, PROVEN): four `key_identity` applications reduce `coord_add_assoc` to C_LHS = C_RHS (β-images agree) plus injectivity.
+2. **Composition law** (1 sorry): `pc(O, s, C_c, m) = pc(O, a, pc(O, b, C_c, m), m)`. Requires 6 `cross_parallelism` calls + 2 two-lines arguments (~400-600 lines, mechanical).
+3. **E-perspectivity recovery** (session 59, PROVEN): `(pc(O, x, C, m) ⊔ E) ⊓ l = x`. The E-perspectivity from l to q is inverted by joining with E and meeting with l. Modular law + containment, case split on x = O.
 
 ### The deductive chain (from P² = P)
 

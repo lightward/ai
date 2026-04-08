@@ -21,23 +21,30 @@ composition law directly on l (where all tools degenerate), we:
    - Two-lines argument: X⊔e is a single line, β(LHS) and β(RHS) both
      on this line AND on q → β(LHS) = β(RHS).
 
-3. perspectivity_injective: β(LHS) = β(RHS) → LHS = RHS.
+3. E-perspectivity recovery: β(LHS) = β(RHS) → LHS = RHS.
 
-## Key lemma (session 58: PROVEN)
+## Key lemmas
 
-`translation_determined_by_param`: if pc(C, C₁, P, m) = pc(C, C₂, P, m)
-for P off q and m in π, then C₁ = C₂.
+### translation_determined_by_param (session 58: PROVEN)
 
-Session 58 insight: pc(C, C_i, P, m) IS a perspectivity from q to P⊔U
-through center e_P = (C⊔P)⊓m. The key collapse: since C_i ≤ q and
-C_i ≠ C, we have C⊔C_i = q, so the "direction" (C⊔C_i)⊓m = q⊓m = U.
-This turns pc into (C_i⊔e_P) ⊓ (P⊔U) — exactly the perspectivity
-formula. perspectivity_injective finishes.
+If pc(C, C₁, P, m) = pc(C, C₂, P, m) for P off q and m in π, then C₁ = C₂.
+pc(C, C_i, P, m) IS a perspectivity from q to P⊔U through center e_P = (C⊔P)⊓m.
+
+### E-perspectivity recovery (session 59: PROVEN)
+
+(pc(O, x, C, m) ⊔ E) ⊓ l = x for any atom x on l.
+
+The E-perspectivity x ↦ C_x = (C⊔d)⊓(x⊔E) from l to q is inverted by
+joining with E and meeting with l. Key: pc ⊔ E = x ⊔ E (modular law +
+containment x ≤ (C⊔d)⊔E), then (x⊔E) ⊓ l = x (modular law, E⊓l = ⊥).
+Case split: x = O gives C⊔E = O⊔C (CovBy); x ≠ O gives (C⊔U)⊔E = π.
+This closes Step 3: h_beta_eq threads through as a three-step calc.
 
 ## Status
 
-1 sorry: coord_add_assoc. Key lemma proven (0 sorry).
-Proof architecture complete, implementation in progress.
+1 sorry: coord_add_assoc (Step 2 only — the composition law at C_c).
+Steps 1 and 3 proven. Key lemmas proven (0 sorry).
+Remaining: 6 cross_parallelism calls + 2 two-lines arguments (~400-600 lines).
 -/
 
 import Foam.FTPGAssoc
@@ -265,8 +272,115 @@ theorem coord_add_assoc (Γ : CoordSystem L)
     -- This is the composition law at C_c, proved by cross-parallelism chain.
     sorry
   -- ═══ Step 3: E-perspectivity injectivity → LHS = RHS ═══
-  -- C_x = (x⊔E)⊓q is the E-perspectivity from l to q.
-  -- C_LHS = C_RHS → LHS = RHS by perspectivity_injective.
-  sorry
+  -- Key: (pc(O, x, C, m) ⊔ E) ⊓ l = x for any atom x on l.
+  -- This recovers x from its β-image, so h_beta_eq forces LHS = RHS.
+  have hLHS_atom : IsAtom (coord_add Γ s c) :=
+    coord_add_atom Γ s c hs_atom hc hs_on hc_on hs_ne_O hc_ne_O hs_ne_U hc_ne_U
+  have hRHS_atom : IsAtom (coord_add Γ a t) :=
+    coord_add_atom Γ a t ha ht_atom ha_on ht_on ha_ne_O ht_ne_O ha_ne_U ht_ne_U
+  have hE_inf_l : Γ.E ⊓ l = ⊥ :=
+    (Γ.hE_atom.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hE_not_l (h ▸ inf_le_right))
+  -- Recovery lemma: the E-perspectivity from l to q is inverted by (· ⊔ E) ⊓ l
+  have recover : ∀ (x : L), IsAtom x → x ≤ l →
+      (parallelogram_completion Γ.O x Γ.C m ⊔ Γ.E) ⊓ l = x := by
+    intro x hx hx_l
+    -- Strategy: show pc ⊔ E = x ⊔ E, then (x ⊔ E) ⊓ l = x by modular law.
+    suffices h_eq : parallelogram_completion Γ.O x Γ.C m ⊔ Γ.E = x ⊔ Γ.E by
+      rw [h_eq, sup_inf_assoc_of_le Γ.E hx_l, hE_inf_l, sup_bot_eq]
+    apply le_antisymm
+    · -- pc ⊔ E ≤ x ⊔ E: pc ≤ x ⊔ E (inf_le_right of pc defn), E ≤ x ⊔ E
+      exact sup_le (show parallelogram_completion Γ.O x Γ.C m ≤ x ⊔ Γ.E from
+        inf_le_right) le_sup_right
+    · -- x ⊔ E ≤ pc ⊔ E: E ≤ pc ⊔ E (le_sup_right). x ≤ pc ⊔ E:
+      -- By modular law: pc ⊔ E = ((C⊔d) ⊔ E) ⊓ (x⊔E), where d = (O⊔x)⊓m.
+      -- So x ≤ pc ⊔ E iff x ≤ (C⊔d)⊔E (since x ≤ x⊔E already).
+      apply sup_le _ le_sup_right
+      -- Goal: x ≤ pc ⊔ E
+      -- Rewrite pc ⊔ E via modular law
+      have h_mod : parallelogram_completion Γ.O x Γ.C m ⊔ Γ.E =
+          ((Γ.C ⊔ (Γ.O ⊔ x) ⊓ m) ⊔ Γ.E) ⊓ (x ⊔ Γ.E) := by
+        -- pc = (C⊔d)⊓(x⊔E). pc⊔E = (C⊔d)⊓(x⊔E)⊔E = (E⊔(C⊔d))⊓(x⊔E) [modular, E≤x⊔E]
+        show (Γ.C ⊔ (Γ.O ⊔ x) ⊓ m) ⊓ (x ⊔ Γ.E) ⊔ Γ.E =
+             ((Γ.C ⊔ (Γ.O ⊔ x) ⊓ m) ⊔ Γ.E) ⊓ (x ⊔ Γ.E)
+        have := sup_inf_assoc_of_le (Γ.C ⊔ (Γ.O ⊔ x) ⊓ m)
+          (le_sup_right : Γ.E ≤ x ⊔ Γ.E)
+        -- this : (Γ.E ⊔ (C⊔d)) ⊓ (x⊔E) = Γ.E ⊔ (C⊔d) ⊓ (x⊔E)
+        rw [sup_comm] at this  -- ((C⊔d) ⊔ E) ⊓ (x⊔E) = Γ.E ⊔ (C⊔d)⊓(x⊔E)
+        rw [sup_comm Γ.E _] at this  -- ((C⊔d) ⊔ E) ⊓ (x⊔E) = (C⊔d)⊓(x⊔E) ⊔ Γ.E
+        exact this.symm
+      rw [h_mod]
+      -- Goal: x ≤ ((C ⊔ d) ⊔ E) ⊓ (x ⊔ E)
+      -- x ≤ x ⊔ E (le_sup_left) and x ≤ (C⊔d)⊔E (case analysis)
+      apply le_inf _ le_sup_left
+      -- Goal: x ≤ (C ⊔ (O⊔x)⊓m) ⊔ E
+      by_cases hx_O : x = Γ.O
+      · -- x = O: (C⊔d)⊔E where d = (O⊔O)⊓m. C⊔E = O⊔C ≥ O.
+        subst hx_O
+        have hC_ne_E : Γ.C ≠ Γ.E := fun h => Γ.hC_not_m (h ▸ Γ.hE_on_m)
+        have hCE_eq_OC : Γ.C ⊔ Γ.E = Γ.O ⊔ Γ.C := by
+          have hCE_le : Γ.C ⊔ Γ.E ≤ Γ.C ⊔ Γ.O :=
+            (sup_comm Γ.O Γ.C) ▸ (sup_le le_sup_right Γ.hE_le_OC : Γ.C ⊔ Γ.E ≤ Γ.O ⊔ Γ.C)
+          have hC_lt : Γ.C < Γ.C ⊔ Γ.E := lt_of_le_of_ne le_sup_left
+            (fun h => hC_ne_E ((Γ.hC.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+              Γ.hE_atom.1).symm)
+          have := ((atom_covBy_join Γ.hC Γ.hO (fun h => Γ.hC_not_l (h ▸ le_sup_left))).eq_or_eq
+            hC_lt.le hCE_le).resolve_left (ne_of_gt hC_lt)
+          rw [sup_comm Γ.C Γ.O] at this; exact this
+        calc Γ.O ≤ Γ.O ⊔ Γ.C := le_sup_left
+          _ = Γ.C ⊔ Γ.E := hCE_eq_OC.symm
+          _ ≤ (Γ.C ⊔ (Γ.O ⊔ Γ.O) ⊓ m) ⊔ Γ.E :=
+              sup_le_sup_right (le_sup_left : Γ.C ≤ Γ.C ⊔ (Γ.O ⊔ Γ.O) ⊓ m) Γ.E
+      · -- x ≠ O: O⊔x = l, d = U, (C⊔U)⊔E = q⊔E = π ≥ x
+        have hOx_eq_l : Γ.O ⊔ x = l := by
+          have hO_lt : Γ.O < Γ.O ⊔ x := by
+            apply lt_of_le_of_ne le_sup_left; intro h
+            have hx_le_O : x ≤ Γ.O := le_sup_right.trans (le_of_eq h.symm)
+            exact hx_O (le_antisymm hx_le_O
+              (Γ.hO.le_iff.mp hx_le_O |>.resolve_left hx.1 ▸ le_refl _))
+          exact ((atom_covBy_join Γ.hO Γ.hU Γ.hOU).eq_or_eq hO_lt.le
+            (sup_le le_sup_left hx_l)).resolve_left (ne_of_gt hO_lt)
+        rw [hOx_eq_l, Γ.l_inf_m_eq_U]
+        have hqm : q ⊓ m = Γ.U := by
+          show (Γ.U ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) = Γ.U
+          rw [sup_inf_assoc_of_le Γ.C (le_sup_left : Γ.U ≤ Γ.U ⊔ Γ.V)]
+          have : Γ.C ⊓ (Γ.U ⊔ Γ.V) = ⊥ :=
+            (Γ.hC.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hC_not_m (h ▸ inf_le_right))
+          rw [this, sup_bot_eq]
+        have hq_covBy_π : q ⋖ π := by
+          have h_inf : m ⊓ q ⋖ m := by
+            rw [inf_comm, hqm]
+            exact atom_covBy_join Γ.hU Γ.hV (fun h => Γ.hV_off (h ▸ le_sup_right))
+          have hmq : m ⊔ q = π := by
+            have : m ⊔ q = m ⊔ Γ.C := by
+              show m ⊔ (Γ.U ⊔ Γ.C) = m ⊔ Γ.C
+              rw [← sup_assoc, sup_eq_left.mpr (le_sup_left : Γ.U ≤ m)]
+            rw [this]
+            exact (Γ.m_covBy_π.eq_or_eq (le_sup_left : m ≤ m ⊔ Γ.C)
+              (sup_le hm_le_π Γ.hC_plane)).resolve_left
+              (ne_of_gt (lt_of_le_of_ne le_sup_left
+                (fun h => Γ.hC_not_m (le_sup_right.trans h.symm.le))))
+          have h1 := covBy_sup_of_inf_covBy_left h_inf; rwa [hmq] at h1
+        have hqE_eq_π : q ⊔ Γ.E = π := by
+          have hE_not_q : ¬ Γ.E ≤ q := fun hle =>
+            Γ.hEU ((Γ.hU.le_iff.mp (hqm ▸ le_inf hle Γ.hE_on_m)).resolve_left Γ.hE_atom.1)
+          have hq_lt : q < q ⊔ Γ.E := lt_of_le_of_ne le_sup_left
+            (fun h => hE_not_q (le_sup_right.trans h.symm.le))
+          exact (hq_covBy_π.eq_or_eq hq_lt.le
+            (sup_le (sup_le (le_sup_right.trans le_sup_left) Γ.hC_plane)
+              (Γ.hE_on_m.trans hm_le_π))).resolve_left (ne_of_gt hq_lt)
+        calc x ≤ l := hx_l
+          _ ≤ π := le_sup_left
+          _ = q ⊔ Γ.E := hqE_eq_π.symm
+          _ = (Γ.C ⊔ Γ.U) ⊔ Γ.E := by
+              show (Γ.U ⊔ Γ.C) ⊔ Γ.E = (Γ.C ⊔ Γ.U) ⊔ Γ.E; rw [sup_comm Γ.U Γ.C]
+  -- Apply recovery to both sides
+  have hLHS_on_l : coord_add Γ s c ≤ l := by
+    show coord_add Γ s c ≤ Γ.O ⊔ Γ.U; exact inf_le_right
+  have hRHS_on_l : coord_add Γ a t ≤ l := by
+    show coord_add Γ a t ≤ Γ.O ⊔ Γ.U; exact inf_le_right
+  calc coord_add Γ s c
+      = (C_LHS ⊔ Γ.E) ⊓ l := (recover (coord_add Γ s c) hLHS_atom hLHS_on_l).symm
+    _ = (C_RHS ⊔ Γ.E) ⊓ l := by rw [h_beta_eq]
+    _ = coord_add Γ a t := recover (coord_add Γ a t) hRHS_atom hRHS_on_l
 
 end Foam.FTPGExplore
