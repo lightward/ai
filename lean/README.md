@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 19 files, 1 axiom, 2 sorry (all in associativity).
+Mechanically verified deductive path from P² = P to the foam's architecture. 19 files, 1 axiom, 1 sorry (associativity capstone).
 
 ## The chain
 
@@ -77,15 +77,15 @@ Part IV-B: a single translation preserves directions of lines connecting any two
 |---|---|
 | cross-parallelism | `cross_parallelism` |
 
-**FTPGAssoc.lean** — associativity (2 sorry)
+**FTPGAssoc.lean** — associativity (1 sorry)
 
 Part V: `coord_add` equals translation application, then associativity from the translation group structure. The final connection.
 
 | layer | key declarations |
 |---|---|
 | translation bridge | `coord_add_eq_translation` (von Staudt addition = apply translation, 0 sorry) |
-| key identity | `key_identity` (τ_a(C_b) = C_{a+b}, 1 sorry: G-on-m fallback) |
-| associativity | `coord_add_assoc` (1 sorry, structurally dependent on `key_identity`) |
+| key identity | `key_identity` (τ_a(C_b) = C_{a+b}, 0 sorry) |
+| associativity | `coord_add_assoc` (1 sorry: the capstone) |
 
 ### The deductive chain (from P² = P)
 

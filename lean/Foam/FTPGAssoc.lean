@@ -8,19 +8,19 @@ then associativity follows from the translation group structure.
 - `key_identity`: τ_a(C_b) = C_{a+b}
 - `coord_add_assoc`: (a + b) + c = a + (b + c)
 
-## Status (session 55)
+## Status (session 56)
 
-2 sorry remain: 1 in key_identity (G-on-m fallback),
-1 in coord_add_assoc.
+1 sorry remains: coord_add_assoc.
+key_identity is fully proven (0 sorry).
 
-Session 55: hwd1 closed via cross_parallelism(O,a,G,C) + CovBy collapse.
-G-on-m case restructured: suffices abstraction over G, with
-G₂ = (a⊔E)⊓(b⊔C) as replacement when h_irred's G lands on m.
-G₂ is the intersection of lines a⊔E and b⊔C in π — guaranteed
-off m (different direction from G), off l (E ∉ l), off q (E ∉ q).
-4 sorry remain for G₂ properties (atom, ≠b, ≠C, ∉m).
-Key infrastructure: coord_add_eq_translation, modular_intersection,
-line_direction. .trans/.le instead of ▸ across set boundaries.
+Session 56: G₂ properties closed (4 sorry → 0).
+G₂ = (a⊔E)⊓(b⊔C), the intersection of two lines in π.
+- atom: via meet_of_lines_is_atom + veblen_young (two lines in π meet)
+- ≠ b: b ≤ a⊔E → b ≤ l⊓(E⊔a) = a → b=a, contradiction
+- ≠ C: C ≤ a⊔E → a⊔C = a⊔E (CovBy) → E ≤ (a⊔C)⊓(O⊔C) = C → E=C, C∉m
+- ∉ m: G₂ ≤ (a⊔E)⊓m = E → G₂=⊥ or G₂=E; both contradict meet≠⊥ or E∉b⊔C
+Key technique: .trans (le_of_eq ...) instead of rw to handle set abbreviations
+(definitional equality works, syntactic matching doesn't across set boundaries).
 
 Session 54: pc-distinctness (hb'_ne_Cb') closed via translation injectivity
 argument. hwd2 non-collinear case closed via parallelogram_completion_well_defined
@@ -350,20 +350,97 @@ theorem key_identity (Γ : CoordSystem L)
       · -- G on m: construct G₂ = (a ⊔ E) ⊓ (b ⊔ C) off m
         -- G₂ is the intersection of lines a⊔E and b⊔C in π
         set G₂ := (a ⊔ (Γ.O ⊔ Γ.C) ⊓ m) ⊓ (b ⊔ Γ.C)
-        -- G₂ properties (sorry for now, will fill in)
-        -- G₂ = (a ⊔ E) ⊓ (b ⊔ C) where E = (O⊔C)⊓m
-        -- Proof strategies for each property:
-        -- atom: meet_of_lines_is_atom (a⊔E ≠ b⊔C since a ∉ b⊔C)
-        -- ≠ b: b ≤ a⊔E → (a⊔E)⊓l = a (modular, E∉l) → b = a. Contradicts hab.
-        -- ≠ C: C ≤ a⊔E → a⊔C = a⊔E (CovBy) → E ≤ (a⊔C)⊓(O⊔C) = C (modular)
-        --       → E = C → C ∈ m. Contradiction.
-        -- ∉ m: G₂ ≤ m → (a⊔E)⊓m = E (line_direction) → G₂ = E → E ∈ b⊔C
-        --       → (O⊔C)⊓m = (b⊔C)⊓m → C⊔d = O⊔C = b⊔C (CovBy at C)
-        --       → O ≤ b⊔C → O ≤ (b⊔C)⊓l = b → O = b. Contradiction.
-        have hG₂_atom : IsAtom G₂ := sorry
-        have hG₂_ne_b : G₂ ≠ b := sorry
-        have hG₂_ne_C : G₂ ≠ Γ.C := sorry
-        have hG₂_not_m : ¬ G₂ ≤ m := sorry
+        -- ── Shared lemmas for G₂ properties ──
+        have ha_ne_E : a ≠ (Γ.O ⊔ Γ.C) ⊓ m :=
+          fun h => CoordSystem.hE_not_l ((le_of_eq h.symm).trans ha_on)
+        have ha_ne_C : a ≠ Γ.C := fun h => Γ.hC_not_l ((le_of_eq h.symm).trans ha_on)
+        -- a ⊔ b = l (both atoms on l, distinct)
+        have hab_eq_l : a ⊔ b = l :=
+          ((line_covers_its_atoms Γ.hO Γ.hU Γ.hOU ha ha_on).eq_or_eq
+            le_sup_left (sup_le ha_on hb_on)).resolve_left
+            (fun h => hab ((ha.le_iff.mp (le_of_le_of_eq le_sup_right h)).resolve_left hb.1).symm)
+        -- E ∉ b⊔C: E ≤ O⊔C and E ≤ b⊔C → E ≤ (O⊔C)⊓(b⊔C) = C → E=C, but C∉m
+        have hE_not_bC : ¬ (Γ.O ⊔ Γ.C) ⊓ m ≤ b ⊔ Γ.C := by
+          intro h
+          -- (C⊔O)⊓(C⊔b) = C by modular_intersection
+          have h_int : (Γ.C ⊔ Γ.O) ⊓ (Γ.C ⊔ b) = Γ.C :=
+            modular_intersection Γ.hC Γ.hO hb hOC.symm hb_ne_C.symm hb_ne_O.symm
+              (fun hle => by
+                have := (le_inf hb_on hle).trans
+                  (le_of_eq (inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l (le_sup_left : Γ.O ≤ l)))
+                exact hb_ne_O ((Γ.hO.le_iff.mp this).resolve_left hb.1))
+          -- E ≤ (O⊔C) ⊓ (b⊔C) = C
+          have hE_le_C : (Γ.O ⊔ Γ.C) ⊓ m ≤ Γ.C :=
+            (le_inf inf_le_left h).trans (le_of_eq (show (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.C) = Γ.C from by
+              rw [show (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.C) = (Γ.C ⊔ Γ.O) ⊓ (Γ.C ⊔ b) from by
+                rw [sup_comm Γ.O, sup_comm b]]; exact h_int))
+          exact Γ.hC_not_m ((le_of_eq ((Γ.hC.le_iff.mp hE_le_C).resolve_left
+            Γ.hE_atom.1).symm).trans CoordSystem.hE_on_m)
+        -- (a⊔E) ⊓ (b⊔C) ≠ ⊥ (two lines in π meet, via Veblen-Young)
+        have h_meet_ne : G₂ ≠ ⊥ := by
+          show (a ⊔ (Γ.O ⊔ Γ.C) ⊓ m) ⊓ (b ⊔ Γ.C) ≠ ⊥
+          rw [inf_comm]
+          exact veblen_young ha hb Γ.hC Γ.hE_atom hab ha_ne_C hb_ne_C ha_ne_E
+            (fun hle => Γ.hC_not_l (hle.trans (sup_le ha_on hb_on)))
+            (CoordSystem.hE_le_OC.trans (sup_le
+              ((le_sup_left : Γ.O ≤ l).trans (le_of_eq hab_eq_l.symm) |>.trans le_sup_left)
+              le_sup_right))
+            hE_not_bC
+        -- ¬ a⊔E ≤ b⊔C (a ≤ b⊔C → a ≤ (b⊔C)⊓l = b → a=b)
+        have h_not_le : ¬ a ⊔ (Γ.O ⊔ Γ.C) ⊓ m ≤ b ⊔ Γ.C := by
+          intro h
+          have : a ≤ (b ⊔ Γ.C) ⊓ l := le_inf (le_sup_left.trans h) ha_on
+          rw [show (b ⊔ Γ.C) ⊓ l = b from by
+            rw [sup_comm, inf_comm]
+            exact inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l hb_on] at this
+          exact hab ((hb.le_iff.mp this).resolve_left ha.1)
+        -- ── G₂ properties ──
+        have hG₂_atom : IsAtom G₂ :=
+          meet_of_lines_is_atom ha Γ.hE_atom hb Γ.hC ha_ne_E hb_ne_C h_not_le h_meet_ne
+        have hG₂_ne_b : G₂ ≠ b := by
+          intro h
+          -- b ≤ a⊔E and b ≤ l → b ≤ l ⊓ (E⊔a) = a → b=a
+          have h_eq : l ⊓ ((Γ.O ⊔ Γ.C) ⊓ m ⊔ a) = a :=
+            inf_sup_of_atom_not_le Γ.hE_atom CoordSystem.hE_not_l ha_on
+          have hb_le_a : b ≤ a :=
+            (le_inf hb_on (((le_of_eq h.symm).trans inf_le_left).trans
+              (le_of_eq (sup_comm a _)))).trans (le_of_eq h_eq)
+          exact hab ((ha.le_iff.mp hb_le_a).resolve_left hb.1).symm
+        have hG₂_ne_C : G₂ ≠ Γ.C := by
+          intro h
+          have hC_le_aE : Γ.C ≤ a ⊔ (Γ.O ⊔ Γ.C) ⊓ m := (le_of_eq h.symm).trans inf_le_left
+          -- a⊔C = a⊔E by CovBy collapse
+          have haE_eq_aC : a ⊔ (Γ.O ⊔ Γ.C) ⊓ m = a ⊔ Γ.C := by
+            symm; exact ((atom_covBy_join ha Γ.hE_atom ha_ne_E).eq_or_eq
+              (atom_covBy_join ha Γ.hC ha_ne_C).lt.le
+              (sup_le le_sup_left hC_le_aE)).resolve_left
+              (ne_of_gt (atom_covBy_join ha Γ.hC ha_ne_C).lt)
+          -- E ≤ a⊔C and E ≤ O⊔C → E ≤ (a⊔C)⊓(O⊔C) = C
+          have hE_le_aC : (Γ.O ⊔ Γ.C) ⊓ m ≤ a ⊔ Γ.C :=
+            le_sup_right.trans (le_of_eq haE_eq_aC)
+          -- (C⊔a)⊓(C⊔O) = C by modular_intersection
+          have h_int : (Γ.C ⊔ a) ⊓ (Γ.C ⊔ Γ.O) = Γ.C :=
+            modular_intersection Γ.hC ha Γ.hO ha_ne_C.symm hOC.symm ha_ne_O
+              (fun hle => by
+                have := (le_inf (le_sup_left : Γ.O ≤ l) hle).trans
+                  (le_of_eq (inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l ha_on))
+                exact ha_ne_O ((ha.le_iff.mp this).resolve_left Γ.hO.1).symm)
+          -- E ≤ (a⊔C) ⊓ (O⊔C) = C
+          have hE_le_C : (Γ.O ⊔ Γ.C) ⊓ m ≤ Γ.C :=
+            (le_inf hE_le_aC CoordSystem.hE_le_OC).trans (le_of_eq (show
+              (a ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.C) = Γ.C from by
+                rw [show (a ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.C) = (Γ.C ⊔ a) ⊓ (Γ.C ⊔ Γ.O) from by
+                  rw [sup_comm a, sup_comm Γ.O]]; exact h_int))
+          exact Γ.hC_not_m ((le_of_eq ((Γ.hC.le_iff.mp hE_le_C).resolve_left
+            Γ.hE_atom.1).symm).trans CoordSystem.hE_on_m)
+        have hG₂_not_m : ¬ G₂ ≤ m := by
+          intro hG₂_m
+          have hG₂_le_E : G₂ ≤ (Γ.O ⊔ Γ.C) ⊓ m :=
+            (le_inf inf_le_left hG₂_m).trans
+              (le_of_eq (line_direction ha ha_not_m CoordSystem.hE_on_m))
+          rcases Γ.hE_atom.le_iff.mp hG₂_le_E with h | h
+          · exact h_meet_ne h
+          · exact hE_not_bC ((le_of_eq h.symm).trans inf_le_right)
         have hG₂_not_l : ¬ G₂ ≤ l := by
           intro h
           -- G₂ ≤ (b⊔C) ⊓ l = b (C ∉ l), so G₂ = b. Contradiction.
