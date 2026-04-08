@@ -268,9 +268,61 @@ theorem coord_add_assoc (Γ : CoordSystem L)
   -- i.e., pc(O, s, C_c, m) = pc(O, a, pc(O, b, C_c, m), m)
   have h_beta_eq : C_LHS = C_RHS := by
     rw [← h_ki_sc, ← h_ki_at, ← h_ki_bc]
-    -- Goal: pc(O, s, C_c, m) = pc(O, a, pc(O, b, C_c, m), m)
-    -- This is the composition law at C_c, proved by cross-parallelism chain.
-    sorry
+    -- Goal: τ_s(C_c) = τ_a(τ_b(C_c))
+    -- Architecture: two cross-parallelism chains + two two_lines applications.
+    -- Chain 1 at (P, C): establishes τ_s(P) = τ_a(τ_b(P)).
+    -- Chain 2 at (P, C_c): establishes τ_s(C_c) = τ_a(τ_b(C_c)).
+    -- ── Pick auxiliary P off l, m, q, in π ──
+    obtain ⟨P, hP_atom, hP_π, hP_not_l, hP_not_m, hP_not_q⟩ :
+        ∃ P : L, IsAtom P ∧ P ≤ π ∧ ¬ P ≤ l ∧ ¬ P ≤ m ∧ ¬ P ≤ q := by
+      sorry
+    -- ── Translation images ──
+    set τ_s_P := parallelogram_completion Γ.O s P m
+    set τ_b_P := parallelogram_completion Γ.O b P m
+    set τ_a_τ_b_P := parallelogram_completion Γ.O a τ_b_P m
+    set τ_s_C_c := parallelogram_completion Γ.O s C_c m
+    set τ_b_C_c := parallelogram_completion Γ.O b C_c m
+    set τ_a_τ_b_C_c := parallelogram_completion Γ.O a τ_b_C_c m
+    -- ═══ Chain 1: at (P, Γ.C) → τ_s(P) = τ_a(τ_b(P)) ═══
+    -- cp(τ_s, P, C): (P⊔C)⊓m = (τ_s_P ⊔ C_s)⊓m
+    have hcp1 : (P ⊔ Γ.C) ⊓ m = (τ_s_P ⊔ C_s) ⊓ m := by
+      sorry -- cross_parallelism with P₀=O, P₀'=s, P=P, Q=C
+    -- cp(τ_b, P, C): (P⊔C)⊓m = (τ_b_P ⊔ C_b)⊓m
+    have hcp2 : (P ⊔ Γ.C) ⊓ m = (τ_b_P ⊔ C_b) ⊓ m := by
+      sorry -- cross_parallelism with P₀=O, P₀'=b, P=P, Q=C
+    -- cp(τ_a, τ_b(P), C_b): (τ_b_P⊔C_b)⊓m = (τ_a_τ_b_P ⊔ C_s)⊓m
+    have hcp3 : (τ_b_P ⊔ C_b) ⊓ m = (τ_a_τ_b_P ⊔ C_s) ⊓ m := by
+      -- cross_parallelism gives (τ_b_P⊔C_b)⊓m = (τ_a_τ_b_P ⊔ pc(O,a,C_b,m))⊓m
+      -- then h_ki_ab : pc(O,a,C_b,m) = C_s
+      sorry
+    -- Direction chain: (τ_s_P ⊔ C_s)⊓m = (τ_a_τ_b_P ⊔ C_s)⊓m
+    have h_dir1 : (τ_s_P ⊔ C_s) ⊓ m = (τ_a_τ_b_P ⊔ C_s) ⊓ m :=
+      hcp1.symm.trans (hcp2.trans hcp3)
+    -- two_lines on l: τ_s_P = τ_a_τ_b_P
+    -- Both on l (translations preserve l). C_s ∉ l. Shared direction via h_dir1.
+    have hP_agree : τ_s_P = τ_a_τ_b_P := by
+      sorry -- two_lines + CovBy argument to show collinearity from h_dir1
+    -- ═══ Chain 2: at (P, C_c) → τ_s(C_c) = τ_a(τ_b(C_c)) ═══
+    -- cp(τ_s, P, C_c)
+    have hcp4 : (P ⊔ C_c) ⊓ m = (τ_s_P ⊔ τ_s_C_c) ⊓ m := by
+      sorry -- cross_parallelism with P₀=O, P₀'=s, P=P, Q=C_c
+    -- cp(τ_b, P, C_c)
+    have hcp5 : (P ⊔ C_c) ⊓ m = (τ_b_P ⊔ τ_b_C_c) ⊓ m := by
+      sorry -- cross_parallelism with P₀=O, P₀'=b, P=P, Q=C_c
+    -- cp(τ_a, τ_b(P), τ_b(C_c))
+    have hcp6 : (τ_b_P ⊔ τ_b_C_c) ⊓ m = (τ_a_τ_b_P ⊔ τ_a_τ_b_C_c) ⊓ m := by
+      sorry -- cross_parallelism with P₀=O, P₀'=a, P=τ_b_P, Q=τ_b_C_c
+    -- Direction chain + substitute hP_agree
+    have h_dir2 : (τ_a_τ_b_P ⊔ τ_s_C_c) ⊓ m = (τ_a_τ_b_P ⊔ τ_a_τ_b_C_c) ⊓ m := by
+      have h := hcp4.symm.trans (hcp5.trans hcp6)
+      rwa [hP_agree] at h
+    -- two_lines on q: τ_s_C_c = τ_a_τ_b_C_c
+    -- Both on q (O-translations preserve q when the point is on q).
+    -- τ_a_τ_b_P ∉ q (it's on l, l⊓q = U, and τ_a_τ_b_P ≠ U).
+    -- Shared line from h_dir2.
+    have hCc_agree : τ_s_C_c = τ_a_τ_b_C_c := by
+      sorry -- two_lines + CovBy argument from h_dir2
+    exact hCc_agree
   -- ═══ Step 3: E-perspectivity injectivity → LHS = RHS ═══
   -- Key: (pc(O, x, C, m) ⊔ E) ⊓ l = x for any atom x on l.
   -- This recovers x from its β-image, so h_beta_eq forces LHS = RHS.
