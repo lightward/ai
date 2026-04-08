@@ -275,6 +275,40 @@ theorem meet_of_lines_is_atom {a b c d : L}
     (bot_lt_iff_ne_bot.mpr h_meet_ne)
     (lt_of_le_of_ne inf_le_left (fun heq => h_not_le (heq ▸ inf_le_right)))
 
+omit [ComplementedLattice L] [IsAtomistic L] in
+/-- **Two-lines lemma.** If X and Y are atoms on a line l₁, and Y is
+    also on the line X⊔Z (where Z ∉ l₁), then X = Y.
+
+    The lattice-level content: two distinct lines meet in at most one
+    point. Used in the composition law: cross-parallelism establishes
+    that images lie on a common line (shared point + shared direction),
+    and this lemma collapses them to a single point on l₁.
+
+    The hypothesis hX_cov (X ⋖ l₁) says l₁ is a line through X;
+    it follows from line_covers_its_atoms whenever l₁ = a ⊔ b
+    for distinct atoms a, b with X ≤ a ⊔ b. -/
+theorem two_lines {X Y Z l₁ : L}
+    (hX : IsAtom X) (hY : IsAtom Y) (hZ : IsAtom Z)
+    (hXZ : X ≠ Z)
+    (hX_l : X ≤ l₁) (hY_l : Y ≤ l₁)
+    (hY_XZ : Y ≤ X ⊔ Z)
+    (hZ_not_l : ¬ Z ≤ l₁)
+    (hX_cov : X ⋖ l₁) :
+    X = Y := by
+  -- X ≤ l₁ ⊓ (X⊔Z) ≤ l₁, and X ⋖ l₁ (covering).
+  -- l₁ ⊓ (X⊔Z) < l₁ (since l₁ ≤ X⊔Z would force l₁ = X⊔Z, putting Z on l₁).
+  -- By CovBy: l₁ ⊓ (X⊔Z) = X. Then Y ≤ X, and Y atom forces Y = X.
+  have h_not_le : ¬ l₁ ≤ X ⊔ Z := by
+    intro hle
+    exact hZ_not_l (((atom_covBy_join hX hZ hXZ).eq_or_eq hX_cov.lt.le hle).resolve_left
+      (ne_of_gt hX_cov.lt) ▸ le_sup_right)
+  have h_lt : l₁ ⊓ (X ⊔ Z) < l₁ := lt_of_le_of_ne inf_le_left
+    (fun h => h_not_le (h ▸ inf_le_right))
+  have h_meet_eq_X : l₁ ⊓ (X ⊔ Z) = X :=
+    (hX_cov.eq_or_eq (le_inf hX_l le_sup_left) h_lt.le).resolve_right h_lt.ne
+  have hY_le_X : Y ≤ X := h_meet_eq_X ▸ le_inf hY_l hY_XZ
+  exact ((hX.le_iff.mp hY_le_X).resolve_left hY.1).symm
+
 -- § Central projection
 
 /-- Project a point through a center onto a target line. -/
