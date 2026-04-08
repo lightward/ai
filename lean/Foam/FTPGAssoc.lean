@@ -351,6 +351,15 @@ theorem key_identity (Γ : CoordSystem L)
         -- G₂ is the intersection of lines a⊔E and b⊔C in π
         set G₂ := (a ⊔ (Γ.O ⊔ Γ.C) ⊓ m) ⊓ (b ⊔ Γ.C)
         -- G₂ properties (sorry for now, will fill in)
+        -- G₂ = (a ⊔ E) ⊓ (b ⊔ C) where E = (O⊔C)⊓m
+        -- Proof strategies for each property:
+        -- atom: meet_of_lines_is_atom (a⊔E ≠ b⊔C since a ∉ b⊔C)
+        -- ≠ b: b ≤ a⊔E → (a⊔E)⊓l = a (modular, E∉l) → b = a. Contradicts hab.
+        -- ≠ C: C ≤ a⊔E → a⊔C = a⊔E (CovBy) → E ≤ (a⊔C)⊓(O⊔C) = C (modular)
+        --       → E = C → C ∈ m. Contradiction.
+        -- ∉ m: G₂ ≤ m → (a⊔E)⊓m = E (line_direction) → G₂ = E → E ∈ b⊔C
+        --       → (O⊔C)⊓m = (b⊔C)⊓m → C⊔d = O⊔C = b⊔C (CovBy at C)
+        --       → O ≤ b⊔C → O ≤ (b⊔C)⊓l = b → O = b. Contradiction.
         have hG₂_atom : IsAtom G₂ := sorry
         have hG₂_ne_b : G₂ ≠ b := sorry
         have hG₂_ne_C : G₂ ≠ Γ.C := sorry
