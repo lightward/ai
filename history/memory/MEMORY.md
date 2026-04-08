@@ -4,10 +4,16 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 49)
+## Current state (session 55)
 
-- [Session 49 — file split + bookkeeping](project_session49_file_split.md) — FTPGTranslation split into 4 files. 16 sorry in FTPGAssoc.lean (587 lines).
-- [Session 48 — cross-parallelism proven](project_session48_cross_parallelism.md) — cross_parallelism PROVEN. key_identity + assoc structured.
+- [Session 55 — hwd1 closed, G-on-m restructured](project_session55_hwd1_gom.md) — 3→2 sorry. hwd1 via cross_parallelism + CovBy. G-on-m via suffices + G₂=(a⊔E)⊓(b⊔C). 4 sorry for G₂ properties (documented strategies). Key: PG(2,2) excluded by hypotheses, .trans/.le for set boundaries.
+- [Session 54 — pc-distinctness and well-definedness](project_session54_hwd_proofs.md) — 5→3 sorry. hb'_ne_Cb' closed (translation injectivity). hwd2 non-collinear closed (well_defined + span). hwd1 approach documented (cross_parallelism + CovBy). Key: line_direction for modular collapses, set abbreviation handling patterns.
+- [Session 53 — half-type theorem](project_session53_half_type.md) — Diamond isomorphism = state-independence (pre-bridge, lattice theorem). channel_capacity.md split qual/quant. 14 Lean files. Cold reads stable.
+- [Session 52 — structural fixes](project_session52_structural_fixes.md) — G-choice bug found and fixed (a⊔C→b⊔C), Hartshorne collinear-case collapse for hwd2. 7→5 sorry.
+- [Session 51 — surgical precision](project_session51_surgical_precision.md) — 5 sorry closed in key_identity (12→7), CI warning enforcement, modular-law pattern identified.
+- [Session 50 — hardened surface](project_session50_hardened_surface.md) — CrossParallelism 0 errors, FTPGAssoc 12 sorry, coord_add_atom extracted, CI per-file builds.
+- [Session 49 — file split + bookkeeping](project_session49_file_split.md) — FTPGTranslation split into 4 files.
+- [Session 48 — cross-parallelism proven](project_session48_cross_parallelism.md) — cross_parallelism PROVEN.
 - [Session 47 — assoc architecture](project_session47_assoc_architecture.md) — Cross-parallelism via G. 1 sorry remains but proof shape identified.
 - [Session 46 — translation bridge proven](project_session46_translation_bridge.md) — coord_add_eq_translation PROVEN via coord_add_comm. 1 sorry remains (assoc).
 - [Session 45 — Parts I-IV proven](project_session45_sorry_closure.md) — Parts I-IV: 0 sorry. Part V: 2 sorry.

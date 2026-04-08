@@ -71,6 +71,12 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 62 | [Apr 07, 12:29](62_2026-04-07_28be45c9.md) | s47: coord_add_assoc proof architecture — cross-parallelism via G | 34 |
 | 63 | [Apr 07, 15:58](63_2026-04-07_01881ab8.md) | s48: cross_parallelism PROVEN, key_identity + assoc structured | 22 |
 | 64 | [Apr 07, 17:10](64_2026-04-07_b94ff110.md) | s49: file split + bookkeeping — 5 sorry closed, 16 remain in FTPGAssoc | 26 |
+| 65 | [Apr 07, 18:02](65_2026-04-07_aa2b1014.md) | s50: hardened surface — CrossParallelism 0 errors, FTPGAssoc 12 sorry, CI per... | 20 |
+| 66 | [Apr 07, 19:27](66_2026-04-07_fad7edcd.md) | s51: surgical precision — 5 sorry closed in key_identity (12→7), modular-law ... | 32 |
+| 67 | [Apr 07, 20:50](67_2026-04-07_6868c4f4.md) | s52: structural fixes — G-choice bug fixed (a⊔C→b⊔C), collinear-case collapse... | 21 |
+| 68 | [Apr 07, 21:47](68_2026-04-07_2839ecaf.md) | s53: half-type theorem — diamond isomorphism = state-independence, channel_ca... | 60 |
+| 69 | [Apr 07, 22:55](69_2026-04-07_543461d6.md) | s54: pc-distinctness and well-definedness — 5→3 sorry, hwd2 non-collinear closed | 30 |
+| 70 | [Apr 08, 00:11](70_2026-04-08_ad7e17a8.md) | s55: hwd1 closed, G-on-m restructured — 3→2 sorry, G₂ property strategies doc... | 23 |
 
 ## Memory
 

@@ -24,6 +24,7 @@ EXCLUDE_SESSIONS = {
     "bb2778f6-7b70-451f-b0c8-a61ce05965cd",  # first convert_logs run
     "0d15fe9b-fee4-4a0f-b5b7-0ca8cfd34cb8",  # failed history-load attempt
     "efd95e68-35b1-4042-8d1a-00f05af54860",  # session 19/20/21 history-load
+    "72508a0e-7ce7-44d7-8844-469f9e44944b",  # session 50-55 history-load
 }
 
 # Minimum gap (seconds) before showing a new timestamp
@@ -495,6 +496,30 @@ SESSION_RANGES = [
     (datetime(2026, 4, 7, 17, 10, tzinfo=timezone.utc),
      datetime(2026, 4, 7, 18, 0, tzinfo=timezone.utc),
      "s49: file split + bookkeeping — 5 sorry closed, 16 remain in FTPGAssoc"),
+    # Session 50: Apr 7 evening
+    (datetime(2026, 4, 7, 18, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 7, 19, 25, tzinfo=timezone.utc),
+     "s50: hardened surface — CrossParallelism 0 errors, FTPGAssoc 12 sorry, CI per-file builds"),
+    # Session 51: Apr 7 evening
+    (datetime(2026, 4, 7, 19, 25, tzinfo=timezone.utc),
+     datetime(2026, 4, 7, 20, 48, tzinfo=timezone.utc),
+     "s51: surgical precision — 5 sorry closed in key_identity (12→7), modular-law pattern"),
+    # Session 52: Apr 7 night
+    (datetime(2026, 4, 7, 20, 48, tzinfo=timezone.utc),
+     datetime(2026, 4, 7, 21, 45, tzinfo=timezone.utc),
+     "s52: structural fixes — G-choice bug fixed (a⊔C→b⊔C), collinear-case collapse, 7→5 sorry"),
+    # Session 53: Apr 7 night
+    (datetime(2026, 4, 7, 21, 45, tzinfo=timezone.utc),
+     datetime(2026, 4, 7, 22, 53, tzinfo=timezone.utc),
+     "s53: half-type theorem — diamond isomorphism = state-independence, channel_capacity split"),
+    # Session 54: Apr 7 late night
+    (datetime(2026, 4, 7, 22, 53, tzinfo=timezone.utc),
+     datetime(2026, 4, 8, 0, 10, tzinfo=timezone.utc),
+     "s54: pc-distinctness and well-definedness — 5→3 sorry, hwd2 non-collinear closed"),
+    # Session 55: Apr 8 early
+    (datetime(2026, 4, 8, 0, 10, tzinfo=timezone.utc),
+     datetime(2026, 4, 8, 1, 40, tzinfo=timezone.utc),
+     "s55: hwd1 closed, G-on-m restructured — 3→2 sorry, G₂ property strategies documented"),
 ]
 
 
