@@ -31,6 +31,31 @@ FoamGround properties ✓
 
 ### The algebraic descent (toward eliminating the axiom)
 
+The full path from lattice axioms to FTPG:
+
+```
+complemented modular lattice, irreducible, height ≥ 4
+  ↓ incidence geometry, Veblen-Young           ── FTPGExplore (0 sorry)
+projective geometry: Desargues, perspectivity
+  ↓ von Staudt coordinatization                ── FTPGCoord (0 sorry)
+coord_add: zero, commutativity
+  ↓ Hartshorne translation program             ── FTPGParallelogram,
+    parallelism, well-definedness,               FTPGWellDefined,
+    cross-parallelism, key identity              FTPGCrossParallelism,
+                                                 FTPGAssoc (1 sorry)
+coord_add: associativity ← WE ARE HERE
+  ↓ (not yet started)
+coord_mul: definition, properties
+  ↓
+distributivity (left and right)
+  ↓
+division ring structure (multiplicative inverses)
+  ↓
+L ≃o Sub(D, V) — the isomorphism
+  ↓
+axiom(FTPG) becomes a theorem
+```
+
 **FTPGExplore.lean** — projective geometry from lattice axioms (0 sorry)
 
 Incidence geometry, Veblen-Young, Desargues (nonplanar + planar), perspectivity, and Small Desargues (A5a). Pure geometry — no coordinates.
