@@ -520,6 +520,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 8, 0, 10, tzinfo=timezone.utc),
      datetime(2026, 4, 8, 1, 40, tzinfo=timezone.utc),
      "s55: hwd1 closed, G-on-m restructured — 3→2 sorry, G₂ property strategies documented"),
+    # Session 56: Apr 8
+    (datetime(2026, 4, 8, 11, 35, tzinfo=timezone.utc),
+     datetime(2026, 4, 8, 14, 10, tzinfo=timezone.utc),
+     "s56: G₂ closed, assoc architecture — 5→1 sorry, key_identity clean, C_p=β(p) insight"),
 ]
 
 
