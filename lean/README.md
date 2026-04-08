@@ -117,14 +117,14 @@ The final connection: associativity via β-injectivity and cross-parallelism.
 
 | layer | key declarations |
 |---|---|
-| parameter rigidity | `translation_determined_by_param` (C-based translation determined by one point, 1 sorry) |
+| parameter rigidity | `translation_determined_by_param` (C-based translation determined by one point, 0 sorry) |
 | associativity | `coord_add_assoc` (1 sorry: the capstone) |
 
 Session 57 proof architecture: route through q via β-injectivity.
-The q-based composition law holds because q-points are off l (where O-based
-translations are well-defined). Three key_identity applications reduce the
-goal to an O-based composition at C_c. A cross-parallelism chain + two-lines
-argument gives β(LHS) = β(RHS). perspectivity_injective finishes.
+Session 58: `translation_determined_by_param` proven — pc(C, C_i, P, m) IS a
+perspectivity from q to P⊔U through center e_P. The key collapse: C⊔C_i = q
+(since C_i ≤ q, C_i ≠ C), so (C⊔C_i)⊓m = q⊓m = U, turning pc into the
+perspectivity formula (C_i⊔e_P)⊓(P⊔U). perspectivity_injective finishes.
 
 ### The deductive chain (from P² = P)
 
