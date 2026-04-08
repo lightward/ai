@@ -730,7 +730,20 @@ theorem key_identity (Γ : CoordSystem L)
       -- Well-definedness 1: pc(G, G', b, m) = pc(C, C_a, b, m) = s
       -- where C_a = pc(O, a, C, m) and s = coord_add a b = pc(C, C_a, b, m)
       have hwd1 : parallelogram_completion G G' b m = s := by
-        sorry -- well-definedness rebase from (O, a) to (G, G') then to (C, C_a)
+        sorry
+        /- Proof approach (session 54):
+           G, b, C collinear (G ≤ b⊔C), blocking parallelogram_completion_well_defined.
+           Use cross_parallelism + CovBy instead:
+           1. pc(G,G',b,m) = l ⊓ (G'⊔e) and s = pc(C,C',b,m) = l ⊓ (C'⊔e)
+              where e = (b⊔C)⊓m, using (G⊔G')⊓m = U, G⊔b = b⊔C, (C⊔C')⊓m = U
+           2. cross_parallelism(O, a, G, C) gives (G⊔C)⊓m = (G'⊔C')⊓m = e
+           3. CovBy: e ≤ G'⊔C' forces G'⊔e = C'⊔e (= G'⊔C')
+           4. l ⊓ (G'⊔e) = l ⊓ (C'⊔e) = s
+
+           Preconditions: O⊔G⊔C = π (span), C∉O⊔G, C'≠C, G'≠C'.
+           All proved in analysis. Mechanical issue: `set` abbreviations
+           require named intermediates with `show` for rw compatibility.
+           Use `line_direction` for all modular collapses. -/
       -- Well-definedness 2: pc(G, G', C_b, m) = pc(O, a, C_b, m) = τ_a_C_b
       -- By cases on whether O, G, C_b are collinear.
       -- Collinear case: shared direction f makes G'⊔f = a⊔f, collapsing both pc's.
