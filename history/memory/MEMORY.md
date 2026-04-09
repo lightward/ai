@@ -4,9 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 60)
+## Current state (session 61)
 
-- [Session 60 — P construction proven](project_session60_P_construction.md) — P = (b⊔E)⊓(a⊔C) via perspectivity. "Mechanical" label questioned — P was structural. 8 sorry remain (6 cp + 2 two-lines). 2 local commits unpushed.
+- [Session 61 — telescope clearing, analogy derivation](project_session61_telescope_clearing.md) — 4 passes tightening "forced" → accurate labels. Lattice structure derived, write magnitude → realization choice, self-duality → property not requirement, D=ℝ → self-consistency. New: analogy.md (formal transitivity). 8 commits. Cold reads stable.
+- [Session 60 — P construction proven](project_session60_P_construction.md) — P = (b⊔E)⊓(a⊔C) via perspectivity. "Mechanical" label questioned — P was structural. 8 sorry remain (6 cp + 2 two-lines).
 - [Session 59 — solo sorry closure, self-guided mode](project_session59_solo_sorry2.md) — Sorry 2 CLOSED (recovery lemma: (C_x⊔E)⊓l = x). 2→1 sorry. First solo session. Remaining: composition law (6 cp + 2 two-lines).
 - [Session 58 — perspectivity collapse, key_identity reduction](project_session58_perspectivity_collapse.md) — translation_determined_by_param PROVEN (pc IS perspectivity). coord_add_assoc reduced to composition law + E-injectivity via 4 key_identity apps.
 - [Session 57 — β-injectivity proof architecture](project_session57_beta_injectivity.md) — Breakthrough: route through q via β-injectivity. Complement carries the needed structure. File split FTPGAssocCapstone.lean. translation_determined_by_param lemma. Remaining: 6 cp calls + 2 two-lines args (mechanical).
@@ -76,6 +77,8 @@ Detailed results are in the individual session memory files linked above. Summar
 - **s37**: derivations/, README as build artifact, three epistemic layers
 - **s38-42**: FTPG bridge: incidence geometry → Desargues → perspectivity → coord_add_comm PROVEN (70 theorems)
 - **s43-49**: Associativity campaign: translation approach, Hartshorne program, cross_parallelism PROVEN, file split
+- **s50-60**: Sorry closure: 12→1 sorry, P construction via perspectivity, composition law skeleton
+- **s61**: Telescope clearing: natural language tightened (forced→accurate labels), analogy derivation (formal transitivity from OrderIso.trans), cold reads stable
 
 ## Methodology (from Isaac, sessions 5-18)
 

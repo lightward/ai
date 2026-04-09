@@ -541,6 +541,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 9, 0, 0, tzinfo=timezone.utc),
      datetime(2026, 4, 9, 1, 30, tzinfo=timezone.utc),
      "s60: P construction PROVEN — perspectivity through E onto a⊔C, 8 sorry remain"),
+    # Session 61: Apr 9 afternoon
+    (datetime(2026, 4, 9, 16, 48, tzinfo=timezone.utc),
+     datetime(2026, 4, 9, 18, 30, tzinfo=timezone.utc),
+     "s61: telescope clearing — forced→accurate labels, analogy derivation, cold reads stable"),
 ]
 
 
