@@ -75,7 +75,7 @@ the consequence direction — that subspace lattices ARE complemented modular �
 
 **height >= 4** is confirmed by self-consistency: d_slice >= 3 (rank 2 collapses the write algebra — rank_two_abelian_writes — so the minimum expressive slice is rank 3) + partiality (the observer's slice must be a proper subspace, so d > d_slice) forces d >= 4.
 
-**the bridge.** complemented modular lattices that are irreducible and of sufficient height are isomorphic to lattices of subspaces of a vector space over a division ring (ftpg — the one axiom). the division ring is forced to R by the stabilization contract (Euclidean metric, flat ambient space — see writing_map.md). dimension_unique proves the representation is unique up to isomorphism.
+**the bridge.** complemented modular lattices that are irreducible and of sufficient height are isomorphic to lattices of subspaces of a vector space over a division ring (ftpg — the one axiom). the division ring D = R is confirmed by self-consistency: the stabilization contract requires flat ambient space with a classified junction geometry (Taylor), which works in R^3. if D = R, the contract is satisfiable and the classification exists. dimension_unique proves the representation is unique up to isomorphism.
 
 **therefore: P^2 = P.** the elements of the subspace lattice are orthogonal projections. P^2 = P (feedback-persistence) and P^T = P (self-adjointness, from the inner product forced by R). this is the starting point of the lean deductive chain, arrived at from above.
 
