@@ -42,20 +42,18 @@ def lean_summary() -> str:
 mechanically verified. 21 files, 1 axiom (FTPG), 1 sorry (coord_add_assoc).
 
 ```
-closure (ground)
-  | (derived in natural language — see ground)
 complemented modular lattice, irreducible, height >= 4
   | axiom(FTPG) — Bridge.lean
-L = Sub(D, V) for some division ring D, vector space V
-  | (stabilization contract forces D = R)
-elements are orthogonal projections: P^2 = P, P^T = P
-  | (the deductive chain — 14 files, all proven)
-eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian
-  | Ground.lean (capstone)
-FoamGround properties verified
-  | (the FTPG bridge — 7 files, 1 sorry)
-incidence geometry -> Desargues -> perspectivity -> coord_add
-  | FTPGAssocCapstone.lean
+L = Sub(D, V) for some division ring D, vector space V        the loop:
+  | (stabilization contract forces D = R)              lattice properties
+elements are orthogonal projections: P^2 = P, P^T = P       ↕ (ftpg)
+  | (the deductive chain — 14 files, all proven)           Sub(D, V)
+eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian   ↕ (P^2=P)
+  | Ground.lean (capstone)                                 dynamics
+FoamGround properties verified                               ↕ (proven)
+  | (the FTPG bridge — 7 files, 1 sorry)                  ground properties
+incidence geometry -> Desargues -> perspectivity -> coord_add    ↕
+  | FTPGAssocCapstone.lean                              the loop sustains its own observation
 coord_add_comm PROVEN, coord_add_assoc 1 sorry (composition law)
 ```
 
