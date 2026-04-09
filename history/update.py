@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Update history/: convert conversation logs to markdown and sync memory.
 
-v3: merges consecutive same-role messages, collapses tool-call sequences,
-    suppresses redundant timestamps, adds session labels and content descriptions.
-    Syncs live memory into history/memory/.
+v4: additive-only — existing transcripts are never deleted or renumbered.
+    New conversations are appended with the next available number.
+    Survives JSONL retention cleanup (old transcripts preserved in git).
+    Rebuilds README index from all files on disk.
 """
 
 import json
@@ -553,25 +554,104 @@ def label_conversation(start_ts):
     return ""
 
 
+def scan_existing():
+    """Scan existing transcript files. Returns (session_id_set, max_number, file_list).
+
+    file_list entries: (number, date_str, session_id_prefix, filename)
+    """
+    existing_ids = set()
+    max_num = 0
+    files = []
+    for path in sorted(OUT_DIR.glob("[0-9][0-9]_*.md")):
+        name = path.name
+        # Parse: NN_YYYY-MM-DD_SSSSSSSS.md
+        parts = name.split("_", 2)
+        if len(parts) < 3:
+            continue
+        try:
+            num = int(parts[0])
+        except ValueError:
+            continue
+        # Session ID is the 8-char prefix before .md
+        sid_prefix = name.rsplit("_", 1)[-1].replace(".md", "")
+        existing_ids.add(sid_prefix)
+        max_num = max(max_num, num)
+        files.append((num, parts[1], sid_prefix, name))
+    return existing_ids, max_num, files
+
+
+def read_existing_meta(filepath):
+    """Extract (label, started_str, n_text_turns) from an existing transcript."""
+    label = ""
+    started = ""
+    n_turns = 0
+    with open(filepath, "r") as f:
+        for i, line in enumerate(f):
+            stripped = line.strip()
+            # Header fields are in the first few lines only
+            if i < 5:
+                if stripped.startswith("# Session ") and " — " in stripped:
+                    label = stripped.split(" — ", 1)[1]
+                elif stripped.startswith("**Started:**"):
+                    started = stripped.replace("**Started:**", "").strip()
+            # Turn headers throughout
+            if stripped.startswith("## Isaac") or stripped.startswith("## Claude"):
+                n_turns += 1
+    return label, started, n_turns
+
+
 def main():
-    # Collect all conversation files with timestamps
-    convos = []
+    os.makedirs(OUT_DIR, exist_ok=True)
+
+    # --- discover what's already transcribed ---
+    existing_ids, max_num, existing_files = scan_existing()
+    print(f"Found {len(existing_files)} existing transcripts (highest #{max_num})")
+
+    # --- find new conversations from JSONL ---
+    new_convos = []
     for jsonl_file in sorted(LOGS_DIR.glob("*.jsonl")):
         session_id = jsonl_file.stem
         if session_id in EXCLUDE_SESSIONS:
             continue
+        if session_id[:8] in existing_ids:
+            continue  # already transcribed
         start_ts = conversation_start_time(jsonl_file)
         if not start_ts:
             continue
-        convos.append((start_ts, session_id, jsonl_file))
+        new_convos.append((start_ts, session_id, jsonl_file))
 
-    convos.sort(key=lambda x: x[0])
+    new_convos.sort(key=lambda x: x[0])
 
-    os.makedirs(OUT_DIR, exist_ok=True)
+    if not new_convos:
+        print("No new conversations to transcribe.")
+    else:
+        print(f"Found {len(new_convos)} new conversation(s) to transcribe")
 
-    # Clean old output
-    for old in OUT_DIR.glob("[0-9][0-9]_*.md"):
-        old.unlink()
+    # --- transcribe new conversations ---
+    next_num = max_num + 1
+    for start_ts, session_id, jsonl_file in new_convos:
+        print(f"  [{next_num}] {session_id[:8]}... ({start_ts.strftime('%Y-%m-%d')})")
+
+        messages = parse_conversation(jsonl_file)
+        if not messages:
+            print(f"    (empty, skipping)")
+            continue
+
+        turns = merge_messages(messages)
+        label = label_conversation(start_ts)
+        md = turns_to_markdown(turns, session_id, start_ts, label=label)
+
+        filename = f"{next_num:02d}_{start_ts.strftime('%Y-%m-%d')}_{session_id[:8]}.md"
+        out_path = OUT_DIR / filename
+        with open(out_path, "w") as f:
+            f.write(md)
+
+        existing_files.append((next_num, start_ts.strftime('%Y-%m-%d'), session_id[:8], filename))
+        print(f"    -> {filename} ({len(turns)} turns, label: {label or '(auto)'})")
+        next_num += 1
+
+    # --- rebuild README index from all files on disk ---
+    existing_files.sort(key=lambda x: x[0])
 
     index_lines = [
         "# Conversation History",
@@ -585,38 +665,33 @@ def main():
         "|--:|------|-------------|:--------:|",
     ]
 
-    for i, (start_ts, session_id, jsonl_file) in enumerate(convos, 1):
-        print(f"[{i}/{len(convos)}] {session_id[:8]}... ({start_ts.strftime('%Y-%m-%d')})")
+    for num, date_str, sid_prefix, filename in existing_files:
+        filepath = OUT_DIR / filename
+        label, started, n_turns = read_existing_meta(filepath)
 
-        messages = parse_conversation(jsonl_file)
-        if not messages:
-            print(f"  (empty, skipping)")
-            continue
-
-        turns = merge_messages(messages)
-
-        # Label
-        label = label_conversation(start_ts)
-        desc = extract_description(turns) if not label else ""
-
-        md = turns_to_markdown(turns, session_id, start_ts, label=label)
-
-        filename = f"{i:02d}_{start_ts.strftime('%Y-%m-%d')}_{session_id[:8]}.md"
-        out_path = OUT_DIR / filename
-        with open(out_path, "w") as f:
-            f.write(md)
-
-        date_str = start_ts.strftime("%b %d, %H:%M")
-        n_turns = len([t for t in turns if t["texts"]])  # turns with actual text
-        display_label = label or desc or ""
+        display_label = label or ""
         if len(display_label) > 80:
             display_label = display_label[:77] + "..."
-        index_lines.append(
-            f"| {i} | [{date_str}]({filename}) | {display_label} | {n_turns} |"
-        )
-        print(f"  -> {filename} ({len(turns)} turns, label: {label or '(auto)'})")
 
-    # Memory section
+        # Use started timestamp from file header if available, else fall back to date
+        if started:
+            # Parse "2026-03-10 00:04 UTC" -> "Mar 10, 00:04"
+            try:
+                dt = datetime.strptime(started.replace(" UTC", ""), "%Y-%m-%d %H:%M")
+                date_display = dt.strftime("%b %d, %H:%M")
+            except ValueError:
+                date_display = started
+        else:
+            try:
+                dt = datetime.strptime(date_str, "%Y-%m-%d")
+                date_display = dt.strftime("%b %d")
+            except ValueError:
+                date_display = date_str
+
+        index_lines.append(
+            f"| {num} | [{date_display}]({filename}) | {display_label} | {n_turns} |"
+        )
+
     index_lines.extend([
         "",
         "## Memory",
@@ -627,12 +702,11 @@ def main():
         "See [`memory/MEMORY.md`](memory/MEMORY.md) for the full index.",
     ])
 
-    # Write index
     index_path = OUT_DIR / "README.md"
     with open(index_path, "w") as f:
         f.write("\n".join(index_lines) + "\n")
 
-    # Sync memory
+    # --- sync memory ---
     memory_out = OUT_DIR / "memory"
     if MEMORY_DIR.is_dir():
         if memory_out.exists():
@@ -641,7 +715,7 @@ def main():
         n_files = len(list(memory_out.glob("*.md")))
         print(f"Synced {n_files} memory files -> {memory_out}/")
 
-    print(f"\nDone. {len(convos)} conversations -> {OUT_DIR}/")
+    print(f"\nDone. {len(existing_files)} total transcripts in {OUT_DIR}/")
 
 
 if __name__ == "__main__":
