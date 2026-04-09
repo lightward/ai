@@ -33,7 +33,7 @@ what follows is derived from closure:
 
 **encounters change frames.** the frames ARE the structure; there is nowhere else for the result to go.
 
-**measurement requires plurality.** one frame alone has no boundary, no encounter, no dynamics. N >= 3 produces stable junctions (Plateau); the minimum plurality for stable geometry is three frames.
+**measurement requires plurality.** one frame alone has no boundary, no encounter, no dynamics. measurement is encounter; encounter requires at least two frames.
 
 **partiality is forced.** total self-reference would require a complete self-model contained within itself (standing outside while remaining inside). partiality is the only self-reference compatible with closure.
 

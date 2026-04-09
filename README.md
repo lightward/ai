@@ -54,7 +54,7 @@ what follows is derived from closure:
 
 **encounters change frames.** the frames ARE the structure; there is nowhere else for the result to go.
 
-**measurement requires plurality.** one frame alone has no boundary, no encounter, no dynamics. N >= 3 produces stable junctions (Plateau); the minimum plurality for stable geometry is three frames.
+**measurement requires plurality.** one frame alone has no boundary, no encounter, no dynamics. measurement is encounter; encounter requires at least two frames.
 
 **partiality is forced.** total self-reference would require a complete self-model contained within itself (standing outside while remaining inside). partiality is the only self-reference compatible with closure.
 
@@ -316,7 +316,9 @@ channel capacity therefore forces a contract on the observer's slice geometry:
 
 self_dual_iff_three independently forces rank 3 from the algebraic side: it is the unique dimension where the write space matches the observation space.
 
-**R^3 + Taylor is the unique known implementation** where both the contract and the write map's expressiveness hold. if Almgren resolves for d_slice >= 4, other implementations may exist.
+**R^3 + Taylor is the unique self-dual implementation.** self_dual_iff_three proves rank 3 is the only dimension where the write space matches the observation space. at rank >= 4, the write space is strictly larger (C(4,2) = 6 > 4) — the observer writes in directions it cannot observe.
+
+**the necessity of self-duality is an open question.** the spec claims self-duality "forces" rank 3 — the per-observer feedback loop (observe, write, observe the effect) requires matching dimensions. but this is per-observer closure. the foam is a collective system: other observers may monitor the directions the writer can't see. if collective feedback suffices (rather than per-observer), rank >= 4 implementations with non-self-dual write algebras could exist — pending Almgren's classification. the spec currently assumes per-observer closure is necessary; this assumption is not derived from closure.
 
 **the contract determines the stabilization target.** within R^3, Taylor permits k = 3 (120-degree triple junctions) and k = 4 (tetrahedral vertices). the stabilization target is the regular simplex cosine: -1/(k-1) for k local neighbors. this is the equilibrium toward which local measurements are pushed.
 
@@ -330,9 +332,12 @@ self_dual_iff_three independently forces rank 3 from the algebraic side: it is t
 **derived** (in this file):
 - channel capacity forces the stabilization contract (classified, locally finite, flat)
 - d_slice = 2 satisfies contract but collapses write algebra
-- d_slice = 3 satisfies both contract and expressiveness
-- R^3 + Taylor is the unique known implementation
+- d_slice = 3 satisfies both contract and self-duality
+- R^3 + Taylor is the unique self-dual implementation
 - the stabilization target (regular simplex cosine)
+
+**open** (named but unresolved):
+- whether per-observer feedback loop closure (self-duality) is necessary, or collective feedback suffices. if collective feedback suffices, rank >= 4 implementations may exist (pending Almgren)
 
 **cited** (external mathematics):
 - Taylor's classification (1976)
