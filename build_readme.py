@@ -13,6 +13,7 @@ DERIVATIONS = [
     "ground",
     "writing_map",
     "half_type",
+    "analogy",
     "channel_capacity",
     "stabilization",
     "group",
