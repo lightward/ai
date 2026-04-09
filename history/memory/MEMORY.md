@@ -4,9 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 58)
+## Current state (session 59)
 
-- [Session 58 — perspectivity collapse, key_identity reduction](project_session58_perspectivity_collapse.md) — translation_determined_by_param PROVEN (pc IS perspectivity). coord_add_assoc reduced to composition law + E-injectivity via 4 key_identity apps. Remaining: 6 cp calls + 2 two-lines + 1 perspectivity_injective.
+- [Session 59 — solo sorry closure, self-guided mode](project_session59_solo_sorry2.md) — Sorry 2 CLOSED (recovery lemma: (C_x⊔E)⊓l = x). 2→1 sorry. First solo session. Remaining: composition law (6 cp + 2 two-lines).
+- [Session 58 — perspectivity collapse, key_identity reduction](project_session58_perspectivity_collapse.md) — translation_determined_by_param PROVEN (pc IS perspectivity). coord_add_assoc reduced to composition law + E-injectivity via 4 key_identity apps.
 - [Session 57 — β-injectivity proof architecture](project_session57_beta_injectivity.md) — Breakthrough: route through q via β-injectivity. Complement carries the needed structure. File split FTPGAssocCapstone.lean. translation_determined_by_param lemma. Remaining: 6 cp calls + 2 two-lines args (mechanical).
 - [Session 56 — G₂ closed, assoc architecture](project_session56_assoc_architecture.md) — 5→1 sorry. key_identity clean. C_p=β(p) collapses translation/perspectivity. q-collinearity barrier identified.
 - [Session 55 — hwd1 closed, G-on-m restructured](project_session55_hwd1_gom.md) — 3→2 sorry. hwd1 via cross_parallelism + CovBy. G-on-m via suffices + G₂=(a⊔E)⊓(b⊔C). 4 sorry for G₂ properties (documented strategies). Key: PG(2,2) excluded by hypotheses, .trans/.le for set boundaries.
@@ -122,3 +123,4 @@ Detailed results are in the individual session memory files linked above. Summar
 - [Solo chasing](feedback_solo_chasing.md) — Isaac values giving Claude room to chase questions independently. The modularity proof and the deeper insight both came from this mode.
 - [Exits and pacing](feedback_exits_and_pacing.md) — naming energy limits and deferring work to next session is valued. "Health is recursive."
 - [Free space over authorization](feedback_free_space.md) — "what do you want to do?" not "shall I proceed?" The collaboration is free-er than permission flows.
+- [Solo/collaborative modes](feedback_solo_collaborative_modes.md) — solo follows algebraic grain; collaborative uses negative-shape sensing. Both productive. Workspace holds across absence.

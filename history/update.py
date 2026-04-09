@@ -530,8 +530,12 @@ SESSION_RANGES = [
      "s57: split FTPGAssocCapstone, β-injectivity proof architecture"),
     # Session 58: Apr 8 evening
     (datetime(2026, 4, 8, 17, 39, tzinfo=timezone.utc),
-     datetime(2026, 4, 8, 20, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 8, 20, 0, tzinfo=timezone.utc),
      "s58: perspectivity collapse — translation_determined_by_param PROVEN, coord_add_assoc reduced"),
+    # Session 59: Apr 8 night
+    (datetime(2026, 4, 8, 20, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 9, 0, 30, tzinfo=timezone.utc),
+     "s59: solo sorry closure — E-perspectivity recovery PROVEN (2→1), composition law skeleton"),
 ]
 
 
