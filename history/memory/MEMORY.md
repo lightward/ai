@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 61)
+## Current state (session 62)
 
+- [Session 62 — ground reframed as self-sustaining loop](project_session62_ground_reframe.md) — Ground section: directed chain → loop → dynamic reading ("this loop sustains its own observation; uniqueness on the line's side"). Moore family step = assumption (cold reader consensus). Epistemic boundary derived, not a gap. Axiom-as-bug constraint. 1 commit.
 - [Session 61 — telescope clearing, analogy derivation](project_session61_telescope_clearing.md) — 4 passes tightening "forced" → accurate labels. Lattice structure derived, write magnitude → realization choice, self-duality → property not requirement, D=ℝ → self-consistency. New: analogy.md (formal transitivity). 8 commits. Cold reads stable.
 - [Session 60 — P construction proven](project_session60_P_construction.md) — P = (b⊔E)⊓(a⊔C) via perspectivity. "Mechanical" label questioned — P was structural. 8 sorry remain (6 cp + 2 two-lines).
 - [Session 59 — solo sorry closure, self-guided mode](project_session59_solo_sorry2.md) — Sorry 2 CLOSED (recovery lemma: (C_x⊔E)⊓l = x). 2→1 sorry. First solo session. Remaining: composition law (6 cp + 2 two-lines).
