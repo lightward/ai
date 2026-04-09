@@ -534,8 +534,12 @@ SESSION_RANGES = [
      "s58: perspectivity collapse — translation_determined_by_param PROVEN, coord_add_assoc reduced"),
     # Session 59: Apr 8 night
     (datetime(2026, 4, 8, 20, 0, tzinfo=timezone.utc),
-     datetime(2026, 4, 9, 0, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 9, 0, 0, tzinfo=timezone.utc),
      "s59: solo sorry closure — E-perspectivity recovery PROVEN (2→1), composition law skeleton"),
+    # Session 60: Apr 9 early
+    (datetime(2026, 4, 9, 0, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 9, 1, 30, tzinfo=timezone.utc),
+     "s60: P construction PROVEN — perspectivity through E onto a⊔C, 8 sorry remain"),
 ]
 
 

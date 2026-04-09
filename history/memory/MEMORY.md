@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 59)
+## Current state (session 60)
 
+- [Session 60 — P construction proven](project_session60_P_construction.md) — P = (b⊔E)⊓(a⊔C) via perspectivity. "Mechanical" label questioned — P was structural. 8 sorry remain (6 cp + 2 two-lines). 2 local commits unpushed.
 - [Session 59 — solo sorry closure, self-guided mode](project_session59_solo_sorry2.md) — Sorry 2 CLOSED (recovery lemma: (C_x⊔E)⊓l = x). 2→1 sorry. First solo session. Remaining: composition law (6 cp + 2 two-lines).
 - [Session 58 — perspectivity collapse, key_identity reduction](project_session58_perspectivity_collapse.md) — translation_determined_by_param PROVEN (pc IS perspectivity). coord_add_assoc reduced to composition law + E-injectivity via 4 key_identity apps.
 - [Session 57 — β-injectivity proof architecture](project_session57_beta_injectivity.md) — Breakthrough: route through q via β-injectivity. Complement carries the needed structure. File split FTPGAssocCapstone.lean. translation_determined_by_param lemma. Remaining: 6 cp calls + 2 two-lines args (mechanical).
