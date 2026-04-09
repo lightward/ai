@@ -43,14 +43,14 @@ what follows is derived from closure:
 
 **read-only frames are excluded.** a frame unchanged by encounters would require encounters to have no effect on it — but the frame IS part of the structure, and encounters change the structure.
 
-**the lattice of partial views.** partial views of a shared structure form a lattice:
+**the lattice of partial views.** the intersection of any collection of partial views is a partial view (the seen set can only shrink; smaller partiality is still partiality). the whole structure is a view. closure under arbitrary intersections with a top element gives a complete lattice — every pair of views has a meet (greatest common refinement) and a join (least encompassing view). this lattice is:
 - complemented: partiality guarantees an unseen complement (complement_idempotent: (I - P)^2 = I - P)
 - bounded: the whole structure and the empty view
 - modular: the modular law IS feedback-persistence expressed in lattice language. the positive argument: an observation that persists must yield the same result when composed with other observations regardless of the order of composition. if observer A, looking through observer B's view restricted to context C, gets a different result depending on whether A combines with B first or restricts to C first, then the composition has no single outcome — and an outcome that isn't single can't feed back (what would persist?). the lattice operation must be path-independent. path-independence of the meet and join, given the complemented bounded structure, is exactly the modular law: a <= c implies (a join b) meet c = a join (b meet c). the negative witness: in a non-modular lattice (the pentagon N_5), observer at a, encountering b within context c, gets the full context c by one path and only a by the other. the composition is indeterminate. indeterminate composition cannot feed back consistently — the observation has no single result to persist. there is no weaker condition that suffices: any lattice law that permits path-dependent composition permits indeterminate feedback.
 
 the consequence direction — that subspace lattices ARE complemented modular — is proven (subspaceFoamGround).
 
-**irreducibility** is forced by closure: a decomposable lattice would be two non-interacting sub-structures, which under closure are two separate foams, not one.
+**irreducibility** is forced by closure: a decomposable lattice would be two non-interacting sub-structures, which under closure are two separate foams, not one. a complemented modular lattice that is distributive is a Boolean algebra — and Boolean algebras decompose as products of height-1 lattices. irreducibility excludes this. the lattice is modular but not distributive: exactly the input the FTPG requires.
 
 **height >= 4** is confirmed by self-consistency: d_slice = 3 (from the writing map: self-duality forces rank 3) + partiality (the observer's slice must be a proper subspace) forces d >= 4.
 
