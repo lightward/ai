@@ -123,7 +123,8 @@ The final connection: associativity via β-injectivity and cross-parallelism.
 
 Three-step proof architecture:
 1. **Key identity reduction** (session 58, PROVEN): four `key_identity` applications reduce `coord_add_assoc` to C_LHS = C_RHS (β-images agree) plus injectivity.
-2. **Composition law** (1 sorry): `pc(O, s, C_c, m) = pc(O, a, pc(O, b, C_c, m), m)`. Requires 6 `cross_parallelism` calls + 2 two-lines arguments (~400-600 lines, mechanical).
+2. **Composition law** (8 sorry): `pc(O, s, C_c, m) = pc(O, a, pc(O, b, C_c, m), m)`. Skeleton proven (session 59): direction chains, auxiliary point P. Remaining: 6 `cross_parallelism` calls + 2 `two_lines` arguments (mechanical hypothesis verification).
+   - **Auxiliary point P** (session 60, PROVEN): `P = (b ⊔ E) ⊓ (a ⊔ C)` — perspectivity image of b through center E onto line a⊔C. Off l, m, q by three distinct contradiction arguments. Coplanarity via `(a⊔C)⊓m ≠ E` (distinct lines through C) → `m ≤ (a⊔C)⊔E` → `m ⋖ π` gives `(a⊔C)⊔E = π`.
 3. **E-perspectivity recovery** (session 59, PROVEN): `(pc(O, x, C, m) ⊔ E) ⊓ l = x`. The E-perspectivity from l to q is inverted by joining with E and meeting with l. Modular law + containment, case split on x = O.
 
 ### The deductive chain (from P² = P)
