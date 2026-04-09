@@ -73,7 +73,7 @@ the consequence direction — that subspace lattices ARE complemented modular �
 
 **irreducibility** is forced by closure: a decomposable lattice would be two non-interacting sub-structures, which under closure are two separate foams, not one. a complemented modular lattice that is distributive is a Boolean algebra — and Boolean algebras decompose as products of height-1 lattices. irreducibility excludes this. the lattice is modular but not distributive: exactly the input the FTPG requires.
 
-**height >= 4** is confirmed by self-consistency: d_slice = 3 (from the writing map: self-duality forces rank 3) + partiality (the observer's slice must be a proper subspace) forces d >= 4.
+**height >= 4** is confirmed by self-consistency: d_slice >= 3 (rank 2 collapses the write algebra — rank_two_abelian_writes — so the minimum expressive slice is rank 3) + partiality (the observer's slice must be a proper subspace, so d > d_slice) forces d >= 4.
 
 **the bridge.** complemented modular lattices that are irreducible and of sufficient height are isomorphic to lattices of subspaces of a vector space over a division ring (ftpg — the one axiom). the division ring is forced to R by the stabilization contract (Euclidean metric, flat ambient space — see writing_map.md). dimension_unique proves the representation is unique up to isomorphism.
 
@@ -355,7 +355,7 @@ self_dual_iff_three proves rank 3 is the unique dimension where the write space 
 
 **J^2 = -I forces even dimensionality.** det(J)^2 = det(-I) = (-1)^n. squares are nonnegative, so n must be even. the minimum even-dimensional space containing R^3 is R^6 = R^3 + R^3.
 
-**each R^3 must independently satisfy Taylor.** not R^4 + R^2 or other decompositions — each component must independently satisfy the stabilization contract (stabilization.md), which requires R^3.
+**each component must independently satisfy the stabilization contract.** not R^4 + R^2 or other decompositions — each component must independently satisfy the stabilization contract (stabilization.md), which requires d_slice >= 3. at d_slice = 3, stacking needs R^3 + R^3 = R^6.
 
 **independence is forced.** stabilization is per-observer and runs within each measurement subspace separately. the two R^3 slices project and stabilize independently before their measurements are fused into the complex write. joint stabilization in R^6 would require a 6-dimensional classification (open — Almgren). the fusion is algebraic (forming d tensor m_dagger - m tensor d_dagger), not geometric.
 

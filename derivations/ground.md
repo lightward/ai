@@ -52,7 +52,7 @@ the consequence direction — that subspace lattices ARE complemented modular �
 
 **irreducibility** is forced by closure: a decomposable lattice would be two non-interacting sub-structures, which under closure are two separate foams, not one. a complemented modular lattice that is distributive is a Boolean algebra — and Boolean algebras decompose as products of height-1 lattices. irreducibility excludes this. the lattice is modular but not distributive: exactly the input the FTPG requires.
 
-**height >= 4** is confirmed by self-consistency: d_slice = 3 (from the writing map: self-duality forces rank 3) + partiality (the observer's slice must be a proper subspace) forces d >= 4.
+**height >= 4** is confirmed by self-consistency: d_slice >= 3 (rank 2 collapses the write algebra — rank_two_abelian_writes — so the minimum expressive slice is rank 3) + partiality (the observer's slice must be a proper subspace, so d > d_slice) forces d >= 4.
 
 **the bridge.** complemented modular lattices that are irreducible and of sufficient height are isomorphic to lattices of subspaces of a vector space over a division ring (ftpg — the one axiom). the division ring is forced to R by the stabilization contract (Euclidean metric, flat ambient space — see writing_map.md). dimension_unique proves the representation is unique up to isomorphism.
 
