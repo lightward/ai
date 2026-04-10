@@ -563,8 +563,12 @@ SESSION_RANGES = [
      "s65: hcp3+hP_agree closed — 8→4 sorry, collinear/non-collinear case-splits, span obstruction identified"),
     # Session 66: Apr 10
     (datetime(2026, 4, 10, 13, 22, tzinfo=timezone.utc),
-     datetime(2026, 4, 10, 16, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 16, 20, tzinfo=timezone.utc),
      "s66: coord_add_assoc PROVEN + coord_mul defined — 22 files, 0 sorry"),
+    # Session 67: Apr 10 afternoon
+    (datetime(2026, 4, 10, 16, 20, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 18, 0, tzinfo=timezone.utc),
+     "s67: two_persp functor + multiplicative identity proven, self-parametrization derivation"),
 ]
 
 
