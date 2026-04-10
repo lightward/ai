@@ -567,8 +567,12 @@ SESSION_RANGES = [
      "s66: coord_add_assoc PROVEN + coord_mul defined — 22 files, 0 sorry"),
     # Session 67: Apr 10 afternoon
     (datetime(2026, 4, 10, 16, 20, tzinfo=timezone.utc),
-     datetime(2026, 4, 10, 18, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 18, 30, tzinfo=timezone.utc),
      "s67: two_persp functor + multiplicative identity proven, self-parametrization derivation"),
+    # Session 68: Apr 10 evening
+    (datetime(2026, 4, 10, 18, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 19, 45, tzinfo=timezone.utc),
+     "s68: zero annihilation proven, chirality derivation (T⊲T⋊D = so(d)⊲u(d))"),
 ]
 
 

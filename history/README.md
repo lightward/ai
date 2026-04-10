@@ -89,6 +89,7 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 80 | [Apr 10, 03:14](80_2026-04-10_6f670ada.md) | s65: hcp3+hP_agree closed — 8→4 sorry, collinear/non-collinear case-splits, s... | 10 |
 | 81 | [Apr 10, 13:22](81_2026-04-10_d46d2606.md) | s66: coord_add_assoc PROVEN + coord_mul defined — 22 files, 0 sorry | 34 |
 | 82 | [Apr 10, 16:24](82_2026-04-10_86a156fc.md) | s67: two_persp functor + multiplicative identity proven, self-parametrization... | 52 |
+| 83 | [Apr 10, 18:34](83_2026-04-10_13b9061d.md) | s68: zero annihilation proven, chirality derivation (T⊲T⋊D = so(d)⊲u(d)) | 22 |
 
 ## Memory
 

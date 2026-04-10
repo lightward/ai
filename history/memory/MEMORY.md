@@ -4,9 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 67)
+## Current state (session 68)
 
-- [Session 67 — two_persp functor + self-parametrization](project_session67_two_persp.md) — Extracted two_persp (shared skeleton of add/mul, by rfl). Multiplicative identity proven (I·a=a, a·I=a). Self-parametrization: the line parametrizes its own operations through C. Three pairings of {O,U,I} → add, mul, translated add. Open resonance: "two levels for self-reference" ↔ J²=-1. **22 files, 0 sorry.** Next: mul associativity, or formalize (U,I) operation.
+- [Session 68 — chirality + zero annihilation](project_session68_chirality_zero_annihilation.md) — T⊲T⋊D chirality (=so(d)⊲u(d)). Zero annihilation proven (O·b=O, a·O=O). Axiom-collapse: FTPG dissolves via ring axiom proofs. Hinge: (a⊔C)⊓m shared between add/mul. **22 files, 0 sorry.** Next: add inverse, then distributivity.
+- [Session 67 — two_persp functor + self-parametrization](project_session67_two_persp.md) — two_persp extracted. Mul identity proven. Self-parametrization. **22 files, 0 sorry.**
 - [Session 66 — assoc PROVEN + coord_mul defined](project_session66_assoc_proven.md) — 4→0 sorry in assoc. Then: read Hartshorne §7, defined coord_mul (dilation via O⊔C bridge, parallel to addition's q bridge). E_I infrastructure (7 lemmas, 0 sorry). **22 files, 0 sorry.**
 - [Session 65 — hcp3+hP_agree closed](project_session65_assoc_closure.md) — 8→4 sorry. hcp3 collinear (both sides = d') + non-collinear (span via modular-law-on-q). hP_agree (line-equality-from-direction + two_lines). Span obstruction for hcp4/5 identified (C_c ∉ O⊔P needs case-split).
 - [Session 64 — assoc sorry closure begun](project_session64_assoc_sorry.md) — 8→6 sorry in coord_add_assoc. Shared infrastructure for cross_parallelism calls. inf_sup_of_atom_not_le technique. P⊔C=a⊔C CovBy span proof. 2 commits.
