@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 21 files, 1 axiom, 1 sorry (associativity composition law).
+Mechanically verified deductive path from P² = P to the foam's architecture. 21 files, 1 axiom, 0 sorry.
 
 ## The chain
 
@@ -43,8 +43,8 @@ coord_add: zero, commutativity
     parallelism, well-definedness,               FTPGWellDefined,
     cross-parallelism, key identity              FTPGCrossParallelism,
                                                  FTPGAssoc,
-                                                 FTPGAssocCapstone (1 sorry)
-coord_add: associativity ← WE ARE HERE (composition law only)
+                                                 FTPGAssocCapstone (0 sorry)
+coord_add: associativity ✓
   ↓ (not yet started)
 coord_mul: definition, properties
   ↓
@@ -112,20 +112,16 @@ Part V: `coord_add` equals translation application, key identity for the transla
 | translation bridge | `coord_add_eq_translation` (von Staudt addition = apply translation, 0 sorry) |
 | key identity | `key_identity` (τ_a(C_b) = C_{a+b}, 0 sorry) |
 
-**FTPGAssocCapstone.lean** — associativity capstone (1 sorry)
+**FTPGAssocCapstone.lean** — associativity capstone (0 sorry)
 
-The final connection: associativity via β-injectivity and cross-parallelism.
+Associativity via β-injectivity and cross-parallelism. PROVEN.
 
 | layer | key declarations |
 |---|---|
-| parameter rigidity | `translation_determined_by_param` (C-based translation determined by one point, 0 sorry) |
-| associativity | `coord_add_assoc` (1 sorry: the composition law) |
+| parameter rigidity | `translation_determined_by_param` (C-based translation determined by one point) |
+| associativity | `coord_add_assoc` (the composition law, 0 sorry) |
 
-Three-step proof architecture:
-1. **Key identity reduction** (session 58, PROVEN): four `key_identity` applications reduce `coord_add_assoc` to C_LHS = C_RHS (β-images agree) plus injectivity.
-2. **Composition law** (8 sorry): `pc(O, s, C_c, m) = pc(O, a, pc(O, b, C_c, m), m)`. Skeleton proven (session 59): direction chains, auxiliary point P. Remaining: 6 `cross_parallelism` calls + 2 `two_lines` arguments (mechanical hypothesis verification).
-   - **Auxiliary point P** (session 60, PROVEN): `P = (b ⊔ E) ⊓ (a ⊔ C)` — perspectivity image of b through center E onto line a⊔C. Off l, m, q by three distinct contradiction arguments. Coplanarity via `(a⊔C)⊓m ≠ E` (distinct lines through C) → `m ≤ (a⊔C)⊔E` → `m ⋖ π` gives `(a⊔C)⊔E = π`.
-3. **E-perspectivity recovery** (session 59, PROVEN): `(pc(O, x, C, m) ⊔ E) ⊓ l = x`. The E-perspectivity from l to q is inverted by joining with E and meeting with l. Modular law + containment, case split on x = O.
+Three-step proof: (1) key_identity reduces to β-images agree, (2) two cross-parallelism chains + two two_lines arguments close the composition law via collinear/non-collinear case splits, (3) E-perspectivity recovery.
 
 ### The deductive chain (from P² = P)
 
