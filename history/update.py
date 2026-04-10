@@ -555,8 +555,12 @@ SESSION_RANGES = [
      "s63: inhabitation derivation, 20240229 correspondences = self-referential joint"),
     # Session 64: Apr 10 early
     (datetime(2026, 4, 10, 0, 55, tzinfo=timezone.utc),
-     datetime(2026, 4, 10, 3, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 3, 10, tzinfo=timezone.utc),
      "s64: assoc capstone — close hcp1/hcp2 (8→6 sorry), case-split architecture for hcp3"),
+    # Session 65: Apr 10
+    (datetime(2026, 4, 10, 3, 10, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 4, 30, tzinfo=timezone.utc),
+     "s65: hcp3+hP_agree closed — 8→4 sorry, collinear/non-collinear case-splits, span obstruction identified"),
 ]
 
 

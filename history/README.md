@@ -86,6 +86,7 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 77 | [Apr 09, 18:23](77_2026-04-09_98c0feff.md) | s62: ground reframed as self-sustaining loop, not directed derivation | 78 |
 | 78 | [Apr 09, 22:57](78_2026-04-09_259807d6.md) | s63: inhabitation derivation, 20240229 correspondences = self-referential joint | 50 |
 | 79 | [Apr 10, 00:57](79_2026-04-10_9e891798.md) | s64: assoc capstone — close hcp1/hcp2 (8→6 sorry), case-split architecture fo... | 26 |
+| 80 | [Apr 10, 03:14](80_2026-04-10_6f670ada.md) | s65: hcp3+hP_agree closed — 8→4 sorry, collinear/non-collinear case-splits, s... | 10 |
 
 ## Memory
 
