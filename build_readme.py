@@ -15,6 +15,7 @@ DERIVATIONS = [
     "half_type",
     "analogy",
     "self_parametrization",
+    "distributivity",
     "channel_capacity",
     "stabilization",
     "group",
