@@ -918,8 +918,64 @@ theorem coord_add_assoc (Γ : CoordSystem L)
       hcp1.symm.trans (hcp2.trans hcp3)
     -- two_lines on l: τ_s_P = τ_a_τ_b_P
     -- Both on l (translations preserve l). C_s ∉ l. Shared direction via h_dir1.
+    -- ── Shared facts for two_lines arguments ──
+    have hτsP_atom : IsAtom τ_s_P :=
+      parallelogram_completion_atom Γ.hO hs_atom hP_atom
+        (fun h => hs_ne_O h.symm) hO_ne_P (fun h => hP_not_l (h ▸ hs_on))
+        (le_sup_left.trans le_sup_left) (hs_on.trans le_sup_left) hP_π
+        hm_le_π hm_cov hm_line
+        Γ.hO_not_m hs_not_m hP_not_m
+        (fun h => hP_not_l (h.trans (hOs_eq_l ▸ le_refl l)))
+    have hτsP_le_PU : τ_s_P ≤ P ⊔ Γ.U := by
+      have : τ_s_P ≤ P ⊔ (Γ.O ⊔ s) ⊓ m := inf_le_left
+      rw [hOs_eq_l, Γ.l_inf_m_eq_U] at this; exact this
+    have hτa_le_PU : τ_a_τ_b_P ≤ P ⊔ Γ.U := by
+      have h1 : τ_a_τ_b_P ≤ τ_b_P ⊔ (Γ.O ⊔ a) ⊓ m := inf_le_left
+      rw [hOa_eq_l, Γ.l_inf_m_eq_U] at h1
+      exact h1.trans (sup_le hτbP_le_PU le_sup_right)
+    have hτsP_ne_Cs : τ_s_P ≠ C_s := by
+      intro h; exact hCs_not_m (((Γ.hU.le_iff.mp ((le_inf (h ▸ hτsP_le_PU) hCs_le_q).trans
+        hPU_inf_q.le)).resolve_left hCs_atom.1).symm ▸ (le_sup_left : Γ.U ≤ m))
+    have hτa_ne_Cs : τ_a_τ_b_P ≠ C_s := by
+      intro h; exact hCs_not_m (((Γ.hU.le_iff.mp ((le_inf (h ▸ hτa_le_PU) hCs_le_q).trans
+        hPU_inf_q.le)).resolve_left hCs_atom.1).symm ▸ (le_sup_left : Γ.U ≤ m))
+    have hCs_not_PU : ¬ C_s ≤ P ⊔ Γ.U := by
+      intro h; exact hCs_not_m (((Γ.hU.le_iff.mp ((le_inf h hCs_le_q).trans
+        hPU_inf_q.le)).resolve_left hCs_atom.1).symm ▸ (le_sup_left : Γ.U ≤ m))
     have hP_agree : τ_s_P = τ_a_τ_b_P := by
-      sorry -- two_lines + CovBy argument to show collinearity from h_dir1
+      -- d_dir = direction on m = (τ_s_P⊔C_s)⊓m is an atom ≠ C_s
+      have hτsP_π : τ_s_P ≤ π := hτsP_le_PU.trans (sup_le hP_π (le_sup_right.trans le_sup_left))
+      have hCs_π : C_s ≤ π := hCs_le_q.trans (sup_le (le_sup_right.trans le_sup_left) Γ.hC_plane)
+      have hd_atom : IsAtom ((τ_s_P ⊔ C_s) ⊓ m) := by
+        rw [sup_comm]; exact line_meets_m_at_atom hCs_atom hτsP_atom
+          (fun h => hτsP_ne_Cs h.symm) (sup_le hCs_π hτsP_π) hm_le_π hm_cov hCs_not_m
+      have hd_ne_Cs : (τ_s_P ⊔ C_s) ⊓ m ≠ C_s := fun h =>
+        hCs_not_m (h ▸ inf_le_right)
+      -- Line equality: τ_s_P⊔C_s = τ_a_τ_b_P⊔C_s (both = C_s ⊔ d_dir, CovBy)
+      have hCs_covBy_1 : C_s ⋖ τ_s_P ⊔ C_s :=
+        sup_comm C_s τ_s_P ▸ atom_covBy_join hCs_atom hτsP_atom hτsP_ne_Cs.symm
+      have hCs_lt_d : C_s < C_s ⊔ (τ_s_P ⊔ C_s) ⊓ m := lt_of_le_of_ne le_sup_left
+        (fun h => hd_ne_Cs ((hCs_atom.le_iff.mp (le_sup_right.trans
+          (le_of_eq h.symm))).resolve_left hd_atom.1))
+      have hCsd_eq_1 : C_s ⊔ (τ_s_P ⊔ C_s) ⊓ m = τ_s_P ⊔ C_s :=
+        (hCs_covBy_1.eq_or_eq hCs_lt_d.le (sup_le le_sup_right inf_le_left)).resolve_left
+          (ne_of_gt hCs_lt_d)
+      have hCs_covBy_2 : C_s ⋖ τ_a_τ_b_P ⊔ C_s :=
+        sup_comm C_s τ_a_τ_b_P ▸ atom_covBy_join hCs_atom hτa_atom hτa_ne_Cs.symm
+      have hd_le_2 : (τ_s_P ⊔ C_s) ⊓ m ≤ τ_a_τ_b_P ⊔ C_s := h_dir1 ▸ inf_le_left
+      have hCs_lt_d2 : C_s < C_s ⊔ (τ_s_P ⊔ C_s) ⊓ m := hCs_lt_d
+      have hCsd_eq_2 : C_s ⊔ (τ_s_P ⊔ C_s) ⊓ m = τ_a_τ_b_P ⊔ C_s :=
+        (hCs_covBy_2.eq_or_eq hCs_lt_d2.le (sup_le le_sup_right hd_le_2)).resolve_left
+          (ne_of_gt hCs_lt_d2)
+      -- τ_s_P ⊔ C_s = τ_a_τ_b_P ⊔ C_s
+      have hline_eq : τ_s_P ⊔ C_s = τ_a_τ_b_P ⊔ C_s := hCsd_eq_1.symm.trans hCsd_eq_2
+      -- τ_a_τ_b_P ≤ τ_s_P ⊔ C_s
+      have hτa_on_line : τ_a_τ_b_P ≤ τ_s_P ⊔ C_s := hline_eq ▸ le_sup_left
+      -- Apply two_lines: X = τ_s_P, Y = τ_a_τ_b_P, Z = C_s, l₁ = P⊔U
+      have hPU_ne : P ≠ Γ.U := fun h => hP_not_m (h ▸ (le_sup_left : Γ.U ≤ m))
+      exact two_lines hτsP_atom hτa_atom hCs_atom hτsP_ne_Cs
+        hτsP_le_PU hτa_le_PU hτa_on_line hCs_not_PU
+        (line_covers_its_atoms hP_atom Γ.hU hPU_ne hτsP_atom hτsP_le_PU)
     -- ═══ Chain 2: at (P, C_c) → τ_s(C_c) = τ_a(τ_b(C_c)) ═══
     -- cp(τ_s, P, C_c)
     have hcp4 : (P ⊔ C_c) ⊓ m = (τ_s_P ⊔ τ_s_C_c) ⊓ m := by
