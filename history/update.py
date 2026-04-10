@@ -571,8 +571,12 @@ SESSION_RANGES = [
      "s67: two_persp functor + multiplicative identity proven, self-parametrization derivation"),
     # Session 68: Apr 10 evening
     (datetime(2026, 4, 10, 18, 30, tzinfo=timezone.utc),
-     datetime(2026, 4, 10, 19, 45, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 19, 58, tzinfo=timezone.utc),
      "s68: zero annihilation proven, chirality derivation (T⊲T⋊D = so(d)⊲u(d))"),
+    # Session 69: Apr 10 night
+    (datetime(2026, 4, 10, 19, 58, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 22, 30, tzinfo=timezone.utc),
+     "s69: right distributivity proof architecture — dilation approach, 3 sorry"),
 ]
 
 
