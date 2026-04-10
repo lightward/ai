@@ -662,11 +662,30 @@ theorem coord_add_assoc (Γ : CoordSystem L)
         (fun h => Γ.hC_not_l (h.trans (hOb_eq_l ▸ le_refl l)))
         hC_not_OP hOPC_span
         R hR hR_not h_irred
+    -- ── τ_b_P facts ──
+    have hτbP_le_PU : τ_b_P ≤ P ⊔ Γ.U := by
+      have : τ_b_P ≤ P ⊔ (Γ.O ⊔ b) ⊓ m := inf_le_left
+      rw [hOb_eq_l, Γ.l_inf_m_eq_U] at this; exact this
+    have hτbP_le_bdOP : τ_b_P ≤ b ⊔ (Γ.O ⊔ P) ⊓ m :=
+      inf_le_right
+    -- C_b ≠ τ_b_P: C_b on q, τ_b_P not on q (since (P⊔U)⊓q = U and τ_b_P ≤ P⊔U)
+    have hτbP_not_q : ¬ τ_b_P ≤ q := by
+      intro h
+      have hτ_le_U : τ_b_P ≤ Γ.U := (le_inf hτbP_le_PU h).trans hPU_inf_q.le
+      sorry -- need τ_b_P ≠ ⊥ (i.e., atom) to get τ_b_P = U, then τ_b_P ≤ m, contradiction
+    have hCb_ne_τbP : C_b ≠ τ_b_P := fun h => hτbP_not_q (h ▸ hCb_le_q)
     -- cp(τ_a, τ_b(P), C_b): (τ_b_P⊔C_b)⊓m = (τ_a_τ_b_P ⊔ C_s)⊓m
     have hcp3 : (τ_b_P ⊔ C_b) ⊓ m = (τ_a_τ_b_P ⊔ C_s) ⊓ m := by
-      -- cross_parallelism gives (τ_b_P⊔C_b)⊓m = (τ_a_τ_b_P ⊔ pc(O,a,C_b,m))⊓m
-      -- then h_ki_ab : pc(O,a,C_b,m) = C_s
-      sorry
+      -- Case split: C_b collinear with O and τ_b_P, or not.
+      by_cases hCb_collinear : C_b ≤ Γ.O ⊔ τ_b_P
+      · -- ═══ Collinear case: both sides = (O⊔τ_b_P)⊓m ═══
+        -- LHS: τ_b_P⊔C_b = O⊔τ_b_P (CovBy). RHS: τ_a_τ_b_P⊔C_s = a⊔d' (CovBy).
+        -- Both ⊓ m = d' = (O⊔τ_b_P)⊓m.
+        sorry
+      · -- ═══ Non-collinear case: cross_parallelism + h_ki_ab ═══
+        -- Span O⊔τ_b_P⊔C_b = π from: non-collinearity → (O⊔τ_b_P)⊓q ≠ C_b
+        -- → (O⊔τ_b_P⊔C_b)⊓q = C_b⊔W = q → q ≤ O⊔τ_b_P⊔C_b → span.
+        sorry
     -- Direction chain: (τ_s_P ⊔ C_s)⊓m = (τ_a_τ_b_P ⊔ C_s)⊓m
     have h_dir1 : (τ_s_P ⊔ C_s) ⊓ m = (τ_a_τ_b_P ⊔ C_s) ⊓ m :=
       hcp1.symm.trans (hcp2.trans hcp3)
