@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 21 files, 1 axiom, 0 sorry.
+Mechanically verified deductive path from P² = P to the foam's architecture. 22 files, 1 axiom, 0 sorry.
 
 ## The chain
 
@@ -45,8 +45,8 @@ coord_add: zero, commutativity
                                                  FTPGAssoc,
                                                  FTPGAssocCapstone (0 sorry)
 coord_add: associativity ✓
-  ↓ (not yet started)
-coord_mul: definition, properties
+  ↓ von Staudt multiplication via dilations  ── FTPGMul (0 sorry, definition + infrastructure)
+coord_mul: identity, associativity ← WE ARE HERE
   ↓
 distributivity (left and right)
   ↓
@@ -122,6 +122,15 @@ Associativity via β-injectivity and cross-parallelism. PROVEN.
 | associativity | `coord_add_assoc` (the composition law, 0 sorry) |
 
 Three-step proof: (1) key_identity reduces to β-images agree, (2) two cross-parallelism chains + two two_lines arguments close the composition law via collinear/non-collinear case splits, (3) E-perspectivity recovery.
+
+**FTPGMul.lean** — coordinate multiplication (0 sorry)
+
+Multiplication via dilations (Hartshorne §7). Structurally parallel to addition: uses O⊔C as bridge line instead of q = U⊔C.
+
+| layer | key declarations |
+|---|---|
+| multiplicative anchor | `CoordSystem.E_I` (projection of I onto m via C), `hE_I_atom`, `hE_I_not_OC`, `hE_I_ne_E` |
+| multiplication | `coord_mul` (a·b via dilation σ_b) |
 
 ### The deductive chain (from P² = P)
 
