@@ -21,6 +21,7 @@ DERIVATIONS = [
     "self_generation",
     "geometry",
     "conservation",
+    "inhabitation",
 ]
 
 OPEN = [
