@@ -16,7 +16,8 @@ only free variable — addition uses m (via E), multiplication uses O⊔C
 
 ## Status
 
-Definition, E_I infrastructure, identity proofs (I·a=a, a·I=a), 0 sorry.
+Definition, E_I infrastructure, identity proofs (I·a=a, a·I=a),
+zero annihilation (O·b=O, a·O=O), 0 sorry.
 -/
 
 import Foam.FTPGCoord
@@ -245,5 +246,158 @@ theorem coord_mul_right_one (Γ : CoordSystem L)
     exact Γ.hC_not_l (le_sup_right.trans (le_of_eq h_eq.symm))
   exact ((line_height_two Γ.hO Γ.hU Γ.hOU (lt_of_lt_of_le ha.bot_lt ha_le) h_lt
     |>.le_iff.mp ha_le).resolve_left ha.1).symm
+
+/-!
+## Zero annihilation
+-/
+
+/-- (O⊔C) ⊓ l = O: the bridge line meets the coordinate line at O. -/
+private theorem OC_inf_l_eq_O : (Γ.O ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) = Γ.O := by
+  rw [sup_comm Γ.O Γ.C, inf_comm]
+  exact inf_sup_of_atom_not_le Γ.hC Γ.hC_not_l le_sup_left
+
+/-- E ⊔ E_I = m: E and E_I are distinct atoms on m, generating it. -/
+private theorem E_sup_EI_eq_m : Γ.E ⊔ Γ.E_I = Γ.U ⊔ Γ.V := by
+  have hE_lt : Γ.E < Γ.E ⊔ Γ.E_I :=
+    lt_of_le_of_ne le_sup_left (fun h => Γ.hE_I_ne_E
+      ((Γ.hE_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left Γ.hE_I_atom.1))
+  -- E ⋖ m (since E⊔U = m by EU_eq_m, and E ⋖ E⊔U by atom_covBy_join)
+  have hE_covBy_m : Γ.E ⋖ Γ.U ⊔ Γ.V := by
+    rw [← CoordSystem.EU_eq_m]
+    exact atom_covBy_join Γ.hE_atom Γ.hU CoordSystem.hEU
+  exact (hE_covBy_m.eq_or_eq hE_lt.le
+    (sup_le CoordSystem.hE_on_m Γ.hE_I_on_m)).resolve_left (ne_of_gt hE_lt)
+
+/-- C ≠ E_I (C is not on m, but E_I is). -/
+private theorem hC_ne_EI : Γ.C ≠ Γ.E_I :=
+  fun h => Γ.hC_not_m (h ▸ Γ.hE_I_on_m)
+
+/-- O is a left multiplicative zero: O · b = O.
+
+    When a = O, both perspectivity intersections land on O⊔C:
+    σ = (O⊔C) ⊓ (b⊔E_I) ≤ O⊔C and E = (O⊔C) ⊓ m ≤ O⊔C.
+    σ ≠ E (since b ≠ U), so σ ⊔ E = O⊔C, and (O⊔C) ⊓ l = O. -/
+theorem coord_mul_left_zero (Γ : CoordSystem L)
+    (b : L) (hb : IsAtom b) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hb_ne_U : b ≠ Γ.U) :
+    coord_mul Γ Γ.O b = Γ.O := by
+  unfold coord_mul
+  -- Fold (O⊔C) ⊓ (U⊔V) = E
+  change ((Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ⊔ Γ.E) ⊓ (Γ.O ⊔ Γ.U) = Γ.O
+  have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+  have hb_ne_EI : b ≠ Γ.E_I := fun h => Γ.hE_I_not_l (h ▸ hb_on)
+  -- Upper bound: σ and E both ≤ O⊔C, so (σ ⊔ E) ⊓ l ≤ (O⊔C) ⊓ l = O
+  have h_upper : ((Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ⊔ Γ.E) ⊓ (Γ.O ⊔ Γ.U) ≤ Γ.O := by
+    calc _ ≤ (Γ.O ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) :=
+          inf_le_inf_right _ (sup_le inf_le_left CoordSystem.hE_le_OC)
+      _ = Γ.O := OC_inf_l_eq_O Γ
+  -- σ ≠ E: if σ = E then E ≤ b⊔E_I, so m = E⊔E_I ≤ b⊔E_I = m, so b ≤ m, so b = U.
+  have hσ_ne_E : (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ≠ Γ.E := by
+    intro h
+    have hE_le : Γ.E ≤ b ⊔ Γ.E_I := h ▸ inf_le_right
+    have hm_le : Γ.U ⊔ Γ.V ≤ b ⊔ Γ.E_I := by
+      rw [← E_sup_EI_eq_m]; exact sup_le hE_le le_sup_right
+    -- E_I ⋖ b⊔E_I. E_I < m ≤ b⊔E_I. CovBy: m = b⊔E_I. Then b ≤ m.
+    have hEI_covBy : Γ.E_I ⋖ b ⊔ Γ.E_I := by
+      rw [sup_comm]; exact atom_covBy_join Γ.hE_I_atom hb hb_ne_EI.symm
+    have hEI_lt_m : Γ.E_I < Γ.U ⊔ Γ.V := by
+      apply lt_of_le_of_ne Γ.hE_I_on_m; intro h_eq
+      exact Γ.hE_I_not_l (((Γ.hE_I_atom.le_iff.mp
+        (le_sup_left.trans h_eq.symm.le)).resolve_left Γ.hU.1).symm.le.trans le_sup_right)
+    have hm_eq : Γ.U ⊔ Γ.V = b ⊔ Γ.E_I :=
+      (hEI_covBy.eq_or_eq hEI_lt_m.le hm_le).resolve_left (ne_of_gt hEI_lt_m)
+    have hb_on_m : b ≤ Γ.U ⊔ Γ.V := le_sup_left.trans hm_eq.symm.le
+    exact hb_ne_U (Γ.atom_on_both_eq_U hb hb_on hb_on_m)
+  -- σ ≠ ⊥: two coplanar lines meet nontrivially
+  have hσ_ne_bot : (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ≠ ⊥ := by
+    apply lines_meet_if_coplanar (CoordSystem.OC_covBy_π Γ)
+      (sup_le (hb_on.trans le_sup_left)
+        (Γ.hE_I_on_m.trans (sup_le (le_sup_right.trans le_sup_left) le_sup_right)))
+      (fun h => Γ.hE_I_not_OC (le_sup_right.trans h))
+      hb
+    exact lt_of_le_of_ne le_sup_left
+      (fun h => hb_ne_EI ((hb.le_iff.mp
+        (le_sup_right.trans h.symm.le)).resolve_left Γ.hE_I_atom.1).symm)
+  -- σ ⊔ E = O⊔C: E ⋖ O⊔C and σ pushes past E
+  have hσ_not_le_E : ¬ ((Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ≤ Γ.E) :=
+    fun h => (Γ.hE_atom.le_iff.mp h).elim (fun h => hσ_ne_bot h) (fun h => hσ_ne_E h)
+  have hE_lt : Γ.E < (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ⊔ Γ.E :=
+    lt_of_le_of_ne le_sup_right (fun h => hσ_not_le_E (h ▸ le_sup_left))
+  have hσE_eq : (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ⊔ Γ.E = Γ.O ⊔ Γ.C :=
+    ((line_covers_its_atoms Γ.hO Γ.hC hOC Γ.hE_atom CoordSystem.hE_le_OC).eq_or_eq
+      hE_lt.le (sup_le inf_le_left CoordSystem.hE_le_OC)).resolve_left (ne_of_gt hE_lt)
+  -- Combine: (O⊔C) ⊓ l = O
+  rw [hσE_eq, OC_inf_l_eq_O]
+
+/-- O is a right multiplicative zero: a · O = O.
+
+    With b = O, the first intersection (O⊔C) ⊓ (O⊔E_I) = O
+    (two distinct lines through O, since E_I ∉ O⊔C). Then
+    (O ⊔ d_a) ⊓ l = O since d_a ∉ l. -/
+theorem coord_mul_right_zero (Γ : CoordSystem L)
+    (a : L) (ha : IsAtom a) (ha_on : a ≤ Γ.O ⊔ Γ.U) (ha_ne_U : a ≠ Γ.U) :
+    coord_mul Γ a Γ.O = Γ.O := by
+  unfold coord_mul
+  -- First intersection: (O⊔C) ⊓ (O⊔E_I) = O
+  have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+  have hOE_I : Γ.O ≠ Γ.E_I := fun h => Γ.hO_not_m (h ▸ Γ.hE_I_on_m)
+  have hC_ne_EI : Γ.C ≠ Γ.E_I := fun h => Γ.hC_not_m (h ▸ Γ.hE_I_on_m)
+  -- E_I ∉ O⊔C (key hypothesis from FTPGMul infrastructure)
+  have hEI_not_OC := Γ.hE_I_not_OC
+  -- (O⊔C) ⊓ (O⊔E_I) = O: two distinct lines through O meet at O.
+  -- Use modular_intersection with a = O, b = C, c = E_I.
+  have h_first : (Γ.O ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.E_I) = Γ.O :=
+    modular_intersection Γ.hO Γ.hC Γ.hE_I_atom hOC hOE_I hC_ne_EI hEI_not_OC
+  rw [h_first]
+  -- Goal: (O ⊔ (a⊔C) ⊓ m) ⊓ l = O
+  -- d_a = (a⊔C) ⊓ m is an atom on m, hence d_a ∉ l (unless d_a = U, but a ≠ U)
+  set d_a := (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V)
+  have hAC : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
+  have ha_not_m : ¬ a ≤ Γ.U ⊔ Γ.V :=
+    fun h => ha_ne_U (Γ.atom_on_both_eq_U ha ha_on h)
+  have hda_atom : IsAtom d_a :=
+    line_meets_m_at_atom ha Γ.hC hAC
+      (sup_le (ha_on.trans le_sup_left) Γ.hC_plane)
+      (sup_le (le_sup_right.trans le_sup_left) le_sup_right)
+      Γ.m_covBy_π ha_not_m
+  have hda_on_m : d_a ≤ Γ.U ⊔ Γ.V := inf_le_right
+  have hda_ne_O : d_a ≠ Γ.O := fun h => Γ.hO_not_m (h ▸ hda_on_m)
+  -- d_a ∉ l: if d_a ≤ l, then d_a ≤ l ⊓ m = U, so d_a = U
+  have hda_not_l : ¬ d_a ≤ Γ.O ⊔ Γ.U := by
+    intro h
+    have hda_le_U : d_a ≤ Γ.U := by
+      rw [← Γ.l_inf_m_eq_U]; exact le_inf h hda_on_m
+    have hda_eq_U : d_a = Γ.U :=
+      (Γ.hU.le_iff.mp hda_le_U).resolve_left hda_atom.1
+    -- d_a = U means U ≤ a⊔C, so a on q (= U⊔C), so a = l ⊓ q = U
+    have hU_le_aC : Γ.U ≤ a ⊔ Γ.C := hda_eq_U ▸ inf_le_left
+    have hU_le_lq : Γ.U ≤ (Γ.O ⊔ Γ.U) ⊓ (a ⊔ Γ.C) := le_inf le_sup_right hU_le_aC
+    have ha_le_lq : a ≤ (Γ.O ⊔ Γ.U) ⊓ (a ⊔ Γ.C) := le_inf ha_on le_sup_left
+    -- (O⊔U) ⊓ (a⊔C): C ∉ l, so this is an atom by line_height_two
+    -- Both a and U are ≤ this atom, so a = U
+    have h_lt : (Γ.O ⊔ Γ.U) ⊓ (a ⊔ Γ.C) < Γ.O ⊔ Γ.U := by
+      apply lt_of_le_of_ne inf_le_left; intro h
+      -- h : l ⊓ (a⊔C) = l, so l ≤ a⊔C. CovBy: a⊔C = l, so C ≤ l.
+      have hl_le := inf_eq_left.mp h
+      exact Γ.hC_not_l (le_sup_right.trans
+        ((atom_covBy_join ha Γ.hC hAC).eq_or_eq
+          (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU ha ha_on).lt.le hl_le
+        |>.resolve_left (ne_of_gt (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU ha ha_on).lt)).symm.le)
+    have h_atom := line_height_two Γ.hO Γ.hU Γ.hOU
+      (lt_of_lt_of_le ha.bot_lt ha_le_lq) h_lt
+    exact ha_ne_U ((h_atom.le_iff.mp hU_le_lq).resolve_left Γ.hU.1 ▸
+      (h_atom.le_iff.mp ha_le_lq).resolve_left ha.1)
+  -- O ⊔ d_a is a line, and (O ⊔ d_a) ⊓ l: O ≤ both, CovBy gives = O
+  have hO_le : Γ.O ≤ (Γ.O ⊔ d_a) ⊓ (Γ.O ⊔ Γ.U) :=
+    le_inf le_sup_left le_sup_left
+  have h_lt : (Γ.O ⊔ d_a) ⊓ (Γ.O ⊔ Γ.U) < Γ.O ⊔ Γ.U := by
+    apply lt_of_le_of_ne inf_le_right; intro h
+    -- l ≤ O ⊔ d_a, so d_a ≤ l (well, U ≤ O ⊔ d_a, then...)
+    have hl_le : Γ.O ⊔ Γ.U ≤ Γ.O ⊔ d_a := inf_eq_right.mp h
+    have h_eq := ((atom_covBy_join Γ.hO hda_atom hda_ne_O.symm).eq_or_eq
+      (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt.le hl_le).resolve_left
+      (ne_of_gt (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt)
+    exact hda_not_l (le_sup_right.trans h_eq.symm.le)
+  exact ((line_height_two Γ.hO Γ.hU Γ.hOU (lt_of_lt_of_le Γ.hO.bot_lt hO_le) h_lt
+    |>.le_iff.mp hO_le).resolve_left Γ.hO.1).symm
 
 end Foam.FTPGExplore
