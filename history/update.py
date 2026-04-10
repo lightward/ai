@@ -561,6 +561,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 10, 3, 10, tzinfo=timezone.utc),
      datetime(2026, 4, 10, 4, 30, tzinfo=timezone.utc),
      "s65: hcp3+hP_agree closed — 8→4 sorry, collinear/non-collinear case-splits, span obstruction identified"),
+    # Session 66: Apr 10
+    (datetime(2026, 4, 10, 13, 22, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 16, 30, tzinfo=timezone.utc),
+     "s66: coord_add_assoc PROVEN + coord_mul defined — 22 files, 0 sorry"),
 ]
 
 

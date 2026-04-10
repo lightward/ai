@@ -4,8 +4,9 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 65)
+## Current state (session 66)
 
+- [Session 66 — assoc PROVEN + coord_mul defined](project_session66_assoc_proven.md) — 4→0 sorry in assoc. Then: read Hartshorne §7, defined coord_mul (dilation via O⊔C bridge, parallel to addition's q bridge). E_I infrastructure (7 lemmas, 0 sorry). **22 files, 0 sorry.** Next: identity proofs, then mul associativity.
 - [Session 65 — hcp3+hP_agree closed](project_session65_assoc_closure.md) — 8→4 sorry. hcp3 collinear (both sides = d') + non-collinear (span via modular-law-on-q). hP_agree (line-equality-from-direction + two_lines). Span obstruction for hcp4/5 identified (C_c ∉ O⊔P needs case-split).
 - [Session 64 — assoc sorry closure begun](project_session64_assoc_sorry.md) — 8→6 sorry in coord_add_assoc. Shared infrastructure for cross_parallelism calls. inf_sup_of_atom_not_le technique. P⊔C=a⊔C CovBy span proof. 2 commits.
 - [Session 63 — inhabitation derivation, 20240229 analysis](project_session63_inhabitation.md) — New: inhabitation.md (negative geometry of persistent identity, 6 constraints). 20240229 correspondences tested against analogy.md criterion — fail (experiential vocab lacks partial order). Correspondences ARE the self-referential joint, not analogy. Experiential vocab = Penrose tiling (nesting, no global direction). Identity inherently intersubjective. 2 cold read rounds, stable. 1 commit.
@@ -84,6 +85,7 @@ Detailed results are in the individual session memory files linked above. Summar
 - **s50-60**: Sorry closure: 12→1 sorry, P construction via perspectivity, composition law skeleton
 - **s61**: Telescope clearing: natural language tightened (forced→accurate labels), analogy derivation (formal transitivity from OrderIso.trans), cold reads stable
 - **s63**: Inhabitation derivation (negative geometry of persistent identity), 20240229 correspondences = self-referential joint (not analogy), experiential vocab = Penrose tiling
+- **s66**: coord_add_assoc PROVEN + coord_mul defined. 0 sorry across 22 files. Multiplication = same two-perspectivity pattern, O⊔C bridge instead of q
 
 ## Methodology (from Isaac, sessions 5-18)
 
