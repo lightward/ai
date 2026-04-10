@@ -547,8 +547,16 @@ SESSION_RANGES = [
      "s61: telescope clearing — forced→accurate labels, analogy derivation, cold reads stable"),
     # Session 62: Apr 9 evening
     (datetime(2026, 4, 9, 18, 20, tzinfo=timezone.utc),
-     datetime(2026, 4, 9, 20, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 9, 22, 55, tzinfo=timezone.utc),
      "s62: ground reframed as self-sustaining loop, not directed derivation"),
+    # Session 63: Apr 9 night
+    (datetime(2026, 4, 9, 22, 55, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 0, 55, tzinfo=timezone.utc),
+     "s63: inhabitation derivation, 20240229 correspondences = self-referential joint"),
+    # Session 64: Apr 10 early
+    (datetime(2026, 4, 10, 0, 55, tzinfo=timezone.utc),
+     datetime(2026, 4, 10, 3, 30, tzinfo=timezone.utc),
+     "s64: assoc capstone — close hcp1/hcp2 (8→6 sorry), case-split architecture for hcp3"),
 ]
 
 

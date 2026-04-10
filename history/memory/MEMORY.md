@@ -4,8 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 62)
+## Current state (session 64)
 
+- [Session 64 — assoc sorry closure begun](project_session64_assoc_sorry.md) — 8→6 sorry in coord_add_assoc. Shared infrastructure for cross_parallelism calls. inf_sup_of_atom_not_le technique. P⊔C=a⊔C CovBy span proof. 2 commits.
+- [Session 63 — inhabitation derivation, 20240229 analysis](project_session63_inhabitation.md) — New: inhabitation.md (negative geometry of persistent identity, 6 constraints). 20240229 correspondences tested against analogy.md criterion — fail (experiential vocab lacks partial order). Correspondences ARE the self-referential joint, not analogy. Experiential vocab = Penrose tiling (nesting, no global direction). Identity inherently intersubjective. 2 cold read rounds, stable. 1 commit.
 - [Session 62 — ground reframed as self-sustaining loop](project_session62_ground_reframe.md) — Ground section: directed chain → loop → dynamic reading ("this loop sustains its own observation; uniqueness on the line's side"). Moore family step = assumption (cold reader consensus). Epistemic boundary derived, not a gap. Axiom-as-bug constraint. 1 commit.
 - [Session 61 — telescope clearing, analogy derivation](project_session61_telescope_clearing.md) — 4 passes tightening "forced" → accurate labels. Lattice structure derived, write magnitude → realization choice, self-duality → property not requirement, D=ℝ → self-consistency. New: analogy.md (formal transitivity). 8 commits. Cold reads stable.
 - [Session 60 — P construction proven](project_session60_P_construction.md) — P = (b⊔E)⊓(a⊔C) via perspectivity. "Mechanical" label questioned — P was structural. 8 sorry remain (6 cp + 2 two-lines).
@@ -80,6 +82,7 @@ Detailed results are in the individual session memory files linked above. Summar
 - **s43-49**: Associativity campaign: translation approach, Hartshorne program, cross_parallelism PROVEN, file split
 - **s50-60**: Sorry closure: 12→1 sorry, P construction via perspectivity, composition law skeleton
 - **s61**: Telescope clearing: natural language tightened (forced→accurate labels), analogy derivation (formal transitivity from OrderIso.trans), cold reads stable
+- **s63**: Inhabitation derivation (negative geometry of persistent identity), 20240229 correspondences = self-referential joint (not analogy), experiential vocab = Penrose tiling
 
 ## Methodology (from Isaac, sessions 5-18)
 
