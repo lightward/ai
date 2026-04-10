@@ -218,6 +218,19 @@ theorem CoordSystem.OC_inf_UC : (Γ.O ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.C) = Γ.C := by
     exact Γ.hC_not_l (h_eq ▸ le_sup_right)
   exact modular_intersection Γ.hC Γ.hO Γ.hU hCO hCU Γ.hOU hU_not_CO
 
+/-- Two-perspectivity composition on the coordinate line.
+
+    Given line pairs (r₁, s₁) and (r₂, s₂), form two perspectivity
+    intersection points p₁ = r₁ ⊓ s₁ and p₂ = r₂ ⊓ s₂, then project
+    their join back onto l:
+
+      two_persp r₁ s₁ r₂ s₂ = (r₁ ⊓ s₁ ⊔ r₂ ⊓ s₂) ⊓ l
+
+    Both coord_add and coord_mul are instances of this pattern
+    (see coord_add_eq_two_persp, coord_mul_eq_two_persp). -/
+noncomputable def two_persp (Γ : CoordSystem L) (r₁ s₁ r₂ s₂ : L) : L :=
+  (r₁ ⊓ s₁ ⊔ r₂ ⊓ s₂) ⊓ (Γ.O ⊔ Γ.U)
+
 /-- Addition on the coordinate line.
 
     a + b = ((a ⊔ C) ⊓ m ⊔ D) ⊓ l
@@ -229,6 +242,11 @@ theorem CoordSystem.OC_inf_UC : (Γ.O ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.C) = Γ.C := by
     sends E ↦ b. -/
 noncomputable def coord_add (Γ : CoordSystem L) (a b : L) : L :=
   ((a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (b ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ⊓ (Γ.O ⊔ Γ.U)
+
+/-- Addition factors through the two-perspectivity pattern.
+    Bridge: m (via center C, return via E on q). -/
+theorem coord_add_eq_two_persp (Γ : CoordSystem L) (a b : L) :
+    coord_add Γ a b = two_persp Γ (a ⊔ Γ.C) (Γ.U ⊔ Γ.V) (b ⊔ Γ.E) (Γ.U ⊔ Γ.C) := rfl
 
 /-- O is a left additive identity: O + b = b.
 

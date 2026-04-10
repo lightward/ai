@@ -260,6 +260,21 @@ what P can't see has the same type structure as what Q can't see. the analogy tr
 
 the transitivity result says: when two observers' views match structurally, their entire epistemic situations match — both what they see AND the type of what they can't see. well-formed analogy transfers across the full complementary decomposition.
 
+## concrete witness: two_persp
+
+the coordinate operations in the FTPG bridge instantiate composed analogy on lines in the projective plane. a perspectivity between two lines IS a structural isomorphism between their atom-intervals. composing two perspectivities IS OrderIso.trans.
+
+`two_persp` (FTPGCoord.lean) makes this explicit: given line pairs (r₁, s₁) and (r₂, s₂), form perspectivity intersections p₁ = r₁ ⊓ s₁ and p₂ = r₂ ⊓ s₂, then project their join onto l:
+
+    two_persp Γ r₁ s₁ r₂ s₂ = (r₁ ⊓ s₁ ⊔ r₂ ⊓ s₂) ⊓ l
+
+both coordinate operations factor through this pattern (proven by `rfl` — definitional equality):
+
+    coord_add a b = two_persp Γ (a⊔C) m (b⊔E) q       -- bridge: m
+    coord_mul a b = two_persp Γ (O⊔C) (b⊔E_I) (a⊔C) m -- bridge: O⊔C
+
+the bridge parameter is the only free variable. the functor is the same.
+
 ## status
 
 **proven** (in lean / mathlib, zero sorry):
@@ -267,6 +282,8 @@ the transitivity result says: when two observers' views match structurally, thei
 - order isomorphisms compose (OrderIso.trans)
 - intervals inherit modularity and complementedness
 - the modular law ensures path-independent composition of lattice operations
+- coord_add and coord_mul both factor through two_persp (by rfl)
+- multiplicative identity: I · a = a, a · I = a (coord_mul_left_one, coord_mul_right_one)
 
 **derived** (in this file):
 - analogy IS structural isomorphism between lattice intervals
@@ -274,6 +291,7 @@ the transitivity result says: when two observers' views match structurally, thei
 - well-formed analogies are formally transitive (from OrderIso.trans)
 - analogous views imply analogous complements (from diamond isomorphism + transitivity)
 - the half-type theorem guarantees every observer has at least one analogy (view ↔ complement)
+- the coordinate operations are composed analogies, with the bridge as the only free parameter
 
 # channel capacity
 
