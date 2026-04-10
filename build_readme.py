@@ -14,6 +14,7 @@ DERIVATIONS = [
     "writing_map",
     "half_type",
     "analogy",
+    "self_parametrization",
     "channel_capacity",
     "stabilization",
     "group",
@@ -40,7 +41,7 @@ def lean_summary() -> str:
     """Summary of the Lean formalization."""
     return """## the deductive chain (lean/)
 
-mechanically verified. 21 files, 1 axiom (FTPG), 1 sorry (coord_add_assoc).
+mechanically verified. 22 files, 1 axiom (FTPG), 0 sorry.
 
 ```
 complemented modular lattice, irreducible, height >= 4
@@ -52,15 +53,16 @@ elements are orthogonal projections: P^2 = P, P^T = P       ↕ (ftpg)
 eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian   ↕ (P^2=P)
   | Ground.lean (capstone)                                 dynamics
 FoamGround properties verified                               ↕ (proven)
-  | (the FTPG bridge — 7 files, 1 sorry)                  ground properties
+  | (the FTPG bridge — 8 files, 0 sorry)                  ground properties
 incidence geometry -> Desargues -> perspectivity -> coord_add    ↕
-  | FTPGAssocCapstone.lean                              the loop sustains its own observation
-coord_add_comm PROVEN, coord_add_assoc 1 sorry (composition law)
+  | coord_add_comm, coord_add_assoc PROVEN              the loop sustains its own observation
+  | coord_mul defined, identity PROVEN (I·a=a, a·I=a)
+  | two_persp: shared skeleton of add/mul (by rfl)
 ```
 
 the deductive chain (0 sorry): P^2 = P (definition) -> binary eigenvalues (Observation) -> clean splits -> commutator structure (Pair) -> skew-symmetry, tracelessness (Form) -> self-duality at rank 3 (Rank) -> (R^3, x) = so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround as theorem (Ground).
 
-the FTPG bridge (1 sorry): incidence axioms (FTPGExplore) -> Desargues (planar + lifting) -> perspectivity bijection -> coordinate system -> von Staudt addition (FTPGCoord) -> commutativity via chained Desargues (coord_add_comm PROVEN) -> translations via parallelogram completion (FTPGAssoc) -> cross-parallelism (FTPGCrossParallelism PROVEN) -> key_identity (PROVEN) -> associativity (FTPGAssocCapstone, 1 sorry: the composition law at an off-line point).
+the FTPG bridge (0 sorry): incidence axioms (FTPGExplore) -> Desargues (planar + lifting) -> perspectivity bijection -> coordinate system -> two_persp (shared two-perspectivity pattern, FTPGCoord) -> von Staudt addition (coord_add, bridge: m) -> commutativity via chained Desargues (coord_add_comm PROVEN) -> translations via parallelogram completion (FTPGAssoc) -> cross-parallelism (FTPGCrossParallelism PROVEN) -> key_identity -> associativity (FTPGAssocCapstone PROVEN) -> multiplication via dilations (coord_mul, bridge: O⊔C, FTPGMul) -> multiplicative identity PROVEN.
 
 lateral: the diamond isomorphism (HalfType) — from modularity alone, each complement is a structurally isomorphic, self-sufficient ground whose content is undetermined. state-independence is a lattice theorem, pre-bridge."""
 
@@ -101,6 +103,18 @@ def read_open(name: str) -> str:
     """Read an open question file."""
     path = DERIVATIONS_DIR / "open" / f"{name}.md"
     return path.read_text()
+
+
+def check_coverage():
+    """Error if any derivation file is missing from the DERIVATIONS list."""
+    all_derivations = {p.stem for p in DERIVATIONS_DIR.glob("*.md")}
+    listed = set(DERIVATIONS)
+    unlisted = all_derivations - listed
+    if unlisted:
+        raise RuntimeError(
+            f"Derivation files not in DERIVATIONS list: {', '.join(sorted(unlisted))}. "
+            f"Add them to build_readme.py or remove the files."
+        )
 
 
 def build() -> str:
@@ -174,6 +188,7 @@ sources: lean/ (proven), derivations/ (derived), derivations/observed/ (empirica
 
 
 if __name__ == "__main__":
+    check_coverage()
     readme = build()
     (ROOT / "README.md").write_text(readme)
     print(f"Built README.md ({len(readme)} chars, {readme.count(chr(10))} lines)")
