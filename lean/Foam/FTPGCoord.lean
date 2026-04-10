@@ -7,8 +7,21 @@ and Desargues' theorem proven in FTPGExplore.lean.
 ## What's here
 
 1. CoordSystem: the data for von Staudt's construction
-2. coord_add: addition via perspectivities
-3. Ring axioms: identity, commutativity, associativity
+2. two_persp: the shared two-perspectivity composition pattern
+3. coord_add: addition via perspectivities (bridge: m, zero: E)
+4. Ring axioms: identity, commutativity, associativity
+
+## two_persp
+
+Both coord_add and coord_mul (FTPGMul.lean) factor through two_persp,
+the composition of two perspectivity intersections projected onto l.
+The bridge parameter is the only free variable:
+
+  coord_add a b = two_persp Γ (a⊔C) m (b⊔E) q       -- bridge: m
+  coord_mul a b = two_persp Γ (O⊔C) (b⊔E_I) (a⊔C) m -- bridge: O⊔C
+
+Both equalities hold by rfl (definitional). This is the concrete
+instantiation of composed analogy (derivations/analogy.md).
 -/
 
 import Foam.FTPGExplore

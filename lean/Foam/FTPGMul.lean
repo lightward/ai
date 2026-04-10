@@ -9,9 +9,14 @@ a · b is a two-step perspectivity implementing the dilation σ_b:
 1. σ_b(C) = (O⊔C) ⊓ (b ⊔ E_I) on the line O⊔C
 2. a · b = (σ_b(C) ⊔ d_a) ⊓ l where d_a = (a⊔C)⊓m
 
+Both coord_add and coord_mul are instances of two_persp (FTPGCoord.lean):
+the two-perspectivity composition pattern. The bridge parameter is the
+only free variable — addition uses m (via E), multiplication uses O⊔C
+(via E_I). See coord_mul_eq_two_persp (proven by rfl).
+
 ## Status
 
-Definition, E_I infrastructure, 0 sorry.
+Definition, E_I infrastructure, identity proofs (I·a=a, a·I=a), 0 sorry.
 -/
 
 import Foam.FTPGCoord
