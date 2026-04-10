@@ -77,26 +77,42 @@ the line constrains its own parameter space. the constraint is not imposed from 
 
 ## proof strategy (lean)
 
-the classical approach (Hartshorne §6) to left distributivity:
+### session 69 finding: the dilation approach (Hartshorne §7)
 
-1. **extend σ_a to the plane.** for fixed a ≠ O, define σ_a on the full plane by: σ_a fixes m pointwise, fixes O, maps I to a. this is a collineation (Desargues ensures consistency). in lattice terms: σ_a maps any atom P in π to the unique atom P' such that P' ⊔ O is the image of P ⊔ O under the perspectivity structure.
+the multiplication x ↦ x·c factors as two perspectivities:
+  x → D_x = (x⊔C)⊓m → x·c = (σ⊔D_x)⊓l
 
-2. **show σ_a preserves the addition construction.** since σ_a fixes m pointwise and maps l to l, it maps the addition diagram for (b, c) to the addition diagram for (σ_a(b), σ_a(c)). the result lands on l at σ_a(b + c) = σ_a(b) + σ_a(c).
+this extends to off-line points via:
+  dilation_ext Γ c P = (O⊔P) ⊓ (c ⊔ ((I⊔P)⊓m))
 
-3. **the Desargues configuration.** the proof constructs three triangles: the original addition diagram, the scaled addition diagram, and the triangles relating corresponding vertices through O. Desargues forces the axis of perspectivity (m) to contain the meets of corresponding sides.
+**right distributivity** ((a+b)·c = a·c + b·c) proved via:
 
-alternative approach (more compatible with existing infrastructure):
+1. **dilation preserves directions.** for off-line P, Q:
+   (P⊔Q)⊓m = (σ_c(P)⊔σ_c(Q))⊓m.
+   proof: Desargues with center O, triangles (P, Q, I) and (σ_c(P), σ_c(Q), c).
+   the two INPUT parallelisms follow from the definition of dilation_ext + modular law:
+   σ_c(P) ≤ c ⊔ ((I⊔P)⊓m), so σ_c(P) ⊔ c = c ⊔ ((I⊔P)⊓m), and
+   (σ_c(P) ⊔ c) ⊓ m = (I⊔P) ⊓ m (using c ⊓ m = ⊥ since c ∈ l, c ≠ U).
 
-1. **unfold both sides of a·(b+c) = a·b + a·c as lattice expressions.** both are compositions of two_persp, hence lattice meets and joins.
+2. **mul key identity.** σ_c(C_a) = C'_{ac} where C' = σ_c(C) = σ and
+   C'_x = (σ⊔U) ⊓ (x⊔E). this connects the dilation to coord_mul.
 
-2. **identify shared infrastructure.** the second perspectivity in coord_mul uses d_a = (a⊔C) ⊓ m, which is also the center used in addition's first perspectivity. this shared element may allow direct algebraic manipulation.
+3. **chain.** σ_c(C_{a+b}) = σ_c(τ_a(C_b)) [key_identity]
+   = τ_{ac}(σ_c(C_b)) [direction preservation]
+   = τ_{ac}(C'_{bc}) [mul key identity]
+   = C'_{ac+bc} [key_identity at C']
+   = C'_{(a+b)c} [mul key identity, other direction]
+   ⟹ (a+b)c = ac+bc [translation_determined_by_param at C']
 
-3. **apply cross_parallelism.** the proof of associativity used cross_parallelism to link two Desargues configurations. distributivity may require a similar but different Desargues configuration linking the addition and multiplication diagrams.
+### earlier explorations (session 69)
 
-existing infrastructure that may transfer:
-- parallelogram_completion (FTPGParallelogram.lean): the building block for perspectivity composition
-- translation_determined_by_param: injectivity of translations
-- the entire associativity proof structure, adapted to the add-mul interaction
+- direct Desargues-stacking: multiple configurations tried. found triangle (s, D_s, V)
+  where V = (D_a⊔C_b)⊓(σ⊔D_s) whose sides are exactly the three key lines (s⊔C, D_a⊔C_b, σ⊔D_s).
+  the axis intersections Z, W, LHS are symbolically verified collinear (= the distributive law).
+  but no second triangle was found to produce this collinearity via forward-Desargues.
+
+- the hinge element (a⊔C)⊓m appears as the first step of addition and the second step
+  of multiplication. this shared element is the bridge between the two operations.
 
 ## status
 
@@ -112,10 +128,12 @@ existing infrastructure that may transfer:
 - the line's self-parametrization space has structure imposed by distributivity
 - proof strategy identified (two approaches)
 
+**proven** (in lean, since this file was last updated):
+- zero annihilation: coord_mul_left_zero (O·b=O), coord_mul_right_zero (a·O=O) — FTPGMul.lean
+
 **open**:
 - lean proof of left distributivity: a · (b + c) = a·b + a·c
 - lean proof of right distributivity: (b + c) · a = b·a + c·a
-- lean proof of zero annihilation: a · O = O, O · a = O (needed as base case)
 - multiplicative associativity and inverse (prerequisites for D being a group)
 - explicit characterization of the (U, I) translated-addition operation under distributivity
 - does the normalization relation σ_a ∘ τ_c ∘ σ_a⁻¹ = τ_{a·c} have a direct lattice proof shorter than the full distributive law?

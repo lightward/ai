@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 22 files, 1 axiom, 0 sorry.
+Mechanically verified deductive path from P² = P to the foam's architecture. 23 files, 1 axiom, 3 sorry (distributivity in progress).
 
 ## The chain
 
@@ -46,9 +46,11 @@ coord_add: zero, commutativity
                                                  FTPGAssocCapstone (0 sorry)
 coord_add: associativity ✓
   ↓ von Staudt multiplication via dilations  ── FTPGMul (0 sorry, definition + infrastructure)
-coord_mul: identity, associativity ← WE ARE HERE
+coord_mul: identity, zero annihilation
+  ↓ dilation extension, direction preservation  ── FTPGDistrib (3 sorry, in progress)
+distributivity (right) ← WE ARE HERE
   ↓
-distributivity (left and right)
+distributivity (left)
   ↓
 division ring structure (multiplicative inverses)
   ↓
@@ -131,6 +133,17 @@ Multiplication via dilations (Hartshorne §7). Structurally parallel to addition
 |---|---|
 | multiplicative anchor | `CoordSystem.E_I` (projection of I onto m via C), `hE_I_atom`, `hE_I_not_OC`, `hE_I_ne_E` |
 | multiplication | `coord_mul` (a·b via dilation σ_b) |
+
+**FTPGDistrib.lean** — right distributivity (3 sorry, in progress)
+
+Dilation extension and direction preservation (Hartshorne §7). Proves (a+b)·c = a·c + b·c via: define σ_c on off-line points, show it preserves directions (Desargues center O), chain with key_identity.
+
+| layer | key declarations |
+|---|---|
+| dilation extension | `dilation_ext` (σ_c on off-line points), `dilation_ext_C` (= σ by rfl) |
+| direction preservation | `dilation_preserves_direction` (sorry — Desargues with center O) |
+| mul key identity | `dilation_mul_key_identity` (sorry — σ_c(C_a) = C'_{ac}) |
+| right distributivity | `coord_mul_right_distrib` (sorry — chain of above) |
 
 ### The deductive chain (from P² = P)
 
