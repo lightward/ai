@@ -79,11 +79,97 @@ theorem dilation_ext_atom (Γ : CoordSystem L)
   have hc_ne_dir : c ≠ dir := fun h => hc_not_m (h ▸ inf_le_right)
   -- dir ∉ l: if dir ≤ l then dir = U (atom_on_both), U ≤ I⊔P, P ≤ l ✗
   have hdir_not_l : ¬ dir ≤ Γ.O ⊔ Γ.U := by
-    sorry -- Route: atom_on_both_eq_U → U ≤ I⊔P → CovBy I⊔U ≤ I⊔P → P ≤ l ✗
+    intro h_le
+    -- dir on l and m → dir = U
+    have hdir_eq_U := Γ.atom_on_both_eq_U hdir_atom h_le inf_le_right
+    -- U ≤ I⊔P
+    have hU_le_IP : Γ.U ≤ Γ.I ⊔ P := hdir_eq_U ▸ (inf_le_left : dir ≤ Γ.I ⊔ P)
+    -- I⊔U ≤ I⊔P, I ⋖ I⊔P (atom_covBy_join), I < I⊔U → I⊔U = I⊔P
+    have hI_cov := atom_covBy_join Γ.hI hP (Ne.symm hP_ne_I)
+    have hIU_le := sup_le (le_sup_left : Γ.I ≤ Γ.I ⊔ P) hU_le_IP
+    have hI_lt_IU : Γ.I < Γ.I ⊔ Γ.U := lt_of_le_of_ne le_sup_left
+      (fun h => Γ.hUI.symm ((Γ.hI.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left Γ.hU.1).symm)
+    -- CovBy: I < I⊔U ≤ I⊔P and I ⋖ I⊔P → I⊔U = I⊔P
+    have hIU_eq := (hI_cov.eq_or_eq hI_lt_IU.le hIU_le).resolve_left (ne_of_gt hI_lt_IU)
+    -- P ≤ I⊔P = I⊔U ≤ l (I, U both on l)
+    exact hP_not_l (le_sup_right.trans (hIU_eq.symm.le.trans (sup_le Γ.hI_on le_sup_right)))
   -- O⊔P ⋖ π: U ∉ O⊔P (else l ≤ O⊔P, P ≤ l ✗), O⊔P⊔U = l⊔P = π. line_covBy_plane.
-  have hOP_covBy : Γ.O ⊔ P ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by sorry
+  have hOP_covBy : Γ.O ⊔ P ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by
+    -- U ∉ O⊔P: if U ≤ O⊔P, O ⋖ O⊔U = l, O < O⊔P, CovBy → l = O⊔P → P ≤ l ✗
+    have hU_not_OP : ¬ Γ.U ≤ Γ.O ⊔ P := by
+      intro h
+      have hO_lt_OP : Γ.O < Γ.O ⊔ P := lt_of_le_of_ne le_sup_left
+        (fun h' => (Ne.symm hP_ne_O) ((Γ.hO.le_iff.mp
+          (le_sup_right.trans h'.symm.le)).resolve_left hP.1).symm)
+      -- l = O⊔U ≤ O⊔P (U ≤ O⊔P). O ⋖ O⊔P. O < l ≤ O⊔P. CovBy → l = O⊔P. P ≤ l.
+      have hl_le_OP : Γ.O ⊔ Γ.U ≤ Γ.O ⊔ P := sup_le le_sup_left h
+      have hO_lt_l : Γ.O < Γ.O ⊔ Γ.U := (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt
+      have hl_eq_OP : Γ.O ⊔ Γ.U = Γ.O ⊔ P :=
+        ((atom_covBy_join Γ.hO hP (Ne.symm hP_ne_O)).eq_or_eq hO_lt_l.le
+          hl_le_OP).resolve_left (ne_of_gt hO_lt_l)
+      exact hP_not_l (le_sup_right.trans hl_eq_OP.symm.le)
+    -- O⊔P⊔U = l⊔P = π
+    have hOPU_eq : Γ.O ⊔ P ⊔ Γ.U = Γ.O ⊔ Γ.U ⊔ Γ.V := by
+      rw [show Γ.O ⊔ P ⊔ Γ.U = (Γ.O ⊔ Γ.U) ⊔ P from by ac_rfl]
+      have hl_lt : Γ.O ⊔ Γ.U < (Γ.O ⊔ Γ.U) ⊔ P := lt_of_le_of_ne le_sup_left
+        (fun h => hP_not_l (le_sup_right.trans h.symm.le))
+      exact (hl_covBy_π.eq_or_eq hl_lt.le
+        (sup_le hl_covBy_π.le hP_plane)).resolve_left (ne_of_gt hl_lt)
+    rw [← hOPU_eq]
+    exact line_covBy_plane Γ.hO hP Γ.hU (Ne.symm hP_ne_O) Γ.hOU
+      (fun h => hU_not_OP (h ▸ le_sup_right)) hU_not_OP
   -- c⊔dir ⋖ π
-  have hcdir_covBy : c ⊔ dir ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by sorry
+  have hcdir_covBy : c ⊔ dir ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by
+    -- O ∉ c⊔dir: if O ≤ c⊔dir, then O⊔c ≤ c⊔dir. O⊔c = l (O,c on l, O≠c).
+    -- l ≤ c⊔dir ≤ π. l ⋖ π → c⊔dir = l ∨ c⊔dir = π.
+    -- c⊔dir = l → dir ≤ l ✗. c⊔dir = π → c ⋖ π, but c < l < π contradicts c ⋖ π.
+    have hO_not_cdir : ¬ Γ.O ≤ c ⊔ dir := by
+      intro h
+      have hOc_le : Γ.O ⊔ c ≤ c ⊔ dir := sup_le h le_sup_left
+      have hO_lt_Oc : Γ.O < Γ.O ⊔ c := lt_of_le_of_ne le_sup_left
+        (fun h' => (Ne.symm hc_ne_O) ((Γ.hO.le_iff.mp
+          (le_sup_right.trans h'.symm.le)).resolve_left hc.1).symm)
+      have hOc_eq_l : Γ.O ⊔ c = Γ.O ⊔ Γ.U :=
+        ((atom_covBy_join Γ.hO Γ.hU Γ.hOU).eq_or_eq hO_lt_Oc.le
+          (sup_le le_sup_left hc_on)).resolve_left (ne_of_gt hO_lt_Oc)
+      have hl_le : Γ.O ⊔ Γ.U ≤ c ⊔ dir := hOc_eq_l ▸ hOc_le
+      have hcdir_le : c ⊔ dir ≤ Γ.O ⊔ Γ.U ⊔ Γ.V :=
+        sup_le (hc_on.trans le_sup_left) ((inf_le_right : dir ≤ m).trans Γ.m_covBy_π.le)
+      rcases hl_covBy_π.eq_or_eq hl_le hcdir_le with h_eq | h_eq
+      · -- c⊔dir = l → dir ≤ l ✗
+        exact hdir_not_l (le_sup_right.trans h_eq.le)
+      · -- c⊔dir = π → c ⋖ π. But c ≤ l < π, so c < l < π. c ⋖ π impossible.
+        have hc_cov_π : c ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V :=
+          h_eq ▸ atom_covBy_join hc hdir_atom hc_ne_dir
+        -- c < l: if c = l then O ≤ c (O ≤ l), O = c (atoms), c = O. ✗
+        have hc_lt_l : c < Γ.O ⊔ Γ.U := lt_of_le_of_ne hc_on
+          (fun h' => hc_ne_O ((hc.le_iff.mp (le_sup_left.trans h'.symm.le)).resolve_left
+            Γ.hO.1).symm)
+        exact (hc_cov_π.eq_or_eq hc_lt_l.le hl_covBy_π.le).elim
+          (fun h => absurd h.symm (ne_of_lt hc_lt_l))
+          (fun h => absurd h (Ne.symm (ne_of_gt hl_covBy_π.lt)))
+    -- c⊔dir⊔O = π: l ≤ c⊔dir⊔O (O,c → l), l⊔dir = π (dir ∉ l)
+    have hcdirO_eq : c ⊔ dir ⊔ Γ.O = Γ.O ⊔ Γ.U ⊔ Γ.V := by
+      have hl_le : Γ.O ⊔ Γ.U ≤ c ⊔ dir ⊔ Γ.O := by
+        have hO_lt_Oc : Γ.O < Γ.O ⊔ c := lt_of_le_of_ne le_sup_left
+          (fun h' => (Ne.symm hc_ne_O) ((Γ.hO.le_iff.mp
+            (le_sup_right.trans h'.symm.le)).resolve_left hc.1).symm)
+        have hOc_eq_l : Γ.O ⊔ c = Γ.O ⊔ Γ.U :=
+          ((atom_covBy_join Γ.hO Γ.hU Γ.hOU).eq_or_eq hO_lt_Oc.le
+            (sup_le le_sup_left hc_on)).resolve_left (ne_of_gt hO_lt_Oc)
+        rw [← hOc_eq_l]; exact sup_le le_sup_right (le_sup_left.trans le_sup_left)
+      have hl_lt : Γ.O ⊔ Γ.U < (Γ.O ⊔ Γ.U) ⊔ dir := lt_of_le_of_ne le_sup_left
+        (fun h => hdir_not_l (le_sup_right.trans h.symm.le))
+      have hldir_eq : (Γ.O ⊔ Γ.U) ⊔ dir = Γ.O ⊔ Γ.U ⊔ Γ.V :=
+        (hl_covBy_π.eq_or_eq hl_lt.le (sup_le hl_covBy_π.le
+          ((inf_le_right : dir ≤ m).trans Γ.m_covBy_π.le))).resolve_left (ne_of_gt hl_lt)
+      exact le_antisymm
+        (sup_le (sup_le (hc_on.trans le_sup_left)
+          ((inf_le_right : dir ≤ m).trans Γ.m_covBy_π.le)) (le_sup_left.trans le_sup_left))
+        (hldir_eq.symm.le.trans (sup_le hl_le (le_sup_right.trans le_sup_left)))
+    rw [← hcdirO_eq]
+    exact line_covBy_plane hc hdir_atom Γ.hO hc_ne_dir
+      hc_ne_O (fun h => hO_not_cdir (h ▸ le_sup_right)) hO_not_cdir
   -- Lines distinct (proven helper)
   have h_ne := dilation_ext_lines_ne Γ hP hc hc_on hc_ne_O hP_not_l hP_ne_O
   -- Meet CovBy O⊔P
