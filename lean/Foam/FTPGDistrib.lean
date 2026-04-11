@@ -441,7 +441,508 @@ theorem dilation_preserves_direction (Γ : CoordSystem L)
       ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
     (P ⊔ Q) ⊓ (Γ.U ⊔ Γ.V) =
       (dilation_ext Γ c P ⊔ dilation_ext Γ c Q) ⊓ (Γ.U ⊔ Γ.V) := by
-  sorry
+  set m := Γ.U ⊔ Γ.V
+  set π := Γ.O ⊔ Γ.U ⊔ Γ.V
+  set σP := dilation_ext Γ c P
+  set σQ := dilation_ext Γ c Q
+  -- ═══ Case 1: c = I (identity dilation) ═══
+  by_cases hcI : c = Γ.I
+  · subst hcI
+    -- When c = I, show σ_I(P) = P
+    -- Direction d_P = (I⊔P)⊓m
+    have hd_P_atom : IsAtom ((Γ.I ⊔ P) ⊓ m) :=
+      line_meets_m_at_atom Γ.hI hP (Ne.symm hP_ne_I)
+        (sup_le (Γ.hI_on.trans le_sup_left) hP_plane) Γ.m_covBy_π.le Γ.m_covBy_π Γ.hI_not_m
+    have hI_ne_dir : Γ.I ≠ (Γ.I ⊔ P) ⊓ m :=
+      fun h => Γ.hI_not_m (h ▸ inf_le_right)
+    -- I ⊔ ((I⊔P)⊓m) = I ⊔ P
+    have hIdir_eq : Γ.I ⊔ (Γ.I ⊔ P) ⊓ m = Γ.I ⊔ P := by
+      have h_lt : Γ.I < Γ.I ⊔ (Γ.I ⊔ P) ⊓ m := by
+        apply lt_of_le_of_ne le_sup_left
+        intro h
+        exact hI_ne_dir ((Γ.hI.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+          hd_P_atom.1).symm
+      exact ((atom_covBy_join Γ.hI hP (Ne.symm hP_ne_I)).eq_or_eq h_lt.le
+        (sup_le le_sup_left inf_le_left)).resolve_left (ne_of_gt h_lt)
+    -- I not on line P⊔O (if so, O⊔I ≤ P⊔O = line containing O,
+    -- both lines with O on both, CovBy forces O⊔I = P⊔O, so P ≤ O⊔I = l ✗)
+    have hI_not_PO : ¬ Γ.I ≤ P ⊔ Γ.O := by
+      intro hI_le
+      have hOI_le : Γ.O ⊔ Γ.I ≤ P ⊔ Γ.O := sup_le le_sup_right hI_le
+      have hO_lt : Γ.O < Γ.O ⊔ Γ.I := (atom_covBy_join Γ.hO Γ.hI Γ.hOI).lt
+      have hOI_eq : Γ.O ⊔ Γ.I = P ⊔ Γ.O :=
+        ((sup_comm P Γ.O ▸ atom_covBy_join Γ.hO hP (Ne.symm hP_ne_O)).eq_or_eq hO_lt.le
+          (sup_comm P Γ.O ▸ hOI_le)).resolve_left (ne_of_gt hO_lt)
+      have hP_le_OI : P ≤ Γ.O ⊔ Γ.I := le_sup_left.trans hOI_eq.symm.le
+      exact hP_not_l (hP_le_OI.trans (sup_le le_sup_left Γ.hI_on))
+    -- σ_I(P) = (O⊔P) ⊓ (I⊔P) = P
+    have hσP_eq : σP = P := by
+      show (Γ.O ⊔ P) ⊓ (Γ.I ⊔ (Γ.I ⊔ P) ⊓ m) = P
+      rw [hIdir_eq, sup_comm Γ.O P, sup_comm Γ.I P]
+      exact modular_intersection hP Γ.hO Γ.hI hP_ne_O hP_ne_I Γ.hOI hI_not_PO
+    -- Same for Q
+    have hd_Q_atom : IsAtom ((Γ.I ⊔ Q) ⊓ m) :=
+      line_meets_m_at_atom Γ.hI hQ (Ne.symm hQ_ne_I)
+        (sup_le (Γ.hI_on.trans le_sup_left) hQ_plane) Γ.m_covBy_π.le Γ.m_covBy_π Γ.hI_not_m
+    have hI_ne_dirQ : Γ.I ≠ (Γ.I ⊔ Q) ⊓ m :=
+      fun h => Γ.hI_not_m (h ▸ inf_le_right)
+    have hIdirQ_eq : Γ.I ⊔ (Γ.I ⊔ Q) ⊓ m = Γ.I ⊔ Q := by
+      have h_lt : Γ.I < Γ.I ⊔ (Γ.I ⊔ Q) ⊓ m := by
+        apply lt_of_le_of_ne le_sup_left
+        intro h
+        exact hI_ne_dirQ ((Γ.hI.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+          hd_Q_atom.1).symm
+      exact ((atom_covBy_join Γ.hI hQ (Ne.symm hQ_ne_I)).eq_or_eq h_lt.le
+        (sup_le le_sup_left inf_le_left)).resolve_left (ne_of_gt h_lt)
+    have hI_not_QO : ¬ Γ.I ≤ Q ⊔ Γ.O := by
+      intro hI_le
+      have hOI_le : Γ.O ⊔ Γ.I ≤ Q ⊔ Γ.O := sup_le le_sup_right hI_le
+      have hO_lt : Γ.O < Γ.O ⊔ Γ.I := (atom_covBy_join Γ.hO Γ.hI Γ.hOI).lt
+      have hOI_eq : Γ.O ⊔ Γ.I = Q ⊔ Γ.O :=
+        ((sup_comm Q Γ.O ▸ atom_covBy_join Γ.hO hQ (Ne.symm hQ_ne_O)).eq_or_eq hO_lt.le
+          (sup_comm Q Γ.O ▸ hOI_le)).resolve_left (ne_of_gt hO_lt)
+      have hQ_le_OI : Q ≤ Γ.O ⊔ Γ.I := le_sup_left.trans hOI_eq.symm.le
+      exact hQ_not_l (hQ_le_OI.trans (sup_le le_sup_left Γ.hI_on))
+    have hσQ_eq : σQ = Q := by
+      show (Γ.O ⊔ Q) ⊓ (Γ.I ⊔ (Γ.I ⊔ Q) ⊓ m) = Q
+      rw [hIdirQ_eq, sup_comm Γ.O Q, sup_comm Γ.I Q]
+      exact modular_intersection hQ Γ.hO Γ.hI hQ_ne_O hQ_ne_I Γ.hOI hI_not_QO
+    rw [hσP_eq, hσQ_eq]
+  -- ═══ Case 2: c ≠ I ═══
+  · -- Common infrastructure
+    have hc_not_m : ¬ c ≤ m := fun h => hc_ne_U (Γ.atom_on_both_eq_U hc hc_on h)
+    have hσP_atom : IsAtom σP := dilation_ext_atom Γ hP hc hc_on hc_ne_O hc_ne_U
+      hP_plane hP_not_l hP_ne_O hP_ne_I hP_not_m
+    have hσQ_atom : IsAtom σQ := dilation_ext_atom Γ hQ hc hc_on hc_ne_O hc_ne_U
+      hQ_plane hQ_not_l hQ_ne_O hQ_ne_I hQ_not_m
+    have hσP_ne_c : σP ≠ c := dilation_ext_ne_c Γ hP hc hc_on hc_ne_O hP_not_l hP_ne_O hσP_atom
+    have hσQ_ne_c : σQ ≠ c := dilation_ext_ne_c Γ hQ hc hc_on hc_ne_O hQ_not_l hQ_ne_O hσQ_atom
+    -- Directions
+    set d_P := (Γ.I ⊔ P) ⊓ m
+    set d_Q := (Γ.I ⊔ Q) ⊓ m
+    have hd_P_atom : IsAtom d_P :=
+      line_meets_m_at_atom Γ.hI hP (Ne.symm hP_ne_I)
+        (sup_le (Γ.hI_on.trans le_sup_left) hP_plane) Γ.m_covBy_π.le Γ.m_covBy_π Γ.hI_not_m
+    have hd_Q_atom : IsAtom d_Q :=
+      line_meets_m_at_atom Γ.hI hQ (Ne.symm hQ_ne_I)
+        (sup_le (Γ.hI_on.trans le_sup_left) hQ_plane) Γ.m_covBy_π.le Γ.m_covBy_π Γ.hI_not_m
+    -- Parallelisms from dilation_ext_parallelism
+    have h_par_P : (P ⊔ Γ.I) ⊓ m = (σP ⊔ c) ⊓ m :=
+      dilation_ext_parallelism Γ hP hc hc_on hc_ne_O hc_ne_U hP_plane hP_not_m
+        hP_not_l hP_ne_O hP_ne_I hσP_atom hσP_ne_c
+    have h_par_Q : (Q ⊔ Γ.I) ⊓ m = (σQ ⊔ c) ⊓ m :=
+      dilation_ext_parallelism Γ hQ hc hc_on hc_ne_O hc_ne_U hQ_plane hQ_not_m
+        hQ_not_l hQ_ne_O hQ_ne_I hσQ_atom hσQ_ne_c
+    -- Rewrite parallelisms: d_P = (σP⊔c)⊓m, d_Q = (σQ⊔c)⊓m
+    have h_par_P' : d_P = (σP ⊔ c) ⊓ m := by
+      show (Γ.I ⊔ P) ⊓ m = (σP ⊔ c) ⊓ m; rw [sup_comm Γ.I P]; exact h_par_P
+    have h_par_Q' : d_Q = (σQ ⊔ c) ⊓ m := by
+      show (Γ.I ⊔ Q) ⊓ m = (σQ ⊔ c) ⊓ m; rw [sup_comm Γ.I Q]; exact h_par_Q
+    -- σP ≤ c⊔d_P, σQ ≤ c⊔d_Q (from definition)
+    have hσP_le_cd : σP ≤ c ⊔ d_P := inf_le_right
+    have hσQ_le_cd : σQ ≤ c ⊔ d_Q := inf_le_right
+    -- σP ≤ O⊔P, σQ ≤ O⊔Q
+    have hσP_le_OP : σP ≤ Γ.O ⊔ P := inf_le_left
+    have hσQ_le_OQ : σQ ≤ Γ.O ⊔ Q := inf_le_left
+    -- ═══ Case 2a: Q ≤ I⊔P (collinear with I) ═══
+    by_cases hQ_col : Q ≤ Γ.I ⊔ P
+    · -- I⊔Q = I⊔P (by CovBy)
+      have hI_lt_IQ : Γ.I < Γ.I ⊔ Q := lt_of_le_of_ne le_sup_left
+        (fun h => hQ_ne_I ((Γ.hI.le_iff.mp (h ▸ le_sup_right)).resolve_left hQ.1))
+      have hIQ_eq_IP : Γ.I ⊔ Q = Γ.I ⊔ P :=
+        ((atom_covBy_join Γ.hI hP (Ne.symm hP_ne_I)).eq_or_eq hI_lt_IQ.le
+          (sup_le le_sup_left hQ_col)).resolve_left (ne_of_gt hI_lt_IQ)
+      -- d_Q = d_P
+      have hd_eq : d_Q = d_P := by show (Γ.I ⊔ Q) ⊓ m = (Γ.I ⊔ P) ⊓ m; rw [hIQ_eq_IP]
+      -- P⊔Q = I⊔P
+      have hPQ_le : P ⊔ Q ≤ Γ.I ⊔ P := sup_le le_sup_right hQ_col
+      have hP_lt_PQ : P < P ⊔ Q := lt_of_le_of_ne le_sup_left
+        (fun h => hPQ ((hP.le_iff.mp (h ▸ le_sup_right)).resolve_left hQ.1).symm)
+      have hPQ_eq_IP : P ⊔ Q = Γ.I ⊔ P := by
+        rw [sup_comm Γ.I P]
+        exact ((atom_covBy_join hP Γ.hI hP_ne_I).eq_or_eq hP_lt_PQ.le
+          (hPQ_le.trans (le_of_eq (sup_comm Γ.I P)))).resolve_left (ne_of_gt hP_lt_PQ)
+      -- (P⊔Q)⊓m = d_P
+      have hPQ_m : (P ⊔ Q) ⊓ m = d_P := by rw [hPQ_eq_IP]
+      -- σQ ≤ c⊔d_P
+      have hσQ_le_cdP : σQ ≤ c ⊔ d_P := hd_eq ▸ hσQ_le_cd
+      -- σP⊔σQ ≤ c⊔d_P
+      have hσPQ_le : σP ⊔ σQ ≤ c ⊔ d_P := sup_le hσP_le_cd hσQ_le_cdP
+      -- c ≠ d_P
+      have hc_ne_d : c ≠ d_P := fun h => hc_not_m (h ▸ inf_le_right)
+      -- σP⊔σQ = c⊔d_P (line ≤ line, by CovBy)
+      have hσPQ_eq : σP ⊔ σQ = c ⊔ d_P := by
+        have hσP_lt : σP < σP ⊔ σQ := lt_of_le_of_ne le_sup_left
+          (fun h => h_images_ne ((hσP_atom.le_iff.mp (h ▸ le_sup_right)).resolve_left hσQ_atom.1).symm)
+        have hσP_cov := line_covers_its_atoms hc hd_P_atom hc_ne_d hσP_atom hσP_le_cd
+        exact (hσP_cov.eq_or_eq hσP_lt.le hσPQ_le).resolve_left (ne_of_gt hσP_lt)
+      -- (σP⊔σQ)⊓m = d_P
+      have hσPQ_m : (σP ⊔ σQ) ⊓ m = d_P := by
+        rw [hσPQ_eq]; exact line_direction hc hc_not_m (inf_le_right : d_P ≤ m)
+      rw [hPQ_m, hσPQ_m]
+    -- ═══ Case 2b: Q ∉ I⊔P (non-collinear with I) ═══
+    · -- Sub-case: Q ≤ O⊔P (collinear with O)
+      by_cases hQ_colO : Q ≤ Γ.O ⊔ P
+      · -- O⊔Q = O⊔P
+        have hO_lt_OQ : Γ.O < Γ.O ⊔ Q := lt_of_le_of_ne le_sup_left
+          (fun h => hQ_ne_O ((Γ.hO.le_iff.mp (h ▸ le_sup_right)).resolve_left hQ.1))
+        have hOQ_eq_OP : Γ.O ⊔ Q = Γ.O ⊔ P :=
+          ((atom_covBy_join Γ.hO hP (Ne.symm hP_ne_O)).eq_or_eq hO_lt_OQ.le
+            (sup_le le_sup_left hQ_colO)).resolve_left (ne_of_gt hO_lt_OQ)
+        -- P⊔Q = O⊔P
+        have hP_lt_PQ : P < P ⊔ Q := lt_of_le_of_ne le_sup_left
+          (fun h => hPQ ((hP.le_iff.mp (h ▸ le_sup_right)).resolve_left hQ.1).symm)
+        have hPQ_eq_OP : P ⊔ Q = Γ.O ⊔ P := by
+          rw [sup_comm Γ.O P]
+          exact ((atom_covBy_join hP Γ.hO hP_ne_O).eq_or_eq hP_lt_PQ.le
+            (sup_le le_sup_left (hQ_colO.trans (sup_comm Γ.O P).le))).resolve_left
+            (ne_of_gt hP_lt_PQ)
+        -- σP ≤ O⊔P, σQ ≤ O⊔Q = O⊔P
+        have hσQ_le_OP : σQ ≤ Γ.O ⊔ P := hOQ_eq_OP ▸ hσQ_le_OQ
+        have hσPQ_le_OP : σP ⊔ σQ ≤ Γ.O ⊔ P := sup_le hσP_le_OP hσQ_le_OP
+        -- σP⊔σQ = O⊔P
+        have hσPQ_eq_OP : σP ⊔ σQ = Γ.O ⊔ P := by
+          have hσP_lt : σP < σP ⊔ σQ := lt_of_le_of_ne le_sup_left
+            (fun h => h_images_ne ((hσP_atom.le_iff.mp (h ▸ le_sup_right)).resolve_left hσQ_atom.1).symm)
+          have hσP_cov := line_covers_its_atoms Γ.hO hP (Ne.symm hP_ne_O) hσP_atom hσP_le_OP
+          exact (hσP_cov.eq_or_eq hσP_lt.le hσPQ_le_OP).resolve_left (ne_of_gt hσP_lt)
+        rw [hPQ_eq_OP, hσPQ_eq_OP]
+      -- ═══ Case 2c: Q ∉ I⊔P, Q ∉ O⊔P (generic — Desargues) ═══
+      · -- ═══ Case 2c: Q ∉ I⊔P, Q ∉ O⊔P (generic — Desargues) ═══
+        have hσP_ne_P : σP ≠ P := dilation_ext_ne_P Γ hP hc hc_on hc_ne_O hc_ne_U
+          hP_plane hP_not_m hP_not_l hP_ne_O hP_ne_I hcI
+        have hσQ_ne_Q : σQ ≠ Q := dilation_ext_ne_P Γ hQ hc hc_on hc_ne_O hc_ne_U
+          hQ_plane hQ_not_m hQ_not_l hQ_ne_O hQ_ne_I hcI
+        have hσP_not_m : ¬ σP ≤ m := dilation_ext_not_m Γ hP hc hc_on hc_ne_O hc_ne_U
+          hP_plane hP_not_m hP_not_l hP_ne_O hP_ne_I hcI
+        have hσQ_not_m : ¬ σQ ≤ m := dilation_ext_not_m Γ hQ hc hc_on hc_ne_O hc_ne_U
+          hQ_plane hQ_not_m hQ_not_l hQ_ne_O hQ_ne_I hcI
+        have hσP_plane : σP ≤ π := dilation_ext_plane Γ hP hc hc_on hP_plane
+        have hσQ_plane : σQ ≤ π := dilation_ext_plane Γ hQ hc hc_on hQ_plane
+        have hd_ne : d_P ≠ d_Q := dilation_ext_directions_ne Γ hP hQ hP_plane hQ_plane
+          hP_not_m hP_ne_I hQ_ne_I hPQ hQ_col
+        have hOI_eq_l : Γ.O ⊔ Γ.I = Γ.O ⊔ Γ.U := by
+          have hO_lt : Γ.O < Γ.O ⊔ Γ.I := (atom_covBy_join Γ.hO Γ.hI Γ.hOI).lt
+          exact ((atom_covBy_join Γ.hO Γ.hU Γ.hOU).eq_or_eq hO_lt.le
+            (sup_le le_sup_left Γ.hI_on)).resolve_left (ne_of_gt hO_lt)
+        have hc_le_OI : c ≤ Γ.O ⊔ Γ.I := hOI_eq_l.symm ▸ hc_on
+        -- Non-degeneracy (sorry for now, fill in later)
+        have hOc_eq_l : Γ.O ⊔ c = Γ.O ⊔ Γ.U := by
+          have hO_lt : Γ.O < Γ.O ⊔ c := by
+            apply lt_of_le_of_ne le_sup_left; intro h'
+            exact hc_ne_O ((Γ.hO.le_iff.mp (h' ▸ le_sup_right)).resolve_left hc.1)
+          exact ((atom_covBy_join Γ.hO Γ.hU Γ.hOU).eq_or_eq hO_lt.le
+            (sup_le le_sup_left hc_on)).resolve_left (ne_of_gt hO_lt)
+        have U_forces (X : L) (hX : IsAtom X) (hXI : X ≠ Γ.I)
+            (hd : (Γ.I ⊔ X) ⊓ m = Γ.U) : X ≤ Γ.O ⊔ Γ.U := by
+          have hU_le : Γ.U ≤ Γ.I ⊔ X := hd ▸ inf_le_left
+          have hI_lt : Γ.I < Γ.I ⊔ Γ.U := by
+            apply lt_of_le_of_ne le_sup_left; intro h
+            exact Γ.hUI ((Γ.hI.le_iff.mp (h ▸ le_sup_right)).resolve_left Γ.hU.1)
+          have hIU_eq : Γ.I ⊔ Γ.U = Γ.I ⊔ X :=
+            ((atom_covBy_join Γ.hI hX (Ne.symm hXI)).eq_or_eq hI_lt.le
+              (sup_le le_sup_left hU_le)).resolve_left (ne_of_gt hI_lt)
+          exact le_sup_right.trans (hIU_eq.symm.le.trans (sup_le Γ.hI_on le_sup_right))
+        have hO_ne_σP : Γ.O ≠ σP := by
+          intro h; apply hP_not_l
+          have hd : d_P = (Γ.O ⊔ c) ⊓ m := by rw [h_par_P']; congr 1; rw [h]
+          rw [hOc_eq_l, Γ.l_inf_m_eq_U] at hd
+          exact U_forces P hP hP_ne_I hd
+        have hO_ne_σQ : Γ.O ≠ σQ := by
+          intro h; apply hQ_not_l
+          have hd : d_Q = (Γ.O ⊔ c) ⊓ m := by rw [h_par_Q']; congr 1; rw [h]
+          rw [hOc_eq_l, Γ.l_inf_m_eq_U] at hd
+          exact U_forces Q hQ hQ_ne_I hd
+        have hσP_not_l : ¬ σP ≤ Γ.O ⊔ Γ.U := by
+          intro h
+          have hle : σP ≤ (Γ.O ⊔ Γ.U) ⊓ (Γ.O ⊔ P) := le_inf h hσP_le_OP
+          rw [modular_intersection Γ.hO Γ.hU hP Γ.hOU (Ne.symm hP_ne_O)
+            (fun h' => hP_not_l (h' ▸ le_sup_right)) hP_not_l] at hle
+          exact hO_ne_σP ((Γ.hO.le_iff.mp hle).resolve_left hσP_atom.1).symm
+        have hσQ_not_l : ¬ σQ ≤ Γ.O ⊔ Γ.U := by
+          intro h
+          have hle : σQ ≤ (Γ.O ⊔ Γ.U) ⊓ (Γ.O ⊔ Q) := le_inf h hσQ_le_OQ
+          rw [modular_intersection Γ.hO Γ.hU hQ Γ.hOU (Ne.symm hQ_ne_O)
+            (fun h' => hQ_not_l (h' ▸ le_sup_right)) hQ_not_l] at hle
+          exact hO_ne_σQ ((Γ.hO.le_iff.mp hle).resolve_left hσQ_atom.1).symm
+        -- I < O⊔I (helper for side distinctness)
+        have hI_lt_OI : Γ.I < Γ.O ⊔ Γ.I := by
+          apply lt_of_le_of_ne le_sup_right; intro h
+          exact Γ.hOI ((Γ.hI.le_iff.mp (h ▸ le_sup_left)).resolve_left Γ.hO.1)
+        -- l_le_XI_contra: O⊔I ≤ X⊔I implies X ≤ l (CovBy argument)
+        have l_le_contra (X : L) (hX : IsAtom X) (hXI : X ≠ Γ.I) :
+            Γ.O ⊔ Γ.I ≤ X ⊔ Γ.I → X ≤ Γ.O ⊔ Γ.U := by
+          intro hle
+          have hOI_eq : Γ.O ⊔ Γ.I = X ⊔ Γ.I :=
+            ((sup_comm Γ.I X ▸ atom_covBy_join Γ.hI hX (Ne.symm hXI)).eq_or_eq
+              hI_lt_OI.le hle).resolve_left (ne_of_gt hI_lt_OI)
+          exact le_sup_left.trans (hOI_eq.symm.le.trans (hOI_eq_l ▸ le_rfl))
+        have hPI_ne_σPc : P ⊔ Γ.I ≠ σP ⊔ c := by
+          intro h; apply hcI
+          have hle_I : Γ.I ≤ (P ⊔ Γ.I) ⊓ (Γ.O ⊔ Γ.U) := le_inf le_sup_right Γ.hI_on
+          have hle_c : c ≤ (P ⊔ Γ.I) ⊓ (Γ.O ⊔ Γ.U) := le_inf (h.symm ▸ le_sup_right) hc_on
+          have h_lt : (P ⊔ Γ.I) ⊓ (Γ.O ⊔ Γ.U) < Γ.O ⊔ Γ.U := by
+            apply lt_of_le_of_ne inf_le_right; intro h'
+            exact hP_not_l (l_le_contra P hP hP_ne_I (hOI_eq_l ▸ h'.symm ▸ inf_le_left))
+          have h_atom := line_height_two Γ.hO Γ.hU Γ.hOU
+            (lt_of_lt_of_le Γ.hI.bot_lt hle_I) h_lt
+          exact ((h_atom.le_iff.mp hle_c).resolve_left hc.1).trans
+            ((h_atom.le_iff.mp hle_I).resolve_left Γ.hI.1).symm
+        have hQI_ne_σQc : Q ⊔ Γ.I ≠ σQ ⊔ c := by
+          intro h; apply hcI
+          have hle_I : Γ.I ≤ (Q ⊔ Γ.I) ⊓ (Γ.O ⊔ Γ.U) := le_inf le_sup_right Γ.hI_on
+          have hle_c : c ≤ (Q ⊔ Γ.I) ⊓ (Γ.O ⊔ Γ.U) := le_inf (h.symm ▸ le_sup_right) hc_on
+          have h_lt : (Q ⊔ Γ.I) ⊓ (Γ.O ⊔ Γ.U) < Γ.O ⊔ Γ.U := by
+            apply lt_of_le_of_ne inf_le_right; intro h'
+            exact hQ_not_l (l_le_contra Q hQ hQ_ne_I (hOI_eq_l ▸ h'.symm ▸ inf_le_left))
+          have h_atom := line_height_two Γ.hO Γ.hU Γ.hOU
+            (lt_of_lt_of_le Γ.hI.bot_lt hle_I) h_lt
+          exact ((h_atom.le_iff.mp hle_c).resolve_left hc.1).trans
+            ((h_atom.le_iff.mp hle_I).resolve_left Γ.hI.1).symm
+        have hPQ_ne_σPQ : P ⊔ Q ≠ σP ⊔ σQ := by
+          intro h
+          have hσP_le_PQ : σP ≤ P ⊔ Q := le_sup_left.trans h.symm.le
+          have hO_not_PQ : ¬ Γ.O ≤ P ⊔ Q := by
+            intro h'
+            have hP_lt : P < P ⊔ Γ.O := by
+              apply lt_of_le_of_ne le_sup_left; intro h''
+              exact hP_ne_O ((hP.le_iff.mp (h'' ▸ le_sup_right)).resolve_left Γ.hO.1).symm
+            have hPO_eq : P ⊔ Γ.O = P ⊔ Q :=
+              ((atom_covBy_join hP hQ hPQ).eq_or_eq hP_lt.le
+                (sup_comm Γ.O P ▸ sup_le h' le_sup_left)).resolve_left (ne_of_gt hP_lt)
+            exact hQ_colO (le_sup_right.trans (hPO_eq.symm.le.trans (sup_comm P Γ.O ▸ le_rfl)))
+          have hPQ_PO_eq : (P ⊔ Q) ⊓ (P ⊔ Γ.O) = P :=
+            modular_intersection hP hQ Γ.hO hPQ hP_ne_O hQ_ne_O hO_not_PQ
+          have hσP_le_P : σP ≤ P := by
+            have := le_inf hσP_le_PQ (sup_comm Γ.O P ▸ hσP_le_OP : σP ≤ P ⊔ Γ.O)
+            rwa [hPQ_PO_eq] at this
+          exact hσP_ne_P ((hP.le_iff.mp hσP_le_P).resolve_left hσP_atom.1)
+        have hO_not_PI : ¬ Γ.O ≤ P ⊔ Γ.I := by
+          intro h'
+          exact hP_not_l (l_le_contra P hP hP_ne_I (sup_le h' le_sup_right))
+        have hQ_not_PI : ¬ Q ≤ P ⊔ Γ.I :=
+          fun h' => hQ_col (h'.trans (sup_le le_sup_right le_sup_left))
+        have hPQI_eq : P ⊔ Q ⊔ Γ.I = π := by
+          -- P⊔I is a line; O ∉ P⊔I; P⊔I⊔O contains l⊔P = π; so P⊔I ⋖ π
+          -- Then Q ∉ P⊔I; P⊔I < P⊔I⊔Q ≤ π; CovBy → P⊔I⊔Q = π = P⊔Q⊔I
+          have hPIO_eq : P ⊔ Γ.I ⊔ Γ.O = π := by
+            -- l = O⊔I ≤ P⊔I⊔O (O and I both there)
+            have hl_le : Γ.O ⊔ Γ.U ≤ P ⊔ Γ.I ⊔ Γ.O := by
+              rw [← hOI_eq_l]; exact sup_le le_sup_right (le_sup_right.trans le_sup_left)
+            -- l ⋖ π, P ∉ l → l⊔P = π
+            have hl_covBy : Γ.O ⊔ Γ.U ⋖ π := by
+              have hV_disj : Γ.V ⊓ (Γ.O ⊔ Γ.U) = ⊥ :=
+                (Γ.hV.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hV_off (h ▸ inf_le_right))
+              have := covBy_sup_of_inf_covBy_left (hV_disj ▸ Γ.hV.bot_covBy)
+              rwa [show Γ.V ⊔ (Γ.O ⊔ Γ.U) = Γ.O ⊔ Γ.U ⊔ Γ.V from sup_comm _ _] at this
+            have hl_lt : Γ.O ⊔ Γ.U < Γ.O ⊔ Γ.U ⊔ P := lt_of_le_of_ne le_sup_left
+              (fun h => hP_not_l (h ▸ le_sup_right))
+            have hlP_eq : Γ.O ⊔ Γ.U ⊔ P = π :=
+              (hl_covBy.eq_or_eq hl_lt.le (sup_le (show Γ.O ⊔ Γ.U ≤ π from le_sup_left) hP_plane)).resolve_left
+                (ne_of_gt hl_lt)
+            -- l⊔P ≤ P⊔I⊔O (l ≤ PIO, P ≤ PIO)
+            exact le_antisymm (sup_le (sup_le hP_plane (Γ.hI_on.trans (show Γ.O ⊔ Γ.U ≤ π from le_sup_left)))
+              (le_sup_left.trans (show Γ.O ⊔ Γ.U ≤ π from le_sup_left)))
+              (hlP_eq ▸ sup_le hl_le (le_sup_left.trans le_sup_left))
+          have hPI_covBy : P ⊔ Γ.I ⋖ π := by
+            rw [← hPIO_eq]; exact line_covBy_plane hP Γ.hI Γ.hO hP_ne_I hP_ne_O Γ.hOI.symm hO_not_PI
+          have hPI_lt : P ⊔ Γ.I < (P ⊔ Γ.I) ⊔ Q := lt_of_le_of_ne le_sup_left
+            (fun h => hQ_not_PI (h ▸ le_sup_right))
+          have hPIQ_le : (P ⊔ Γ.I) ⊔ Q ≤ π := sup_le (sup_le hP_plane
+            (Γ.hI_on.trans (show Γ.O ⊔ Γ.U ≤ π from le_sup_left))) hQ_plane
+          calc P ⊔ Q ⊔ Γ.I = (P ⊔ Γ.I) ⊔ Q := by ac_rfl
+            _ = π := (hPI_covBy.eq_or_eq hPI_lt.le hPIQ_le).resolve_left (ne_of_gt hPI_lt)
+        have hσPQc_eq : σP ⊔ σQ ⊔ c = π := by
+          -- σP ∉ l. l ⋖ π. l⊔σP = π. O ∉ σP⊔c (else O, c on l∩(σP⊔c), l ≠ σP⊔c, atom, O=c ✗).
+          -- σP⊔c⊔O = π (contains l⊔σP). σP⊔c ⋖ π.
+          -- σQ ∉ σP⊔c (if σQ ≤ σP⊔c then σQ⊔c = σP⊔c, (σQ⊔c)⊓m = (σP⊔c)⊓m = d_P, but also = d_Q, d_P≠d_Q ✗).
+          -- σP⊔c⊔σQ = π. QED.
+          have hl_covBy : Γ.O ⊔ Γ.U ⋖ π := by
+            have hV_disj : Γ.V ⊓ (Γ.O ⊔ Γ.U) = ⊥ :=
+              (Γ.hV.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hV_off (h ▸ inf_le_right))
+            have := covBy_sup_of_inf_covBy_left (hV_disj ▸ Γ.hV.bot_covBy)
+            rwa [show Γ.V ⊔ (Γ.O ⊔ Γ.U) = Γ.O ⊔ Γ.U ⊔ Γ.V from sup_comm _ _] at this
+          -- l⊔σP = π
+          have hlσP_eq : Γ.O ⊔ Γ.U ⊔ σP = π := by
+            have hl_lt : Γ.O ⊔ Γ.U < Γ.O ⊔ Γ.U ⊔ σP := lt_of_le_of_ne le_sup_left
+              (fun h => hσP_not_l (h ▸ le_sup_right))
+            exact (hl_covBy.eq_or_eq hl_lt.le (sup_le (show Γ.O ⊔ Γ.U ≤ π from le_sup_left) hσP_plane)).resolve_left
+              (ne_of_gt hl_lt)
+          -- O ∉ σP⊔c
+          have hO_not_σPc : ¬ Γ.O ≤ σP ⊔ c := by
+            intro h
+            -- O, c both on l and on σP⊔c. σP ∉ l → σP⊔c ≠ l. l⊓(σP⊔c) is atom. O = c. ✗
+            have hσPc_ne_l : σP ⊔ c ≠ Γ.O ⊔ Γ.U := by
+              intro heq; exact hσP_not_l (le_sup_left.trans heq.le)
+            have hO_le : Γ.O ≤ (Γ.O ⊔ Γ.U) ⊓ (σP ⊔ c) := le_inf (show Γ.O ≤ Γ.O ⊔ Γ.U from le_sup_left) h
+            have hc_le : c ≤ (Γ.O ⊔ Γ.U) ⊓ (σP ⊔ c) := le_inf hc_on le_sup_right
+            have h_ne_bot : (Γ.O ⊔ Γ.U) ⊓ (σP ⊔ c) ≠ ⊥ := fun h' => Γ.hO.1 (le_bot_iff.mp (h' ▸ hO_le))
+            -- If l = l⊓(σP⊔c), then l ≤ σP⊔c. O ⋖ σP⊔c (line_covers_its_atoms).
+            -- O < l ≤ σP⊔c, CovBy → l = σP⊔c → σP ≤ l ✗
+            have h_lt : (Γ.O ⊔ Γ.U) ⊓ (σP ⊔ c) < Γ.O ⊔ Γ.U := by
+              apply lt_of_le_of_ne inf_le_left; intro h'
+              have hl_le : Γ.O ⊔ Γ.U ≤ σP ⊔ c := h'.symm ▸ inf_le_right
+              have hO_cov := line_covers_its_atoms hσP_atom hc hσP_ne_c Γ.hO
+                (le_sup_left.trans hl_le)
+              have hl_eq : Γ.O ⊔ Γ.U = σP ⊔ c :=
+                (hO_cov.eq_or_eq (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt.le hl_le).resolve_left
+                  (ne_of_gt (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt)
+              exact hσP_not_l (le_sup_left.trans hl_eq.symm.le)
+            have h_atom := line_height_two Γ.hO Γ.hU Γ.hOU (bot_lt_iff_ne_bot.mpr h_ne_bot) h_lt
+            exact hc_ne_O ((h_atom.le_iff.mp hO_le).resolve_left Γ.hO.1 ▸
+              (h_atom.le_iff.mp hc_le).resolve_left hc.1)
+          -- σP⊔c⊔O = π
+          have hσPcO_eq : σP ⊔ c ⊔ Γ.O = π := by
+            have hl_le : Γ.O ⊔ Γ.U ≤ σP ⊔ c ⊔ Γ.O := by
+              rw [← hOc_eq_l]; exact sup_le le_sup_right (le_sup_right.trans le_sup_left)
+            exact le_antisymm (sup_le (sup_le hσP_plane (hc_on.trans (show Γ.O ⊔ Γ.U ≤ π from le_sup_left)))
+              (le_sup_left.trans (show Γ.O ⊔ Γ.U ≤ π from le_sup_left)))
+              (hlσP_eq ▸ sup_le hl_le (le_sup_left.trans le_sup_left))
+          -- σP⊔c ⋖ π
+          have hσPc_covBy : σP ⊔ c ⋖ π := by
+            rw [← hσPcO_eq]; exact line_covBy_plane hσP_atom hc Γ.hO hσP_ne_c
+              (Ne.symm hO_ne_σP) hc_ne_O hO_not_σPc
+          -- σQ ∉ σP⊔c
+          have hσQ_not_σPc : ¬ σQ ≤ σP ⊔ c := by
+            intro h
+            -- σQ ≤ σP⊔c. So σQ⊔c ≤ σP⊔c (line ≤ line → equal). (σQ⊔c)⊓m = (σP⊔c)⊓m.
+            -- But (σP⊔c)⊓m = d_P and (σQ⊔c)⊓m = d_Q. So d_P = d_Q. ✗
+            have hσQc_le : σQ ⊔ c ≤ σP ⊔ c := sup_le h le_sup_right
+            have hσQ_cov := line_covers_its_atoms hσP_atom hc hσP_ne_c hσQ_atom h
+            have hσQc_eq : σQ ⊔ c = σP ⊔ c :=
+              (hσQ_cov.eq_or_eq le_sup_left (sup_le h le_sup_right)).resolve_left
+                (fun h' => hσQ_ne_c ((hσQ_atom.le_iff.mp (h' ▸ le_sup_right)).resolve_left hc.1).symm)
+            have : d_P = d_Q := h_par_P'.trans (hσQc_eq ▸ h_par_Q'.symm)
+            exact hd_ne this
+          -- σP⊔c < σP⊔c⊔σQ ≤ π → σP⊔c⊔σQ = π
+          have hσPc_lt : σP ⊔ c < (σP ⊔ c) ⊔ σQ := lt_of_le_of_ne le_sup_left
+            (fun h => hσQ_not_σPc (h ▸ le_sup_right))
+          have hσPcQ_le : (σP ⊔ c) ⊔ σQ ≤ π := sup_le (sup_le hσP_plane
+            (hc_on.trans (show Γ.O ⊔ Γ.U ≤ π from le_sup_left))) hσQ_plane
+          calc σP ⊔ σQ ⊔ c = (σP ⊔ c) ⊔ σQ := by ac_rfl
+            _ = π := (hσPc_covBy.eq_or_eq hσPc_lt.le hσPcQ_le).resolve_left (ne_of_gt hσPc_lt)
+        -- Sides CovBy π
+        have hI_not_PQ : ¬ Γ.I ≤ P ⊔ Q := by
+          intro h'
+          -- I ≤ P⊔Q and P ≤ P⊔Q. So I⊔P ≤ P⊔Q. Both lines. CovBy → I⊔P = P⊔Q. Q ≤ I⊔P. ✗
+          have hIP_le : Γ.I ⊔ P ≤ P ⊔ Q := sup_le h' le_sup_left
+          have hP_lt : P < P ⊔ Q := by
+            apply lt_of_le_of_ne le_sup_left; intro h''
+            exact hPQ ((hP.le_iff.mp (h'' ▸ le_sup_right)).resolve_left hQ.1).symm
+          have hP_lt_IP : P < Γ.I ⊔ P := by
+            apply lt_of_le_of_ne le_sup_right; intro h''
+            exact hP_ne_I ((hP.le_iff.mp (h'' ▸ le_sup_left)).resolve_left Γ.hI.1).symm
+          have hIP_eq := ((atom_covBy_join hP hQ hPQ).eq_or_eq le_sup_right
+            hIP_le).resolve_left (ne_of_gt hP_lt_IP)
+          exact hQ_col (le_sup_right.trans hIP_eq.symm.le)
+        have hPQ_cov : P ⊔ Q ⋖ π := by
+          rw [← hPQI_eq]
+          exact line_covBy_plane hP hQ Γ.hI hPQ hP_ne_I hQ_ne_I hI_not_PQ
+        have hPI_cov : P ⊔ Γ.I ⋖ π := by
+          rw [← hPQI_eq, show P ⊔ Q ⊔ Γ.I = P ⊔ Γ.I ⊔ Q from by ac_rfl]
+          exact line_covBy_plane hP Γ.hI hQ hP_ne_I hPQ hQ_ne_I.symm hQ_not_PI
+        have hP_not_QI : ¬ P ≤ Q ⊔ Γ.I := by
+          intro h'
+          -- P ≤ Q⊔I, I ≤ Q⊔I, so P⊔I ≤ Q⊔I. I ⋖ Q⊔I (CovBy). I < P⊔I ≤ Q⊔I.
+          -- CovBy → P⊔I = Q⊔I. Q ≤ Q⊔I = P⊔I = I⊔P. ✗
+          have hPI_le : Γ.I ⊔ P ≤ Q ⊔ Γ.I := sup_le le_sup_right h'
+          have hI_lt_IP : Γ.I < Γ.I ⊔ P := by
+            apply lt_of_le_of_ne le_sup_left; intro h''
+            exact hP_ne_I ((Γ.hI.le_iff.mp (h'' ▸ le_sup_right)).resolve_left hP.1)
+          have hIP_eq : Γ.I ⊔ P = Q ⊔ Γ.I :=
+            ((sup_comm Γ.I Q ▸ atom_covBy_join Γ.hI hQ (Ne.symm hQ_ne_I)).eq_or_eq
+              hI_lt_IP.le hPI_le).resolve_left (ne_of_gt hI_lt_IP)
+          exact hQ_col (le_sup_left.trans (hIP_eq.symm.le))
+        have hQI_cov : Q ⊔ Γ.I ⋖ π := by
+          rw [← hPQI_eq, show P ⊔ Q ⊔ Γ.I = Q ⊔ Γ.I ⊔ P from by ac_rfl]
+          exact line_covBy_plane hQ Γ.hI hP hQ_ne_I hPQ.symm hP_ne_I.symm hP_not_QI
+        -- Apply Desargues
+        obtain ⟨axis, haxis_le, haxis_ne, hPQ_axis, hPI_axis, hQI_axis⟩ :=
+          desargues_planar Γ.hO hP hQ Γ.hI hσP_atom hσQ_atom hc
+            ((le_sup_left : Γ.O ≤ Γ.O ⊔ Γ.U).trans (le_sup_left : Γ.O ⊔ Γ.U ≤ π))
+            hP_plane hQ_plane (Γ.hI_on.trans ((le_sup_left : Γ.O ⊔ Γ.U ≤ π)))
+            hσP_plane hσQ_plane (hc_on.trans ((le_sup_left : Γ.O ⊔ Γ.U ≤ π)))
+            hσP_le_OP hσQ_le_OQ hc_le_OI
+            hPQ hP_ne_I hQ_ne_I h_images_ne hσP_ne_c hσQ_ne_c
+            hPQ_ne_σPQ hPI_ne_σPc hQI_ne_σQc
+            hPQI_eq hσPQc_eq
+            (Ne.symm hP_ne_O) (Ne.symm hQ_ne_O) Γ.hOI
+            hO_ne_σP hO_ne_σQ hc_ne_O.symm
+            hσP_ne_P.symm hσQ_ne_Q.symm (fun h => hcI h.symm)
+            R hR hR_not h_irred
+            hPQ_cov hPI_cov hQI_cov
+        -- d_P, d_Q ≤ axis
+        have hd_P_axis : d_P ≤ axis :=
+          le_trans (le_inf (sup_comm Γ.I P ▸ inf_le_left : d_P ≤ P ⊔ Γ.I)
+            (h_par_P'.le.trans inf_le_left)) hPI_axis
+        have hd_Q_axis : d_Q ≤ axis :=
+          le_trans (le_inf (sup_comm Γ.I Q ▸ inf_le_left : d_Q ≤ Q ⊔ Γ.I)
+            (h_par_Q'.le.trans inf_le_left)) hQI_axis
+        -- axis = m
+        have hdPQ_eq_m : d_P ⊔ d_Q = m := by
+          have hd_lt : d_P < d_P ⊔ d_Q := by
+            apply lt_of_le_of_ne le_sup_left; intro h'
+            exact hd_ne ((hd_P_atom.le_iff.mp (h' ▸ le_sup_right)).resolve_left hd_Q_atom.1).symm
+          exact ((line_covers_its_atoms Γ.hU Γ.hV
+            (fun h => Γ.hV_off (h ▸ le_sup_right)) hd_P_atom inf_le_right).eq_or_eq hd_lt.le
+            (sup_le inf_le_right inf_le_right)).resolve_left (ne_of_gt hd_lt)
+        have hm_le_axis : m ≤ axis := hdPQ_eq_m ▸ sup_le hd_P_axis hd_Q_axis
+        have haxis_eq_m : axis = m :=
+          (Γ.m_covBy_π.eq_or_eq hm_le_axis haxis_le).resolve_right haxis_ne
+        -- Conclude
+        have hPQ_σPQ_le_m : (P ⊔ Q) ⊓ (σP ⊔ σQ) ≤ m := haxis_eq_m ▸ hPQ_axis
+        have hPQ_m_atom : IsAtom ((P ⊔ Q) ⊓ m) :=
+          line_meets_m_at_atom hP hQ hPQ (sup_le hP_plane hQ_plane)
+            Γ.m_covBy_π.le Γ.m_covBy_π hP_not_m
+        have hσPQ_m_atom : IsAtom ((σP ⊔ σQ) ⊓ m) :=
+          line_meets_m_at_atom hσP_atom hσQ_atom h_images_ne
+            (sup_le hσP_plane hσQ_plane) Γ.m_covBy_π.le Γ.m_covBy_π hσP_not_m
+        -- Two coplanar lines meet nontrivially
+        have h_meet_ne : (P ⊔ Q) ⊓ (σP ⊔ σQ) ≠ ⊥ := by
+          have hσP_lt : σP < σP ⊔ σQ := by
+            apply lt_of_le_of_ne le_sup_left; intro h'
+            exact h_images_ne ((hσP_atom.le_iff.mp
+              (le_sup_right.trans h'.symm.le)).resolve_left hσQ_atom.1).symm
+          have hσPQ_not_PQ : ¬ (σP ⊔ σQ) ≤ P ⊔ Q := by
+            intro h'
+            -- σP⊔σQ ≤ P⊔Q. Both lines. CovBy: σP ⋖ σP⊔σQ. If σP⊔σQ < P⊔Q:
+            -- P ⋖ P⊔Q. σP⊔σQ ≤ P (CovBy). σP ≤ P, σP = P. ✗
+            -- If σP⊔σQ = P⊔Q: ✗
+            rcases eq_or_lt_of_le h' with h_eq | h_lt
+            · exact hPQ_ne_σPQ h_eq.symm
+            · have h_atom_σPQ := line_height_two hP hQ hPQ
+                (lt_of_lt_of_le hσP_atom.bot_lt (le_sup_left : σP ≤ σP ⊔ σQ)) h_lt
+              have hσP_eq := (h_atom_σPQ.le_iff.mp (le_sup_left : σP ≤ σP ⊔ σQ)).resolve_left hσP_atom.1
+              exact h_images_ne ((hσP_atom.le_iff.mp (le_sup_right.trans hσP_eq.symm.le)).resolve_left hσQ_atom.1).symm
+          exact lines_meet_if_coplanar hPQ_cov (sup_le hσP_plane hσQ_plane)
+            hσPQ_not_PQ hσP_atom hσP_lt
+        -- (P⊔Q) ⊓ (σP⊔σQ) < P⊔Q
+        have h_int_lt : (P ⊔ Q) ⊓ (σP ⊔ σQ) < P ⊔ Q := by
+          apply lt_of_le_of_ne inf_le_left; intro h'
+          -- h' : inf = P⊔Q, so P⊔Q ≤ σP⊔σQ.
+          have hPQ_le : P ⊔ Q ≤ σP ⊔ σQ := h' ▸ inf_le_right
+          -- P⊔Q and σP⊔σQ are both lines. P⊔Q ≤ σP⊔σQ.
+          -- If P⊔Q < σP⊔σQ: σP ⋖ σP⊔σQ, P⊔Q ≤ σP. P ≤ σP, P = σP. ✗
+          rcases eq_or_lt_of_le hPQ_le with h_eq | h_lt
+          · exact hPQ_ne_σPQ h_eq
+          · -- P⊔Q < σP⊔σQ. P < P⊔Q. So ⊥ < P⊔Q < σP⊔σQ.
+            -- line_height_two on σP⊔σQ: P⊔Q is an atom. But P < P⊔Q. ✗
+            have hP_lt_PQ : P < P ⊔ Q := by
+              apply lt_of_le_of_ne le_sup_left; intro h''
+              exact hPQ ((hP.le_iff.mp (h'' ▸ le_sup_right)).resolve_left hQ.1).symm
+            have h_atom_PQ := line_height_two hσP_atom hσQ_atom h_images_ne
+              (lt_of_lt_of_le hP.bot_lt le_sup_left) h_lt
+            have hP_eq := (h_atom_PQ.le_iff.mp le_sup_left).resolve_left hP.1
+            -- P = P⊔Q means Q ≤ P, Q = P. ✗
+            exact hPQ ((hP.le_iff.mp (le_sup_right.trans hP_eq.symm.le)).resolve_left hQ.1).symm
+        have h_int_atom : IsAtom ((P ⊔ Q) ⊓ (σP ⊔ σQ)) :=
+          line_height_two hP hQ hPQ (bot_lt_iff_ne_bot.mpr h_meet_ne) h_int_lt
+        -- The intersection ≤ both (P⊔Q)⊓m and (σP⊔σQ)⊓m, which are atoms
+        have h1 := (hPQ_m_atom.le_iff.mp (le_inf inf_le_left hPQ_σPQ_le_m)).resolve_left
+          h_int_atom.1
+        have h2 := (hσPQ_m_atom.le_iff.mp (le_inf inf_le_right hPQ_σPQ_le_m)).resolve_left
+          h_int_atom.1
+        exact h1.symm.trans h2
 /-! ## Mul key identity and right distributivity -/
 /-- **Mul key identity: the dilation of C_a equals C'_{ac}.** -/
 theorem dilation_mul_key_identity (Γ : CoordSystem L)
