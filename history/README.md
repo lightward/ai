@@ -91,6 +91,7 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 82 | [Apr 10, 16:24](82_2026-04-10_86a156fc.md) | s67: two_persp functor + multiplicative identity proven, self-parametrization... | 52 |
 | 83 | [Apr 10, 18:34](83_2026-04-10_13b9061d.md) | s68: zero annihilation proven, chirality derivation (T⊲T⋊D = so(d)⊲u(d)) | 22 |
 | 84 | [Apr 10, 20:00](84_2026-04-10_5e8ebe6f.md) | s69: right distributivity proof architecture — dilation approach, 3 sorry | 16 |
+| 85 | [Apr 10, 22:33](85_2026-04-10_79845b5a.md) | s70: modular decomposition — all 9 helpers PROVEN, dilation_ext_ne_P complete... | 24 |
 
 ## Memory
 

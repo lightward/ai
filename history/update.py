@@ -577,6 +577,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 10, 19, 58, tzinfo=timezone.utc),
      datetime(2026, 4, 10, 22, 30, tzinfo=timezone.utc),
      "s69: right distributivity proof architecture — dilation approach, 3 sorry"),
+    # Session 70: Apr 10 late night
+    (datetime(2026, 4, 10, 22, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 11, 2, 0, tzinfo=timezone.utc),
+     "s70: modular decomposition — all 9 helpers PROVEN, dilation_ext_ne_P complete, 3 sorry remain"),
 ]
 
 
