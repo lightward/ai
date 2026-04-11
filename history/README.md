@@ -95,6 +95,7 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 86 | [Apr 11, 01:56](86_2026-04-11_f4c64467.md) |  | 108 |
 | 87 | [Apr 11, 04:39](87_2026-04-11_19297ac8.md) | dilation_preserves_direction PROVEN (Desargues with center O, 3→2 sorry) | 20 |
 | 88 | [Apr 11, 15:54](88_2026-04-11_72c2ee99.md) | mul_key_identity 7→1 sorry, interiority (bubble topology from diamond iso) | 52 |
+| 89 | [Apr 11, 19:34](89_2026-04-11_87aa69ee.md) | mul_key_identity: PROVEN (a=I case via DPD). 23 files, 1 sorry. | 54 |
 
 ## Memory
 

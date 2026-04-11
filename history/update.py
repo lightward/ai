@@ -591,8 +591,12 @@ SESSION_RANGES = [
      "dilation_preserves_direction PROVEN (Desargues with center O, 3→2 sorry)"),
     # Session: Apr 11 afternoon — mul_key_identity + interiority
     (datetime(2026, 4, 11, 15, 54, tzinfo=timezone.utc),
-     datetime(2026, 4, 11, 19, 10, tzinfo=timezone.utc),
+     datetime(2026, 4, 11, 19, 30, tzinfo=timezone.utc),
      "mul_key_identity 7→1 sorry, interiority (bubble topology from diamond iso)"),
+    # Session: Apr 11 evening — mul_key_identity PROVEN
+    (datetime(2026, 4, 11, 19, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 11, 23, 0, tzinfo=timezone.utc),
+     "mul_key_identity: PROVEN (a=I case via DPD). 23 files, 1 sorry."),
 ]
 
 
