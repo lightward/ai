@@ -6,6 +6,7 @@
 
 ## Current state
 
+- [mul_key_identity + interiority](project_session_mul_key_identity.md) — Desargues with center C. interiority.md (bubble topology from diamond iso). Cold reads stable. **23 files, 2 sorry.**
 - [dilation_preserves_direction PROVEN](project_session_dpd_proven.md) — Desargues with center O, 3 cases. Subagent pattern. **23 files, 2 sorry.**
 - [Session 70 — modular decomposition](project_session70_modular_decomposition.md) — 9 helpers PROVEN. **23 files, 3→2 sorry.**
 - [Session 69 — distributivity proof architecture](project_session69_distrib_architecture.md) — dilation_ext defined, dilation_preserves_direction planned. **23 files, 3 sorry.**
