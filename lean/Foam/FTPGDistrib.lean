@@ -313,7 +313,47 @@ theorem dilation_ext_ne_P (Γ : CoordSystem L)
     (hP_not_l : ¬ P ≤ Γ.O ⊔ Γ.U) (hP_ne_O : P ≠ Γ.O)
     (hP_ne_I : P ≠ Γ.I) (hcI : c ≠ Γ.I) :
     dilation_ext Γ c P ≠ P := by
-  sorry
+  -- If σP = P, then P ≤ c⊔dir. Same chain as not_m: dir ≤ P⊓m = ⊥. ✗
+  intro h
+  set m := Γ.U ⊔ Γ.V
+  set dir := (Γ.I ⊔ P) ⊓ m
+  have hdir_atom : IsAtom dir :=
+    line_meets_m_at_atom Γ.hI hP (Ne.symm hP_ne_I)
+      (sup_le (Γ.hI_on.trans le_sup_left) hP_plane) Γ.m_covBy_π.le Γ.m_covBy_π Γ.hI_not_m
+  have hc_not_m : ¬ c ≤ m := fun h => hc_ne_U (Γ.atom_on_both_eq_U hc hc_on h)
+  have hc_ne_dir : c ≠ dir := fun h' => hc_not_m (h' ▸ inf_le_right)
+  have hP_ne_c : P ≠ c := fun h' => hP_not_l (h' ▸ hc_on)
+  -- P ≤ c⊔dir
+  have hP_le_cdir : P ≤ c ⊔ dir := h ▸ (inf_le_right : dilation_ext Γ c P ≤ c ⊔ dir)
+  -- P⊔c = c⊔dir (CovBy on c ⋖ c⊔dir)
+  have hPc_le : P ⊔ c ≤ c ⊔ dir := sup_le hP_le_cdir le_sup_left
+  have hc_lt_Pc : c < P ⊔ c := lt_of_le_of_ne le_sup_right
+    (fun h' => hP_ne_c ((hc.le_iff.mp (le_sup_left.trans h'.symm.le)).resolve_left hP.1))
+  have hPc_eq : P ⊔ c = c ⊔ dir :=
+    ((atom_covBy_join hc hdir_atom hc_ne_dir).eq_or_eq hc_lt_Pc.le hPc_le).resolve_left
+      (ne_of_gt hc_lt_Pc)
+  -- (I⊔P) ⊓ (P⊔c) = P (modular: I, c on l, P ∉ l)
+  have hc_not_PI : ¬ c ≤ P ⊔ Γ.I := by
+    intro h'
+    have hIc_le : Γ.I ⊔ c ≤ P ⊔ Γ.I := sup_le le_sup_right h'
+    have hI_lt : Γ.I < Γ.I ⊔ c := lt_of_le_of_ne le_sup_left
+      (fun h'' => hcI.symm ((Γ.hI.le_iff.mp (le_sup_right.trans h''.symm.le)).resolve_left
+        hc.1).symm)
+    -- I ⋖ I⊔P (= P⊔I). I < I⊔c ≤ P⊔I. CovBy → I⊔c = P⊔I. c ≤ l. P ≤ I⊔c ≤ l. ✗
+    have hI_cov_PI : Γ.I ⋖ P ⊔ Γ.I := sup_comm Γ.I P ▸ atom_covBy_join Γ.hI hP (Ne.symm hP_ne_I)
+    have hIc_eq : Γ.I ⊔ c = P ⊔ Γ.I :=
+      (hI_cov_PI.eq_or_eq hI_lt.le hIc_le).resolve_left (ne_of_gt hI_lt)
+    exact hP_not_l (le_sup_left.trans (hIc_eq.symm.le.trans (sup_le Γ.hI_on hc_on)))
+  have hIP_Pc_eq : (Γ.I ⊔ P) ⊓ (P ⊔ c) = P := by
+    rw [sup_comm Γ.I P]
+    exact modular_intersection hP Γ.hI hc hP_ne_I hP_ne_c hcI.symm hc_not_PI
+  have hdir_le_P : dir ≤ P := by
+    have := le_inf (inf_le_left : dir ≤ Γ.I ⊔ P)
+      (le_sup_right.trans hPc_eq.symm.le : dir ≤ P ⊔ c)
+    rwa [hIP_Pc_eq] at this
+  have hPm : P ⊓ m = ⊥ := (hP.le_iff.mp inf_le_left).resolve_right
+    (fun h' => hP_not_m (h' ▸ inf_le_right))
+  exact hdir_atom.1 (le_antisymm (hPm ▸ le_inf hdir_le_P (inf_le_right : dir ≤ m)) bot_le)
 /-- The input parallelism: (P⊔I)⊓m = (σ_c(P)⊔c)⊓m.
     Proof: σ_c(P)⊔c = c⊔((I⊔P)⊓m) by CovBy, then line_direction. -/
 theorem dilation_ext_parallelism (Γ : CoordSystem L)
