@@ -21,11 +21,15 @@ The proof chain:
 4. By translation_determined_by_param at C': (a+b)c = ac + bc
 ## Status
 dilation_preserves_direction PROVEN (3 cases: c=I, collinear, generic Desargues).
-dilation_ext_identity, beta_atom, beta_not_l, beta_plane helper lemmas.
-dilation_mul_key_identity: 1 sorry (a=I degenerate case).
-  Main case (c≠I, a≠I): Desargues with center C on triangles
-  (O,a,G)↔(σ,d_a,E_I), axis = ac⊔E. Part A + Part B via DPD.
-coord_mul_right_distrib: 1 sorry (depends on mul_key_identity).
+dilation_mul_key_identity PROVEN (3 cases: c=I, a=I via DPD, generic Desargues center C).
+  a=I case: DPD on (C, C_a) gives direction U, CovBy gives DE ≤ σ⊔U, atom equality.
+coord_mul_right_distrib: 1 sorry.
+  Proof architecture (verified in coordinates, needs converse Desargues):
+  Converse Desargues on T1=(C,sc,ac), T2=(U,E,e_bc), axis=m
+  where sc=(a+b)c, e_bc=(O⊔β(bc))⊓m. Axis points d_sc, U, d_ac all on m.
+  Gives: β(sc) = q⊓(ac⊔e_bc) = pc(O,ac,β(bc),m).
+  Then key_identity: pc(O,ac,β(bc),m) = β(ac+bc).
+  Then β-injectivity (translation_determined_by_param): sc = ac+bc. QED.
 -/
 import Foam.FTPGMul
 namespace Foam.FTPGExplore
@@ -1290,11 +1294,105 @@ theorem dilation_mul_key_identity (Γ : CoordSystem L)
       |>.trans hcEI_l.le)).resolve_left Γ.hO.1).symm
   -- ═══ Case split on a = I ═══
   by_cases haI : a = Γ.I
-  · -- a = I: degenerate case (G = I, Desargues triangle collapses).
-    -- Direct argument: ac = I·c = c, direction of I⊔C_I is E,
-    -- so LHS = (O⊔C_I)⊓(c⊔E), and RHS = (σ⊔U)⊓(c⊔E).
-    -- Both are atoms on c⊔E; equal by a perspectivity argument from E_I.
-    sorry
+  · -- a = I: degenerate case. Use dilation_preserves_direction on C and C_a.
+    subst haI
+    -- ac = I · c = c
+    have hac_eq : ac = c := coord_mul_left_one Γ c hc hc_on hc_ne_U
+    rw [hac_eq]
+    -- I⊔C_a = I⊔E (C_a ≤ I⊔E by definition, C_a ≠ I, CovBy)
+    have hICa_eq_IE : Γ.I ⊔ C_a = Γ.I ⊔ Γ.E := by
+      have h_lt : Γ.I < Γ.I ⊔ C_a := lt_of_le_of_ne le_sup_left
+        (fun h => hCa_ne_I ((Γ.hI.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+          hCa_atom.1))
+      exact ((atom_covBy_join Γ.hI Γ.hE_atom ha_ne_E).eq_or_eq h_lt.le
+        (sup_le le_sup_left (inf_le_right : C_a ≤ Γ.I ⊔ Γ.E))).resolve_left (ne_of_gt h_lt)
+    -- (I⊔C_a)⊓m = E
+    have hdir : (Γ.I ⊔ C_a) ⊓ m = Γ.E := by
+      rw [hICa_eq_IE]; exact line_direction Γ.hI ha_not_m Γ.hE_on_m
+    -- Simplify dilation_ext Γ c C_a = (O⊔C_a)⊓(c⊔E)
+    have hDE_eq : dilation_ext Γ c C_a = (Γ.O ⊔ C_a) ⊓ (c ⊔ Γ.E) := by
+      show (Γ.O ⊔ C_a) ⊓ (c ⊔ (Γ.I ⊔ C_a) ⊓ m) = (Γ.O ⊔ C_a) ⊓ (c ⊔ Γ.E); rw [hdir]
+    -- dilation_ext Γ c C_a is an atom
+    have hDE_atom : IsAtom (dilation_ext Γ c C_a) :=
+      dilation_ext_atom Γ hCa_atom hc hc_on hc_ne_O hc_ne_U hCa_plane hCa_not_l
+        hCa_ne_O hCa_ne_I hCa_not_m
+    -- C_a ∉ O⊔C (needed for image distinctness)
+    have hCa_not_OC : ¬ C_a ≤ Γ.O ⊔ Γ.C := by
+      intro hle
+      -- (O⊔C)⊓(U⊔C) = C by modular_intersection
+      have hU_not_OC : ¬ Γ.U ≤ Γ.O ⊔ Γ.C := by
+        intro h'; exact Γ.hC_not_l (le_sup_right.trans
+          (((atom_covBy_join Γ.hO Γ.hC hOC).eq_or_eq
+            (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU Γ.hO le_sup_left).lt.le
+            (sup_le le_sup_left h')).resolve_left
+            (ne_of_gt (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU Γ.hO le_sup_left).lt)).symm.le)
+      have hOCq : (Γ.C ⊔ Γ.O) ⊓ (Γ.C ⊔ Γ.U) = Γ.C :=
+        modular_intersection Γ.hC Γ.hO Γ.hU hOC.symm hUC.symm Γ.hOU
+          (sup_comm Γ.O Γ.C ▸ hU_not_OC)
+      exact hCa_ne_C ((Γ.hC.le_iff.mp ((le_inf hle hCa_le_q).trans
+        (show (Γ.O ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.C) ≤ Γ.C from
+          sup_comm Γ.O Γ.C ▸ sup_comm Γ.U Γ.C ▸ hOCq.le))).resolve_left hCa_atom.1)
+    -- σ ≠ dilation_ext Γ c C_a (if equal, both ≤ (O⊔C)⊓(O⊔C_a) = O, σ=O, σ on l ✗)
+    have hσ_ne_DE : σ ≠ dilation_ext Γ c C_a := by
+      intro h
+      have h1 : σ ≤ Γ.O ⊔ C_a := by rw [h]; unfold dilation_ext; exact inf_le_left
+      have hmod : (Γ.O ⊔ Γ.C) ⊓ (Γ.O ⊔ C_a) = Γ.O :=
+        modular_intersection Γ.hO Γ.hC hCa_atom hOC hCa_ne_O.symm
+          (Ne.symm hCa_ne_C) hCa_not_OC
+      exact hσ_not_l (((Γ.hO.le_iff.mp ((le_inf hσ_on_OC h1).trans hmod.le)).resolve_left
+        hσ_atom.1) ▸ (show Γ.O ≤ l from le_sup_left))
+    -- C⊔C_a = q (both on q = U⊔C, distinct atoms on q, CovBy)
+    have hCCa_eq_q : Γ.C ⊔ C_a = Γ.U ⊔ Γ.C := by
+      have hC_lt : Γ.C < Γ.C ⊔ C_a := lt_of_le_of_ne le_sup_left
+        (fun h => hCa_ne_C ((Γ.hC.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+          hCa_atom.1))
+      exact ((sup_comm Γ.C Γ.U ▸ atom_covBy_join Γ.hC Γ.hU (Ne.symm hUC) :
+        Γ.C ⋖ Γ.U ⊔ Γ.C).eq_or_eq hC_lt.le
+        (sup_le le_sup_right hCa_le_q)).resolve_left (ne_of_gt hC_lt)
+    -- Apply dilation_preserves_direction with P = C, Q = C_a
+    have hDPD := dilation_preserves_direction Γ Γ.hC hCa_atom c hc hc_on hc_ne_O hc_ne_U
+      Γ.hC_plane hCa_plane Γ.hC_not_m hCa_not_m Γ.hC_not_l hCa_not_l
+      (Ne.symm hOC) hCa_ne_O (Ne.symm hCa_ne_C) (Ne.symm hIC) hCa_ne_I
+      hσ_ne_DE R hR hR_not h_irred
+    -- hDPD: (C⊔C_a)⊓m = (σ⊔DE)⊓m. LHS = q⊓m = U. So U = (σ⊔DE)⊓m.
+    rw [hCCa_eq_q, hqm_eq_U] at hDPD
+    -- hDPD : Γ.U = (σ ⊔ dilation_ext Γ c C_a) ⊓ m
+    -- U ≤ σ ⊔ DE
+    have hU_le_σDE : Γ.U ≤ σ ⊔ dilation_ext Γ c C_a :=
+      (le_of_eq hDPD).trans inf_le_left
+    -- σ⊔U = σ⊔DE (CovBy: σ ⋖ σ⊔DE, σ < σ⊔U ≤ σ⊔DE → equal)
+    have hσ_ne_U : σ ≠ Γ.U := fun h => hσ_not_l (h ▸ (le_sup_right : Γ.U ≤ l))
+    have hσU_eq_σDE : σ ⊔ Γ.U = σ ⊔ dilation_ext Γ c C_a := by
+      have hσ_lt : σ < σ ⊔ Γ.U := lt_of_le_of_ne le_sup_left
+        (fun h => hσ_ne_U ((hσ_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+          Γ.hU.1).symm)
+      exact ((atom_covBy_join hσ_atom hDE_atom hσ_ne_DE).eq_or_eq hσ_lt.le
+        (sup_le le_sup_left hU_le_σDE)).resolve_left (ne_of_gt hσ_lt)
+    -- DE ≤ σ⊔U
+    have hDE_le_σU : dilation_ext Γ c C_a ≤ σ ⊔ Γ.U :=
+      le_sup_right.trans hσU_eq_σDE.symm.le
+    -- DE ≤ c⊔E
+    have hDE_le_cE : dilation_ext Γ c C_a ≤ c ⊔ Γ.E :=
+      hDE_eq ▸ inf_le_right
+    -- DE ≤ (σ⊔U)⊓(c⊔E)
+    have hDE_le : dilation_ext Γ c C_a ≤ (σ ⊔ Γ.U) ⊓ (c ⊔ Γ.E) :=
+      le_inf hDE_le_σU hDE_le_cE
+    -- (σ⊔U)⊓(c⊔E) is an atom (meet of two distinct lines)
+    -- (σ⊔U)⊓(c⊔E) is an atom (meet of two distinct lines)
+    have hRHS_atom : IsAtom ((σ ⊔ Γ.U) ⊓ (c ⊔ Γ.E)) := by
+      apply line_height_two hσ_atom Γ.hU hσ_ne_U
+      · exact lt_of_lt_of_le hDE_atom.bot_lt hDE_le
+      · apply lt_of_le_of_ne inf_le_left; intro heq
+        -- heq : (σ⊔U)⊓(c⊔E) = σ⊔U → σ⊔U ≤ c⊔E → U ≤ c⊔E → U ≤ (c⊔E)⊓l = c → U=c ✗
+        have hσU_le : σ ⊔ Γ.U ≤ c ⊔ Γ.E := inf_eq_left.mp heq
+        have hU_le_c : Γ.U ≤ c := by
+          have h1 : Γ.U ≤ (c ⊔ Γ.E) ⊓ (Γ.O ⊔ Γ.U) :=
+            le_inf (le_sup_right.trans hσU_le) le_sup_right
+          rw [sup_comm c Γ.E] at h1
+          exact h1.trans (line_direction Γ.hE_atom Γ.hE_not_l hc_on).le
+        exact hc_ne_U ((hc.le_iff.mp hU_le_c).resolve_left Γ.hU.1).symm
+    -- atom ≤ atom → equal
+    exact (hRHS_atom.le_iff.mp hDE_le).resolve_left hDE_atom.1
   -- From here: a ≠ I
   -- G = (a⊔E)⊓(I⊔C)
   set G := (a ⊔ Γ.E) ⊓ (Γ.I ⊔ Γ.C) with hG_def
