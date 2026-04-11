@@ -20,8 +20,12 @@ The proof chain:
    Also: σ_c(C_{a+b}) = C'_{(a+b)c} via mul key identity
 4. By translation_determined_by_param at C': (a+b)c = ac + bc
 ## Status
-Modular proof architecture. Helper lemmas with sorry.
-Session 70: decomposed monolith into independently-testable helpers.
+dilation_preserves_direction PROVEN (3 cases: c=I, collinear, generic Desargues).
+dilation_ext_identity, beta_atom, beta_not_l, beta_plane helper lemmas.
+dilation_mul_key_identity: 1 sorry (a=I degenerate case).
+  Main case (c≠I, a≠I): Desargues with center C on triangles
+  (O,a,G)↔(σ,d_a,E_I), axis = ac⊔E. Part A + Part B via DPD.
+coord_mul_right_distrib: 1 sorry (depends on mul_key_identity).
 -/
 import Foam.FTPGMul
 namespace Foam.FTPGExplore

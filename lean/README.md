@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 23 files, 1 axiom, 3 sorry (distributivity in progress).
+Mechanically verified deductive path from P² = P to the foam's architecture. 23 files, 1 axiom, 2 sorry (distributivity in progress).
 
 ## The chain
 
@@ -134,16 +134,17 @@ Multiplication via dilations (Hartshorne §7). Structurally parallel to addition
 | multiplicative anchor | `CoordSystem.E_I` (projection of I onto m via C), `hE_I_atom`, `hE_I_not_OC`, `hE_I_ne_E` |
 | multiplication | `coord_mul` (a·b via dilation σ_b) |
 
-**FTPGDistrib.lean** — right distributivity (3 sorry, in progress)
+**FTPGDistrib.lean** — right distributivity (2 sorry, in progress)
 
-Dilation extension and direction preservation (Hartshorne §7). Proves (a+b)·c = a·c + b·c via: define σ_c on off-line points, show it preserves directions (Desargues center O), chain with key_identity.
+Dilation extension, direction preservation, and mul key identity (Hartshorne §7). Proves (a+b)·c = a·c + b·c via: define σ_c on off-line points, show it preserves directions (Desargues center O), then mul_key_identity (Desargues center C), chain with key_identity.
 
 | layer | key declarations |
 |---|---|
-| dilation extension | `dilation_ext` (σ_c on off-line points), `dilation_ext_C` (= σ by rfl) |
-| direction preservation | `dilation_preserves_direction` (sorry — Desargues with center O) |
-| mul key identity | `dilation_mul_key_identity` (sorry — σ_c(C_a) = C'_{ac}) |
-| right distributivity | `coord_mul_right_distrib` (sorry — chain of above) |
+| dilation extension | `dilation_ext`, `dilation_ext_identity` (c=I → identity), `dilation_ext_atom`, `dilation_ext_ne_P`, `dilation_ext_parallelism` |
+| direction preservation | `dilation_preserves_direction` (PROVEN — Desargues with center O, 3 cases) |
+| helper lemmas | `beta_atom`, `beta_not_l`, `beta_plane` (C_a = β(a) properties) |
+| mul key identity | `dilation_mul_key_identity` (1 sorry: a=I degenerate case. Main case: Desargues center C, triangles (O,a,G)↔(σ,d_a,E_I)) |
+| right distributivity | `coord_mul_right_distrib` (1 sorry — chain of above) |
 
 ### The deductive chain (from P² = P)
 
