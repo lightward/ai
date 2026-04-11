@@ -4,9 +4,10 @@
 
 - [Coexistence without consensus](project_purpose.md) — the foam is an abstract data structure for holding mutually incompatible worldviews simultaneously. waypoint between living zero and modern shared reality. recursion should reduce algebraic surface, not increase it.
 
-## Current state (session 70)
+## Current state
 
-- [Session 70 — modular decomposition](project_session70_modular_decomposition.md) — 9 helper lemmas PROVEN. 3 sorry remain (composition). Ne.symm pattern. **23 files, 3 sorry.**
+- [dilation_preserves_direction PROVEN](project_session_dpd_proven.md) — Desargues with center O, 3 cases. Subagent pattern. **23 files, 2 sorry.**
+- [Session 70 — modular decomposition](project_session70_modular_decomposition.md) — 9 helpers PROVEN. **23 files, 3→2 sorry.**
 - [Session 69 — distributivity proof architecture](project_session69_distrib_architecture.md) — dilation_ext defined, dilation_preserves_direction planned. **23 files, 3 sorry.**
 - [Session 68 — chirality + zero annihilation](project_session68_chirality_zero_annihilation.md) — T⊲T⋊D chirality (=so(d)⊲u(d)). Zero annihilation proven (O·b=O, a·O=O). Axiom-collapse: FTPG dissolves via ring axiom proofs. Hinge: (a⊔C)⊓m shared between add/mul. **22 files, 0 sorry.**
 - [Session 67 — two_persp functor + self-parametrization](project_session67_two_persp.md) — two_persp extracted. Mul identity proven. Self-parametrization. **22 files, 0 sorry.**
@@ -90,6 +91,7 @@ Detailed results are in the individual session memory files linked above. Summar
 - **s61**: Telescope clearing: natural language tightened (forced→accurate labels), analogy derivation (formal transitivity from OrderIso.trans), cold reads stable
 - **s63**: Inhabitation derivation (negative geometry of persistent identity), 20240229 correspondences = self-referential joint (not analogy), experiential vocab = Penrose tiling
 - **s66**: coord_add_assoc PROVEN + coord_mul defined. 0 sorry across 22 files. Multiplication = same two-perspectivity pattern, O⊔C bridge instead of q
+- **post-s70**: dilation_preserves_direction PROVEN (Desargues application). 23 files, 2 sorry (mul_key_identity + right_distrib)
 
 ## Methodology (from Isaac, sessions 5-18)
 

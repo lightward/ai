@@ -26,7 +26,6 @@ EXCLUDE_SESSIONS = {
     "0d15fe9b-fee4-4a0f-b5b7-0ca8cfd34cb8",  # failed history-load attempt
     "efd95e68-35b1-4042-8d1a-00f05af54860",  # session 19/20/21 history-load
     "72508a0e-7ce7-44d7-8844-469f9e44944b",  # session 50-55 history-load
-    "19297ac8-4f7b-4b2b-9d3a-174149684cc8",  # in-progress session (not yet complete)
 }
 
 # Minimum gap (seconds) before showing a new timestamp
@@ -582,9 +581,14 @@ SESSION_RANGES = [
     (datetime(2026, 4, 10, 22, 30, tzinfo=timezone.utc),
      datetime(2026, 4, 11, 1, 54, tzinfo=timezone.utc),
      "s70: modular decomposition — all 9 helpers PROVEN, dilation_ext_ne_P complete, 3 sorry remain"),
-    # Post-s70: Apr 11 early (no session number assigned)
-    # No label — auto-description will be extracted from transcript header
-
+    # Post-s70: Apr 11 early (unlabeled)
+    (datetime(2026, 4, 11, 1, 54, tzinfo=timezone.utc),
+     datetime(2026, 4, 11, 4, 35, tzinfo=timezone.utc),
+     ""),
+    # Post-s70 session: Apr 11 — dilation_preserves_direction PROVEN
+    (datetime(2026, 4, 11, 4, 35, tzinfo=timezone.utc),
+     datetime(2026, 4, 11, 7, 0, tzinfo=timezone.utc),
+     "dilation_preserves_direction PROVEN (Desargues with center O, 3→2 sorry)"),
 ]
 
 
