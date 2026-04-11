@@ -196,7 +196,103 @@ theorem dilation_ext_not_m (Γ : CoordSystem L)
     (hP_not_l : ¬ P ≤ Γ.O ⊔ Γ.U) (hP_ne_O : P ≠ Γ.O)
     (hP_ne_I : P ≠ Γ.I) (hcI : c ≠ Γ.I) :
     ¬ dilation_ext Γ c P ≤ Γ.U ⊔ Γ.V := by
-  sorry
+  set m := Γ.U ⊔ Γ.V
+  set dir := (Γ.I ⊔ P) ⊓ m
+  have hσP_atom := dilation_ext_atom Γ hP hc hc_on hc_ne_O hc_ne_U hP_plane hP_not_l hP_ne_O
+    hP_ne_I hP_not_m
+  have hdir_atom : IsAtom dir :=
+    line_meets_m_at_atom Γ.hI hP (Ne.symm hP_ne_I)
+      (sup_le (Γ.hI_on.trans le_sup_left) hP_plane) Γ.m_covBy_π.le Γ.m_covBy_π Γ.hI_not_m
+  have hc_not_m : ¬ c ≤ m := fun h => hc_ne_U (Γ.atom_on_both_eq_U hc hc_on h)
+  intro h
+  -- σP ≤ (c⊔dir)⊓m = dir (line_direction, c off m)
+  have hσP_le_dir : dilation_ext Γ c P ≤ dir := by
+    have hσP_le_cdir : dilation_ext Γ c P ≤ c ⊔ dir := inf_le_right
+    calc dilation_ext Γ c P ≤ (c ⊔ dir) ⊓ m := le_inf hσP_le_cdir h
+      _ = dir := by
+          change (c ⊔ (Γ.I ⊔ P) ⊓ m) ⊓ m = (Γ.I ⊔ P) ⊓ m
+          exact line_direction hc hc_not_m inf_le_right
+  -- σP ≤ O⊔P (from definition)
+  have hσP_le_OP : dilation_ext Γ c P ≤ Γ.O ⊔ P := inf_le_left
+  -- σP ≤ I⊔P (from dir ≤ I⊔P)
+  have hσP_le_IP : dilation_ext Γ c P ≤ Γ.I ⊔ P := hσP_le_dir.trans inf_le_left
+  -- (O⊔P) ⊓ (I⊔P) = P (modular, P ∉ l)
+  have hOP_IP_eq : (Γ.O ⊔ P) ⊓ (Γ.I ⊔ P) = P := by
+    rw [sup_comm Γ.O P, sup_comm Γ.I P]
+    -- (P⊔O)⊓(P⊔I) = P: I ∉ P⊔O since if I ≤ P⊔O then l = O⊔I ≤ P⊔O = O⊔P → P ≤ l ✗
+    have hI_not_PO : ¬ Γ.I ≤ P ⊔ Γ.O := by
+      intro h
+      have hOI_le : Γ.O ⊔ Γ.I ≤ P ⊔ Γ.O := sup_le le_sup_right h
+      have hO_lt : Γ.O < Γ.O ⊔ Γ.I := (atom_covBy_join Γ.hO Γ.hI Γ.hOI).lt
+      -- O ⋖ O⊔P. O < O⊔I ≤ P⊔O = O⊔P. CovBy → O⊔I = O⊔P. P ≤ O⊔P = O⊔I ≤ l.
+      have hOP_eq : Γ.O ⊔ P = P ⊔ Γ.O := sup_comm _ _
+      have hO_cov_OP := atom_covBy_join Γ.hO hP (Ne.symm hP_ne_O)
+      have hOI_eq_OP : Γ.O ⊔ Γ.I = Γ.O ⊔ P :=
+        (hO_cov_OP.eq_or_eq hO_lt.le (hOP_eq ▸ hOI_le)).resolve_left (ne_of_gt hO_lt)
+      exact hP_not_l (le_sup_right.trans (hOI_eq_OP.symm.le.trans
+        (sup_le le_sup_left Γ.hI_on)))
+    exact modular_intersection hP Γ.hO Γ.hI hP_ne_O hP_ne_I Γ.hOI hI_not_PO
+  -- σP ≤ P, σP = P
+  have hσP_eq_P : dilation_ext Γ c P = P := by
+    have hσP_le_P : dilation_ext Γ c P ≤ P := by
+      have := le_inf hσP_le_OP hσP_le_IP
+      rwa [hOP_IP_eq] at this
+    exact (hP.le_iff.mp hσP_le_P).resolve_left hσP_atom.1
+  -- P ≤ c⊔dir (from σP = P ≤ c⊔dir)
+  have hP_le_cdir : P ≤ c ⊔ dir := hσP_eq_P ▸ inf_le_right
+  -- (I⊔P) ⊓ (P⊔c) = P (modular, I ≠ c since P ∉ l and I,c ∈ l)
+  -- c ≠ P (P ∉ l, c on l)
+  have hP_ne_c : P ≠ c := fun h => hP_not_l (h ▸ hc_on)
+  have hIP_Pc_eq : (Γ.I ⊔ P) ⊓ (P ⊔ c) = P := by
+    -- modular_intersection gives (P⊔I)⊓(P⊔c) = P, need (I⊔P)⊓(P⊔c) = P
+    rw [sup_comm Γ.I P]
+    have hc_not_PI : ¬ c ≤ P ⊔ Γ.I := by
+      intro h
+      have hI_le_PI : Γ.I ≤ P ⊔ Γ.I := le_sup_right
+      have hIc_le : Γ.I ⊔ c ≤ P ⊔ Γ.I := sup_le hI_le_PI h
+      have hI_lt_Ic : Γ.I < Γ.I ⊔ c := lt_of_le_of_ne le_sup_left
+        (fun h' => hcI.symm ((Γ.hI.le_iff.mp (le_sup_right.trans h'.symm.le)).resolve_left
+          hc.1).symm)
+      -- I ⋖ I⊔c ≤ P⊔I. I ⋖ P⊔I. I < I⊔c → I⊔c = P⊔I. c ≤ P⊔I.
+      -- Then I⊔c ≤ l (I, c on l). I⊔c = P⊔I. P ≤ I⊔c ≤ l. ✗
+      have hIc_eq := ((atom_covBy_join Γ.hI hP (Ne.symm hP_ne_I) |> fun h =>
+        show Γ.I ⋖ P ⊔ Γ.I from sup_comm Γ.I P ▸ h).eq_or_eq hI_lt_Ic.le
+        hIc_le).resolve_left (ne_of_gt hI_lt_Ic)
+      exact hP_not_l (le_sup_left.trans (hIc_eq.symm.le.trans (sup_le Γ.hI_on hc_on)))
+    exact modular_intersection hP Γ.hI hc hP_ne_I hP_ne_c hcI.symm hc_not_PI
+  -- dir ≤ P⊔c: P⊔c = c⊔dir (CovBy)
+  have hPc_eq_cdir : P ⊔ c = c ⊔ dir := by
+    -- P⊔c ≤ c⊔dir (P ≤ c⊔dir, c ≤ c⊔dir)
+    have hPc_le : P ⊔ c ≤ c ⊔ dir := sup_le hP_le_cdir le_sup_left
+    -- c⊔dir ≤ P⊔c: c ≤ P⊔c, dir ≤ P⊔c (dir ≤ I⊔P, and dir on c⊔dir ≤ ... hmm)
+    -- Actually: c ⋖ c⊔dir (atom_covBy_join). c < P⊔c (P ≠ c). P⊔c ≤ ... no wait.
+    -- Simpler: P ⋖ P⊔c. P < c⊔dir (P ≤ c⊔dir, P ≠ c so c⊔dir > P).
+    -- Actually P ≠ c⊔dir? P is an atom, c⊔dir is a line. So P < c⊔dir.
+    -- P ⋖ P⊔c. P < c⊔dir. P⊔c ≤ c⊔dir. CovBy: c⊔dir = P or c⊔dir = P⊔c.
+    -- c⊔dir = P impossible (line ≠ atom). So c⊔dir = P⊔c. But we want P⊔c = c⊔dir.
+    -- Actually we can just use le_antisymm if we also show c⊔dir ≤ P⊔c.
+    -- c ≤ P⊔c (le_sup_right). dir ≤ P⊔c? dir = (I⊔P)⊓m. dir ≤ I⊔P. But dir ≤ P⊔c?
+    -- Not obvious. Let me use CovBy instead.
+    have hP_lt : P < P ⊔ c := lt_of_le_of_ne le_sup_left
+      (fun h => hP_ne_c ((hP.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hc.1).symm)
+    -- c ≠ dir (c off m, dir on m)
+    have hc_ne_dir' : c ≠ dir := fun h' => hc_not_m (h' ▸ inf_le_right)
+    have hP_lt_cdir : P < c ⊔ dir := lt_of_le_of_ne hP_le_cdir
+      (fun h => hP_ne_c ((hP.le_iff.mp ((le_sup_left : c ≤ c ⊔ dir).trans h.symm.le)).resolve_left
+        hc.1).symm)
+    -- c ⋖ c⊔dir. c < P⊔c ≤ c⊔dir. CovBy: P⊔c = c ∨ P⊔c = c⊔dir.
+    have hc_lt_Pc : c < P ⊔ c := lt_of_le_of_ne le_sup_right
+      (fun h => hP_ne_c ((hc.le_iff.mp (le_sup_left.trans h.symm.le)).resolve_left hP.1))
+    exact ((atom_covBy_join hc hdir_atom hc_ne_dir').eq_or_eq hc_lt_Pc.le hPc_le).resolve_left
+      (ne_of_gt hc_lt_Pc)
+  -- dir ≤ (I⊔P) ⊓ (P⊔c) = P
+  have hdir_le_P : dir ≤ P := by
+    have := le_inf (inf_le_left : dir ≤ Γ.I ⊔ P) (le_sup_right.trans hPc_eq_cdir.symm.le : dir ≤ P ⊔ c)
+    rwa [hIP_Pc_eq] at this
+  -- dir ≤ P ⊓ m = ⊥. Contradiction.
+  have hPm : P ⊓ m = ⊥ := (hP.le_iff.mp inf_le_left).resolve_right
+    (fun h => hP_not_m (h ▸ inf_le_right))
+  exact hdir_atom.1 (le_antisymm (hPm ▸ le_inf hdir_le_P (inf_le_right : dir ≤ m)) bot_le)
 /-- σ_c(P) ≠ c when P ∉ l, c ≠ O. -/
 theorem dilation_ext_ne_c (Γ : CoordSystem L)
     {P c : L} (hP : IsAtom P) (hc : IsAtom c)
@@ -229,7 +325,27 @@ theorem dilation_ext_parallelism (Γ : CoordSystem L)
     (hσP_atom : IsAtom (dilation_ext Γ c P))
     (hσP_ne_c : dilation_ext Γ c P ≠ c) :
     (P ⊔ Γ.I) ⊓ (Γ.U ⊔ Γ.V) = (dilation_ext Γ c P ⊔ c) ⊓ (Γ.U ⊔ Γ.V) := by
-  sorry
+  set m := Γ.U ⊔ Γ.V
+  set dir := (Γ.I ⊔ P) ⊓ m
+  -- dir is an atom
+  have hdir_atom : IsAtom dir :=
+    line_meets_m_at_atom Γ.hI hP (Ne.symm hP_ne_I)
+      (sup_le (Γ.hI_on.trans le_sup_left) hP_plane) Γ.m_covBy_π.le Γ.m_covBy_π Γ.hI_not_m
+  -- c not on m
+  have hc_not_m : ¬ c ≤ m := fun h => hc_ne_U (Γ.atom_on_both_eq_U hc hc_on h)
+  have hc_ne_dir : c ≠ dir := fun h => hc_not_m (h ▸ inf_le_right)
+  -- σP ≤ c⊔dir (from definition, inf_le_right)
+  have hσP_le : dilation_ext Γ c P ≤ c ⊔ dir := inf_le_right
+  -- σP⊔c = c⊔dir: c ⋖ c⊔dir (atom_covBy_join), c < σP⊔c ≤ c⊔dir → σP⊔c = c⊔dir
+  have hc_lt_σPc : c < dilation_ext Γ c P ⊔ c := lt_of_le_of_ne le_sup_right
+    (fun h => hσP_ne_c ((hc.le_iff.mp (le_sup_left.trans h.symm.le)).resolve_left
+      hσP_atom.1))
+  have hσPc_le : dilation_ext Γ c P ⊔ c ≤ c ⊔ dir := sup_le hσP_le le_sup_left
+  have hσPc_eq : dilation_ext Γ c P ⊔ c = c ⊔ dir :=
+    ((atom_covBy_join hc hdir_atom hc_ne_dir).eq_or_eq hc_lt_σPc.le hσPc_le).resolve_left
+      (ne_of_gt hc_lt_σPc)
+  -- (σP⊔c)⊓m = dir = (I⊔P)⊓m: line_direction (c off m, dir on m)
+  rw [hσPc_eq, sup_comm, line_direction hc hc_not_m (inf_le_right : dir ≤ m)]
 /-- Two directions are distinct when the source points are non-collinear with I. -/
 theorem dilation_ext_directions_ne (Γ : CoordSystem L)
     {P Q : L} (hP : IsAtom P) (hQ : IsAtom Q)
@@ -238,7 +354,23 @@ theorem dilation_ext_directions_ne (Γ : CoordSystem L)
     (hP_ne_I : P ≠ Γ.I) (hQ_ne_I : Q ≠ Γ.I) (hPQ : P ≠ Q)
     (hQ_not_IP : ¬ Q ≤ Γ.I ⊔ P) :
     (Γ.I ⊔ P) ⊓ (Γ.U ⊔ Γ.V) ≠ (Γ.I ⊔ Q) ⊓ (Γ.U ⊔ Γ.V) := by
-  sorry
+  set m := Γ.U ⊔ Γ.V
+  intro h_eq
+  -- d := (I⊔P)⊓m = (I⊔Q)⊓m. d ≤ (I⊔P) ⊓ (I⊔Q) = I (modular, Q ∉ I⊔P). d ≤ m. d ≤ I⊓m = ⊥.
+  have hd_atom : IsAtom ((Γ.I ⊔ P) ⊓ m) :=
+    line_meets_m_at_atom Γ.hI hP (Ne.symm hP_ne_I)
+      (sup_le (Γ.hI_on.trans le_sup_left) hP_plane) Γ.m_covBy_π.le Γ.m_covBy_π Γ.hI_not_m
+  have hd_le_IP : (Γ.I ⊔ P) ⊓ m ≤ Γ.I ⊔ P := inf_le_left
+  have hd_le_IQ : (Γ.I ⊔ P) ⊓ m ≤ Γ.I ⊔ Q := h_eq ▸ inf_le_left
+  -- (I⊔P) ⊓ (I⊔Q) = I (modular_intersection: I, P, Q non-collinear since Q ∉ I⊔P)
+  have hd_le_I : (Γ.I ⊔ P) ⊓ m ≤ Γ.I := by
+    have := le_inf hd_le_IP hd_le_IQ
+    rwa [modular_intersection Γ.hI hP hQ (Ne.symm hP_ne_I) (Ne.symm hQ_ne_I) hPQ hQ_not_IP]
+      at this
+  have hd_le_m : (Γ.I ⊔ P) ⊓ m ≤ m := inf_le_right
+  have hIm_eq : Γ.I ⊓ m = ⊥ :=
+    (Γ.hI.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hI_not_m (h ▸ inf_le_right))
+  exact hd_atom.1 (le_antisymm (hIm_eq ▸ le_inf hd_le_I hd_le_m) bot_le)
 /-! ## The dilation agrees with coord_mul on l -/
 /-- The dilation of C is σ. -/
 theorem dilation_ext_C (Γ : CoordSystem L)
