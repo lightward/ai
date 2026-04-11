@@ -1286,7 +1286,11 @@ theorem dilation_mul_key_identity (Γ : CoordSystem L)
       |>.trans hcEI_l.le)).resolve_left Γ.hO.1).symm
   -- ═══ Case split on a = I ═══
   by_cases haI : a = Γ.I
-  · sorry -- a = I case
+  · -- a = I: degenerate case (G = I, Desargues triangle collapses).
+    -- Direct argument: ac = I·c = c, direction of I⊔C_I is E,
+    -- so LHS = (O⊔C_I)⊓(c⊔E), and RHS = (σ⊔U)⊓(c⊔E).
+    -- Both are atoms on c⊔E; equal by a perspectivity argument from E_I.
+    sorry
   -- From here: a ≠ I
   -- G = (a⊔E)⊓(I⊔C)
   set G := (a ⊔ Γ.E) ⊓ (Γ.I ⊔ Γ.C) with hG_def
@@ -1837,29 +1841,239 @@ theorem dilation_mul_key_identity (Γ : CoordSystem L)
     exact hσU_eq ▸ le_sup_right
   -- ═══ Part B: σ_c(C_a) ≤ ac ⊔ E ═══
   have hPartB : dilation_ext Γ c C_a ≤ ac ⊔ Γ.E := by
+    -- G ≠ C_a: if G = C_a then G ≤ (I⊔C)⊓(U⊔C) = C. G = C. ✗.
+    have hG_ne_Ca : G ≠ C_a := by
+      intro h
+      have hI_not_UC : ¬ Γ.I ≤ Γ.U ⊔ Γ.C := by
+        intro hI_le
+        have hqlI : (Γ.U ⊔ Γ.C) ⊓ l = Γ.U := by
+          change (Γ.U ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) = Γ.U
+          calc (Γ.U ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) = Γ.U ⊔ Γ.C ⊓ (Γ.O ⊔ Γ.U) :=
+                sup_inf_assoc_of_le Γ.C (le_sup_right : Γ.U ≤ Γ.O ⊔ Γ.U)
+            _ = Γ.U := by
+                have : Γ.C ⊓ (Γ.O ⊔ Γ.U) = ⊥ :=
+                  (Γ.hC.le_iff.mp inf_le_left).resolve_right (fun h' => Γ.hC_not_l (h' ▸ inf_le_right))
+                rw [this, sup_bot_eq]
+        have hI_eq_U : Γ.I = Γ.U :=
+          (Γ.hU.le_iff.mp (le_inf hI_le Γ.hI_on |>.trans hqlI.le)).resolve_left Γ.hI.1
+        exact Γ.hI_not_m (hI_eq_U ▸ le_sup_left)
+      have hICUC_eq_C : (Γ.I ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.C) = Γ.C := by
+        rw [sup_comm Γ.I Γ.C, sup_comm Γ.U Γ.C]
+        calc (Γ.C ⊔ Γ.I) ⊓ (Γ.C ⊔ Γ.U) = Γ.C ⊔ Γ.I ⊓ (Γ.C ⊔ Γ.U) :=
+              sup_inf_assoc_of_le Γ.I (le_sup_left : Γ.C ≤ Γ.C ⊔ Γ.U)
+          _ = Γ.C := by
+              have : Γ.I ⊓ (Γ.C ⊔ Γ.U) = ⊥ :=
+                (Γ.hI.le_iff.mp inf_le_left).resolve_right
+                  (fun h' => hI_not_UC (sup_comm Γ.U Γ.C ▸ (h' ▸ inf_le_right)))
+              rw [this, sup_bot_eq]
+      exact hG_ne_C ((Γ.hC.le_iff.mp (le_inf hG_le_IC (h ▸ hCa_le_q) |>.trans
+        hICUC_eq_C.le)).resolve_left hG_atom.1)
     -- G⊔C_a = a⊔E (both on a⊔E, CovBy)
     have hGCa_eq_aE : G ⊔ C_a = a ⊔ Γ.E := by
-      have hG_lt : G < G ⊔ C_a := lt_of_le_of_ne le_sup_left
-        (fun h' => (fun hGCa : G = C_a => by
-          -- G = C_a. G on I⊔C (hG_le_IC), C_a on U⊔C (hCa_le_q).
-          -- G = C_a ≤ (I⊔C)⊓(U⊔C). (I⊔C)⊓(U⊔C) = C (modular: C common, I∉U⊔C).
-          have hI_not_UC : ¬ Γ.I ≤ Γ.U ⊔ Γ.C := by
-            intro hI_le; exact haI ((ha.le_iff.mp (le_inf ha_on
-              (hI_le.trans (show Γ.U ⊔ Γ.C ≤ Γ.I ⊔ Γ.C from by
-                rw [sup_comm Γ.I Γ.C, sup_comm Γ.U Γ.C]
-                exact sup_le_sup_left (by exact Γ.hI_on.trans le_sup_left |>.trans (by
-                  sorry)) Γ.C)) |>.trans (by sorry))).resolve_left Γ.hI.1).symm
-          sorry)
-          ((hG_atom.le_iff.mp (le_sup_right.trans h'.symm.le)).resolve_left hCa_atom.1).symm)
-      exact ((atom_covBy_join ha Γ.hE_atom ha_ne_E).eq_or_eq hG_lt.le
-        (sup_le hG_le_aE hCa_le_aE)).resolve_left (ne_of_gt hG_lt) |>.symm ▸ haG_eq_aE
-    sorry
+      have hG_lt_GCa : G < G ⊔ C_a := lt_of_le_of_ne le_sup_left
+        (fun h' => hG_ne_Ca ((hG_atom.le_iff.mp (le_sup_right.trans h'.symm.le)).resolve_left
+          hCa_atom.1).symm)
+      have hGCa_le_aE : G ⊔ C_a ≤ a ⊔ Γ.E := sup_le hG_le_aE hCa_le_aE
+      have ha_lt_aE : a < a ⊔ Γ.E := lt_of_le_of_ne le_sup_left
+        (fun h' => ha_ne_E ((ha.le_iff.mp (le_sup_right.trans h'.symm.le)).resolve_left
+          Γ.hE_atom.1).symm)
+      -- G ⋖ G⊔C_a (atom join). G ≤ a⊔E. G⊔C_a ≤ a⊔E. a ⋖ a⊔E.
+      -- G < G⊔C_a ≤ a⊔E. Need to show a < G⊔C_a or similar.
+      -- Both G and C_a are on a⊔E. G⊔C_a ≤ a⊔E. Also a ≤ a⊔E.
+      -- If G⊔C_a = a⊔E, done. If G⊔C_a < a⊔E, then G < G⊔C_a < a⊔E.
+      -- But G ⋖ G⊔C_a (atom covBy). And G ⋖ a⊔E (G on a⊔E, atom).
+      -- G < G⊔C_a ≤ a⊔E. G ⋖ a⊔E → G⊔C_a = a⊔E or G⊔C_a = G. Not G. So = a⊔E.
+      have hG_covBy_aE : G ⋖ a ⊔ Γ.E :=
+        line_covers_its_atoms ha Γ.hE_atom ha_ne_E hG_atom hG_le_aE
+      exact (hG_covBy_aE.eq_or_eq hG_lt_GCa.le hGCa_le_aE).resolve_left (ne_of_gt hG_lt_GCa)
+    -- (G⊔C_a)⊓m = E
+    have hGCa_dir : (G ⊔ C_a) ⊓ m = Γ.E := by
+      rw [hGCa_eq_aE]; exact line_direction ha ha_not_m Γ.hE_on_m
+    -- σ(G) ≠ σ(C_a): modular_intersection gives (O⊔G)⊓(O⊔C_a) = O, so if equal then = O.
+    have hσG_ne_σCa : dilation_ext Γ c G ≠ dilation_ext Γ c C_a := by
+      intro heq
+      -- C_a ∉ O⊔G (if C_a ≤ O⊔G, modular gives C_a ≤ G, C_a = G, ✗)
+      have hCa_not_OG : ¬ C_a ≤ Γ.O ⊔ G := by
+        intro hle
+        have hO_not_aE : ¬ Γ.O ≤ a ⊔ Γ.E := by
+          intro hO_le
+          have hl_le : l ≤ a ⊔ Γ.E := by
+            show Γ.O ⊔ Γ.U ≤ a ⊔ Γ.E
+            calc Γ.O ⊔ Γ.U = Γ.O ⊔ a := hOa_eq_l.symm
+              _ ≤ a ⊔ Γ.E := sup_le hO_le le_sup_left
+          have ha_lt_l := (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU ha ha_on).lt
+          exact Γ.hE_not_l (le_sup_right.trans
+            (((atom_covBy_join ha Γ.hE_atom ha_ne_E).eq_or_eq ha_lt_l.le hl_le).resolve_left
+              (ne_of_gt ha_lt_l)).symm.le)
+        -- modular_intersection G a O: (G⊔a)⊓(G⊔O) = G. O ∉ G⊔a.
+        have hO_not_aG : ¬ Γ.O ≤ a ⊔ G := fun h => hO_not_aE (haG_eq_aE ▸ h)
+        have hGaGO_eq_G : (G ⊔ a) ⊓ (G ⊔ Γ.O) = G :=
+          modular_intersection hG_atom ha Γ.hO (Ne.symm ha_ne_G) hG_ne_O ha_ne_O
+            (fun h => hO_not_aG (sup_comm G a ▸ h))
+        have hCa_le_Ga : C_a ≤ G ⊔ a :=
+          hCa_le_aE.trans (haG_eq_aE.symm ▸ sup_comm a G ▸ le_refl (a ⊔ G))
+        have hCa_le_GO : C_a ≤ G ⊔ Γ.O := sup_comm Γ.O G ▸ hle
+        exact hG_ne_Ca.symm ((hG_atom.le_iff.mp
+          (le_inf hCa_le_Ga hCa_le_GO |>.trans hGaGO_eq_G.le)).resolve_left hCa_atom.1)
+      have hσG_atom := dilation_ext_atom Γ hG_atom hc hc_on hc_ne_O hc_ne_U
+        hG_plane hG_not_l hG_ne_O hG_ne_I hG_not_m
+      have hOGOCa_eq_O : (Γ.O ⊔ G) ⊓ (Γ.O ⊔ C_a) = Γ.O :=
+        modular_intersection Γ.hO hG_atom hCa_atom (Ne.symm hG_ne_O) (Ne.symm hCa_ne_O)
+          hG_ne_Ca hCa_not_OG
+      have hσG_le_OG : dilation_ext Γ c G ≤ Γ.O ⊔ G := inf_le_left
+      have hσG_le_OCa : dilation_ext Γ c G ≤ Γ.O ⊔ C_a := by
+        calc dilation_ext Γ c G = dilation_ext Γ c C_a := heq
+          _ ≤ Γ.O ⊔ C_a := inf_le_left
+      -- dilation_ext Γ c G ≤ O, so = O or = ⊥. Not ⊥ (atom). So = O. But σ ≠ O.
+      -- Wait, this is dilation_ext Γ c G, not σ. σ = dilation_ext Γ c C.
+      -- The goal is False. We have heq : dilation_ext Γ c G = dilation_ext Γ c C_a.
+      -- dilation_ext Γ c G ≤ (O⊔G)⊓(O⊔C_a) = O. So it's O. dilation_ext Γ c G = O.
+      -- But dilation_ext_ne_P says dilation_ext ≠ P (the original point).
+      -- Actually dilation_ext Γ c G ≠ G (from dilation_ext_ne_P, if applicable).
+      -- But we showed dilation_ext Γ c G = O. And G ≠ O. So dilation_ext = O ≠ G.
+      -- That doesn't immediately help unless we know dilation_ext ≠ O.
+      -- Actually: dilation_ext Γ c G = (O⊔G) ⊓ (c⊔...). It's ≤ O⊔G.
+      -- If = O, then O ≤ c⊔dir. dir = (I⊔G)⊓m. O on l. c on l.
+      -- O ≤ c⊔dir. c ⋖ c⊔dir. O ≤ c⊔dir means c⊔dir ≥ O. c⊔O ≤ c⊔dir.
+      -- This would need more work. Let me use a different contradiction.
+      -- The point is dilation_ext Γ c G is an atom (hσG_atom). It's ≤ O. So = O.
+      -- But G ≠ O (hG_ne_O). And dilation_ext Γ c G on O⊔G. If dilation_ext = O, fine.
+      -- Now dilation_ext Γ c G ≠ G (dilation_ext_ne_P). So O ≠ G. Already known.
+      -- Hmm, dilation_ext = O doesn't immediately give a contradiction.
+      -- But: dilation_ext Γ c G = O means O ≤ c⊔((I⊔G)⊓m). O on l, c on l.
+      -- (I⊔G)⊓m is on m. O not on m. O ≤ c⊔dir. c on l, dir on m.
+      -- If O = c, done (hc_ne_O). If O ≠ c, c⊔O = l. dir ≤ c⊔dir. c⊔dir ≥ O, c.
+      -- c⊔dir ≥ l. But c ⋖ c⊔dir (c atom, dir atom, c ≠ dir). c < l ≤ c⊔dir.
+      -- CovBy: l = c⊔dir. dir ≤ l. dir on m. dir ≤ l⊓m = U. dir atom: dir = U or ⊥.
+      -- dir atom → dir = U. (I⊔G)⊓m = U. But we showed this might equal something else.
+      -- This is getting complex. Let me just show the dilation_ext ≠ O via properties.
+      -- dilation_ext_ne_P gives dilation_ext ≠ G. We need ≠ O.
+      -- Actually we can just show: if dilation_ext Γ c G = O, then...
+      -- Actually, easier: use that hσG_atom is an atom and ≤ O.
+      have hσG_eq_O : dilation_ext Γ c G = Γ.O :=
+        (Γ.hO.le_iff.mp (le_inf hσG_le_OG hσG_le_OCa |>.trans hOGOCa_eq_O.le)).resolve_left
+          hσG_atom.1
+      -- dilation_ext Γ c G = O. O ≤ c⊔((I⊔G)⊓m) = c⊔E_I (since I⊔G = I⊔C).
+      -- (c⊔E_I)⊓l = c (line_direction, E_I∉l, c on l). O ≤ c. O = c. hc_ne_O. ✗.
+      have hO_le_cEI : Γ.O ≤ c ⊔ Γ.E_I := by
+        have : dilation_ext Γ c G ≤ c ⊔ ((Γ.I ⊔ G) ⊓ m) := inf_le_right
+        rw [hIG_dir] at this; rw [hσG_eq_O] at this; exact this
+      have hcEI_l : (c ⊔ Γ.E_I) ⊓ l = c := by
+        change (c ⊔ Γ.E_I) ⊓ (Γ.O ⊔ Γ.U) = c
+        rw [sup_comm c Γ.E_I]
+        exact line_direction Γ.hE_I_atom Γ.hE_I_not_l hc_on
+      exact hc_ne_O ((hc.le_iff.mp (le_inf hO_le_cEI (show Γ.O ≤ l from le_sup_left) |>.trans
+        hcEI_l.le)).resolve_left Γ.hO.1).symm
+    -- DPD: (G⊔C_a)⊓m = (σ(G)⊔σ(C_a))⊓m = E
+    have hσG_atom := dilation_ext_atom Γ hG_atom hc hc_on hc_ne_O hc_ne_U
+      hG_plane hG_not_l hG_ne_O hG_ne_I hG_not_m
+    have hdpd := dilation_preserves_direction Γ hG_atom hCa_atom c hc hc_on hc_ne_O hc_ne_U
+      hG_plane hCa_plane hG_not_m hCa_not_m hG_not_l hCa_not_l
+      hG_ne_O hCa_ne_O hG_ne_Ca hG_ne_I hCa_ne_I
+      hσG_ne_σCa R hR hR_not h_irred
+    -- E ≤ σ(G)⊔σ(C_a)
+    have hE_le : Γ.E ≤ dilation_ext Γ c G ⊔ dilation_ext Γ c C_a := by
+      have h : (dilation_ext Γ c G ⊔ dilation_ext Γ c C_a) ⊓ m = Γ.E := by
+        rw [← hdpd, hGCa_dir]
+      exact h ▸ inf_le_left
+    -- σ(G) ⋖ σ(G)⊔σ(C_a). σ(G)⊔E ≤ σ(G)⊔σ(C_a). CovBy → σ(G)⊔E = σ(G)⊔σ(C_a).
+    have hσG_ne_E : dilation_ext Γ c G ≠ Γ.E := fun h =>
+      dilation_ext_not_m Γ hG_atom hc hc_on hc_ne_O hc_ne_U
+        hG_plane hG_not_m hG_not_l hG_ne_O hG_ne_I hcI (h ▸ Γ.hE_on_m)
+    have hσG_lt : dilation_ext Γ c G < dilation_ext Γ c G ⊔ Γ.E := lt_of_le_of_ne le_sup_left
+      (fun h => hσG_ne_E ((hσG_atom.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
+        Γ.hE_atom.1).symm)
+    have hσCa_atom := dilation_ext_atom Γ hCa_atom hc hc_on hc_ne_O hc_ne_U
+      hCa_plane hCa_not_l hCa_ne_O hCa_ne_I hCa_not_m
+    have hσGE_eq : dilation_ext Γ c G ⊔ Γ.E = dilation_ext Γ c G ⊔ dilation_ext Γ c C_a :=
+      ((atom_covBy_join hσG_atom hσCa_atom hσG_ne_σCa).eq_or_eq hσG_lt.le
+        (sup_le le_sup_left hE_le)).resolve_left (ne_of_gt hσG_lt)
+    exact (hσGE_eq ▸ le_sup_right : dilation_ext Γ c C_a ≤ dilation_ext Γ c G ⊔ Γ.E).trans
+      (sup_le hσcG_le_acE le_sup_right)
   -- ═══ Combine ═══
   have hLHS_atom : IsAtom (dilation_ext Γ c C_a) :=
     dilation_ext_atom Γ hCa_atom hc hc_on hc_ne_O hc_ne_U
       hCa_plane hCa_not_l hCa_ne_O hCa_ne_I hCa_not_m
   have hRHS_atom : IsAtom ((σ ⊔ Γ.U) ⊓ (ac ⊔ Γ.E)) := by
-    sorry
+    -- ⊥ < meet: dilation_ext Γ c C_a is an atom ≤ (σ⊔U)⊓(ac⊔E)
+    have hbot_lt : ⊥ < (σ ⊔ Γ.U) ⊓ (ac ⊔ Γ.E) :=
+      lt_of_lt_of_le hLHS_atom.bot_lt (le_inf hPartA hPartB)
+    -- meet < σ⊔U: if (σ⊔U)⊓(ac⊔E) = σ⊔U then σ⊔U ≤ ac⊔E, so l-directions match:
+    -- (σ⊔U)⊓l = U and (ac⊔E)⊓l = ac, giving U = ac, U ≤ σ⊔d_a, contradiction.
+    have hlt : (σ ⊔ Γ.U) ⊓ (ac ⊔ Γ.E) < σ ⊔ Γ.U := by
+      apply lt_of_le_of_ne inf_le_left
+      intro h
+      -- h : (σ⊔U) ⊓ (ac⊔E) = σ⊔U → σ⊔U ≤ ac⊔E
+      have hσU_le_acE : σ ⊔ Γ.U ≤ ac ⊔ Γ.E := h ▸ inf_le_right
+      have hac_on' : ac ≤ l := show coord_mul Γ a c ≤ Γ.O ⊔ Γ.U from inf_le_right
+      have hσUl : (σ ⊔ Γ.U) ⊓ l = Γ.U :=
+        line_direction hσ_atom hσ_not_l (show Γ.U ≤ l from le_sup_right)
+      have hacEl : (ac ⊔ Γ.E) ⊓ l = ac := by
+        change (ac ⊔ Γ.E) ⊓ (Γ.O ⊔ Γ.U) = ac
+        rw [sup_comm ac Γ.E]
+        exact line_direction Γ.hE_atom Γ.hE_not_l hac_on'
+      have hU_eq_ac : Γ.U = ac := by
+        have hU_le_ac : Γ.U ≤ ac :=
+          hσUl ▸ inf_le_inf_right l hσU_le_acE |>.trans hacEl.le
+        -- U ≤ ac ≤ l. CovBy U ⋖ l. ac = U or ac = l.
+        -- If ac = l: l ≤ σ⊔d_a → σ∉l → σ⊔l ≤ σ⊔d_a → σ⊔l = π → σ⊔d_a = π → ✗ (same chain).
+        have hU_covBy_l : Γ.U ⋖ l := by
+          show Γ.U ⋖ Γ.O ⊔ Γ.U
+          rw [sup_comm]; exact atom_covBy_join Γ.hU Γ.hO (Ne.symm Γ.hOU)
+        exact ((hU_covBy_l.eq_or_eq hU_le_ac (show ac ≤ l from inf_le_right)).resolve_right (by
+          intro hac_eq_l
+          -- ac = l → l ≤ σ⊔d_a (since ac ≤ σ⊔d_a) → same contradiction chain
+          have hl_le_σda : l ≤ σ ⊔ d_a := hac_eq_l ▸ (inf_le_left : ac ≤ σ ⊔ d_a)
+          have hσ_le_σda : σ ≤ σ ⊔ d_a := le_sup_left
+          have hl_lt_σl : l < σ ⊔ l := lt_of_le_of_ne le_sup_right
+            (fun hh => hσ_not_l (le_sup_left.trans hh.symm.le))
+          have hσl_eq_π : σ ⊔ l = π :=
+            (hl_covBy.eq_or_eq hl_lt_σl.le (sup_le hσ_plane hl_covBy.le)).resolve_left
+              (ne_of_gt hl_lt_σl)
+          have hπ_le_σda : π ≤ σ ⊔ d_a := hσl_eq_π ▸ sup_le le_sup_left hl_le_σda
+          have hσda_eq_π : σ ⊔ d_a = π := le_antisymm (sup_le hσ_plane hda_plane) hπ_le_σda
+          have hσ_covBy' : σ ⋖ π := hσda_eq_π ▸ atom_covBy_join hσ_atom hda_atom hσ_ne_da
+          have ⟨_, h2'⟩ := planes_meet_covBy hσ_covBy' hl_covBy
+            (fun hh => hσ_not_l (hh.symm ▸ le_refl _))
+          exact (((hσ_atom.le_iff.mp inf_le_left).resolve_right
+            (fun hh => hσ_not_l (hh ▸ inf_le_right))) ▸ h2').2 Γ.hO.bot_lt
+            (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt)).symm
+      -- U = ac ≤ σ⊔d_a. Contradiction via same argument as before.
+      have hU_le_σda : Γ.U ≤ σ ⊔ d_a := hU_eq_ac ▸ (inf_le_left : ac ≤ σ ⊔ d_a)
+      -- d_a⊔U = m → m ≤ σ⊔d_a → σ⊔m = π → σ⊔d_a = π → σ ⋖ π → ⊥ ⋖ l → O < l. ✗.
+      have hda_ne_U' : d_a ≠ Γ.U := by
+        intro hd
+        have hU_le_aC : Γ.U ≤ a ⊔ Γ.C := hd ▸ (inf_le_left : d_a ≤ a ⊔ Γ.C)
+        have haCl : (a ⊔ Γ.C) ⊓ l = a := by
+          change (a ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) = a
+          rw [sup_comm a Γ.C]; exact line_direction Γ.hC Γ.hC_not_l ha_on
+        exact ha_ne_U ((ha.le_iff.mp (le_inf hU_le_aC (show Γ.U ≤ l from le_sup_right)
+          |>.trans haCl.le)).resolve_left Γ.hU.1).symm
+      have hUV : Γ.U ≠ Γ.V := fun hh => Γ.hV_off (hh ▸ le_sup_right)
+      have hdaU_eq_m : d_a ⊔ Γ.U = m := by
+        have hda_lt : d_a < d_a ⊔ Γ.U := lt_of_le_of_ne le_sup_left
+          (fun h' => hda_ne_U' ((hda_atom.le_iff.mp (le_sup_right.trans h'.symm.le)).resolve_left
+            Γ.hU.1).symm)
+        exact ((line_covers_its_atoms Γ.hU Γ.hV hUV hda_atom
+          (inf_le_right : d_a ≤ m)).eq_or_eq hda_lt.le
+          (sup_le (inf_le_right : d_a ≤ m) le_sup_left)).resolve_left (ne_of_gt hda_lt)
+      have hm_le : m ≤ σ ⊔ d_a := hdaU_eq_m ▸ sup_le le_sup_right hU_le_σda
+      have hσm_eq_π' : σ ⊔ m = π := by
+        have hm_lt : m < σ ⊔ m := lt_of_le_of_ne le_sup_right
+          (fun hh => hσ_not_m (le_sup_left.trans hh.symm.le))
+        exact (Γ.m_covBy_π.eq_or_eq hm_lt.le (sup_le hσ_plane Γ.m_covBy_π.le)).resolve_left
+          (ne_of_gt hm_lt)
+      have hσda_eq_π : σ ⊔ d_a = π := le_antisymm (sup_le hσ_plane hda_plane)
+        (hσm_eq_π' ▸ sup_le le_sup_left hm_le)
+      have hσ_covBy : σ ⋖ π := hσda_eq_π ▸ atom_covBy_join hσ_atom hda_atom hσ_ne_da
+      have ⟨_, h2⟩ := planes_meet_covBy hσ_covBy hl_covBy
+        (fun hh => hσ_not_l (hh.symm ▸ le_refl _))
+      exact (((hσ_atom.le_iff.mp inf_le_left).resolve_right
+        (fun hh => hσ_not_l (hh ▸ inf_le_right))) ▸ h2).2 Γ.hO.bot_lt
+        (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt
+    -- Use line_height_two on σ⊔U
+    have hσ_ne_U' : σ ≠ Γ.U := fun h => hσ_not_m (show σ ≤ m from h ▸ le_sup_left)
+    exact line_height_two hσ_atom Γ.hU hσ_ne_U' hbot_lt hlt
   exact (hRHS_atom.le_iff.mp (le_inf hPartA hPartB)).resolve_left hLHS_atom.1
 /-- **Right distributivity: (a + b) · c = a·c + b·c.** -/
 theorem coord_mul_right_distrib (Γ : CoordSystem L)
