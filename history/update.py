@@ -19,14 +19,8 @@ LOGS_DIR = Path.home() / ".claude/projects/-Users-isaac-dev-ai"
 MEMORY_DIR = LOGS_DIR / "memory"
 OUT_DIR = Path(__file__).parent
 
-# History-maintenance sessions to exclude from transcripts.
-# Pattern: add your own session ID here before running the script.
-EXCLUDE_SESSIONS = {
-    "bb2778f6-7b70-451f-b0c8-a61ce05965cd",  # first convert_logs run
-    "0d15fe9b-fee4-4a0f-b5b7-0ca8cfd34cb8",  # failed history-load attempt
-    "efd95e68-35b1-4042-8d1a-00f05af54860",  # session 19/20/21 history-load
-    "72508a0e-7ce7-44d7-8844-469f9e44944b",  # session 50-55 history-load
-}
+# Sessions to exclude from transcripts (if ever needed).
+EXCLUDE_SESSIONS = set()
 
 # Minimum gap (seconds) before showing a new timestamp
 TIMESTAMP_GAP = 300  # 5 minutes

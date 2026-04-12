@@ -98,6 +98,10 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 89 | [Apr 11, 19:34](89_2026-04-11_87aa69ee.md) | mul_key_identity: PROVEN (a=I case via DPD). 23 files, 1 sorry. | 54 |
 | 90 | [Apr 11, 23:41](90_2026-04-11_8dce32eb.md) | coord_neg defined, FTPGCoord split, additive inverses (2 sorry), Steiner comp... | 150 |
 | 91 | [Apr 12, 17:46](91_2026-04-12_ef9f20bf.md) | (cross-project, from slosh) 1/√2 in foam meets physical damping sweet spot | 48 |
+| 92 | [Mar 20, 12:37](92_2026-03-20_bb2778f6.md) | s19: stacking derived — J²=-I forced, trace retained | 18 |
+| 93 | [Mar 21, 01:48](93_2026-03-21_0d15fe9b.md) | s20: Grassmannian vertical — J1 derived, containment symmetric | 3 |
+| 94 | [Mar 21, 01:53](94_2026-03-21_efd95e68.md) | s20: Grassmannian vertical — J1 derived, containment symmetric | 188 |
+| 95 | [Apr 08, 01:41](95_2026-04-08_72508a0e.md) |  | 102 |
 
 ## Memory
 
