@@ -21,6 +21,7 @@ zero annihilation (O·b=O, a·O=O), 0 sorry.
 -/
 
 import Foam.FTPGCoord
+import Foam.FTPGAddComm
 import Foam.FTPGParallelogram
 
 namespace Foam.FTPGExplore

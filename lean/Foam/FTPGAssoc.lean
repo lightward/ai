@@ -32,6 +32,7 @@ Closed: hCb_not_Gb, h_span (7→5 sorry).
 -/
 
 import Foam.FTPGCrossParallelism
+import Foam.FTPGAddComm
 
 namespace Foam.FTPGExplore
 

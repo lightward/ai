@@ -38,7 +38,9 @@ complemented modular lattice, irreducible, height ≥ 4
   ↓ incidence geometry, Veblen-Young           ── FTPGExplore (0 sorry)
 projective geometry: Desargues, perspectivity
   ↓ von Staudt coordinatization                ── FTPGCoord (0 sorry)
-coord_add: zero, commutativity
+coord_add: zero, identity
+  ↓ two Desargues applications                 ── FTPGAddComm (0 sorry)
+coord_add: commutativity
   ↓ Hartshorne translation program             ── FTPGParallelogram,
     parallelism, well-definedness,               FTPGWellDefined,
     cross-parallelism, key identity              FTPGCrossParallelism,
@@ -74,11 +76,19 @@ Incidence geometry, Veblen-Young, Desargues (nonplanar + planar), perspectivity,
 
 **FTPGCoord.lean** — von Staudt coordinatization (0 sorry)
 
-Coordinate system, addition via perspectivities, commutativity. Imports FTPGExplore.
+Coordinate system, addition via perspectivities, identity. Imports FTPGExplore.
 
 | layer | key declarations |
 |---|---|
 | coordinate system | `CoordSystem`, `coord_add`, `coord_add_atom`, `coord_add_left_zero`, `coord_add_right_zero` |
+| Desargues helpers | `desargues_planar`, `collinear_of_common_bound`, `small_desargues'` |
+
+**FTPGAddComm.lean** — commutativity of coordinate addition (0 sorry)
+
+Two Desargues applications establish coord_add_comm. Split from FTPGCoord. Imports FTPGCoord.
+
+| layer | key declarations |
+|---|---|
 | commutativity | `coord_first_desargues`, `coord_second_desargues`, `coord_add_comm` |
 
 **FTPGParallelogram.lean** — parallelogram completion (0 sorry)
