@@ -407,7 +407,7 @@ theorem coord_mul_right_zero (Γ : CoordSystem L)
 theorem coord_mul_atom (Γ : CoordSystem L)
     (a c : L) (ha : IsAtom a) (hc : IsAtom c)
     (ha_on : a ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
-    (ha_ne_O : a ≠ Γ.O) (hc_ne_O : c ≠ Γ.O)
+    (ha_ne_O : a ≠ Γ.O) (_hc_ne_O : c ≠ Γ.O)
     (ha_ne_U : a ≠ Γ.U) (hc_ne_U : c ≠ Γ.U) :
     IsAtom (coord_mul Γ a c) := by
   set l := Γ.O ⊔ Γ.U

@@ -130,10 +130,14 @@ this extends to off-line points via:
 
 **proven** (in lean, since this file was last updated):
 - zero annihilation: coord_mul_left_zero (O·b=O), coord_mul_right_zero (a·O=O) — FTPGMul.lean
+- coord_mul_atom: a·b is an atom — FTPGMul.lean
+- dilation_preserves_direction: forward Desargues center O, 3 cases — FTPGDistrib.lean
+- dilation_mul_key_identity: 3 cases (c=I, a=I via DPD, generic Desargues center C) — FTPGDistrib.lean
+- coord_mul_right_distrib: (a+b)·c = a·c + b·c — FTPGDistrib.lean (0 sorry)
+  Key: forward Desargues (center O) + parallelogram_completion_well_defined. O⊔σ = O⊔C gives shared E; well_defined provides base-independence.
 
 **open**:
 - lean proof of left distributivity: a · (b + c) = a·b + a·c
-- lean proof of right distributivity: (b + c) · a = b·a + c·a
 - multiplicative associativity and inverse (prerequisites for D being a group)
 - explicit characterization of the (U, I) translated-addition operation under distributivity
 - does the normalization relation σ_a ∘ τ_c ∘ σ_a⁻¹ = τ_{a·c} have a direct lattice proof shorter than the full distributive law?

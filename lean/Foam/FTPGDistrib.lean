@@ -20,18 +20,12 @@ The proof chain:
    Also: σ_c(C_{a+b}) = C'_{(a+b)c} via mul key identity
 4. By translation_determined_by_param at C': (a+b)c = ac + bc
 ## Status
-dilation_preserves_direction PROVEN (3 cases: c=I, collinear, generic Desargues).
-dilation_mul_key_identity PROVEN (3 cases: c=I, a=I via DPD, generic Desargues center C).
+ALL PROVEN, 0 sorry.
+dilation_preserves_direction: 3 cases (c=I, collinear, generic forward Desargues center O).
+dilation_mul_key_identity: 3 cases (c=I, a=I via DPD, generic Desargues center C).
   a=I case: DPD on (C, C_a) gives direction U, CovBy gives DE ≤ σ⊔U, atom equality.
-coord_mul_right_distrib: 12 sorry (5 original targets addressed: hσ_ne_C'sc PROVEN,
-  hCCs_ne_σC'sc PROVEN, hπA/hπB sorry'd with proof outline, hC'sc_eq_acbc partially filled
-  with computation structure + sub-sorrys for well_defined invocation).
-  Proof architecture (verified in coordinates, needs converse Desargues):
-  Converse Desargues on T1=(C,sc,ac), T2=(U,E,e_bc), axis=m
-  where sc=(a+b)c, e_bc=(O⊔β(bc))⊓m. Axis points d_sc, U, d_ac all on m.
-  Gives: β(sc) = q⊓(ac⊔e_bc) = pc(O,ac,β(bc),m).
-  Then key_identity: pc(O,ac,β(bc),m) = β(ac+bc).
-  Then β-injectivity (translation_determined_by_param): sc = ac+bc. QED.
+coord_mul_right_distrib: forward Desargues (center O) + parallelogram_completion_well_defined.
+  Key insight: O⊔σ = O⊔C gives shared E; well_defined provides base-independence.
 -/
 import Foam.FTPGMul
 import Foam.FTPGAssoc
@@ -70,7 +64,7 @@ theorem dilation_ext_atom (Γ : CoordSystem L)
     (hc_on : c ≤ Γ.O ⊔ Γ.U) (hc_ne_O : c ≠ Γ.O) (hc_ne_U : c ≠ Γ.U)
     (hP_plane : P ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
     (hP_not_l : ¬ P ≤ Γ.O ⊔ Γ.U) (hP_ne_O : P ≠ Γ.O) (hP_ne_I : P ≠ Γ.I)
-    (hP_not_m : ¬ P ≤ Γ.U ⊔ Γ.V) :
+    (_hP_not_m : ¬ P ≤ Γ.U ⊔ Γ.V) :
     IsAtom (dilation_ext Γ c P) := by
   unfold dilation_ext
   set m := Γ.U ⊔ Γ.V
@@ -195,8 +189,8 @@ theorem dilation_ext_atom (Γ : CoordSystem L)
   exact line_height_two Γ.hO hP (Ne.symm hP_ne_O) (bot_lt_iff_ne_bot.mpr h_ne_bot) h_meet_covBy.lt
 /-- σ_c(P) is in π. -/
 theorem dilation_ext_plane (Γ : CoordSystem L)
-    {P c : L} (hP : IsAtom P) (hc : IsAtom c)
-    (hc_on : c ≤ Γ.O ⊔ Γ.U) (hP_plane : P ≤ Γ.O ⊔ Γ.U ⊔ Γ.V) :
+    {P c : L} (_hP : IsAtom P) (_hc : IsAtom c)
+    (_hc_on : c ≤ Γ.O ⊔ Γ.U) (hP_plane : P ≤ Γ.O ⊔ Γ.U ⊔ Γ.V) :
     dilation_ext Γ c P ≤ Γ.O ⊔ Γ.U ⊔ Γ.V := by
   exact inf_le_left.trans (sup_le (le_sup_left.trans le_sup_left) hP_plane)
 /-- σ_c(P) is not on m when P ∉ l, c ≠ I. -/
@@ -309,7 +303,7 @@ theorem dilation_ext_ne_c (Γ : CoordSystem L)
     {P c : L} (hP : IsAtom P) (hc : IsAtom c)
     (hc_on : c ≤ Γ.O ⊔ Γ.U) (hc_ne_O : c ≠ Γ.O)
     (hP_not_l : ¬ P ≤ Γ.O ⊔ Γ.U) (hP_ne_O : P ≠ Γ.O)
-    (hσP_atom : IsAtom (dilation_ext Γ c P)) :
+    (_hσP_atom : IsAtom (dilation_ext Γ c P)) :
     dilation_ext Γ c P ≠ c := by
   intro h; apply hc_ne_O
   have hc_le_OP : c ≤ Γ.O ⊔ P := h ▸ (inf_le_left : dilation_ext Γ c P ≤ Γ.O ⊔ P)
@@ -319,9 +313,9 @@ theorem dilation_ext_ne_c (Γ : CoordSystem L)
 /-- σ_c(P) ≠ P when c ≠ I, P ∉ l. -/
 theorem dilation_ext_ne_P (Γ : CoordSystem L)
     {P c : L} (hP : IsAtom P) (hc : IsAtom c)
-    (hc_on : c ≤ Γ.O ⊔ Γ.U) (hc_ne_O : c ≠ Γ.O) (hc_ne_U : c ≠ Γ.U)
+    (hc_on : c ≤ Γ.O ⊔ Γ.U) (_hc_ne_O : c ≠ Γ.O) (hc_ne_U : c ≠ Γ.U)
     (hP_plane : P ≤ Γ.O ⊔ Γ.U ⊔ Γ.V) (hP_not_m : ¬ P ≤ Γ.U ⊔ Γ.V)
-    (hP_not_l : ¬ P ≤ Γ.O ⊔ Γ.U) (hP_ne_O : P ≠ Γ.O)
+    (hP_not_l : ¬ P ≤ Γ.O ⊔ Γ.U) (_hP_ne_O : P ≠ Γ.O)
     (hP_ne_I : P ≠ Γ.I) (hcI : c ≠ Γ.I) :
     dilation_ext Γ c P ≠ P := by
   -- If σP = P, then P ≤ c⊔dir. Same chain as not_m: dir ≤ P⊓m = ⊥. ✗
@@ -369,9 +363,9 @@ theorem dilation_ext_ne_P (Γ : CoordSystem L)
     Proof: σ_c(P)⊔c = c⊔((I⊔P)⊓m) by CovBy, then line_direction. -/
 theorem dilation_ext_parallelism (Γ : CoordSystem L)
     {P c : L} (hP : IsAtom P) (hc : IsAtom c)
-    (hc_on : c ≤ Γ.O ⊔ Γ.U) (hc_ne_O : c ≠ Γ.O) (hc_ne_U : c ≠ Γ.U)
-    (hP_plane : P ≤ Γ.O ⊔ Γ.U ⊔ Γ.V) (hP_not_m : ¬ P ≤ Γ.U ⊔ Γ.V)
-    (hP_not_l : ¬ P ≤ Γ.O ⊔ Γ.U) (hP_ne_O : P ≠ Γ.O)
+    (hc_on : c ≤ Γ.O ⊔ Γ.U) (_hc_ne_O : c ≠ Γ.O) (hc_ne_U : c ≠ Γ.U)
+    (hP_plane : P ≤ Γ.O ⊔ Γ.U ⊔ Γ.V) (_hP_not_m : ¬ P ≤ Γ.U ⊔ Γ.V)
+    (_hP_not_l : ¬ P ≤ Γ.O ⊔ Γ.U) (_hP_ne_O : P ≠ Γ.O)
     (hP_ne_I : P ≠ Γ.I)
     (hσP_atom : IsAtom (dilation_ext Γ c P))
     (hσP_ne_c : dilation_ext Γ c P ≠ c) :
@@ -400,8 +394,8 @@ theorem dilation_ext_parallelism (Γ : CoordSystem L)
 /-- Two directions are distinct when the source points are non-collinear with I. -/
 theorem dilation_ext_directions_ne (Γ : CoordSystem L)
     {P Q : L} (hP : IsAtom P) (hQ : IsAtom Q)
-    (hP_plane : P ≤ Γ.O ⊔ Γ.U ⊔ Γ.V) (hQ_plane : Q ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
-    (hP_not_m : ¬ P ≤ Γ.U ⊔ Γ.V)
+    (hP_plane : P ≤ Γ.O ⊔ Γ.U ⊔ Γ.V) (_hQ_plane : Q ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
+    (_hP_not_m : ¬ P ≤ Γ.U ⊔ Γ.V)
     (hP_ne_I : P ≠ Γ.I) (hQ_ne_I : Q ≠ Γ.I) (hPQ : P ≠ Q)
     (hQ_not_IP : ¬ Q ≤ Γ.I ⊔ P) :
     (Γ.I ⊔ P) ⊓ (Γ.U ⊔ Γ.V) ≠ (Γ.I ⊔ Q) ⊓ (Γ.U ⊔ Γ.V) := by
@@ -425,8 +419,8 @@ theorem dilation_ext_directions_ne (Γ : CoordSystem L)
 /-! ## The dilation agrees with coord_mul on l -/
 /-- The dilation of C is σ. -/
 theorem dilation_ext_C (Γ : CoordSystem L)
-    (c : L) (hc : IsAtom c) (hc_on : c ≤ Γ.O ⊔ Γ.U)
-    (hc_ne_O : c ≠ Γ.O) (hc_ne_U : c ≠ Γ.U) :
+    (c : L) (_hc : IsAtom c) (_hc_on : c ≤ Γ.O ⊔ Γ.U)
+    (_hc_ne_O : c ≠ Γ.O) (_hc_ne_U : c ≠ Γ.U) :
     dilation_ext Γ c Γ.C = (Γ.O ⊔ Γ.C) ⊓ (c ⊔ Γ.E_I) := by
   unfold dilation_ext
   rfl
@@ -1112,7 +1106,7 @@ theorem beta_not_l (Γ : CoordSystem L)
   exact Γ.hE_not_l (le_sup_right.trans (haU_eq.symm.le.trans (sup_le ha_on le_sup_right)))
 /-- C_a in π. -/
 theorem beta_plane (Γ : CoordSystem L)
-    {a : L} (ha_on : a ≤ Γ.O ⊔ Γ.U) :
+    {a : L} (_ha_on : a ≤ Γ.O ⊔ Γ.U) :
     (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E) ≤ Γ.O ⊔ Γ.U ⊔ Γ.V :=
   inf_le_left.trans (sup_le (le_sup_right.trans le_sup_left) Γ.hC_plane)
 /-! ## Mul key identity and right distributivity -/

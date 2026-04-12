@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 23 files, 1 axiom, 2 sorry (distributivity in progress).
+Mechanically verified deductive path from P² = P to the foam's architecture. 23 files, 1 axiom, 0 sorry.
 
 ## The chain
 
@@ -45,10 +45,10 @@ coord_add: zero, commutativity
                                                  FTPGAssoc,
                                                  FTPGAssocCapstone (0 sorry)
 coord_add: associativity ✓
-  ↓ von Staudt multiplication via dilations  ── FTPGMul (0 sorry, definition + infrastructure)
-coord_mul: identity, zero annihilation
-  ↓ dilation extension, direction preservation  ── FTPGDistrib (3 sorry, in progress)
-distributivity (right) ← WE ARE HERE
+  ↓ von Staudt multiplication via dilations  ── FTPGMul (0 sorry)
+coord_mul: identity, zero annihilation, atom
+  ↓ dilation extension, direction preservation  ── FTPGDistrib (0 sorry)
+distributivity (right) ✓
   ↓
 distributivity (left)
   ↓
@@ -132,19 +132,19 @@ Multiplication via dilations (Hartshorne §7). Structurally parallel to addition
 | layer | key declarations |
 |---|---|
 | multiplicative anchor | `CoordSystem.E_I` (projection of I onto m via C), `hE_I_atom`, `hE_I_not_OC`, `hE_I_ne_E` |
-| multiplication | `coord_mul` (a·b via dilation σ_b) |
+| multiplication | `coord_mul` (a·b via dilation σ_b), `coord_mul_atom` (a·b is an atom) |
 
-**FTPGDistrib.lean** — right distributivity (2 sorry, in progress)
+**FTPGDistrib.lean** — right distributivity (0 sorry, PROVEN)
 
-Dilation extension, direction preservation, and mul key identity (Hartshorne §7). Proves (a+b)·c = a·c + b·c via: define σ_c on off-line points, show it preserves directions (Desargues center O), then mul_key_identity (Desargues center C), chain with key_identity.
+Dilation extension, direction preservation, and mul key identity (Hartshorne §7). Proves (a+b)·c = a·c + b·c via: define σ_c on off-line points, show it preserves directions (forward Desargues center O), then mul_key_identity (Desargues center C), chain with key_identity. Key insight: O⊔σ = O⊔C gives shared E; parallelogram_completion_well_defined provides base-independence.
 
 | layer | key declarations |
 |---|---|
 | dilation extension | `dilation_ext`, `dilation_ext_identity` (c=I → identity), `dilation_ext_atom`, `dilation_ext_ne_P`, `dilation_ext_parallelism` |
-| direction preservation | `dilation_preserves_direction` (PROVEN — Desargues with center O, 3 cases) |
+| direction preservation | `dilation_preserves_direction` (PROVEN — forward Desargues with center O, 3 cases) |
 | helper lemmas | `beta_atom`, `beta_not_l`, `beta_plane` (C_a = β(a) properties) |
-| mul key identity | `dilation_mul_key_identity` (1 sorry: a=I degenerate case. Main case: Desargues center C, triangles (O,a,G)↔(σ,d_a,E_I)) |
-| right distributivity | `coord_mul_right_distrib` (1 sorry — chain of above) |
+| mul key identity | `dilation_mul_key_identity` (PROVEN — 3 cases: c=I, a=I via DPD, generic Desargues center C) |
+| right distributivity | `coord_mul_right_distrib` (PROVEN — chain of above) |
 
 ### The deductive chain (from P² = P)
 
