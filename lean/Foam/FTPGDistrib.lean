@@ -2189,6 +2189,10 @@ theorem coord_mul_right_distrib (Γ : CoordSystem L)
     (hac_ne_O : coord_mul Γ a c ≠ Γ.O) (hac_ne_U : coord_mul Γ a c ≠ Γ.U)
     (hbc_ne_O : coord_mul Γ b c ≠ Γ.O) (hbc_ne_U : coord_mul Γ b c ≠ Γ.U)
     (hac_ne_bc : coord_mul Γ a c ≠ coord_mul Γ b c)
+    (hsc_ne_O : coord_mul Γ (coord_add Γ a b) c ≠ Γ.O)
+    (hsc_ne_U : coord_mul Γ (coord_add Γ a b) c ≠ Γ.U)
+    (hacbc_ne_O : coord_add Γ (coord_mul Γ a c) (coord_mul Γ b c) ≠ Γ.O)
+    (hacbc_ne_U : coord_add Γ (coord_mul Γ a c) (coord_mul Γ b c) ≠ Γ.U)
     (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
     (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
       ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
@@ -2236,13 +2240,13 @@ theorem coord_mul_right_distrib (Γ : CoordSystem L)
   -- Atoms on l
   have hs_atom : IsAtom s := coord_add_atom Γ a b ha hb ha_on hb_on ha_ne_O hb_ne_O ha_ne_U hb_ne_U
   have hs_on : s ≤ l := by show coord_add Γ a b ≤ Γ.O ⊔ Γ.U; exact inf_le_right
-  have hac_atom : IsAtom ac := sorry -- coord_mul produces an atom (from non-degeneracy hyps)
+  have hac_atom : IsAtom ac := coord_mul_atom Γ a c ha hc ha_on hc_on ha_ne_O hc_ne_O ha_ne_U hc_ne_U
   have hac_on : ac ≤ l := by show coord_mul Γ a c ≤ Γ.O ⊔ Γ.U; exact inf_le_right
-  have hbc_atom : IsAtom bc := sorry -- coord_mul produces an atom
+  have hbc_atom : IsAtom bc := coord_mul_atom Γ b c hb hc hb_on hc_on hb_ne_O hc_ne_O hb_ne_U hc_ne_U
   have hbc_on : bc ≤ l := by show coord_mul Γ b c ≤ Γ.O ⊔ Γ.U; exact inf_le_right
-  have hsc_atom : IsAtom sc := sorry -- coord_mul produces an atom
+  have hsc_atom : IsAtom sc := coord_mul_atom Γ s c hs_atom hc hs_on hc_on hs_ne_O hc_ne_O hs_ne_U hc_ne_U
   have hsc_on : sc ≤ l := by show coord_mul Γ s c ≤ Γ.O ⊔ Γ.U; exact inf_le_right
-  have hacbc_atom : IsAtom (coord_add Γ ac bc) := sorry -- coord_add produces an atom
+  have hacbc_atom : IsAtom (coord_add Γ ac bc) := coord_add_atom Γ ac bc hac_atom hbc_atom hac_on hbc_on hac_ne_O hbc_ne_O hac_ne_U hbc_ne_U
   have hacbc_on : coord_add Γ ac bc ≤ l := by
     show coord_add Γ (coord_mul Γ a c) (coord_mul Γ b c) ≤ Γ.O ⊔ Γ.U; exact inf_le_right
   -- β-images on q
@@ -2510,12 +2514,100 @@ theorem coord_mul_right_distrib (Γ : CoordSystem L)
     have hσ_not_l : ¬ σ ≤ l := by
       intro hσl
       -- σ ≤ l and σ ≤ O⊔C → σ ≤ l⊓(O⊔C) = O (modular) → σ = O → O ≤ c⊔E_I → c = O ✗
-      sorry -- non-degeneracy: σ ∉ l
+      by_cases hcI : c = Γ.I
+      · -- c = I: σ = C, C ∉ l
+        subst hcI
+        have hσ_eq_C : σ = Γ.C := dilation_ext_identity Γ Γ.hC Γ.hC_plane Γ.hC_not_l
+        exact Γ.hC_not_l (hσ_eq_C ▸ hσl)
+      · -- c ≠ I: σ ≤ (O⊔C)⊓l = O → σ = O → O ≤ c⊔E_I → c = O ✗
+        have hOCl : (Γ.O ⊔ Γ.C) ⊓ l = Γ.O := by
+          change (Γ.O ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) = Γ.O
+          rw [sup_comm Γ.O Γ.C]
+          exact inf_comm (Γ.O ⊔ Γ.U) (Γ.C ⊔ Γ.O) ▸
+            line_direction Γ.hC Γ.hC_not_l (show Γ.O ≤ l from le_sup_left)
+        have hσ_eq_O : σ = Γ.O := (Γ.hO.le_iff.mp ((le_inf hσ_on_OC hσl).trans hOCl.le)).resolve_left hσ_atom.1
+        have hσ_on_cEI : σ ≤ c ⊔ (Γ.I ⊔ Γ.C) ⊓ m := by
+          show dilation_ext Γ c Γ.C ≤ c ⊔ (Γ.I ⊔ Γ.C) ⊓ m; unfold dilation_ext; exact inf_le_right
+        have hO_le_cEI : Γ.O ≤ c ⊔ (Γ.I ⊔ Γ.C) ⊓ m := hσ_eq_O.symm ▸ hσ_on_cEI
+        -- (I⊔C)⊓m = E_I, so c⊔(I⊔C)⊓m = c⊔E_I
+        have hcEI_l : (c ⊔ Γ.E_I) ⊓ l = c := by
+          change (c ⊔ Γ.E_I) ⊓ (Γ.O ⊔ Γ.U) = c; rw [sup_comm c Γ.E_I]
+          exact line_direction Γ.hE_I_atom Γ.hE_I_not_l hc_on
+        exact hc_ne_O ((hc.le_iff.mp (le_inf hO_le_cEI (show Γ.O ≤ l from le_sup_left)
+          |>.trans hcEI_l.le)).resolve_left Γ.hO.1).symm
+    -- C_s non-degeneracy facts (needed for dilation_ext_atom)
+    have hCs_ne_O : C_s ≠ Γ.O := fun h => hCs_not_l (h ▸ le_sup_left)
+    have hCs_ne_I : C_s ≠ Γ.I := fun h => hCs_not_l (h ▸ Γ.hI_on)
+    have hCs_ne_U : C_s ≠ Γ.U := fun h => hCs_not_l (h ▸ le_sup_right)
+    have hCs_not_m : ¬ C_s ≤ m := by
+      intro h
+      have hs_not_m : ¬ s ≤ m := fun hm => hs_ne_U (Γ.atom_on_both_eq_U hs_atom hs_on hm)
+      have hCs_le_sE : C_s ≤ s ⊔ Γ.E := inf_le_right
+      have hsE_dir : (s ⊔ Γ.E) ⊓ m = Γ.E := line_direction hs_atom hs_not_m Γ.hE_on_m
+      have hCs_eq_E : C_s = Γ.E :=
+        (Γ.hE_atom.le_iff.mp (le_inf hCs_le_sE h |>.trans hsE_dir.le)).resolve_left hCs_atom.1
+      have hE_le_q : Γ.E ≤ q := hCs_eq_E ▸ hCs_on_q
+      exact Γ.hEU ((Γ.hU.le_iff.mp (le_inf hE_le_q Γ.hE_on_m |>.trans hqm_eq_U.le)).resolve_left Γ.hE_atom.1)
     -- C'_sc properties
-    have hC'sc_atom : IsAtom C'_sc := sorry -- dilation_ext preserves atoms
+    have hC'sc_atom : IsAtom C'_sc :=
+      dilation_ext_atom Γ hCs_atom hc hc_on hc_ne_O hc_ne_U hCs_plane hCs_not_l hCs_ne_O hCs_ne_I hCs_not_m
     have hC'sc_plane : C'_sc ≤ π := dilation_ext_plane Γ hCs_atom hc hc_on hCs_plane
-    have hC'sc_not_m : ¬ C'_sc ≤ m := sorry -- dilation_ext not on m
-    have hC'sc_not_l : ¬ C'_sc ≤ l := sorry -- dilation_ext not on l
+    have hC'sc_not_m : ¬ C'_sc ≤ m := by
+      by_cases hcI : c = Γ.I
+      · subst hcI
+        have hC'sc_eq_Cs : C'_sc = C_s := dilation_ext_identity Γ hCs_atom hCs_plane hCs_not_l
+        rw [hC'sc_eq_Cs]; exact hCs_not_m
+      · exact dilation_ext_not_m Γ hCs_atom hc hc_on hc_ne_O hc_ne_U
+          hCs_plane hCs_not_m hCs_not_l hCs_ne_O hCs_ne_I hcI
+    have hC'sc_not_l : ¬ C'_sc ≤ l := by
+      intro h
+      by_cases hcI : c = Γ.I
+      · subst hcI
+        have hC'sc_eq_Cs : C'_sc = C_s := dilation_ext_identity Γ hCs_atom hCs_plane hCs_not_l
+        exact hCs_not_l (hC'sc_eq_Cs ▸ h)
+      · -- C'_sc ≤ l and C'_sc ≤ O⊔C_s → C'_sc ≤ l⊓(O⊔C_s) = O → C'_sc = O
+        -- Then O ≤ c⊔(I⊔C_s)⊓m → c = O via line_direction. ✗ hc_ne_O.
+        have hOCs_l : (Γ.O ⊔ C_s) ⊓ l = Γ.O := by
+          change (Γ.O ⊔ C_s) ⊓ (Γ.O ⊔ Γ.U) = Γ.O
+          rw [sup_comm Γ.O C_s]
+          exact inf_comm (Γ.O ⊔ Γ.U) (C_s ⊔ Γ.O) ▸
+            line_direction hCs_atom hCs_not_l (show Γ.O ≤ l from le_sup_left)
+        have hC'sc_atom' : IsAtom C'_sc := by
+          exact dilation_ext_atom Γ hCs_atom hc hc_on hc_ne_O hc_ne_U hCs_plane hCs_not_l hCs_ne_O hCs_ne_I hCs_not_m
+        have hC'sc_le_OCs' : C'_sc ≤ Γ.O ⊔ C_s := by
+          show dilation_ext Γ c C_s ≤ Γ.O ⊔ C_s; unfold dilation_ext; exact inf_le_left
+        have hC'sc_eq_O : C'_sc = Γ.O :=
+          (Γ.hO.le_iff.mp ((le_inf hC'sc_le_OCs' h).trans hOCs_l.le)).resolve_left hC'sc_atom'.1
+        -- C'_sc = O ≤ c ⊔ (I⊔C_s)⊓m (from dilation_ext definition)
+        have hC'sc_on_cdir : C'_sc ≤ c ⊔ (Γ.I ⊔ C_s) ⊓ m := by
+          show dilation_ext Γ c C_s ≤ c ⊔ (Γ.I ⊔ C_s) ⊓ m; unfold dilation_ext; exact inf_le_right
+        have hO_le_cdir : Γ.O ≤ c ⊔ (Γ.I ⊔ C_s) ⊓ m := hC'sc_eq_O.symm ▸ hC'sc_on_cdir
+        -- (I⊔C_s)⊓m is an atom on m. c⊔(I⊔C_s)⊓m is a line. Its direction on l is c.
+        have hI_ne_Cs : Γ.I ≠ C_s := Ne.symm hCs_ne_I
+        have hICs_dir_atom : IsAtom ((Γ.I ⊔ C_s) ⊓ m) :=
+          line_meets_m_at_atom Γ.hI hCs_atom hI_ne_Cs
+            (sup_le (Γ.hI_on.trans le_sup_left) hCs_plane) hm_le_π Γ.m_covBy_π Γ.hI_not_m
+        have hICs_dir_not_l : ¬ (Γ.I ⊔ C_s) ⊓ m ≤ l := by
+          intro hle
+          -- (I⊔C_s)⊓m ≤ l and ≤ m → ≤ l⊓m = U. So (I⊔C_s)⊓m = U.
+          -- Then U ≤ I⊔C_s. I ≤ l, C_s not on l. So I⊔C_s is a line.
+          -- U ≤ I⊔C_s and I ≤ l → I⊔U ≤ I⊔C_s? No, I⊔U = l, C_s ∉ l.
+          -- Actually, I need to show I⊔C_s ≠ l. Since C_s ∉ l, I⊔C_s ≠ l (if equal, C_s ≤ l).
+          -- U ≤ I⊔C_s and U ≤ l. U is atom. (I⊔C_s)⊓l ≥ U.
+          -- (I⊔C_s)⊓l = I (modular: I on l, C_s not on l → (I⊔C_s)⊓l = I).
+          -- So U ≤ I. U = I? Contradicts hI_ne_U or I ≠ U.
+          have hICs_dir_eq_U : (Γ.I ⊔ C_s) ⊓ m = Γ.U :=
+            (Γ.hU.le_iff.mp (le_inf hle inf_le_right |>.trans hlm_eq_U.le)).resolve_left hICs_dir_atom.1
+          have hU_le_ICs : Γ.U ≤ Γ.I ⊔ C_s := hICs_dir_eq_U ▸ inf_le_left
+          have hICs_l : (Γ.I ⊔ C_s) ⊓ l = Γ.I := by
+            rw [sup_comm Γ.I C_s]; exact inf_comm l (C_s ⊔ Γ.I) ▸ line_direction hCs_atom hCs_not_l Γ.hI_on
+          have hU_le_I : Γ.U ≤ Γ.I := le_inf hU_le_ICs (show Γ.U ≤ l from le_sup_right) |>.trans hICs_l.le
+          exact Γ.hUI.symm ((Γ.hI.le_iff.mp hU_le_I).resolve_left Γ.hU.1).symm
+        have hcdir_l : (c ⊔ (Γ.I ⊔ C_s) ⊓ m) ⊓ l = c := by
+          rw [sup_comm c ((Γ.I ⊔ C_s) ⊓ m)]
+          exact line_direction hICs_dir_atom hICs_dir_not_l hc_on
+        exact hc_ne_O ((hc.le_iff.mp (le_inf hO_le_cdir (show Γ.O ≤ l from le_sup_left)
+          |>.trans hcdir_l.le)).resolve_left Γ.hO.1).symm
     -- C'_sc ≤ O⊔C_s (from dilation_ext definition)
     have hC'sc_le_OCs : C'_sc ≤ Γ.O ⊔ C_s := by
       show dilation_ext Γ c C_s ≤ Γ.O ⊔ C_s; unfold dilation_ext; exact inf_le_left
@@ -2523,8 +2615,22 @@ theorem coord_mul_right_distrib (Γ : CoordSystem L)
     have hC'sc_le_σU : C'_sc ≤ σ ⊔ Γ.U := h_mki_s ▸ inf_le_left
     -- C'_sc ≤ sc⊔E (from h_mki_s)
     have hC'sc_le_scE : C'_sc ≤ sc ⊔ Γ.E := h_mki_s ▸ inf_le_right
+    -- C_b non-degeneracy facts (needed for dilation_ext_atom)
+    have hCb_ne_O : C_b ≠ Γ.O := fun h => hCb_not_l (h ▸ le_sup_left)
+    have hCb_ne_I : C_b ≠ Γ.I := fun h => hCb_not_l (h ▸ Γ.hI_on)
+    have hCb_ne_U : C_b ≠ Γ.U := fun h => hCb_not_l (h ▸ le_sup_right)
+    have hCb_not_m : ¬ C_b ≤ m := by
+      intro h
+      have hb_not_m : ¬ b ≤ m := fun hm => hb_ne_U (Γ.atom_on_both_eq_U hb hb_on hm)
+      have hCb_le_bE : C_b ≤ b ⊔ Γ.E := inf_le_right
+      have hbE_dir : (b ⊔ Γ.E) ⊓ m = Γ.E := line_direction hb hb_not_m Γ.hE_on_m
+      have hCb_eq_E : C_b = Γ.E :=
+        (Γ.hE_atom.le_iff.mp (le_inf hCb_le_bE h |>.trans hbE_dir.le)).resolve_left hCb_atom.1
+      have hE_le_q : Γ.E ≤ q := hCb_eq_E ▸ hCb_on_q
+      exact Γ.hEU ((Γ.hU.le_iff.mp (le_inf hE_le_q Γ.hE_on_m |>.trans hqm_eq_U.le)).resolve_left Γ.hE_atom.1)
     -- C'_bc properties
-    have hC'bc_atom : IsAtom C'_bc := sorry -- dilation_ext preserves atoms
+    have hC'bc_atom : IsAtom C'_bc :=
+      dilation_ext_atom Γ hCb_atom hc hc_on hc_ne_O hc_ne_U hCb_plane hCb_not_l hCb_ne_O hCb_ne_I hCb_not_m
     -- C'_bc ≤ O⊔C_b (from dilation_ext definition)
     have hC'bc_le_OCb : C'_bc ≤ Γ.O ⊔ C_b := by
       show dilation_ext Γ c C_b ≤ Γ.O ⊔ C_b; unfold dilation_ext; exact inf_le_left
@@ -2560,7 +2666,33 @@ theorem coord_mul_right_distrib (Γ : CoordSystem L)
       -- Hence (C⊔C_s)⊓(σ⊔C'_sc) ≤ U ≤ m.
       have hCCs_eq_q : Γ.C ⊔ C_s = q := by
         rw [show q = Γ.U ⊔ Γ.C from rfl, sup_comm Γ.U Γ.C]
-        have hCs_ne_C : C_s ≠ Γ.C := sorry -- C_s ≠ C (non-degeneracy)
+        have hCs_ne_C : C_s ≠ Γ.C := by
+          intro hCsC
+          -- C_s = C → C ≤ s⊔E. s⊔C ≤ s⊔E. CovBy → s⊔C = s⊔E. Direction: (s⊔C)⊓m = E.
+          -- O ∉ s⊔C → (s⊔C)⊓(O⊔C) = C (modular). E ≤ s⊔C and E ≤ O⊔C → E ≤ C → E = C ✗.
+          have hs_not_m : ¬ s ≤ m := fun hm => hs_ne_U (Γ.atom_on_both_eq_U hs_atom hs_on hm)
+          have hs_ne_C : s ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ hs_on)
+          have hs_ne_E : s ≠ Γ.E := fun h => hs_ne_U (Γ.atom_on_both_eq_U hs_atom hs_on (h ▸ Γ.hE_on_m))
+          have hC_le_sE : Γ.C ≤ s ⊔ Γ.E := hCsC ▸ (inf_le_right : C_s ≤ s ⊔ Γ.E)
+          have hs_lt_sC : s < s ⊔ Γ.C := lt_of_le_of_ne le_sup_left
+            (fun h' => hs_ne_C ((hs_atom.le_iff.mp (le_sup_right.trans h'.symm.le)).resolve_left Γ.hC.1).symm)
+          have hsC_eq_sE : s ⊔ Γ.C = s ⊔ Γ.E :=
+            ((atom_covBy_join hs_atom Γ.hE_atom hs_ne_E).eq_or_eq hs_lt_sC.le
+              (sup_le le_sup_left hC_le_sE)).resolve_left (ne_of_gt hs_lt_sC)
+          have hE_le_sC : Γ.E ≤ s ⊔ Γ.C := le_sup_right.trans hsC_eq_sE.symm.le
+          have hE_le_OC : Γ.E ≤ Γ.O ⊔ Γ.C := inf_le_left
+          have hO_not_sC : ¬ Γ.O ≤ s ⊔ Γ.C := by
+            intro hle
+            have hl_le : l ≤ s ⊔ Γ.C := hOs_eq_l ▸ (sup_le hle le_sup_left : Γ.O ⊔ s ≤ s ⊔ Γ.C)
+            exact Γ.hC_not_l (le_sup_right.trans
+              (((atom_covBy_join hs_atom Γ.hC hs_ne_C).eq_or_eq hs_on hl_le).resolve_left
+                (ne_of_gt (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU hs_atom hs_on).lt)).symm.le)
+          have hmod := modular_intersection Γ.hC hs_atom Γ.hO hs_ne_C.symm (Ne.symm (fun h => Γ.hC_not_l (h ▸ le_sup_left))) hs_ne_O
+            (show ¬ Γ.O ≤ Γ.C ⊔ s from sup_comm s Γ.C ▸ hO_not_sC)
+          have hE_le_C : Γ.E ≤ Γ.C :=
+            (le_inf (sup_comm s Γ.C ▸ hE_le_sC) (sup_comm Γ.O Γ.C ▸ hE_le_OC)).trans hmod.le
+          exact (fun hEC : Γ.E ≠ Γ.C => hEC ((Γ.hC.le_iff.mp hE_le_C).resolve_left Γ.hE_atom.1))
+            (fun h' => Γ.hC_not_m (h' ▸ Γ.hE_on_m))
         have hC_lt : Γ.C < Γ.C ⊔ C_s := lt_of_le_of_ne le_sup_left
           (fun h => hCs_ne_C (((Γ.hC.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
             hCs_atom.1)))
@@ -2652,7 +2784,16 @@ theorem coord_mul_right_distrib (Γ : CoordSystem L)
       -- C'_bc ≤ O⊔C_b (from dilation_ext definition).
       -- O ≠ C'_bc (C'_bc not on l, O on l). O⊔C'_bc is a line.
       -- O⊔C'_bc ≤ O⊔C_b. O < O⊔C'_bc. CovBy: O⊔C'_bc = O⊔C_b.
-      have hO_ne_C'bc : Γ.O ≠ C'_bc := sorry -- O ≠ C'_bc (non-degeneracy)
+      have hO_ne_C'bc : Γ.O ≠ C'_bc := by
+        intro h
+        -- O = C'_bc. From h_mki_b: C'_bc = (σ⊔U)⊓(bc⊔E). So O ≤ bc⊔E.
+        -- (bc⊔E)⊓l = bc (line_direction). O ≤ bc⊔E and O ≤ l → O ≤ bc → O = bc ✗.
+        have hO_le_bcE : Γ.O ≤ bc ⊔ Γ.E := h ▸ (h_mki_b ▸ inf_le_right : C'_bc ≤ bc ⊔ Γ.E)
+        have hbcE_l : (bc ⊔ Γ.E) ⊓ l = bc := by
+          change (bc ⊔ Γ.E) ⊓ (Γ.O ⊔ Γ.U) = bc; rw [sup_comm bc Γ.E]
+          exact line_direction Γ.hE_atom Γ.hE_not_l hbc_on
+        have hO_le_bc : Γ.O ≤ bc := le_inf hO_le_bcE (show Γ.O ≤ l from le_sup_left) |>.trans hbcE_l.le
+        exact hbc_ne_O ((hbc_atom.le_iff.mp hO_le_bc).resolve_left Γ.hO.1).symm
       have hO_ne_Cb : Γ.O ≠ C_b := fun h => hCb_not_l (h ▸ le_sup_left)
       have hO_lt : Γ.O < Γ.O ⊔ C'_bc := lt_of_le_of_ne le_sup_left
         (fun h => hO_ne_C'bc ((Γ.hO.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
@@ -2661,7 +2802,15 @@ theorem coord_mul_right_distrib (Γ : CoordSystem L)
         (sup_le le_sup_left hC'bc_le_OCb)).resolve_left (ne_of_gt hO_lt)
     have heb_eq : (Γ.O ⊔ C'_bc) ⊓ m = e_b := by
       rw [hOC'bc_eq_OCb]
-    have hC'bc_ne_U : C'_bc ≠ Γ.U := sorry -- C'_bc ≠ U (non-degeneracy)
+    have hC'bc_ne_U : C'_bc ≠ Γ.U := by
+      intro h
+      -- U = C'_bc = (σ⊔U)⊓(bc⊔E). So U ≤ bc⊔E. (bc⊔E)⊓l = bc. U ≤ bc. U = bc ✗.
+      have hU_le_bcE : Γ.U ≤ bc ⊔ Γ.E := h ▸ (h_mki_b ▸ inf_le_right : C'_bc ≤ bc ⊔ Γ.E)
+      have hbcE_l : (bc ⊔ Γ.E) ⊓ l = bc := by
+        change (bc ⊔ Γ.E) ⊓ (Γ.O ⊔ Γ.U) = bc; rw [sup_comm bc Γ.E]
+        exact line_direction Γ.hE_atom Γ.hE_not_l hbc_on
+      have hU_le_bc : Γ.U ≤ bc := le_inf hU_le_bcE (show Γ.U ≤ l from le_sup_right) |>.trans hbcE_l.le
+      exact hbc_ne_U ((hbc_atom.le_iff.mp hU_le_bc).resolve_left Γ.hU.1).symm
     have hC'bcU_eq_σU : C'_bc ⊔ Γ.U = σ ⊔ Γ.U := by
       -- C'_bc ≤ σ⊔U. C'_bc ≠ U. So C'_bc⊔U: U < U⊔C'_bc. CovBy U ⋖ σ⊔U.
       -- U⊔C'_bc ≤ σ⊔U. CovBy gives U⊔C'_bc = σ⊔U.
@@ -2679,7 +2828,7 @@ theorem coord_mul_right_distrib (Γ : CoordSystem L)
       key_identity Γ ac bc hac_atom hbc_atom hac_on hbc_on hac_ne_O hbc_ne_O
         hac_ne_U hbc_ne_U hac_ne_bc R hR hR_not h_irred
     -- pc(O, ac+bc, C, m) = q ⊓ ((ac+bc)⊔E)
-    have hacbc_ne_O_local : coord_add Γ ac bc ≠ Γ.O := sorry -- non-degeneracy
+    have hacbc_ne_O_local : coord_add Γ ac bc ≠ Γ.O := hacbc_ne_O
     have hOacbc_eq_l_local : Γ.O ⊔ coord_add Γ ac bc = l := by
       have hO_lt : Γ.O < Γ.O ⊔ coord_add Γ ac bc := lt_of_le_of_ne le_sup_left
         (fun h => hacbc_ne_O_local ((Γ.hO.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left
@@ -2796,8 +2945,6 @@ theorem coord_mul_right_distrib (Γ : CoordSystem L)
       (sup_le le_sup_left hbc_on)).resolve_left (ne_of_gt hO_lt)
   have hCbc_eq_beta : C_bc = q ⊓ (bc ⊔ Γ.E) := pc_eq_beta bc hObc_eq_l
   -- C_{ac+bc} as β
-  have hacbc_ne_O : coord_add Γ ac bc ≠ Γ.O := sorry -- non-degeneracy
-  have hacbc_ne_U : coord_add Γ ac bc ≠ Γ.U := sorry -- non-degeneracy
   have hOacbc_eq_l : Γ.O ⊔ coord_add Γ ac bc = l := by
     have hO_lt : Γ.O < Γ.O ⊔ coord_add Γ ac bc := lt_of_le_of_ne le_sup_left
       (fun h => hacbc_ne_O ((Γ.hO.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hacbc_atom.1))
@@ -2856,8 +3003,7 @@ theorem coord_mul_right_distrib (Γ : CoordSystem L)
       exact le_inf hxE_le_π (le_refl _)
     have h_eq : q ⊓ (x ⊔ Γ.E) ⊔ Γ.E = x ⊔ Γ.E := le_antisymm hbx_le_xE hxE_le_bxE
     rw [h_eq, sup_inf_assoc_of_le Γ.E hx_l, hE_inf_l, sup_bot_eq]
-  have hsc_ne_O : sc ≠ Γ.O := sorry -- sc = coord_mul s c ≠ O (non-degeneracy)
-  have hsc_ne_U : sc ≠ Γ.U := sorry -- sc ≠ U (non-degeneracy)
+  -- hsc_ne_O and hsc_ne_U are theorem hypotheses (rewritten by set sc)
   -- Final calc using beta-injectivity (recover pattern)
   calc sc
       = (q ⊓ (sc ⊔ Γ.E) ⊔ Γ.E) ⊓ l := (recover sc hsc_atom hsc_on hsc_ne_O hsc_ne_U).symm

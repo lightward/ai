@@ -400,4 +400,114 @@ theorem coord_mul_right_zero (Γ : CoordSystem L)
   exact ((line_height_two Γ.hO Γ.hU Γ.hOU (lt_of_lt_of_le Γ.hO.bot_lt hO_le) h_lt
     |>.le_iff.mp hO_le).resolve_left Γ.hO.1).symm
 
+/-- coord_mul produces an atom when both inputs are non-degenerate atoms on l.
+
+    coord_mul Γ a c = (σ_c ⊔ d_a) ⊓ l where σ_c = (O⊔C)⊓(c⊔E_I) and d_a = (a⊔C)⊓m.
+    Both are atoms in π, d_a not on l, so perspect_atom gives the result. -/
+theorem coord_mul_atom (Γ : CoordSystem L)
+    (a c : L) (ha : IsAtom a) (hc : IsAtom c)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (hc_ne_O : c ≠ Γ.O)
+    (ha_ne_U : a ≠ Γ.U) (hc_ne_U : c ≠ Γ.U) :
+    IsAtom (coord_mul Γ a c) := by
+  set l := Γ.O ⊔ Γ.U
+  set m := Γ.U ⊔ Γ.V
+  set π := Γ.O ⊔ Γ.U ⊔ Γ.V
+  show IsAtom (((Γ.O ⊔ Γ.C) ⊓ (c ⊔ Γ.E_I) ⊔ (a ⊔ Γ.C) ⊓ m) ⊓ l)
+  set σ_c := (Γ.O ⊔ Γ.C) ⊓ (c ⊔ Γ.E_I)
+  set d_a := (a ⊔ Γ.C) ⊓ m
+  have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+  have ha_ne_C : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
+  have ha_not_m : ¬ a ≤ m := fun h => ha_ne_U (Γ.atom_on_both_eq_U ha ha_on h)
+  have hm_le_π : m ≤ π := sup_le (le_sup_right.trans le_sup_left) le_sup_right
+  -- d_a is an atom on m
+  have hda_atom : IsAtom d_a :=
+    line_meets_m_at_atom ha Γ.hC ha_ne_C
+      (sup_le (ha_on.trans le_sup_left) Γ.hC_plane) hm_le_π Γ.m_covBy_π ha_not_m
+  -- d_a not on l
+  have hda_not_l : ¬ d_a ≤ l := by
+    intro h
+    have hda_le_U : d_a ≤ Γ.U := Γ.l_inf_m_eq_U ▸ le_inf h inf_le_right
+    have hda_eq_U := (Γ.hU.le_iff.mp hda_le_U).resolve_left hda_atom.1
+    have hU_le_aC : Γ.U ≤ a ⊔ Γ.C := hda_eq_U ▸ inf_le_left
+    have h_lt : (Γ.O ⊔ Γ.U) ⊓ (a ⊔ Γ.C) < Γ.O ⊔ Γ.U := by
+      apply lt_of_le_of_ne inf_le_left; intro h
+      exact Γ.hC_not_l (le_sup_right.trans
+        ((atom_covBy_join ha Γ.hC ha_ne_C).eq_or_eq
+          (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU ha ha_on).lt.le (inf_eq_left.mp h)
+        |>.resolve_left (ne_of_gt (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU ha ha_on).lt)).symm.le)
+    have h_atom := line_height_two Γ.hO Γ.hU Γ.hOU
+      (lt_of_lt_of_le ha.bot_lt (le_inf ha_on le_sup_left)) h_lt
+    exact ha_ne_U ((h_atom.le_iff.mp (le_inf le_sup_right hU_le_aC)).resolve_left Γ.hU.1 ▸
+      (h_atom.le_iff.mp (le_inf ha_on le_sup_left)).resolve_left ha.1)
+  -- σ_c is an atom: (O⊔C) ⊓ (c⊔E_I) via perspect_atom with center E_I
+  have hc_ne_EI : c ≠ Γ.E_I :=
+    fun h => hc_ne_U (Γ.atom_on_both_eq_U hc hc_on (h ▸ Γ.hE_I_on_m))
+  have hσ_atom : IsAtom σ_c := by
+    -- σ_c = (O⊔C) ⊓ (c⊔E_I). Prove IsAtom ((c⊔E_I) ⊓ (O⊔C)) by perspect_atom, then inf_comm.
+    have h_eq : σ_c = (c ⊔ Γ.E_I) ⊓ (Γ.O ⊔ Γ.C) := inf_comm _ _
+    rw [h_eq]
+    -- perspect_atom with center=E_I, point=c, target=O⊔C
+    -- E_I ⊔ (O⊔C) = π
+    have hEI_sup_OC : Γ.E_I ⊔ (Γ.O ⊔ Γ.C) = π := by
+      have h_lt : Γ.O ⊔ Γ.C < Γ.E_I ⊔ (Γ.O ⊔ Γ.C) :=
+        lt_of_le_of_ne le_sup_right (fun h => Γ.hE_I_not_OC (h ▸ le_sup_left))
+      exact ((CoordSystem.OC_covBy_π Γ).eq_or_eq h_lt.le
+        (sup_le (Γ.hE_I_on_m.trans hm_le_π) (sup_le (le_sup_left.trans le_sup_left) Γ.hC_plane))
+      ).resolve_left (ne_of_gt h_lt)
+    -- coplanarity: c ⊔ E_I ≤ (O⊔C) ⊔ E_I
+    have h_coplanar : c ⊔ Γ.E_I ≤ (Γ.O ⊔ Γ.C) ⊔ Γ.E_I := by
+      rw [sup_comm (Γ.O ⊔ Γ.C) Γ.E_I, hEI_sup_OC]
+      exact sup_le (hc_on.trans le_sup_left) (Γ.hE_I_on_m.trans hm_le_π)
+    exact perspect_atom Γ.hE_I_atom hc hc_ne_EI Γ.hO Γ.hC hOC Γ.hE_I_not_OC h_coplanar
+  -- d_a ≠ σ_c: if equal, d_a on both m and O⊔C → d_a = E → contradiction
+  have hda_ne_σ : d_a ≠ σ_c := by
+    intro h_eq
+    have hda_le_OC : d_a ≤ Γ.O ⊔ Γ.C := h_eq ▸ inf_le_left
+    have hda_eq_E : d_a = Γ.E := by
+      have h1 : d_a ≤ Γ.E := by
+        show d_a ≤ (Γ.O ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V)
+        exact le_inf hda_le_OC inf_le_right
+      exact (Γ.hE_atom.le_iff.mp h1).resolve_left hda_atom.1
+    have hE_le_aC : Γ.E ≤ a ⊔ Γ.C := hda_eq_E ▸ inf_le_left
+    have hE_le_OC : Γ.E ≤ Γ.O ⊔ Γ.C := CoordSystem.hE_le_OC
+    have hO_not_aC : ¬ Γ.O ≤ a ⊔ Γ.C := by
+      intro hle
+      have hOa_eq_l : Γ.O ⊔ a = l := by
+        have h_lt : Γ.O < Γ.O ⊔ a := lt_of_le_of_ne le_sup_left
+          (fun h => ha_ne_O ((Γ.hO.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left ha.1))
+        exact ((atom_covBy_join Γ.hO Γ.hU Γ.hOU).eq_or_eq h_lt.le
+          (sup_le le_sup_left ha_on)).resolve_left (ne_of_gt h_lt)
+      have hl_le_aC : l ≤ a ⊔ Γ.C := hOa_eq_l.symm.le.trans (sup_le hle le_sup_left)
+      exact Γ.hC_not_l (le_sup_right.trans
+        ((atom_covBy_join ha Γ.hC ha_ne_C).eq_or_eq
+          (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU ha ha_on).lt.le hl_le_aC
+        |>.resolve_left (ne_of_gt (line_covers_its_atoms Γ.hO Γ.hU Γ.hOU ha ha_on).lt)).symm.le)
+    have hmod := modular_intersection Γ.hC ha Γ.hO ha_ne_C.symm hOC.symm ha_ne_O
+      (show ¬ Γ.O ≤ Γ.C ⊔ a from by rw [sup_comm]; exact hO_not_aC)
+    have hE_le_C : Γ.E ≤ Γ.C :=
+      calc Γ.E ≤ (Γ.C ⊔ a) ⊓ (Γ.C ⊔ Γ.O) :=
+            le_inf (by rw [sup_comm]; exact hE_le_aC) (by rw [sup_comm]; exact hE_le_OC)
+        _ = Γ.C := hmod
+    have hE_eq_C := (Γ.hC.le_iff.mp hE_le_C).resolve_left Γ.hE_atom.1
+    exact Γ.hC_not_m (hE_eq_C ▸ CoordSystem.hE_on_m)
+  -- Coplanarity and CovBy
+  have hσ_plane : σ_c ≤ π :=
+    (inf_le_left : σ_c ≤ Γ.O ⊔ Γ.C).trans (sup_le (le_sup_left.trans le_sup_left) Γ.hC_plane)
+  have hda_plane : d_a ≤ π := (inf_le_right : d_a ≤ m).trans hm_le_π
+  have hl_covBy : l ⋖ π := by
+    have hV_disj : Γ.V ⊓ l = ⊥ :=
+      (Γ.hV.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hV_off (h ▸ inf_le_right))
+    have := covBy_sup_of_inf_covBy_left (hV_disj ▸ Γ.hV.bot_covBy)
+    rwa [show Γ.V ⊔ l = π from by
+      show Γ.V ⊔ (Γ.O ⊔ Γ.U) = Γ.O ⊔ Γ.U ⊔ Γ.V; rw [sup_comm]] at this
+  have hl_sup_da : l ⊔ d_a = π :=
+    (hl_covBy.eq_or_eq (lt_of_le_of_ne le_sup_left
+      (fun h => hda_not_l (le_sup_right.trans h.symm.le))).le
+      (sup_le le_sup_left hda_plane)).resolve_left
+      (ne_of_gt (lt_of_le_of_ne le_sup_left
+        (fun h => hda_not_l (le_sup_right.trans h.symm.le))))
+  exact perspect_atom hda_atom hσ_atom hda_ne_σ.symm Γ.hO Γ.hU Γ.hOU hda_not_l
+    (hl_sup_da.symm ▸ sup_le hσ_plane hda_plane)
+
 end Foam.FTPGExplore
