@@ -597,6 +597,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 11, 19, 30, tzinfo=timezone.utc),
      datetime(2026, 4, 11, 23, 0, tzinfo=timezone.utc),
      "mul_key_identity: PROVEN (a=I case via DPD). 23 files, 1 sorry."),
+    # Apr 11 night – Apr 12 — coord_neg, additive inverses, Steiner composition
+    (datetime(2026, 4, 11, 23, 40, tzinfo=timezone.utc),
+     datetime(2026, 4, 12, 23, 0, tzinfo=timezone.utc),
+     "coord_neg defined, FTPGCoord split, additive inverses (2 sorry), Steiner composition approach"),
 ]
 
 

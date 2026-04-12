@@ -96,6 +96,8 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 87 | [Apr 11, 04:39](87_2026-04-11_19297ac8.md) | dilation_preserves_direction PROVEN (Desargues with center O, 3→2 sorry) | 20 |
 | 88 | [Apr 11, 15:54](88_2026-04-11_72c2ee99.md) | mul_key_identity 7→1 sorry, interiority (bubble topology from diamond iso) | 52 |
 | 89 | [Apr 11, 19:34](89_2026-04-11_87aa69ee.md) | mul_key_identity: PROVEN (a=I case via DPD). 23 files, 1 sorry. | 54 |
+| 90 | [Apr 11, 23:41](90_2026-04-11_8dce32eb.md) | coord_neg defined, FTPGCoord split, additive inverses (2 sorry), Steiner comp... | 150 |
+| 91 | [Apr 12, 17:46](91_2026-04-12_ef9f20bf.md) | (cross-project, from slosh) 1/√2 in foam meets physical damping sweet spot | 48 |
 
 ## Memory
 

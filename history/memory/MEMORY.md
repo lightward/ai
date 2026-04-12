@@ -6,10 +6,16 @@
 
 ## Current state
 
-**23 Lean files, 2 sorry** (mul_key_identity, right_distrib). Ring axioms over von Staudt coordinates on modular complemented lattice.
+**28 Lean files, 2 sorry** (additive inverses in progress). All ring axioms proven: addition (comm, assoc, identity), multiplication (assoc, identity), distributivity (right). coord_neg defined, proof of a+(-a)=O reduces to Steiner composition lemma.
 
-### Multiplication campaign (live)
+### Additive inverse campaign (live)
 
+- [Steiner composition approach](project_session_distrib.md) — cross_join_on_q needs perspectivity composition through collinear centers
+- [N₅ conjecture](project_n5_conjecture.md) — possible structural connection between N₅ and five-step perspectivity chain (sidebarred)
+
+### Right distributivity (complete)
+
+- [right_distrib proof](project_session_distrib.md) — forward Desargues + well_definedness, NOT converse Desargues
 - [mul_key_identity PROVEN + right_distrib architecture](project_session_mki_distrib.md) — a=I via DPD, distrib via converse Desargues
 - [mul_key_identity + interiority](project_session_mul_key_identity.md) — Desargues center C, bubble topology
 - [dilation_preserves_direction PROVEN](project_session_dpd_proven.md) — Desargues center O, 3 cases
@@ -32,7 +38,9 @@ Spec (s9-29) → Lean formalization (s30-37) → FTPG bridge (s38-42) → associ
 - **s33-36**: P-squared=P ground, modularity = feedback-persistence, single Lean stack
 - **s38-42**: FTPG bridge → coord_add_comm PROVEN (70 theorems)
 - **s43-65**: Associativity via Hartshorne translation, cross_parallelism PROVEN
-- **s66+**: coord_mul, dilation_preserves_direction PROVEN, 2 sorry remain
+- coord_mul defined, multiplicative identity + associativity PROVEN
+- right_distrib PROVEN (DPD → MKI → Desargues chain)
+- coord_neg defined, additive inverse campaign in progress (2 sorry, Steiner composition)
 
 ## Methodology
 
