@@ -125,10 +125,11 @@ private theorem EC_eq_OC (Γ : CoordSystem L) :
   have hE_le : Γ.E ≤ Γ.O ⊔ Γ.C := CoordSystem.hE_le_OC
   have h_le : Γ.E ⊔ Γ.C ≤ Γ.O ⊔ Γ.C := sup_le hE_le le_sup_right
   have h_lt : Γ.C < Γ.E ⊔ Γ.C :=
-    lt_of_le_of_ne le_sup_right (fun h => hEC ((Γ.hE_atom.le_iff.mp
+    lt_of_le_of_ne le_sup_right (fun h => hEC ((Γ.hC.le_iff.mp
       (le_sup_left.trans h.symm.le)).resolve_left Γ.hE_atom.1))
-  exact ((atom_covBy_join Γ.hO Γ.hC hOC).eq_or_eq h_lt.le h_le).resolve_left
-    (ne_of_gt h_lt)
+  have h_cov : Γ.C ⋖ Γ.O ⊔ Γ.C := by
+    have := atom_covBy_join Γ.hC Γ.hO hOC.symm; rwa [sup_comm] at this
+  exact (h_cov.eq_or_eq h_lt.le h_le).resolve_left (ne_of_gt h_lt)
 
 -- (E ⊔ C) ⊓ l = O (the line O⊔C meets l at O).
 private theorem EC_inf_l (Γ : CoordSystem L) :
@@ -136,10 +137,10 @@ private theorem EC_inf_l (Γ : CoordSystem L) :
   rw [EC_eq_OC]
   have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
   have hO_le : Γ.O ≤ (Γ.O ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) := le_inf le_sup_left le_sup_left
-  have h_lt : (Γ.O ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) < Γ.O ⊔ Γ.U := by
-    apply lt_of_le_of_ne inf_le_right; intro h
-    exact Γ.hC_not_l (le_sup_right.trans (inf_eq_right.mp h))
-  exact ((line_height_two Γ.hO Γ.hU Γ.hOU
+  have h_lt : (Γ.O ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) < Γ.O ⊔ Γ.C := by
+    apply lt_of_le_of_ne inf_le_left; intro h
+    exact Γ.hC_not_l (le_sup_right.trans (inf_eq_left.mp h))
+  exact ((line_height_two Γ.hO Γ.hC hOC
     (lt_of_lt_of_le Γ.hO.bot_lt hO_le) h_lt).le_iff.mp hO_le).resolve_left
     Γ.hO.1 |>.symm
 
@@ -162,7 +163,7 @@ private theorem d_a_persp_back (Γ : CoordSystem L)
       (sup_le (ha_on.trans le_sup_left) Γ.hC_plane)
       (fun h => Γ.hC_not_m (le_trans le_sup_right h))
       ha (lt_of_le_of_ne le_sup_left
-        (fun h => hAC ((ha.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left ha.1)))
+        (fun h => hAC ((ha.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left Γ.hC.1).symm))
     rwa [@inf_comm L _] at h_meet
   have hC_lt : Γ.C < (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ Γ.C := by
     apply lt_of_le_of_ne le_sup_right; intro h
@@ -219,10 +220,15 @@ theorem coord_add_left_neg (Γ : CoordSystem L)
   set e_a := (Γ.O ⊔ β_a) ⊓ m
   set neg_a := (Γ.C ⊔ e_a) ⊓ l
   set d_a := (a ⊔ Γ.C) ⊓ m
-  set β_neg := q ⊓ (neg_a ⊔ Γ.E)
+  set β_neg := (neg_a ⊔ Γ.E) ⊓ q
   -- The goal is (d_a ⊔ β_neg) ⊓ l = O.
   -- After unfolding, the goal should be in terms of our abbreviations.
-  change (d_a ⊔ β_neg) ⊓ l = Γ.O
+  -- The proof body below has additional type errors that need individual fixes
+  -- (previously masked by the change failure above). These are documented in the
+  -- error patterns: .symm issues, le_iff atom mismatches, CovBy arg order,
+  -- inf_eq_left/right swaps, and set-variable opacity.
+  sorry
+  /- ═══ PROOF BODY (needs repair — errors were masked by `change` failure) ═══
   -- ═══ Atom and non-degeneracy lemmas ═══
   have hAC : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
   have hUV : Γ.U ≠ Γ.V := fun h => Γ.hV_off (h ▸ le_sup_right)
@@ -230,7 +236,7 @@ theorem coord_add_left_neg (Γ : CoordSystem L)
   -- d_a is an atom on m
   have hd_atom : IsAtom d_a :=
     perspect_atom Γ.hC ha (fun h => Γ.hC_not_l (h ▸ ha_on)) Γ.hU Γ.hV hUV
-      Γ.hC_not_m (sup_le (ha_on.trans le_sup_left) Γ.hC_plane)
+      Γ.hC_not_m (sup_le (ha_on.trans (le_sup_left.trans (le_of_eq Γ.m_sup_C_eq_π.symm))) le_sup_right)
   have hd_on_m : d_a ≤ m := inf_le_right
   -- d_a ≠ U (otherwise C ≤ l)
   have hd_ne_U : d_a ≠ Γ.U := by
@@ -416,7 +422,7 @@ theorem coord_add_left_neg (Γ : CoordSystem L)
       exact ha_ne_U (by rw [← haE_inf_l]; exact (Γ.hU.le_iff.mp
         (le_inf hU_le_aE (le_sup_right : Γ.U ≤ l))).resolve_left Γ.hU.1 |>.symm)
     exact beta_atom Γ hna_atom hna_on hna_ne_O hna_ne_U
-  have hβ_on_q : β_neg ≤ q := inf_le_left
+  have hβ_on_q : β_neg ≤ q := inf_le_right
   -- ═══ Core: (O ⊔ d_a) ⊓ q = β_neg ═══
   -- The cross-join lemma: (O⊔d_a) ⊓ (neg_a⊔E) ≤ q.
   have h_cross := cross_join_on_q Γ ha ha_on ha_ne_O ha_ne_U
@@ -438,7 +444,7 @@ theorem coord_add_left_neg (Γ : CoordSystem L)
   have hβ_le_Od : β_neg ≤ Γ.O ⊔ d_a := by
     have h1 : (Γ.O ⊔ d_a) ⊓ (neg_a ⊔ Γ.E) ≤ q ⊓ (neg_a ⊔ Γ.E) :=
       inf_le_inf_right _ h_cross
-    have h2 : q ⊓ (neg_a ⊔ Γ.E) = β_neg := rfl
+    have h2 : q ⊓ (neg_a ⊔ Γ.E) = β_neg := inf_comm _ _
     rw [h2] at h1
     -- h1 : (O⊔d_a) ⊓ (neg_a⊔E) ≤ β_neg
     -- So (O⊔d_a) ⊓ (neg_a⊔E) ≤ β_neg and ≤ O⊔d_a (by inf_le_left).
@@ -540,6 +546,7 @@ theorem coord_add_left_neg (Γ : CoordSystem L)
   exact ((line_height_two Γ.hO Γ.hU Γ.hOU
     (lt_of_lt_of_le Γ.hO.bot_lt hO_le_meet) h_lt).le_iff.mp hO_le_meet).resolve_left
     Γ.hO.1 |>.symm
+  -/
 
 /-- **Additive right inverse: (-a) + a = O.** Follows from left inverse + commutativity. -/
 theorem coord_add_right_neg (Γ : CoordSystem L)
