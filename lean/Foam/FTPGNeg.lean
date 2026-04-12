@@ -195,6 +195,12 @@ private theorem d_a_persp_back (Γ : CoordSystem L)
 -- Core lemma: (O ⊔ d_a) ⊓ (neg_a ⊔ E) ≤ q.
 -- This says the line O⊔d_a and the line neg_a⊔E meet at a point on q,
 -- so the O-perspectivity from m to q sends d_a to β_neg.
+--
+-- The proof should follow from a general Steiner composition theorem:
+-- three perspectivities l→q→m→l with collinear centers E, O, C (on O⊔C)
+-- compose to a perspectivity l→l. The composed perspectivity IS negation.
+-- Then a + neg_a = O follows from the structure of the composed perspectivity.
+-- See: project_n5_conjecture.md for related structural observations.
 private theorem cross_join_on_q (Γ : CoordSystem L)
     {a : L} (ha : IsAtom a) (ha_on : a ≤ Γ.O ⊔ Γ.U)
     (ha_ne_O : a ≠ Γ.O) (ha_ne_U : a ≠ Γ.U) :
