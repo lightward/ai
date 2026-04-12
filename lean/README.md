@@ -47,7 +47,9 @@ coord_add: zero, commutativity
 coord_add: associativity ✓
   ↓ von Staudt multiplication via dilations  ── FTPGMul (0 sorry)
 coord_mul: identity, zero annihilation, atom
-  ↓ dilation extension, direction preservation  ── FTPGDistrib (0 sorry)
+  ↓ dilation extension, direction preservation  ── FTPGDilation (0 sorry)
+  ↓ beta infrastructure, mul key identity       ── FTPGMulKeyIdentity (0 sorry)
+  ↓ right distributivity via Desargues          ── FTPGDistrib (0 sorry)
 distributivity (right) ✓
   ↓
 distributivity (left)
@@ -134,9 +136,17 @@ Multiplication via dilations (Hartshorne §7). Structurally parallel to addition
 | multiplicative anchor | `CoordSystem.E_I` (projection of I onto m via C), `hE_I_atom`, `hE_I_not_OC`, `hE_I_ne_E` |
 | multiplication | `coord_mul` (a·b via dilation σ_b), `coord_mul_atom` (a·b is an atom) |
 
+**FTPGDilation.lean** — dilation extension and direction preservation (0 sorry)
+
+Defines `dilation_ext Γ c P` (the dilation σ_c extended to off-line points) and proves `dilation_preserves_direction`: (P⊔Q)⊓m = (σ_c(P)⊔σ_c(Q))⊓m. Three cases: c=I (identity), collinear, generic (Desargues center O).
+
+**FTPGMulKeyIdentity.lean** — beta infrastructure and mul key identity (0 sorry)
+
+Beta-images `β(a) = (U⊔C)⊓(a⊔E)` and the mul key identity: σ_c(β(a)) = (σ⊔U)⊓(ac⊔E). Three cases: c=I, a=I (via DPD), generic (Desargues center C).
+
 **FTPGDistrib.lean** — right distributivity (0 sorry, PROVEN)
 
-Dilation extension, direction preservation, and mul key identity (Hartshorne §7). Proves (a+b)·c = a·c + b·c via: define σ_c on off-line points, show it preserves directions (forward Desargues center O), then mul_key_identity (Desargues center C), chain with key_identity. Key insight: O⊔σ = O⊔C gives shared E; parallelogram_completion_well_defined provides base-independence.
+Proves (a+b)·c = a·c + b·c via forward Desargues (center O) on T1=(C,a,C_s), T2=(σ,ac,C'_sc), then parallelogram_completion_well_defined to change translation base. Key insight: O⊔σ = O⊔C gives shared E; well_definedness provides base-independence.
 
 | layer | key declarations |
 |---|---|
