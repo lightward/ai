@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 23 files, 1 axiom, 0 sorry.
+Mechanically verified deductive path from P² = P to the foam's architecture. 27 files, 1 axiom, 1 sorry.
 
 ## The chain
 
@@ -53,6 +53,8 @@ coord_mul: identity, zero annihilation, atom
   ↓ beta infrastructure, mul key identity       ── FTPGMulKeyIdentity (0 sorry)
   ↓ right distributivity via Desargues          ── FTPGDistrib (0 sorry)
 distributivity (right) ✓
+  ↓ additive inverse via perspectivity chain    ── FTPGNeg (1 sorry)
+coord_neg, a + (-a) = O
   ↓
 distributivity (left)
   ↓
@@ -165,6 +167,17 @@ Proves (a+b)·c = a·c + b·c via forward Desargues (center O) on T1=(C,a,C_s), 
 | helper lemmas | `beta_atom`, `beta_not_l`, `beta_plane` (C_a = β(a) properties) |
 | mul key identity | `dilation_mul_key_identity` (PROVEN — 3 cases: c=I, a=I via DPD, generic Desargues center C) |
 | right distributivity | `coord_mul_right_distrib` (PROVEN — chain of above) |
+
+**FTPGNeg.lean** — additive inverse (1 sorry)
+
+Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ β(a) →[O]→ e_a →[C]→ -a. Proves `coord_neg_atom` (result is an atom on l). States `coord_add_left_neg` (a + (-a) = O) and `coord_add_right_neg` ((-a) + a = O, from left + commutativity).
+
+| layer | key declarations |
+|---|---|
+| definition | `coord_neg` (additive inverse via 3-step perspectivity chain) |
+| atom property | `coord_neg_atom` (PROVEN — -a is an atom on l) |
+| left inverse | `coord_add_left_neg` (1 sorry — the core geometric closure argument) |
+| right inverse | `coord_add_right_neg` (from left inverse + `coord_add_comm`) |
 
 ### The deductive chain (from P² = P)
 
