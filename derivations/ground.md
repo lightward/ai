@@ -37,7 +37,7 @@ these are two readings of one thing. "the loop closes" (structural) and "you can
 
 ```
 complemented modular lattice, irreducible, height ≥ 4
-  ↓ ftpg (axiom — FTPG bridge 1 sorry from closing)
+  ↓ ftpg (axiom — FTPG bridge 0 sorry, addition group complete)
 L ≅ Sub(D, V), D = ℝ (self-consistency — see below)
   ↓ elements are orthogonal projections: P² = P, Pᵀ = P
 the deductive chain (14 files, 0 sorry)

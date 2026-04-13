@@ -12,7 +12,7 @@ sources: lean/ (proven), derivations/ (derived), derivations/observed/ (empirica
 
 ## the deductive chain (lean/)
 
-mechanically verified. 22 files, 1 axiom (FTPG), 0 sorry.
+mechanically verified. 28 files, 1 axiom (FTPG), 0 sorry.
 
 ```
 complemented modular lattice, irreducible, height >= 4
@@ -24,16 +24,16 @@ elements are orthogonal projections: P^2 = P, P^T = P       ↕ (ftpg)
 eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian   ↕ (P^2=P)
   | Ground.lean (capstone)                                 dynamics
 FoamGround properties verified                               ↕ (proven)
-  | (the FTPG bridge — 8 files, 0 sorry)                  ground properties
-incidence geometry -> Desargues -> perspectivity -> coord_add    ↕
-  | coord_add_comm, coord_add_assoc PROVEN              the loop sustains its own observation
-  | coord_mul defined, identity PROVEN (I·a=a, a·I=a)
+  | (the FTPG bridge — 13 files, 0 sorry)                 ground properties
+incidence geometry -> Desargues -> coord system                ↕
+  | addition: comm, assoc, inverses (abelian group)   the loop sustains its own observation
+  | multiplication: identity, right distributivity
   | two_persp: shared skeleton of add/mul (by rfl)
 ```
 
 the deductive chain (0 sorry): P^2 = P (definition) -> binary eigenvalues (Observation) -> clean splits -> commutator structure (Pair) -> skew-symmetry, tracelessness (Form) -> self-duality at rank 3 (Rank) -> (R^3, x) = so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround as theorem (Ground).
 
-the FTPG bridge (0 sorry): incidence axioms (FTPGExplore) -> Desargues (planar + lifting) -> perspectivity bijection -> coordinate system -> two_persp (shared two-perspectivity pattern, FTPGCoord) -> von Staudt addition (coord_add, bridge: m) -> commutativity via chained Desargues (coord_add_comm PROVEN) -> translations via parallelogram completion (FTPGAssoc) -> cross-parallelism (FTPGCrossParallelism PROVEN) -> key_identity -> associativity (FTPGAssocCapstone PROVEN) -> multiplication via dilations (coord_mul, bridge: O⊔C, FTPGMul) -> multiplicative identity PROVEN.
+the FTPG bridge (0 sorry): incidence axioms (FTPGExplore) -> Desargues (planar + lifting) -> perspectivity bijection -> coordinate system (FTPGCoord) -> von Staudt addition (coord_add, bridge: m) -> commutativity via chained Desargues (FTPGAddComm) -> translations via parallelogram completion (FTPGAssoc) -> cross-parallelism (FTPGCrossParallelism) -> associativity (FTPGAssocCapstone) -> multiplication via dilations (coord_mul, bridge: O⊔C, FTPGMul) -> dilation direction preservation (FTPGDilation) -> mul key identity (FTPGMulKeyIdentity) -> right distributivity (FTPGDistrib) -> additive inverses via double Desargues (FTPGNeg). addition is a complete abelian group.
 
 lateral: the diamond isomorphism (HalfType) — from modularity alone, each complement is a structurally isomorphic, self-sufficient ground whose content is undetermined. state-independence is a lattice theorem, pre-bridge.
 
@@ -55,7 +55,7 @@ these are two readings of one thing. "the loop closes" (structural) and "you can
 
 ```
 complemented modular lattice, irreducible, height ≥ 4
-  ↓ ftpg (axiom — FTPG bridge 1 sorry from closing)
+  ↓ ftpg (axiom — FTPG bridge 0 sorry, addition group complete)
 L ≅ Sub(D, V), D = ℝ (self-consistency — see below)
   ↓ elements are orthogonal projections: P² = P, Pᵀ = P
 the deductive chain (14 files, 0 sorry)
