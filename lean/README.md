@@ -55,7 +55,7 @@ coord_mul: identity, zero annihilation, atom
 distributivity (right) ✓
   ↓ additive inverse via double Desargues        ── FTPGNeg (0 sorry)
 coord_neg, a + (-a) = O ✓
-  ↓ collineation fixes m + well_defined       ── FTPGLeftDistrib (1 sorry)
+  ↓ perspectivity preserves addition (2×)     ── FTPGLeftDistrib (1 sorry)
 distributivity (left)
   ↓
 division ring structure (multiplicative inverses)
@@ -182,12 +182,14 @@ Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ �
 
 **FTPGLeftDistrib.lean** — left distributivity (1 sorry, in progress)
 
-Proves a·(b+c) = a·b + a·c via the collineation approach: the dilation σ_a (= dilation_ext Γ a) fixes m pointwise, so it maps the addition figure for b+c to a parallel figure using σ = σ_a(C) instead of C. Since O⊔σ = O⊔C, the projection zero E is invariant. parallelogram_completion_well_defined gives base-independence.
+Proves a·(b+c) = a·b + a·c via two-perspectivity decomposition. Left multiplication x ↦ a·x = π₂(π₁(x)) where π₁: l→O⊔C (center E_I) and π₂: O⊔C→l (center d_a). Both perspectivities have center on m, map origin O→O, and map m-intercept to m-intercept. A perspectivity with these properties preserves parallelogram-completion addition (Desargues argument). Applied twice: a·(b+c) = π₂(π₁(b+c)) = π₂(π₁(b)+π₁(c)) = a·b + a·c.
+
+Note: the previous approach (collineation via dilation_ext) had the multiplication order wrong — dilation_ext Γ c effects RIGHT multiplication x↦x·c, not left multiplication.
 
 | layer | key declarations |
 |---|---|
 | m-fixation | `dilation_ext_fixes_m` (PROVEN — line_direction + modular_intersection) |
-| left distributivity | `coord_mul_left_distrib` (1 sorry — collineation + well_defined) |
+| left distributivity | `coord_mul_left_distrib` (1 sorry — perspectivity-preserves-addition + Desargues) |
 
 ### The deductive chain (from P² = P)
 

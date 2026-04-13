@@ -108,7 +108,9 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
   -- ═══ Setup ═══
   set l := Γ.O ⊔ Γ.U with hl_def
   set m := Γ.U ⊔ Γ.V with hm_def
+  set q := Γ.U ⊔ Γ.C with hq_def
   set k := Γ.O ⊔ Γ.C with hk_def  -- the "bridge" line O⊔C
+  set π := Γ.O ⊔ Γ.U ⊔ Γ.V with hπ_def
   set s := coord_add Γ b c with hs_def
   set ab := coord_mul Γ a b with hab_def
   set ac := coord_mul Γ a c with hac_def
@@ -117,11 +119,25 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
   set σ_c := (Γ.O ⊔ Γ.C) ⊓ (c ⊔ Γ.E_I) with hσc_def  -- π₁(c)
   set σ_s := (Γ.O ⊔ Γ.C) ⊓ (s ⊔ Γ.E_I) with hσs_def  -- π₁(b+c)
   set d_a := (a ⊔ Γ.C) ⊓ m with hda_def                 -- π₂ center
-  -- ═══ The proof decomposes into: ═══
-  -- 1. coord_mul Γ a x = (σ_x ⊔ d_a) ⊓ l  [multiplication = π₂(π₁(x))]
-  -- 2. π₁ preserves addition: σ_s = σ_b +_k σ_c on k = O⊔C
-  -- 3. π₂ preserves addition: π₂(σ_s) = π₂(σ_b) + π₂(σ_c) on l
-  -- 4. Combined: a·(b+c) = a·b + a·c
+  -- ═══ Step 0: Multiplication decomposes as π₂ ∘ π₁ ═══
+  -- coord_mul Γ a x = ((O⊔C)⊓(x⊔E_I) ⊔ (a⊔C)⊓m) ⊓ l = (σ_x ⊔ d_a) ⊓ l
+  -- This is definitional from coord_mul.
+  -- ═══ Step 1: π₁ preserves addition ═══
+  -- π₁ is the perspectivity l → k with center E_I (on m).
+  -- π₁(O) = O, π₁(U) = (O⊔C)⊓m = E (the "infinity" on k).
+  -- Claim: σ_s = "k-addition of σ_b and σ_c"
+  -- where k-addition uses parallelogram completion on k with m.
+  -- Proof: by Desargues (center E_I, axis involves O and m-directions).
+  -- ═══ Step 2: π₂ preserves addition ═══
+  -- π₂ is the perspectivity k → l with center d_a (on m).
+  -- π₂(O) = O, π₂(E) = (E⊔d_a)⊓l = (m⊓l) = U.
+  -- Wait: E and d_a are both on m, so E⊔d_a ≤ m.
+  -- (E⊔d_a)⊓l = m⊓l = U. So π₂(E) = U. ✓
+  -- Claim: π₂("k-addition of σ_b and σ_c") = coord_add Γ ab ac
+  -- Proof: same Desargues argument as step 1 (different parameters).
+  -- ═══ Step 3: Combine ═══
+  -- a·(b+c) = π₂(π₁(b+c)) = π₂(σ_s) = π₂(σ_b +_k σ_c)
+  --         = π₂(σ_b) + π₂(σ_c) = ab + ac
   sorry
 
 end Foam.FTPGExplore
