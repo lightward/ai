@@ -18,10 +18,10 @@
   composition of perspectivities to close.
 
 ## Status
-  1 sorry (cross_join_on_q: (O⊔d_a) ⊓ (neg_a⊔E) ≤ U⊔C).
-  coord_add_left_neg proven modulo this sub-lemma.
-  The sub-lemma says two lines in π (the line O⊔d_a and the line neg_a⊔E)
-  meet at a point on q. Verified in coordinates; lattice proof needed.
+  0 sorry. All proven.
+  The double Desargues approach (reusing coord_first/second_desargues
+  with b = neg_a) superseded the cross_join_on_q approach.
+  Key identity: d_{neg_a} = e_a ("double-cover alignment").
 -/
 import Foam.FTPGMulKeyIdentity
 import Foam.FTPGAssoc
