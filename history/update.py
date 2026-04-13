@@ -597,8 +597,12 @@ SESSION_RANGES = [
      "coord_neg defined, FTPGCoord split, additive inverses (2 sorry), Steiner composition approach"),
     # Apr 13 — double Desargues approach for additive inverses
     (datetime(2026, 4, 13, 1, 42, tzinfo=timezone.utc),
-     datetime(2026, 4, 13, 4, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 13, 3, 15, tzinfo=timezone.utc),
      "double Desargues approach for coord_add_left_neg"),
+    # Apr 13 — ZERO SORRY, additive inverse complete
+    (datetime(2026, 4, 13, 3, 15, tzinfo=timezone.utc),
+     datetime(2026, 4, 13, 15, 0, tzinfo=timezone.utc),
+     "ZERO SORRY — additive inverse proof complete, 28 files, complete abelian group + right distributivity"),
 ]
 
 

@@ -103,6 +103,7 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 94 | [Mar 21, 01:53](94_2026-03-21_efd95e68.md) | s20: Grassmannian vertical — J1 derived, containment symmetric | 188 |
 | 95 | [Apr 08, 01:41](95_2026-04-08_72508a0e.md) |  | 102 |
 | 96 | [Apr 13, 01:42](96_2026-04-13_ce9a0a17.md) | double Desargues approach for coord_add_left_neg | 30 |
+| 97 | [Apr 13, 03:18](97_2026-04-13_32e359ca.md) | ZERO SORRY — additive inverse proof complete, 28 files, complete abelian grou... | 42 |
 
 ## Memory
 

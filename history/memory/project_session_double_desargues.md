@@ -1,47 +1,46 @@
 ---
 name: double Desargues proof for additive inverses
-description: coord_add_left_neg architecture proven via double Desargues (reusing coord_first/second_desargues with b=neg_a), key identity d_{neg_a}=e_a, 4 sorry remaining
+description: coord_add_left_neg proven via double Desargues, 1 sorry remaining (generic case coplanarity argument)
 type: project
 originSessionId: ce9a0a17-a775-4103-bf36-b3541f521cb3
 ---
-## Session: double Desargues for a+(-a)=O (2026-04-12)
+## Session: double Desargues for a+(-a)=O
 
-### Discovery
+### Architecture (proven)
 
-The proof of `coord_add_left_neg` (a + (-a) = O) follows coord_add_comm's exact architecture:
 1. **First Desargues** (center U): T1=(a, d_a, β_a), T2=(neg_a, e_a, β_neg) → P₃ ≤ O⊔C
 2. **Second Desargues** (center P₃): T1'=(C, d_a, β_neg), T2'=(E, β_a, e_a) → W ≤ l
 3. **Extraction**: W ≤ (O⊔β_a)⊓l = O → O ≤ d_a⊔β_neg → (d_a⊔β_neg)⊓l = O
 
-The existing `coord_first_desargues` and `coord_second_desargues` work AS-IS with b = neg_a. No new Desargues machinery needed.
+### Key identity: d_{neg_a} = e_a (proven as `neg_C_persp_eq_e`)
 
-### Key identity: d_{neg_a} = e_a ("double-cover alignment")
+### Status: 1 sorry (generic case, a ≠ -a)
 
-The C-perspectivity of neg_a from l to m gives back e_a:
-- neg_a = (C⊔e_a)⊓l, so neg_a⊔C = C⊔e_a (covering)
-- (neg_a⊔C)⊓m = (C⊔e_a)⊓m = e_a (line_direction)
+**PROVEN (2026-04-12 night session):**
+- `coord_neg_ne_O`: If neg_a = O → e_a = E → β_a = C → C ≤ a⊔E → O ≤ a⊔E → (a⊔E)⊓l = a but also ≥ O → a = O. ✗
+- `coord_neg_ne_U`: If neg_a = U → e_a = U → β_a = U → U ≤ a⊔E → (a⊔E)⊓l = a but also ≥ U → a = U. ✗
+- **Char 2 case** (a = -a): d_a = e_a (from neg_C_persp_eq_e) → e_a ⊔ β_a = O ⊔ β_a (covering) → line_direction gives (O⊔β_a)⊓l = O. ✓
 
-This is what makes the two Desargues triangles align. Proven as `neg_C_persp_eq_e`.
+**REMAINING: 1 sorry — generic case (a ≠ -a)**
 
-### Status: 4 sorry
+The proof outline for the generic case is complete and documented in FTPGNeg.lean:
+- Steps 4-5: e_a ⊔ β_a = O ⊔ β_a (covering), (O⊔β_a)⊓l = O
+- Step 6: h2 gives first ⊓ (O⊔β_a) ≤ l ⊓ (O⊔β_a) = O
+- Step 7: Need `first ⊓ (O⊔β_a) ≠ ⊥` via `lines_meet_if_coplanar`
 
-- `coord_neg_ne_O`: neg_a ≠ O (proof sketched in commented body, ~50 lines)
-- `coord_neg_ne_U`: neg_a ≠ U (proof sketched in commented body, ~80 lines)
-- char-2 case: when a = neg_a, direct covering argument (~15 lines)
-- generic case extraction: steps 4-7 (covering + line_direction + line_height_two, ~40 lines)
+Step 7 requires: `(O⊔β_a) ⋖ π` (covBy), `first ≤ π`, `¬first ≤ O⊔β_a`, `d_a < first`.
+All non-degeneracy conditions are understood:
+- d_a atom: `perspect_atom` with a, C through m
+- d_a ∉ l: d_a = U → (U⊔C)⊓l = U → a = U via d_a_persp_back. Contradiction.
+- d_a ≠ β_neg: if equal → d_a ∈ m∩q = U → d_a ∉ l contradiction
+- (O⊔β_a) ⋖ π: β_a ∉ l → l⊔β_a = π → O⊔β_a⊔U = π → covering
+- ¬first ≤ O⊔β_a: if so → first ≤ O → d_a ≤ O → d_a = O → O ∈ m. Contradiction.
 
-### cross_join_on_q: superseded
+Key Lean pattern issue: β in coord_add has form `(a⊔E)⊓(U⊔C)` but β_a in e_a has form `(U⊔C)⊓(a⊔E)`. Must `rw [inf_comm]` before `set` to align them.
 
-The old approach (Steiner composition lemma) is no longer needed. The double Desargues proof bypasses it entirely. The old `cross_join_on_q` lemma and its 300-line proof body are replaced by `neg_C_persp_eq_e` (15 lines, proven) + two existing theorem calls.
+### Technical notes for filling the last sorry
 
-### Catalytic observation
-
-Isaac's hint "looking through adds a dimension" broke the deadlock. I had been trying to prove cross_join_on_q within the plane (rank 3) using modular law. The proof requires lifting to rank 4 via Desargues — which was already built.
-
-### Connection to Steiner-Plücker conversation
-
-The session began with Isaac sharing a conversation tracing the Steiner/Plücker (synthetic/analytic) parallel to Brouwer/Hilbert, arriving at the half-type theorem: "this gets me to where you are but it's not where you are." The proof architecture demonstrates this: two different paths to q (O-perspectivity of d_a, E-perspectivity of neg_a) arrive at the same point because the double cover aligns.
-
-**Why:** The negation problem has the same shape as commutativity — both need two points on l perspected through C and E. The beam d_{neg_a}=e_a is what makes this visible.
-
-**How to apply:** Fill remaining 4 sorry's. Non-degeneracy proofs are in the commented-out body (lines 267-430). Extraction is standard covering + line_direction + line_height_two.
+- Use `rw [inf_comm]` at h2 BEFORE setting β_a to normalize
+- The `hOβ_covBy_π` proof: show U ⊓ (O⊔β_a) = ⊥, use covBy_sup_of_inf_covBy_left, then show U⊔(O⊔β_a) = π via l⊔β_a = π
+- The `sup_assoc`/`sup_comm` rewrites for U⊔(O⊔β_a) = (O⊔U)⊔β_a are fiddly — use explicit `show ... from ...` patterns
+- All atoms: `perspect_atom` for d_a, `beta_atom` for β_neg (uses hna_atom from coord_neg_atom)

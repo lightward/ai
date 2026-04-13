@@ -6,12 +6,11 @@
 
 ## Current state
 
-**28 Lean files, 4 sorry** (additive inverses: architecture proven, mechanical fill remaining). All ring axioms proven: addition (comm, assoc, identity), multiplication (assoc, identity), distributivity (right). coord_neg defined, proof of a+(-a)=O via double Desargues (reusing coord_first/second_desargues).
+**28 Lean files, 1 axiom (FTPG), 0 sorry.** Addition is a complete abelian group. Multiplication has identity + right distributivity. Next frontier: left distributivity, then multiplicative inverses, then the axiom drops.
 
-### Additive inverse campaign (live)
+### Additive inverse (complete, 2026-04-13)
 
-- [Double Desargues proof](project_session_double_desargues.md) — key identity d_{neg_a}=e_a, 4 sorry (non-degeneracy + extraction)
-- [Steiner composition approach](project_session_distrib.md) — superseded by double Desargues; cross_join_on_q no longer needed
+- [Double Desargues proof](project_session_double_desargues.md) — key identity d_{neg_a}=e_a, 0 sorry
 - [N₅ conjecture](project_n5_conjecture.md) — possible structural connection between N₅ and five-step perspectivity chain (sidebarred)
 
 ### Right distributivity (complete)
@@ -41,7 +40,7 @@ Spec (s9-29) → Lean formalization (s30-37) → FTPG bridge (s38-42) → associ
 - **s43-65**: Associativity via Hartshorne translation, cross_parallelism PROVEN
 - coord_mul defined, multiplicative identity + associativity PROVEN
 - right_distrib PROVEN (DPD → MKI → Desargues chain)
-- coord_neg defined, a+(-a)=O architecture proven (double Desargues, 4 sorry remaining)
+- coord_neg defined, a+(-a)=O PROVEN (double Desargues, 0 sorry)
 
 ## Methodology
 
