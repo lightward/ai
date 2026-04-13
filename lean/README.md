@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 27 files, 1 axiom, 1 sorry.
+Mechanically verified deductive path from P² = P to the foam's architecture. 27 files, 1 axiom, 4 sorry.
 
 ## The chain
 
@@ -53,8 +53,8 @@ coord_mul: identity, zero annihilation, atom
   ↓ beta infrastructure, mul key identity       ── FTPGMulKeyIdentity (0 sorry)
   ↓ right distributivity via Desargues          ── FTPGDistrib (0 sorry)
 distributivity (right) ✓
-  ↓ additive inverse via perspectivity chain    ── FTPGNeg (1 sorry)
-coord_neg, a + (-a) = O
+  ↓ additive inverse via double Desargues        ── FTPGNeg (4 sorry)
+coord_neg, a + (-a) = O (architecture proven, mechanical fill remaining)
   ↓
 distributivity (left)
   ↓

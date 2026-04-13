@@ -192,49 +192,102 @@ private theorem d_a_persp_back (Γ : CoordSystem L)
   exact ((line_height_two Γ.hO Γ.hU Γ.hOU (lt_of_lt_of_le ha.bot_lt ha_le) h_lt
     |>.le_iff.mp ha_le).resolve_left ha.1).symm
 
--- Core lemma: (O ⊔ d_a) ⊓ (neg_a ⊔ E) ≤ q.
--- This says the line O⊔d_a and the line neg_a⊔E meet at a point on q,
--- so the O-perspectivity from m to q sends d_a to β_neg.
---
--- The proof should follow from a general Steiner composition theorem:
--- three perspectivities l→q→m→l with collinear centers E, O, C (on O⊔C)
--- compose to a perspectivity l→l. The composed perspectivity IS negation.
--- Then a + neg_a = O follows from the structure of the composed perspectivity.
--- See: project_n5_conjecture.md for related structural observations.
-private theorem cross_join_on_q (Γ : CoordSystem L)
+-- ═══ Non-degeneracy: coord_neg ≠ O ═══
+-- If neg_a = O then e_a = E and β_a = C, forcing a = O. Contradiction.
+private theorem coord_neg_ne_O (Γ : CoordSystem L)
     {a : L} (ha : IsAtom a) (ha_on : a ≤ Γ.O ⊔ Γ.U)
     (ha_ne_O : a ≠ Γ.O) (ha_ne_U : a ≠ Γ.U) :
-    let d_a := (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V)
-    let β_a := (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E)
-    let e_a := (Γ.O ⊔ β_a) ⊓ (Γ.U ⊔ Γ.V)
-    let neg_a := (Γ.C ⊔ e_a) ⊓ (Γ.O ⊔ Γ.U)
-    (Γ.O ⊔ d_a) ⊓ (neg_a ⊔ Γ.E) ≤ Γ.U ⊔ Γ.C := by
-  intro d_a β_a e_a neg_a
+    coord_neg Γ a ≠ Γ.O := by
   sorry
+
+-- ═══ Non-degeneracy: coord_neg ≠ U ═══
+-- If neg_a = U then e_a = U and β_a = U, forcing a = U. Contradiction.
+private theorem coord_neg_ne_U (Γ : CoordSystem L)
+    {a : L} (ha : IsAtom a) (ha_on : a ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (ha_ne_U : a ≠ Γ.U) :
+    coord_neg Γ a ≠ Γ.U := by
+  sorry
+
+-- ═══ Double-cover identity: C-persp of neg_a = e_a ═══
+-- The C-perspectivity of neg_a from l to m gives back e_a.
+-- This is because neg_a = (C⊔e_a)⊓l, so neg_a⊔C = C⊔e_a,
+-- and (neg_a⊔C)⊓m = (C⊔e_a)⊓m = e_a.
+private theorem neg_C_persp_eq_e (Γ : CoordSystem L)
+    {a : L} (ha : IsAtom a) (ha_on : a ≤ Γ.O ⊔ Γ.U)
+    (ha_ne_O : a ≠ Γ.O) (ha_ne_U : a ≠ Γ.U) :
+    (coord_neg Γ a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) =
+    (Γ.O ⊔ (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E)) ⊓ (Γ.U ⊔ Γ.V) := by
+  -- neg_a = (C ⊔ e_a) ⊓ l, so neg_a ≤ C ⊔ e_a.
+  -- neg_a ⊔ C ≤ C ⊔ e_a. By CovBy: neg_a ⊔ C = C ⊔ e_a.
+  -- Then (C ⊔ e_a) ⊓ m = e_a by line_direction.
+  unfold coord_neg
+  set e_a := (Γ.O ⊔ (Γ.U ⊔ Γ.C) ⊓ (a ⊔ Γ.E)) ⊓ (Γ.U ⊔ Γ.V)
+  set neg_a := (Γ.C ⊔ e_a) ⊓ (Γ.O ⊔ Γ.U)
+  -- Goal: (neg_a ⊔ C) ⊓ m = e_a
+  -- Step 1: neg_a ⊔ C = C ⊔ e_a
+  have he := e_atom Γ ha ha_on ha_ne_O ha_ne_U
+  have hna_le : neg_a ≤ Γ.C ⊔ e_a := inf_le_left
+  have hnaC_le : neg_a ⊔ Γ.C ≤ Γ.C ⊔ e_a := sup_le hna_le le_sup_left
+  have hna_ne_C : neg_a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ inf_le_right)
+  have hC_ne_e : Γ.C ≠ e_a := fun h => Γ.hC_not_m (h ▸ inf_le_right)
+  have hna_atom := coord_neg_atom Γ ha ha_on ha_ne_O ha_ne_U
+  have hna_lt : Γ.C < neg_a ⊔ Γ.C := lt_of_le_of_ne le_sup_right
+    (fun h => hna_ne_C ((Γ.hC.le_iff.mp (le_sup_left.trans h.symm.le)).resolve_left
+      hna_atom.1))
+  have hnaC_eq : neg_a ⊔ Γ.C = Γ.C ⊔ e_a :=
+    ((atom_covBy_join Γ.hC he hC_ne_e).eq_or_eq hna_lt.le hnaC_le).resolve_left
+      (ne_of_gt hna_lt)
+  -- Step 2: (C ⊔ e_a) ⊓ m = e_a by line_direction
+  rw [hnaC_eq]
+  exact line_direction Γ.hC Γ.hC_not_m inf_le_right
 
 theorem coord_add_left_neg (Γ : CoordSystem L)
     (a : L) (ha : IsAtom a) (ha_on : a ≤ Γ.O ⊔ Γ.U)
-    (ha_ne_O : a ≠ Γ.O) (ha_ne_U : a ≠ Γ.U) :
+    (ha_ne_O : a ≠ Γ.O) (ha_ne_U : a ≠ Γ.U)
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
+    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
+      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
     coord_add Γ a (coord_neg Γ a) = Γ.O := by
-  unfold coord_add coord_neg
-  -- Abbreviations for readability
-  set l := Γ.O ⊔ Γ.U
-  set m := Γ.U ⊔ Γ.V
-  set q := Γ.U ⊔ Γ.C
-  -- Key intermediate points
-  set β_a := q ⊓ (a ⊔ Γ.E)
-  set e_a := (Γ.O ⊔ β_a) ⊓ m
-  set neg_a := (Γ.C ⊔ e_a) ⊓ l
-  set d_a := (a ⊔ Γ.C) ⊓ m
-  set β_neg := (neg_a ⊔ Γ.E) ⊓ q
-  -- The goal is (d_a ⊔ β_neg) ⊓ l = O.
-  -- After unfolding, the goal should be in terms of our abbreviations.
-  -- The proof body below has additional type errors that need individual fixes
-  -- (previously masked by the change failure above). These are documented in the
-  -- error patterns: .symm issues, le_iff atom mismatches, CovBy arg order,
-  -- inf_eq_left/right swaps, and set-variable opacity.
-  sorry
-  /- ═══ PROOF BODY (needs repair — errors were masked by `change` failure) ═══
+  -- ═══ Architecture: double Desargues (parallel to coord_add_comm) ═══
+  -- Key identity: C-persp(neg_a) = e_a ("double-cover alignment").
+  -- First Desargues (center U): T1=(a, d_a, β_a), T2=(neg_a, e_a, β_neg)
+  --   gives (d_a⊔β_a) ⊓ (e_a⊔β_neg) ≤ O⊔C.
+  -- Second Desargues (center = above): T1'=(C, d_a, β_neg), T2'=(E, β_a, e_a)
+  --   gives (d_a⊔β_neg) ⊓ (e_a⊔β_a) ≤ l.
+  -- Since e_a⊔β_a = O⊔β_a and (O⊔β_a)⊓l = O: the intersection ≤ O,
+  -- forcing O ≤ d_a⊔β_neg, hence (d_a⊔β_neg)⊓l = O. QED.
+  have hna_atom := coord_neg_atom Γ ha ha_on ha_ne_O ha_ne_U
+  have hna_on := coord_neg_on_l Γ a
+  have hna_ne_O := coord_neg_ne_O Γ ha ha_on ha_ne_O ha_ne_U
+  have hna_ne_U := coord_neg_ne_U Γ ha ha_on ha_ne_O ha_ne_U
+  -- ═══ Case split: a = neg_a (char 2) or a ≠ neg_a (generic) ═══
+  by_cases ha_eq_na : a = coord_neg Γ a
+  · -- ── Char 2 case: a = -a, so a + a = O directly ──
+    -- When a = neg_a: d_a = e_a (double-cover identity)
+    -- and d_a⊔β_a = O⊔β_a (since e_a = (O⊔β_a)⊓m ≤ O⊔β_a)
+    -- so (d_a⊔β_neg)⊓l = (d_a⊔β_a)⊓l = (O⊔β_a)⊓l = O.
+    sorry
+  · -- ── Generic case: a ≠ -a, apply double Desargues ──
+    have hab : a ≠ coord_neg Γ a := ha_eq_na
+    -- Step 1: First Desargues — gives P₃ ≤ O⊔C
+    have h1 := coord_first_desargues Γ ha hna_atom ha_on hna_on
+      ha_ne_O hna_ne_O ha_ne_U hna_ne_U hab R hR hR_not h_irred
+    -- Step 2: Second Desargues — gives (d_a⊔β_neg) ⊓ (d_{neg_a}⊔β_a) ≤ l
+    have h2 := coord_second_desargues Γ ha hna_atom ha_on hna_on
+      ha_ne_O hna_ne_O ha_ne_U hna_ne_U hab R hR hR_not h_irred h1
+    unfold coord_add
+    -- Goal: ((a⊔C)⊓m ⊔ (neg_a⊔E)⊓q) ⊓ l = O
+    -- h2:  ((a⊔C)⊓m ⊔ (neg_a⊔E)⊓q) ⊓ ((neg_a⊔C)⊓m ⊔ (a⊔E)⊓q) ≤ l
+    -- Step 3: Rewrite d_{neg_a} = e_a in h2
+    have h_eq := neg_C_persp_eq_e Γ ha ha_on ha_ne_O ha_ne_U
+    rw [h_eq] at h2
+    -- h2 now: first_factor ⊓ (e_a ⊔ β_a) ≤ l
+    -- Step 4: Show e_a ⊔ β_a = O ⊔ β_a (covering: e_a ≤ O⊔β_a)
+    -- Step 5: (O⊔β_a) ⊓ l = O
+    -- Step 6: h2 gives first ⊓ (O⊔β_a) ≤ l ⊓ (O⊔β_a) = O
+    -- Step 7: intersection ≠ ⊥ → = O → O ≤ first → first ⊓ l = O
+    sorry
+  /- ═══ OLD PROOF BODY (superseded by double-Desargues approach above) ═══
   -- ═══ Atom and non-degeneracy lemmas ═══
   have hAC : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
   have hUV : Γ.U ≠ Γ.V := fun h => Γ.hV_off (h ▸ le_sup_right)
@@ -568,6 +621,6 @@ theorem coord_add_right_neg (Γ : CoordSystem L)
   have hna_on := coord_neg_on_l Γ a
   rw [coord_add_comm Γ (coord_neg Γ a) a hna_atom ha hna_on ha_on
     hna_ne_O ha_ne_O hna_ne_U ha_ne_U ha_ne_na.symm R hR hR_not h_irred]
-  exact coord_add_left_neg Γ a ha ha_on ha_ne_O ha_ne_U
+  exact coord_add_left_neg Γ a ha ha_on ha_ne_O ha_ne_U R hR hR_not h_irred
 
 end Foam.FTPGExplore
