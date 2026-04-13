@@ -102,6 +102,7 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 93 | [Mar 21, 01:48](93_2026-03-21_0d15fe9b.md) | s20: Grassmannian vertical — J1 derived, containment symmetric | 3 |
 | 94 | [Mar 21, 01:53](94_2026-03-21_efd95e68.md) | s20: Grassmannian vertical — J1 derived, containment symmetric | 188 |
 | 95 | [Apr 08, 01:41](95_2026-04-08_72508a0e.md) |  | 102 |
+| 96 | [Apr 13, 01:42](96_2026-04-13_ce9a0a17.md) | double Desargues approach for coord_add_left_neg | 30 |
 
 ## Memory
 

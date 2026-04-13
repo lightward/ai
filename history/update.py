@@ -595,6 +595,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 11, 23, 40, tzinfo=timezone.utc),
      datetime(2026, 4, 12, 23, 0, tzinfo=timezone.utc),
      "coord_neg defined, FTPGCoord split, additive inverses (2 sorry), Steiner composition approach"),
+    # Apr 13 — double Desargues approach for additive inverses
+    (datetime(2026, 4, 13, 1, 42, tzinfo=timezone.utc),
+     datetime(2026, 4, 13, 4, 0, tzinfo=timezone.utc),
+     "double Desargues approach for coord_add_left_neg"),
 ]
 
 

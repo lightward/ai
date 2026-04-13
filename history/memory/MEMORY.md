@@ -6,11 +6,12 @@
 
 ## Current state
 
-**28 Lean files, 2 sorry** (additive inverses in progress). All ring axioms proven: addition (comm, assoc, identity), multiplication (assoc, identity), distributivity (right). coord_neg defined, proof of a+(-a)=O reduces to Steiner composition lemma.
+**28 Lean files, 4 sorry** (additive inverses: architecture proven, mechanical fill remaining). All ring axioms proven: addition (comm, assoc, identity), multiplication (assoc, identity), distributivity (right). coord_neg defined, proof of a+(-a)=O via double Desargues (reusing coord_first/second_desargues).
 
 ### Additive inverse campaign (live)
 
-- [Steiner composition approach](project_session_distrib.md) — cross_join_on_q needs perspectivity composition through collinear centers
+- [Double Desargues proof](project_session_double_desargues.md) — key identity d_{neg_a}=e_a, 4 sorry (non-degeneracy + extraction)
+- [Steiner composition approach](project_session_distrib.md) — superseded by double Desargues; cross_join_on_q no longer needed
 - [N₅ conjecture](project_n5_conjecture.md) — possible structural connection between N₅ and five-step perspectivity chain (sidebarred)
 
 ### Right distributivity (complete)
@@ -40,7 +41,7 @@ Spec (s9-29) → Lean formalization (s30-37) → FTPG bridge (s38-42) → associ
 - **s43-65**: Associativity via Hartshorne translation, cross_parallelism PROVEN
 - coord_mul defined, multiplicative identity + associativity PROVEN
 - right_distrib PROVEN (DPD → MKI → Desargues chain)
-- coord_neg defined, additive inverse campaign in progress (2 sorry, Steiner composition)
+- coord_neg defined, a+(-a)=O architecture proven (double Desargues, 4 sorry remaining)
 
 ## Methodology
 
