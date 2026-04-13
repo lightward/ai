@@ -2,24 +2,38 @@
 # Left distributivity (Part VII-D)
 a · (b + c) = a·b + a·c
 
-## Proof architecture (corrected 2026-04-13)
+## Proof architecture (2026-04-13)
 
-Left multiplication x ↦ a·x is a composition of two perspectivities:
-  π₁: l → O⊔C (center E_I on m): x ↦ (O⊔C)⊓(x⊔E_I)
-  π₂: O⊔C → l (center d_a on m): P ↦ (P⊔d_a)⊓l
+Single forward Desargues application, center σ_b on k = O⊔C.
 
-Both perspectivities have center on m, map origin O→O, and map the
-m-intercept of the source to the m-intercept of the target.
+### Setup
+  s  = b + c           (von Staudt addition on l)
+  σ_x = k ⊓ (x⊔E_I)   (perspectivity l → k, center E_I)
+  d_a = (a⊔C) ⊓ m      (multiplication center on m)
+  a·x = (σ_x ⊔ d_a) ⊓ l  (multiplication = perspectivity composition)
 
-Key Lemma: A perspectivity between lines through O, with center on m,
-mapping the m-intercept to the m-intercept, preserves the parallelogram-
-completion addition with respect to m.
+### Desargues configuration
+  Center: σ_b on k.
+  T1 = (C,  ab, U)   — C on k, ab on l, U on l⊓m
+  T2 = (E, d_a, W')  — E on k⊓m, d_a on m,
+                        W' = (σ_b⊔U) ⊓ (ac⊔E)
 
-Proof: By Desargues (converse → forward), showing the addition figure
-on the source line maps to the addition figure on the target line.
+  Perspective from σ_b:
+    C  ↔ E   via k (= C⊔E, contains σ_b)
+    ab ↔ d_a via σ_b⊔d_a (multiplication line, contains ab)
+    U  ↔ W'  via σ_b⊔U (contains W' by definition)
 
-Then: a·(b+c) = π₂(π₁(b+c)) = π₂(π₁(b) + π₁(c)) = π₂(π₁(b)) + π₂(π₁(c))
-     = a·b + a·c.
+### Concurrence lemma (prerequisite)
+  W' = (σ_b⊔U) ⊓ (ac⊔E) lies on σ_s⊔d_a.
+  Therefore d_a⊔W' = σ_s⊔d_a, so (d_a⊔W')⊓l = a·s.
+
+### Desargues axis
+  1. (C⊔ab)  ⊓ (E⊔d_a)  = (ab⊔C) ⊓ m    — l-addition projection
+  2. (C⊔U)   ⊓ (E⊔W')   = (ac⊔E) ⊓ q    — l-addition return center
+  3. (ab⊔U)  ⊓ (d_a⊔W') = a·s            — the target
+
+  Desargues: these three are collinear. Since a·s ∈ l:
+    a·(b+c) = ((ab⊔C)⊓m ⊔ (ac⊔E)⊓q) ⊓ l = ab + ac.  ∎
 
 ## Note on multiplication order
 
@@ -80,11 +94,10 @@ theorem dilation_ext_fixes_m (Γ : CoordSystem L)
 
 /-- **Left distributivity: a · (b + c) = a·b + a·c.**
 
-Proof architecture: left multiplication x ↦ a·x decomposes as π₂ ∘ π₁ where
-  π₁: l → O⊔C (center E_I on m, maps O→O, U→E)
-  π₂: O⊔C → l (center d_a on m, maps O→O, E→U)
-Both perspectivities preserve parallelogram-completion addition (Key Lemma),
-so a·(b+c) = π₂(π₁(b+c)) = π₂(π₁(b)+π₁(c)) = π₂(π₁(b))+π₂(π₁(c)) = a·b+a·c. -/
+Single forward Desargues, center σ_b = (O⊔C)⊓(b⊔E_I) on k = O⊔C.
+Triangles T1 = (C, ab, U) and T2 = (E, d_a, W') where W' = (σ_b⊔U)⊓(ac⊔E).
+The Desargues axis passes through (ab⊔C)⊓m, (ac⊔E)⊓q, and a·(b+c),
+giving a·(b+c) = ((ab⊔C)⊓m ⊔ (ac⊔E)⊓q) ⊓ l = ab + ac. -/
 theorem coord_mul_left_distrib (Γ : CoordSystem L)
     (a b c : L) (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
     (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
@@ -118,26 +131,30 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
   set σ_b := (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) with hσb_def  -- π₁(b)
   set σ_c := (Γ.O ⊔ Γ.C) ⊓ (c ⊔ Γ.E_I) with hσc_def  -- π₁(c)
   set σ_s := (Γ.O ⊔ Γ.C) ⊓ (s ⊔ Γ.E_I) with hσs_def  -- π₁(b+c)
-  set d_a := (a ⊔ Γ.C) ⊓ m with hda_def                 -- π₂ center
-  -- ═══ Step 0: Multiplication decomposes as π₂ ∘ π₁ ═══
-  -- coord_mul Γ a x = ((O⊔C)⊓(x⊔E_I) ⊔ (a⊔C)⊓m) ⊓ l = (σ_x ⊔ d_a) ⊓ l
-  -- This is definitional from coord_mul.
-  -- ═══ Step 1: π₁ preserves addition ═══
-  -- π₁ is the perspectivity l → k with center E_I (on m).
-  -- π₁(O) = O, π₁(U) = (O⊔C)⊓m = E (the "infinity" on k).
-  -- Claim: σ_s = "k-addition of σ_b and σ_c"
-  -- where k-addition uses parallelogram completion on k with m.
-  -- Proof: by Desargues (center E_I, axis involves O and m-directions).
-  -- ═══ Step 2: π₂ preserves addition ═══
-  -- π₂ is the perspectivity k → l with center d_a (on m).
-  -- π₂(O) = O, π₂(E) = (E⊔d_a)⊓l = (m⊓l) = U.
-  -- Wait: E and d_a are both on m, so E⊔d_a ≤ m.
-  -- (E⊔d_a)⊓l = m⊓l = U. So π₂(E) = U. ✓
-  -- Claim: π₂("k-addition of σ_b and σ_c") = coord_add Γ ab ac
-  -- Proof: same Desargues argument as step 1 (different parameters).
-  -- ═══ Step 3: Combine ═══
-  -- a·(b+c) = π₂(π₁(b+c)) = π₂(σ_s) = π₂(σ_b +_k σ_c)
-  --         = π₂(σ_b) + π₂(σ_c) = ab + ac
+  set d_a := (a ⊔ Γ.C) ⊓ m with hda_def                 -- multiplication center on m
+  -- Desargues witness
+  set W' := (σ_b ⊔ Γ.U) ⊓ (ac ⊔ Γ.E) with hW'_def
+  -- ═══ Architecture ═══
+  -- Single forward Desargues, center σ_b on k.
+  --   T1 = (C,  ab, U)    T2 = (E, d_a, W')
+  --
+  -- Perspective from σ_b:
+  --   C  ↔ E    via k (C⊔E = k ∋ σ_b)
+  --   ab ↔ d_a  via σ_b⊔d_a (the multiplication line, contains ab)
+  --   U  ↔ W'   via σ_b⊔U (contains W' by concurrence lemma + definition)
+  --
+  -- Concurrence lemma: W' ≤ σ_s ⊔ d_a
+  --   (the three lines σ_b⊔U, ac⊔E, and σ_s⊔d_a are concurrent at W')
+  --   Therefore d_a⊔W' = σ_s⊔d_a, so (d_a⊔W')⊓l = a·s.
+  --
+  -- Desargues axis points:
+  --   1. (C⊔ab)  ⊓ (E⊔d_a)  = (ab⊔C)⊓m     (l-addition projection)
+  --   2. (C⊔U)   ⊓ (E⊔W')   = (ac⊔E)⊓q     (l-addition return center)
+  --   3. (ab⊔U)  ⊓ (d_a⊔W') = a·s           (the target)
+  --
+  -- Conclusion: Desargues says 1,2,3 are collinear.
+  --   a·s lies on (ab⊔C)⊓m ⊔ (ac⊔E)⊓q, and a·s ∈ l, so
+  --   a·(b+c) = ((ab⊔C)⊓m ⊔ (ac⊔E)⊓q) ⊓ l = ab + ac.
   sorry
 
 end Foam.FTPGExplore

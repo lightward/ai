@@ -55,7 +55,7 @@ coord_mul: identity, zero annihilation, atom
 distributivity (right) ✓
   ↓ additive inverse via double Desargues        ── FTPGNeg (0 sorry)
 coord_neg, a + (-a) = O ✓
-  ↓ perspectivity preserves addition (2×)     ── FTPGLeftDistrib (1 sorry)
+  ↓ single Desargues (center σ_b)              ── FTPGLeftDistrib (1 sorry)
 distributivity (left)
   ↓
 division ring structure (multiplicative inverses)
@@ -182,14 +182,16 @@ Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ �
 
 **FTPGLeftDistrib.lean** — left distributivity (1 sorry, in progress)
 
-Proves a·(b+c) = a·b + a·c via two-perspectivity decomposition. Left multiplication x ↦ a·x = π₂(π₁(x)) where π₁: l→O⊔C (center E_I) and π₂: O⊔C→l (center d_a). Both perspectivities have center on m, map origin O→O, and map m-intercept to m-intercept. A perspectivity with these properties preserves parallelogram-completion addition (Desargues argument). Applied twice: a·(b+c) = π₂(π₁(b+c)) = π₂(π₁(b)+π₁(c)) = a·b + a·c.
+Proves a·(b+c) = a·b + a·c via a single forward Desargues application with center σ_b on k = O⊔C. Triangles T1=(C, ab, U) and T2=(E, d_a, W') where W' = (σ_b⊔U)⊓(ac⊔E). The Desargues axis passes through (ab⊔C)⊓m, (ac⊔E)⊓q, and a·(b+c) — the first two determine the l-addition line, and the third point on l gives a·(b+c) = ab + ac.
 
-Note: the previous approach (collineation via dilation_ext) had the multiplication order wrong — dilation_ext Γ c effects RIGHT multiplication x↦x·c, not left multiplication.
+Prerequisite: a concurrence lemma showing W' lies on σ_s⊔d_a (verified generically in coordinates, lattice proof pending).
+
+Note: dilation_ext Γ c effects RIGHT multiplication x↦x·c, not left. Left multiplication is NOT a collineation — this is why left distrib requires a different proof structure from right distrib.
 
 | layer | key declarations |
 |---|---|
 | m-fixation | `dilation_ext_fixes_m` (PROVEN — line_direction + modular_intersection) |
-| left distributivity | `coord_mul_left_distrib` (1 sorry — perspectivity-preserves-addition + Desargues) |
+| left distributivity | `coord_mul_left_distrib` (1 sorry — single Desargues center σ_b + concurrence lemma) |
 
 ### The deductive chain (from P² = P)
 
