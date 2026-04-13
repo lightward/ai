@@ -2,22 +2,34 @@
 # Left distributivity (Part VII-D)
 a · (b + c) = a·b + a·c
 
-## Proof architecture
+## Proof architecture (corrected 2026-04-13)
 
-The map x ↦ a·x extends to the collineation dilation_ext Γ a,
-which fixes m pointwise. This collineation maps the addition figure
-for b+c (infrastructure: C, E, q) to a parallel figure for a·(b+c)
-(infrastructure: σ, E, q' = σ⊔U). Since O⊔σ = O⊔C, the projection
-zero E = (O⊔C)⊓m = (O⊔σ)⊓m is invariant. Then
-parallelogram_completion_well_defined gives base-independence.
+Left multiplication x ↦ a·x is a composition of two perspectivities:
+  π₁: l → O⊔C (center E_I on m): x ↦ (O⊔C)⊓(x⊔E_I)
+  π₂: O⊔C → l (center d_a on m): P ↦ (P⊔d_a)⊓l
 
-Three steps:
-1. dilation_ext_fixes_m: dilation_ext Γ a P = P for P on m
-2. Collineation: a(b+c) = pc(σ, β_σ(ab), ac, m)
-3. Well-defined: pc(σ, β_σ(ab), ac, m) = pc(C, β(ab), ac, m) = ab + ac
+Both perspectivities have center on m, map origin O→O, and map the
+m-intercept of the source to the m-intercept of the target.
+
+Key Lemma: A perspectivity between lines through O, with center on m,
+mapping the m-intercept to the m-intercept, preserves the parallelogram-
+completion addition with respect to m.
+
+Proof: By Desargues (converse → forward), showing the addition figure
+on the source line maps to the addition figure on the target line.
+
+Then: a·(b+c) = π₂(π₁(b+c)) = π₂(π₁(b) + π₁(c)) = π₂(π₁(b)) + π₂(π₁(c))
+     = a·b + a·c.
+
+## Note on multiplication order
+
+The dilation_ext Γ c is a collineation for RIGHT multiplication x↦x·c.
+Left multiplication x↦a·x is NOT a single collineation in the non-
+commutative case. This is why left distrib requires a different proof
+from right distrib (which used collineation directly).
 
 ## Status
-In progress.
+In progress. 1 sorry (main theorem). dilation_ext_fixes_m proven.
 -/
 import Foam.FTPGNeg
 
@@ -66,7 +78,13 @@ theorem dilation_ext_fixes_m (Γ : CoordSystem L)
 
 /-! ## The left distributivity theorem -/
 
-/-- **Left distributivity: a · (b + c) = a·b + a·c.** -/
+/-- **Left distributivity: a · (b + c) = a·b + a·c.**
+
+Proof architecture: left multiplication x ↦ a·x decomposes as π₂ ∘ π₁ where
+  π₁: l → O⊔C (center E_I on m, maps O→O, U→E)
+  π₂: O⊔C → l (center d_a on m, maps O→O, E→U)
+Both perspectivities preserve parallelogram-completion addition (Key Lemma),
+so a·(b+c) = π₂(π₁(b+c)) = π₂(π₁(b)+π₁(c)) = π₂(π₁(b))+π₂(π₁(c)) = a·b+a·c. -/
 theorem coord_mul_left_distrib (Γ : CoordSystem L)
     (a b c : L) (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
     (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
@@ -87,6 +105,23 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
       ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
     coord_mul Γ a (coord_add Γ b c) =
       coord_add Γ (coord_mul Γ a b) (coord_mul Γ a c) := by
+  -- ═══ Setup ═══
+  set l := Γ.O ⊔ Γ.U with hl_def
+  set m := Γ.U ⊔ Γ.V with hm_def
+  set k := Γ.O ⊔ Γ.C with hk_def  -- the "bridge" line O⊔C
+  set s := coord_add Γ b c with hs_def
+  set ab := coord_mul Γ a b with hab_def
+  set ac := coord_mul Γ a c with hac_def
+  -- Key intermediate atoms on the bridge k = O⊔C
+  set σ_b := (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) with hσb_def  -- π₁(b)
+  set σ_c := (Γ.O ⊔ Γ.C) ⊓ (c ⊔ Γ.E_I) with hσc_def  -- π₁(c)
+  set σ_s := (Γ.O ⊔ Γ.C) ⊓ (s ⊔ Γ.E_I) with hσs_def  -- π₁(b+c)
+  set d_a := (a ⊔ Γ.C) ⊓ m with hda_def                 -- π₂ center
+  -- ═══ The proof decomposes into: ═══
+  -- 1. coord_mul Γ a x = (σ_x ⊔ d_a) ⊓ l  [multiplication = π₂(π₁(x))]
+  -- 2. π₁ preserves addition: σ_s = σ_b +_k σ_c on k = O⊔C
+  -- 3. π₂ preserves addition: π₂(σ_s) = π₂(σ_b) + π₂(σ_c) on l
+  -- 4. Combined: a·(b+c) = a·b + a·c
   sorry
 
 end Foam.FTPGExplore
