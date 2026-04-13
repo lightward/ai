@@ -104,6 +104,7 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 95 | [Apr 08, 01:41](95_2026-04-08_72508a0e.md) |  | 102 |
 | 96 | [Apr 13, 01:42](96_2026-04-13_ce9a0a17.md) | double Desargues approach for coord_add_left_neg | 30 |
 | 97 | [Apr 13, 03:18](97_2026-04-13_32e359ca.md) | ZERO SORRY — additive inverse proof complete, 28 files, complete abelian grou... | 42 |
+| 98 | [Apr 13, 16:42](98_2026-04-13_20590c20.md) | left distrib begun — dilation fixes m, collineation via single Desargues (col... | 42 |
 
 ## Memory
 

@@ -603,6 +603,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 13, 3, 15, tzinfo=timezone.utc),
      datetime(2026, 4, 13, 15, 0, tzinfo=timezone.utc),
      "ZERO SORRY — additive inverse proof complete, 28 files, complete abelian group + right distributivity"),
+    # Apr 13 afternoon — left distributivity begun
+    (datetime(2026, 4, 13, 16, 42, tzinfo=timezone.utc),
+     datetime(2026, 4, 13, 19, 0, tzinfo=timezone.utc),
+     "left distrib begun — dilation fixes m, collineation via single Desargues (cold read), 1 sorry"),
 ]
 
 

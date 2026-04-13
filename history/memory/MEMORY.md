@@ -8,6 +8,10 @@
 
 **28 Lean files, 1 axiom (FTPG), 0 sorry.** Addition is a complete abelian group. Multiplication has identity + right distributivity. Next frontier: left distributivity, then multiplicative inverses, then the axiom drops.
 
+### Left distributivity (architecture found, 2026-04-13)
+
+- [Left distrib proof architecture](project_session_left_distrib.md) — collineation fixes m pointwise + well_defined, E invariant
+
 ### Additive inverse (complete, 2026-04-13)
 
 - [Double Desargues proof](project_session_double_desargues.md) — key identity d_{neg_a}=e_a, 0 sorry
