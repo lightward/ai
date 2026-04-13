@@ -153,8 +153,7 @@ private theorem EC_inf_l (Γ : CoordSystem L) :
 
 -- (d_a ⊔ C) ⊓ l = a: the C-perspectivity from m to l sends d_a back to a.
 private theorem d_a_persp_back (Γ : CoordSystem L)
-    {a : L} (ha : IsAtom a) (ha_on : a ≤ Γ.O ⊔ Γ.U)
-    (ha_ne_O : a ≠ Γ.O) (ha_ne_U : a ≠ Γ.U) :
+    {a : L} (ha : IsAtom a) (ha_on : a ≤ Γ.O ⊔ Γ.U) :
     ((a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) = a := by
   -- d_a ⊔ C = a ⊔ C by the covering argument.
   have hAC : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
@@ -514,7 +513,7 @@ theorem coord_add_left_neg (Γ : CoordSystem L)
     have hd_not_l : ¬ (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ≤ Γ.O ⊔ Γ.U := by
       intro h
       have hd_eq_U := Γ.atom_on_both_eq_U hd_atom h inf_le_right
-      have := d_a_persp_back Γ ha ha_on ha_ne_O ha_ne_U
+      have := d_a_persp_back Γ ha ha_on
       rw [hd_eq_U, show (Γ.U ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) =
           (Γ.O ⊔ Γ.U) ⊓ (Γ.U ⊔ Γ.C) from inf_comm _ _] at this
       have hlq : (Γ.O ⊔ Γ.U) ⊓ (Γ.U ⊔ Γ.C) = Γ.U := by
