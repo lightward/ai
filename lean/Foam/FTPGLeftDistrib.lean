@@ -343,7 +343,67 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
         (inf_sup_of_atom_not_le hR hR_not hU_π ▸ le_inf h hU'_le)).resolve_left
         hU'_atom.1)
     -- Axis-threading properties (all sorry, to be filled)
-    have hE'_ne_E : E' ≠ Γ.E := by sorry
+    have hE'_ne_E : E' ≠ Γ.E := by
+      intro h_eq
+      -- E ≤ s₁₂ ⊔ U' (from E = E' ≤ s₁₂ ⊔ U')
+      have hE_le_s₁₂U' : Γ.E ≤ s₁₂ ⊔ U' := h_eq ▸ (inf_le_left : E' ≤ s₁₂ ⊔ U')
+      -- U' ⊓ m = ⊥
+      have hU'_inf_m : U' ⊓ m = ⊥ :=
+        (hU'_atom.le_iff.mp inf_le_left).resolve_right
+          (fun h => hU'_not_π (h ▸ inf_le_right |>.trans hm_π))
+      -- (s₁₂ ⊔ U') ⊓ m = s₁₂ (modular law: s₁₂ ≤ m)
+      have hproj : (s₁₂ ⊔ U') ⊓ m = s₁₂ := by
+        calc (s₁₂ ⊔ U') ⊓ m = s₁₂ ⊔ U' ⊓ m := sup_inf_assoc_of_le U' inf_le_right
+          _ = s₁₂ := by rw [hU'_inf_m]; simp
+      -- E ≤ m, E ≤ s₁₂ ⊔ U' → E ≤ (s₁₂ ⊔ U') ⊓ m = s₁₂
+      have hE_le_s₁₂ : Γ.E ≤ s₁₂ := hproj ▸ le_inf hE_le_s₁₂U' hE_m
+      -- E ≤ σ_b ⊔ ac (from E ≤ s₁₂ ≤ σ_b ⊔ ac)
+      have hE_le_σbac : Γ.E ≤ σ_b ⊔ ac := hE_le_s₁₂.trans inf_le_left
+      -- k ⊓ (σ_b ⊔ ac) = σ_b (modular: σ_b ≤ k, ac ⊓ k = ⊥)
+      have hac_atom := coord_mul_atom Γ a c ha hc ha_on hc_on ha_ne_O hc_ne_O ha_ne_U hc_ne_U
+      have hac_not_k : ¬ ac ≤ k := by
+        intro h_le
+        have hkl : k ⊓ l = Γ.O := by
+          rw [inf_comm]
+          exact modular_intersection Γ.hO Γ.hU Γ.hC Γ.hOU
+            (fun h => Γ.hC_not_l (h ▸ le_sup_left))
+            (fun h => Γ.hC_not_l (h.symm.le.trans le_sup_right))
+            Γ.hC_not_l
+        exact hac_ne_O ((Γ.hO.le_iff.mp (hkl ▸ le_inf h_le hac_l)).resolve_left
+          hac_atom.1)
+      have hac_inf_k : ac ⊓ k = ⊥ := by
+        rcases hac_atom.le_iff.mp inf_le_left with h | h
+        · exact h
+        · exfalso; exact hac_not_k (inf_eq_left.mp h)
+      have hE_le_σb : Γ.E ≤ σ_b := by
+        -- (σ_b ⊔ ac) ⊓ k = σ_b (modular law)
+        have hmod : (σ_b ⊔ ac) ⊓ k = σ_b := by
+          have h1 := sup_inf_assoc_of_le ac hσb_k
+          rw [hac_inf_k] at h1; simp at h1; exact h1
+        calc Γ.E ≤ (σ_b ⊔ ac) ⊓ k := le_inf hE_le_σbac hE_k
+          _ = σ_b := hmod
+      -- E ≤ σ_b, so σ_b ≤ m (from E ≤ m, and E,σ_b atoms → E = σ_b).
+      -- σ_b ≤ (b⊔E_I) ⊓ m = E_I (modular, b ∉ m). σ_b ≤ k ∧ σ_b ≤ E_I → E_I ≤ k.
+      -- But E_I ∉ k (hE_I_not_OC). Contradiction.
+      -- For E ≤ σ_b → σ_b ≤ m: need σ_b ≥ E ≥ ⊥ and both atoms → σ_b = E → σ_b ≤ m.
+      -- Use: E ≤ σ_b ≤ b ⊔ E_I. Also E ≤ m. So E ≤ (b ⊔ E_I) ⊓ m = E_I.
+      -- But E ≠ E_I (if E = E_I then E_I ≤ k, contradicting hE_I_not_OC).
+      -- Actually simpler: we have E ≤ σ_b and σ_b ≤ b ⊔ E_I and σ_b ≤ k.
+      -- So E ≤ b ⊔ E_I. E ≤ m. (b ⊔ E_I) ⊓ m = E_I
+      -- (modular: E_I ≤ m, b ∉ m). So E ≤ E_I.
+      -- E = E_I (atoms). E_I ≤ k (from E ≤ k). But hE_I_not_OC. Done.
+      have hb_inf_m : b ⊓ m = ⊥ :=
+        (hb.le_iff.mp inf_le_left).resolve_right
+          (fun h => hb_ne_U (Γ.atom_on_both_eq_U hb hb_on (h ▸ inf_le_right)))
+      have hbEI_inf_m : (b ⊔ Γ.E_I) ⊓ m = Γ.E_I := by
+        rw [sup_comm b Γ.E_I]
+        have h1 := sup_inf_assoc_of_le b Γ.hE_I_on_m
+        rw [h1, hb_inf_m]; simp
+      have hE_le_bEI : Γ.E ≤ b ⊔ Γ.E_I := hE_le_σb.trans inf_le_right
+      have hE_le_EI : Γ.E ≤ Γ.E_I := hbEI_inf_m ▸ le_inf hE_le_bEI hE_m
+      have hE_eq_EI : Γ.E = Γ.E_I :=
+        (Γ.hE_I_atom.le_iff.mp hE_le_EI).resolve_left Γ.hE_atom.1
+      exact Γ.hE_I_not_OC (hE_eq_EI ▸ hE_k)
     have hE'_atom : IsAtom E' := by sorry
     have hE'_not_π : ¬ E' ≤ π := by
       intro h; exact hE'_ne_E ((Γ.hE_atom.le_iff.mp
