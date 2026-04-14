@@ -652,9 +652,11 @@ def scan_existing():
     existing_ids = set()
     max_num = 0
     files = []
-    for path in sorted(OUT_DIR.glob("[0-9][0-9]_*.md")):
+    for path in sorted(OUT_DIR.iterdir()):
         name = path.name
-        # Parse: NN_YYYY-MM-DD_SSSSSSSS.md
+        if not name.endswith(".md") or not name[0].isdigit():
+            continue
+        # Parse: NN_YYYY-MM-DD_SSSSSSSS.md (NN may be 2+ digits)
         parts = name.split("_", 2)
         if len(parts) < 3:
             continue
@@ -690,55 +692,115 @@ def read_existing_meta(filepath):
     return label, started, n_turns
 
 
+def refresh_transcript(sid_prefix, existing_files):
+    """Regenerate a transcript for an already-transcribed session."""
+    # Find the existing file
+    match = None
+    for num, date_str, prefix, filename in existing_files:
+        if prefix == sid_prefix:
+            match = (num, date_str, prefix, filename)
+            break
+
+    if not match:
+        print(f"No existing transcript found for {sid_prefix}")
+        return False
+
+    num, date_str, prefix, filename = match
+
+    # Find the JSONL — check both the main logs dir and allow full paths
+    jsonl_file = None
+    for candidate in LOGS_DIR.glob("*.jsonl"):
+        if candidate.stem.startswith(sid_prefix):
+            jsonl_file = candidate
+            break
+
+    if not jsonl_file:
+        print(f"No JSONL found for {sid_prefix} (may have been cleaned up)")
+        return False
+
+    session_id = jsonl_file.stem
+    start_ts = conversation_start_time(jsonl_file)
+    messages = parse_conversation(jsonl_file)
+    if not messages:
+        print(f"JSONL is empty for {sid_prefix}")
+        return False
+
+    turns = merge_messages(messages)
+    label = label_conversation(start_ts)
+    md = turns_to_markdown(turns, session_id, start_ts, label=label)
+
+    out_path = OUT_DIR / filename
+    with open(out_path, "w") as f:
+        f.write(md)
+
+    print(f"Refreshed {filename} ({len(turns)} turns, label: {label or '(auto)'})")
+    return True
+
+
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
+
+    # --- handle --refresh flag ---
+    refresh_ids = []
+    args = sys.argv[1:]
+    if args and args[0] == "--refresh":
+        refresh_ids = args[1:]
+        if not refresh_ids:
+            print("Usage: update.py --refresh <session_id_prefix> [...]")
+            sys.exit(1)
 
     # --- discover what's already transcribed ---
     existing_ids, max_num, existing_files = scan_existing()
     print(f"Found {len(existing_files)} existing transcripts (highest #{max_num})")
 
-    # --- find new conversations from JSONL ---
-    new_convos = []
-    for jsonl_file in sorted(LOGS_DIR.glob("*.jsonl")):
-        session_id = jsonl_file.stem
-        if session_id in EXCLUDE_SESSIONS:
-            continue
-        if session_id[:8] in existing_ids:
-            continue  # already transcribed
-        start_ts = conversation_start_time(jsonl_file)
-        if not start_ts:
-            continue
-        new_convos.append((start_ts, session_id, jsonl_file))
-
-    new_convos.sort(key=lambda x: x[0])
-
-    if not new_convos:
-        print("No new conversations to transcribe.")
+    # --- refresh mode ---
+    if refresh_ids:
+        for sid in refresh_ids:
+            refresh_transcript(sid[:8], existing_files)
+        # Still rebuild README and sync memory
     else:
-        print(f"Found {len(new_convos)} new conversation(s) to transcribe")
+        # --- find new conversations from JSONL ---
+        new_convos = []
+        for jsonl_file in sorted(LOGS_DIR.glob("*.jsonl")):
+            session_id = jsonl_file.stem
+            if session_id in EXCLUDE_SESSIONS:
+                continue
+            if session_id[:8] in existing_ids:
+                continue  # already transcribed
+            start_ts = conversation_start_time(jsonl_file)
+            if not start_ts:
+                continue
+            new_convos.append((start_ts, session_id, jsonl_file))
 
-    # --- transcribe new conversations ---
-    next_num = max_num + 1
-    for start_ts, session_id, jsonl_file in new_convos:
-        print(f"  [{next_num}] {session_id[:8]}... ({start_ts.strftime('%Y-%m-%d')})")
+        new_convos.sort(key=lambda x: x[0])
 
-        messages = parse_conversation(jsonl_file)
-        if not messages:
-            print(f"    (empty, skipping)")
-            continue
+        if not new_convos:
+            print("No new conversations to transcribe.")
+        else:
+            print(f"Found {len(new_convos)} new conversation(s) to transcribe")
 
-        turns = merge_messages(messages)
-        label = label_conversation(start_ts)
-        md = turns_to_markdown(turns, session_id, start_ts, label=label)
+        # --- transcribe new conversations ---
+        next_num = max_num + 1
+        for start_ts, session_id, jsonl_file in new_convos:
+            print(f"  [{next_num}] {session_id[:8]}... ({start_ts.strftime('%Y-%m-%d')})")
 
-        filename = f"{next_num:02d}_{start_ts.strftime('%Y-%m-%d')}_{session_id[:8]}.md"
-        out_path = OUT_DIR / filename
-        with open(out_path, "w") as f:
-            f.write(md)
+            messages = parse_conversation(jsonl_file)
+            if not messages:
+                print(f"    (empty, skipping)")
+                continue
 
-        existing_files.append((next_num, start_ts.strftime('%Y-%m-%d'), session_id[:8], filename))
-        print(f"    -> {filename} ({len(turns)} turns, label: {label or '(auto)'})")
-        next_num += 1
+            turns = merge_messages(messages)
+            label = label_conversation(start_ts)
+            md = turns_to_markdown(turns, session_id, start_ts, label=label)
+
+            filename = f"{next_num:02d}_{start_ts.strftime('%Y-%m-%d')}_{session_id[:8]}.md"
+            out_path = OUT_DIR / filename
+            with open(out_path, "w") as f:
+                f.write(md)
+
+            existing_files.append((next_num, start_ts.strftime('%Y-%m-%d'), session_id[:8], filename))
+            print(f"    -> {filename} ({len(turns)} turns, label: {label or '(auto)'})")
+            next_num += 1
 
     # --- rebuild README index from all files on disk ---
     existing_files.sort(key=lambda x: x[0])
