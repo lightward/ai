@@ -1,42 +1,49 @@
 ---
-name: Left distributivity proof — circle broken, 2 sorry
-description: Left distrib decomposed into two independent pieces (Desargues + concurrence), combination PROVEN. Circle broke via d_a⊔W' having two independently computable ends.
+name: Left distributivity proof — converse Desargues via 3D lift
+description: Left distrib via converse planar Desargues (lift to 3D using R, apply converse, project back). desargues_converse_nonplanar PROVEN. 5 mechanical sorry remain.
 type: project
-originSessionId: 454b680c-3dcb-401d-bcac-d309b89731de
+originSessionId: 303c75fd-1331-4221-a963-bc2a75628ca5
 ---
-Left distrib: a·(b+c) = a·b + a·c. Circle broken 2026-04-14 (session 101).
+Left distrib: a·(b+c) = a·b + a·c. Architecture found session 101 (circle broken), proof path found session 102 (converse Desargues).
 
-## The decomposition that breaks the circle
+## Architecture (session 102, 2026-04-14)
 
-The circle was: concurrence W'≤σ_s⊔d_a ↔ left distrib. Broke by recognizing the line d_a⊔W' has two independently computable ends:
+Two Desargues applications:
 
-**Piece 1 (Forward Desargues, center σ_b):**
-- T1=(C,ab,U), T2=(E,d_a,W') where W'=(σ_b⊔U)⊓(ac⊔E)
-- Computes l-intercept: (d_a⊔W')⊓l = ab+ac
+**Piece 1 — Converse planar Desargues (the concurrence):**
+- T1=(σ_b, ac, σ_s) spans π, T2=(U, E, d_a) on m (degenerate)
+- Side-intersections trivially on m
+- Lift T2 off π using R → T2'=(U', E', da') outside π
+- `desargues_converse_nonplanar` (PROVEN, 0 sorry) → lifted vertex-joins concurrent at O'
+- Project: W = (R⊔O')⊓π lands on σ_b⊔U, ac⊔E, AND σ_s⊔d_a
+- Conclusion: W' ≤ σ_s⊔d_a
 
-**Piece 2 (Concurrence — lattice computation):**
-- W' ≤ σ_s⊔d_a (the "density" argument)
-- Computes: d_a⊔W' = σ_s⊔d_a, so (d_a⊔W')⊓l = a·s
+**Piece 2 — Forward Desargues** (center σ_b, T1=(C,ab,U), T2=(E,d_a,W')): axis = addition line, third axis point = a·s.
 
-**Combination (PROVEN in Lean, type-checked):**
-- a·s ≤ addition_line ⊓ l = ab+ac → a·(b+c) = ab+ac
+**Combination** (PROVEN, 0 sorry): a·s on addition line → a·s = ab+ac.
 
-## Current state: 2 sorry
+## desargues_converse_nonplanar (PROVEN)
 
-1. `h_concurrence`: W' ≤ σ_s⊔d_a — the novel piece
-2. `h_desargues_conclusion`: a·s on addition line — forward Desargues (~500 lines mechanical)
+Non-planar converse Desargues: if T1 in π₁, T2 in π₂ ≠ π₁ have sides meeting on a common axis, vertex-joins are concurrent.
 
-## Key insight: "degenerate converse Desargues" is a signpost
+Proof: auxiliary planes ρ₁₂=a₁⊔a₂⊔b₁, ρ₁₃=a₁⊔a₃⊔b₁, ρ₂₃=a₂⊔a₃⊔b₂. Axis point forces missing b vertex into each ρ. Then O=(a₁⊔b₁)⊓(a₂⊔b₂) ∈ ρ₂₃⊓ρ₁₃ = a₃⊔b₃. Key step: CovBy + modular law for the plane intersection.
 
-Same pattern as right distrib (session 89→90): converse Desargues with T2 on m points at the right CONCLUSION but names the wrong TOOL. Resolution: forward Desargues on non-degenerate triangles.
+## Why R is essential
 
-The "density" metaphor: W' is already at the right density — the configuration is self-consistent because addition and multiplication are built from the same lattice. The coordinate proof is the trivial identity γ(1-α)+αγ = γ.
+Plane can't prove its own converse Desargues when T2 is degenerate (on m). 3D lift using R makes T2' non-degenerate. Projection (R⊔O')⊓π = x (modular law) brings result back. Same pattern as desargues_planar but reversed.
 
-## How we got here (session 101)
+## Status: 5 sorry (all mechanical)
 
-1. Read session 58 (assoc, circle→translations) and session 100 (left distrib, single Desargues, circle)
-2. Recognized same circle pattern; tried every framework (translation conjugation, routing through q, FTPG, collineation extension)
-3. Found degenerate converse Desargues: T1=(σ_b,ac,σ_s) spanning π, T2=(U,E,d_a) on m
-4. Isaac: "you don't float by being weightless, you float by being the same density as the ambient medium"
-5. History grep found sessions 89-90: converse Desargues was signpost for right distrib too
-6. Decomposition crystallized: l-intercept (Desargues) + k-intercept (concurrence) = both ends of d_a⊔W'
+1. `hda_atom` — d_a is atom (perspect_atom)
+2. `h_converse` — instantiate desargues_converse_nonplanar (~30 non-degeneracy hypotheses)
+3. `hW_atom` — (R⊔O')⊓π is atom (rank argument)
+4. `hW'_atom` — W' is atom (lines_meet_if_coplanar)
+5. `h_desargues_conclusion` — forward Desargues (~500 lines, same pattern as FTPGDistrib)
+
+## History
+
+Session 101: found decomposition (Desargues + concurrence), combination proven. h_concurrence labeled "density argument (novel)" — no proof path.
+
+Session 102: h_concurrence identified as converse Desargues. Attempted pure lattice computation (failed — everything generates π). Isaac's questions relocated the approach: "can something further back set this up?" → recognized need for 3D lift (R). Converse Desargues proven via ρ-planes. Projection chain complete.
+
+The "converse Desargues is signpost not destination" from session 101 was PARTIALLY correct: converse Desargues was wrong for the WHOLE proof but RIGHT for the concurrence piece. The signpost was pointing at the right theorem after all — just needed the 3D lift to make it work for the degenerate case.

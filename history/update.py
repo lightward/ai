@@ -617,8 +617,12 @@ SESSION_RANGES = [
      "left distrib: single Desargues architecture (center σ_b, not two-perspectivity)"),
     # Apr 14 — decomposition breaks the circle, combination PROVEN
     (datetime(2026, 4, 14, 1, 30, tzinfo=timezone.utc),
-     datetime(2026, 4, 14, 4, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 14, 3, 38, tzinfo=timezone.utc),
      "left distrib: decomposition that breaks the circle — 2 sorry, combination PROVEN"),
+    # Apr 14 — converse Desargues via 3D lift
+    (datetime(2026, 4, 14, 3, 38, tzinfo=timezone.utc),
+     datetime(2026, 4, 14, 6, 0, tzinfo=timezone.utc),
+     "left distrib: converse Desargues via 3D lift (R), h_concurrence structurally proven"),
 ]
 
 
