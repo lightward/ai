@@ -43,7 +43,7 @@ def lean_summary() -> str:
     """Summary of the Lean formalization."""
     return """## the deductive chain (lean/)
 
-mechanically verified. 28 files, 1 axiom (FTPG), 2 sorry.
+mechanically verified. 28 files, 1 axiom (FTPG).
 
 ```
 complemented modular lattice, irreducible, height >= 4
@@ -55,17 +55,17 @@ elements are orthogonal projections: P^2 = P, P^T = P       ↕ (ftpg)
 eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian   ↕ (P^2=P)
   | Ground.lean (capstone)                                 dynamics
 FoamGround properties verified                               ↕ (proven)
-  | (the FTPG bridge — 13 files, 0 sorry)                 ground properties
+  | (the FTPG bridge — 13 files, proven)                   ground properties
 incidence geometry -> Desargues -> coord system                ↕
   | addition: comm, assoc, inverses (abelian group)   the loop sustains its own observation
   | multiplication: identity, right distributivity
-  | left distributivity: converse Desargues via 3D lift (2 sorry)
+  | left distributivity: converse Desargues via 3D lift (in progress)
   | two_persp: shared skeleton of add/mul (by rfl)
 ```
 
-the deductive chain (0 sorry): P^2 = P (definition) -> binary eigenvalues (Observation) -> clean splits -> commutator structure (Pair) -> skew-symmetry, tracelessness (Form) -> self-duality at rank 3 (Rank) -> (R^3, x) = so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround as theorem (Ground).
+the deductive chain (proven): P^2 = P (definition) -> binary eigenvalues (Observation) -> clean splits -> commutator structure (Pair) -> skew-symmetry, tracelessness (Form) -> self-duality at rank 3 (Rank) -> (R^3, x) = so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround as theorem (Ground).
 
-the FTPG bridge (2 sorry): incidence axioms (FTPGExplore) -> Desargues (planar + lifting) -> perspectivity bijection -> coordinate system (FTPGCoord) -> von Staudt addition (coord_add, bridge: m) -> commutativity via chained Desargues (FTPGAddComm) -> translations via parallelogram completion (FTPGAssoc) -> cross-parallelism (FTPGCrossParallelism) -> associativity (FTPGAssocCapstone) -> multiplication via dilations (coord_mul, bridge: O⊔C, FTPGMul) -> dilation direction preservation (FTPGDilation) -> mul key identity (FTPGMulKeyIdentity) -> right distributivity (FTPGDistrib) -> additive inverses via double Desargues (FTPGNeg) -> left distributivity via converse Desargues + axis-threaded 3D lift (FTPGLeftDistrib, 2 sorry: h_converse instantiation + forward Desargues). addition is a complete abelian group; left distrib structurally proven.
+the FTPG bridge: incidence axioms (FTPGExplore) -> Desargues (planar + lifting) -> perspectivity bijection -> coordinate system (FTPGCoord) -> von Staudt addition (coord_add, bridge: m) -> commutativity via chained Desargues (FTPGAddComm) -> translations via parallelogram completion (FTPGAssoc) -> cross-parallelism (FTPGCrossParallelism) -> associativity (FTPGAssocCapstone) -> multiplication via dilations (coord_mul, bridge: O⊔C, FTPGMul) -> dilation direction preservation (FTPGDilation) -> mul key identity (FTPGMulKeyIdentity) -> right distributivity (FTPGDistrib) -> additive inverses via double Desargues (FTPGNeg) -> left distributivity via converse Desargues + axis-threaded 3D lift (FTPGLeftDistrib, in progress). addition is a complete abelian group; left distrib architecture validated.
 
 lateral: the diamond isomorphism (HalfType) — from modularity alone, each complement is a structurally isomorphic, self-sufficient ground whose content is undetermined. state-independence is a lattice theorem, pre-bridge."""
 

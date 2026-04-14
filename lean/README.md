@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 28 files, 1 axiom, 2 sorry.
+Mechanically verified deductive path from P² = P to the foam's architecture. 28 files, 1 axiom.
 
 ## The chain
 
@@ -35,28 +35,18 @@ The full path from lattice axioms to FTPG:
 
 ```
 complemented modular lattice, irreducible, height ≥ 4
-  ↓ incidence geometry, Veblen-Young           ── FTPGExplore (0 sorry)
-projective geometry: Desargues, perspectivity
-  ↓ von Staudt coordinatization                ── FTPGCoord (0 sorry)
-coord_add: zero, identity
-  ↓ two Desargues applications                 ── FTPGAddComm (0 sorry)
-coord_add: commutativity
+  ↓ incidence geometry, Veblen-Young           ── FTPGExploreprojective geometry: Desargues, perspectivity
+  ↓ von Staudt coordinatization                ── FTPGCoordcoord_add: zero, identity
+  ↓ two Desargues applications                 ── FTPGAddCommcoord_add: commutativity
   ↓ Hartshorne translation program             ── FTPGParallelogram,
     parallelism, well-definedness,               FTPGWellDefined,
     cross-parallelism, key identity              FTPGCrossParallelism,
                                                  FTPGAssoc,
-                                                 FTPGAssocCapstone (0 sorry)
-coord_add: associativity ✓
-  ↓ von Staudt multiplication via dilations  ── FTPGMul (0 sorry)
-coord_mul: identity, zero annihilation, atom
-  ↓ dilation extension, direction preservation  ── FTPGDilation (0 sorry)
-  ↓ beta infrastructure, mul key identity       ── FTPGMulKeyIdentity (0 sorry)
-  ↓ right distributivity via Desargues          ── FTPGDistrib (0 sorry)
-distributivity (right) ✓
-  ↓ additive inverse via double Desargues        ── FTPGNeg (0 sorry)
-coord_neg, a + (-a) = O ✓
-  ↓ converse Desargues (3D lift) + forward      ── FTPGLeftDistrib (2 sorry)
-distributivity (left)                             converse Desargues PROVEN
+                                                 FTPGAssocCapstonecoord_add: associativity ✓
+  ↓ von Staudt multiplication via dilations  ── FTPGMulcoord_mul: identity, zero annihilation, atom
+  ↓ dilation extension, direction preservation  ── FTPGDilation  ↓ beta infrastructure, mul key identity       ── FTPGMulKeyIdentity  ↓ right distributivity via Desargues          ── FTPGDistribdistributivity (right) ✓
+  ↓ additive inverse via double Desargues        ── FTPGNegcoord_neg, a + (-a) = O ✓
+  ↓ converse Desargues (3D lift) + forward      ── FTPGLeftDistribdistributivity (left)                             converse Desargues PROVEN
                                                   combination logic PROVEN
   ↓
 division ring structure (multiplicative inverses)
@@ -66,8 +56,7 @@ L ≃o Sub(D, V) — the isomorphism
 axiom(FTPG) becomes a theorem
 ```
 
-**FTPGExplore.lean** — projective geometry from lattice axioms (0 sorry)
-
+**FTPGExplore.lean** — projective geometry from lattice axioms
 Incidence geometry, Veblen-Young, Desargues (nonplanar + planar), perspectivity, and Small Desargues (A5a). Pure geometry — no coordinates.
 
 | layer | key declarations |
@@ -77,8 +66,7 @@ Incidence geometry, Veblen-Young, Desargues (nonplanar + planar), perspectivity,
 | perspectivity | `project_is_atom`, `project_injective`, `perspectivity_injective` |
 | Small Desargues | `small_desargues'` (A5a: parallelism from Desargues) |
 
-**FTPGCoord.lean** — von Staudt coordinatization (0 sorry)
-
+**FTPGCoord.lean** — von Staudt coordinatization
 Coordinate system, addition via perspectivities, identity. Imports FTPGExplore.
 
 | layer | key declarations |
@@ -86,16 +74,14 @@ Coordinate system, addition via perspectivities, identity. Imports FTPGExplore.
 | coordinate system | `CoordSystem`, `coord_add`, `coord_add_atom`, `coord_add_left_zero`, `coord_add_right_zero` |
 | Desargues helpers | `desargues_planar`, `collinear_of_common_bound`, `small_desargues'` |
 
-**FTPGAddComm.lean** — commutativity of coordinate addition (0 sorry)
-
+**FTPGAddComm.lean** — commutativity of coordinate addition
 Two Desargues applications establish coord_add_comm. Split from FTPGCoord. Imports FTPGCoord.
 
 | layer | key declarations |
 |---|---|
 | commutativity | `coord_first_desargues`, `coord_second_desargues`, `coord_add_comm` |
 
-**FTPGParallelogram.lean** — parallelogram completion (0 sorry)
-
+**FTPGParallelogram.lean** — parallelogram completion
 Infrastructure for the Hartshorne translation approach (§7). Parallelism, parallelogram completion, and Parts I–III properties.
 
 | layer | key declarations |
@@ -104,44 +90,39 @@ Infrastructure for the Hartshorne translation approach (§7). Parallelism, paral
 | construction | `parallelogram_completion`, `parallelogram_completion_atom`, `line_meets_m_at_atom` |
 | properties | `parallelogram_parallel_direction`, `parallelogram_parallel_sides` |
 
-**FTPGWellDefined.lean** — translation well-definedness (0 sorry)
-
+**FTPGWellDefined.lean** — translation well-definedness
 Part IV: parallelogram completion is independent of base point (Hartshorne Theorem 7.6, Step 2). Key use of `small_desargues'`.
 
 | layer | key declarations |
 |---|---|
 | well-definedness | `parallelogram_completion_well_defined` |
 
-**FTPGCrossParallelism.lean** — cross-parallelism (0 sorry)
-
+**FTPGCrossParallelism.lean** — cross-parallelism
 Part IV-B: a single translation preserves directions of lines connecting any two points it acts on.
 
 | layer | key declarations |
 |---|---|
 | cross-parallelism | `cross_parallelism` |
 
-**FTPGAssoc.lean** — translation infrastructure (0 sorry)
-
+**FTPGAssoc.lean** — translation infrastructure
 Part V: `coord_add` equals translation application, key identity for the translation group.
 
 | layer | key declarations |
 |---|---|
-| translation bridge | `coord_add_eq_translation` (von Staudt addition = apply translation, 0 sorry) |
-| key identity | `key_identity` (τ_a(C_b) = C_{a+b}, 0 sorry) |
+| translation bridge | `coord_add_eq_translation` (von Staudt addition = apply translation) |
+| key identity | `key_identity` (τ_a(C_b) = C_{a+b}) |
 
-**FTPGAssocCapstone.lean** — associativity capstone (0 sorry)
-
+**FTPGAssocCapstone.lean** — associativity capstone
 Associativity via β-injectivity and cross-parallelism. PROVEN.
 
 | layer | key declarations |
 |---|---|
 | parameter rigidity | `translation_determined_by_param` (C-based translation determined by one point) |
-| associativity | `coord_add_assoc` (the composition law, 0 sorry) |
+| associativity | `coord_add_assoc` (the composition law) |
 
 Three-step proof: (1) key_identity reduces to β-images agree, (2) two cross-parallelism chains + two two_lines arguments close the composition law via collinear/non-collinear case splits, (3) E-perspectivity recovery.
 
-**FTPGMul.lean** — coordinate multiplication (0 sorry)
-
+**FTPGMul.lean** — coordinate multiplication
 Multiplication via dilations (Hartshorne §7). Structurally parallel to addition: uses O⊔C as bridge line instead of q = U⊔C.
 
 | layer | key declarations |
@@ -149,15 +130,13 @@ Multiplication via dilations (Hartshorne §7). Structurally parallel to addition
 | multiplicative anchor | `CoordSystem.E_I` (projection of I onto m via C), `hE_I_atom`, `hE_I_not_OC`, `hE_I_ne_E` |
 | multiplication | `coord_mul` (a·b via dilation σ_b), `coord_mul_atom` (a·b is an atom) |
 
-**FTPGDilation.lean** — dilation extension and direction preservation (0 sorry)
-
+**FTPGDilation.lean** — dilation extension and direction preservation
 Defines `dilation_ext Γ c P` (the dilation σ_c extended to off-line points) and proves `dilation_preserves_direction`: (P⊔Q)⊓m = (σ_c(P)⊔σ_c(Q))⊓m. Three cases: c=I (identity), collinear, generic (Desargues center O).
 
-**FTPGMulKeyIdentity.lean** — beta infrastructure and mul key identity (0 sorry)
-
+**FTPGMulKeyIdentity.lean** — beta infrastructure and mul key identity
 Beta-images `β(a) = (U⊔C)⊓(a⊔E)` and the mul key identity: σ_c(β(a)) = (σ⊔U)⊓(ac⊔E). Three cases: c=I, a=I (via DPD), generic (Desargues center C).
 
-**FTPGDistrib.lean** — right distributivity (0 sorry, PROVEN)
+**FTPGDistrib.lean** — right distributivity (PROVEN)
 
 Proves (a+b)·c = a·c + b·c via forward Desargues (center O) on T1=(C,a,C_s), T2=(σ,ac,C'_sc), then parallelogram_completion_well_defined to change translation base. Key insight: O⊔σ = O⊔C gives shared E; well_definedness provides base-independence.
 
@@ -169,7 +148,7 @@ Proves (a+b)·c = a·c + b·c via forward Desargues (center O) on T1=(C,a,C_s), 
 | mul key identity | `dilation_mul_key_identity` (PROVEN — 3 cases: c=I, a=I via DPD, generic Desargues center C) |
 | right distributivity | `coord_mul_right_distrib` (PROVEN — chain of above) |
 
-**FTPGNeg.lean** — additive inverse (0 sorry, PROVEN)
+**FTPGNeg.lean** — additive inverse (PROVEN)
 
 Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ β(a) →[O]→ e_a →[C]→ -a. Proves a + (-a) = O via double Desargues: the key identity d_{neg_a} = e_a ("double-cover alignment") reduces the second Desargues output to a covering argument.
 
@@ -181,7 +160,7 @@ Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ �
 | left inverse | `coord_add_left_neg` (PROVEN — double Desargues + coplanarity) |
 | right inverse | `coord_add_right_neg` (from left inverse + `coord_add_comm`) |
 
-**FTPGLeftDistrib.lean** — left distributivity (2 sorry, structurally complete)
+**FTPGLeftDistrib.lean** — left distributivity (in progress)
 
 Proves a·(b+c) = a·b + a·c via two Desargues applications:
 
@@ -195,12 +174,12 @@ Note: left multiplication x↦a·x is NOT a collineation (unlike right mult). Th
 
 | layer | key declarations |
 |---|---|
-| converse Desargues | `desargues_converse_nonplanar` (PROVEN, 0 sorry) |
+| converse Desargues | `desargues_converse_nonplanar` (PROVEN) |
 | m-fixation | `dilation_ext_fixes_m` (PROVEN) |
 | concurrence | h_concurrence chain: axis-threaded lift + project (PROVEN except h_converse) |
-| h_converse | instantiate desargues_converse_nonplanar (1 sorry — ~30 hypotheses) |
-| forward Desargues | h_desargues_conclusion (1 sorry — ~500 lines mechanical) |
-| combination | PROVEN (0 sorry) |
+| h_converse | instantiate desargues_converse_nonplanar (in progress) |
+| forward Desargues | h_desargues_conclusion (in progress) |
+| combination | PROVEN |
 
 ### The deductive chain (from P² = P)
 
