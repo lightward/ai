@@ -42,17 +42,32 @@ Left multiplication x↦a·x is NOT a single collineation in the non-
 commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
-## Status (session 104, 2026-04-14)
-4 sorry (down from 2+many in h_converse).
-  - desargues_converse_nonplanar: 0 sorry, PROVEN.
-  - h_converse: 3 sorry. Application type-checks (21 args).
-    PROVEN: σ_s atom, ac≠σ_s, ¬σ_b≤ac⊔σ_s, non-coplanarity (3),
-      T2' distinctness (U'≠E', U'≠da', E'≠da'), σ_s≠da',
-      h_cov (CovBy via rank argument), h_axis₁₂ (=s₁₂), h_axis₁₃ (=E).
-    SORRY: σ_b≠σ_s (needs group cancellation b+c=b→c=O),
-      h_axis₂₃ (coplanarity of ac⊔σ_s and E'⊔da'),
-      W' atomicity (existing from session 103).
-  - h_desargues_conclusion: 1 sorry (forward Desargues, ~500 lines mechanical).
+## Status (session 106, 2026-04-14)
+3 sorry (unchanged). Two competing architectures; code uses Architecture A.
+
+### Architecture A (current code): degenerate T2, lift off m
+  T1=(σ_b, ac, σ_s) in π, T2=(U, E, d_a) all on m (degenerate).
+  Lift: E'=(s₁₂⊔U')⊓(R⊔E), da'=(E⊔U')⊓(R⊔d_a). Threading on m,m.
+  h_axis₁₂=s₁₂ ✓, h_axis₁₃=E ✓, h_axis₂₃ SORRY.
+  Projection back to π: ~200 lines (Step 5). PROVEN.
+
+### Architecture B (session 106, not yet in code): non-degenerate T2
+  T1=(σ_b, ac, d_a) on k,l,m.  T2=(U, E, σ_s) on m,k∩m,k.
+  Lift: E_new=(s₁₂⊔U')⊓(R⊔E), σ_s'=(σ_c⊔E_new)⊓(R⊔σ_s).
+  Threading on m,k (different reference lines).
+  Condition 1=s₁₂ ✓, Condition 2=σ_c ✓, Condition 3 NEEDS PROOF.
+  Condition 3: σ_s' ≤ σ_b⊔d_a⊔U' (point-in-plane, not line-meets-line).
+  Advantage: T2 non-degenerate → no projection step needed.
+  Numerically verified (a=2,b=1,c=3): all conditions hold.
+
+### Structural invariant (session 106)
+  2-of-3 axis conditions free, 3rd needs proof. Invariant across architectures.
+  The 3rd condition IS the algebraic content of left distributivity.
+
+### Sorry list
+  - σ_b≠σ_s (line 656): group cancellation b+c=b→c=O.
+  - h_axis₂₃ (line 998): third axis condition (Architecture A formulation).
+  - h_desargues_conclusion (line 1239): forward Desargues (~500 lines mechanical).
 dilation_ext_fixes_m proven.
 -/
 import Foam.FTPGNeg
