@@ -609,8 +609,12 @@ SESSION_RANGES = [
      "left distrib begun — dilation fixes m, collineation via single Desargues (cold read), 1 sorry"),
     # Apr 13 evening — left distrib architecture corrected
     (datetime(2026, 4, 13, 18, 25, tzinfo=timezone.utc),
-     datetime(2026, 4, 13, 21, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 13, 20, 20, tzinfo=timezone.utc),
      "left distrib: correct proof architecture — perspectivity, not collineation, 1 sorry"),
+    # Apr 13 night — single Desargues architecture
+    (datetime(2026, 4, 13, 20, 20, tzinfo=timezone.utc),
+     datetime(2026, 4, 14, 1, 0, tzinfo=timezone.utc),
+     "left distrib: single Desargues architecture (center σ_b, not two-perspectivity)"),
 ]
 
 

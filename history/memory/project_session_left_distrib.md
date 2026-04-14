@@ -1,21 +1,64 @@
 ---
-name: Left distributivity proof architecture (corrected)
-description: Session finding — left distrib via perspectivity-preserves-addition, NOT collineation. Previous architecture had multiplication order wrong.
+name: Left distributivity proof — sharp shape, entry point identified
+description: Left distrib via single Desargues (center σ_b) + concurrence lemma. Concurrence IS the theorem. Entry point = lattice version of αβ cancellation.
 type: project
-originSessionId: a5bf7ad6-75f4-42e6-a917-80cac613dc14
+originSessionId: 6379854b-9382-4962-9b29-1513c2847d30
 ---
-Left distrib: a·(b+c) = a·b + a·c. Architecture corrected 2026-04-13.
+Left distrib: a·(b+c) = a·b + a·c. Architecture established 2026-04-13.
 
-**Critical correction**: The session-98 architecture claimed dilation_ext Γ a is a collineation for LEFT multiplication x ↦ a·x. This is WRONG. The key identity `dilation_ext Γ c (β(a)) = (σ_c⊔U)⊓(a·c⊔E)` has the dilation parameter c on the RIGHT of the product. So dilation_ext Γ c effects RIGHT multiplication x ↦ x·c. Right distrib follows from this. Left distrib requires a different argument.
+## Final architecture: single Desargues + concurrence
 
-**Corrected architecture**: The map x ↦ dilation_ext Γ x (β(a)) (varying x, fixed β(a)) is a perspectivity from l to L = O⊔β(a), center dir = (I⊔β(a))⊓m on m. This perspectivity maps O→O and U→L⊓m (preserves origin and "infinity"). A perspectivity preserving origin and infinity preserves parallelogram-completion addition (Desargues argument). Therefore F_{b+c} = F_b + F_c on L, and decoding via the key identity gives a(b+c) = ab + ac.
+**Desargues (center σ_b on k):**
+- T1 = (C, ab, U), T2 = (E, d_a, W') where W' = (σ_b⊔U)⊓(ac⊔E)
+- Axis gives: l⊓(d_a⊔W') = ab+ac (identifies the addition)
+- Concurrence W' ≤ σ_s⊔d_a connects to: a·s = l⊓(σ_s⊔d_a)
+- Together: a·s = ab+ac = left distrib
 
-**Full proof chain:**
-1. `dilation_ext_fixes_m` (DONE, 0 sorry)
-2. `perspectivity_preserves_addition` — Desargues on addition figures on l and L. Core new lemma (~1000 lines). Center dir on m ensures parallel structure is preserved.
-3. Decode: F_{b+c} = F_b + F_c where F_x = dilation_ext Γ x (β(a)) = (σ_x⊔U)⊓(ax⊔E). Use key identity + well_defined to recover a(b+c) = ab+ac on l.
-4. `parallelogram_completion_well_defined` (DONE, 0 sorry)
+**The concurrence IS the theorem.** Not a simpler prerequisite. Every formulation — W' ≤ σ_s⊔d_a, (W'⊔d_a)⊓k = σ_s, p₁/p₂/a·s collinear — is equivalent to left distrib itself.
 
-**Why the correction matters:** In non-commutative division rings, x ↦ x·c is a collineation (dilation) but x ↦ a·x is NOT — it's a composition of two perspectivities (π₁: l→O⊔C via E_I, π₂: O⊔C→l via d_a). Left and right distrib are geometrically independent statements.
+## Equivalent formulations (all verified generically in coordinates)
 
-**Cold reader panel v2 (2026-04-13):** Claude confirmed the perspectivity approach. Gemini retry pending.
+1. **Three lines concurrent:** σ_b⊔U, ac⊔E, σ_s⊔d_a meet at W'
+2. **k-intercept:** (W'⊔d_a)⊓k = σ_s
+3. **Collinearity:** p₁ = (ab⊔σ_s)⊓m, p₂ = (ac⊔E)⊓(U⊔σ_s), a·s are collinear
+4. **Generalized addition:** coord_add_gen(ab, ac; σ_s) = a·s
+5. **W' is a parallelogram completion:** W' = pc(O, σ_b, ac, m)
+
+## Center independence (established, but not sufficient alone)
+
+By `translation_determined_by_param`: both standard addition (center C) and generalized addition (center σ_s) send O → ac, so they define the same translation. Therefore:
+coord_add_gen(ab, ac; σ_s) = coord_add(ab, ac; C) = ab+ac
+
+This gives ONE equation. The theorem also needs coord_add_gen(ab, ac; σ_s) = a·s, which is the concurrence in disguise.
+
+## The entry point (not yet closed)
+
+The coordinate computation for collinearity (3) involves matching conditions that reduce to:
+`αβ(t-s) = 0` → since α≠0, β≠0: `t = s` → forces x₃=0 → intersection on l.
+
+**The αβ cancellation is the content of the theorem.** In the lattice, this should correspond to a perspectivity injectivity or cross_parallelism argument where the non-degeneracy of a and b (≠ O) forces the desired incidence.
+
+## Desargues B (subsidiary, found but not yet connected)
+
+Center E_I, T1=(b,s,C_b), T2=(σ_b,σ_s,d_a):
+- Gives: O, P=(b⊔C)⊓(σ_b⊔d_a), Q=(s⊔C_b)⊓(σ_s⊔d_a) collinear
+- Q is on σ_s⊔d_a AND on d_a⊔W' (verified in coordinates)
+- Q ≤ d_a⊔W' ↔ the concurrence (shown by modular law argument)
+
+## How we got here (2026-04-13 session)
+
+1. Started with two-perspectivity decomposition π₁∘π₂
+2. Agent found Desargues triangles for π₁ (center b)
+3. π₂ had "center mismatch" — gauge theory insight
+4. Isaac: "spinning line tracing cylinder" → reframe as single direct Desargues
+5. Found: center σ_b, T1=(C,ab,U), T2=(E,d_a,W'), axis IS left distrib
+6. Agent found: concurrence IS the theorem, not a prerequisite
+7. Agent found: W' = pc(O, σ_b, ac, m) and generalized addition interpretation
+8. Deep dive: αβ cancellation in coordinates is the entry point
+9. Multiple Desargues configurations available but none independently close
+
+## Next steps
+
+- Find the lattice proof of the collinearity p₁, p₂, a·s
+- Most likely route: cross_parallelism or subsidiary Desargues capturing the αβ cancellation
+- The perspectivity l→m (center σ_s) maps ab→p₁, and the perspectivity l→U⊔σ_s (center E) maps ac→p₂. The collinearity says these two perspectivity images plus a·s are aligned.
