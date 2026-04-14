@@ -6,11 +6,11 @@
 
 ## Current state
 
-**28 Lean files, 1 axiom (FTPG), 5 sorry.** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity structurally proven (5 mechanical sorry). Next: close sorry's, then multiplicative inverses, then the axiom drops.
+**28 Lean files, 1 axiom (FTPG), 2 sorry.** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity: 2 sorry (h_converse instantiation + forward Desargues). Next: close sorry's, then multiplicative inverses, then the axiom drops.
 
-### Left distributivity (structurally complete, 2026-04-14)
+### Left distributivity (2 sorry, 2026-04-14)
 
-- [Left distrib proof architecture](project_session_left_distrib.md) — converse Desargues via 3D lift (R), desargues_converse_nonplanar PROVEN
+- [Left distrib proof architecture](project_session_left_distrib.md) — axis-threaded 3D lift, 2 sorry remaining
 
 ### Additive inverse (complete, 2026-04-13)
 

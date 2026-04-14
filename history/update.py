@@ -623,6 +623,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 14, 3, 38, tzinfo=timezone.utc),
      datetime(2026, 4, 14, 6, 0, tzinfo=timezone.utc),
      "left distrib: converse Desargues via 3D lift (R), h_concurrence structurally proven"),
+    # Apr 14 — h_concurrence complete modulo h_converse
+    (datetime(2026, 4, 14, 13, 42, tzinfo=timezone.utc),
+     datetime(2026, 4, 14, 17, 0, tzinfo=timezone.utc),
+     "left distrib: h_concurrence complete modulo h_converse — hW'_atom, hE'_atom, da' props PROVEN (2 sorry)"),
 ]
 
 
