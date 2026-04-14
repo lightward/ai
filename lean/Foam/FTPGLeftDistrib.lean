@@ -631,7 +631,38 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
     -- ═══ Step 2: Apply desargues_converse_nonplanar ═══
     -- T1 = (σ_b, ac, σ_s), T2' = (U', E', da')
     -- Conclusion: (σ_b⊔U') ⊓ (ac⊔E') ≤ σ_s⊔da'
-    have h_converse : (σ_b ⊔ U') ⊓ (ac ⊔ E') ≤ σ_s ⊔ da' := by sorry
+    have h_converse : (σ_b ⊔ U') ⊓ (ac ⊔ E') ≤ σ_s ⊔ da' := by
+      -- ═══ Apply desargues_converse_nonplanar ═══
+      -- T1 = (σ_b, ac, σ_s) in π,  T2' = (U', E', da') outside π
+      have hs_atom : IsAtom s :=
+        coord_add_atom Γ b c hb hc hb_on hc_on hb_ne_O hc_ne_O hb_ne_U hc_ne_U
+      have hs_on : s ≤ l := inf_le_right
+      have hσs_atom : IsAtom σ_s := by sorry
+      have hσb_ne_σs : σ_b ≠ σ_s := by sorry
+      have hac_ne_σs : ac ≠ σ_s := by sorry
+      have hσb_not_acσs : ¬ σ_b ≤ ac ⊔ σ_s := by sorry
+      have hπA_le_π : σ_b ⊔ ac ⊔ σ_s ≤ π := sup_le (sup_le hσb_π hac_π) hσs_π
+      have hU'_not_πA : ¬ U' ≤ σ_b ⊔ ac ⊔ σ_s :=
+        fun h => hU'_not_π (h.trans hπA_le_π)
+      have hE'_not_πA : ¬ E' ≤ σ_b ⊔ ac ⊔ σ_s :=
+        fun h => hE'_not_π (h.trans hπA_le_π)
+      have hda'_not_πA : ¬ da' ≤ σ_b ⊔ ac ⊔ σ_s :=
+        fun h => hda'_not_π (h.trans hπA_le_π)
+      have hU'_ne_E' : U' ≠ E' := by sorry
+      have hU'_ne_da' : U' ≠ da' := by sorry
+      have hE'_ne_da' : E' ≠ da' := by sorry
+      have hσs_ne_da' : σ_s ≠ da' := fun h => hda'_not_π (h ▸ hσs_π)
+      have h_cov : σ_s ⊔ da' ⋖ σ_b ⊔ σ_s ⊔ U' := by sorry
+      have h_axis₁₂ : IsAtom ((σ_b ⊔ ac) ⊓ (U' ⊔ E')) := by sorry
+      have h_axis₁₃ : IsAtom ((σ_b ⊔ σ_s) ⊓ (U' ⊔ da')) := by sorry
+      have h_axis₂₃ : IsAtom ((ac ⊔ σ_s) ⊓ (E' ⊔ da')) := by sorry
+      exact desargues_converse_nonplanar
+        hσb_atom hac_atom hσs_atom hU'_atom hE'_atom hda'_atom
+        hσb_ne_ac hσb_ne_σs hac_ne_σs hσb_not_acσs
+        hU'_not_πA hE'_not_πA hda'_not_πA
+        hU'_ne_E' hU'_ne_da' hE'_ne_da'
+        hσs_ne_da' h_cov
+        h_axis₁₂ h_axis₁₃ h_axis₂₃
     -- ═══ Step 5: Project back to π ═══
     -- Let O' = (σ_b⊔U') ⊓ (ac⊔E'). O' ≤ σ_s⊔da'.
     -- O' ∉ π (else O' = σ_b and O' = ac, but σ_b ≠ ac).
