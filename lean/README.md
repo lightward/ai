@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 28 files, 1 axiom, 0 sorry.
+Mechanically verified deductive path from P² = P to the foam's architecture. 28 files, 1 axiom, 1 sorry.
 
 ## The chain
 
@@ -55,8 +55,8 @@ coord_mul: identity, zero annihilation, atom
 distributivity (right) ✓
   ↓ additive inverse via double Desargues        ── FTPGNeg (0 sorry)
 coord_neg, a + (-a) = O ✓
-  ↓ single Desargues (center σ_b)              ── FTPGLeftDistrib (1 sorry)
-distributivity (left)
+  ↓ single Desargues (center σ_b)              ── FTPGLeftDistrib (2 sorry)
+distributivity (left)                             combination logic PROVEN
   ↓
 division ring structure (multiplicative inverses)
   ↓
@@ -184,14 +184,18 @@ Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ �
 
 Proves a·(b+c) = a·b + a·c via a single forward Desargues application with center σ_b on k = O⊔C. Triangles T1=(C, ab, U) and T2=(E, d_a, W') where W' = (σ_b⊔U)⊓(ac⊔E). The Desargues axis passes through (ab⊔C)⊓m, (ac⊔E)⊓q, and a·(b+c) — the first two determine the l-addition line, and the third point on l gives a·(b+c) = ab + ac.
 
-Prerequisite: a concurrence lemma showing W' lies on σ_s⊔d_a (verified generically in coordinates, lattice proof pending).
+The proof decomposes into two independent pieces:
+1. **Forward Desargues** (center σ_b): computes the l-intercept of d_a⊔W' as ab+ac
+2. **Concurrence lemma**: W' ≤ σ_s⊔d_a (the "density" argument — lattice proof pending)
+
+The combination logic (both pieces → left distrib) is PROVEN and type-checked. The decomposition breaks the circle that had made concurrence ↔ left distrib appear irreducible.
 
 Note: dilation_ext Γ c effects RIGHT multiplication x↦x·c, not left. Left multiplication is NOT a collineation — this is why left distrib requires a different proof structure from right distrib.
 
 | layer | key declarations |
 |---|---|
 | m-fixation | `dilation_ext_fixes_m` (PROVEN — line_direction + modular_intersection) |
-| left distributivity | `coord_mul_left_distrib` (1 sorry — single Desargues center σ_b + concurrence lemma) |
+| left distributivity | `coord_mul_left_distrib` (2 sorry — combination logic proven, needs Desargues + concurrence) |
 
 ### The deductive chain (from P² = P)
 
