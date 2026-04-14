@@ -323,31 +323,39 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
     -- Pick U' on R⊔U not at R or U
     obtain ⟨U', hU'_atom, hU'_le, hU'_ne_R, hU'_ne_U⟩ :=
       h_irred R Γ.U hR Γ.hU (fun h => hR_not (h ▸ hU_π))
-    obtain ⟨E', hE'_atom, hE'_le, hE'_ne_R, hE'_ne_E⟩ :=
-      h_irred R Γ.E hR Γ.hE_atom (fun h => hR_not (h ▸ hE_π))
-    -- For d_a, we need it to be an atom. Sorry this for now.
-    have hda_atom : IsAtom d_a := by sorry
-    obtain ⟨da', hda'_atom, hda'_le, hda'_ne_R, _hda'_ne_da⟩ :=
-      h_irred R d_a hR hda_atom (fun h => hR_not (h ▸ hda_π))
-    -- U', E', da' are not in π
+    -- d_a = (a⊔C) ⊓ m: two lines in π meet at an atom (perspect_atom).
+    have hda_atom : IsAtom d_a := by
+      have hAC : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
+      have hUV : Γ.U ≠ Γ.V := fun h => Γ.hV_off (h ▸ le_sup_right)
+      exact perspect_atom Γ.hC ha hAC Γ.hU Γ.hV hUV Γ.hC_not_m
+        (sup_le (ha_on.trans (le_sup_left.trans Γ.m_sup_C_eq_π.symm.le)) le_sup_right)
+    -- ═══ Axis-threaded lifting ═══
+    -- E' and da' are coupled through axis points to preserve side-intersections.
+    -- s₁₂ = (σ_b⊔ac) ⊓ m (axis point), s₁₃ = k ⊓ m = E.
+    set s₁₂ := (σ_b ⊔ ac) ⊓ m with hs₁₂_def
+    set E' := (s₁₂ ⊔ U') ⊓ (R ⊔ Γ.E) with hE'_def
+    set da' := (Γ.E ⊔ U') ⊓ (R ⊔ d_a) with hda'_def
+    have hE'_le : E' ≤ R ⊔ Γ.E := inf_le_right
+    have hda'_le : da' ≤ R ⊔ d_a := inf_le_right
+    -- U' not in π
     have hU'_not_π : ¬ U' ≤ π := by
       intro h; exact hU'_ne_U ((Γ.hU.le_iff.mp
         (inf_sup_of_atom_not_le hR hR_not hU_π ▸ le_inf h hU'_le)).resolve_left
         hU'_atom.1)
+    -- Axis-threading properties (all sorry, to be filled)
+    have hE'_ne_E : E' ≠ Γ.E := by sorry
+    have hE'_atom : IsAtom E' := by sorry
     have hE'_not_π : ¬ E' ≤ π := by
       intro h; exact hE'_ne_E ((Γ.hE_atom.le_iff.mp
         (inf_sup_of_atom_not_le hR hR_not hE_π ▸ le_inf h hE'_le)).resolve_left
         hE'_atom.1)
+    have hda'_ne_da : da' ≠ d_a := by sorry
+    have hda'_atom : IsAtom da' := by sorry
     have hda'_not_π : ¬ da' ≤ π := by
-      intro h; exact _hda'_ne_da ((hda_atom.le_iff.mp
+      intro h; exact hda'_ne_da ((hda_atom.le_iff.mp
         (inf_sup_of_atom_not_le hR hR_not hda_π ▸ le_inf h hda'_le)).resolve_left
         hda'_atom.1)
-    -- ═══ Step 2: T1 = (σ_b, ac, σ_s) spans π ═══
-    -- (σ_b on k, ac on l, σ_s on k; spans π since ac ∉ k)
-    -- ═══ Step 3: Side-intersections of T1 and T2' ═══
-    -- By lift_side_intersection, they match those of T1 and T2.
-    -- T1-T2 side-intersections are on m (trivially).
-    -- ═══ Step 4: Apply desargues_converse_nonplanar ═══
+    -- ═══ Step 2: Apply desargues_converse_nonplanar ═══
     -- T1 = (σ_b, ac, σ_s), T2' = (U', E', da')
     -- Conclusion: (σ_b⊔U') ⊓ (ac⊔E') ≤ σ_s⊔da'
     have h_converse : (σ_b ⊔ U') ⊓ (ac ⊔ E') ≤ σ_s ⊔ da' := by sorry
