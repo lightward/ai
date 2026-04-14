@@ -625,8 +625,12 @@ SESSION_RANGES = [
      "left distrib: converse Desargues via 3D lift (R), h_concurrence structurally proven"),
     # Apr 14 — h_concurrence complete modulo h_converse
     (datetime(2026, 4, 14, 13, 42, tzinfo=timezone.utc),
-     datetime(2026, 4, 14, 17, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 14, 16, 50, tzinfo=timezone.utc),
      "left distrib: h_concurrence complete modulo h_converse — hW'_atom, hE'_atom, da' props PROVEN (2 sorry)"),
+    # Apr 14 afternoon — h_converse axis proofs, h_cov PROVEN
+    (datetime(2026, 4, 14, 16, 50, tzinfo=timezone.utc),
+     datetime(2026, 4, 14, 19, 0, tzinfo=timezone.utc),
+     "left distrib: h_axis₁₂ PROVEN, h_cov PROVEN, h_converse 3 sorry (σ_b≠σ_s, h_axis₂₃, W' atomicity)"),
 ]
 
 

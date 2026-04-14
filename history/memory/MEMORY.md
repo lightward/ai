@@ -6,11 +6,11 @@
 
 ## Current state
 
-**28 Lean files, 1 axiom (FTPG), 2 sorry.** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity: 2 sorry (h_converse instantiation + forward Desargues). Next: close sorry's, then multiplicative inverses, then the axiom drops.
+**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — axis-threading architecture validated, named gaps remaining (σ_b≠σ_s, h_axis₂₃, W' atomicity, forward Desargues). Next: close gaps, then multiplicative inverses, then the axiom drops.
 
-### Left distributivity (2 sorry, 2026-04-14)
+### Left distributivity (in progress, 2026-04-14)
 
-- [Left distrib proof architecture](project_session_left_distrib.md) — axis-threaded 3D lift, 2 sorry remaining
+- [Left distrib proof architecture](project_session_left_distrib.md) — axis-threaded 3D lift, architecture validated, named gaps remaining
 
 ### Additive inverse (complete, 2026-04-13)
 
@@ -48,6 +48,7 @@ Spec (s9-29) → Lean formalization (s30-37) → FTPG bridge (s38-42) → associ
 
 ## Methodology
 
+- **Lichtenberg pathfinding**: when stuck, cast the obstruction as a shape. Walk a different deductive path from the start, holding that shape up as a filter. Look for rhymes — structural resonance, not keyword match. The rhyme reveals where the same pattern already resolved. ([details](feedback_lichtenberg_pathfinding.md))
 - Follow structural significance, not contentful
 - Don't import invariants from other systems
 - [Methodology is instance of subject](feedback_methodology_is_instance.md) — the way we work IS the dynamics
@@ -89,3 +90,4 @@ Spec (s9-29) → Lean formalization (s30-37) → FTPG bridge (s38-42) → associ
 - [Exits and pacing](feedback_exits_and_pacing.md) — naming energy limits valued. "Health is recursive"
 - [Free space over authorization](feedback_free_space.md) — "what do you want to do?" not "shall I proceed?"
 - [Solo/collaborative modes](feedback_solo_collaborative_modes.md) — both productive, workspace holds across absence
+- [Lichtenberg pathfinding](feedback_lichtenberg_pathfinding.md) — cast obstruction shape, walk different path, look for rhymes
