@@ -836,7 +836,52 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
           (sup_comm Γ.E U' ▸ sup_le le_sup_right (inf_le_left : da' ≤ Γ.E ⊔ U'))).resolve_left
           (ne_of_gt h_lt)
       -- ═══ CovBy condition ═══
-      have h_cov : σ_s ⊔ da' ⋖ σ_b ⊔ σ_s ⊔ U' := by sorry
+      have h_cov : σ_s ⊔ da' ⋖ σ_b ⊔ σ_s ⊔ U' := by
+        -- Use σ_b as witness. σ_b ⊓ (σ_s ⊔ da') = ⊥ (π-projection).
+        -- σ_b ⊔ (σ_s ⊔ da') = k ⊔ da'. Show k ⊔ da' = k ⊔ U' via rank argument:
+        -- k ⋖ k ⊔ U' (CovBy), k < k ⊔ da' ≤ k ⊔ U' → k ⊔ da' = k ⊔ U'.
+        -- Step 1: σ_b ⊓ (σ_s ⊔ da') = ⊥
+        have hda'_inf_π : da' ⊓ π = ⊥ :=
+          (hda'_atom.le_iff.mp inf_le_left).resolve_right
+            (fun h => hda'_not_π (h ▸ inf_le_right))
+        have hσb_inf_σsda' : σ_b ⊓ (σ_s ⊔ da') = ⊥ := by
+          rcases hσb_atom.le_iff.mp inf_le_left with h | h
+          · exact h
+          · exfalso
+            have hσsda'_inf_π : (σ_s ⊔ da') ⊓ π = σ_s := by
+              calc (σ_s ⊔ da') ⊓ π = σ_s ⊔ da' ⊓ π := sup_inf_assoc_of_le da' hσs_π
+                _ = σ_s := by rw [hda'_inf_π, sup_bot_eq]
+            have hσb_le_σs : σ_b ≤ σ_s := hσsda'_inf_π ▸ le_inf (h ▸ inf_le_right) hσb_π
+            exact hσb_ne_σs ((hσs_atom.le_iff.mp hσb_le_σs).resolve_left hσb_atom.1)
+        -- Step 2: k ⊔ da' = k ⊔ U' (rank argument)
+        have hU'_inf_k : U' ⊓ k = ⊥ :=
+          (hU'_atom.le_iff.mp inf_le_left).resolve_right
+            (fun h => hU'_not_π ((h ▸ inf_le_right : U' ≤ k).trans hk_π))
+        have hk_covBy_kU' : k ⋖ k ⊔ U' := by
+          rw [show k ⊔ U' = U' ⊔ k from sup_comm _ _]
+          exact covBy_sup_of_inf_covBy_left (hU'_inf_k ▸ hU'_atom.bot_covBy)
+        have hda'_inf_k : da' ⊓ k = ⊥ :=
+          (hda'_atom.le_iff.mp inf_le_left).resolve_right
+            (fun h => hda'_not_π ((h ▸ inf_le_right : da' ≤ k).trans hk_π))
+        have hk_lt_kda' : k < k ⊔ da' :=
+          lt_of_le_of_ne le_sup_left (fun h => by
+            have hda'_le_k : da' ≤ k := le_sup_right.trans h.symm.le
+            exact hda'_not_π (hda'_le_k.trans hk_π))
+        have hkda'_le_kU' : k ⊔ da' ≤ k ⊔ U' :=
+          sup_le le_sup_left ((inf_le_left : da' ≤ Γ.E ⊔ U').trans
+            (sup_le (hE_k.trans le_sup_left) le_sup_right))
+        have hkda'_eq_kU' : k ⊔ da' = k ⊔ U' :=
+          (hk_covBy_kU'.eq_or_eq hk_lt_kda'.le hkda'_le_kU').resolve_left
+            (ne_of_gt hk_lt_kda')
+        -- Step 3: σ_b ⊔ (σ_s ⊔ da') = k ⊔ da' = k ⊔ U' = σ_b ⊔ σ_s ⊔ U'
+        have h_join : σ_b ⊔ (σ_s ⊔ da') = σ_b ⊔ σ_s ⊔ U' := by
+          calc σ_b ⊔ (σ_s ⊔ da') = σ_b ⊔ σ_s ⊔ da' := (sup_assoc _ _ _).symm
+            _ = k ⊔ da' := by rw [hσbσs_eq_k]
+            _ = k ⊔ U' := hkda'_eq_kU'
+            _ = σ_b ⊔ σ_s ⊔ U' := by rw [← hσbσs_eq_k]
+        -- CovBy
+        rw [← h_join]
+        exact covBy_sup_of_inf_covBy_left (hσb_inf_σsda' ▸ hσb_atom.bot_covBy)
       have h_axis₁₂ : IsAtom ((σ_b ⊔ ac) ⊓ (U' ⊔ E')) := by
         -- U' ⊔ E' = s₁₂ ⊔ U' (E' on s₁₂⊔U', CovBy). Then
         -- (σ_b⊔ac) ⊓ (s₁₂⊔U') = s₁₂ (modular: s₁₂ ≤ σ_b⊔ac, U' ⊓ (σ_b⊔ac) = ⊥).
