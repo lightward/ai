@@ -42,8 +42,11 @@ Left multiplication x↦a·x is NOT a single collineation in the non-
 commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
-## Status
-In progress. 1 sorry (main theorem). dilation_ext_fixes_m proven.
+## Status (session 101, 2026-04-14)
+2 sorry. Combination logic PROVEN — the two sorry's independently imply left distrib.
+  1. h_concurrence (W' ≤ σ_s⊔d_a) — the density argument (novel)
+  2. h_desargues_conclusion (a·s on addition line) — forward Desargues (~500 lines mechanical)
+dilation_ext_fixes_m proven.
 -/
 import Foam.FTPGNeg
 
@@ -118,11 +121,23 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
       ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
     coord_mul Γ a (coord_add Γ b c) =
       coord_add Γ (coord_mul Γ a b) (coord_mul Γ a c) := by
-  -- ═══ Setup ═══
+  -- ═══════════════════════════════════════════════════════
+  -- PROOF ARCHITECTURE (two independent pieces)
+  --
+  -- Piece 1 (Forward Desargues, center σ_b):
+  --   T1=(C,ab,U), T2=(E,d_a,W') where W'=(σ_b⊔U)⊓(ac⊔E)
+  --   Conclusion: (d_a⊔W')⊓l = ab+ac
+  --
+  -- Piece 2 (Concurrence — lattice computation):
+  --   W' ≤ σ_s⊔d_a
+  --   Therefore d_a⊔W' = σ_s⊔d_a, so (d_a⊔W')⊓l = a·s
+  --
+  -- Combination: a·s = (d_a⊔W')⊓l = ab+ac ∎
+  -- ═══════════════════════════════════════════════════════
   set l := Γ.O ⊔ Γ.U with hl_def
   set m := Γ.U ⊔ Γ.V with hm_def
   set q := Γ.U ⊔ Γ.C with hq_def
-  set k := Γ.O ⊔ Γ.C with hk_def  -- the "bridge" line O⊔C
+  set k := Γ.O ⊔ Γ.C with hk_def
   set π := Γ.O ⊔ Γ.U ⊔ Γ.V with hπ_def
   set s := coord_add Γ b c with hs_def
   set ab := coord_mul Γ a b with hab_def
@@ -134,27 +149,40 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
   set d_a := (a ⊔ Γ.C) ⊓ m with hda_def                 -- multiplication center on m
   -- Desargues witness
   set W' := (σ_b ⊔ Γ.U) ⊓ (ac ⊔ Γ.E) with hW'_def
-  -- ═══ Architecture ═══
-  -- Single forward Desargues, center σ_b on k.
-  --   T1 = (C,  ab, U)    T2 = (E, d_a, W')
-  --
-  -- Perspective from σ_b:
-  --   C  ↔ E    via k (C⊔E = k ∋ σ_b)
-  --   ab ↔ d_a  via σ_b⊔d_a (the multiplication line, contains ab)
-  --   U  ↔ W'   via σ_b⊔U (contains W' by concurrence lemma + definition)
-  --
-  -- Concurrence lemma: W' ≤ σ_s ⊔ d_a
-  --   (the three lines σ_b⊔U, ac⊔E, and σ_s⊔d_a are concurrent at W')
-  --   Therefore d_a⊔W' = σ_s⊔d_a, so (d_a⊔W')⊓l = a·s.
-  --
-  -- Desargues axis points:
-  --   1. (C⊔ab)  ⊓ (E⊔d_a)  = (ab⊔C)⊓m     (l-addition projection)
-  --   2. (C⊔U)   ⊓ (E⊔W')   = (ac⊔E)⊓q     (l-addition return center)
-  --   3. (ab⊔U)  ⊓ (d_a⊔W') = a·s           (the target)
-  --
-  -- Conclusion: Desargues says 1,2,3 are collinear.
-  --   a·s lies on (ab⊔C)⊓m ⊔ (ac⊔E)⊓q, and a·s ∈ l, so
-  --   a·(b+c) = ((ab⊔C)⊓m ⊔ (ac⊔E)⊓q) ⊓ l = ab + ac.
-  sorry
+  -- ═══ Piece 2: Concurrence ═══
+  -- W' = (σ_b⊔U) ⊓ (ac⊔E) lies on σ_s⊔d_a
+  have h_concurrence : W' ≤ σ_s ⊔ d_a := by sorry
+  -- ═══ Piece 1: Forward Desargues ═══
+  -- Apply desargues_planar with center σ_b, T1=(C,ab,U), T2=(E,d_a,W')
+  -- Conclusion: axis through (ab⊔C)⊓m, (ac⊔E)⊓q, (d_a⊔W')⊓l = a·s
+  -- Since a·s lies on ((ab⊔C)⊓m ⊔ (ac⊔E)⊓q) ⊓ l = coord_add ab ac:
+  have h_desargues_conclusion : coord_mul Γ a s ≤
+      (ab ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (ac ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C) := by sorry
+  -- ═══ Combination ═══
+  -- coord_mul Γ a s ≤ addition_line ∧ coord_mul Γ a s ≤ l
+  -- coord_add Γ ab ac = addition_line ⊓ l (by definition)
+  -- Both are atoms on l on the addition line → equal
+  have has_on : coord_mul Γ a s ≤ Γ.O ⊔ Γ.U := inf_le_right
+  have has_atom : IsAtom (coord_mul Γ a s) :=
+    coord_mul_atom Γ a s ha (coord_add_atom Γ b c hb hc hb_on hc_on hb_ne_O hc_ne_O hb_ne_U hc_ne_U)
+      ha_on (show coord_add Γ b c ≤ Γ.O ⊔ Γ.U from inf_le_right)
+      ha_ne_O hs_ne_O ha_ne_U hs_ne_U
+  have habac_atom : IsAtom (coord_add Γ ab ac) :=
+    coord_add_atom Γ ab ac
+      (coord_mul_atom Γ a b ha hb ha_on hb_on ha_ne_O hb_ne_O ha_ne_U hb_ne_U)
+      (coord_mul_atom Γ a c ha hc ha_on hc_on ha_ne_O hc_ne_O ha_ne_U hc_ne_U)
+      inf_le_right inf_le_right hab_ne_O hac_ne_O hab_ne_U hac_ne_U
+  have habac_on : coord_add Γ ab ac ≤ Γ.O ⊔ Γ.U := inf_le_right
+  -- coord_add Γ ab ac = ((ab⊔C)⊓m ⊔ (ac⊔E)⊓q) ⊓ l by definition
+  have h_add_unfold : coord_add Γ ab ac =
+      ((ab ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (ac ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ⊓ (Γ.O ⊔ Γ.U) := by
+    unfold coord_add; rfl
+  -- a·s ≤ addition_line and a·s ≤ l → a·s ≤ addition_line ⊓ l = ab+ac
+  have has_le_sum : coord_mul Γ a s ≤
+      ((ab ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (ac ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C)) ⊓ (Γ.O ⊔ Γ.U) :=
+    le_inf h_desargues_conclusion has_on
+  -- Both atoms ≤ the same atom → equal
+  rw [← h_add_unfold] at has_le_sum
+  exact (habac_atom.le_iff.mp has_le_sum).resolve_left has_atom.1
 
 end Foam.FTPGExplore
