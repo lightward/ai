@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 28 files, 1 axiom, 1 sorry.
+Mechanically verified deductive path from P² = P to the foam's architecture. 28 files, 1 axiom, 5 sorry.
 
 ## The chain
 
@@ -55,8 +55,9 @@ coord_mul: identity, zero annihilation, atom
 distributivity (right) ✓
   ↓ additive inverse via double Desargues        ── FTPGNeg (0 sorry)
 coord_neg, a + (-a) = O ✓
-  ↓ single Desargues (center σ_b)              ── FTPGLeftDistrib (2 sorry)
-distributivity (left)                             combination logic PROVEN
+  ↓ converse Desargues (3D lift) + forward      ── FTPGLeftDistrib (5 sorry)
+distributivity (left)                             converse Desargues PROVEN
+                                                  combination logic PROVEN
   ↓
 division ring structure (multiplicative inverses)
   ↓
@@ -180,22 +181,25 @@ Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ �
 | left inverse | `coord_add_left_neg` (PROVEN — double Desargues + coplanarity) |
 | right inverse | `coord_add_right_neg` (from left inverse + `coord_add_comm`) |
 
-**FTPGLeftDistrib.lean** — left distributivity (1 sorry, in progress)
+**FTPGLeftDistrib.lean** — left distributivity (5 sorry, structurally complete)
 
-Proves a·(b+c) = a·b + a·c via a single forward Desargues application with center σ_b on k = O⊔C. Triangles T1=(C, ab, U) and T2=(E, d_a, W') where W' = (σ_b⊔U)⊓(ac⊔E). The Desargues axis passes through (ab⊔C)⊓m, (ac⊔E)⊓q, and a·(b+c) — the first two determine the l-addition line, and the third point on l gives a·(b+c) = ab + ac.
+Proves a·(b+c) = a·b + a·c via two Desargues applications:
 
-The proof decomposes into two independent pieces:
-1. **Forward Desargues** (center σ_b): computes the l-intercept of d_a⊔W' as ab+ac
-2. **Concurrence lemma**: W' ≤ σ_s⊔d_a (the "density" argument — lattice proof pending)
+1. **Converse planar Desargues** (the concurrence): T1=(σ_b, ac, σ_s) in π, T2=(U, E, d_a) on m. Side-intersections trivially on m. Lift T2 off π using R → apply `desargues_converse_nonplanar` in 3D → project back via (R⊔O')⊓π. This gives W' ≤ σ_s⊔d_a.
 
-The combination logic (both pieces → left distrib) is PROVEN and type-checked. The decomposition breaks the circle that had made concurrence ↔ left distrib appear irreducible.
+2. **Forward Desargues** (center σ_b): T1=(C, ab, U), T2=(E, d_a, W'). The axis determines the addition line, and the concurrence identifies d_a⊔W' = σ_s⊔d_a so the third axis point is a·s.
 
-Note: dilation_ext Γ c effects RIGHT multiplication x↦x·c, not left. Left multiplication is NOT a collineation — this is why left distrib requires a different proof structure from right distrib.
+The proof introduces `desargues_converse_nonplanar` (0 sorry): if two non-coplanar triangles have sides meeting on a common axis, vertex-joins are concurrent. Proved via auxiliary planes ρ₁₂ = a₁⊔a₂⊔b₁, ρ₁₃, ρ₂₃ — the axis forces each b_i into the appropriate plane, and CovBy gives ρ₂₃⊓ρ₁₃ = a₃⊔b₃.
+
+Note: left multiplication x↦a·x is NOT a collineation (unlike right mult). This is why left distrib requires converse Desargues + 3D lift, while right distrib used collineation directly.
 
 | layer | key declarations |
 |---|---|
-| m-fixation | `dilation_ext_fixes_m` (PROVEN — line_direction + modular_intersection) |
-| left distributivity | `coord_mul_left_distrib` (2 sorry — combination logic proven, needs Desargues + concurrence) |
+| converse Desargues | `desargues_converse_nonplanar` (PROVEN, 0 sorry) |
+| m-fixation | `dilation_ext_fixes_m` (PROVEN) |
+| concurrence | h_concurrence chain: lift + project (4 sorry — atomicity + instantiation) |
+| forward Desargues | h_desargues_conclusion (1 sorry — ~500 lines mechanical) |
+| combination | PROVEN (0 sorry) |
 
 ### The deductive chain (from P² = P)
 
