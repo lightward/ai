@@ -637,10 +637,39 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
       have hs_atom : IsAtom s :=
         coord_add_atom Γ b c hb hc hb_on hc_on hb_ne_O hc_ne_O hb_ne_U hc_ne_U
       have hs_on : s ≤ l := inf_le_right
-      have hσs_atom : IsAtom σ_s := by sorry
+      have hσs_atom : IsAtom σ_s := by
+        rw [show σ_s = (s ⊔ Γ.E_I) ⊓ (Γ.O ⊔ Γ.C) from inf_comm _ _]
+        have hEI_sup_OC : Γ.E_I ⊔ (Γ.O ⊔ Γ.C) = π := by
+          have h_lt : Γ.O ⊔ Γ.C < Γ.E_I ⊔ (Γ.O ⊔ Γ.C) :=
+            lt_of_le_of_ne le_sup_right (fun h => Γ.hE_I_not_OC (h ▸ le_sup_left))
+          exact ((CoordSystem.OC_covBy_π Γ).eq_or_eq h_lt.le
+            (sup_le (Γ.hE_I_on_m.trans hm_π) hk_π)).resolve_left (ne_of_gt h_lt)
+        exact perspect_atom Γ.hE_I_atom hs_atom
+          (fun h => hs_ne_U (Γ.atom_on_both_eq_U hs_atom hs_on (h ▸ Γ.hE_I_on_m)))
+          Γ.hO Γ.hC hOC Γ.hE_I_not_OC
+          (sup_comm (Γ.O ⊔ Γ.C) Γ.E_I ▸ hEI_sup_OC ▸
+            sup_le (hs_on.trans le_sup_left) (Γ.hE_I_on_m.trans hm_π))
       have hσb_ne_σs : σ_b ≠ σ_s := by sorry
-      have hac_ne_σs : ac ≠ σ_s := by sorry
-      have hσb_not_acσs : ¬ σ_b ≤ ac ⊔ σ_s := by sorry
+      have hac_ne_σs : ac ≠ σ_s := by
+        intro h; exact hac_ne_O ((Γ.hO.le_iff.mp
+          (hkl_eq_O ▸ le_inf (h ▸ hσs_k) hac_l)).resolve_left hac_atom.1)
+      have hσb_not_acσs : ¬ σ_b ≤ ac ⊔ σ_s := by
+        intro h
+        have hac_inf_k : ac ⊓ k = ⊥ := by
+          rcases hac_atom.le_iff.mp inf_le_left with h' | h'
+          · exact h'
+          · exact absurd ((Γ.hO.le_iff.mp (hkl_eq_O ▸ le_inf (inf_eq_left.mp h') hac_l)
+              ).resolve_left hac_atom.1) hac_ne_O
+        -- (σ_s ⊔ ac) ⊓ k = σ_s (modular: σ_s ≤ k, ac ⊓ k = ⊥)
+        have h_mod : (σ_s ⊔ ac) ⊓ k = σ_s := by
+          calc (σ_s ⊔ ac) ⊓ k = σ_s ⊔ ac ⊓ k := sup_inf_assoc_of_le ac hσs_k
+            _ = σ_s := by rw [hac_inf_k, sup_bot_eq]
+        -- σ_b ≤ (ac ⊔ σ_s) ⊓ k. Rewrite ac ⊔ σ_s = σ_s ⊔ ac, apply h_mod.
+        have h_σb_le_σs : σ_b ≤ σ_s := by
+          have : σ_b ≤ (ac ⊔ σ_s) ⊓ k := le_inf h hσb_k
+          rw [show ac ⊔ σ_s = σ_s ⊔ ac from sup_comm _ _, h_mod] at this
+          exact this
+        exact hσb_ne_σs ((hσs_atom.le_iff.mp h_σb_le_σs).resolve_left hσb_atom.1)
       have hπA_le_π : σ_b ⊔ ac ⊔ σ_s ≤ π := sup_le (sup_le hσb_π hac_π) hσs_π
       have hU'_not_πA : ¬ U' ≤ σ_b ⊔ ac ⊔ σ_s :=
         fun h => hU'_not_π (h.trans hπA_le_π)
