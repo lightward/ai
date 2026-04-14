@@ -761,7 +761,101 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
           (hσbU_inf_m ▸ le_inf hE_le hE_m)).resolve_left Γ.hE_atom.1)
       exact line_height_two hac_atom Γ.hE_atom hac_ne_E hW'_pos hW'_lt
     -- W ≠ ⊥ (axis-threaded coplanarity → O' ≠ ⊥ → 4D meet)
-    have hW_ne_bot : (R ⊔ O') ⊓ π ≠ ⊥ := by sorry
+    have hW_ne_bot : (R ⊔ O') ⊓ π ≠ ⊥ := by
+      -- U' ⊓ π = ⊥
+      have hU'_inf_π : U' ⊓ π = ⊥ :=
+        (hU'_atom.le_iff.mp inf_le_left).resolve_right (fun h => hU'_not_π (h ▸ inf_le_right))
+      -- E' ≤ ρ₁₂ = σ_b ⊔ ac ⊔ U' (axis construction)
+      have hE'_le_ρ : E' ≤ σ_b ⊔ ac ⊔ U' :=
+        inf_le_left.trans (sup_le ((inf_le_left : s₁₂ ≤ σ_b ⊔ ac).trans le_sup_left) le_sup_right)
+      -- ac ⊔ E' ≤ ρ₁₂, σ_b ⊔ U' ≤ ρ₁₂
+      have hacE'_le_ρ : ac ⊔ E' ≤ σ_b ⊔ ac ⊔ U' :=
+        sup_le (le_sup_right.trans le_sup_left) hE'_le_ρ
+      -- σ_b ⊔ U' ⋖ ρ₁₂ (ac ⊓ (σ_b⊔U') = ⊥ since projection gives ac ≤ σ_b)
+      have hproj_σbU' : (σ_b ⊔ U') ⊓ π = σ_b := by
+        have h1 := sup_inf_assoc_of_le U' hσb_π; rw [hU'_inf_π] at h1; simp at h1; exact h1
+      have hac_disj_σbU' : ac ⊓ (σ_b ⊔ U') = ⊥ := by
+        rcases hac_atom.le_iff.mp inf_le_left with h | h
+        · exact h
+        · exfalso; exact hσb_ne_ac ((hσb_atom.le_iff.mp
+            (hproj_σbU' ▸ le_inf (h ▸ inf_le_right) hac_π)).resolve_left hac_atom.1).symm
+      have hσbU'_covBy_ρ : σ_b ⊔ U' ⋖ σ_b ⊔ ac ⊔ U' := by
+        have h := covBy_sup_of_inf_covBy_left (hac_disj_σbU' ▸ hac_atom.bot_covBy)
+        rwa [show ac ⊔ (σ_b ⊔ U') = σ_b ⊔ ac ⊔ U' from by
+          simp only [sup_assoc, sup_comm, sup_left_comm]] at h
+      -- ac ⊔ E' ≰ σ_b ⊔ U'
+      have hacE'_not : ¬ ac ⊔ E' ≤ σ_b ⊔ U' := fun h =>
+        hσb_ne_ac ((hσb_atom.le_iff.mp
+          (hproj_σbU' ▸ le_inf (le_sup_left.trans h) hac_π)).resolve_left hac_atom.1).symm
+      -- ac ≠ E'
+      have hac_ne_E' : ac ≠ E' := fun h => hE'_not_π (h ▸ hac_π)
+      -- O' ≠ ⊥
+      have hO'_ne_bot : O' ≠ ⊥ := by
+        intro h_eq; rw [hO'_def] at h_eq
+        exact lines_meet_if_coplanar hσbU'_covBy_ρ hacE'_le_ρ hacE'_not hac_atom
+          (atom_covBy_join hac_atom hE'_atom hac_ne_E').lt
+          (inf_comm (ac ⊔ E') (σ_b ⊔ U') ▸ h_eq)
+      -- O' ≠ R (if R = O' then R ≤ σ_b⊔U', project: R ≤ σ_b ≤ π, contradicts R ∉ π)
+      have hσb_ne_U' : σ_b ≠ U' := fun h => hU'_not_π (h ▸ hσb_π)
+      have hO'_ne_R : O' ≠ R := by
+        intro h_eq
+        have hR_le_σbU' : R ≤ σ_b ⊔ U' := h_eq ▸ (inf_le_left : O' ≤ σ_b ⊔ U')
+        -- R atom on σ_b ⊔ U'. Either R = σ_b or R ≠ σ_b.
+        by_cases hR_eq_σb : R = σ_b
+        · -- R = σ_b → R ≤ π, contradiction
+          exact hR_not (hR_eq_σb ▸ hσb_π)
+        · -- R ≠ σ_b, both atoms on σ_b⊔U' → σ_b⊔R = σ_b⊔U' → U' ≤ σ_b⊔R
+          have hσbR_eq : σ_b ⊔ R = σ_b ⊔ U' :=
+            ((atom_covBy_join hσb_atom hU'_atom hσb_ne_U').eq_or_eq
+              (lt_of_le_of_ne (le_sup_left : σ_b ≤ σ_b ⊔ R) (fun h' =>
+                hR_eq_σb ((hσb_atom.le_iff.mp (h' ▸ le_sup_right : R ≤ σ_b)).resolve_left hR.1)
+              )).le (sup_le le_sup_left hR_le_σbU')).resolve_left
+              (ne_of_gt (lt_of_le_of_ne (le_sup_left : σ_b ≤ σ_b ⊔ R) (fun h' =>
+                hR_eq_σb ((hσb_atom.le_iff.mp (h' ▸ le_sup_right)).resolve_left hR.1))))
+          have hU'_le_σbR : U' ≤ σ_b ⊔ R := hσbR_eq.symm ▸ le_sup_right
+          -- σ_b ⊓ (R ⊔ U) = ⊥ (project: if σ_b ≤ R ⊔ U, project to π: σ_b ≤ U, σ_b = U)
+          have hσb_inf_RU : σ_b ⊓ (R ⊔ Γ.U) = ⊥ := by
+            rcases hσb_atom.le_iff.mp inf_le_left with h' | h'
+            · exact h'
+            · exfalso
+              have hσb_le_RU : σ_b ≤ R ⊔ Γ.U := h' ▸ inf_le_right
+              have hσb_le_U : σ_b ≤ Γ.U :=
+                (inf_sup_of_atom_not_le hR hR_not hU_π) ▸ le_inf hσb_π hσb_le_RU
+              -- σ_b = U → U ≤ k → l = k → C ≤ l, contradiction
+              have hσb_eq_U := (Γ.hU.le_iff.mp hσb_le_U).resolve_left hσb_atom.1
+              exact Γ.hC_not_l ((le_sup_right : Γ.C ≤ k).trans
+                (((atom_covBy_join Γ.hO Γ.hC hOC).eq_or_eq
+                  (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt.le
+                  (sup_le le_sup_left (hσb_eq_U ▸ hσb_k))).resolve_left
+                  (ne_of_gt (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt)).symm.le)
+          -- (σ_b ⊔ R) ⊓ (R ⊔ U) = R (modular: R ≤ both, σ_b ⊓ (R ⊔ U) = ⊥)
+          have hmod : (σ_b ⊔ R) ⊓ (R ⊔ Γ.U) = R := by
+            rw [sup_comm σ_b R]
+            have h1 := sup_inf_assoc_of_le σ_b (le_sup_left : R ≤ R ⊔ Γ.U)
+            rw [hσb_inf_RU] at h1; simp at h1; exact h1
+          -- U' ≤ (σ_b ⊔ R) ⊓ (R ⊔ U) = R → U' = R. Contradiction.
+          have hU'_le_R : U' ≤ R := hmod ▸ le_inf hU'_le_σbR hU'_le
+          exact hU'_ne_R ((hR.le_iff.mp hU'_le_R).resolve_left hU'_atom.1)
+      -- R < R ⊔ O'
+      have hR_lt : R < R ⊔ O' :=
+        lt_of_le_of_ne le_sup_left (fun h =>
+          hO'_ne_R ((hR.le_iff.mp (h ▸ le_sup_right)).resolve_left hO'_ne_bot))
+      -- O' ≤ R ⊔ π (O' ≤ ρ₁₂ ≤ R ⊔ π)
+      have hRO'_le : R ⊔ O' ≤ R ⊔ π :=
+        sup_le le_sup_left ((inf_le_left : O' ≤ σ_b ⊔ U').trans
+          (sup_le (hσb_π.trans le_sup_right)
+            (hU'_le.trans (sup_le le_sup_left (hU_π.trans le_sup_right)))))
+      -- ¬ R ⊔ O' ≤ π
+      have hRO'_not_π : ¬ R ⊔ O' ≤ π := fun h => hR_not (le_sup_left.trans h)
+      -- π ⋖ R ⊔ π
+      have hR_inf_π : R ⊓ π = ⊥ :=
+        (hR.le_iff.mp inf_le_left).resolve_right (fun h => hR_not (h ▸ inf_le_right))
+      have hπ_covBy : π ⋖ R ⊔ π := by
+        have h := covBy_sup_of_inf_covBy_left (hR_inf_π ▸ hR.bot_covBy)
+        rwa [show R ⊔ π = π ⊔ R from sup_comm _ _, show π ⊔ R = R ⊔ π from sup_comm _ _] at h
+      -- Apply
+      rw [inf_comm]
+      exact lines_meet_if_coplanar hπ_covBy hRO'_le hRO'_not_π hR hR_lt
     -- W ≤ W', W' atom, W ≠ ⊥ → W = W'. Then W' ≤ σ_s⊔d_a.
     have hW_eq : (R ⊔ O') ⊓ π = W' :=
       (hW'_atom.le_iff.mp hW_le_W').resolve_left hW_ne_bot
