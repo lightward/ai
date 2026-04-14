@@ -42,16 +42,16 @@ Left multiplication x↦a·x is NOT a single collineation in the non-
 commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
-## Status (session 102, 2026-04-14)
-5 sorry (down from 2 structural, now all mechanical non-degeneracy).
-h_concurrence STRUCTURALLY PROVEN via converse planar Desargues:
+## Status (session 103, 2026-04-14)
+2 sorry (down from 5). Axis-threaded lifting fix applied (session 103).
   - desargues_converse_nonplanar: 0 sorry, PROVEN.
-    Non-planar converse Desargues via auxiliary planes ρ₁₂, ρ₁₃, ρ₂₃.
-  - h_concurrence chain: lift T2=(U,E,d_a) off π using R,
-    apply converse Desargues in 3D, project back via (R⊔O')⊓π.
-    Structural chain complete. 4 sorry (atomicity + instantiation).
+  - h_concurrence chain: PROVEN except h_converse instantiation.
+    Axis-threaded lifting: E' and da' coupled through axis points on m.
+    Atomicity (hda_atom, hW'_atom, hs₁₂_atom, hE'_atom, hda'_atom): PROVEN.
+    Projection (hW_ne_bot → W' = (R⊔O')⊓π): PROVEN.
+    Combination: 0 sorry, PROVEN.
+  - h_converse: 1 sorry (instantiate desargues_converse_nonplanar, ~30 hypotheses).
   - h_desargues_conclusion: 1 sorry (forward Desargues, ~500 lines mechanical).
-  - Combination: 0 sorry, PROVEN.
 dilation_ext_fixes_m proven.
 -/
 import Foam.FTPGNeg

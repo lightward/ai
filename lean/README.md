@@ -1,6 +1,6 @@
 # lean
 
-Mechanically verified deductive path from P² = P to the foam's architecture. 28 files, 1 axiom, 5 sorry.
+Mechanically verified deductive path from P² = P to the foam's architecture. 28 files, 1 axiom, 2 sorry.
 
 ## The chain
 
@@ -55,7 +55,7 @@ coord_mul: identity, zero annihilation, atom
 distributivity (right) ✓
   ↓ additive inverse via double Desargues        ── FTPGNeg (0 sorry)
 coord_neg, a + (-a) = O ✓
-  ↓ converse Desargues (3D lift) + forward      ── FTPGLeftDistrib (5 sorry)
+  ↓ converse Desargues (3D lift) + forward      ── FTPGLeftDistrib (2 sorry)
 distributivity (left)                             converse Desargues PROVEN
                                                   combination logic PROVEN
   ↓
@@ -181,7 +181,7 @@ Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ �
 | left inverse | `coord_add_left_neg` (PROVEN — double Desargues + coplanarity) |
 | right inverse | `coord_add_right_neg` (from left inverse + `coord_add_comm`) |
 
-**FTPGLeftDistrib.lean** — left distributivity (5 sorry, structurally complete)
+**FTPGLeftDistrib.lean** — left distributivity (2 sorry, structurally complete)
 
 Proves a·(b+c) = a·b + a·c via two Desargues applications:
 
@@ -197,7 +197,8 @@ Note: left multiplication x↦a·x is NOT a collineation (unlike right mult). Th
 |---|---|
 | converse Desargues | `desargues_converse_nonplanar` (PROVEN, 0 sorry) |
 | m-fixation | `dilation_ext_fixes_m` (PROVEN) |
-| concurrence | h_concurrence chain: lift + project (4 sorry — atomicity + instantiation) |
+| concurrence | h_concurrence chain: axis-threaded lift + project (PROVEN except h_converse) |
+| h_converse | instantiate desargues_converse_nonplanar (1 sorry — ~30 hypotheses) |
 | forward Desargues | h_desargues_conclusion (1 sorry — ~500 lines mechanical) |
 | combination | PROVEN (0 sorry) |
 
