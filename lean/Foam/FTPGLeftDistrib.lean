@@ -677,9 +677,123 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
         fun h => hE'_not_π (h.trans hπA_le_π)
       have hda'_not_πA : ¬ da' ≤ σ_b ⊔ ac ⊔ σ_s :=
         fun h => hda'_not_π (h.trans hπA_le_π)
-      have hU'_ne_E' : U' ≠ E' := by sorry
-      have hU'_ne_da' : U' ≠ da' := by sorry
-      have hE'_ne_da' : E' ≠ da' := by sorry
+      have hU'_ne_E' : U' ≠ E' := by
+        intro h_eq
+        -- U' ≤ R⊔U, E' ≤ R⊔E. If equal: U' ≤ (R⊔E) ⊓ (R⊔U).
+        -- (R⊔E) ⊓ (R⊔U) = R (modular: R ≤ R⊔E, U ⊓ (R⊔E) = ⊥ since U ∉ R⊔E).
+        have hR_inf_m : R ⊓ (Γ.U ⊔ Γ.V) = ⊥ :=
+          (hR.le_iff.mp inf_le_left).resolve_right
+            (fun h => hR_not (h ▸ inf_le_right |>.trans hm_π))
+        have hU_not_RE : ¬ Γ.U ≤ R ⊔ Γ.E := by
+          intro h
+          have hRE_inf_m : (R ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.V) = Γ.E := by
+            rw [show R ⊔ Γ.E = Γ.E ⊔ R from sup_comm _ _]
+            calc (Γ.E ⊔ R) ⊓ (Γ.U ⊔ Γ.V) = Γ.E ⊔ R ⊓ (Γ.U ⊔ Γ.V) :=
+                  sup_inf_assoc_of_le R hE_m
+              _ = Γ.E := by rw [hR_inf_m, sup_bot_eq]
+          exact CoordSystem.hEU ((Γ.hE_atom.le_iff.mp
+            (hRE_inf_m ▸ le_inf h (le_sup_left : Γ.U ≤ Γ.U ⊔ Γ.V))).resolve_left Γ.hU.1).symm
+        have hU_inf_RE : Γ.U ⊓ (R ⊔ Γ.E) = ⊥ :=
+          (Γ.hU.le_iff.mp inf_le_left).resolve_right
+            (fun h => hU_not_RE (h ▸ inf_le_right))
+        have hRE_inf_RU : (R ⊔ Γ.E) ⊓ (R ⊔ Γ.U) = R := by
+          rw [show (R ⊔ Γ.E) ⊓ (R ⊔ Γ.U) = (R ⊔ Γ.U) ⊓ (R ⊔ Γ.E) from inf_comm _ _]
+          calc (R ⊔ Γ.U) ⊓ (R ⊔ Γ.E) = R ⊔ Γ.U ⊓ (R ⊔ Γ.E) :=
+                sup_inf_assoc_of_le Γ.U (le_sup_left : R ≤ R ⊔ Γ.E)
+            _ = R := by rw [hU_inf_RE, sup_bot_eq]
+        exact hU'_ne_R ((hR.le_iff.mp
+          (hRE_inf_RU ▸ le_inf (h_eq ▸ hE'_le) hU'_le)).resolve_left hU'_atom.1)
+      have hU'_ne_da' : U' ≠ da' := by
+        intro h_eq
+        -- U' ≤ R⊔U, da' ≤ R⊔d_a. (R⊔d_a) ⊓ (R⊔U) = R. U' ≤ R. U' = R. Contradiction.
+        have hR_inf_m : R ⊓ (Γ.U ⊔ Γ.V) = ⊥ :=
+          (hR.le_iff.mp inf_le_left).resolve_right
+            (fun h => hR_not (h ▸ inf_le_right |>.trans hm_π))
+        have hU_not_Rda : ¬ Γ.U ≤ R ⊔ d_a := by
+          intro h
+          have hRda_inf_m : (R ⊔ d_a) ⊓ (Γ.U ⊔ Γ.V) = d_a := by
+            rw [show R ⊔ d_a = d_a ⊔ R from sup_comm _ _]
+            calc (d_a ⊔ R) ⊓ (Γ.U ⊔ Γ.V) = d_a ⊔ R ⊓ (Γ.U ⊔ Γ.V) :=
+                  sup_inf_assoc_of_le R hda_m
+              _ = d_a := by rw [hR_inf_m, sup_bot_eq]
+          exact hda_ne_U ((hda_atom.le_iff.mp
+            (hRda_inf_m ▸ le_inf h (le_sup_left : Γ.U ≤ Γ.U ⊔ Γ.V))).resolve_left Γ.hU.1).symm
+        have hU_inf_Rda : Γ.U ⊓ (R ⊔ d_a) = ⊥ :=
+          (Γ.hU.le_iff.mp inf_le_left).resolve_right
+            (fun h => hU_not_Rda (h ▸ inf_le_right))
+        have hRda_inf_RU : (R ⊔ d_a) ⊓ (R ⊔ Γ.U) = R := by
+          rw [show (R ⊔ d_a) ⊓ (R ⊔ Γ.U) = (R ⊔ Γ.U) ⊓ (R ⊔ d_a) from inf_comm _ _]
+          calc (R ⊔ Γ.U) ⊓ (R ⊔ d_a) = R ⊔ Γ.U ⊓ (R ⊔ d_a) :=
+                sup_inf_assoc_of_le Γ.U (le_sup_left : R ≤ R ⊔ d_a)
+            _ = R := by rw [hU_inf_Rda, sup_bot_eq]
+        exact hU'_ne_R ((hR.le_iff.mp
+          (hRda_inf_RU ▸ le_inf (h_eq ▸ hda'_le) hU'_le)).resolve_left hU'_atom.1)
+      have hE'_ne_da' : E' ≠ da' := by
+        intro h_eq
+        -- E' ≤ s₁₂⊔U', da' ≤ E⊔U'. Two lines through U'.
+        -- s₁₂ ≠ E (hE_ne_s₁₂), so (s₁₂⊔U') ⊓ (E⊔U') = U' (modular + CovBy).
+        -- E' = U'. But U' ≤ R⊔U, E' ≤ R⊔E. (R⊔E)⊓(R⊔U) = R → U' = R. Contradiction.
+        have hE'_le_both : E' ≤ (s₁₂ ⊔ U') ⊓ (Γ.E ⊔ U') :=
+          le_inf inf_le_left (h_eq ▸ inf_le_left)
+        -- Modular: (s₁₂⊔U') ⊓ (E⊔U') = U' ⊔ ((s₁₂⊔U')⊓E) [U' ≤ E⊔U']
+        -- (s₁₂⊔U')⊓E: E atom. E ≤ s₁₂⊔U' → E ≤ (s₁₂⊔U')⊓π = s₁₂ → E = s₁₂.
+        -- But hE_ne_s₁₂. So (s₁₂⊔U')⊓E = ⊥. Meet = U'.
+        have hs₁₂_ne_U' : s₁₂ ≠ U' := by
+          intro h; exact hU'_not_π (h ▸ (inf_le_right : s₁₂ ≤ Γ.U ⊔ Γ.V).trans hm_π)
+        have hE_not_s₁₂U' : ¬ Γ.E ≤ s₁₂ ⊔ U' := by
+          intro h
+          -- E ≤ π, (s₁₂⊔U')⊓π = s₁₂ (modular: s₁₂ ≤ π, U' ⊓ π = ⊥)
+          have hU'_inf_π : U' ⊓ π = ⊥ :=
+            (hU'_atom.le_iff.mp inf_le_left).resolve_right
+              (fun h' => hU'_not_π (h' ▸ inf_le_right))
+          have h_proj : (s₁₂ ⊔ U') ⊓ π = s₁₂ := by
+            rw [show s₁₂ ⊔ U' = U' ⊔ s₁₂ from sup_comm _ _, show U' ⊔ s₁₂ = s₁₂ ⊔ U' from sup_comm _ _]
+            calc (s₁₂ ⊔ U') ⊓ π = s₁₂ ⊔ U' ⊓ π :=
+                  sup_inf_assoc_of_le U' ((inf_le_right : s₁₂ ≤ Γ.U ⊔ Γ.V).trans hm_π)
+              _ = s₁₂ := by rw [hU'_inf_π, sup_bot_eq]
+          -- E = s₁₂ → E ≤ σ_b⊔ac ⊓ k = σ_b → E ≤ b⊔E_I → E_I on k. Contradiction.
+          have hE_ne_s₁₂ : Γ.E ≠ s₁₂ := by
+            intro h'
+            have hac_inf_k' : ac ⊓ k = ⊥ := by
+              rcases hac_atom.le_iff.mp inf_le_left with h'' | h''
+              · exact h''
+              · exact absurd ((Γ.hO.le_iff.mp (hkl_eq_O ▸ le_inf (inf_eq_left.mp h'') hac_l)
+                  ).resolve_left hac_atom.1) hac_ne_O
+            have hσbac_inf_k' : (σ_b ⊔ ac) ⊓ k = σ_b := by
+              calc (σ_b ⊔ ac) ⊓ k = σ_b ⊔ ac ⊓ k := sup_inf_assoc_of_le ac hσb_k
+                _ = σ_b := by rw [hac_inf_k', sup_bot_eq]
+            have hE_le_σb : Γ.E ≤ σ_b :=
+              hσbac_inf_k' ▸ le_inf (h'.le.trans inf_le_left) hE_k
+            have hb_inf_m' : b ⊓ (Γ.U ⊔ Γ.V) = ⊥ :=
+              (hb.le_iff.mp inf_le_left).resolve_right
+                (fun h'' => hb_ne_U (Γ.atom_on_both_eq_U hb hb_on (h'' ▸ inf_le_right)))
+            have hbEI_inf_m' : (b ⊔ Γ.E_I) ⊓ (Γ.U ⊔ Γ.V) = Γ.E_I := by
+              rw [show b ⊔ Γ.E_I = Γ.E_I ⊔ b from sup_comm _ _]
+              calc (Γ.E_I ⊔ b) ⊓ (Γ.U ⊔ Γ.V) = Γ.E_I ⊔ b ⊓ (Γ.U ⊔ Γ.V) :=
+                    sup_inf_assoc_of_le b Γ.hE_I_on_m
+                _ = Γ.E_I := by rw [hb_inf_m', sup_bot_eq]
+            have hE_le_EI : Γ.E ≤ Γ.E_I := by
+              have : Γ.E ≤ (b ⊔ Γ.E_I) ⊓ (Γ.U ⊔ Γ.V) :=
+                le_inf (hE_le_σb.trans inf_le_right) hE_m
+              rw [hbEI_inf_m'] at this; exact this
+            exact Γ.hE_I_not_OC ((Γ.hE_I_atom.le_iff.mp hE_le_EI).resolve_left
+              Γ.hE_atom.1 ▸ hE_k)
+          have hE_le_s₁₂ : Γ.E ≤ s₁₂ := h_proj ▸ le_inf h hE_π
+          exact hE_ne_s₁₂ ((hs₁₂_atom.le_iff.mp hE_le_s₁₂).resolve_left Γ.hE_atom.1)
+        have hE_inf_s₁₂U' : Γ.E ⊓ (s₁₂ ⊔ U') = ⊥ :=
+          (Γ.hE_atom.le_iff.mp inf_le_left).resolve_right
+            (fun h => hE_not_s₁₂U' (h ▸ inf_le_right))
+        have h_meet : (s₁₂ ⊔ U') ⊓ (Γ.E ⊔ U') = U' := by
+          rw [show (s₁₂ ⊔ U') ⊓ (Γ.E ⊔ U') = (Γ.E ⊔ U') ⊓ (s₁₂ ⊔ U') from inf_comm _ _,
+              show Γ.E ⊔ U' = U' ⊔ Γ.E from sup_comm _ _]
+          calc (U' ⊔ Γ.E) ⊓ (s₁₂ ⊔ U') = U' ⊔ Γ.E ⊓ (s₁₂ ⊔ U') :=
+                sup_inf_assoc_of_le Γ.E (le_sup_right : U' ≤ s₁₂ ⊔ U')
+            _ = U' := by rw [hE_inf_s₁₂U', sup_bot_eq]
+        -- E' ≤ U'. E' atom. So E' = U'.
+        have hE'_eq_U' : E' = U' :=
+          (hU'_atom.le_iff.mp (h_meet ▸ hE'_le_both)).resolve_left hE'_atom.1
+        -- But we proved U' ≠ E'. Contradiction.
+        exact hU'_ne_E' hE'_eq_U'.symm
       have hσs_ne_da' : σ_s ≠ da' := fun h => hda'_not_π (h ▸ hσs_π)
       have h_cov : σ_s ⊔ da' ⋖ σ_b ⊔ σ_s ⊔ U' := by sorry
       have h_axis₁₂ : IsAtom ((σ_b ⊔ ac) ⊓ (U' ⊔ E')) := by sorry
