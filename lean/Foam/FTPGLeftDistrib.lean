@@ -693,11 +693,78 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
     -- For W = W': need W to be an atom and W ≤ W' atom → W = W'.
     -- W is atom: (R⊔O')⊓π, where R∉π and O'∉π, is an atom (rank argument).
     -- For now, sorry the atomicity and conclude.
-    have hW_atom : IsAtom ((R ⊔ O') ⊓ π) := by sorry
-    have hW'_atom : IsAtom W' := by sorry
-    -- W ≤ W', both atoms → W = W'. Then W' ≤ σ_s⊔d_a.
+    -- W' is an atom (two lines in π meet)
+    have hW'_atom : IsAtom W' := by
+      have hac_ne_E : ac ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ hac_l)
+      have hσb_ne_U : σ_b ≠ Γ.U := by
+        intro h; have hU_le_k : Γ.U ≤ k := h ▸ hσb_k
+        have hl_eq_k : l = k := ((atom_covBy_join Γ.hO Γ.hC hOC).eq_or_eq
+          (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt.le
+          (sup_le le_sup_left hU_le_k)).resolve_left
+          (ne_of_gt (atom_covBy_join Γ.hO Γ.hU Γ.hOU).lt)
+        exact Γ.hC_not_l ((le_sup_right : Γ.C ≤ k).trans hl_eq_k.symm.le)
+      -- U ⊓ (ac⊔E) = ⊥
+      have hac_sup_U : ac ⊔ Γ.U = l :=
+        ((line_covers_its_atoms Γ.hO Γ.hU Γ.hOU hac_atom hac_l).eq_or_eq
+          (atom_covBy_join hac_atom Γ.hU hac_ne_U).lt.le
+          (sup_le hac_l le_sup_right)).resolve_left
+          (ne_of_gt (atom_covBy_join hac_atom Γ.hU hac_ne_U).lt)
+      have hU_disj_acE : Γ.U ⊓ (ac ⊔ Γ.E) = ⊥ := by
+        rcases Γ.hU.le_iff.mp inf_le_left with h | h
+        · exact h
+        · exfalso
+          have hl_le : l ≤ ac ⊔ Γ.E := hac_sup_U ▸ sup_le le_sup_left (h ▸ inf_le_right)
+          have hl_eq := ((atom_covBy_join hac_atom Γ.hE_atom hac_ne_E).eq_or_eq hac_l hl_le
+            ).resolve_left (fun h' => hac_ne_U ((hac_atom.le_iff.mp
+              (h' ▸ (le_sup_right : Γ.U ≤ l))).resolve_left Γ.hU.1).symm)
+          exact CoordSystem.hE_not_l (hl_eq ▸ le_sup_right)
+      -- ac⊔E ⋖ π
+      have hl_covBy_π : l ⋖ π := by
+        have hV_disj : Γ.V ⊓ l = ⊥ :=
+          (Γ.hV.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hV_off (h ▸ inf_le_right))
+        have h := covBy_sup_of_inf_covBy_left (hV_disj ▸ Γ.hV.bot_covBy)
+        rwa [show Γ.V ⊔ l = π from by simp only [hl_def, hπ_def, sup_comm, sup_left_comm]] at h
+      have hacE_covBy_π : ac ⊔ Γ.E ⋖ π := by
+        have hl_sup_E : l ⊔ Γ.E = π := (hl_covBy_π.eq_or_eq
+          (lt_of_le_of_ne le_sup_left (fun h => CoordSystem.hE_not_l (h ▸ le_sup_right))).le
+          (sup_le le_sup_left hE_π)).resolve_left
+          (ne_of_gt (lt_of_le_of_ne le_sup_left (fun h => CoordSystem.hE_not_l (h ▸ le_sup_right))))
+        have h := covBy_sup_of_inf_covBy_left (hU_disj_acE ▸ Γ.hU.bot_covBy)
+        rwa [show Γ.U ⊔ (ac ⊔ Γ.E) = π from by
+          calc Γ.U ⊔ (ac ⊔ Γ.E) = (ac ⊔ Γ.U) ⊔ Γ.E := by simp only [sup_assoc, sup_comm]
+            _ = l ⊔ Γ.E := by rw [hac_sup_U]
+            _ = π := hl_sup_E] at h
+      -- σ_b⊔U ≤ π, σ_b⊔U ≰ ac⊔E
+      have hσbU_not_acE : ¬ σ_b ⊔ Γ.U ≤ ac ⊔ Γ.E := fun h =>
+        Γ.hU.1 (le_antisymm (hU_disj_acE ▸ le_inf le_rfl (le_sup_right.trans h)) bot_le)
+      -- ⊥ < W'
+      have hW'_pos : ⊥ < W' := by
+        rw [show W' = (ac ⊔ Γ.E) ⊓ (σ_b ⊔ Γ.U) from inf_comm _ _]
+        exact bot_lt_iff_ne_bot.mpr
+          (lines_meet_if_coplanar hacE_covBy_π (sup_le hσb_π hU_π) hσbU_not_acE hσb_atom
+            (atom_covBy_join hσb_atom Γ.hU hσb_ne_U).lt)
+      -- W' < ac⊔E
+      have hW'_lt : W' < ac ⊔ Γ.E := by
+        refine lt_of_le_of_ne inf_le_right (fun h_eq => ?_)
+        have hacE_le : ac ⊔ Γ.E ≤ σ_b ⊔ Γ.U := h_eq ▸ inf_le_left
+        have hE_le : Γ.E ≤ σ_b ⊔ Γ.U := le_sup_right.trans hacE_le
+        -- σ_b⊓m = ⊥ → (σ_b⊔U)⊓m = U → E ≤ U → E = U. Contradiction.
+        have hσb_inf_m : σ_b ⊓ m = ⊥ := by
+          rcases hσb_atom.le_iff.mp inf_le_left with h | h
+          · exact h
+          · exfalso; exact hσb_not_m (h ▸ inf_le_right)
+        have hσbU_inf_m : (σ_b ⊔ Γ.U) ⊓ m = Γ.U := by
+          rw [sup_comm σ_b Γ.U]
+          have h1 := sup_inf_assoc_of_le σ_b (le_sup_left : Γ.U ≤ m)
+          rw [hσb_inf_m] at h1; simp at h1; exact h1
+        exact CoordSystem.hEU ((Γ.hU.le_iff.mp
+          (hσbU_inf_m ▸ le_inf hE_le hE_m)).resolve_left Γ.hE_atom.1)
+      exact line_height_two hac_atom Γ.hE_atom hac_ne_E hW'_pos hW'_lt
+    -- W ≠ ⊥ (axis-threaded coplanarity → O' ≠ ⊥ → 4D meet)
+    have hW_ne_bot : (R ⊔ O') ⊓ π ≠ ⊥ := by sorry
+    -- W ≤ W', W' atom, W ≠ ⊥ → W = W'. Then W' ≤ σ_s⊔d_a.
     have hW_eq : (R ⊔ O') ⊓ π = W' :=
-      (hW'_atom.le_iff.mp hW_le_W').resolve_left hW_atom.1
+      (hW'_atom.le_iff.mp hW_le_W').resolve_left hW_ne_bot
     exact hW_eq ▸ hW_σsda
   -- ═══ Piece 1: Forward Desargues ═══
   -- Apply desargues_planar with center σ_b, T1=(C,ab,U), T2=(E,d_a,W')
