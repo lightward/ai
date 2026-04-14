@@ -342,7 +342,56 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
       intro h; exact hU'_ne_U ((Γ.hU.le_iff.mp
         (inf_sup_of_atom_not_le hR hR_not hU_π ▸ le_inf h hU'_le)).resolve_left
         hU'_atom.1)
-    -- Axis-threading properties (all sorry, to be filled)
+    -- ═══ Shared non-degeneracy facts ═══
+    have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+    have hac_atom : IsAtom ac :=
+      coord_mul_atom Γ a c ha hc ha_on hc_on ha_ne_O hc_ne_O ha_ne_U hc_ne_U
+    have hac_l : ac ≤ l := by
+      show coord_mul Γ a c ≤ l; unfold coord_mul; exact inf_le_right
+    have hσb_atom : IsAtom σ_b := by
+      rw [show σ_b = (b ⊔ Γ.E_I) ⊓ (Γ.O ⊔ Γ.C) from inf_comm _ _]
+      have hb_ne_EI : b ≠ Γ.E_I :=
+        fun h => hb_ne_U (Γ.atom_on_both_eq_U hb hb_on (h ▸ Γ.hE_I_on_m))
+      have hEI_sup_OC : Γ.E_I ⊔ (Γ.O ⊔ Γ.C) = π := by
+        have h_lt : Γ.O ⊔ Γ.C < Γ.E_I ⊔ (Γ.O ⊔ Γ.C) :=
+          lt_of_le_of_ne le_sup_right (fun h => Γ.hE_I_not_OC (h ▸ le_sup_left))
+        exact ((CoordSystem.OC_covBy_π Γ).eq_or_eq h_lt.le
+          (sup_le (Γ.hE_I_on_m.trans hm_π) hk_π)).resolve_left (ne_of_gt h_lt)
+      exact perspect_atom Γ.hE_I_atom hb hb_ne_EI Γ.hO Γ.hC hOC Γ.hE_I_not_OC
+        (sup_comm (Γ.O ⊔ Γ.C) Γ.E_I ▸ hEI_sup_OC ▸
+          sup_le (hb_on.trans le_sup_left) (Γ.hE_I_on_m.trans hm_π))
+    have hkl_eq_O : k ⊓ l = Γ.O := by
+      rw [inf_comm]; exact modular_intersection Γ.hO Γ.hU Γ.hC Γ.hOU
+        (fun h => Γ.hC_not_l (h ▸ le_sup_left))
+        (fun h => Γ.hC_not_l (h.symm.le.trans le_sup_right))
+        Γ.hC_not_l
+    have hσb_ne_ac : σ_b ≠ ac := by
+      intro h
+      exact hac_ne_O ((Γ.hO.le_iff.mp (hkl_eq_O ▸ le_inf (h ▸ hσb_k) hac_l
+        )).resolve_left hac_atom.1)
+    have hσb_not_m : ¬ σ_b ≤ m := by
+      intro h
+      -- σ_b ≤ k ⊓ m. k ⊓ m = E (both in E's definition). σ_b ≤ E → σ_b = E.
+      -- Then σ_b ≤ b⊔E_I. (b⊔E_I)⊓m = E_I. σ_b ≤ E_I. E_I ≤ k. Contradiction.
+      have hE_eq : m ⊓ k = Γ.E := by rw [inf_comm]; simp only [hk_def, hm_def]; rfl
+      have hσb_le_E : σ_b ≤ Γ.E := hE_eq ▸ le_inf h hσb_k
+      have hb_inf_m : b ⊓ m = ⊥ :=
+        (hb.le_iff.mp inf_le_left).resolve_right
+          (fun h' => hb_ne_U (Γ.atom_on_both_eq_U hb hb_on (h' ▸ inf_le_right)))
+      have hbEI_inf_m : (b ⊔ Γ.E_I) ⊓ m = Γ.E_I := by
+        rw [sup_comm b Γ.E_I]
+        have h1 := sup_inf_assoc_of_le b Γ.hE_I_on_m
+        rw [h1, hb_inf_m]; simp
+      have hσb_le_bEI : σ_b ≤ b ⊔ Γ.E_I := inf_le_right
+      have hσb_le_EI : σ_b ≤ Γ.E_I := by
+        have : σ_b ≤ (b ⊔ Γ.E_I) ⊓ m := le_inf hσb_le_bEI (hσb_le_E.trans hE_m)
+        rw [hbEI_inf_m] at this; exact this
+      exact Γ.hE_I_not_OC ((Γ.hE_I_atom.le_iff.mp hσb_le_EI).resolve_left
+        hσb_atom.1 ▸ hσb_k)
+    have hs₁₂_atom : IsAtom s₁₂ :=
+      line_meets_m_at_atom hσb_atom hac_atom hσb_ne_ac
+        (sup_le hσb_π hac_π) hm_π Γ.m_covBy_π hσb_not_m
+    -- ═══ Axis-threading properties ═══
     have hE'_ne_E : E' ≠ Γ.E := by
       intro h_eq
       -- E ≤ s₁₂ ⊔ U' (from E = E' ≤ s₁₂ ⊔ U')
