@@ -799,7 +799,35 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
         exact hU'_ne_E' hE'_eq_U'.symm
       have hσs_ne_da' : σ_s ≠ da' := fun h => hda'_not_π (h ▸ hσs_π)
       have h_cov : σ_s ⊔ da' ⋖ σ_b ⊔ σ_s ⊔ U' := by sorry
-      have h_axis₁₂ : IsAtom ((σ_b ⊔ ac) ⊓ (U' ⊔ E')) := by sorry
+      have h_axis₁₂ : IsAtom ((σ_b ⊔ ac) ⊓ (U' ⊔ E')) := by
+        -- U' ⊔ E' = s₁₂ ⊔ U' (E' on s₁₂⊔U', CovBy). Then
+        -- (σ_b⊔ac) ⊓ (s₁₂⊔U') = s₁₂ (modular: s₁₂ ≤ σ_b⊔ac, U' ⊓ (σ_b⊔ac) = ⊥).
+        -- Step 1: U' ⊔ E' = s₁₂ ⊔ U'
+        have hE'_le_s₁₂U' : E' ≤ s₁₂ ⊔ U' := inf_le_left
+        have hs₁₂_ne_U' : s₁₂ ≠ U' :=
+          fun h => hU'_not_π (h ▸ (inf_le_right : s₁₂ ≤ Γ.U ⊔ Γ.V).trans hm_π)
+        have hU'E'_eq : U' ⊔ E' = s₁₂ ⊔ U' := by
+          have h_lt : U' < U' ⊔ E' :=
+            lt_of_le_of_ne le_sup_left (fun h => by
+              have : E' ≤ U' := le_sup_right.trans h.symm.le
+              exact hU'_ne_E' ((hU'_atom.le_iff.mp this).resolve_left hE'_atom.1).symm)
+          rw [show s₁₂ ⊔ U' = U' ⊔ s₁₂ from sup_comm _ _]
+          exact ((atom_covBy_join hU'_atom hs₁₂_atom hs₁₂_ne_U'.symm).eq_or_eq h_lt.le
+            (sup_comm s₁₂ U' ▸ sup_le le_sup_right hE'_le_s₁₂U')).resolve_left
+            (ne_of_gt h_lt)
+        -- Step 2: (σ_b ⊔ ac) ⊓ (s₁₂ ⊔ U') = s₁₂ (modular law)
+        have hs₁₂_le : s₁₂ ≤ σ_b ⊔ ac := inf_le_left
+        have hU'_inf_σbac : U' ⊓ (σ_b ⊔ ac) = ⊥ :=
+          (hU'_atom.le_iff.mp inf_le_left).resolve_right
+            (fun h => hU'_not_π ((h ▸ inf_le_right : U' ≤ σ_b ⊔ ac).trans
+              (sup_le hσb_π hac_π)))
+        have h_mod : (σ_b ⊔ ac) ⊓ (s₁₂ ⊔ U') = s₁₂ := by
+          calc (σ_b ⊔ ac) ⊓ (s₁₂ ⊔ U')
+              = (s₁₂ ⊔ U') ⊓ (σ_b ⊔ ac) := inf_comm _ _
+            _ = s₁₂ ⊔ U' ⊓ (σ_b ⊔ ac) := sup_inf_assoc_of_le U' hs₁₂_le
+            _ = s₁₂ := by rw [hU'_inf_σbac, sup_bot_eq]
+        rw [hU'E'_eq, h_mod]
+        exact hs₁₂_atom
       have h_axis₁₃ : IsAtom ((σ_b ⊔ σ_s) ⊓ (U' ⊔ da')) := by
         -- σ_b ⊔ σ_s = k (two distinct atoms on line k).
         -- U' ⊔ da' = E ⊔ U' (da' ≤ E⊔U', da' ≠ U').
