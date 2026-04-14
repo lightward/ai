@@ -649,7 +649,10 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
           Γ.hO Γ.hC hOC Γ.hE_I_not_OC
           (sup_comm (Γ.O ⊔ Γ.C) Γ.E_I ▸ hEI_sup_OC ▸
             sup_le (hs_on.trans le_sup_left) (Γ.hE_I_on_m.trans hm_π))
-      have hσb_ne_σs : σ_b ≠ σ_s := by sorry
+      have hσb_ne_σs : σ_b ≠ σ_s := by
+        -- Perspectivity l→k center E_I is injective, so σ_b=σ_s → b=s.
+        -- b=s means b+c=b, which forces c=O (group cancellation). Contradiction.
+        sorry -- TODO: group cancellation (coord_add_assoc + coord_add_left_neg + identity)
       have hac_ne_σs : ac ≠ σ_s := by
         intro h; exact hac_ne_O ((Γ.hO.le_iff.mp
           (hkl_eq_O ▸ le_inf (h ▸ hσs_k) hac_l)).resolve_left hac_atom.1)
@@ -797,7 +800,84 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
       have hσs_ne_da' : σ_s ≠ da' := fun h => hda'_not_π (h ▸ hσs_π)
       have h_cov : σ_s ⊔ da' ⋖ σ_b ⊔ σ_s ⊔ U' := by sorry
       have h_axis₁₂ : IsAtom ((σ_b ⊔ ac) ⊓ (U' ⊔ E')) := by sorry
-      have h_axis₁₃ : IsAtom ((σ_b ⊔ σ_s) ⊓ (U' ⊔ da')) := by sorry
+      have h_axis₁₃ : IsAtom ((σ_b ⊔ σ_s) ⊓ (U' ⊔ da')) := by
+        -- σ_b ⊔ σ_s = k (two distinct atoms on line k).
+        -- U' ⊔ da' = E ⊔ U' (da' ≤ E⊔U', da' ≠ U').
+        -- k ⊓ (E ⊔ U') = E (modular: E ≤ k, U' ⊓ k = ⊥). Result = E, which is an atom.
+        -- Step 1: σ_b ⊔ σ_s = k
+        have hσbσs_eq_k : σ_b ⊔ σ_s = k := by
+          -- Two distinct atoms on a line join to the line.
+          -- σ_b ⋖ σ_b⊔σ_s (atom_covBy_join). σ_b⊔σ_s ≤ k. σ_b⊔σ_s ≠ σ_b.
+          -- Need: σ_b ⋖ k (then CovBy gives σ_b⊔σ_s = σ_b or σ_b⊔σ_s = k).
+          -- O ⋖ k. σ_b atom on k. (atom_covBy_join σ_b O _) gives σ_b ⋖ σ_b⊔O = k.
+          -- Wait: σ_b⊔O ≤ k, O ⋖ k gives O⊔σ_b = k when σ_b ∉ O.
+          -- Use: (atom_covBy_join hσb_atom hσs_atom hσb_ne_σs) gives σ_b ⋖ σ_b⊔σ_s.
+          -- And σ_b⊔σ_s ≤ k. Need σ_b⊔σ_s = k.
+          -- Since O ⋖ k (CovBy): any x with O < x ≤ k has x = k.
+          -- σ_b⊔σ_s > σ_b ≥ ⊥⁺ = some atom. If σ_b⊔σ_s ≤ k and σ_b⊔σ_s > ⊥:
+          -- σ_b⊔σ_s is either an atom or ≥ k. If atom: σ_b⊔σ_s = σ_b = σ_s. Contradiction.
+          have h_lt : σ_b < σ_b ⊔ σ_s :=
+            lt_of_le_of_ne le_sup_left (fun h => by
+              have : σ_s ≤ σ_b := le_sup_right.trans h.symm.le
+              exact hσb_ne_σs ((hσb_atom.le_iff.mp this).resolve_left hσs_atom.1).symm)
+          have h_le : σ_b ⊔ σ_s ≤ k := sup_le hσb_k hσs_k
+          -- Use O ⋖ k. σ_b ≤ k, σ_b atom. O⊔σ_b ≤ k. O ⋖ k.
+          -- If σ_b = O: O ⊔ σ_s ≤ k. σ_s ≠ O (= σ_b). So O < O⊔σ_s ≤ k. CovBy: O⊔σ_s = k.
+          -- If σ_b ≠ O: O < O⊔σ_b ≤ k. CovBy: O⊔σ_b = k. k ≤ σ_b⊔σ_s⊔O. Since σ_b⊔σ_s ≤ k.
+          -- Hmm. Let's just use: σ_b ⋖ σ_b⊔σ_s and σ_b⊔σ_s ≤ k, and σ_b ⋖ k.
+          -- σ_b ⋖ k: σ_b atom, σ_b ≤ k, σ_b ≠ k. Then for any x: σ_b ≤ x ≤ k → x = σ_b or x = k.
+          -- This is exactly CovBy iff k "covers" σ_b. In our lattice, k is rank 2, σ_b is rank 1.
+          -- Modularity: ⊥ ⋖ σ_b ⋖ ? ≤ k. By Jordan-Dedekind (modular lattice), rank is well-defined.
+          -- A clean proof: O ⋖ k. σ_b atom. σ_b ⊓ O = ⊥ or σ_b = O.
+          -- Case σ_b = O: σ_b ⊔ σ_s = O ⊔ σ_s. O ⋖ k. σ_s ≤ k, σ_s ≠ O.
+          --   O < O⊔σ_s ≤ k. CovBy gives O⊔σ_s = k. Done.
+          -- Case σ_b ≠ O: σ_b ⊓ O = ⊥ (atoms). σ_b⊔O: ⊥ ⋖ O, so O⊔σ_b ⋖ ... hmm.
+          --   O < O⊔σ_b ≤ k. CovBy: O⊔σ_b = k. So k = σ_b⊔O ≤ σ_b⊔σ_s. Done.
+          -- σ_b ⋖ k (atom on a rank-2 element). Then CovBy gives σ_b⊔σ_s = k.
+          have hσb_covBy_k : σ_b ⋖ k := by
+            by_cases hσb_eq_O : σ_b = Γ.O
+            · exact hσb_eq_O ▸ atom_covBy_join Γ.hO Γ.hC hOC
+            · -- σ_b ≠ O. σ_b ⊓ O = ⊥. ⊥ ⋖ O gives σ_b ⋖ σ_b ⊔ O. O ⋖ k gives σ_b⊔O = k.
+              have hσb_inf_O : σ_b ⊓ Γ.O = ⊥ :=
+                (hσb_atom.le_iff.mp inf_le_left).resolve_right
+                  (fun h => hσb_eq_O ((Γ.hO.le_iff.mp (h ▸ inf_le_right)).resolve_left hσb_atom.1))
+              -- O ⊓ σ_b = ⊥ ⋖ O gives σ_b ⋖ O ⊔ σ_b = σ_b ⊔ O.
+              have hO_inf_σb : Γ.O ⊓ σ_b = ⊥ := inf_comm σ_b Γ.O ▸ hσb_inf_O
+              have h_cov_σbO : σ_b ⋖ σ_b ⊔ Γ.O := by
+                rw [show σ_b ⊔ Γ.O = Γ.O ⊔ σ_b from sup_comm _ _]
+                exact covBy_sup_of_inf_covBy_left (hO_inf_σb ▸ Γ.hO.bot_covBy)
+              -- O < σ_b⊔O ≤ k. O ⋖ k gives σ_b⊔O = k.
+              have hO_lt : Γ.O < σ_b ⊔ Γ.O :=
+                lt_of_le_of_ne le_sup_right (fun h =>
+                  hσb_eq_O ((Γ.hO.le_iff.mp (le_sup_left.trans h.symm.le)).resolve_left hσb_atom.1))
+              have hσbO_eq_k : σ_b ⊔ Γ.O = k :=
+                ((atom_covBy_join Γ.hO Γ.hC hOC).eq_or_eq hO_lt.le
+                  (sup_le hσb_k (le_sup_left : Γ.O ≤ k))).resolve_left (ne_of_gt hO_lt)
+              exact hσbO_eq_k ▸ h_cov_σbO
+          exact (hσb_covBy_k.eq_or_eq h_lt.le h_le).resolve_left (ne_of_gt h_lt)
+        -- Step 2: U' ⊔ da' = E ⊔ U' (da' ≤ E⊔U', CovBy)
+        have hU'da'_eq : U' ⊔ da' = Γ.E ⊔ U' := by
+          have h_lt : U' < U' ⊔ da' :=
+            lt_of_le_of_ne le_sup_left (fun h => by
+              have : da' ≤ U' := le_sup_right.trans h.symm.le
+              exact hU'_ne_da' ((hU'_atom.le_iff.mp this).resolve_left hda'_atom.1).symm)
+          have hda'_le_EU' : da' ≤ Γ.E ⊔ U' := inf_le_left
+          have hU'da'_le : U' ⊔ da' ≤ Γ.E ⊔ U' := sup_le le_sup_right hda'_le_EU'
+          have hU'_ne_E : U' ≠ Γ.E := fun h => hU'_not_π (h ▸ hE_π)
+          -- U' ⋖ U'⊔E. U'⊔da' ≤ U'⊔E. CovBy gives U'⊔da' = U' or U'⊔da' = U'⊔E.
+          rw [show Γ.E ⊔ U' = U' ⊔ Γ.E from sup_comm _ _]
+          exact ((atom_covBy_join hU'_atom Γ.hE_atom hU'_ne_E).eq_or_eq h_lt.le
+            (sup_comm Γ.E U' ▸ hU'da'_le)).resolve_left (ne_of_gt h_lt)
+        -- Step 3: k ⊓ (E ⊔ U') = E (modular: E ≤ k, U' ⊓ k = ⊥)
+        have hU'_inf_k : U' ⊓ k = ⊥ :=
+          (hU'_atom.le_iff.mp inf_le_left).resolve_right
+            (fun h => hU'_not_π ((h ▸ inf_le_right : U' ≤ k).trans hk_π))
+        have hk_inf_EU' : k ⊓ (Γ.E ⊔ U') = Γ.E := by
+          rw [inf_comm]
+          calc (Γ.E ⊔ U') ⊓ k = Γ.E ⊔ U' ⊓ k := sup_inf_assoc_of_le U' hE_k
+            _ = Γ.E := by rw [hU'_inf_k, sup_bot_eq]
+        rw [hσbσs_eq_k, hU'da'_eq, hk_inf_EU']
+        exact Γ.hE_atom
       have h_axis₂₃ : IsAtom ((ac ⊔ σ_s) ⊓ (E' ⊔ da')) := by sorry
       exact desargues_converse_nonplanar
         hσb_atom hac_atom hσs_atom hU'_atom hE'_atom hda'_atom
