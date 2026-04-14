@@ -798,6 +798,44 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
         -- But we proved U' ≠ E'. Contradiction.
         exact hU'_ne_E' hE'_eq_U'.symm
       have hσs_ne_da' : σ_s ≠ da' := fun h => hda'_not_π (h ▸ hσs_π)
+      -- ═══ Shared structural facts ═══
+      -- σ_b ⊔ σ_s = k (two distinct atoms on line k)
+      have hσbσs_eq_k : σ_b ⊔ σ_s = k := by
+        have h_lt : σ_b < σ_b ⊔ σ_s :=
+          lt_of_le_of_ne le_sup_left (fun h => by
+            have : σ_s ≤ σ_b := le_sup_right.trans h.symm.le
+            exact hσb_ne_σs ((hσb_atom.le_iff.mp this).resolve_left hσs_atom.1).symm)
+        have h_le : σ_b ⊔ σ_s ≤ k := sup_le hσb_k hσs_k
+        have hσb_covBy_k : σ_b ⋖ k := by
+          by_cases hσb_eq_O : σ_b = Γ.O
+          · exact hσb_eq_O ▸ atom_covBy_join Γ.hO Γ.hC hOC
+          · have hσb_inf_O : σ_b ⊓ Γ.O = ⊥ :=
+              (hσb_atom.le_iff.mp inf_le_left).resolve_right
+                (fun h => hσb_eq_O ((Γ.hO.le_iff.mp (h ▸ inf_le_right)).resolve_left hσb_atom.1))
+            have hO_inf_σb : Γ.O ⊓ σ_b = ⊥ := inf_comm σ_b Γ.O ▸ hσb_inf_O
+            have h_cov_σbO : σ_b ⋖ σ_b ⊔ Γ.O := by
+              rw [show σ_b ⊔ Γ.O = Γ.O ⊔ σ_b from sup_comm _ _]
+              exact covBy_sup_of_inf_covBy_left (hO_inf_σb ▸ Γ.hO.bot_covBy)
+            have hO_lt : Γ.O < σ_b ⊔ Γ.O :=
+              lt_of_le_of_ne le_sup_right (fun h => by
+                exact hσb_eq_O ((Γ.hO.le_iff.mp (le_sup_left.trans h.symm.le)).resolve_left hσb_atom.1))
+            have hσbO_eq_k : σ_b ⊔ Γ.O = k :=
+              ((atom_covBy_join Γ.hO Γ.hC hOC).eq_or_eq hO_lt.le
+                (sup_le hσb_k (le_sup_left : Γ.O ≤ k))).resolve_left (ne_of_gt hO_lt)
+            exact hσbO_eq_k ▸ h_cov_σbO
+        exact (hσb_covBy_k.eq_or_eq h_lt.le h_le).resolve_left (ne_of_gt h_lt)
+      -- U' ⊔ da' = E ⊔ U' (da' on E⊔U', CovBy)
+      have hU'da'_eq : U' ⊔ da' = Γ.E ⊔ U' := by
+        have h_lt : U' < U' ⊔ da' :=
+          lt_of_le_of_ne le_sup_left (fun h => by
+            have : da' ≤ U' := le_sup_right.trans h.symm.le
+            exact hU'_ne_da' ((hU'_atom.le_iff.mp this).resolve_left hda'_atom.1).symm)
+        have hU'_ne_E : U' ≠ Γ.E := fun h => hU'_not_π (h ▸ hE_π)
+        rw [show Γ.E ⊔ U' = U' ⊔ Γ.E from sup_comm _ _]
+        exact ((atom_covBy_join hU'_atom Γ.hE_atom hU'_ne_E).eq_or_eq h_lt.le
+          (sup_comm Γ.E U' ▸ sup_le le_sup_right (inf_le_left : da' ≤ Γ.E ⊔ U'))).resolve_left
+          (ne_of_gt h_lt)
+      -- ═══ CovBy condition ═══
       have h_cov : σ_s ⊔ da' ⋖ σ_b ⊔ σ_s ⊔ U' := by sorry
       have h_axis₁₂ : IsAtom ((σ_b ⊔ ac) ⊓ (U' ⊔ E')) := by
         -- U' ⊔ E' = s₁₂ ⊔ U' (E' on s₁₂⊔U', CovBy). Then
@@ -906,7 +944,12 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
             _ = Γ.E := by rw [hU'_inf_k, sup_bot_eq]
         rw [hσbσs_eq_k, hU'da'_eq, hk_inf_EU']
         exact Γ.hE_atom
-      have h_axis₂₃ : IsAtom ((ac ⊔ σ_s) ⊓ (E' ⊔ da')) := by sorry
+      have h_axis₂₃ : IsAtom ((ac ⊔ σ_s) ⊓ (E' ⊔ da')) := by
+        -- E' ≤ s₁₂⊔U' ⊓ (R⊔E), da' ≤ (E⊔U') ⊓ (R⊔d_a).
+        -- Need: the line ac⊔σ_s meets the line E'⊔da' at an atom.
+        -- Strategy: show s₂₃ = (ac⊔σ_s) ⊓ (E⊔d_a) ≤ E'⊔da', then modularity.
+        -- s₂₃ is where ac⊔σ_s meets E⊔d_a (two lines in π).
+        sorry
       exact desargues_converse_nonplanar
         hσb_atom hac_atom hσs_atom hU'_atom hE'_atom hda'_atom
         hσb_ne_ac hσb_ne_σs hac_ne_σs hσb_not_acσs
