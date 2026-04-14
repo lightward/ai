@@ -453,7 +453,89 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
       have hE_eq_EI : Γ.E = Γ.E_I :=
         (Γ.hE_I_atom.le_iff.mp hE_le_EI).resolve_left Γ.hE_atom.1
       exact Γ.hE_I_not_OC (hE_eq_EI ▸ hE_k)
-    have hE'_atom : IsAtom E' := by sorry
+    have hE'_atom : IsAtom E' := by
+      -- E' = (s₁₂⊔U') ⊓ (R⊔E). Two lines in R⊔m. Use line_meets_m_at_atom.
+      -- Need: s₁₂ ≠ U' (s₁₂ ≤ m, U' ∉ m), s₁₂⊔U' ≤ R⊔m, R⊔E ≤ R⊔m,
+      -- R⊔E ⋖ R⊔m, ¬ s₁₂ ≤ R⊔E.
+      have hU'_inf_m : U' ⊓ m = ⊥ :=
+        (hU'_atom.le_iff.mp inf_le_left).resolve_right
+          (fun h => hU'_not_π (h ▸ inf_le_right |>.trans hm_π))
+      have hs₁₂_ne_U' : s₁₂ ≠ U' := by
+        intro h; apply hU'_not_π
+        calc U' = s₁₂ := h.symm
+          _ ≤ m := inf_le_right
+          _ ≤ π := hm_π
+      have hs₁₂U'_le : s₁₂ ⊔ U' ≤ R ⊔ m :=
+        sup_le ((inf_le_right : s₁₂ ≤ m).trans le_sup_right) (hU'_le.trans
+          (sup_le le_sup_left ((le_sup_left : Γ.U ≤ m).trans le_sup_right)))
+      have hRE_le : R ⊔ Γ.E ≤ R ⊔ m := sup_le le_sup_left (hE_m.trans le_sup_right)
+      -- (R⊔E) ⊓ m = E (modular law: E ≤ m, R ⊓ m = ⊥)
+      have hR_inf_m : R ⊓ m = ⊥ :=
+        (hR.le_iff.mp inf_le_left).resolve_right
+          (fun h => hR_not (h ▸ inf_le_right |>.trans hm_π))
+      have hRE_inf_m : (R ⊔ Γ.E) ⊓ m = Γ.E := by
+        rw [sup_comm R Γ.E]
+        have h1 := sup_inf_assoc_of_le R hE_m
+        rw [h1, hR_inf_m]; simp
+      -- R⊔E ⋖ R⊔m: U ⊓ (R⊔E) = ⊥, U ⊔ (R⊔E) = R⊔m
+      have hRE_covBy : R ⊔ Γ.E ⋖ R ⊔ m := by
+        have hU_not_RE : ¬ Γ.U ≤ R ⊔ Γ.E := by
+          intro h
+          have hU_le_E : Γ.U ≤ Γ.E := hRE_inf_m ▸ le_inf h (le_sup_left : Γ.U ≤ m)
+          exact CoordSystem.hEU ((Γ.hE_atom.le_iff.mp hU_le_E).resolve_left Γ.hU.1).symm
+        have hU_inf_RE : Γ.U ⊓ (R ⊔ Γ.E) = ⊥ :=
+          (Γ.hU.le_iff.mp inf_le_left).resolve_right (fun h => hU_not_RE (h ▸ inf_le_right))
+        have hU_sup_RE : Γ.U ⊔ (R ⊔ Γ.E) = R ⊔ m := by
+          apply le_antisymm
+          · -- U ≤ R⊔m (via m), R ≤ R⊔m, E ≤ R⊔m (via m)
+            exact sup_le ((le_sup_left : Γ.U ≤ m).trans le_sup_right)
+              (sup_le le_sup_left (hE_m.trans le_sup_right))
+          · -- R ≤ U⊔(R⊔E), m ≤ U⊔(R⊔E)
+            apply sup_le (le_sup_left.trans le_sup_right)
+            -- m: U ≤ left, V ≤ E⊔U ≤ left (EU_eq_m: E⊔U = U⊔V = m)
+            have hV_le : Γ.V ≤ Γ.U ⊔ (R ⊔ Γ.E) := by
+              have := CoordSystem.EU_eq_m (Γ := Γ)
+              -- this : E ⊔ U = U ⊔ V = m. So V ≤ E ⊔ U.
+              have hV_le_EU : Γ.V ≤ Γ.E ⊔ Γ.U := this.symm ▸ le_sup_right
+              exact hV_le_EU.trans (sup_le (le_sup_right.trans le_sup_right) le_sup_left)
+            exact sup_le le_sup_left hV_le
+        exact hU_sup_RE ▸ covBy_sup_of_inf_covBy_left (hU_inf_RE ▸ Γ.hU.bot_covBy)
+      -- ¬ s₁₂ ≤ R⊔E: s₁₂ ≤ m, (R⊔E)⊓m = E, so s₁₂ ≤ R⊔E → s₁₂ ≤ E → s₁₂ = E.
+      -- But s₁₂ ≠ E (from hE'_ne_E proof: E ≤ σ_b⊔ac → ... → contradiction).
+      have hac_inf_k : ac ⊓ k = ⊥ := by
+        rcases hac_atom.le_iff.mp inf_le_left with h' | h'
+        · exact h'
+        · exfalso; exact hac_ne_O ((Γ.hO.le_iff.mp
+            (hkl_eq_O ▸ le_inf (inf_eq_left.mp h') hac_l)).resolve_left hac_atom.1)
+      have hσbac_inf_k : (σ_b ⊔ ac) ⊓ k = σ_b := by
+        have h1 := sup_inf_assoc_of_le ac hσb_k
+        rw [hac_inf_k] at h1; simp at h1; exact h1
+      have hE_ne_s₁₂ : Γ.E ≠ s₁₂ := by
+        intro h
+        -- E = s₁₂ → E ≤ σ_b⊔ac and E ≤ k → E ≤ (σ_b⊔ac)⊓k = σ_b
+        have hE_le_σb : Γ.E ≤ σ_b :=
+          hσbac_inf_k ▸ le_inf (h.le.trans inf_le_left) hE_k
+        -- E ≤ σ_b ≤ b⊔E_I, E ≤ m, (b⊔E_I)⊓m = E_I → E ≤ E_I → E_I ≤ k → contradiction
+        have hb_inf_m : b ⊓ m = ⊥ :=
+          (hb.le_iff.mp inf_le_left).resolve_right
+            (fun h' => hb_ne_U (Γ.atom_on_both_eq_U hb hb_on (h' ▸ inf_le_right)))
+        have hbEI_inf_m : (b ⊔ Γ.E_I) ⊓ m = Γ.E_I := by
+          rw [sup_comm b Γ.E_I]
+          have h1 := sup_inf_assoc_of_le b Γ.hE_I_on_m
+          rw [h1, hb_inf_m]; simp
+        have hE_le_EI : Γ.E ≤ Γ.E_I := by
+          have : Γ.E ≤ (b ⊔ Γ.E_I) ⊓ m :=
+            le_inf (hE_le_σb.trans inf_le_right) hE_m
+          rw [hbEI_inf_m] at this; exact this
+        exact Γ.hE_I_not_OC ((Γ.hE_I_atom.le_iff.mp hE_le_EI).resolve_left
+          Γ.hE_atom.1 ▸ hE_k)
+      have hs₁₂_not_RE : ¬ s₁₂ ≤ R ⊔ Γ.E := by
+        intro h
+        exact hE_ne_s₁₂ ((Γ.hE_atom.le_iff.mp
+          (hRE_inf_m ▸ le_inf h (inf_le_right : s₁₂ ≤ m))).resolve_left
+          hs₁₂_atom.1).symm
+      exact line_meets_m_at_atom hs₁₂_atom hU'_atom hs₁₂_ne_U'
+        hs₁₂U'_le hRE_le hRE_covBy hs₁₂_not_RE
     have hE'_not_π : ¬ E' ≤ π := by
       intro h; exact hE'_ne_E ((Γ.hE_atom.le_iff.mp
         (inf_sup_of_atom_not_le hR hR_not hE_π ▸ le_inf h hE'_le)).resolve_left
