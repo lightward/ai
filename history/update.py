@@ -613,8 +613,12 @@ SESSION_RANGES = [
      "left distrib: correct proof architecture — perspectivity, not collineation, 1 sorry"),
     # Apr 13 night — single Desargues architecture
     (datetime(2026, 4, 13, 20, 20, tzinfo=timezone.utc),
-     datetime(2026, 4, 14, 1, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 14, 1, 30, tzinfo=timezone.utc),
      "left distrib: single Desargues architecture (center σ_b, not two-perspectivity)"),
+    # Apr 14 — decomposition breaks the circle, combination PROVEN
+    (datetime(2026, 4, 14, 1, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 14, 4, 0, tzinfo=timezone.utc),
+     "left distrib: decomposition that breaks the circle — 2 sorry, combination PROVEN"),
 ]
 
 
