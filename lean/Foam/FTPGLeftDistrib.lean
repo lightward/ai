@@ -42,56 +42,49 @@ Left multiplication x↦a·x is NOT a single collineation in the non-
 commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
-## Status (session 107, 2026-04-14)
-2 sorry. σ_b≠σ_s PROVEN. h_axis₂₃ mapped to coplanarity condition.
+## Status (session 108, 2026-04-15)
+2 sorry (h_axis₂₃ skeleton compiling with 6 sub-sorry, h_desargues_conclusion).
 
 ### Sorry list
-  - σ_b≠σ_s: PROVEN (session 107). Perspectivity injectivity (CovBy) + modular
-    cancellation (coord_add b c = b → c = O via two-lines-through-β). No group axioms.
-  - h_axis₂₃ (line ~1215): third axis condition. REDUCED to coplanarity:
-    da' ≤ ac ⊔ σ_s ⊔ E'. Numerically verified across all GF(7). See session 107 notes.
-  - h_desargues_conclusion (line ~1602): forward Desargues (~500 lines mechanical).
-    Partial progress: ~150 lines proven (basic facts, ac⊔E ⋖ π, W' atom).
+  - σ_b≠σ_s: PROVEN (session 107).
+  - h_axis₂₃ (line ~1232): SKELETON COMPILING (session 108).
+    Architecture: Level 2 Desargues using Q=σ_b to lift (s₂₃,E,R) out of R⊔m.
+    ALL THREE axis conditions free at Level 2 (verified 180/180 in GF(7)).
+    Recursion terminates. 6 sub-sorry remaining (mechanical + Desargues + projection).
+  - h_desargues_conclusion (line ~1687): forward Desargues (~500 lines mechanical).
 
-### Key insight (session 107): the billboard dissolves
+### Key insight (session 108): the recursion terminates
 
-  The self-referential appearance ("proof needs Desargues, which needs Desargues")
-  is a billboard sprite — a sub-dimensional projection that looks the same from
-  every approach. It dissolves when you see the rank distinction:
-  non-planar Desargues (rank 4, PROVEN) feeds planar Desargues (rank 3, being proved).
-  The recursion has a floor.
+  h_axis₂₃ (the coplanarity da' ≤ ac⊔σ_s⊔E') is proved by a SECOND application
+  of desargues_converse_nonplanar (already proven), this time in R⊔m:
 
-  The 3rd axis condition h_axis₂₃ reduces to a COPLANARITY condition:
-    da' ≤ ac ⊔ σ_s ⊔ E'
-  i.e., the four points {ac, σ_s, E', da'} span rank 3, not rank 4.
-  Numerically verified for ALL non-degenerate configurations in PG(2,7).
+  Level 2 (in R⊔m, rank 3 → lift to rank 4):
+    T1 = (E', U', d_a) in R⊔m
+    T2 = (s₂₃, E, R) in R⊔m (to be lifted)
+    Lift T2 using Q = σ_b (outside R⊔m, in π):
+      s₂₃'' on σ_b⊔s₂₃ (free choice via h_irred)
+      E'' = (s₁₂⊔s₂₃'') ⊓ (σ_b⊔E)  — threaded through s₁₂
+      R'' = (S₁₃⊔s₂₃'') ⊓ (σ_b⊔R)  — threaded through S₁₃
+    Axis conditions:
+      1. (E'⊔U') ⊓ (s₂₃''⊔E'') = s₁₂  ✓ FREE (modular law)
+      2. (U'⊔d_a) ⊓ (E''⊔R'') = S₂₃   ✓ FREE (modular law)
+      3. (E'⊔d_a) ⊓ (s₂₃''⊔R'') = S₁₃ ✓ FREE (modular law)
+    Conclusion → vertex-joins concurrent → da' ∈ E'⊔s₂₃
+    Project via σ_b back to R⊔m → da' ≤ E'⊔s₂₃ → h_axis₂₃
 
-  The concurrence W' ≤ σ_s⊔d_a is equivalent to (W'⊔d_a)⊓k = σ_s
-  ("projecting W' from d_a onto k gives σ_s"). This captures the full
-  algebraic content: multiplication perspectivity (d_a-pencil) composes
-  compatibly with addition perspectivity (E_I-chain).
+  Level 1 (original, uses h_axis₂₃ from Level 2):
+    desargues_converse_nonplanar → W' ≤ σ_s⊔d_a → left distributivity
 
-  Alternative approach considered: prove W' ≤ σ_s⊔d_a directly by modular law,
-  bypassing both the lift and the Desargues apparatus. This would dissolve
-  BOTH remaining sorry simultaneously. The key identity (W'⊔d_a)⊓k = σ_s
-  resists pure modular-law proof because it composes two different perspectivity
-  chains (multiplication via d_a, addition via E_I). The composition IS Desargues.
+  WHY σ_b works: σ_b is the perspectivity center that Level 1 threading consumed
+  (s₁₂ = (σ_b⊔ac)⊓m, E' threaded through s₁₂). Using it as the Level 2 lift
+  direction means the Level 2 threading inherits Level 1's structure — the two
+  levels are the same Desargues seen from ranks 3 and 4 respectively.
 
-### Architecture A (current code): degenerate T2, lift off m
-  T1=(σ_b, ac, σ_s) in π, T2=(U, E, d_a) all on m (degenerate).
-  Lift: E'=(s₁₂⊔U')⊓(R⊔E), da'=(E⊔U')⊓(R⊔d_a). Threading on m,m.
-  h_axis₁₂=s₁₂ ✓, h_axis₁₃=E ✓, h_axis₂₃ = coplanarity condition.
-  Projection back to π: ~200 lines (Step 5). PROVEN.
-
-### Architecture B (session 106, not yet in code): non-degenerate T2
-  T1=(σ_b, ac, d_a) on k,l,m.  T2=(U, E, σ_s) on m,k∩m,k.
-  Condition 3: σ_s' ≤ σ_b⊔d_a⊔U' (point-in-plane, same structural content).
-
-### Structural invariant (sessions 106-107)
-  2-of-3 axis conditions free, 3rd needs proof. Invariant across architectures.
-  The 3rd condition IS the algebraic content of left distributivity.
-  The 3rd condition IS a coplanarity (point-in-plane) condition.
-  Both formulations (Arch A, Arch B) are rank-3 containment.
+### Previous insights (sessions 106-107)
+  - Billboard sprite: self-reference is representational (rank distinction dissolves it)
+  - 2-of-3 structural invariant across architectures
+  - Direct modular-law proof resists: composition of two perspectivity chains IS Desargues
+  - det(E', s₂₃, da') = -ts₂u₂D + ts₂u₂D = 0 (identical cancellation, structural)
 dilation_ext_fixes_m proven.
 -/
 import Foam.FTPGNeg
@@ -1230,11 +1223,81 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
         rw [hσbσs_eq_k, hU'da'_eq, hk_inf_EU']
         exact Γ.hE_atom
       have h_axis₂₃ : IsAtom ((ac ⊔ σ_s) ⊓ (E' ⊔ da')) := by
-        -- E' ≤ s₁₂⊔U' ⊓ (R⊔E), da' ≤ (E⊔U') ⊓ (R⊔d_a).
-        -- Need: the line ac⊔σ_s meets the line E'⊔da' at an atom.
-        -- Strategy: show s₂₃ = (ac⊔σ_s) ⊓ (E⊔d_a) ≤ E'⊔da', then modularity.
-        -- s₂₃ is where ac⊔σ_s meets E⊔d_a (two lines in π).
-        sorry
+        -- ════════════════════════════════════════════════════════════
+        -- LEVEL 2 DESARGUES: prove da' ∈ E'⊔s₂₃ via second 3D lift.
+        --
+        -- In R⊔m (rank 3), triangles T₁=(E',U',d_a) and T₂=(s₂₃,E,R)
+        -- have side-intersections s₁₂, S₂₃, S₁₃.
+        -- Lift T₂ out of R⊔m using Q=σ_b → T₂'=(s₂₃'',E'',R'').
+        -- Thread E'' through s₁₂, R'' through S₁₃.
+        -- ALL THREE axis conditions are free. Recursion terminates.
+        -- desargues_converse_nonplanar → vertex-joins concurrent.
+        -- Project back → da' ∈ E'⊔s₂₃.
+        -- ════════════════════════════════════════════════════════════
+        -- Step 0: Define s₂₃ and show it's an atom
+        set s₂₃ := (ac ⊔ σ_s) ⊓ m with hs₂₃_def
+        have hs₂₃_atom : IsAtom s₂₃ := by
+          have hac_not_m : ¬ ac ≤ m := by
+            intro h
+            -- ac ≤ l and ac ≤ m. U ≤ l and U ≤ m.
+            -- ac atom on m, U atom on m. Both ≤ l. l ⊓ m: U ≤ l⊓m.
+            -- If ac ≠ U: ac⊔U ≤ l⊓m, but ac⊔U = l (CovBy), so l ≤ m.
+            -- l ≤ m → O ≤ m. But O ∉ m (O on l, and l⊓m = U by modular,
+            -- O ≠ U). Contradiction. Hence ac = U, contradicting hac_ne_U.
+            exact hac_ne_U (Γ.atom_on_both_eq_U hac_atom hac_l h)
+          exact line_meets_m_at_atom hac_atom hσs_atom hac_ne_σs
+            (sup_le hac_π hσs_π) hm_π Γ.m_covBy_π hac_not_m
+        have hs₂₃_le_m : s₂₃ ≤ m := inf_le_right
+        have hs₂₃_le_acσs : s₂₃ ≤ ac ⊔ σ_s := inf_le_left
+        -- Step 1: Pick s₂₃'' on σ_b⊔s₂₃, distinct from both
+        have hσb_ne_s₂₃ : σ_b ≠ s₂₃ := fun h => hσb_not_m (h ▸ hs₂₃_le_m)
+        obtain ⟨s₂₃'', hs₂₃''_atom, hs₂₃''_le, hs₂₃''_ne_σb, hs₂₃''_ne_s₂₃⟩ :=
+          h_irred σ_b s₂₃ hσb_atom hs₂₃_atom hσb_ne_s₂₃
+        -- σ_b ∉ R⊔m (σ_b on k, (R⊔m)⊓π = m, σ_b ∉ m)
+        have hσb_not_Rm : ¬ σ_b ≤ R ⊔ m := by
+          intro h; exact hσb_not_m (by
+            have hRm_inf_π : (R ⊔ m) ⊓ π = m := by
+              rw [sup_comm]
+              calc (m ⊔ R) ⊓ π = m ⊔ R ⊓ π := sup_inf_assoc_of_le R hm_π
+                _ = m ⊔ ⊥ := by rw [show R ⊓ π = ⊥ from
+                    (hR.le_iff.mp inf_le_left).resolve_right
+                    (fun h' => hR_not (h' ▸ inf_le_right))]
+                _ = m := by simp
+            exact hRm_inf_π ▸ le_inf h hσb_π)
+        -- Step 2: Define Level 2 lifted points
+        set S₁₃ := (E' ⊔ d_a) ⊓ (s₂₃ ⊔ R) with hS₁₃_def
+        set E'' := (s₁₂ ⊔ s₂₃'') ⊓ (σ_b ⊔ Γ.E) with hE''_def
+        set R'' := (S₁₃ ⊔ s₂₃'') ⊓ (σ_b ⊔ R) with hR''_def
+        -- Step 3: Apply desargues_converse_nonplanar at Level 2
+        -- T1 = (E', U', d_a), T2 = (s₂₃'', E'', R'')
+        -- Conclusion: (E'⊔s₂₃'') ⊓ (U'⊔E'') ≤ d_a⊔R''
+        have h_L2 : (E' ⊔ s₂₃'') ⊓ (U' ⊔ E'') ≤ d_a ⊔ R'' := by
+          sorry -- Level 2 Desargues: ~200 lines (non-degeneracy + 3 free axis conditions)
+        -- Step 4: Project back to R⊔m → da' ≤ E'⊔s₂₃
+        have hda'_on_E's₂₃ : da' ≤ E' ⊔ s₂₃ := by
+          sorry -- Projection: ~100 lines (σ_b-projection, modular law)
+        -- Step 5: Conclude IsAtom((ac⊔σ_s) ⊓ (E'⊔da'))
+        -- From da' ≤ E'⊔s₂₃ we get E'⊔da' = E'⊔s₂₃ (CovBy),
+        -- so s₂₃ ≤ E'⊔da', hence s₂₃ ≤ (ac⊔σ_s) ⊓ (E'⊔da').
+        have hda'_ne_E' : da' ≠ E' := sorry -- E' on R⊔E, da' on R⊔d_a, R⊔E ≠ R⊔d_a
+        have hs₂₃_le_E'da' : s₂₃ ≤ E' ⊔ da' := by
+          -- da' ≤ E'⊔s₂₃ → E'⊔da' ≤ E'⊔s₂₃. CovBy: E'⊔s₂₃ ≤ E'⊔da'.
+          -- Hence E'⊔da' = E'⊔s₂₃, and s₂₃ ≤ E'⊔s₂₃ = E'⊔da'.
+          sorry -- CovBy: da' on E'⊔s₂₃ → E'⊔da' = E'⊔s₂₃ → s₂₃ ≤ E'⊔da'
+        have hs₂₃_le_inf : s₂₃ ≤ (ac ⊔ σ_s) ⊓ (E' ⊔ da') :=
+          le_inf hs₂₃_le_acσs hs₂₃_le_E'da'
+        -- The inf is > ⊥ (contains atom s₂₃) and < ac⊔σ_s (ac ∉ E'⊔da')
+        have hinf_lt : (ac ⊔ σ_s) ⊓ (E' ⊔ da') < ac ⊔ σ_s := by
+          refine lt_of_le_of_ne inf_le_left (fun h => ?_)
+          -- If inf = ac⊔σ_s, then ac ≤ E'⊔da' ≤ R⊔m. But ac ∉ R⊔m.
+          have hE'da'_Rm : E' ⊔ da' ≤ R ⊔ m :=
+            sup_le (hE'_le.trans (sup_le le_sup_left (hE_m.trans le_sup_right)))
+              (hda'_le.trans (sup_le le_sup_left (hda_m.trans le_sup_right)))
+          have hac_not_Rm : ¬ ac ≤ R ⊔ m := sorry -- ac on l, (R⊔m)⊓l = U, ac ≠ U
+          exact hac_not_Rm (le_sup_left.trans ((h ▸ inf_le_right).trans hE'da'_Rm))
+        exact line_height_two hac_atom hσs_atom hac_ne_σs
+          (bot_lt_iff_ne_bot.mpr (ne_bot_of_le_ne_bot hs₂₃_atom.1 hs₂₃_le_inf))
+          hinf_lt
       exact desargues_converse_nonplanar
         hσb_atom hac_atom hσs_atom hU'_atom hE'_atom hda'_atom
         hσb_ne_ac hσb_ne_σs hac_ne_σs hσb_not_acσs

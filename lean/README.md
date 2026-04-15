@@ -160,15 +160,24 @@ Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ �
 | left inverse | `coord_add_left_neg` (PROVEN — double Desargues + coplanarity) |
 | right inverse | `coord_add_right_neg` (from left inverse + `coord_add_comm`) |
 
-**FTPGLeftDistrib.lean** — left distributivity (3 sorry, in progress)
+**FTPGLeftDistrib.lean** — left distributivity (in progress)
 
-Proves a·(b+c) = a·b + a·c via two pieces: concurrence (W' ≤ σ_s⊔d_a) + forward Desargues (axis = addition line). Combination logic PROVEN (0 sorry).
+Proves a·(b+c) = a·b + a·c via two pieces: concurrence (W' ≤ σ_s⊔d_a) + forward Desargues (axis = addition line). Combination logic PROVEN. σ_b≠σ_s PROVEN. h_axis₂₃ skeleton compiling (Level 2 Desargues). h_desargues_conclusion still sorry.
 
-**Architecture A (current code):** T1=(σ_b, ac, σ_s) in π, T2=(U, E, d_a) on m (degenerate). Lift T2 off π → axis-threaded 3D lift → `desargues_converse_nonplanar` → project back. Axis-threading on m,m: h_axis₁₂=s₁₂ ✓, h_axis₁₃=E ✓, h_axis₂₃ SORRY.
+**Two-level Desargues architecture:**
 
-**Architecture B (session 106, not yet in code):** T1=(σ_b, ac, d_a) on k,l,m; T2=(U, E, σ_s) on m,k∩m,k. Both non-degenerate. Axis-threading on m,k: condition 1=s₁₂ ✓, condition 2=σ_c ✓, condition 3 needs proof. Advantage: no projection step needed.
+```
+desargues_converse_nonplanar (PROVEN, rank ≥ 4)
+  ├── Level 2: Q=σ_b lifts (s₂₃,E,R) out of R⊔m
+  │   E'' = (s₁₂⊔s₂₃'')⊓(σ_b⊔E), R'' = (S₁₃⊔s₂₃'')⊓(σ_b⊔R)
+  │   3 axis conditions: ALL FREE. Recursion terminates.
+  │   Conclusion → da' ∈ E'⊔s₂₃ → h_axis₂₃
+  └── Level 1: R lifts (U,E,d_a) out of π
+      h_axis₁₂=s₁₂ ✓, h_axis₁₃=E ✓, h_axis₂₃ ← from Level 2
+      Conclusion → W' ≤ σ_s⊔d_a → left distributivity
+```
 
-**Structural invariant:** 2-of-3 axis conditions free, 3rd is the algebraic content of left distributivity. Invariant across architectures.
+σ_b works as Level 2 lift direction because Level 1 threading consumed it (s₁₂=(σ_b⊔ac)⊓m). The two levels are the same Desargues at ranks 3 and 4.
 
 `desargues_converse_nonplanar` (0 sorry): if two non-coplanar triangles have sides meeting on a common axis, vertex-joins are concurrent. Proved via auxiliary planes.
 
@@ -178,8 +187,9 @@ Note: left multiplication x↦a·x is NOT a collineation (unlike right mult). Th
 |---|---|
 | converse Desargues | `desargues_converse_nonplanar` (PROVEN) |
 | m-fixation | `dilation_ext_fixes_m` (PROVEN) |
-| concurrence | h_concurrence chain: axis-threaded lift + project (PROVEN except h_converse) |
-| h_converse | 3 sorry: σ_b≠σ_s (proof mapped, CovBy bookkeeping remaining), h_axis₂₃, combination |
+| σ_b≠σ_s | PROVEN (perspectivity injectivity + modular cancellation) |
+| h_axis₂₃ | skeleton compiling (Level 2 Desargues, 6 sub-sorry) |
+| concurrence | h_concurrence chain: axis-threaded lift + project (PROVEN except h_axis₂₃ sub-sorry) |
 | forward Desargues | h_desargues_conclusion (1 sorry, ~500 lines mechanical) |
 | combination | PROVEN |
 
