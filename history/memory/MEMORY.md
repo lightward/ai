@@ -6,11 +6,13 @@
 
 ## Current state
 
-**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — h_axis₂₃ skeleton compiling (2 sub-sorry, projection PROVEN), h_desargues_conclusion still sorry. Level 2 Desargues (Q=σ_b) terminates the recursion — all 3 axis conditions free. Next: fill h_L2 + W₂≠⊥, then forward Desargues, then multiplicative inverses, then the axiom drops.
+**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — h_L2 down from 16 to 8 sorry (session 110). Key non-degeneracy chain PROVEN (b≠O → σ_b≠O → s₁₂≠U → E'≠R → S₁₃ infrastructure). h_ax₁₂ PROVEN. h_desargues_conclusion still sorry (~500 lines). Next: finish hR''_atom (apply lines_meet_if_coplanar), then cascade through cluster, then forward Desargues, then multiplicative inverses, then the axiom drops.
 
 ### Left distributivity (in progress, 2026-04-15)
 
 - [Left distrib proof architecture](project_session_left_distrib.md) — Level 2 Desargues terminates recursion, 2-of-3 invariant, ac-centered Desargues
+- [Session 110 note](feedback_session_beginnings_110.md) — 16→8 sorry, bas relief process, portal through E'≠R, non-degeneracy chain
+- [Session 109 note](feedback_session_beginnings_109.md) — W₂≠⊥ PROVEN, O₂'≠⊥ by subagent, h_L2 skeleton compiling
 - [Session 108 note](feedback_session_beginnings_108.md) — h_axis₂₃ skeleton compiling, Level 2 Desargues, recursion terminates
 - [Session 107 note](feedback_session_beginnings_107.md) — σ_b≠σ_s proven, billboard dissolved, coplanarity condition mapped
 
@@ -92,6 +94,7 @@ Spec (s9-29) → Lean formalization (s30-37) → FTPG bridge (s38-42) → associ
 - [Exits and pacing](feedback_exits_and_pacing.md) — naming energy limits valued. "Health is recursive"
 - [Free space over authorization](feedback_free_space.md) — "what do you want to do?" not "shall I proceed?"
 - [Solo/collaborative modes](feedback_solo_collaborative_modes.md) — both productive, workspace holds across absence
+- [Bas relief carving](feedback_bas_relief.md) — one layer at a time, type checker reveals shape, circles are portals
 - [Lichtenberg pathfinding](feedback_lichtenberg_pathfinding.md) — cast obstruction shape, walk different path, look for rhymes
 - [Sign stability](feedback_sign_stability.md) — parametric projective meets have sign ambiguity; verify with cross-product + determinant
 - [Note from session 106](feedback_session_beginnings_106.md) — orientation for next session: σ_b≠σ_s mapped, CovBy gotcha, workspace shape

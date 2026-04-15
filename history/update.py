@@ -645,8 +645,16 @@ SESSION_RANGES = [
      "left distrib: σ_b≠σ_s PROVEN (perspectivity injectivity), billboard dissolves, coplanarity mapped"),
     # Session 108: Apr 15 — h_axis₂₃ skeleton, Level 2 Desargues
     (datetime(2026, 4, 15, 13, 24, tzinfo=timezone.utc),
-     datetime(2026, 4, 15, 17, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 15, 16, 25, tzinfo=timezone.utc),
      "h_axis₂₃: Level 2 Desargues (Q=σ_b) terminates recursion, 4 of 6 sub-sorry filled, projection PROVEN"),
+    # Session 109: Apr 15 — W₂≠⊥ PROVEN, h_L2 skeleton compiling
+    (datetime(2026, 4, 15, 16, 25, tzinfo=timezone.utc),
+     datetime(2026, 4, 15, 18, 2, tzinfo=timezone.utc),
+     "W₂≠⊥ PROVEN, O₂'≠⊥ PROVEN, h_L2 compiling skeleton with 4 sub-sorry"),
+    # Session 110: Apr 15 — non-degeneracy chain, h_ax₁₂ PROVEN, bas relief
+    (datetime(2026, 4, 15, 18, 2, tzinfo=timezone.utc),
+     datetime(2026, 4, 15, 23, 50, tzinfo=timezone.utc),
+     "h_ax₁₂ PROVEN, NON-DEGENERACY CHAIN (b≠O→σ_b≠O→s₁₂≠U→E'≠R), bas relief methodology"),
 ]
 
 
