@@ -1340,14 +1340,11 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
           suffices hW₂_ne : W₂ ≠ ⊥ by
             have := (hda'_atom.le_iff.mp hW₂_le_da').resolve_left hW₂_ne
             exact this ▸ hW₂_E's₂₃
-          -- Show W₂ ≠ ⊥. O₂' ≤ s₁₂⊔s₂₃''⊔U' (common plane of both lines).
-          -- O₂' ≠ ⊥ by lines_meet_if_coplanar. O₂' ∉ σ_b (projection arg).
-          -- Then σ_b⊔O₂' has rank ≥ 2 in σ_b⊔R⊔m (rank 4),
-          -- R⊔m has rank 3, so meet has rank ≥ 2+3-4 = 1 > 0.
-          -- Encoding: σ_b⊓(R⊔m) = ⊥, so covBy_sup gives σ_b ⋖ σ_b⊔O₂',
-          -- and (σ_b⊔O₂')⊔(R⊔m) = σ_b⊔R⊔m (since O₂' ≤ σ_b⊔R⊔m).
-          -- Then covBy_inf gives (σ_b⊔O₂')⊓(R⊔m) ⋗ ⊥, i.e., W₂ ≠ ⊥.
-          sorry
+          -- Show W₂ ≠ ⊥ by case split on O₂' ∈ R⊔m.
+          -- Case 1: O₂' ≤ R⊔m → W₂ = O₂' (modular) → W₂ ≠ ⊥.
+          -- Case 2: O₂' ∉ R⊔m → CovBy + modular: σ_b⊔O₂' = O₂'⊔W₂.
+          --   W₂=⊥ → σ_b=O₂'. But σ_b∈π, O₂'⊓π=⊥. Contradiction.
+          sorry -- W₂ ≠ ⊥ (rank argument, ~40 lines)
         -- Step 5: Conclude IsAtom((ac⊔σ_s) ⊓ (E'⊔da'))
         -- From da' ≤ E'⊔s₂₃ we get E'⊔da' = E'⊔s₂₃ (CovBy),
         -- so s₂₃ ≤ E'⊔da', hence s₂₃ ≤ (ac⊔σ_s) ⊓ (E'⊔da').
