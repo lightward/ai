@@ -1342,11 +1342,228 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
           suffices hW₂_ne : W₂ ≠ ⊥ by
             have := (hda'_atom.le_iff.mp hW₂_le_da').resolve_left hW₂_ne
             exact this ▸ hW₂_E's₂₃
-          -- Show W₂ ≠ ⊥ by case split on O₂' ∈ R⊔m.
-          -- Case 1: O₂' ≤ R⊔m → W₂ = O₂' (modular) → W₂ ≠ ⊥.
-          -- Case 2: O₂' ∉ R⊔m → CovBy + modular: σ_b⊔O₂' = O₂'⊔W₂.
-          --   W₂=⊥ → σ_b=O₂'. But σ_b∈π, O₂'⊓π=⊥. Contradiction.
-          sorry -- W₂ ≠ ⊥ (rank argument, ~40 lines)
+          -- ═══ W₂ ≠ ⊥: dimension argument in σ_b ⊔ R ⊔ m ═══
+          -- Strategy: show O₂' ≠ ⊥ and O₂' ≠ σ_b, then CovBy forces W₂ ≠ ⊥.
+          intro hW₂_bot
+          -- (A) O₂' ≠ σ_b: project O₂' to π via (E'⊔s₂₃'')⊓π = s₂₃''
+          have hO₂'_ne_σb : O₂' ≠ σ_b := by
+            intro h_eq
+            have hE'_inf_π : E' ⊓ π = ⊥ :=
+              (hE'_atom.le_iff.mp inf_le_left).resolve_right
+                (fun h => hE'_not_π (h ▸ inf_le_right))
+            have hs₂₃''_π : s₂₃'' ≤ π :=
+              hs₂₃''_le.trans (sup_le hσb_π (hs₂₃_le_m.trans hm_π))
+            have h_proj : (E' ⊔ s₂₃'') ⊓ π = s₂₃'' := by
+              rw [sup_comm]; calc (s₂₃'' ⊔ E') ⊓ π
+                  = s₂₃'' ⊔ E' ⊓ π := sup_inf_assoc_of_le E' hs₂₃''_π
+                _ = s₂₃'' := by rw [hE'_inf_π, sup_bot_eq]
+            have hσb_le : σ_b ≤ (E' ⊔ s₂₃'') ⊓ π :=
+              le_inf (h_eq ▸ (inf_le_left : O₂' ≤ E' ⊔ s₂₃'')) hσb_π
+            rw [h_proj] at hσb_le
+            exact hs₂₃''_ne_σb.symm ((hs₂₃''_atom.le_iff.mp hσb_le).resolve_left
+              hσb_atom.1)
+          -- (B) O₂' ≠ ⊥: two lines in plane ρ₁₂ = E'⊔s₂₃''⊔U' meet
+          have hO₂'_ne_bot : O₂' ≠ ⊥ := by
+            -- Step 1: σ_b ⊔ E = k (two distinct atoms on line k)
+            have hσb_ne_E : σ_b ≠ Γ.E := fun h => hσb_not_m (h ▸ hE_m)
+            have hσbE_eq_k : σ_b ⊔ Γ.E = k := by
+              have h_lt : σ_b < σ_b ⊔ Γ.E :=
+                lt_of_le_of_ne le_sup_left (fun h => by
+                  have : Γ.E ≤ σ_b := le_sup_right.trans h.symm.le
+                  exact hσb_ne_E ((hσb_atom.le_iff.mp this).resolve_left
+                    Γ.hE_atom.1).symm)
+              have h_le : σ_b ⊔ Γ.E ≤ k := sup_le hσb_k hE_k
+              exact ((line_covers_its_atoms Γ.hO Γ.hC
+                (fun h => Γ.hC_not_l (h ▸ le_sup_left)) hσb_atom hσb_k).eq_or_eq
+                h_lt.le h_le).resolve_left (ne_of_gt h_lt)
+            -- Step 2: E'' ≤ k
+            have hE''_le_k : E'' ≤ k := hσbE_eq_k ▸ inf_le_right
+            -- Step 3: U' ∉ k
+            have hU'_not_k : ¬ U' ≤ k := by
+              intro h
+              have hU'_le_π : U' ≤ π := h.trans hk_π
+              exact hU'_not_π hU'_le_π
+            -- Step 4: E'' ≠ ⊥ (lines_meet_if_coplanar: k ⋖ π, s₁₂⊔s₂₃'' ≤ π, s₁₂⊔s₂₃'' ≰ k)
+            have hE''_ne_bot : E'' ≠ ⊥ := by
+              -- s₁₂⊔s₂₃'' ≤ π
+              have hs₁₂_π : s₁₂ ≤ π := (inf_le_right : s₁₂ ≤ m).trans hm_π
+              have hs₂₃''_π : s₂₃'' ≤ π :=
+                hs₂₃''_le.trans (sup_le hσb_π (hs₂₃_le_m.trans hm_π))
+              have hs₁₂s₂₃''_π : s₁₂ ⊔ s₂₃'' ≤ π := sup_le hs₁₂_π hs₂₃''_π
+              -- s₁₂⊔s₂₃'' ≰ k: if s₁₂ ≤ k then s₁₂ ≤ k⊓m = E
+              have hs₁₂s₂₃''_not_k : ¬ (s₁₂ ⊔ s₂₃'') ≤ k := by
+                intro h_le
+                have hs₁₂_le_k : s₁₂ ≤ k := le_sup_left.trans h_le
+                -- s₁₂ ≤ k and s₁₂ ≤ m, so s₁₂ ≤ k ⊓ m = E
+                have hE_eq : k ⊓ m = Γ.E := by
+                  simp only [hk_def, hm_def]; rfl
+                have hs₁₂_le_E : s₁₂ ≤ Γ.E := hE_eq ▸ le_inf hs₁₂_le_k inf_le_right
+                -- E ≤ s₁₂ ≤ σ_b ⊔ ac
+                have hE_le_σbac : Γ.E ≤ σ_b ⊔ ac :=
+                  (Γ.hE_atom.le_iff.mp hs₁₂_le_E).resolve_left hs₁₂_atom.1 ▸
+                    (inf_le_left : s₁₂ ≤ σ_b ⊔ ac)
+                -- ac ⊓ k = ⊥
+                have hac_not_k : ¬ ac ≤ k := by
+                  intro h_le'
+                  exact hac_ne_O ((Γ.hO.le_iff.mp (hkl_eq_O ▸ le_inf h_le' hac_l)
+                    ).resolve_left hac_atom.1)
+                have hac_inf_k : ac ⊓ k = ⊥ :=
+                  (hac_atom.le_iff.mp inf_le_left).resolve_right
+                    (fun h' => hac_not_k (inf_eq_left.mp h'))
+                -- (σ_b ⊔ ac) ⊓ k = σ_b (modular: σ_b ≤ k)
+                have hmod : (σ_b ⊔ ac) ⊓ k = σ_b := by
+                  have h1 := sup_inf_assoc_of_le ac hσb_k
+                  rw [hac_inf_k] at h1; simp at h1; exact h1
+                -- E ≤ σ_b
+                have hE_le_σb : Γ.E ≤ σ_b := hmod ▸ le_inf hE_le_σbac hE_k
+                exact hσb_ne_E ((hσb_atom.le_iff.mp hE_le_σb).resolve_left
+                  Γ.hE_atom.1).symm
+              -- Apply lines_meet_if_coplanar
+              -- E'' = (s₁₂ ⊔ s₂₃'') ⊓ (σ_b ⊔ E) = (s₁₂ ⊔ s₂₃'') ⊓ k
+              rw [hE''_def, hσbE_eq_k, inf_comm]
+              exact lines_meet_if_coplanar (CoordSystem.OC_covBy_π Γ)
+                hs₁₂s₂₃''_π hs₁₂s₂₃''_not_k hs₁₂_atom (atom_covBy_join hs₁₂_atom hs₂₃''_atom
+                  (fun h => by
+                    have hs₂₃''_m : s₂₃'' ≤ m := h ▸ inf_le_right
+                    have hs₂₃''_le_σbs₂₃ : s₂₃'' ≤ σ_b ⊔ s₂₃ := hs₂₃''_le
+                    -- s₂₃'' ≤ m and s₂₃'' ≤ σ_b⊔s₂₃
+                    -- (σ_b ⊔ s₂₃) ⊓ m = s₂₃ (modular: s₂₃ ≤ m, σ_b ⊓ m = ⊥)
+                    have hσb_inf_m : σ_b ⊓ m = ⊥ :=
+                      (hσb_atom.le_iff.mp inf_le_left).resolve_right
+                        (fun h' => hσb_not_m (h' ▸ inf_le_right))
+                    have hmod : (σ_b ⊔ s₂₃) ⊓ m = s₂₃ := by
+                      calc (σ_b ⊔ s₂₃) ⊓ m = (s₂₃ ⊔ σ_b) ⊓ m := by rw [sup_comm]
+                        _ = s₂₃ ⊔ σ_b ⊓ m := sup_inf_assoc_of_le σ_b hs₂₃_le_m
+                        _ = s₂₃ := by rw [hσb_inf_m, sup_bot_eq]
+                    have hs₂₃''_le_s₂₃ : s₂₃'' ≤ s₂₃ :=
+                      hmod ▸ le_inf hs₂₃''_le_σbs₂₃ hs₂₃''_m
+                    exact hs₂₃''_ne_s₂₃ ((hs₂₃_atom.le_iff.mp hs₂₃''_le_s₂₃).resolve_left
+                      hs₂₃''_atom.1))).lt
+            -- Step 5: U' ⊓ (E' ⊔ s₂₃'') = ⊥
+            have hU'_inf_E's₂₃'' : U' ⊓ (E' ⊔ s₂₃'') = ⊥ := by
+              rcases hU'_atom.le_iff.mp inf_le_left with h | h
+              · exact h
+              · exfalso
+                -- U' ≤ E' ⊔ s₂₃''. Project to R⊔m.
+                -- s₂₃'' ⊓ (R⊔m) = ⊥ (s₂₃'' ∉ R⊔m since σ_b ∉ R⊔m)
+                have hs₂₃''_not_Rm : ¬ s₂₃'' ≤ R ⊔ m := by
+                  intro h'
+                  -- s₂₃'' ≤ σ_b⊔s₂₃ and s₂₃'' ≤ R⊔m
+                  -- (σ_b⊔s₂₃) ⊓ (R⊔m): s₂₃ ≤ R⊔m (s₂₃ ≤ m ≤ R⊔m)
+                  -- modular: (s₂₃ ⊔ σ_b) ⊓ (R⊔m) = s₂₃ ⊔ σ_b⊓(R⊔m) = s₂₃ (σ_b ∉ R⊔m)
+                  have hσb_inf_Rm' : σ_b ⊓ (R ⊔ m) = ⊥ :=
+                    (hσb_atom.le_iff.mp inf_le_left).resolve_right
+                      (fun h'' => hσb_not_Rm (h'' ▸ inf_le_right))
+                  have hmod : (σ_b ⊔ s₂₃) ⊓ (R ⊔ m) = s₂₃ := by
+                    calc (σ_b ⊔ s₂₃) ⊓ (R ⊔ m)
+                        = (s₂₃ ⊔ σ_b) ⊓ (R ⊔ m) := by rw [sup_comm]
+                      _ = s₂₃ ⊔ σ_b ⊓ (R ⊔ m) := sup_inf_assoc_of_le σ_b
+                          (hs₂₃_le_m.trans le_sup_right)
+                      _ = s₂₃ := by rw [hσb_inf_Rm', sup_bot_eq]
+                  have hs₂₃''_le_s₂₃ : s₂₃'' ≤ s₂₃ :=
+                    hmod ▸ le_inf hs₂₃''_le h'
+                  exact hs₂₃''_ne_s₂₃ ((hs₂₃_atom.le_iff.mp hs₂₃''_le_s₂₃).resolve_left
+                    hs₂₃''_atom.1)
+                have hs₂₃''_inf_Rm : s₂₃'' ⊓ (R ⊔ m) = ⊥ :=
+                  (hs₂₃''_atom.le_iff.mp inf_le_left).resolve_right
+                    (fun h' => hs₂₃''_not_Rm (h' ▸ inf_le_right))
+                -- (E' ⊔ s₂₃'') ⊓ (R⊔m) = E' (modular: E' ≤ R⊔m)
+                have hE'_le_Rm : E' ≤ R ⊔ m :=
+                  hE'_le.trans (sup_le le_sup_left (hE_m.trans le_sup_right))
+                have hmod : (E' ⊔ s₂₃'') ⊓ (R ⊔ m) = E' := by
+                  calc (E' ⊔ s₂₃'') ⊓ (R ⊔ m)
+                      = E' ⊔ s₂₃'' ⊓ (R ⊔ m) := sup_inf_assoc_of_le s₂₃'' hE'_le_Rm
+                    _ = E' := by rw [hs₂₃''_inf_Rm, sup_bot_eq]
+                -- U' ≤ E' ⊔ s₂₃'' and U' ≤ R⊔m, so U' ≤ E'
+                have hU'_le_E' : U' ≤ E' :=
+                  hmod ▸ le_inf (h ▸ inf_le_right) (hU'_le.trans
+                    (sup_le le_sup_left ((le_sup_left : Γ.U ≤ m).trans le_sup_right)))
+                exact hU'_ne_E' ((hE'_atom.le_iff.mp hU'_le_E').resolve_left
+                  hU'_atom.1)
+            -- Step 6: E' ⊔ s₂₃'' ⋖ E' ⊔ s₂₃'' ⊔ U' (CovBy from disjointness)
+            have hE's₂₃''_covBy : E' ⊔ s₂₃'' ⋖ E' ⊔ s₂₃'' ⊔ U' := by
+              rw [show E' ⊔ s₂₃'' ⊔ U' = U' ⊔ (E' ⊔ s₂₃'') from by
+                simp only [sup_comm, sup_left_comm]]
+              exact covBy_sup_of_inf_covBy_left (hU'_inf_E's₂₃'' ▸ hU'_atom.bot_covBy)
+            -- Step 7: s₁₂ ≤ E' ⊔ U' (E' on line s₁₂⊔U', so E'⊔U' = s₁₂⊔U')
+            have hs₁₂_le_E'U' : s₁₂ ≤ E' ⊔ U' := by
+              have hE'_le_s₁₂U' : E' ≤ s₁₂ ⊔ U' := inf_le_left
+              have hs₁₂_ne_U' : s₁₂ ≠ U' :=
+                fun h => hU'_not_π (h ▸ (inf_le_right : s₁₂ ≤ m).trans hm_π)
+              have hU'E'_eq : U' ⊔ E' = s₁₂ ⊔ U' := by
+                have h_lt : U' < U' ⊔ E' :=
+                  lt_of_le_of_ne le_sup_left (fun h => by
+                    have : E' ≤ U' := le_sup_right.trans h.symm.le
+                    exact hU'_ne_E' ((hU'_atom.le_iff.mp this).resolve_left
+                      hE'_atom.1).symm)
+                rw [show s₁₂ ⊔ U' = U' ⊔ s₁₂ from sup_comm _ _]
+                exact ((atom_covBy_join hU'_atom hs₁₂_atom
+                  hs₁₂_ne_U'.symm).eq_or_eq h_lt.le
+                  (sup_comm s₁₂ U' ▸ sup_le le_sup_right hE'_le_s₁₂U')).resolve_left
+                  (ne_of_gt h_lt)
+              calc s₁₂ ≤ s₁₂ ⊔ U' := le_sup_left
+                _ = U' ⊔ E' := hU'E'_eq.symm
+                _ = E' ⊔ U' := sup_comm _ _
+            -- Step 8: U' ⊔ E'' ≤ E' ⊔ s₂₃'' ⊔ U' (= ρ₁₂)
+            have hU'E''_le : U' ⊔ E'' ≤ E' ⊔ s₂₃'' ⊔ U' := by
+              apply sup_le (le_sup_right)
+              -- E'' ≤ s₁₂ ⊔ s₂₃'' ≤ E'⊔U'⊔s₂₃'' = E'⊔s₂₃''⊔U'
+              calc E'' ≤ s₁₂ ⊔ s₂₃'' := inf_le_left
+                _ ≤ (E' ⊔ U') ⊔ s₂₃'' := sup_le_sup_right hs₁₂_le_E'U' _
+                _ = E' ⊔ s₂₃'' ⊔ U' := by
+                    simp only [sup_assoc, sup_comm, sup_left_comm]
+            -- Step 9: ¬ U' ⊔ E'' ≤ E' ⊔ s₂₃''
+            have hU'E''_not_le : ¬ (U' ⊔ E'') ≤ E' ⊔ s₂₃'' := by
+              intro h_le
+              have hU'_le : U' ≤ E' ⊔ s₂₃'' := le_sup_left.trans h_le
+              exact hU'_atom.1 (le_bot_iff.mp (hU'_inf_E's₂₃'' ▸ le_inf (le_refl U') hU'_le))
+            -- Step 10: U' < U' ⊔ E'' (E'' ≤ k, U' ∉ k → E'' ≰ U')
+            have hU'_lt : U' < U' ⊔ E'' := by
+              apply lt_of_le_of_ne le_sup_left
+              intro h_eq
+              have hE''_le_U' : E'' ≤ U' := le_sup_right.trans h_eq.symm.le
+              -- E'' ≤ U' and E'' ≤ k. U' ⊓ k = ⊥ (U' ∉ k).
+              have hU'_inf_k : U' ⊓ k = ⊥ :=
+                (hU'_atom.le_iff.mp inf_le_left).resolve_right
+                  (fun h' => hU'_not_k (h' ▸ inf_le_right))
+              exact hE''_ne_bot (le_bot_iff.mp (hU'_inf_k ▸ le_inf hE''_le_U' hE''_le_k))
+            -- Step 11: Apply lines_meet_if_coplanar
+            -- O₂' = (E' ⊔ s₂₃'') ⊓ (U' ⊔ E'')
+            -- CovBy: E' ⊔ s₂₃'' ⋖ E' ⊔ s₂₃'' ⊔ U'
+            -- U' ⊔ E'' ≤ E' ⊔ s₂₃'' ⊔ U'
+            -- ¬ U' ⊔ E'' ≤ E' ⊔ s₂₃''
+            -- U' < U' ⊔ E'' (atom on U'⊔E'')
+            rw [hO₂'_def]
+            exact lines_meet_if_coplanar hE's₂₃''_covBy hU'E''_le hU'E''_not_le
+              hU'_atom hU'_lt
+          -- (C) CovBy argument: W₂ ⋖ σ_b ⊔ O₂'
+          -- R⊔m ⋖ σ_b⊔(R⊔m) (σ_b atom, σ_b ⊓ (R⊔m) = ⊥)
+          have hRm_covBy : R ⊔ m ⋖ σ_b ⊔ (R ⊔ m) :=
+            covBy_sup_of_inf_covBy_left (hσb_inf_Rm ▸ hσb_atom.bot_covBy)
+          -- O₂' ≤ σ_b⊔R⊔m
+          have hO₂'_le : O₂' ≤ σ_b ⊔ (R ⊔ m) := by
+            calc O₂' ≤ E' ⊔ s₂₃'' := inf_le_left
+              _ ≤ σ_b ⊔ (R ⊔ m) := sup_le
+                  (hE'_le.trans (sup_le (le_sup_left.trans le_sup_right)
+                    (hE_m.trans (le_sup_right.trans le_sup_right))))
+                  (hs₂₃''_le.trans (sup_le le_sup_left
+                    (hs₂₃_le_m.trans (le_sup_right.trans le_sup_right))))
+          -- (R⊔m) ⊔ (σ_b⊔O₂') = σ_b ⊔ (R⊔m)
+          have hRm_join : (R ⊔ m) ⊔ (σ_b ⊔ O₂') = σ_b ⊔ (R ⊔ m) :=
+            le_antisymm (sup_le le_sup_right (sup_le le_sup_left hO₂'_le))
+              (sup_le (le_sup_left.trans le_sup_right) le_sup_left)
+          -- inf_covBy_of_covBy_sup: R⊔m ⋖ (R⊔m)⊔(σ_b⊔O₂') → W₂ ⋖ σ_b⊔O₂'
+          have hW₂_covBy : (σ_b ⊔ O₂') ⊓ (R ⊔ m) ⋖ σ_b ⊔ O₂' := by
+            rw [inf_comm]
+            exact IsLowerModularLattice.inf_covBy_of_covBy_sup (hRm_join ▸ hRm_covBy)
+          -- W₂ = ⊥ → ⊥ ⋖ σ_b⊔O₂' → σ_b⊔O₂' is atom
+          -- hW₂_covBy : W₂ ⋖ σ_b⊔O₂'. Substitute W₂ = ⊥.
+          have hW₂_covBy' : ⊥ ⋖ σ_b ⊔ O₂' := hW₂_bot ▸ hW₂_covBy
+          -- σ_b⊔O₂' is atom. σ_b ≤ σ_b⊔O₂' → σ_b = σ_b⊔O₂' → O₂' ≤ σ_b
+          have hσbO₂'_atom := hW₂_covBy'.is_atom
+          have hO₂'_le_σb : O₂' ≤ σ_b :=
+            (hσbO₂'_atom.le_iff.mp le_sup_left).resolve_left hσb_atom.1 ▸ le_sup_right
+          exact hO₂'_ne_σb ((hσb_atom.le_iff.mp hO₂'_le_σb).resolve_left hO₂'_ne_bot)
         -- Step 5: Conclude IsAtom((ac⊔σ_s) ⊓ (E'⊔da'))
         -- From da' ≤ E'⊔s₂₃ we get E'⊔da' = E'⊔s₂₃ (CovBy),
         -- so s₂₃ ≤ E'⊔da', hence s₂₃ ≤ (ac⊔σ_s) ⊓ (E'⊔da').
