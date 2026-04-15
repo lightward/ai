@@ -1457,7 +1457,87 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
           -- S₁₃ = (E'⊔d_a) ⊓ (s₂₃⊔R). Two lines in R⊔m.
           -- σ_b ⊔ R: line through σ_b and R.
           -- R'' = (S₁₃ ⊔ s₂₃'') ⊓ (σ_b ⊔ R). Two lines meeting in σ_b⊔R⊔m.
-          have hR''_atom : IsAtom R'' := by sorry
+          have hR''_atom : IsAtom R'' := by
+            -- ── d_a ≠ U ──
+            have hda_ne_U : d_a ≠ Γ.U := by
+              intro h_eq
+              -- d_a = U → U ≤ a⊔C. (a⊔C)⊓l = a (modular: a ≤ l, C⊓l = ⊥). U ≤ a. U = a.
+              have hCl : Γ.C ⊓ l = ⊥ := (Γ.hC.le_iff.mp inf_le_left).resolve_right
+                (fun h' => Γ.hC_not_l (h' ▸ inf_le_right))
+              have haC_inf_l : (a ⊔ Γ.C) ⊓ l = a := by
+                have h1 := sup_inf_assoc_of_le Γ.C ha_on; rw [hCl] at h1; simp at h1; exact h1
+              have hU_le_a : Γ.U ≤ a :=
+                haC_inf_l ▸ le_inf (h_eq ▸ (inf_le_left : d_a ≤ a ⊔ Γ.C)) (le_sup_right : Γ.U ≤ l)
+              exact ha_ne_U ((ha.le_iff.mp hU_le_a).resolve_left Γ.hU.1).symm
+            -- ── d_a ≠ E ──
+            have hda_ne_E : d_a ≠ Γ.E := by
+              intro h_eq
+              -- d_a = E → E ≤ a⊔C. (a⊔C)⊓k = C (modular: C ≤ k, a⊓k = ⊥). E ≤ C. E = C.
+              -- But C ∉ m and E ≤ m. Contradiction.
+              have hak : a ⊓ k = ⊥ := (ha.le_iff.mp inf_le_left).resolve_right
+                (fun h' => ha_ne_O ((Γ.hO.le_iff.mp (hkl_eq_O ▸ le_inf
+                  (h' ▸ inf_le_right) ha_on)).resolve_left ha.1))
+              have haC_inf_k : (a ⊔ Γ.C) ⊓ k = Γ.C := by
+                rw [show a ⊔ Γ.C = Γ.C ⊔ a from sup_comm _ _]
+                have h1 := sup_inf_assoc_of_le a (le_sup_right : Γ.C ≤ k)
+                rw [hak] at h1; simp at h1; exact h1
+              have hE_le_C : Γ.E ≤ Γ.C :=
+                haC_inf_k ▸ le_inf (h_eq ▸ (inf_le_left : d_a ≤ a ⊔ Γ.C)) hE_k
+              exact Γ.hC_not_m ((Γ.hC.le_iff.mp hE_le_C).resolve_left Γ.hE_atom.1 ▸ hE_m)
+            -- ── E ≠ s₂₃ ──
+            have hE_ne_s₂₃ : Γ.E ≠ s₂₃ := by
+              intro h_eq
+              -- E = s₂₃ → s₂₃ ≤ k (E ≤ k). But s₂₃ ⊓ k = ⊥.
+              exact hs₂₃_atom.1 (le_antisymm
+                (le_trans (le_inf le_rfl (h_eq ▸ hE_k)) hs₂₃_inf_k.le) bot_le)
+            -- ── (s₂₃⊔R) ⊓ m = s₂₃ ──
+            have hs₂₃R_inf_m : (s₂₃ ⊔ R) ⊓ m = s₂₃ := by
+              have h1 := sup_inf_assoc_of_le R hs₂₃_le_m
+              rw [hR_inf_m] at h1; simp at h1; exact h1
+            -- ── E' ⊔ d_a ⋖ R ⊔ m (CovBy via U) ──
+            -- ── E' ⊔ d_a ⋖ R ⊔ m (CovBy via Γ.U) ──
+            have hE'_inf_m : E' ⊓ m = ⊥ := (hE'_atom.le_iff.mp inf_le_left).resolve_right
+              (fun h => hE'_not_π (h ▸ inf_le_right |>.trans hm_π))
+            have hE'da_inf_m : (E' ⊔ d_a) ⊓ m = d_a := by
+              rw [sup_comm]; have h1 := sup_inf_assoc_of_le E' hda_m
+              rw [hE'_inf_m] at h1; simp at h1; exact h1
+            have hU_inf_da : Γ.U ⊓ d_a = ⊥ := (Γ.hU.le_iff.mp inf_le_left).resolve_right
+              (fun h => hda_ne_U ((hda_atom.le_iff.mp (h ▸ inf_le_right)).resolve_left Γ.hU.1).symm)
+            have hU_inf_E'da : Γ.U ⊓ (E' ⊔ d_a) = ⊥ := by
+              have h1 : Γ.U ⊓ (E' ⊔ d_a) ≤ d_a := by
+                calc Γ.U ⊓ (E' ⊔ d_a)
+                    ≤ m ⊓ (E' ⊔ d_a) := inf_le_inf_right _ (le_sup_left : Γ.U ≤ m)
+                  _ = (E' ⊔ d_a) ⊓ m := inf_comm _ _
+                  _ = d_a := hE'da_inf_m
+              exact le_antisymm (le_trans (le_inf inf_le_left h1) hU_inf_da.le) bot_le
+            -- U ⊔ d_a = m (two distinct atoms on m, rank 2)
+            have hUda_eq_m : Γ.U ⊔ d_a = m := by
+              have hda_covBy_m : d_a ⋖ m := line_covers_its_atoms Γ.hU Γ.hV
+                (fun h => Γ.hV_off (h ▸ le_sup_right)) hda_atom hda_m
+              have hda_lt : d_a < Γ.U ⊔ d_a := lt_of_le_of_ne le_sup_right
+                (fun h' => hda_ne_U ((hda_atom.le_iff.mp
+                  (h' ▸ le_sup_left)).resolve_left Γ.hU.1).symm)
+              exact (hda_covBy_m.eq_or_eq hda_lt.le
+                (sup_le (le_sup_left : Γ.U ≤ m) hda_m)).resolve_left (ne_of_gt hda_lt)
+            -- U ⊔ (E' ⊔ d_a) = R ⊔ m
+            have hU_sup_E'da : Γ.U ⊔ (E' ⊔ d_a) = R ⊔ m := by
+              -- U ⊔ d_a = m. So U ⊔ E' ⊔ d_a = m ⊔ E'.
+              -- m < m ⊔ E' (E' ∉ m). m ⋖ R ⊔ m. m ⊔ E' ≤ R ⊔ m. CovBy: m ⊔ E' = R ⊔ m.
+              have hm_covBy_Rm : m ⋖ R ⊔ m :=
+                covBy_sup_of_inf_covBy_left (hR_inf_m ▸ hR.bot_covBy)
+              have hm_lt_mE' : m < m ⊔ E' := lt_of_le_of_ne le_sup_left
+                (fun h' => hE'_not_π ((h' ▸ le_sup_right : E' ≤ m).trans hm_π))
+              have hmE'_le : m ⊔ E' ≤ R ⊔ m :=
+                sup_le le_sup_right (hE'_le_Rm)
+              have hmE'_eq : m ⊔ E' = R ⊔ m :=
+                (hm_covBy_Rm.eq_or_eq hm_lt_mE'.le hmE'_le).resolve_left (ne_of_gt hm_lt_mE')
+              calc Γ.U ⊔ (E' ⊔ d_a) = (Γ.U ⊔ d_a) ⊔ E' := by
+                    simp only [sup_assoc, sup_comm, sup_left_comm]
+                _ = m ⊔ E' := by rw [hUda_eq_m]
+                _ = R ⊔ m := hmE'_eq
+            have hE'da_covBy : E' ⊔ d_a ⋖ R ⊔ m :=
+              hU_sup_E'da ▸ covBy_sup_of_inf_covBy_left (hU_inf_E'da ▸ Γ.hU.bot_covBy)
+            sorry
           -- ── T1 non-degeneracy ──
           -- E' ≠ d_a (already: hE'_ne_da')
           have hE'_ne_da : E' ≠ d_a := by
