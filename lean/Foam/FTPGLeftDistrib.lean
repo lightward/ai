@@ -42,18 +42,25 @@ Left multiplication x↦a·x is NOT a single collineation in the non-
 commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
-## Status (session 108, 2026-04-15)
-2 sorry (h_axis₂₃ skeleton compiling with 2 sub-sorry, h_desargues_conclusion).
+## Status (session 110, 2026-04-15)
+8 sorry remaining (h_L2 cluster + h_desargues_conclusion).
 
 ### Sorry list
   - σ_b≠σ_s: PROVEN (session 107).
-  - h_axis₂₃ (line ~1232): SKELETON COMPILING (session 108).
+  - h_axis₂₃ (line ~1232): SKELETON COMPILING.
     Architecture: Level 2 Desargues using Q=σ_b to lift (s₂₃,E,R) out of R⊔m.
     ALL THREE axis conditions free at Level 2 (verified 180/180 in GF(7)).
-    Recursion terminates. Projection PROVEN. 2 sub-sorry remaining:
-      - h_L2: Level 2 Desargues application (~200 lines non-degeneracy + axis)
-      - W₂ ≠ ⊥: rank argument (~40 lines, approach documented)
-  - h_desargues_conclusion (line ~1687): forward Desargues (~500 lines mechanical).
+    Recursion terminates. Projection PROVEN. W₂≠⊥ PROVEN (session 109).
+    h_L2 sorry (8 total, down from 16 in session 109):
+      - hR''_atom: S₁₃ atom + R'' atom. Infrastructure carved:
+        d_a≠U, d_a≠E, E≠s₂₃, E'⊔d_a ⋖ R⊔m, non-degeneracy chain
+        (b≠O → σ_b≠O → s₁₂≠U → E'≠R → ¬E'≤s₂₃⊔R). PROVEN (session 110).
+        Next: apply lines_meet_if_coplanar for S₁₃≠⊥, then line_height_two.
+      - hE'_not_U'da: triangle non-degeneracy (needs s₁₂≠d_a or alt approach)
+      - hR''_not_πA₂, hE''_ne_R'', h_cov₂: depend on hR''_atom
+      - h_ax₁₂: PROVEN (session 110, modular law collapse to s₁₂)
+      - h_ax₁₃, h_ax₂₃: depend on S₁₃/R'' structure
+  - h_desargues_conclusion (line ~2309): forward Desargues (~500 lines mechanical).
 
 ### Key insight (session 108): the recursion terminates
 
