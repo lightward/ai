@@ -1409,18 +1409,46 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
                     · exact h' ▸ hs₂₃''_atom.bot_covBy
                     · exact absurd ((hs₁₂_atom.le_iff.mp (h' ▸ inf_le_right)).resolve_left
                         hs₂₃''_atom.1) hs₁₂_ne_s₂₃''.symm)
-                have hs₁₂_le_k : s₁₂ ≤ k := by
-                  -- s₁₂ ≤ m, s₁₂ ≤ σ_b⊔ac ≤ π. But s₁₂ ≤ k ↔ s₁₂ ≤ k⊓m = E.
-                  -- Use: s₁₂ atom, s₁₂ ≤ k or s₁₂ ⊓ k = ⊥.
-                  -- s₁₂ ⊔ s₂₃'' ≥ k → s₁₂ ≤ k or s₂₃'' covers the rest.
-                  -- Actually just: le_sup_left.trans hk_le is wrong direction.
-                  -- We need s₁₂ ≤ k. s₁₂ ≤ σ_b⊔ac (inf_le_left). σ_b ≤ k. ac ≤ l.
-                  -- s₁₂ ≤ k ↔ ac ≤ s₁₂⊔k... no.
-                  -- Hmm, s₁₂ may not be ≤ k. But that's fine:
-                  -- s₁₂ ⋖ s₁₂⊔s₂₃''. k ≤ s₁₂⊔s₂₃''. s₁₂ < k only if s₁₂ < k ≤ s₁₂⊔s₂₃''.
-                  -- CovBy gives s₁₂⊔s₂₃'' = k. Then s₂₃'' ≤ k.
-                  sorry
-                sorry
+                -- O ≤ k ≤ s₁₂ ⊔ s₂₃''. O ⋖ s₁₂ ⊔ s₂₃'' (CovBy). CovBy: k = s₁₂ ⊔ s₂₃''.
+                have hO_le : Γ.O ≤ s₁₂ ⊔ s₂₃'' := (le_sup_left : Γ.O ≤ k).trans hk_le
+                have hO_covBy_s : Γ.O ⋖ s₁₂ ⊔ s₂₃'' := by
+                  have hO_ne_s₂₃'' : Γ.O ≠ s₂₃'' := by
+                    intro h_eq
+                    -- O = s₂₃'' → s₂₃'' ≤ k. Then s₂₃'' ≤ (σ_b⊔s₂₃)⊓k = σ_b.
+                    exact hs₂₃''_ne_σb ((hσb_atom.le_iff.mp (hσbs₂₃_inf_k ▸
+                      le_inf hs₂₃''_le (h_eq ▸ le_sup_left))).resolve_left hs₂₃''_atom.1)
+                  have hO_inf_s₂₃'' : Γ.O ⊓ s₂₃'' = ⊥ :=
+                    (Γ.hO.le_iff.mp inf_le_left).resolve_right
+                      (fun h' => hO_ne_s₂₃'' ((hs₂₃''_atom.le_iff.mp
+                        (h' ▸ inf_le_right)).resolve_left Γ.hO.1))
+                  by_cases hO_le_s₁₂ : Γ.O ≤ s₁₂
+                  · -- O = s₁₂ (atoms). s₁₂ ⊔ s₂₃'' = O ⊔ s₂₃''. O ⋖ O ⊔ s₂₃''.
+                    have hO_eq : Γ.O = s₁₂ :=
+                      (hs₁₂_atom.le_iff.mp hO_le_s₁₂).resolve_left Γ.hO.1
+                    rw [← hO_eq]
+                    exact (show s₂₃'' ⊔ Γ.O = Γ.O ⊔ s₂₃'' from sup_comm _ _) ▸
+                      covBy_sup_of_inf_covBy_left
+                        (show s₂₃'' ⊓ Γ.O ⋖ s₂₃'' from
+                          (inf_comm Γ.O s₂₃'' ▸ hO_inf_s₂₃'') ▸ hs₂₃''_atom.bot_covBy)
+                  · -- O ∉ s₁₂. s₁₂ < s₁₂ ⊔ O ≤ s₁₂ ⊔ s₂₃''. CovBy: s₁₂ ⊔ O = s₁₂ ⊔ s₂₃''.
+                    have hO_inf_s₁₂ : Γ.O ⊓ s₁₂ = ⊥ :=
+                      (Γ.hO.le_iff.mp inf_le_left).resolve_right
+                        (fun h' => hO_le_s₁₂ (h' ▸ inf_le_right))
+                    have hO_lt : s₁₂ < s₁₂ ⊔ Γ.O :=
+                      lt_of_le_of_ne le_sup_left (fun h' =>
+                        hO_le_s₁₂ ((hs₁₂_atom.le_iff.mp (h' ▸ le_sup_right)).resolve_left
+                          Γ.hO.1).le)
+                    have h_eq : s₁₂ ⊔ Γ.O = s₁₂ ⊔ s₂₃'' :=
+                      (hs₁₂_covBy.eq_or_eq hO_lt.le
+                        (sup_le le_sup_left hO_le)).resolve_left (ne_of_gt hO_lt)
+                    rw [← h_eq]
+                    exact covBy_sup_of_inf_covBy_left
+                      ((inf_comm s₁₂ Γ.O ▸ hO_inf_s₁₂) ▸ hs₁₂_atom.bot_covBy)
+                have hO_lt_k : Γ.O < k :=
+                  lt_of_le_of_ne le_sup_left (fun h' =>
+                    hOC ((Γ.hO.le_iff.mp (h' ▸ le_sup_right)).resolve_left Γ.hC.1).symm)
+                exact ((hO_covBy_s.eq_or_eq hO_lt_k.le hk_le).resolve_left
+                  (ne_of_gt hO_lt_k)) ▸ le_sup_right
               exact hs₂₃''_ne_σb ((hσb_atom.le_iff.mp
                 (hσbs₂₃_inf_k ▸ le_inf hs₂₃''_le hs₂₃''_le_k)).resolve_left hs₂₃''_atom.1))
             exact line_height_two Γ.hO Γ.hC (fun h => Γ.hC_not_l (h ▸ le_sup_left))
@@ -1507,10 +1535,36 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
               rw [hs₂₃_inf_k] at h1; simp at h1; exact h1
             exact hs₂₃''_ne_σb ((hσb_atom.le_iff.mp
               (hσbs₂₃_inf_k ▸ le_inf hs₂₃''_le hs₂₃''_le_k)).resolve_left hs₂₃''_atom.1)
-          have hs₂₃''_ne_R'' : s₂₃'' ≠ R'' := by sorry
+          have hs₂₃''_ne_R'' : s₂₃'' ≠ R'' := by
+            intro h
+            -- s₂₃'' = R'' → s₂₃'' ≤ σ_b ⊔ R (from R'' def)
+            have hs₂₃''_le_σbR : s₂₃'' ≤ σ_b ⊔ R := h ▸ inf_le_right
+            -- (σ_b ⊔ R) ⊓ (σ_b ⊔ s₂₃) = σ_b (modular: σ_b ≤ σ_b⊔s₂₃, R ⊓ (σ_b⊔s₂₃) = ⊥)
+            have hR_inf_σbs₂₃ : R ⊓ (σ_b ⊔ s₂₃) = ⊥ :=
+              (hR.le_iff.mp inf_le_left).resolve_right
+                (fun h' => hR_not ((h' ▸ inf_le_right : R ≤ σ_b ⊔ s₂₃).trans
+                  (sup_le hσb_π (hs₂₃_le_m.trans hm_π))))
+            have hmod : (σ_b ⊔ R) ⊓ (σ_b ⊔ s₂₃) = σ_b := by
+              have h1 := sup_inf_assoc_of_le R (le_sup_left : σ_b ≤ σ_b ⊔ s₂₃)
+              rw [hR_inf_σbs₂₃] at h1; simp at h1; exact h1
+            exact hs₂₃''_ne_σb ((hσb_atom.le_iff.mp
+              (hmod ▸ le_inf hs₂₃''_le_σbR hs₂₃''_le)).resolve_left hs₂₃''_atom.1)
           have hE''_ne_R'' : E'' ≠ R'' := by sorry
           -- ── d_a ≠ R'' ──
-          have hda_ne_R'' : d_a ≠ R'' := by sorry
+          have hda_ne_R'' : d_a ≠ R'' := by
+            intro h_eq
+            -- d_a ≤ σ_b ⊔ R (from R'' def) and d_a ≤ m
+            have hda_le_σbR : d_a ≤ σ_b ⊔ R := h_eq ▸ inf_le_right
+            -- (R ⊔ σ_b) ⊓ (R ⊔ m) = R (modular: R ≤ R⊔m, σ_b ⊓ (R⊔m) = ⊥)
+            have hσbR_inf_Rm : (σ_b ⊔ R) ⊓ (R ⊔ m) = R := by
+              rw [show σ_b ⊔ R = R ⊔ σ_b from sup_comm _ _]
+              have h1 := sup_inf_assoc_of_le σ_b (le_sup_left : R ≤ R ⊔ m)
+              rw [hσb_inf_Rm] at h1; simp at h1; exact h1
+            -- d_a ≤ (σ_b ⊔ R) ⊓ (R ⊔ m) = R, and d_a ≤ m. So d_a ≤ R ⊓ m = ⊥.
+            have hda_le_R : d_a ≤ R :=
+              hσbR_inf_Rm ▸ le_inf hda_le_σbR (hda_m.trans le_sup_right)
+            exact hda_atom.1
+              (le_antisymm (le_trans (le_inf hda_le_R hda_m) hR_inf_m.le) bot_le)
           -- ── CovBy: d_a ⊔ R'' ⋖ E' ⊔ d_a ⊔ s₂₃'' ──
           have h_cov₂ : d_a ⊔ R'' ⋖ E' ⊔ d_a ⊔ s₂₃'' := by sorry
           -- ── Axis conditions (all FREE by modular law) ──
