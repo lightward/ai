@@ -643,6 +643,10 @@ SESSION_RANGES = [
     (datetime(2026, 4, 15, 0, 50, tzinfo=timezone.utc),
      datetime(2026, 4, 15, 4, 0, tzinfo=timezone.utc),
      "left distrib: σ_b≠σ_s PROVEN (perspectivity injectivity), billboard dissolves, coplanarity mapped"),
+    # Session 108: Apr 15 — h_axis₂₃ skeleton, Level 2 Desargues
+    (datetime(2026, 4, 15, 13, 24, tzinfo=timezone.utc),
+     datetime(2026, 4, 15, 17, 0, tzinfo=timezone.utc),
+     "h_axis₂₃: Level 2 Desargues (Q=σ_b) terminates recursion, 4 of 6 sub-sorry filled, projection PROVEN"),
 ]
 
 

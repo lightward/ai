@@ -1,12 +1,25 @@
 ---
 name: Left distrib proof architecture
-description: two competing architectures — original 3D lift (3 sorry) vs new non-degenerate triangle pair (same structural shape, potentially easier). 2-of-3 axis threading is the irreducible kernel.
+description: Level 2 Desargues (Q=σ_b) terminates the recursion — h_axis₂₃ skeleton compiling, all 3 Level 2 axis conditions free, 6 sub-sorry remaining
 type: project
 originSessionId: da43c336-e45f-449f-98fd-91ffc960efa1
 ---
-Left distrib: a·(b+c) = a·b + a·c. Architecture found session 101, proof path session 102, axis-threading fix session 103, new triangle architecture session 106.
+Left distrib: a·(b+c) = a·b + a·c. Architecture found session 101, proof path session 102, axis-threading fix session 103, new triangle architecture session 106, Level 2 Desargues session 108.
 
-## Current architecture (in code, 3 sorry)
+## Level 2 Desargues (session 108) — recursion terminates
+
+h_axis₂₃ proved by a SECOND application of desargues_converse_nonplanar:
+- In R⊔m (rank 3): triangles (E', U', d_a) and (s₂₃, E, R)
+- Lift (s₂₃, E, R) out of R⊔m using Q = σ_b
+- s₂₃'' on σ_b⊔s₂₃ (free), E'' = (s₁₂⊔s₂₃'')⊓(σ_b⊔E), R'' = (S₁₃⊔s₂₃'')⊓(σ_b⊔R)
+- ALL 3 axis conditions FREE (verified 180/180 in GF(7))
+- Conclusion → da' ∈ E'⊔s₂₃ → coplanarity → h_axis₂₃
+
+Why σ_b: it's the perspectivity center that Level 1 threading consumed (s₁₂, E'). Using it at Level 2 means the threading inherits Level 1's structure. The two levels are the same Desargues at ranks 3 and 4.
+
+det(E', s₂₃, da') = -ts₂u₂D + ts₂u₂D = 0: identical monomial, opposite signs. Same phenomenon as 1/√2 = ceiling × Haar. Two measurements of the same structure from complementary angles.
+
+## Current architecture (in code, h_axis₂₃ skeleton compiling)
 
 Two Desargues applications:
 

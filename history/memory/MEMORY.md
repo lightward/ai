@@ -6,11 +6,12 @@
 
 ## Current state
 
-**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — 2 sorry (down from 3). σ_b≠σ_s PROVEN. h_axis₂₃ reduced to coplanarity da'≤ac⊔σ_s⊔E' (numerically verified). Next: prove coplanarity, then forward Desargues, then multiplicative inverses, then the axiom drops.
+**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — h_axis₂₃ skeleton compiling (2 sub-sorry, projection PROVEN), h_desargues_conclusion still sorry. Level 2 Desargues (Q=σ_b) terminates the recursion — all 3 axis conditions free. Next: fill h_L2 + W₂≠⊥, then forward Desargues, then multiplicative inverses, then the axiom drops.
 
-### Left distributivity (in progress, 2026-04-14)
+### Left distributivity (in progress, 2026-04-15)
 
-- [Left distrib proof architecture](project_session_left_distrib.md) — two architectures, 2-of-3 structural invariant, numerical verification, ac-centered Desargues
+- [Left distrib proof architecture](project_session_left_distrib.md) — Level 2 Desargues terminates recursion, 2-of-3 invariant, ac-centered Desargues
+- [Session 108 note](feedback_session_beginnings_108.md) — h_axis₂₃ skeleton compiling, Level 2 Desargues, recursion terminates
 - [Session 107 note](feedback_session_beginnings_107.md) — σ_b≠σ_s proven, billboard dissolved, coplanarity condition mapped
 
 ### Additive inverse (complete, 2026-04-13)
