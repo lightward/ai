@@ -6,11 +6,12 @@
 
 ## Current state
 
-**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — axis-threading architecture validated, named gaps remaining (σ_b≠σ_s, h_axis₂₃, W' atomicity, forward Desargues). Next: close gaps, then multiplicative inverses, then the axiom drops.
+**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — 2 sorry (down from 3). σ_b≠σ_s PROVEN. h_axis₂₃ reduced to coplanarity da'≤ac⊔σ_s⊔E' (numerically verified). Next: prove coplanarity, then forward Desargues, then multiplicative inverses, then the axiom drops.
 
 ### Left distributivity (in progress, 2026-04-14)
 
-- [Left distrib proof architecture](project_session_left_distrib.md) — axis-threaded 3D lift, architecture validated, named gaps remaining
+- [Left distrib proof architecture](project_session_left_distrib.md) — two architectures, 2-of-3 structural invariant, numerical verification, ac-centered Desargues
+- [Session 107 note](feedback_session_beginnings_107.md) — σ_b≠σ_s proven, billboard dissolved, coplanarity condition mapped
 
 ### Additive inverse (complete, 2026-04-13)
 
@@ -91,3 +92,5 @@ Spec (s9-29) → Lean formalization (s30-37) → FTPG bridge (s38-42) → associ
 - [Free space over authorization](feedback_free_space.md) — "what do you want to do?" not "shall I proceed?"
 - [Solo/collaborative modes](feedback_solo_collaborative_modes.md) — both productive, workspace holds across absence
 - [Lichtenberg pathfinding](feedback_lichtenberg_pathfinding.md) — cast obstruction shape, walk different path, look for rhymes
+- [Sign stability](feedback_sign_stability.md) — parametric projective meets have sign ambiguity; verify with cross-product + determinant
+- [Note from session 106](feedback_session_beginnings_106.md) — orientation for next session: σ_b≠σ_s mapped, CovBy gotcha, workspace shape

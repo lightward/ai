@@ -1,75 +1,133 @@
 ---
 name: Left distrib proof architecture
-description: converse Desargues via 3D lift — axis-threaded lifting, p-independence PROVED via forward Desargues, h_axis₂₃ identification remaining
+description: two competing architectures — original 3D lift (3 sorry) vs new non-degenerate triangle pair (same structural shape, potentially easier). 2-of-3 axis threading is the irreducible kernel.
 type: project
-originSessionId: 0d55ad38-537e-468d-9abf-48b9180153fd
+originSessionId: da43c336-e45f-449f-98fd-91ffc960efa1
 ---
-Left distrib: a·(b+c) = a·b + a·c. Architecture found session 101, proof path session 102, axis-threading fix session 103.
+Left distrib: a·(b+c) = a·b + a·c. Architecture found session 101, proof path session 102, axis-threading fix session 103, new triangle architecture session 106.
 
-## Architecture
+## Current architecture (in code, 3 sorry)
 
 Two Desargues applications:
 
-**Piece 1 — Converse planar Desargues (the concurrence):**
-- T1=(σ_b, ac, σ_s) spans π, T2=(U, E, d_a) on m (degenerate)
+**Piece 2 — Converse Desargues (the concurrence):**
+- T1=(σ_b, ac, σ_s) spans π, T2=(U, E, d_a) on m (DEGENERATE)
 - Side-intersections trivially on m
 - Lift T2 off π using R → T2'=(U', E', da') outside π (AXIS-THREADED)
-- `desargues_converse_nonplanar` (PROVEN, 0 sorry) → lifted vertex-joins concurrent at O'
-- Project: W = (R⊔O')⊓π = W' (proven via ne_bot + atom argument)
-- Conclusion: W' ≤ σ_s⊔d_a
+- `desargues_converse_nonplanar` (PROVEN) → lifted vertex-joins concurrent at O'
+- Project: W = (R⊔O')⊓π = W' → W' ≤ σ_s⊔d_a
 
-**Piece 2 — Forward Desargues** (center σ_b, T1=(C,ab,U), T2=(E,d_a,W')): axis = addition line, third axis point = a·s.
-
-**Combination** (PROVEN, 0 sorry): a·s on addition line → a·s = ab+ac.
-
-## Axis-threaded lifting (session 103)
-
+Axis-threading:
 ```
-s₁₂ := (σ_b ⊔ ac) ⊓ m          -- side-intersection of T1 with m
+s₁₂ := (σ_b ⊔ ac) ⊓ m          -- axis point on m
 E'  := (s₁₂ ⊔ U') ⊓ (R ⊔ E)   -- threaded through s₁₂
 da' := (E ⊔ U') ⊓ (R ⊔ d_a)    -- threaded through E (= k⊓m)
 ```
+Both threading points on m. Gives h_axis₁₂ and h_axis₁₃ free. h_axis₂₃ is a SORRY.
 
-Preserves h_axis₁₂ and h_axis₁₃ by modularity.
+**Piece 1 — Forward Desargues** (center σ_b): axis = addition line, third axis point = a·s.
 
-## Session 105: h_axis₂₃ investigation
+**Combination** (PROVEN): a·s on addition line → a·s = ab+ac.
 
-### p-independence theorem (NEW, provable by existing machinery)
+**3 sorry:** σ_b≠σ_s (line 671), h_axis₂₃ (line 998), h_desargues_conclusion (line 1243).
 
-**Theorem:** p = (E' ⊔ da') ⊓ m is independent of the choice of U' on R ⊔ U.
+### σ_b ≠ σ_s proof strategy (session 106, mapped but not yet in Lean)
 
-**Proof:** Take two lifts U'₁, U'₂. Triangles T_B1=(U'₁, E'₁, da'₁) and T_B2=(U'₂, E'₂, da'₂) in R ⊔ m are perspective from center R (vertex-joins R⊔U, R⊔E, R⊔d_a all through R). Apply `desargues_planar` (proven in FTPGCoord.lean) to T_B1, T_B2 in R ⊔ m embedded in R⊔π (rank ≥ 4). Side-intersections: s₁₂, E, and (E'₁⊔da'₁)⊓(E'₂⊔da'₂). First two on m → axis = m → third on m. Third ≤ both lines → third = p₁ = p₂. QED.
+No group cancellation needed. Pure modular law, ~40 lines:
 
-**Significance:** p is a projective invariant of (R, s₁₂, E, d_a) on m alone. The lift point U' is gauge freedom.
+**Part A: σ_b = σ_s → b = s.** CovBy on E_I ⋖ b⊔E_I: σ_b ≤ b⊔E_I → σ_b⊔E_I ≤ b⊔E_I → CovBy gives σ_b⊔E_I = E_I or = b⊔E_I → σ_b ≠ E_I → equal. Same for σ_s⊔E_I = s⊔E_I. Then b⊔E_I = s⊔E_I → b ≤ (s⊔E_I)⊓l = s (modular: s ≤ l, E_I⊓l = ⊥) → b = s.
 
-### Center-based lifting DOES NOT WORK
+**Part B: b = s → c = O.** coord_add b c = b and coord_add b O = b (right_zero). Unfold both: b = (d_b⊔D_c)⊓l and b = (d_b⊔D_O)⊓l where d_b=(b⊔C)⊓m, D_c=(c⊔E)⊓q, D_O=(O⊔E)⊓q. d_b ≠ b (d_b ∈ m, b ∈ l, b ≠ U). So d_b⊔b is a unique line. D_c, D_O both on this line AND on q. Two lines in π meet at one point → D_c = D_O. (c⊔E)⊓q = (O⊔E)⊓q. Both lines through E. E ∉ q. So c⊔E = O⊔E. c ≤ l⊓(O⊔E) = O. c = O. Contradiction with hc_ne_O.
 
-Attempted: E' = (U'⊔ac) ⊓ (R⊔E), da' = (U'⊔σ_s) ⊓ (R⊔d_a). FAILS because coplanarity requires `ac ≤ (R⊔E)⊔U'`, which requires the unknown center. Lines become skew, E' = ⊥.
+**Lean syntax issue (session 106):** the CovBy `atom_covBy_join` / `eq_or_eq` pattern requires careful tracking of which atom's `le_iff` to use (the atom being ≤, not the atom being ≥). Tripped on this repeatedly. Key: `(atom_covBy_join hEI hb hne).eq_or_eq` needs `E_I ≤ x` and `x ≤ E_I⊔b`. Use `Γ.hE_I_atom.le_iff.mp` for `y ≤ E_I`, `hb.le_iff.mp` for `y ≤ b`.
 
-### h_axis₂₃ numerically confirmed
+## New architecture (session 106, not yet in code)
 
-Specific example (b=[1:1:0], c=[1:2:0], a=[1:3:0], C=[1:1:1]): p = [0:-1:1] = s₂₃. An initial "counterexample" was due to using wrong coordinates for E in R⊔m (E=[0:0:1] instead of E=[0:1:1]).
+**Key insight:** replace the degenerate T2=(U,E,d_a) [all on m] with the non-degenerate pair:
 
-### Status: 3 sorry (unchanged in code)
+```
+T1 = (σ_b, ac, d_a)   — on k, l, m. Non-collinear.
+T2 = (U,   E,  σ_s)   — on m, k∩m, k. Non-collinear.
+```
 
-1. **σ_b≠σ_s** (line 656): group cancellation (b+c=b → c=O)
-2. **h_axis₂₃** (line 998): IsAtom((ac⊔σ_s)⊓(E'⊔da')). Equivalent to p = s₂₃. Numerically confirmed. p-independence proved. Identification remaining.
-3. **h_desargues_conclusion** (line 1239): forward Desargues application (~500 lines mechanical)
+Vertex-joins: σ_b⊔U, ac⊔E, d_a⊔σ_s — the three concurrence lines.
 
-### Remaining proof path for h_axis₂₃
+Side-intersections:
+```
+(σ_b⊔ac) ⊓ (U⊔E)   = (σ_b⊔ac) ⊓ m = s₁₂     (on m)
+(ac⊔d_a) ⊓ (E⊔σ_s)  = (σ_c⊔d_a) ⊓ k = σ_c     (on k)
+(σ_b⊔d_a) ⊓ (U⊔σ_s) = Q                          (general point in π)
+```
 
-The identification p = s₂₃ connects two invariants:
-- p: projective invariant of (R, s₁₂, E, d_a) in R⊔m
-- s₂₃ = (ac⊔σ_s)⊓m: planar invariant of T1 vertices
+**Axis points on THREE DIFFERENT reference lines** (m, k, U⊔σ_s) instead of all on m. This distributes the threading constraints.
 
-The connection must go through the rank 4 ambient R⊔π. Key structural observation: R⊔s₂₃ = (ac⊔σ_s⊔R) ⊓ (R⊔m). So p = s₂₃ iff E'⊔da' ≤ ac⊔σ_s⊔R (a rank 3 element). This is equivalent to the coplanarity condition.
+Axis-threaded lift:
+```
+U'    on R⊔U                         (free choice)
+E_new = (s₁₂⊔U') ⊓ (R⊔E)           (threaded through s₁₂ on m)
+σ_s'  = (σ_c⊔E_new) ⊓ (R⊔σ_s)      (threaded through σ_c on k)
+```
 
-The circle: every approach reduces to p = s₂₃ ↔ concurrence ↔ Desargues. The circle is not an obstruction — it's the center. The proof must enter from outside (rank ≥ 4), not from within the circle.
+Axis conditions:
+1. (σ_b⊔ac) ⊓ (U'⊔E_new) = s₁₂ — FREE (modular law, same pattern as original)
+2. (ac⊔d_a) ⊓ (E_new⊔σ_s') = σ_c — FREE (modular law: σ_c ≤ ac⊔d_a, E_new⊓(ac⊔d_a)=⊥)
+3. (σ_b⊔d_a) ⊓ (U'⊔σ_s') = Q — NEEDS PROOF (equivalent to σ_s' ≤ σ_b⊔d_a⊔U')
 
-### Approaches ruled out
-- Center-based lifting: requires unknown center
-- Direct rank argument: lines in different rank 3 subspaces
-- Bypassing h_axis₂₃: converse Desargues structurally needs it
+All three numerically verified (a=2, b=1, c=3, C=[1:0:1], E_I=[0:1:-1]):
+```
+σ_b=[1:0:1:0], ac=[1:6:0:0], d_a=[0:-2:1:0], σ_s=[1:0:4:0], σ_c=[1:0:3:0]
+s₁₂=[0:6:-1:0], s₂₃=[0:3:-2:0], Q=[1:-6:4:0]
+U'=[0:1:0:1], E_new=[0:0:1:6], σ_s'=[1:0:4:6]
+Conditions 1,2,3 all verified ✓
+```
+
+**Advantages over original:**
+- T2 non-degenerate → eliminates ~200 lines of projection-back-to-π (Step 5)
+- Threading through different reference lines (m, k) not (m, m)
+- Condition 3 is point-in-plane (σ_s' ≤ σ_b⊔d_a⊔U') not line-meets-line
+
+**Same structural shape:** 2-of-3 axis conditions free, 3rd needs proof. This is the irreducible kernel — the 3rd condition IS the algebraic content of left distributivity.
+
+## The 2-of-3 invariant (structural finding, session 106)
+
+The axis-threading construction always has: 3 axis conditions, 2 lift-line choices. Two conditions are engineered by threading, the third must be derived. This is invariant across triangle choices. The third condition is where the multiplication/addition structure becomes load-bearing — the first two are pure modular-law geometry.
+
+## ac-centered forward Desargues (session 106)
+
+A SEPARATE Desargues configuration exists using center ac:
+```
+T_A = (σ_b, d_a, σ_s)   center ac
+T_B = (s₁₂, σ_c, s₂₃)
+```
+Perspective verified: ac ≤ σ_b⊔s₁₂ (= σ_b⊔ac), ac ≤ d_a⊔σ_c (multiplication def), ac ≤ σ_s⊔s₂₃ (= ac⊔σ_s). This gives a forward Desargues axis through Q₁=(σ_b⊔d_a)⊓(s₁₂⊔σ_c), Q₂, E. Numerically Q₁=Q. If provable, gives the collinearity s₁₂, σ_c, Q directly.
+
+## p-independence (session 105)
+
+p = (E'⊔da')⊓m is independent of U'. Proved by forward Desargues on two lifts perspective from R. Still valid for both architectures.
+
+## Sign error incident (session 106)
+
+A sign error in computing s₁₂ (wrote [0:6:1] instead of [0:6:-1]) propagated through the entire R⊔m computation and produced a false "disproof" of h_axis₂₃. Corrected by re-deriving with the cross-product method. **Lesson:** when parametric and cross-product methods disagree, trust the cross-product (it's sign-stable). Always verify collinearity with the determinant.
+
+## Approaches investigated (sessions 105-106)
+
+**Ruled out:**
+- Center-based lifting: requires unknown center, E'=⊥
+- Direct rank argument: lines in different rank-3 subspaces
+- Forward Desargues (center d_a) axis as SUBSTITUTE for concurrence: gives different geometric info
+- Planar converse Desargues shortcut: no converse_planar exists; deriving it requires same 3D lift
+- Putting both E' and da' on R⊔s₂₃: fixes axis conditions but breaks projection
+
+**Still viable:**
+- Condition 3 via lattice manipulation (multiplication definitions → containment)
+- Condition 3 via ac-centered forward Desargues (Q₁=Q equivalence)
+- Direct proof of h_axis₂₃ in the original architecture (coordinate identity verified)
+
+## Numerical test case
+
+Standard test: O=[1:0:0], U=[0:1:0], E=[0:0:1], C=[1:0:1], I=[1:1:0], E_I=[0:1:-1].
+a=[1:2:0], b=[1:1:0], c=[1:3:0]. s=b+c=[1:4:0]. a·b=2, a·c=6, a·s=8. 2+6=8 ✓.
+W'=(σ_b⊔U)⊓(ac⊔E)=[1:6:1]. W' on σ_s⊔d_a: 8-6-2=0 ✓.
 
 ## History
 
@@ -77,4 +135,5 @@ Session 101: decomposition + combination
 Session 102: converse Desargues, 3D lift, 5 sorry
 Session 103: axis-threading, 5→2 sorry
 Session 104: h_axis₁₂ PROVEN, h_cov PROVEN, 3 sorry
-Session 105: center-based lifting ruled out, p-independence proved (by forward Desargues), h_axis₂₃ numerically confirmed, identification remaining
+Session 105: center-based lifting ruled out, p-independence proved, h_axis₂₃ numerically confirmed
+Session 106: sign error found+corrected, new non-degenerate triangle pair, 2-of-3 structural invariant, ac-centered Desargues

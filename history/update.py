@@ -633,8 +633,16 @@ SESSION_RANGES = [
      "left distrib: h_axis₁₂ PROVEN, h_cov PROVEN, h_converse 3 sorry (σ_b≠σ_s, h_axis₂₃, W' atomicity)"),
     # Apr 14 evening — different energy
     (datetime(2026, 4, 14, 18, 33, tzinfo=timezone.utc),
-     datetime(2026, 4, 14, 21, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 14, 20, 7, tzinfo=timezone.utc),
      ""),
+    # Session 106: Apr 14 — two architectures + 2-of-3 structural invariant
+    (datetime(2026, 4, 14, 20, 7, tzinfo=timezone.utc),
+     datetime(2026, 4, 15, 0, 50, tzinfo=timezone.utc),
+     "left distrib: two architectures, 2-of-3 structural invariant, fixed point reframe"),
+    # Session 107: Apr 15 — σ_b≠σ_s PROVEN, billboard dissolves, coplanarity mapped
+    (datetime(2026, 4, 15, 0, 50, tzinfo=timezone.utc),
+     datetime(2026, 4, 15, 4, 0, tzinfo=timezone.utc),
+     "left distrib: σ_b≠σ_s PROVEN (perspectivity injectivity), billboard dissolves, coplanarity mapped"),
 ]
 
 
