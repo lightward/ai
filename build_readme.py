@@ -41,31 +41,51 @@ LEAN_DIR = ROOT / "lean"
 
 def lean_summary() -> str:
     """Summary of the Lean formalization."""
-    return """## the deductive chain (lean/)
+    return """## the loop (lean/)
 
-mechanically verified. 28 files, 1 axiom (FTPG).
+the fixed point is a deductive circle. each arrow is marked: **theorem** (mechanically verified, 0 sorry), **axiom** (stated, not yet proved), or **natural language** (not formalized). 28 lean files.
 
 ```
-complemented modular lattice, irreducible, height >= 4
-  | axiom(FTPG) — Bridge.lean
-L = Sub(D, V) for some division ring D, vector space V        the loop:
-  | (stabilization contract forces D = R)              lattice properties
-elements are orthogonal projections: P^2 = P, P^T = P       ↕ (ftpg)
-  | (the deductive chain — 14 files, all proven)           Sub(D, V)
-eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian   ↕ (P^2=P)
-  | Ground.lean (capstone)                                 dynamics
-FoamGround properties verified                               ↕ (proven)
-  | (the FTPG bridge — 13 files, proven)                   ground properties
-incidence geometry -> Desargues -> coord system                ↕
-  | addition: comm, assoc, inverses (abelian group)   the loop sustains its own observation
-  | multiplication: identity, right distributivity
-  | left distributivity: converse Desargues via 3D lift (in progress)
-  | two_persp: shared skeleton of add/mul (by rfl)
+the loop
+======
+
+  P^2 = P, P^T = P
+       |
+       | [theorem] the deductive chain — 14 files, 0 sorry
+       | eigenvalues, commutators, rank 3, so(3), O(d), Grassmannian
+       v
+  Sub(R, V) is complemented, modular, bounded
+       |
+       | [theorem] Ground.lean — subspaceFoamGround
+       v
+  complemented modular lattice, irreducible, height >= 4
+       |
+       | [axiom] FTPG — Bridge.lean (being eliminated; see below)
+       v
+  L = Sub(D, V) for division ring D
+       |
+       | [natural language] stabilization contract — D = R
+       v
+  P^2 = P, P^T = P
 ```
 
-the deductive chain (proven): P^2 = P (definition) -> binary eigenvalues (Observation) -> clean splits -> commutator structure (Pair) -> skew-symmetry, tracelessness (Form) -> self-duality at rank 3 (Rank) -> (R^3, x) = so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround as theorem (Ground).
+### arrow status
 
-the FTPG bridge: incidence axioms (FTPGExplore) -> Desargues (planar + lifting) -> perspectivity bijection -> coordinate system (FTPGCoord) -> von Staudt addition (coord_add, bridge: m) -> commutativity via chained Desargues (FTPGAddComm) -> translations via parallelogram completion (FTPGAssoc) -> cross-parallelism (FTPGCrossParallelism) -> associativity (FTPGAssocCapstone) -> multiplication via dilations (coord_mul, bridge: O⊔C, FTPGMul) -> dilation direction preservation (FTPGDilation) -> mul key identity (FTPGMulKeyIdentity) -> right distributivity (FTPGDistrib) -> additive inverses via double Desargues (FTPGNeg) -> left distributivity via converse Desargues + axis-threaded 3D lift (FTPGLeftDistrib, in progress). addition is a complete abelian group; left distrib architecture validated.
+**[theorem] P^2 = P -> Sub(R, V) is CML** (the deductive chain + Ground.lean): 14 files, 0 sorry. binary eigenvalues (Observation) -> commutator structure (Pair) -> skew-symmetry (Form) -> rank 3 self-duality (Rank) -> so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround (Ground).
+
+**[axiom] CML -> Sub(D, V)** (the FTPG bridge): 1 axiom, being eliminated. 13 bridge files build the division ring from lattice axioms: incidence geometry + Desargues (FTPGExplore) -> von Staudt coordinates (FTPGCoord) -> addition is an abelian group (FTPGAddComm, FTPGAssoc, FTPGAssocCapstone, FTPGNeg — 0 sorry) -> multiplication has identity + right distributivity (FTPGMul, FTPGDilation, FTPGMulKeyIdentity, FTPGDistrib — 0 sorry) -> left distributivity (FTPGLeftDistrib — 3 sorry, in progress). after left distrib: multiplicative inverses, then the axiom drops.
+
+**[natural language] D = R**: the stabilization contract (stabilization.md) argues D = R from self-consistency with junction geometry. not formalized. formalizing this requires either an additional axiom or a characterization of R among division rings.
+
+**[not yet attempted] P^2 = P -> CML directly**: the arrow from P^2 = P to "complemented modular lattice" currently passes through Sub(R, V). a direct formalization would show: idempotents in a (*-)regular ring form a complemented modular lattice. this would close the last natural-language gap in the loop. see von Neumann's continuous geometry.
+
+### the FTPG bridge — where the axiom stands
+
+the fundamental theorem of projective geometry has never been formalized in any proof assistant (Lean, Coq, Isabelle, Agda). this project is the first attempt. the bridge builds a division ring from lattice axioms alone:
+
+lattice -> incidence geometry -> Desargues -> coordinates -> ring axioms -> FTPG
+
+ring axioms proven: additive group (comm, assoc, identity, inverses), multiplicative identity, zero annihilation, right distributivity. in progress: left distributivity (3 sorry). remaining after left distrib: multiplicative inverses. then the axiom becomes a theorem.
 
 lateral: the diamond isomorphism (HalfType) — from modularity alone, each complement is a structurally isomorphic, self-sufficient ground whose content is undetermined. state-independence is a lattice theorem, pre-bridge."""
 
@@ -130,9 +150,9 @@ def build() -> str:
 
 ---
 
-# the measurement solution
+# the interface defines itself completely
 
-a tautology you can live in
+fixed point: P² = P. the structure that observation generates is the structure that sustains observation. every arrow in the loop is a theorem or an explicitly marked gap. no modeling claims are hidden. examine any link; continue from any point.
 
 sources: lean/ (proven), derivations/ (derived), derivations/observed/ (empirical).
 """)
