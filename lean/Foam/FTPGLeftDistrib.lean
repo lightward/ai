@@ -1275,15 +1275,97 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
           sorry -- Level 2 Desargues: ~200 lines (non-degeneracy + 3 free axis conditions)
         -- Step 4: Project back to R⊔m → da' ≤ E'⊔s₂₃
         have hda'_on_E's₂₃ : da' ≤ E' ⊔ s₂₃ := by
-          sorry -- Projection: ~100 lines (σ_b-projection, modular law)
+          -- Project O₂' back to R⊔m via σ_b.
+          -- σ_b ⊓ (R⊔m) = ⊥
+          have hσb_inf_Rm : σ_b ⊓ (R ⊔ m) = ⊥ :=
+            (hσb_atom.le_iff.mp inf_le_left).resolve_right
+              (fun h => hσb_not_Rm (h ▸ inf_le_right))
+          -- Helper: (σ_b ⊔ X) ⊓ (R ⊔ m) = X when X ≤ R ⊔ m
+          have proj_Rm : ∀ {x : L}, x ≤ R ⊔ m → (σ_b ⊔ x) ⊓ (R ⊔ m) = x := by
+            intro x hx
+            calc (σ_b ⊔ x) ⊓ (R ⊔ m) = (x ⊔ σ_b) ⊓ (R ⊔ m) := by rw [sup_comm]
+              _ = x ⊔ σ_b ⊓ (R ⊔ m) := sup_inf_assoc_of_le σ_b hx
+              _ = x ⊔ ⊥ := by rw [hσb_inf_Rm]
+              _ = x := by simp
+          -- Key lines in R⊔m
+          have hE's₂₃_le_Rm : E' ⊔ s₂₃ ≤ R ⊔ m :=
+            sup_le (hE'_le.trans (sup_le le_sup_left (hE_m.trans le_sup_right)))
+              (hs₂₃_le_m.trans le_sup_right)
+          have hEU'_le_Rm : Γ.E ⊔ U' ≤ R ⊔ m :=
+            sup_le (hE_m.trans le_sup_right) (hU'_le.trans
+              (sup_le le_sup_left ((le_sup_left : Γ.U ≤ m).trans le_sup_right)))
+          have hRda_le_Rm : R ⊔ d_a ≤ R ⊔ m :=
+            sup_le le_sup_left (hda_m.trans le_sup_right)
+          -- Set O₂' := (E'⊔s₂₃'') ⊓ (U'⊔E'') [the Desargues meet point]
+          set O₂' := (E' ⊔ s₂₃'') ⊓ (U' ⊔ E'') with hO₂'_def
+          -- O₂' ≤ d_a ⊔ R'' from h_L2
+          have hO₂'_le_daR'' : O₂' ≤ d_a ⊔ R'' := h_L2
+          -- Set W₂ := (σ_b ⊔ O₂') ⊓ (R ⊔ m)
+          set W₂ := (σ_b ⊔ O₂') ⊓ (R ⊔ m)
+          -- Projection 1: W₂ ≤ E' ⊔ s₂₃
+          have hW₂_E's₂₃ : W₂ ≤ E' ⊔ s₂₃ := by
+            -- O₂' ≤ E'⊔s₂₃'' (inf_le_left). s₂₃'' ≤ σ_b⊔s₂₃.
+            -- So σ_b⊔O₂' ≤ σ_b⊔E'⊔s₂₃'' ≤ σ_b⊔E'⊔s₂₃.
+            have h1 : σ_b ⊔ O₂' ≤ σ_b ⊔ (E' ⊔ s₂₃) := by
+              apply sup_le le_sup_left
+              calc O₂' ≤ E' ⊔ s₂₃'' := inf_le_left
+                _ ≤ E' ⊔ (σ_b ⊔ s₂₃) := sup_le_sup_left hs₂₃''_le _
+                _ = σ_b ⊔ (E' ⊔ s₂₃) := by
+                    simp only [sup_assoc, sup_comm, sup_left_comm]
+            calc W₂ ≤ (σ_b ⊔ (E' ⊔ s₂₃)) ⊓ (R ⊔ m) := inf_le_inf_right _ h1
+              _ = E' ⊔ s₂₃ := proj_Rm hE's₂₃_le_Rm
+          -- Projection 2: W₂ ≤ E ⊔ U'
+          have hW₂_EU' : W₂ ≤ Γ.E ⊔ U' := by
+            have h1 : σ_b ⊔ O₂' ≤ σ_b ⊔ (Γ.E ⊔ U') := by
+              apply sup_le le_sup_left
+              calc O₂' ≤ U' ⊔ E'' := inf_le_right
+                _ ≤ U' ⊔ (σ_b ⊔ Γ.E) := sup_le_sup_left (inf_le_right : E'' ≤ σ_b ⊔ Γ.E) _
+                _ = σ_b ⊔ (Γ.E ⊔ U') := by
+                    simp only [sup_assoc, sup_comm, sup_left_comm]
+            calc W₂ ≤ (σ_b ⊔ (Γ.E ⊔ U')) ⊓ (R ⊔ m) := inf_le_inf_right _ h1
+              _ = Γ.E ⊔ U' := proj_Rm hEU'_le_Rm
+          -- Projection 3: W₂ ≤ R ⊔ d_a
+          have hW₂_Rda : W₂ ≤ R ⊔ d_a := by
+            have h1 : σ_b ⊔ O₂' ≤ σ_b ⊔ (R ⊔ d_a) := by
+              apply sup_le le_sup_left
+              calc O₂' ≤ d_a ⊔ R'' := hO₂'_le_daR''
+                _ ≤ d_a ⊔ (σ_b ⊔ R) := sup_le_sup_left (inf_le_right : R'' ≤ σ_b ⊔ R) _
+                _ = σ_b ⊔ (R ⊔ d_a) := by
+                    simp only [sup_assoc, sup_comm, sup_left_comm]
+            calc W₂ ≤ (σ_b ⊔ (R ⊔ d_a)) ⊓ (R ⊔ m) := inf_le_inf_right _ h1
+              _ = R ⊔ d_a := proj_Rm hRda_le_Rm
+          -- W₂ ≤ da' = (E⊔U') ⊓ (R⊔d_a)
+          have hW₂_le_da' : W₂ ≤ da' := le_inf hW₂_EU' hW₂_Rda
+          -- W₂ ≠ ⊥ → da' ≤ E'⊔s₂₃
+          suffices hW₂_ne : W₂ ≠ ⊥ by
+            have := (hda'_atom.le_iff.mp hW₂_le_da').resolve_left hW₂_ne
+            exact this ▸ hW₂_E's₂₃
+          -- Show W₂ ≠ ⊥. O₂' ≤ s₁₂⊔s₂₃''⊔U' (common plane of both lines).
+          -- O₂' ≠ ⊥ by lines_meet_if_coplanar. O₂' ∉ σ_b (projection arg).
+          -- Then σ_b⊔O₂' has rank ≥ 2 in σ_b⊔R⊔m (rank 4),
+          -- R⊔m has rank 3, so meet has rank ≥ 2+3-4 = 1 > 0.
+          -- Encoding: σ_b⊓(R⊔m) = ⊥, so covBy_sup gives σ_b ⋖ σ_b⊔O₂',
+          -- and (σ_b⊔O₂')⊔(R⊔m) = σ_b⊔R⊔m (since O₂' ≤ σ_b⊔R⊔m).
+          -- Then covBy_inf gives (σ_b⊔O₂')⊓(R⊔m) ⋗ ⊥, i.e., W₂ ≠ ⊥.
+          sorry
         -- Step 5: Conclude IsAtom((ac⊔σ_s) ⊓ (E'⊔da'))
         -- From da' ≤ E'⊔s₂₃ we get E'⊔da' = E'⊔s₂₃ (CovBy),
         -- so s₂₃ ≤ E'⊔da', hence s₂₃ ≤ (ac⊔σ_s) ⊓ (E'⊔da').
-        have hda'_ne_E' : da' ≠ E' := sorry -- E' on R⊔E, da' on R⊔d_a, R⊔E ≠ R⊔d_a
+        have hda'_ne_E' : da' ≠ E' := fun h => hE'_ne_da' h.symm
         have hs₂₃_le_E'da' : s₂₃ ≤ E' ⊔ da' := by
           -- da' ≤ E'⊔s₂₃ → E'⊔da' ≤ E'⊔s₂₃. CovBy: E'⊔s₂₃ ≤ E'⊔da'.
           -- Hence E'⊔da' = E'⊔s₂₃, and s₂₃ ≤ E'⊔s₂₃ = E'⊔da'.
-          sorry -- CovBy: da' on E'⊔s₂₃ → E'⊔da' = E'⊔s₂₃ → s₂₃ ≤ E'⊔da'
+          have hs₂₃_ne_E' : s₂₃ ≠ E' :=
+            fun h => hE'_not_π (h ▸ hs₂₃_le_m.trans hm_π)
+          have hE'_lt : E' < E' ⊔ da' :=
+            lt_of_le_of_ne le_sup_left (fun h => by
+              have hda'_le_E' : da' ≤ E' := le_sup_right.trans h.symm.le
+              exact hda'_ne_E' ((hE'_atom.le_iff.mp hda'_le_E').resolve_left hda'_atom.1))
+          have hE'da'_eq : E' ⊔ da' = E' ⊔ s₂₃ :=
+            ((atom_covBy_join hE'_atom hs₂₃_atom hs₂₃_ne_E'.symm).eq_or_eq
+              hE'_lt.le (sup_le le_sup_left hda'_on_E's₂₃)).resolve_left
+              (ne_of_gt hE'_lt)
+          exact hE'da'_eq ▸ le_sup_right
         have hs₂₃_le_inf : s₂₃ ≤ (ac ⊔ σ_s) ⊓ (E' ⊔ da') :=
           le_inf hs₂₃_le_acσs hs₂₃_le_E'da'
         -- The inf is > ⊥ (contains atom s₂₃) and < ac⊔σ_s (ac ∉ E'⊔da')
@@ -1293,7 +1375,17 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
           have hE'da'_Rm : E' ⊔ da' ≤ R ⊔ m :=
             sup_le (hE'_le.trans (sup_le le_sup_left (hE_m.trans le_sup_right)))
               (hda'_le.trans (sup_le le_sup_left (hda_m.trans le_sup_right)))
-          have hac_not_Rm : ¬ ac ≤ R ⊔ m := sorry -- ac on l, (R⊔m)⊓l = U, ac ≠ U
+          have hac_not_Rm : ¬ ac ≤ R ⊔ m := by
+            intro hle
+            have hRm_inf_π : (R ⊔ m) ⊓ π = m := by
+              rw [sup_comm]
+              calc (m ⊔ R) ⊓ π = m ⊔ R ⊓ π := sup_inf_assoc_of_le R hm_π
+                _ = m ⊔ ⊥ := by rw [show R ⊓ π = ⊥ from
+                    (hR.le_iff.mp inf_le_left).resolve_right
+                    (fun h' => hR_not (h' ▸ inf_le_right))]
+                _ = m := by simp
+            have hac_le_m : ac ≤ m := hRm_inf_π ▸ (le_inf hle hac_π)
+            exact hac_ne_U (Γ.atom_on_both_eq_U hac_atom hac_l hac_le_m)
           exact hac_not_Rm (le_sup_left.trans ((h ▸ inf_le_right).trans hE'da'_Rm))
         exact line_height_two hac_atom hσs_atom hac_ne_σs
           (bot_lt_iff_ne_bot.mpr (ne_bot_of_le_ne_bot hs₂₃_atom.1 hs₂₃_le_inf))
