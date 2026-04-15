@@ -43,33 +43,55 @@ commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
 ## Status (session 107, 2026-04-14)
-2 sorry. σ_b≠σ_s PROVEN (perspectivity injectivity + modular cancellation, no group axioms).
-Two competing architectures; code uses Architecture A.
-
-### Architecture A (current code): degenerate T2, lift off m
-  T1=(σ_b, ac, σ_s) in π, T2=(U, E, d_a) all on m (degenerate).
-  Lift: E'=(s₁₂⊔U')⊓(R⊔E), da'=(E⊔U')⊓(R⊔d_a). Threading on m,m.
-  h_axis₁₂=s₁₂ ✓, h_axis₁₃=E ✓, h_axis₂₃ SORRY.
-  Projection back to π: ~200 lines (Step 5). PROVEN.
-
-### Architecture B (session 106, not yet in code): non-degenerate T2
-  T1=(σ_b, ac, d_a) on k,l,m.  T2=(U, E, σ_s) on m,k∩m,k.
-  Lift: E_new=(s₁₂⊔U')⊓(R⊔E), σ_s'=(σ_c⊔E_new)⊓(R⊔σ_s).
-  Threading on m,k (different reference lines).
-  Condition 1=s₁₂ ✓, Condition 2=σ_c ✓, Condition 3 NEEDS PROOF.
-  Condition 3: σ_s' ≤ σ_b⊔d_a⊔U' (point-in-plane, not line-meets-line).
-  Advantage: T2 non-degenerate → no projection step needed.
-  Numerically verified (a=2,b=1,c=3): all conditions hold.
-
-### Structural invariant (session 106)
-  2-of-3 axis conditions free, 3rd needs proof. Invariant across architectures.
-  The 3rd condition IS the algebraic content of left distributivity.
+2 sorry. σ_b≠σ_s PROVEN. h_axis₂₃ mapped to coplanarity condition.
 
 ### Sorry list
   - σ_b≠σ_s: PROVEN (session 107). Perspectivity injectivity (CovBy) + modular
     cancellation (coord_add b c = b → c = O via two-lines-through-β). No group axioms.
-  - h_axis₂₃ (line ~1213): third axis condition (Architecture A formulation).
-  - h_desargues_conclusion (line ~1454): forward Desargues (~500 lines mechanical).
+  - h_axis₂₃ (line ~1215): third axis condition. REDUCED to coplanarity:
+    da' ≤ ac ⊔ σ_s ⊔ E'. Numerically verified across all GF(7). See session 107 notes.
+  - h_desargues_conclusion (line ~1602): forward Desargues (~500 lines mechanical).
+    Partial progress: ~150 lines proven (basic facts, ac⊔E ⋖ π, W' atom).
+
+### Key insight (session 107): the billboard dissolves
+
+  The self-referential appearance ("proof needs Desargues, which needs Desargues")
+  is a billboard sprite — a sub-dimensional projection that looks the same from
+  every approach. It dissolves when you see the rank distinction:
+  non-planar Desargues (rank 4, PROVEN) feeds planar Desargues (rank 3, being proved).
+  The recursion has a floor.
+
+  The 3rd axis condition h_axis₂₃ reduces to a COPLANARITY condition:
+    da' ≤ ac ⊔ σ_s ⊔ E'
+  i.e., the four points {ac, σ_s, E', da'} span rank 3, not rank 4.
+  Numerically verified for ALL non-degenerate configurations in PG(2,7).
+
+  The concurrence W' ≤ σ_s⊔d_a is equivalent to (W'⊔d_a)⊓k = σ_s
+  ("projecting W' from d_a onto k gives σ_s"). This captures the full
+  algebraic content: multiplication perspectivity (d_a-pencil) composes
+  compatibly with addition perspectivity (E_I-chain).
+
+  Alternative approach considered: prove W' ≤ σ_s⊔d_a directly by modular law,
+  bypassing both the lift and the Desargues apparatus. This would dissolve
+  BOTH remaining sorry simultaneously. The key identity (W'⊔d_a)⊓k = σ_s
+  resists pure modular-law proof because it composes two different perspectivity
+  chains (multiplication via d_a, addition via E_I). The composition IS Desargues.
+
+### Architecture A (current code): degenerate T2, lift off m
+  T1=(σ_b, ac, σ_s) in π, T2=(U, E, d_a) all on m (degenerate).
+  Lift: E'=(s₁₂⊔U')⊓(R⊔E), da'=(E⊔U')⊓(R⊔d_a). Threading on m,m.
+  h_axis₁₂=s₁₂ ✓, h_axis₁₃=E ✓, h_axis₂₃ = coplanarity condition.
+  Projection back to π: ~200 lines (Step 5). PROVEN.
+
+### Architecture B (session 106, not yet in code): non-degenerate T2
+  T1=(σ_b, ac, d_a) on k,l,m.  T2=(U, E, σ_s) on m,k∩m,k.
+  Condition 3: σ_s' ≤ σ_b⊔d_a⊔U' (point-in-plane, same structural content).
+
+### Structural invariant (sessions 106-107)
+  2-of-3 axis conditions free, 3rd needs proof. Invariant across architectures.
+  The 3rd condition IS the algebraic content of left distributivity.
+  The 3rd condition IS a coplanarity (point-in-plane) condition.
+  Both formulations (Arch A, Arch B) are rank-3 containment.
 dilation_ext_fixes_m proven.
 -/
 import Foam.FTPGNeg
@@ -1453,7 +1475,153 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
   -- Conclusion: axis through (ab⊔C)⊓m, (ac⊔E)⊓q, (d_a⊔W')⊓l = a·s
   -- Since a·s lies on ((ab⊔C)⊓m ⊔ (ac⊔E)⊓q) ⊓ l = coord_add ab ac:
   have h_desargues_conclusion : coord_mul Γ a s ≤
-      (ab ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (ac ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C) := by sorry
+      (ab ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ (ac ⊔ Γ.E) ⊓ (Γ.U ⊔ Γ.C) := by
+    -- ═══ Forward Desargues: center σ_b, T1=(C,ab,U), T2=(E,d_a,W') ═══
+    -- ─── Step 1: Basic lattice facts ───
+    have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
+    have hk_π : k ≤ π := sup_le (le_sup_left.trans le_sup_left) Γ.hC_plane
+    have hm_π : m ≤ π := sup_le (le_sup_right.trans le_sup_left) le_sup_right
+    have hE_k : Γ.E ≤ k := show Γ.E ≤ Γ.O ⊔ Γ.C from CoordSystem.hE_le_OC
+    have hE_m : Γ.E ≤ m := CoordSystem.hE_on_m
+    have hE_π : Γ.E ≤ π := hE_m.trans hm_π
+    have hσb_k : σ_b ≤ k := inf_le_left
+    have hσb_π : σ_b ≤ π := hσb_k.trans hk_π
+    have hda_m : d_a ≤ m := inf_le_right
+    have hU_π : Γ.U ≤ π := (le_sup_right : Γ.U ≤ l).trans le_sup_left
+    have hkl_eq_O : k ⊓ l = Γ.O := by
+      rw [inf_comm]; exact modular_intersection Γ.hO Γ.hU Γ.hC Γ.hOU
+        (fun h => Γ.hC_not_l (h ▸ le_sup_left))
+        (fun h => Γ.hC_not_l (h.symm.le.trans le_sup_right)) Γ.hC_not_l
+    have hab_atom : IsAtom ab :=
+      coord_mul_atom Γ a b ha hb ha_on hb_on ha_ne_O hb_ne_O ha_ne_U hb_ne_U
+    have hac_atom : IsAtom ac :=
+      coord_mul_atom Γ a c ha hc ha_on hc_on ha_ne_O hc_ne_O ha_ne_U hc_ne_U
+    have hab_on : ab ≤ l := (show coord_mul Γ a b ≤ Γ.O ⊔ Γ.U from inf_le_right)
+    have hac_on : ac ≤ l := (show coord_mul Γ a c ≤ Γ.O ⊔ Γ.U from inf_le_right)
+    have hab_π : ab ≤ π := hab_on.trans le_sup_left
+    have hac_π : ac ≤ π := hac_on.trans le_sup_left
+    have hac_ne_E : ac ≠ Γ.E := fun h => CoordSystem.hE_not_l (h ▸ hac_on)
+    have hac_not_m : ¬ ac ≤ m := fun h => hac_ne_U (Γ.atom_on_both_eq_U hac_atom hac_on h)
+    have hσb_atom : IsAtom σ_b := by
+      rw [show σ_b = (b ⊔ Γ.E_I) ⊓ (Γ.O ⊔ Γ.C) from inf_comm _ _]
+      exact perspect_atom Γ.hE_I_atom hb
+        (fun h => hb_ne_U (Γ.atom_on_both_eq_U hb hb_on (h ▸ Γ.hE_I_on_m)))
+        Γ.hO Γ.hC hOC Γ.hE_I_not_OC
+        (show b ⊔ Γ.E_I ≤ (Γ.O ⊔ Γ.C) ⊔ Γ.E_I from by
+          have : Γ.E_I ⊔ (Γ.O ⊔ Γ.C) = π := by
+            have h_lt := lt_of_le_of_ne (le_sup_right : Γ.O ⊔ Γ.C ≤ Γ.E_I ⊔ (Γ.O ⊔ Γ.C))
+              (fun h => Γ.hE_I_not_OC (h ▸ le_sup_left))
+            exact ((CoordSystem.OC_covBy_π Γ).eq_or_eq h_lt.le
+              (sup_le (Γ.hE_I_on_m.trans hm_π) hk_π)).resolve_left (ne_of_gt h_lt)
+          rw [sup_comm] at this
+          exact this ▸ sup_le (hb_on.trans le_sup_left) (Γ.hE_I_on_m.trans hm_π))
+    have hda_atom : IsAtom d_a :=
+      perspect_atom Γ.hC ha (fun h => Γ.hC_not_l (h ▸ ha_on)) Γ.hU Γ.hV
+        (fun h => Γ.hV_off (h ▸ le_sup_right)) Γ.hC_not_m
+        (sup_le (ha_on.trans (le_sup_left.trans Γ.m_sup_C_eq_π.symm.le)) le_sup_right)
+    have hσb_not_m : ¬ σ_b ≤ m := by
+      intro h
+      have hb_inf_m : b ⊓ m = ⊥ := (hb.le_iff.mp inf_le_left).resolve_right
+        (fun h' => hb_ne_U (Γ.atom_on_both_eq_U hb hb_on (h' ▸ inf_le_right)))
+      have hbEI_inf_m : (b ⊔ Γ.E_I) ⊓ m = Γ.E_I := by
+        rw [sup_comm]; have h1 := sup_inf_assoc_of_le b Γ.hE_I_on_m
+        rw [h1, hb_inf_m]; simp
+      exact Γ.hE_I_not_OC ((Γ.hE_I_atom.le_iff.mp
+        (hbEI_inf_m ▸ le_inf (inf_le_right : σ_b ≤ b ⊔ Γ.E_I) h)).resolve_left hσb_atom.1 ▸ hσb_k)
+    have hσb_ne_U : σ_b ≠ Γ.U := fun h => hσb_not_m (h ▸ le_sup_left)
+    have hda_ne_E : d_a ≠ Γ.E := by
+      intro h
+      have ha_inf_k : a ⊓ k = ⊥ := (ha.le_iff.mp inf_le_left).resolve_right
+        (fun h' => ha_ne_O ((Γ.hO.le_iff.mp (hkl_eq_O ▸ le_inf (h' ▸ inf_le_right) ha_on)
+          ).resolve_left ha.1))
+      have : (a ⊔ Γ.C) ⊓ k = Γ.C := by
+        rw [sup_comm, inf_comm]; have h1 := sup_inf_assoc_of_le a (le_sup_right : Γ.C ≤ k)
+        rw [ha_inf_k] at h1; simp at h1; rw [inf_comm] at h1; exact h1
+      exact Γ.hC_not_m ((Γ.hC.le_iff.mp
+        (this ▸ le_inf (h ▸ inf_le_left) hE_k)).resolve_left Γ.hE_atom.1 ▸ hE_m)
+    have hda_ne_U : d_a ≠ Γ.U := by
+      intro h
+      have : (a ⊔ Γ.C) ⊓ l = a := by
+        have hC_inf_l : Γ.C ⊓ l = ⊥ := (Γ.hC.le_iff.mp inf_le_left).resolve_right
+          (fun h' => Γ.hC_not_l (h' ▸ inf_le_right))
+        have h1 := sup_inf_assoc_of_le Γ.C ha_on; rw [hC_inf_l] at h1; simp at h1; exact h1
+      exact ha_ne_U ((ha.le_iff.mp
+        (this ▸ le_inf (h ▸ inf_le_left) (le_sup_right : Γ.U ≤ l))).resolve_left Γ.hU.1).symm
+    -- ─── Step 2: ac⊔E ⋖ π ───
+    have hac_sup_U : ac ⊔ Γ.U = l :=
+      ((line_covers_its_atoms Γ.hO Γ.hU Γ.hOU hac_atom hac_on).eq_or_eq
+        (atom_covBy_join hac_atom Γ.hU hac_ne_U).lt.le
+        (sup_le hac_on le_sup_right)).resolve_left
+        (ne_of_gt (atom_covBy_join hac_atom Γ.hU hac_ne_U).lt)
+    have hU_disj_acE : Γ.U ⊓ (ac ⊔ Γ.E) = ⊥ := by
+      rcases Γ.hU.le_iff.mp inf_le_left with h | h
+      · exact h
+      · exfalso
+        have hl_le : l ≤ ac ⊔ Γ.E := hac_sup_U ▸ sup_le le_sup_left (h ▸ inf_le_right)
+        have hl_eq : l = ac ⊔ Γ.E := ((atom_covBy_join hac_atom Γ.hE_atom hac_ne_E).eq_or_eq
+          hac_on hl_le).resolve_left (fun h' => hac_ne_U ((hac_atom.le_iff.mp
+            (h' ▸ (le_sup_right : Γ.U ≤ l))).resolve_left Γ.hU.1).symm)
+        exact CoordSystem.hE_not_l (hl_eq ▸ le_sup_right)
+    have hl_covBy_π : l ⋖ π := by
+      have hV_disj : Γ.V ⊓ l = ⊥ := (Γ.hV.le_iff.mp inf_le_left).resolve_right
+        (fun h => Γ.hV_off (h ▸ inf_le_right))
+      have h := covBy_sup_of_inf_covBy_left (hV_disj ▸ Γ.hV.bot_covBy)
+      rwa [show Γ.V ⊔ l = π from by
+        show Γ.V ⊔ (Γ.O ⊔ Γ.U) = Γ.O ⊔ Γ.U ⊔ Γ.V; simp only [sup_comm, sup_left_comm]] at h
+    have hl_sup_E : l ⊔ Γ.E = π := (hl_covBy_π.eq_or_eq
+      (lt_of_le_of_ne le_sup_left (fun h => CoordSystem.hE_not_l (h ▸ le_sup_right))).le
+      (sup_le le_sup_left hE_π)).resolve_left
+      (ne_of_gt (lt_of_le_of_ne le_sup_left (fun h => CoordSystem.hE_not_l (h ▸ le_sup_right))))
+    have hU_sup_acE_eq_π : Γ.U ⊔ (ac ⊔ Γ.E) = π :=
+      calc Γ.U ⊔ (ac ⊔ Γ.E) = (ac ⊔ Γ.U) ⊔ Γ.E := by
+            simp only [sup_assoc, sup_comm, sup_left_comm]
+        _ = l ⊔ Γ.E := by rw [hac_sup_U]
+        _ = π := hl_sup_E
+    have hacE_covBy : ac ⊔ Γ.E ⋖ π :=
+      hU_sup_acE_eq_π ▸ covBy_sup_of_inf_covBy_left (hU_disj_acE ▸ Γ.hU.bot_covBy)
+    -- ─── Step 3: W' is an atom ───
+    have hσbU_π : σ_b ⊔ Γ.U ≤ π := sup_le hσb_π hU_π
+    have hσb_inf_m : σ_b ⊓ m = ⊥ := (hσb_atom.le_iff.mp inf_le_left).resolve_right
+      (fun h => hσb_not_m (h ▸ inf_le_right))
+    have hσbU_inf_m : (σ_b ⊔ Γ.U) ⊓ m = Γ.U := by
+      rw [sup_comm]; have h1 := sup_inf_assoc_of_le σ_b (le_sup_left : Γ.U ≤ m)
+      rw [hσb_inf_m] at h1; simp at h1; exact h1
+    have hW'_atom : IsAtom W' := by
+      have hW'_pos : ⊥ < W' := by
+        rw [show W' = (ac ⊔ Γ.E) ⊓ (σ_b ⊔ Γ.U) from inf_comm _ _]
+        exact bot_lt_iff_ne_bot.mpr (lines_meet_if_coplanar hacE_covBy hσbU_π
+          (fun h => Γ.hU.1 (le_antisymm (hU_disj_acE ▸ le_inf le_rfl
+            (le_sup_right.trans h)) bot_le))
+          hσb_atom (atom_covBy_join hσb_atom Γ.hU hσb_ne_U).lt)
+      have hW'_lt : W' < ac ⊔ Γ.E := by
+        refine lt_of_le_of_ne inf_le_right (fun h_eq => ?_)
+        have hacE_le_σbU : ac ⊔ Γ.E ≤ σ_b ⊔ Γ.U := h_eq ▸ inf_le_left
+        have hE_le_σbU : Γ.E ≤ σ_b ⊔ Γ.U := le_sup_right.trans hacE_le_σbU
+        exact CoordSystem.hEU ((Γ.hU.le_iff.mp
+          (hσbU_inf_m ▸ le_inf hE_le_σbU hE_m)).resolve_left Γ.hE_atom.1)
+      exact line_height_two hac_atom Γ.hE_atom hac_ne_E hW'_pos hW'_lt
+    have hW'_le_acE : W' ≤ ac ⊔ Γ.E := inf_le_right
+    have hW'_π : W' ≤ π := hW'_le_acE.trans (sup_le hac_π hE_π)
+    have hacE_inf_m : (ac ⊔ Γ.E) ⊓ m = Γ.E := by
+      rw [sup_comm]; have h1 := sup_inf_assoc_of_le ac hE_m
+      rw [(hac_atom.le_iff.mp inf_le_left).resolve_right
+        (fun h' => hac_not_m (h' ▸ inf_le_right))] at h1; simp at h1; exact h1
+    have hW'_ne_E : W' ≠ Γ.E := by
+      intro h; exact CoordSystem.hEU ((Γ.hU.le_iff.mp
+        (hσbU_inf_m ▸ le_inf (h ▸ inf_le_left) hE_m)).resolve_left Γ.hE_atom.1)
+    have hW'_ne_da : W' ≠ d_a := by
+      intro h; exact hda_ne_E ((Γ.hE_atom.le_iff.mp
+        (hacE_inf_m ▸ le_inf (h ▸ hW'_le_acE) hda_m)).resolve_left hda_atom.1)
+    -- ─── Step 4: Apply desargues_planar and extract ───
+    -- Remaining: verify ~35 hypotheses of desargues_planar, then extract.
+    -- Key prerequisites still needed:
+    --   σ_b ≠ C, σ_b⊔C = k (perspective condition for E)
+    --   d_a ≤ σ_b⊔ab (perspective condition)
+    --   Triangle planes = π, sides ⋖ π, distinctness conditions
+    -- Then apply desargues_planar, simplify axis points
+    -- (E⊔d_a = m, E⊔W' = ac⊔E, C⊔U = q, ab⊔U = l),
+    -- and use collinear_of_common_bound.
+    sorry
   -- ═══ Combination ═══
   -- coord_mul Γ a s ≤ addition_line ∧ coord_mul Γ a s ≤ l
   -- coord_add Γ ab ac = addition_line ⊓ l (by definition)
