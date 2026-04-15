@@ -1570,10 +1570,54 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
           -- ── Axis conditions (all FREE by modular law) ──
           -- axis₁₂: IsAtom ((E'⊔U') ⊓ (s₂₃''⊔E''))
           have h_ax₁₂ : IsAtom ((E' ⊔ U') ⊓ (s₂₃'' ⊔ E'')) := by
-            -- s₂₃''⊔E'' = s₁₂⊔s₂₃'' (E'' ≤ s₁₂⊔s₂₃'', rank argument).
-            -- E'⊔U' = s₁₂⊔U' (E' ≤ s₁₂⊔U').
-            -- (s₁₂⊔U') ⊓ (s₁₂⊔s₂₃'') = s₁₂ (modular: s₁₂ ≤ both, U'⊓(s₁₂⊔s₂₃'') = ⊥).
-            sorry
+            -- Step 1: E' ⊔ U' = s₁₂ ⊔ U' (E' ≤ s₁₂⊔U', CovBy)
+            have hE'_le_s₁₂U' : E' ≤ s₁₂ ⊔ U' := inf_le_left
+            have hs₁₂_ne_U' : s₁₂ ≠ U' :=
+              fun h => hU'_not_π (h ▸ (inf_le_right : s₁₂ ≤ m).trans hm_π)
+            have hU'E'_eq : U' ⊔ E' = s₁₂ ⊔ U' := by
+              have h_lt : U' < U' ⊔ E' :=
+                lt_of_le_of_ne le_sup_left (fun h => by
+                  exact hU'_ne_E' ((hU'_atom.le_iff.mp
+                    (le_sup_right.trans h.symm.le)).resolve_left hE'_atom.1).symm)
+              rw [show s₁₂ ⊔ U' = U' ⊔ s₁₂ from sup_comm _ _]
+              exact ((atom_covBy_join hU'_atom hs₁₂_atom hs₁₂_ne_U'.symm).eq_or_eq
+                h_lt.le (sup_comm s₁₂ U' ▸ sup_le le_sup_right hE'_le_s₁₂U')).resolve_left
+                (ne_of_gt h_lt)
+            -- Step 2: s₂₃'' ⊔ E'' = s₁₂ ⊔ s₂₃'' (E'' ≤ s₁₂⊔s₂₃'', CovBy)
+            have hE''_le : E'' ≤ s₁₂ ⊔ s₂₃'' := inf_le_left
+            have hs₂₃''E''_eq : s₂₃'' ⊔ E'' = s₁₂ ⊔ s₂₃'' := by
+              have h_lt : s₂₃'' < s₂₃'' ⊔ E'' :=
+                lt_of_le_of_ne le_sup_left (fun h => by
+                  exact hs₂₃''_ne_E'' ((hs₂₃''_atom.le_iff.mp
+                    (le_sup_right.trans h.symm.le)).resolve_left hE''_atom.1).symm)
+              rw [show s₁₂ ⊔ s₂₃'' = s₂₃'' ⊔ s₁₂ from sup_comm _ _]
+              exact ((atom_covBy_join hs₂₃''_atom hs₁₂_atom
+                hs₁₂_ne_s₂₃''.symm).eq_or_eq h_lt.le
+                (sup_comm s₁₂ s₂₃'' ▸ sup_le le_sup_right hE''_le)).resolve_left
+                (ne_of_gt h_lt)
+            -- Step 3: (s₁₂⊔U') ⊓ (s₁₂⊔s₂₃'') = s₁₂ (modular, U'⊓(s₁₂⊔s₂₃'') = ⊥)
+            have hU'_inf : U' ⊓ (s₁₂ ⊔ s₂₃'') = ⊥ := by
+              have hU'_inf_m : U' ⊓ m = ⊥ :=
+                (hU'_atom.le_iff.mp inf_le_left).resolve_right
+                  (fun h => hU'_not_π (h ▸ inf_le_right |>.trans hm_π))
+              have h_proj : (s₁₂ ⊔ s₂₃'') ⊓ (R ⊔ m) = s₁₂ := by
+                calc (s₁₂ ⊔ s₂₃'') ⊓ (R ⊔ m)
+                    = s₁₂ ⊔ s₂₃'' ⊓ (R ⊔ m) := sup_inf_assoc_of_le s₂₃''
+                      ((inf_le_right : s₁₂ ≤ m).trans le_sup_right)
+                  _ = s₁₂ := by rw [hs₂₃''_inf_Rm, sup_bot_eq]
+              -- U' ⊓ (s₁₂⊔s₂₃'') ≤ (R⊔m) ⊓ (s₁₂⊔s₂₃'') = s₁₂ ≤ m. And ≤ U'. So ≤ U'⊓m = ⊥.
+              have hle_s₁₂ : U' ⊓ (s₁₂ ⊔ s₂₃'') ≤ s₁₂ := by
+                calc U' ⊓ (s₁₂ ⊔ s₂₃'')
+                    ≤ (R ⊔ m) ⊓ (s₁₂ ⊔ s₂₃'') := inf_le_inf_right _ hU'_le_Rm
+                  _ = (s₁₂ ⊔ s₂₃'') ⊓ (R ⊔ m) := inf_comm _ _
+                  _ = s₁₂ := h_proj
+              exact le_antisymm (le_trans (le_inf inf_le_left
+                (hle_s₁₂.trans (inf_le_right : s₁₂ ≤ m))) hU'_inf_m.le) bot_le
+            rw [show E' ⊔ U' = U' ⊔ E' from sup_comm _ _, hU'E'_eq, hs₂₃''E''_eq]
+            have h1 := sup_inf_assoc_of_le U'
+              (le_sup_left : s₁₂ ≤ s₁₂ ⊔ s₂₃'')
+            rw [hU'_inf] at h1; simp at h1; rw [h1]
+            exact hs₁₂_atom
           -- axis₁₃: IsAtom ((E'⊔d_a) ⊓ (s₂₃''⊔R''))
           have h_ax₁₃ : IsAtom ((E' ⊔ d_a) ⊓ (s₂₃'' ⊔ R'')) := by
             -- s₂₃''⊔R'' = S₁₃⊔s₂₃'' (R'' ≤ S₁₃⊔s₂₃'').
