@@ -188,7 +188,7 @@ Note: left multiplication x↦a·x is NOT a collineation (unlike right mult). Th
 | converse Desargues | `desargues_converse_nonplanar` (PROVEN) |
 | m-fixation | `dilation_ext_fixes_m` (PROVEN) |
 | σ_b≠σ_s | PROVEN (perspectivity injectivity + modular cancellation) |
-| h_axis₂₃ | skeleton compiling (Level 2 Desargues, 6 sub-sorry) |
+| h_axis₂₃ | skeleton compiling (Level 2 Desargues, 2 sub-sorry, projection PROVEN) |
 | concurrence | h_concurrence chain: axis-threaded lift + project (PROVEN except h_axis₂₃ sub-sorry) |
 | forward Desargues | h_desargues_conclusion (1 sorry, ~500 lines mechanical) |
 | combination | PROVEN |
