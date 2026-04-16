@@ -42,8 +42,8 @@ Left multiplication x↦a·x is NOT a single collineation in the non-
 commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
-## Status (session 111, 2026-04-15)
-7 sorry remaining (h_L2 cluster + h_desargues_conclusion).
+## Status (session 112, 2026-04-16)
+6 sorry remaining (h_L2 cluster + h_desargues_conclusion).
 
 ### Sorry list
   - σ_b≠σ_s: PROVEN (session 107).
@@ -51,14 +51,16 @@ from right distrib (which used collineation directly).
     Architecture: Level 2 Desargues using Q=σ_b to lift (s₂₃,E,R) out of R⊔m.
     ALL THREE axis conditions free at Level 2 (verified 180/180 in GF(7)).
     Recursion terminates. Projection PROVEN. W₂≠⊥ PROVEN (session 109).
-    h_L2 sorry (7 total, down from 8):
+    h_L2 sorry (5 total, down from 8):
       - hR''_atom: PROVEN (session 111). S₁₃ via swapped l₁/l₂, R'' via
         plane σ_b⊔s₂₃⊔R and line_height_two on S₁₃⊔s₂₃'' (not σ_b⊔R).
         Key: "read the lemma from the other side" worked twice.
+      - hR''_not_πA₂: PROVEN (session 112, R'' ≤ S₁₃ ∧ R'' ≤ R → R = E', contradiction)
       - hE'_not_U'da: triangle non-degeneracy (needs s₁₂≠d_a or alt approach)
-      - hR''_not_πA₂, hE''_ne_R'', h_cov₂: now exposed (hR''_atom done)
+      - hE''_ne_R'', h_cov₂: now exposed (hR''_atom done)
       - h_ax₁₂: PROVEN (session 110, modular law collapse to s₁₂)
-      - h_ax₁₃, h_ax₂₃: depend on S₁₃/R'' structure (both now atoms)
+      - h_ax₁₃: proof written, needs hS₁₃_atom hoisted from hR''_atom scope
+      - h_ax₂₃: depends on E''/R'' structure
   - h_desargues_conclusion (line ~2420): forward Desargues (~500 lines mechanical).
 
 ### Key insight (session 108): the recursion terminates
@@ -1658,8 +1660,94 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
               rw [hσb_inf_Rm] at h1; simp at h1; exact h1
             have hR''_le_R : R'' ≤ R :=
               hσbR_inf_Rm' ▸ le_inf (inf_le_right : R'' ≤ σ_b ⊔ R) hR''_le_Rm
-            -- R'' = S₁₃ = R → R ≤ E'⊔d_a → E' ≤ R → E' = R. Contradiction.
-            sorry
+            -- R'' is atom, R'' ≤ R → R'' = R
+            have hR''_eq_R : R'' = R :=
+              (hR.le_iff.mp hR''_le_R).resolve_left hR''_atom.1
+            -- R = R'' ≤ S₁₃ ≤ E'⊔d_a
+            have hR_le_E'da : R ≤ E' ⊔ d_a :=
+              (hR''_eq_R ▸ hR''_le_S₁₃).trans (inf_le_left : S₁₃ ≤ E' ⊔ d_a)
+            -- R ≤ E'⊔d_a, d_a ≤ m, R⊓m = ⊥. (E'⊔d_a)⊓m = d_a (modular, d_a ≤ m).
+            -- Actually: E' ≤ R⊔E, so (E'⊔d_a) ≤ R⊔m.
+            -- Project: (d_a⊔E')⊓(d_a⊔R) contains d_a⊔(E'⊓(d_a⊔R)).
+            -- Hmm. R ≤ E'⊔d_a and E' ≤ R⊔E and d_a ≤ m.
+            -- (E'⊔d_a) ⊓ (R⊔E) ≥ E' (trivially). R ≤ E'⊔d_a and R ≤ R⊔E.
+            -- So R ≤ (E'⊔d_a) ⊓ (R⊔E).
+            -- (E'⊔d_a) ⊓ (R⊔E): E' ≤ R⊔E. modular: (E'⊔d_a) ⊓ (R⊔E) = E' ⊔ d_a⊓(R⊔E).
+            -- d_a⊓(R⊔E): d_a ≤ m. (R⊔E)⊓m = E (modular, R⊓m = ⊥). d_a⊓(R⊔E) ≤ E.
+            -- d_a⊓E: d_a atom, E atom, d_a ≠ E → d_a⊓E = ⊥ (unless d_a = E).
+            -- So (E'⊔d_a) ⊓ (R⊔E) = E'. R ≤ E'. R atom, E' atom → R = E'.
+            -- But hE'_ne_R. Contradiction.
+            have hE'da_inf_RE : (E' ⊔ d_a) ⊓ (R ⊔ Γ.E) = E' := by
+              have h1 := sup_inf_assoc_of_le d_a (hE'_le : E' ≤ R ⊔ Γ.E)
+              have hda_inf_RE : d_a ⊓ (R ⊔ Γ.E) = ⊥ := by
+                have hRE_inf_m : (R ⊔ Γ.E) ⊓ m = Γ.E := by
+                  rw [sup_comm]; have h1 := sup_inf_assoc_of_le R hE_m
+                  rw [hR_inf_m] at h1; simp at h1; exact h1
+                have hda_le_E : d_a ⊓ (R ⊔ Γ.E) ≤ Γ.E := by
+                  calc d_a ⊓ (R ⊔ Γ.E) ≤ m ⊓ (R ⊔ Γ.E) := inf_le_inf_right _ hda_m
+                    _ = (R ⊔ Γ.E) ⊓ m := inf_comm _ _
+                    _ = Γ.E := hRE_inf_m
+                rcases Γ.hE_atom.le_iff.mp hda_le_E with h | h
+                · exact h
+                · exfalso; exact hda_ne_E ((hda_atom.le_iff.mp
+                    (h ▸ inf_le_left)).resolve_left Γ.hE_atom.1).symm
+              rw [hda_inf_RE] at h1; simp at h1; exact h1
+            have hR_le_E' : R ≤ E' :=
+              hE'da_inf_RE ▸ le_inf hR_le_E'da (le_sup_left : R ≤ R ⊔ Γ.E)
+            -- E' = R → R ≤ s₁₂⊔U' → (s₁₂⊔U')⊓(R⊔U) = U' → R ≤ U' → R = U'. Contradiction.
+            have hR_eq_E' : R = E' := (hE'_atom.le_iff.mp hR_le_E').resolve_left hR.1
+            have hR_le_s₁₂U' : R ≤ s₁₂ ⊔ U' := hR_eq_E' ▸ (inf_le_left : E' ≤ s₁₂ ⊔ U')
+            have hs₁₂_inf_RU : s₁₂ ⊓ (R ⊔ Γ.U) = ⊥ := by
+              have hRU_inf_m : (R ⊔ Γ.U) ⊓ m = Γ.U := by
+                rw [sup_comm]; have h1 := sup_inf_assoc_of_le R (le_sup_left : Γ.U ≤ m)
+                rw [hR_inf_m] at h1; simp at h1; exact h1
+              have h_le_U : s₁₂ ⊓ (R ⊔ Γ.U) ≤ Γ.U := by
+                calc s₁₂ ⊓ (R ⊔ Γ.U)
+                    ≤ m ⊓ (R ⊔ Γ.U) := inf_le_inf_right _ (inf_le_right : s₁₂ ≤ m)
+                  _ = (R ⊔ Γ.U) ⊓ m := inf_comm _ _
+                  _ = Γ.U := hRU_inf_m
+              -- s₁₂ ≠ U: if s₁₂ = U, then U ≤ σ_b⊔ac. σ_b⊓l = ⊥ (σ_b atom ≤ k, k⊓l = O, σ_b ≠ O).
+              -- (σ_b⊔ac)⊓l = ac (modular). U ≤ ac → U = ac. Contradiction hac_ne_U.
+              have hσb_ne_O' : σ_b ≠ Γ.O := by
+                intro h
+                -- σ_b = O → O ≤ b⊔E_I (inf_le_right). O ≤ l.
+                -- (b⊔E_I)⊓l = b (modular: b ≤ l, E_I⊓l = ⊥ from E_I ∉ l).
+                have hO_le_bEI : Γ.O ≤ b ⊔ Γ.E_I := h ▸ (inf_le_right : σ_b ≤ b ⊔ Γ.E_I)
+                have hEI_inf_l : Γ.E_I ⊓ l = ⊥ :=
+                  (Γ.hE_I_atom.le_iff.mp inf_le_left).resolve_right
+                    (fun h' => Γ.hE_I_not_l (h' ▸ inf_le_right))
+                have hbEI_inf_l : (b ⊔ Γ.E_I) ⊓ l = b := by
+                  have h1 := sup_inf_assoc_of_le Γ.E_I hb_on
+                  rw [hEI_inf_l] at h1; simp at h1; exact h1
+                exact hb_ne_O ((hb.le_iff.mp
+                  (hbEI_inf_l ▸ le_inf hO_le_bEI (le_sup_left : Γ.O ≤ l))).resolve_left
+                  Γ.hO.1).symm
+              have hs₁₂_ne_U_local : s₁₂ ≠ Γ.U := by
+                intro h_eq
+                have hU_le_σbac : Γ.U ≤ σ_b ⊔ ac := h_eq ▸ (inf_le_left : s₁₂ ≤ σ_b ⊔ ac)
+                have hσb_inf_l : σ_b ⊓ l = ⊥ :=
+                  (hσb_atom.le_iff.mp inf_le_left).resolve_right
+                    (fun h => hσb_ne_O' ((Γ.hO.le_iff.mp
+                      (hkl_eq_O ▸ le_inf hσb_k (h ▸ inf_le_right))).resolve_left
+                      hσb_atom.1))
+                have hσbac_inf_l : (σ_b ⊔ ac) ⊓ l = ac := by
+                  have h1 := sup_inf_assoc_of_le σ_b (hac_l : ac ≤ l)
+                  rw [hσb_inf_l] at h1; simp at h1; rw [sup_comm] at h1; exact h1
+                exact hac_ne_U ((hac_atom.le_iff.mp
+                  (hσbac_inf_l ▸ le_inf hU_le_σbac (le_sup_right : Γ.U ≤ l))).resolve_left
+                  Γ.hU.1).symm
+              have hs₁₂_inf_U : s₁₂ ⊓ Γ.U = ⊥ :=
+                (hs₁₂_atom.le_iff.mp inf_le_left).resolve_right
+                  (fun h' => hs₁₂_ne_U_local ((Γ.hU.le_iff.mp
+                    (h' ▸ inf_le_right)).resolve_left hs₁₂_atom.1))
+              exact le_antisymm (le_trans (le_inf inf_le_left h_le_U)
+                hs₁₂_inf_U.le) bot_le
+            have hmod : (s₁₂ ⊔ U') ⊓ (R ⊔ Γ.U) = U' := by
+              have h1 := sup_inf_assoc_of_le s₁₂ (hU'_le : U' ≤ R ⊔ Γ.U)
+              rw [hs₁₂_inf_RU] at h1; simp at h1; rw [sup_comm] at h1; exact h1
+            have hR_le_U' : R ≤ U' :=
+              hmod ▸ le_inf hR_le_s₁₂U' (le_sup_left : R ≤ R ⊔ Γ.U)
+            exact hU'_ne_R ((hU'_atom.le_iff.mp hR_le_U').resolve_left hR.1).symm
           -- ── T2 non-degeneracy ──
           have hs₂₃''_ne_E'' : s₂₃'' ≠ E'' := by
             intro h
@@ -1757,6 +1845,7 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
           have h_ax₁₃ : IsAtom ((E' ⊔ d_a) ⊓ (s₂₃'' ⊔ R'')) := by
             -- s₂₃''⊔R'' = S₁₃⊔s₂₃'' (R'' ≤ S₁₃⊔s₂₃'').
             -- (E'⊔d_a) ⊓ (S₁₃⊔s₂₃'') = S₁₃ (modular: S₁₃ ≤ E'⊔d_a, s₂₃''⊓(E'⊔d_a) = ⊥).
+            -- Needs hS₁₃_atom and hS₁₃_ne_s₂₃'' hoisted from hR''_atom.
             sorry
           -- axis₂₃: IsAtom ((U'⊔d_a) ⊓ (E''⊔R''))
           have h_ax₂₃ : IsAtom ((U' ⊔ d_a) ⊓ (E'' ⊔ R'')) := by sorry
