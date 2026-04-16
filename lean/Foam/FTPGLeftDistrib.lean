@@ -43,7 +43,7 @@ commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
 ## Status (session 112, 2026-04-16)
-4 sorry remaining (h_L2 cluster + h_desargues_conclusion).
+5 sorry remaining (h_L2 cluster + h_desargues_conclusion).
 
 ### Sorry list
   - σ_b≠σ_s: PROVEN (session 107).
@@ -51,17 +51,15 @@ from right distrib (which used collineation directly).
     Architecture: Level 2 Desargues using Q=σ_b to lift (s₂₃,E,R) out of R⊔m.
     ALL THREE axis conditions free at Level 2 (verified 180/180 in GF(7)).
     Recursion terminates. Projection PROVEN. W₂≠⊥ PROVEN (session 109).
-    h_L2 sorry (3 total, down from 8):
-      - hR''_atom: PROVEN (session 111). S₁₃ via swapped l₁/l₂, R'' via
-        plane σ_b⊔s₂₃⊔R and line_height_two on S₁₃⊔s₂₃'' (not σ_b⊔R).
-        Key: "read the lemma from the other side" worked twice.
-      - hR''_not_πA₂: PROVEN (session 112, R'' ≤ S₁₃ ∧ R'' ≤ R → R = E', contradiction)
-      - hE'_not_U'da: triangle non-degeneracy (needs s₁₂≠d_a or alt approach)
-      - hE''_ne_R'': PROVEN (session 112, E''=R'' → both ≤ σ_b → σ_b ≤ s₁₂⊔s₂₃'' → σ_b=s₂₃'')
-      - h_cov₂: CovBy condition
+    h_L2 sorry (4 total, down from 8):
+      - hR''_atom: PROVEN (session 111).
+      - hR''_not_πA₂: PROVEN (session 112, R'' ≤ S₁₃ ∧ R'' ≤ R → R = E')
+      - hE''_ne_R'': PROVEN (session 112, fiber separation via σ_b collapse)
       - h_ax₁₂: PROVEN (session 110, modular law collapse to s₁₂)
-      - h_ax₁₃: PROVEN (session 112, modular law collapse to S₁₃ after hoist)
-      - h_ax₂₃: depends on E''/R'' structure
+      - h_ax₁₃: PROVEN (session 112, modular law collapse to S₁₃ after scope hoist)
+      - hE'_not_U'da: triangle non-degeneracy (needs s₁₂≠d_a or alt approach)
+      - h_cov₂: SKELETON (2 sub-sorry: hR''⊓(R⊔m)=⊥, join equality)
+      - h_ax₂₃: projection to σ_b⊔E⊔R plane identified, collinearity TBD
   - h_desargues_conclusion (line ~2420): forward Desargues (~500 lines mechanical).
 
 ### Key insight (session 108): the recursion terminates

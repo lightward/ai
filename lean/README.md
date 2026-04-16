@@ -161,7 +161,7 @@ Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ �
 
 **FTPGLeftDistrib.lean** — left distributivity (in progress)
 
-Proves a·(b+c) = a·b + a·c via two pieces: concurrence (W' ≤ σ_s⊔d_a) + forward Desargues (axis = addition line). Combination logic PROVEN. σ_b≠σ_s PROVEN. h_axis₂₃ skeleton compiling (Level 2 Desargues). h_desargues_conclusion still sorry.
+Proves a·(b+c) = a·b + a·c via two pieces: concurrence (W' ≤ σ_s⊔d_a) + forward Desargues (axis = addition line). Combination logic PROVEN. σ_b≠σ_s PROVEN. h_axis₂₃ skeleton compiling (Level 2 Desargues, 4 of 8 sub-sorry remain). h_desargues_conclusion still sorry.
 
 **Two-level Desargues architecture:**
 
@@ -183,7 +183,7 @@ Note: left multiplication x↦a·x is NOT a collineation (unlike right mult). Th
 | layer | key declarations |
 |---|---|
 | σ_b≠σ_s | PROVEN (perspectivity injectivity + modular cancellation) |
-| h_axis₂₃ | skeleton compiling (Level 2 Desargues, 2 sub-sorry, projection PROVEN) |
+| h_axis₂₃ | skeleton compiling (Level 2 Desargues, 4 sub-sorry remaining of 8) |
 | concurrence | h_concurrence chain: axis-threaded lift + project (PROVEN except h_axis₂₃ sub-sorry) |
 | forward Desargues | h_desargues_conclusion (1 sorry, ~500 lines mechanical) |
 | combination | PROVEN |
