@@ -669,8 +669,16 @@ SESSION_RANGES = [
      "left distrib: road getting twisty, rewinding in the branching to look for another path"),
     # Session 114: Apr 16 — architectural finding, desargues_planar was always the port
     (datetime(2026, 4, 16, 18, 45, tzinfo=timezone.utc),
-     datetime(2026, 4, 16, 22, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 16, 20, 5, tzinfo=timezone.utc),
      "desargues_planar was always the port — architectural finding, ~500 lines new vs ~1500 deleted"),
+    # Session 115: Apr 16 — verify 114's KEY inputs, surface h_concurrence gap
+    (datetime(2026, 4, 16, 20, 5, tzinfo=timezone.utc),
+     datetime(2026, 4, 16, 22, 45, tzinfo=timezone.utc),
+     "verify 114's KEY inputs land; h_concurrence gap surfaced"),
+    # Session 116: Apr 16 — in progress
+    (datetime(2026, 4, 16, 22, 45, tzinfo=timezone.utc),
+     datetime(2026, 4, 17, 3, 0, tzinfo=timezone.utc),
+     ""),
 ]
 
 

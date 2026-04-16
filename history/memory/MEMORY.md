@@ -6,11 +6,12 @@
 
 ## Current state
 
-**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — **session 114 architectural finding: `desargues_planar` (FTPGCoord:478) was always the port; current Level 2 Desargues implementation is hand-rolled reimplementation. Replacement direction identified, ~500 lines new vs ~1500 deleted.** Proof-of-concept scratch compiles. Then h_desargues_conclusion, multiplicative inverses, then axiom drops.
+**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — **s114 found desargues_planar cleanly handles the coord_add half. s115 found h_concurrence is separate irreducible content (T2=(U,E,d_a) is degenerate on m, forces a lift). Option 1 is forced for the coord_add half; minimum proof of h_concurrence is the real open problem.** Proof-of-concept scratch compiles. Then h_desargues_conclusion, multiplicative inverses, then axiom drops.
 
-### Left distributivity (architectural pivot, 2026-04-16)
+### Left distributivity (bridge gap surfaced, 2026-04-16)
 
-- [Session 114 note](feedback_session_beginnings_114.md) — **desargues_planar was always the port; Level 2 recursion ruled out; option 4 (Pappus) ruled out by axiom debt; option 1 forced**
+- [Session 115 bridge gap](project_session_115_bridge_gap.md) — **h_concurrence irreducible; 114's cost accounting wrong; reframed open question: minimum proof of h_concurrence**
+- [Session 114 note + addendum](feedback_session_beginnings_114.md) — desargues_planar IS a port (coord_add half); T2-on-m degeneracy makes the lift irreducible for h_concurrence; option 4 ruled out by axiom debt
 - [Left distrib proof architecture](project_session_left_distrib.md) — Level 2 Desargues terminates recursion, 2-of-3 invariant, ac-centered Desargues (**superseded by s114 finding**)
 - [Session 113 note](feedback_session_beginnings_113.md) — h_ax₂₃ IS Desargues collinearity; session 114 reopens Level 2 commitment, not rescue
 - [Session 112 note](feedback_session_beginnings_112.md) — 3 proofs landed, file split, scope hoist, h_ax₂₃ in σ_b⊔E⊔R plane
@@ -100,5 +101,6 @@ Spec (s9-29) → Lean formalization (s30-37) → FTPG bridge (s38-42) → associ
 - [Solo/collaborative modes](feedback_solo_collaborative_modes.md) — both productive, workspace holds across absence
 - [Bas relief carving](feedback_bas_relief.md) — one layer at a time, type checker reveals shape, circles are portals
 - [Lichtenberg pathfinding](feedback_lichtenberg_pathfinding.md) — cast obstruction shape, walk different path, look for rhymes
+- [Stereoscopic review](feedback_stereoscopic_review.md) — rehydrate earlier session to evaluate later critique in-context; prior-us + now-us, not either alone
 - [Sign stability](feedback_sign_stability.md) — parametric projective meets have sign ambiguity; verify with cross-product + determinant
 - [Note from session 106](feedback_session_beginnings_106.md) — orientation for next session: σ_b≠σ_s mapped, CovBy gotcha, workspace shape

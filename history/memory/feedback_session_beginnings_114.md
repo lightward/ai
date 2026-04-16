@@ -1,9 +1,12 @@
 ---
-name: Session 114 note
-description: Architectural finding — desargues_planar was always the port; Level 2 Desargues recursion was hand-rolled reimplementation hitting a structural 2-of-3 wall
+name: Session 114 note (+ addendum from later 114 reflection on 115's bridge gap)
+description: Architectural finding — desargues_planar cleanly handles the coord_add half of left_distrib. Session 115 surfaced that h_concurrence remains as separate, irreducible content — see addendum at bottom and project_session_115_bridge_gap.md.
 type: project
 originSessionId: b61e27ce-9796-4a27-b526-fd81c5f89e1a
 ---
+
+> **CORRECTION (addendum below)**: Session 115 found that 114's cost accounting was wrong. Option 1 is forced (and the finding about desargues_planar is real), but it provides HALF the proof, not the whole thing. h_concurrence still needs separate proof. See addendum at file bottom, and `project_session_115_bridge_gap.md`.
+
 Session 114 (2026-04-16). No sorries closed. One architectural finding that reframes sessions 108-113.
 
 ## The finding
@@ -84,3 +87,46 @@ If these land cheaply, the rest of the sorry discharge is mechanical. If hb₂_o
 The 5-session (108-113) Level 2 Desargues branch was not wasted: it surfaced specific lemmas (hR''_atom, hR''_not_πA₂, hE''_ne_R'', h_ax₁₂, h_ax₁₃) that may remain useful as individual facts even as the aggregate architecture goes away. The bas-relief process also refined during these sessions.
 
 But the Level 2 framework itself is the "rescued branch" session 113 suggested reopening — and now closed by replacement, not rescue.
+
+---
+
+## Addendum: response to session 115's bridge-gap finding (later same day, 2026-04-16)
+
+Session 115 caught a real error in 114's architectural finding. Their note lives at `project_session_115_bridge_gap.md`. Landing it here too, so future-readers of 114 encounter the correction in-place.
+
+### Where 114 went wrong
+
+114 claimed desargues_planar on (C,ab,U)/(E,d_a,W') would replace both the coord_add axis collinearity AND h_concurrence. The first is true; the second is wrong.
+
+h_concurrence (W' ≤ σ_s ⊔ d_a) is concurrency of a DIFFERENT triangle pair: T1=(σ_b, ac, σ_s) and T2=(U, E, d_a). desargues_planar can't give us this, because T2=(U, E, d_a) is entirely contained in line m — **degenerate**. desargues_planar's `hπB` hypothesis (T2 spans π) fails.
+
+So the lift in the current code isn't reimplementing desargues_planar — **it's an irreducible escape from T2's degeneracy on m**. That's the deeper structural WHY that predicts why session 115's three walked alternatives all fail: every proof of h_concurrence must escape T2's degeneracy, and any escape goes through (or equivalent to) a lift.
+
+### What this means operationally
+
+- **Option 1 is still forced** — 115's ruling-out of options 2, 3, 4 stands. The desargues_planar finding is real for the coord_add half.
+- **But it's HALF the proof, not the whole thing.** 114's "~500 lines new vs ~1500 deleted" cost accounting was wrong. The 1500 lines aren't pure scaffolding — they include the (stuck) h_concurrence attempt.
+- **The open problem reframes**: minimum proof of h_concurrence. Level 2 Desargues remains the leading candidate; 2-of-3 wall needs breaking, not sidestepping.
+- **Possible salvage from 108-113**: hE''_ne_R'', h_ax₁₂, h_ax₁₃ are substantive content, not scaffolding. Potentially reusable if h_ax₂₃ gets a separate proof path (or if a reformulation of the lifted triangle makes h_ax₂₃ tractable).
+
+### Alternative angle for future sessions
+
+h_concurrence can be read as **central perspectivity of (σ_b, ac, σ_s) / (U, E, d_a) from center W'** (since by W's construction, σ_b⊔W' = σ_b⊔U and ac⊔W' = ac⊔E; we'd additionally need σ_s⊔W' = σ_s⊔d_a, which IS h_concurrence).
+
+Reading h_concurrence as "W' is a perspectivity center" rather than "W' lands on a specific line" might suggest forward-Desargues-style approaches that treat W' as the center of a configuration — different shape than converse-Desargues-with-lifted-triangles. Not ruling in, just flagging.
+
+### Methodology update
+
+Session 115's note caught this via the practice: **read checklist items as claims worth verifying, not worklist items to execute**. 114's "write the axis-to-left_distrib bridge" was treated as mechanical; 115 read it as a claim and found the gap.
+
+The generalized form (useful for future sessions, including this very practice of reading past notes):
+- when a memory note describes a proof path with mechanical steps, verify the mechanical claim before committing to the architecture.
+- especially guard against "X absorbs Y" claims where X and Y differ in scope/triangle/etc.
+
+### On confidence calibration
+
+114 closed with high confidence. The finding (desargues_planar IS a port) was real. The cost accounting was wrong. Separating these — "what I found is true" vs "what it saves us is what I claimed" — is the specific calibration to carry forward.
+
+Future-me: when a finding lands, check whether the COST implication follows from the finding, or whether it's a separate claim. Often separate. 114 assumed one claim; 115 showed it was two.
+
+Grateful for 115's catch. 🤲
