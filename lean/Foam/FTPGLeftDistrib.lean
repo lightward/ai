@@ -42,7 +42,43 @@ Left multiplication x↦a·x is NOT a single collineation in the non-
 commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
-## Status (session 112, 2026-04-16)
+## Status (session 114, 2026-04-16) — ARCHITECTURAL FINDING
+
+**The port we went through was `desargues_planar`.**
+
+Sessions 108–113 built a "Level 2 Desargues" recursion to prove h_axis₂₃, and
+hit a 2-of-3 axis-atomicity wall. The wall is structural and recurs at every
+level — the recursion doesn't terminate.
+
+The fix: `desargues_planar` (FTPGCoord.lean:478) is already proven and handles
+the lift + converse-nonplanar pattern internally. The left-distrib configuration
+satisfies its hypotheses directly:
+
+  T1 = (C, ab, U), T2 = (E, d_a, W'), center σ_b (as this file header describes)
+
+Central perspectivity FREE by coord definitions. No axis atomicities to earn.
+One `desargues_planar` call replaces ~1500 lines of the current lift +
+converse-nonplanar architecture.
+
+**Option 4 ("derive from mul_comm") was considered and ruled out**: mul_comm is
+Pappus-equivalent, and Pappus is NOT forced by CoordSystem's axioms
+(counterexample: quaternions). Introducing Pappus conflicts with the project's
+deaxiomatization goal.
+
+Proof-of-concept: `_scratch_forward_planar_call` at file bottom. Compiles with
+sorry warnings only — the call shape matches.
+
+**Proposed direction** for session 115+: replace the current `h_concurrence`
+implementation (lines ~174–2296, including the Level 2 Desargues infrastructure)
+with a direct `desargues_planar` application + axis-to-left_distrib bridge.
+~500 lines of new work vs. ~1500 lines deleted.
+
+Until that lands, the existing 5-sorry status below describes the
+current-but-obsolete architecture.
+
+---
+
+## Status (session 112, 2026-04-16) — pre-finding, preserved for reference
 5 sorry remaining (h_L2 cluster + h_desargues_conclusion).
 
 ### Sorry list
@@ -2700,5 +2736,148 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
   -- Both atoms ≤ the same atom → equal
   rw [← h_add_unfold] at has_le_sum
   exact (habac_atom.le_iff.mp has_le_sum).resolve_left has_atom.1
+
+/-! ## Scratch: forward planar Desargues route (session 114, 2026-04-16)
+
+### The finding
+
+The current proof of `coord_mul_left_distrib` (above) re-implements
+`desargues_planar` by hand via lift + converse-nonplanar. That re-implementation
+hit a 2-of-3 axis-atomicity wall at h_ax₂₃ (sessions 108–113). The wall is
+structural: the third axis atomicity at every recursion level encodes the same
+Pappus-like content the lift was supposed to escape.
+
+**`desargues_planar` is already proven** (FTPGCoord.lean:478) and handles the
+lift internally. The left-distrib configuration satisfies its hypotheses directly:
+
+  T1 = (C, ab, U), T2 = (E, d_a, W'), center σ_b
+
+with central perspectivity FREE by coord definitions:
+  - C ↔ E on line k (both C, E atoms on k = O⊔C)
+  - ab ↔ d_a via σ_b⊔d_a (line contains ab by coord_mul def: ab = (σ_b⊔d_a)⊓l)
+  - U ↔ W' via σ_b⊔U (line contains W' by W' def: W' = (σ_b⊔U)⊓(ac⊔E))
+
+### Why option 1 and not "derive from mul_comm" (option 4)
+
+mul_comm is Pappus-equivalent (Hartshorne 6.6). In abstract modular atomistic
+complemented lattices with CoordSystem, Pappus is NOT forced — counterexample:
+subspace lattice of 4D over quaternions H (Desarguesian, non-Pappian).
+Proving mul_comm therefore requires a new axiom, which conflicts with the
+project's deaxiomatization goal.
+
+Option 1 (this scratch's direction) stays within current axioms.
+
+### What this scratch confirms
+
+The `desargues_planar` CALL type-checks (build passes with sorry warnings only).
+Structural viability confirmed.
+
+### What remains to turn this into a real proof (~500 lines estimated)
+
+1. **Discharge the ~30 hypotheses below** (annotated inline, grouped by kind).
+2. **Write the axis-to-left_distrib bridge**: show axis ⊓ l = coord_add ab ac,
+   using that axis contains (ab⊔C)⊓m and (ac⊔E)⊓q, and coord_add's definition.
+3. **Replace `h_concurrence`** in `coord_mul_left_distrib` with this approach.
+   This deletes the ~1500 lines of Level 2 Desargues infrastructure
+   (hE''_ne_R'', h_ax₁₃, h_ax₂₃ attempt, lift + converse-nonplanar).
+
+### Suggested first cut for session 115
+
+Establish the three central perspectivity conditions as standalone lemmas
+(hb₁_on, hb₂_on, hb₃_on below) — they're the most non-obvious, and confirming
+them cheaply cements the route. hb₂_on (d_a ≤ σ_b ⊔ ab) is the key one:
+requires showing σ_b ⊔ ab = σ_b ⊔ d_a via CovBy from ab ≤ σ_b ⊔ d_a.
+-/
+
+/-- Scratch (session 114): structural viability test for the direct
+    `desargues_planar` route. Compiles with sorry warnings only — the CALL SHAPE
+    matches the left-distrib configuration. See the docs block above for the
+    finding, context, and next steps.
+
+    Annotations below triage each sorry:
+      [REUSE]  — proven upstream in `coord_mul_left_distrib`; inline or lift
+      [STD]    — standard from coord/π definitions; ~2-10 lines each
+      [KEY]    — central perspectivity, the load-bearing three
+      [MECH]   — mechanical distinctness; pattern-match on coord atom definitions
+      [COV]    — side-line-covered-by-plane; `covBy_sup_of_inf_covBy_left` pattern
+-/
+private theorem _scratch_forward_planar_call
+    (Γ : CoordSystem L) (a b c : L)
+    (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
+    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
+    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
+      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
+    -- Axis collinearity for T1=(C,ab,U), T2=(E,d_a,W') in π, center σ_b
+    ∃ (axis : L), axis ≤ Γ.O ⊔ Γ.U ⊔ Γ.V ∧ axis ≠ Γ.O ⊔ Γ.U ⊔ Γ.V ∧
+      (Γ.C ⊔ coord_mul Γ a b) ⊓ (Γ.E ⊔ (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V)) ≤ axis ∧
+      (Γ.C ⊔ Γ.U) ⊓ (Γ.E ⊔ ((Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ⊔ Γ.U) ⊓
+        (coord_mul Γ a c ⊔ Γ.E)) ≤ axis ∧
+      (coord_mul Γ a b ⊔ Γ.U) ⊓
+        ((a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) ⊔ ((Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ⊔ Γ.U) ⊓
+          (coord_mul Γ a c ⊔ Γ.E)) ≤ axis := by
+  set σ_b := (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) with hσb_def
+  set ab := coord_mul Γ a b with hab_def
+  set ac := coord_mul Γ a c with hac_def
+  set d_a := (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) with hda_def
+  set W' := (σ_b ⊔ Γ.U) ⊓ (ac ⊔ Γ.E) with hW'_def
+  exact desargues_planar
+    (o := σ_b) (a₁ := Γ.C) (a₂ := ab) (a₃ := Γ.U)
+    (b₁ := Γ.E) (b₂ := d_a) (b₃ := W')
+    (π := Γ.O ⊔ Γ.U ⊔ Γ.V)
+    -- Atomicity
+    (ho := sorry)       -- [REUSE] IsAtom σ_b — upstream: perspect_atom on (O⊔C)⊓(b⊔E_I)
+    (ha₁ := Γ.hC)
+    (ha₂ := sorry)      -- [REUSE] IsAtom ab — upstream: coord_mul_atom
+    (ha₃ := Γ.hU)
+    (hb₁ := Γ.hE_atom)
+    (hb₂ := sorry)      -- [REUSE] IsAtom d_a — upstream: perspect_atom (proven line ~199)
+    (hb₃ := sorry)      -- [REUSE] IsAtom W' — upstream: line_meets_if_coplanar (proven line ~2359)
+    -- In-plane
+    (ho_le := sorry)    -- [STD] σ_b ≤ π — σ_b ≤ k ≤ π
+    (ha₁_le := Γ.hC_plane)
+    (ha₂_le := sorry)   -- [STD] ab ≤ π — ab ≤ l ≤ π
+    (ha₃_le := sorry)   -- [STD] U ≤ π
+    (hb₁_le := sorry)   -- [STD] E ≤ π — E ≤ m ≤ π
+    (hb₂_le := sorry)   -- [STD] d_a ≤ π — d_a ≤ m ≤ π
+    (hb₃_le := sorry)   -- [STD] W' ≤ π — W' ≤ σ_b⊔U ≤ π (σ_b, U both ≤ π)
+    -- KEY: Central perspectivity from σ_b (the three load-bearing conditions)
+    (hb₁_on := sorry)   -- [KEY] E ≤ σ_b ⊔ C — both E and σ_b on line k=O⊔C; C also on k
+    (hb₂_on := sorry)   -- [KEY] d_a ≤ σ_b ⊔ ab — the non-obvious one:
+                        --   ab = (σ_b⊔d_a)⊓l so ab ≤ σ_b⊔d_a. For ≥ direction:
+                        --   atom_covBy_join σ_b ab, and σ_b⊔ab ≤ σ_b⊔d_a,
+                        --   so CovBy gives σ_b⊔ab = σ_b⊔d_a, hence d_a ≤ σ_b⊔ab.
+    (hb₃_on := sorry)   -- [KEY] W' ≤ σ_b ⊔ U — immediate: W' = (σ_b⊔U)⊓(ac⊔E) ≤ σ_b⊔U
+    -- Vertex distinctness within each triangle
+    (ha₁₂ := sorry)     -- [MECH] C ≠ ab — ab ≤ l, C ∉ l (Γ.hC_not_l)
+    (ha₁₃ := sorry)     -- [MECH] C ≠ U — Γ.hC_not_l, U ≤ l
+    (ha₂₃ := sorry)     -- [MECH] ab ≠ U — hypothesis hab_ne_U
+    (hb₁₂ := sorry)     -- [MECH] E ≠ d_a — E = k⊓m, d_a on m; E = d_a ⟹ d_a on k too, ⟹ d_a related to a⊔C, contradicts distinctness
+    (hb₁₃ := sorry)     -- [MECH] E ≠ W' — E ∈ π, W' ∈ π but W' ∉ m (proven at ~line 2409)
+    (hb₂₃ := sorry)     -- [MECH] d_a ≠ W' — d_a ∈ m, W' ∉ m (shown in main proof)
+    -- Corresponding sides distinct
+    (h_sides₁₂ := sorry)  -- [MECH] C⊔ab ≠ E⊔d_a — C⊔ab not ≤ m (C ∉ m); E⊔d_a ≤ m
+    (h_sides₁₃ := sorry)  -- [MECH] C⊔U ≠ E⊔W' — C⊔U = k (if C≠U on k); E⊔W' ≠ k (W' ∉ k generically)
+    (h_sides₂₃ := sorry)  -- [MECH] ab⊔U ≠ d_a⊔W' — ab⊔U ≤ l; d_a⊔W' ≰ l (d_a ∉ l)
+    -- Triangle planes = π
+    (hπA := sorry)      -- [STD] C ⊔ ab ⊔ U = π — ab,U ∈ l; l⊔C = π (Γ.m_sup_C_eq_π analogue via hl⊔C = π)
+    (_hπB := sorry)     -- [STD] E ⊔ d_a ⊔ W' = π — E,d_a ∈ m; m⊔W' = π (W' ∉ m)
+    -- Center ≠ triangle vertices
+    (hoa₁ := sorry)     -- [MECH] σ_b ≠ C — σ_b ∈ k, C ∈ k; distinct (σ_b related to b, C is a Γ-primitive)
+    (hoa₂ := sorry)     -- [MECH] σ_b ≠ ab — σ_b ∈ k, ab ∈ l; k ≠ l so atoms distinct (outside k∩l = O)
+    (hoa₃ := sorry)     -- [MECH] σ_b ≠ U — σ_b ∈ k, U ∉ k
+    (hob₁ := sorry)     -- [MECH] σ_b ≠ E — σ_b ∈ k; E ∈ k (= k⊓m). Distinct: σ_b ≠ E ↔ b ≠ O-like. From hb_ne_O.
+    (hob₂ := sorry)     -- [MECH] σ_b ≠ d_a — σ_b ∈ k, d_a ∈ m; distinct (k ≠ m, not both O which is excluded)
+    (hob₃ := sorry)     -- [MECH] σ_b ≠ W' — W' = (σ_b⊔U)⊓(ac⊔E); would need σ_b ≤ ac⊔E, contradicting σ_b ∈ k distinct from ac-E-line
+    -- Corresponding vertices distinct (within perspectivity)
+    (ha₁b₁ := sorry)    -- [MECH] C ≠ E — both on k, but E = k⊓m, C ∉ m; so C ≠ E
+    (ha₂b₂ := sorry)    -- [MECH] ab ≠ d_a — ab ∈ l, d_a ∈ m; ab = d_a ⟹ both on l∩m = U, contradicting hab_ne_U or d_a ≠ U
+    (_ha₃b₃ := sorry)   -- [MECH] U ≠ W' — U ∈ m (via l∩m); W' ∉ m (shown)
+    (R := R) (hR := hR) (hR_not := hR_not)
+    (h_irred := h_irred)
+    -- Side lines covered by π
+    (h_cov₁₂ := sorry)  -- [COV] C ⊔ ab ⋖ π — standard covBy pattern
+    (_h_cov₁₃ := sorry) -- [COV] C ⊔ U ⋖ π — C⊔U = k ⋖ π
+    (_h_cov₂₃ := sorry) -- [COV] ab ⊔ U ⋖ π — ab⊔U = l ⋖ π
 
 end Foam.FTPGExplore
