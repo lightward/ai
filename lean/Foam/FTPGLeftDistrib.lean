@@ -42,7 +42,7 @@ Left multiplication x↦a·x is NOT a single collineation in the non-
 commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
-## Status (session 110, 2026-04-15)
+## Status (session 111, 2026-04-15)
 8 sorry remaining (h_L2 cluster + h_desargues_conclusion).
 
 ### Sorry list
@@ -52,15 +52,14 @@ from right distrib (which used collineation directly).
     ALL THREE axis conditions free at Level 2 (verified 180/180 in GF(7)).
     Recursion terminates. Projection PROVEN. W₂≠⊥ PROVEN (session 109).
     h_L2 sorry (8 total, down from 16 in session 109):
-      - hR''_atom: S₁₃ atom + R'' atom. Infrastructure carved:
-        d_a≠U, d_a≠E, E≠s₂₃, E'⊔d_a ⋖ R⊔m, non-degeneracy chain
-        (b≠O → σ_b≠O → s₁₂≠U → E'≠R → ¬E'≤s₂₃⊔R). PROVEN (session 110).
-        Next: apply lines_meet_if_coplanar for S₁₃≠⊥, then line_height_two.
+      - hR''_atom: S₁₃ PROVEN (session 111, swapped l₁/l₂ in lines_meet_if_coplanar).
+        R'' atom remains sorry. Same pattern: identify plane, CovBy, lines_meet.
+        Plane is σ_b⊔R⊔m (not R⊔m). Setup differs from S₁₃.
       - hE'_not_U'da: triangle non-degeneracy (needs s₁₂≠d_a or alt approach)
       - hR''_not_πA₂, hE''_ne_R'', h_cov₂: depend on hR''_atom
       - h_ax₁₂: PROVEN (session 110, modular law collapse to s₁₂)
       - h_ax₁₃, h_ax₂₃: depend on S₁₃/R'' structure
-  - h_desargues_conclusion (line ~2309): forward Desargues (~500 lines mechanical).
+  - h_desargues_conclusion (line ~2360): forward Desargues (~500 lines mechanical).
 
 ### Key insight (session 108): the recursion terminates
 
@@ -1628,6 +1627,54 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
               have hE'_le_R : E' ≤ R :=
                 h_mod ▸ le_inf h_le (hE'_le : E' ≤ R ⊔ Γ.E)
               exact hE'_ne_R ((hR.le_iff.mp hE'_le_R).resolve_left hE'_atom.1)
+            -- ── S₁₃ atom: two lines meet in R⊔m ──
+            -- Use l₁ = s₂₃⊔R (⋖ R⊔m), l₂ = E'⊔d_a. ¬(E'⊔d_a ≤ s₂₃⊔R) from hE'_not_s₂₃R.
+            have hs₂₃R_inf_m_eq : (s₂₃ ⊔ R) ⊓ m = s₂₃ := by
+              have h1 := sup_inf_assoc_of_le R hs₂₃_le_m
+              rw [hR_inf_m] at h1; simp at h1; exact h1
+            have hs₂₃_covBy_m : s₂₃ ⋖ m :=
+              line_covers_its_atoms Γ.hU Γ.hV
+                (fun h => Γ.hV_off (h ▸ le_sup_right)) hs₂₃_atom hs₂₃_le_m
+            have hm_inf_s₂₃R : m ⊓ (s₂₃ ⊔ R) = s₂₃ := by
+              rw [inf_comm]; exact hs₂₃R_inf_m_eq
+            have hm_sup_s₂₃R : m ⊔ (s₂₃ ⊔ R) = R ⊔ m := by
+              calc m ⊔ (s₂₃ ⊔ R) = (s₂₃ ⊔ m) ⊔ R := by
+                    simp [sup_assoc, sup_comm, sup_left_comm]
+                _ = m ⊔ R := by rw [sup_eq_right.mpr hs₂₃_le_m]
+                _ = R ⊔ m := sup_comm _ _
+            have hm_inf_s₂₃R_covBy : m ⊓ (s₂₃ ⊔ R) ⋖ m := by
+              rw [hm_inf_s₂₃R]; exact hs₂₃_covBy_m
+            have hs₂₃R_covBy : s₂₃ ⊔ R ⋖ R ⊔ m := by
+              rw [← hm_sup_s₂₃R]; exact covBy_sup_of_inf_covBy_left hm_inf_s₂₃R_covBy
+            have hE'da_le_Rm : E' ⊔ d_a ≤ R ⊔ m :=
+              sup_le hE'_le_Rm (hda_m.trans le_sup_right)
+            have hE'da_not_s₂₃R : ¬ E' ⊔ d_a ≤ s₂₃ ⊔ R :=
+              fun h => hE'_not_s₂₃R (le_sup_left.trans h)
+            -- E' ≠ d_a (needed for line_height_two; also proven below)
+            have hE'_ne_da_0 : E' ≠ d_a := by
+              intro h_eq
+              have hRE_inf_m : (R ⊔ Γ.E) ⊓ m = Γ.E := by
+                rw [sup_comm]; calc (Γ.E ⊔ R) ⊓ m = Γ.E ⊔ R ⊓ m :=
+                      sup_inf_assoc_of_le R hE_m
+                  _ = Γ.E := by rw [hR_inf_m, sup_bot_eq]
+              exact hE'_ne_E ((Γ.hE_atom.le_iff.mp
+                (hRE_inf_m ▸ le_inf hE'_le (h_eq ▸ hda_m))).resolve_left hE'_atom.1)
+            have hE'_lt_E'da : E' < E' ⊔ d_a :=
+              lt_of_le_of_ne le_sup_left (fun h =>
+                hE'_ne_da_0 ((hE'_atom.le_iff.mp (h ▸ le_sup_right)).resolve_left
+                  hda_atom.1).symm)
+            have hS₁₃_ne_bot : S₁₃ ≠ ⊥ := by
+              rw [hS₁₃_def, inf_comm]
+              exact lines_meet_if_coplanar hs₂₃R_covBy hE'da_le_Rm hE'da_not_s₂₃R
+                hE'_atom hE'_lt_E'da
+            have hS₁₃_lt : S₁₃ < E' ⊔ d_a := by
+              refine lt_of_le_of_ne inf_le_left (fun h_eq => ?_)
+              have : E' ⊔ d_a ≤ s₂₃ ⊔ R := by rw [← h_eq]; exact inf_le_right
+              exact hE'_not_s₂₃R (le_sup_left.trans this)
+            have hS₁₃_atom : IsAtom S₁₃ :=
+              line_height_two hE'_atom hda_atom hE'_ne_da_0
+                (bot_lt_iff_ne_bot.mpr hS₁₃_ne_bot) hS₁₃_lt
+            -- ── R'' atom: two lines in σ_b⊔R⊔m ──
             sorry
           -- ── T1 non-degeneracy ──
           -- E' ≠ d_a (already: hE'_ne_da')
