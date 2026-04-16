@@ -1794,15 +1794,15 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
             -- (E'⊔d_a) ⊓ (S₁₃⊔s₂₃'') = S₁₃ (modular: S₁₃ ≤ E'⊔d_a, s₂₃''⊓(E'⊔d_a) = ⊥).
             have hR''_le_line : R'' ≤ S₁₃ ⊔ s₂₃'' :=
               inf_le_left (a := S₁₃ ⊔ s₂₃'') (b := σ_b ⊔ R)
-            have hs₂₃''_covBy_line : s₂₃'' ⋖ S₁₃ ⊔ s₂₃'' :=
-              atom_covBy_join hS₁₃_atom hs₂₃''_atom hS₁₃_ne_s₂₃''
             have hs₂₃''_lt_s₂₃''R'' : s₂₃'' < s₂₃'' ⊔ R'' :=
               lt_of_le_of_ne le_sup_left (fun h =>
                 hs₂₃''_ne_R'' ((hs₂₃''_atom.le_iff.mp
                   (h ▸ le_sup_right)).resolve_left hR''_atom.1).symm)
-            have hs₂₃''R''_eq : s₂₃'' ⊔ R'' = S₁₃ ⊔ s₂₃'' :=
-              (hs₂₃''_covBy_line.eq_or_eq hs₂₃''_lt_s₂₃''R''.le
-                (sup_le (le_sup_right) hR''_le_line)).resolve_left
+            have hs₂₃''R''_eq : s₂₃'' ⊔ R'' = S₁₃ ⊔ s₂₃'' := by
+              rw [show S₁₃ ⊔ s₂₃'' = s₂₃'' ⊔ S₁₃ from sup_comm _ _]
+              exact ((atom_covBy_join hs₂₃''_atom hS₁₃_atom
+                hS₁₃_ne_s₂₃''.symm).eq_or_eq hs₂₃''_lt_s₂₃''R''.le
+                (sup_comm S₁₃ s₂₃'' ▸ sup_le le_sup_right hR''_le_line)).resolve_left
                 (ne_of_gt hs₂₃''_lt_s₂₃''R'')
             rw [hs₂₃''R''_eq]
             -- (E'⊔d_a) ⊓ (S₁₃⊔s₂₃'') = S₁₃ (modular law)
