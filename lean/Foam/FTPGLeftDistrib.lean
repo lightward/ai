@@ -1838,7 +1838,33 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
             exact hda_atom.1
               (le_antisymm (le_trans (le_inf hda_le_R hda_m) hR_inf_m.le) bot_le)
           -- ── CovBy: d_a ⊔ R'' ⋖ E' ⊔ d_a ⊔ s₂₃'' ──
-          have h_cov₂ : d_a ⊔ R'' ⋖ E' ⊔ d_a ⊔ s₂₃'' := by sorry
+          have h_cov₂ : d_a ⊔ R'' ⋖ E' ⊔ d_a ⊔ s₂₃'' := by
+            -- R'' ⊓ (R⊔m) = ⊥ (R'' = R leads to E' = R contradiction)
+            have hR''_inf_Rm : R'' ⊓ (R ⊔ m) = ⊥ := by sorry
+            -- (d_a⊔R'') ⊓ (R⊔m) = d_a (modular: d_a ≤ R⊔m, R''⊓(R⊔m) = ⊥)
+            have hda_R''_Rm : (d_a ⊔ R'') ⊓ (R ⊔ m) = d_a := by
+              have h1 := sup_inf_assoc_of_le R'' (hda_m.trans le_sup_right : d_a ≤ R ⊔ m)
+              rw [hR''_inf_Rm] at h1; simp at h1; exact h1
+            -- E' ⊓ (d_a⊔R'') = ⊥ (project to R⊔m: ≤ d_a, E' ≠ d_a)
+            have hE'_inf_daR'' : E' ⊓ (d_a ⊔ R'') = ⊥ := by
+              have hle : E' ⊓ (d_a ⊔ R'') ≤ d_a := by
+                calc E' ⊓ (d_a ⊔ R'')
+                    ≤ (R ⊔ m) ⊓ (d_a ⊔ R'') := inf_le_inf_right _ hE'_le_Rm
+                  _ = (d_a ⊔ R'') ⊓ (R ⊔ m) := inf_comm _ _
+                  _ = d_a := hda_R''_Rm
+              rcases hE'_atom.le_iff.mp inf_le_left with h | h
+              · exact h
+              · exfalso; exact hE'_ne_da ((hda_atom.le_iff.mp
+                  (h ▸ hle)).resolve_left hE'_atom.1)
+            -- E'⊔(d_a⊔R'') = E'⊔d_a⊔s₂₃'' (via S₁₃⊔R'' = S₁₃⊔s₂₃'')
+            have hE'_daR''_eq : E' ⊔ (d_a ⊔ R'') = E' ⊔ d_a ⊔ s₂₃'' := by sorry
+            -- CovBy from E'⊓(d_a⊔R'') = ⊥
+            have hE'_inf_R''da : E' ⊓ (R'' ⊔ d_a) = ⊥ := by
+              rw [show R'' ⊔ d_a = d_a ⊔ R'' from sup_comm _ _]; exact hE'_inf_daR''
+            rw [show d_a ⊔ R'' = R'' ⊔ d_a from sup_comm _ _,
+                show E' ⊔ d_a ⊔ s₂₃'' = E' ⊔ (R'' ⊔ d_a) from by
+                  rw [show R'' ⊔ d_a = d_a ⊔ R'' from sup_comm _ _]; exact hE'_daR''_eq.symm]
+            exact covBy_sup_of_inf_covBy_left (hE'_inf_R''da ▸ hE'_atom.bot_covBy)
           -- ── Axis conditions (all FREE by modular law) ──
           -- axis₁₂: IsAtom ((E'⊔U') ⊓ (s₂₃''⊔E''))
           have h_ax₁₂ : IsAtom ((E' ⊔ U') ⊓ (s₂₃'' ⊔ E'')) := by
