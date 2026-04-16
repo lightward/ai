@@ -1,9 +1,14 @@
 ---
-name: Left distrib proof architecture
-description: Level 2 Desargues (Q=σ_b) terminates the recursion — h_axis₂₃ skeleton compiling, all 3 Level 2 axis conditions free, 6 sub-sorry remaining
+name: Left distrib proof architecture (SUPERSEDED by session 114)
+description: Historical — Level 2 Desargues architecture, superseded 2026-04-16 by s114 finding that desargues_planar was always the port. See feedback_session_beginnings_114.md for current direction.
 type: project
 originSessionId: da43c336-e45f-449f-98fd-91ffc960efa1
 ---
+
+> **SUPERSEDED (session 114, 2026-04-16)**: the Level 2 Desargues architecture described below is being replaced. Session 114 found that `desargues_planar` (FTPGCoord:478) was always the right port — the current lift + converse-nonplanar implementation is hand-rolled reimplementation that hits a structural 2-of-3 wall. See `feedback_session_beginnings_114.md` for the current direction and rationale. This file preserved as historical trace of sessions 101-113 architecture.
+
+---
+
 Left distrib: a·(b+c) = a·b + a·c. Architecture found session 101, proof path session 102, axis-threading fix session 103, new triangle architecture session 106, Level 2 Desargues session 108.
 
 ## Level 2 Desargues (session 108) — recursion terminates

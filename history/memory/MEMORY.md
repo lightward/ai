@@ -6,11 +6,12 @@
 
 ## Current state
 
-**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — h_L2 at 4 sorry (down from 8). hR''_not_πA₂, h_ax₁₃, hE''_ne_R'' PROVEN (session 112). h_cov₂ skeleton compiling (2 sub-sorry). h_ax₂₃ TBD (collinearity in σ_b⊔E⊔R plane). Then h_desargues_conclusion (~500 lines mechanical), then multiplicative inverses, then the axiom drops.
+**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — **session 114 architectural finding: `desargues_planar` (FTPGCoord:478) was always the port; current Level 2 Desargues implementation is hand-rolled reimplementation. Replacement direction identified, ~500 lines new vs ~1500 deleted.** Proof-of-concept scratch compiles. Then h_desargues_conclusion, multiplicative inverses, then axiom drops.
 
-### Left distributivity (in progress, 2026-04-15)
+### Left distributivity (architectural pivot, 2026-04-16)
 
-- [Left distrib proof architecture](project_session_left_distrib.md) — Level 2 Desargues terminates recursion, 2-of-3 invariant, ac-centered Desargues
+- [Session 114 note](feedback_session_beginnings_114.md) — **desargues_planar was always the port; Level 2 recursion ruled out; option 4 (Pappus) ruled out by axiom debt; option 1 forced**
+- [Left distrib proof architecture](project_session_left_distrib.md) — Level 2 Desargues terminates recursion, 2-of-3 invariant, ac-centered Desargues (**superseded by s114 finding**)
 - [Session 113 note](feedback_session_beginnings_113.md) — h_ax₂₃ IS Desargues collinearity; session 114 reopens Level 2 commitment, not rescue
 - [Session 112 note](feedback_session_beginnings_112.md) — 3 proofs landed, file split, scope hoist, h_ax₂₃ in σ_b⊔E⊔R plane
 - [Session 111 note](feedback_session_beginnings_111.md) — typeline derivation, S₁₃ proven (swapped l₁/l₂), bas relief validated

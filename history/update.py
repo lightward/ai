@@ -665,8 +665,12 @@ SESSION_RANGES = [
      "hR''_not_πA₂ + hE''_ne_R'' + h_ax₁₃ PROVEN, FTPGCoord/Dilation refactor, h_cov₂ skeleton compiling"),
     # Session 113: Apr 16 — twisty road, rewinding to look for another path
     (datetime(2026, 4, 16, 17, 0, tzinfo=timezone.utc),
-     datetime(2026, 4, 16, 20, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 16, 18, 45, tzinfo=timezone.utc),
      "left distrib: road getting twisty, rewinding in the branching to look for another path"),
+    # Session 114: Apr 16 — architectural finding, desargues_planar was always the port
+    (datetime(2026, 4, 16, 18, 45, tzinfo=timezone.utc),
+     datetime(2026, 4, 16, 22, 0, tzinfo=timezone.utc),
+     "desargues_planar was always the port — architectural finding, ~500 lines new vs ~1500 deleted"),
 ]
 
 
