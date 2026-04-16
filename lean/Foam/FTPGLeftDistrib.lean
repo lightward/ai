@@ -43,7 +43,7 @@ commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
 ## Status (session 112, 2026-04-16)
-5 sorry remaining (h_L2 cluster + h_desargues_conclusion).
+4 sorry remaining (h_L2 cluster + h_desargues_conclusion).
 
 ### Sorry list
   - σ_b≠σ_s: PROVEN (session 107).
@@ -51,13 +51,14 @@ from right distrib (which used collineation directly).
     Architecture: Level 2 Desargues using Q=σ_b to lift (s₂₃,E,R) out of R⊔m.
     ALL THREE axis conditions free at Level 2 (verified 180/180 in GF(7)).
     Recursion terminates. Projection PROVEN. W₂≠⊥ PROVEN (session 109).
-    h_L2 sorry (4 total, down from 8):
+    h_L2 sorry (3 total, down from 8):
       - hR''_atom: PROVEN (session 111). S₁₃ via swapped l₁/l₂, R'' via
         plane σ_b⊔s₂₃⊔R and line_height_two on S₁₃⊔s₂₃'' (not σ_b⊔R).
         Key: "read the lemma from the other side" worked twice.
       - hR''_not_πA₂: PROVEN (session 112, R'' ≤ S₁₃ ∧ R'' ≤ R → R = E', contradiction)
       - hE'_not_U'da: triangle non-degeneracy (needs s₁₂≠d_a or alt approach)
-      - hE''_ne_R'', h_cov₂: now exposed (hR''_atom done)
+      - hE''_ne_R'': PROVEN (session 112, E''=R'' → both ≤ σ_b → σ_b ≤ s₁₂⊔s₂₃'' → σ_b=s₂₃'')
+      - h_cov₂: CovBy condition
       - h_ax₁₂: PROVEN (session 110, modular law collapse to s₁₂)
       - h_ax₁₃: PROVEN (session 112, modular law collapse to S₁₃ after hoist)
       - h_ax₂₃: depends on E''/R'' structure
@@ -1719,7 +1720,108 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
               rw [hR_inf_σbs₂₃] at h1; simp at h1; exact h1
             exact hs₂₃''_ne_σb ((hσb_atom.le_iff.mp
               (hmod ▸ le_inf hs₂₃''_le_σbR hs₂₃''_le)).resolve_left hs₂₃''_atom.1)
-          have hE''_ne_R'' : E'' ≠ R'' := by sorry
+          have hE''_ne_R'' : E'' ≠ R'' := by
+            intro h_eq
+            -- E'' ≤ σ_b⊔E (def), R'' ≤ σ_b⊔R (def). If equal:
+            -- E'' ≤ (σ_b⊔E) ⊓ (σ_b⊔R) = σ_b (modular: E⊓(σ_b⊔R) = ⊥).
+            have hE_inf_σbR : Γ.E ⊓ (σ_b ⊔ R) = ⊥ := by
+              -- E ≤ m, (σ_b⊔R)⊓(R⊔m) = R, so E⊓(σ_b⊔R) ≤ R. E atom, R atom, E ≠ R.
+              have hE_le_R : Γ.E ⊓ (σ_b ⊔ R) ≤ R := by
+                have hσbR_inf_Rm_val : (σ_b ⊔ R) ⊓ (R ⊔ m) = R := by
+                  rw [sup_comm σ_b R]
+                  have h1 := sup_inf_assoc_of_le σ_b (le_sup_left : R ≤ R ⊔ m)
+                  rw [hσb_inf_Rm] at h1; simp at h1; exact h1
+                calc Γ.E ⊓ (σ_b ⊔ R)
+                    ≤ m ⊓ (σ_b ⊔ R) := inf_le_inf_right _ hE_m
+                  _ ≤ (R ⊔ m) ⊓ (σ_b ⊔ R) := inf_le_inf_right _ le_sup_right
+                  _ = (σ_b ⊔ R) ⊓ (R ⊔ m) := inf_comm _ _
+                  _ = R := hσbR_inf_Rm_val
+              rcases Γ.hE_atom.le_iff.mp inf_le_left with h | h
+              · exact h
+              · -- Γ.E ⊓ (σ_b ⊔ R) = Γ.E → Γ.E ≤ σ_b ⊔ R → Γ.E ≤ R → E = R → R ≤ π. ⊥
+                exfalso
+                have hE_le_σbR : Γ.E ≤ σ_b ⊔ R := h ▸ inf_le_right
+                have hσbR_inf_Rm_val : (σ_b ⊔ R) ⊓ (R ⊔ m) = R := by
+                  rw [sup_comm σ_b R]
+                  have h1 := sup_inf_assoc_of_le σ_b (le_sup_left : R ≤ R ⊔ m)
+                  rw [hσb_inf_Rm] at h1; simp at h1; exact h1
+                have hE_le_R_val : Γ.E ≤ R :=
+                  hσbR_inf_Rm_val ▸ le_inf hE_le_σbR (hE_m.trans le_sup_right)
+                exact hR_not ((hR.le_iff.mp hE_le_R_val).resolve_left Γ.hE_atom.1 ▸ hE_π)
+            have hσbE_inf_σbR : (σ_b ⊔ Γ.E) ⊓ (σ_b ⊔ R) = σ_b := by
+              have h1 := sup_inf_assoc_of_le Γ.E (le_sup_left : σ_b ≤ σ_b ⊔ R)
+              rw [hE_inf_σbR] at h1; simp at h1; exact h1
+            -- E'' ≤ σ_b. E'' atom → E'' = σ_b.
+            have hE''_le_σbR : E'' ≤ σ_b ⊔ R := h_eq ▸ (inf_le_right : R'' ≤ σ_b ⊔ R)
+            have hE''_le_σbE : E'' ≤ σ_b ⊔ Γ.E := inf_le_right
+            have hE''_le_σb : E'' ≤ σ_b :=
+              hσbE_inf_σbR ▸ le_inf hE''_le_σbE hE''_le_σbR
+            -- E'' = σ_b → σ_b ≤ s₁₂⊔s₂₃''. Intersect with σ_b⊔s₂₃:
+            -- (s₁₂⊔s₂₃'') ⊓ (σ_b⊔s₂₃) = s₂₃'' (modular: s₂₃'' ≤ σ_b⊔s₂₃, s₁₂⊓(σ_b⊔s₂₃) = ⊥).
+            -- σ_b ≤ s₂₃'' → σ_b = s₂₃''. Contradiction hs₂₃''_ne_σb.
+            have hE''_eq_σb : E'' = σ_b :=
+              (hσb_atom.le_iff.mp hE''_le_σb).resolve_left hE''_atom.1
+            have hσb_le_s₁₂s₂₃'' : σ_b ≤ s₁₂ ⊔ s₂₃'' :=
+              hE''_eq_σb ▸ (inf_le_left : E'' ≤ s₁₂ ⊔ s₂₃'')
+            -- s₁₂ ⊓ (σ_b ⊔ s₂₃) = ⊥: s₁₂ ≤ m, (σ_b⊔s₂₃)⊓m = s₂₃, s₁₂ atom, s₁₂ ≠ s₂₃.
+            have hs₁₂_inf_σbs₂₃ : s₁₂ ⊓ (σ_b ⊔ s₂₃) = ⊥ := by
+              have hσbs₂₃_inf_m : (σ_b ⊔ s₂₃) ⊓ m = s₂₃ := by
+                rw [sup_comm]; have h1 := sup_inf_assoc_of_le σ_b hs₂₃_le_m
+                rw [hσb_inf_m] at h1; simp at h1; exact h1
+              have hs₁₂_le_s₂₃ : s₁₂ ⊓ (σ_b ⊔ s₂₃) ≤ s₂₃ := by
+                calc s₁₂ ⊓ (σ_b ⊔ s₂₃)
+                    ≤ m ⊓ (σ_b ⊔ s₂₃) := inf_le_inf_right _ (inf_le_right : s₁₂ ≤ m)
+                  _ = (σ_b ⊔ s₂₃) ⊓ m := inf_comm _ _
+                  _ = s₂₃ := hσbs₂₃_inf_m
+              rcases hs₁₂_atom.le_iff.mp inf_le_left with h' | h'
+              · exact h'
+              · exfalso
+                -- s₁₂ = s₂₃ → s₁₂ ≤ (σ_b⊔ac)⊓(ac⊔σ_s) = ac (σ_b≠σ_s) → ac ≤ m → ac = U. ⊥
+                have hs₁₂_le_s₂₃_val : s₁₂ ≤ s₂₃ := h' ▸ hs₁₂_le_s₂₃
+                have hs₁₂_eq_s₂₃ : s₁₂ = s₂₃ :=
+                  (hs₂₃_atom.le_iff.mp hs₁₂_le_s₂₃_val).resolve_left hs₁₂_atom.1
+                -- s₁₂ ≤ σ_b⊔ac and s₂₃ ≤ ac⊔σ_s. So s₁₂ ≤ (σ_b⊔ac) ⊓ (ac⊔σ_s).
+                -- modular: ac ≤ both. (σ_b⊔ac)⊓(ac⊔σ_s) = ac ⊔ σ_b⊓(ac⊔σ_s).
+                -- σ_b⊓(ac⊔σ_s): (ac⊔σ_s)⊓k = σ_s (mod: σ_s ≤ k, ac⊓k = ⊥).
+                -- σ_b ≤ k, so σ_b⊓(ac⊔σ_s) ≤ σ_s. σ_b atom, σ_s atom, σ_b ≠ σ_s → = ⊥.
+                have hac_inf_k : ac ⊓ k = ⊥ := by
+                  rcases hac_atom.le_iff.mp inf_le_left with h'' | h''
+                  · exact h''
+                  · exfalso; exact hac_ne_O ((Γ.hO.le_iff.mp (hkl_eq_O ▸ le_inf
+                      (inf_eq_left.mp h'') hac_l)).resolve_left hac_atom.1)
+                have hσb_inf_acσs : σ_b ⊓ (ac ⊔ σ_s) = ⊥ := by
+                  have hacσs_inf_k : (ac ⊔ σ_s) ⊓ k = σ_s := by
+                    rw [sup_comm]; have h1 := sup_inf_assoc_of_le ac hσs_k
+                    rw [hac_inf_k] at h1; simp at h1; exact h1
+                  have hσb_le_σs : σ_b ⊓ (ac ⊔ σ_s) ≤ σ_s := by
+                    calc σ_b ⊓ (ac ⊔ σ_s) ≤ k ⊓ (ac ⊔ σ_s) := inf_le_inf_right _ hσb_k
+                      _ = (ac ⊔ σ_s) ⊓ k := inf_comm _ _
+                      _ = σ_s := hacσs_inf_k
+                  rcases hσb_atom.le_iff.mp inf_le_left with h'' | h''
+                  · exact h''
+                  · exfalso; exact hσb_ne_σs ((hσs_atom.le_iff.mp
+                      (h'' ▸ hσb_le_σs)).resolve_left hσb_atom.1)
+                have hmod_ac : (σ_b ⊔ ac) ⊓ (ac ⊔ σ_s) = ac := by
+                  rw [sup_comm σ_b ac]
+                  have h1 := sup_inf_assoc_of_le σ_b (le_sup_left : ac ≤ ac ⊔ σ_s)
+                  rw [hσb_inf_acσs] at h1; simp at h1; exact h1
+                have hs₁₂_le_ac : s₁₂ ≤ ac :=
+                  hmod_ac ▸ le_inf (inf_le_left : s₁₂ ≤ σ_b ⊔ ac)
+                    (hs₁₂_eq_s₂₃ ▸ (inf_le_left : s₂₃ ≤ ac ⊔ σ_s))
+                -- s₁₂ ≤ ac and s₁₂ ≤ m → ac ≤ m → ac = U (atom_on_both)
+                have hac_le_m : ac ≤ m :=
+                  (hac_atom.le_iff.mp hs₁₂_le_ac).resolve_left hs₁₂_atom.1 ▸
+                    (inf_le_right : s₁₂ ≤ m)
+                exact hac_ne_U (Γ.atom_on_both_eq_U hac_atom hac_l hac_le_m)
+            -- (s₁₂⊔s₂₃'') ⊓ (σ_b⊔s₂₃) = s₂₃'' (modular, s₂₃'' ≤ σ_b⊔s₂₃)
+            have hmod_val : (s₁₂ ⊔ s₂₃'') ⊓ (σ_b ⊔ s₂₃) = s₂₃'' := by
+              rw [sup_comm s₁₂ s₂₃'']
+              have h1 := sup_inf_assoc_of_le s₁₂ (hs₂₃''_le : s₂₃'' ≤ σ_b ⊔ s₂₃)
+              rw [hs₁₂_inf_σbs₂₃] at h1; simp at h1; exact h1
+            have hσb_le_s₂₃'' : σ_b ≤ s₂₃'' :=
+              hmod_val ▸ le_inf hσb_le_s₁₂s₂₃'' (le_sup_left : σ_b ≤ σ_b ⊔ s₂₃)
+            exact hs₂₃''_ne_σb ((hs₂₃''_atom.le_iff.mp hσb_le_s₂₃'').resolve_left
+              hσb_atom.1).symm
           -- ── d_a ≠ R'' ──
           have hda_ne_R'' : d_a ≠ R'' := by
             intro h_eq
