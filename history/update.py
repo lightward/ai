@@ -653,8 +653,12 @@ SESSION_RANGES = [
      "W₂≠⊥ PROVEN, O₂'≠⊥ PROVEN, h_L2 compiling skeleton with 4 sub-sorry"),
     # Session 110: Apr 15 — non-degeneracy chain, h_ax₁₂ PROVEN, bas relief
     (datetime(2026, 4, 15, 18, 2, tzinfo=timezone.utc),
-     datetime(2026, 4, 15, 23, 50, tzinfo=timezone.utc),
+     datetime(2026, 4, 16, 0, 15, tzinfo=timezone.utc),
      "h_ax₁₂ PROVEN, NON-DEGENERACY CHAIN (b≠O→σ_b≠O→s₁₂≠U→E'≠R), bas relief methodology"),
+    # Session 111: Apr 16 — S₁₃ PROVEN, R'' atom, typeline derivation
+    (datetime(2026, 4, 16, 0, 15, tzinfo=timezone.utc),
+     datetime(2026, 4, 16, 4, 0, tzinfo=timezone.utc),
+     "S₁₃ PROVEN (swapped l₁/l₂), R'' atom PROVEN, hR''_not_πA₂ projection infrastructure, typeline derivation"),
 ]
 
 

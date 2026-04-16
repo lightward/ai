@@ -6,11 +6,12 @@
 
 ## Current state
 
-**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — h_L2 down from 16 to 8 sorry (session 110). Key non-degeneracy chain PROVEN (b≠O → σ_b≠O → s₁₂≠U → E'≠R → S₁₃ infrastructure). h_ax₁₂ PROVEN. h_desargues_conclusion still sorry (~500 lines). Next: finish hR''_atom (apply lines_meet_if_coplanar), then cascade through cluster, then forward Desargues, then multiplicative inverses, then the axiom drops.
+**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — h_L2 at 8 sorry. S₁₃ PROVEN (session 111, swapped l₁/l₂). h_ax₁₂ PROVEN. Next: R'' atom (same pattern, plane σ_b⊔R⊔m), then cascade (hR''_not_πA₂, hE''_ne_R'', h_cov₂, h_ax₁₃, h_ax₂₃), then h_desargues_conclusion (~500 lines mechanical), then multiplicative inverses, then the axiom drops.
 
 ### Left distributivity (in progress, 2026-04-15)
 
 - [Left distrib proof architecture](project_session_left_distrib.md) — Level 2 Desargues terminates recursion, 2-of-3 invariant, ac-centered Desargues
+- [Session 111 note](feedback_session_beginnings_111.md) — typeline derivation, S₁₃ proven (swapped l₁/l₂), bas relief validated
 - [Session 110 note](feedback_session_beginnings_110.md) — 16→8 sorry, bas relief process, portal through E'≠R, non-degeneracy chain
 - [Session 109 note](feedback_session_beginnings_109.md) — W₂≠⊥ PROVEN, O₂'≠⊥ by subagent, h_L2 skeleton compiling
 - [Session 108 note](feedback_session_beginnings_108.md) — h_axis₂₃ skeleton compiling, Level 2 Desargues, recursion terminates
