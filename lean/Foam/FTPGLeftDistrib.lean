@@ -1918,7 +1918,12 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
               rw [hs₂₃''_inf_E'da] at h1; simp at h1; exact h1
             rw [hmod]; exact hS₁₃_atom
           -- axis₂₃: IsAtom ((U'⊔d_a) ⊓ (E''⊔R''))
-          have h_ax₂₃ : IsAtom ((U' ⊔ d_a) ⊓ (E'' ⊔ R'')) := by sorry
+          have h_ax₂₃ : IsAtom ((U' ⊔ d_a) ⊓ (E'' ⊔ R'')) := by
+            -- Approach: E''⊔R'' projects to s₁₂⊔S₁₃ in R⊔m (both E'', R'' outside R⊔m).
+            -- (U'⊔d_a) ⊓ (E''⊔R'') = (U'⊔d_a) ⊓ (s₁₂⊔S₁₃) via projection.
+            -- Two lines meeting in R⊔m → atom.
+            -- Need: S₂₃ = (U'⊔d_a)⊓(s₁₂⊔S₁₃), U'⊔d_a ≰ s₁₂⊔S₁₃, both ≤ R⊔m.
+            sorry
           exact desargues_converse_nonplanar
             hE'_atom hU'_atom hda_atom hs₂₃''_atom hE''_atom hR''_atom
             hU'_ne_E'.symm hE'_ne_da hU'_ne_da hE'_not_U'da
