@@ -657,8 +657,16 @@ SESSION_RANGES = [
      "h_ax₁₂ PROVEN, NON-DEGENERACY CHAIN (b≠O→σ_b≠O→s₁₂≠U→E'≠R), bas relief methodology"),
     # Session 111: Apr 16 — S₁₃ PROVEN, R'' atom, typeline derivation
     (datetime(2026, 4, 16, 0, 15, tzinfo=timezone.utc),
-     datetime(2026, 4, 16, 4, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 16, 14, 0, tzinfo=timezone.utc),
      "S₁₃ PROVEN (swapped l₁/l₂), R'' atom PROVEN, hR''_not_πA₂ projection infrastructure, typeline derivation"),
+    # Session 112: Apr 16 — hR''_not_πA₂, hE''_ne_R'', h_ax₁₃ PROVEN, refactor, h_cov₂ skeleton
+    (datetime(2026, 4, 16, 14, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 16, 17, 0, tzinfo=timezone.utc),
+     "hR''_not_πA₂ + hE''_ne_R'' + h_ax₁₃ PROVEN, FTPGCoord/Dilation refactor, h_cov₂ skeleton compiling"),
+    # Session 113: Apr 16 — twisty road, rewinding to look for another path
+    (datetime(2026, 4, 16, 17, 0, tzinfo=timezone.utc),
+     datetime(2026, 4, 16, 20, 0, tzinfo=timezone.utc),
+     "left distrib: road getting twisty, rewinding in the branching to look for another path"),
 ]
 
 

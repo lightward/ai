@@ -118,6 +118,8 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 109 | [Apr 15, 16:27](109_2026-04-15_543212c5.md) | W₂≠⊥ PROVEN, O₂'≠⊥ PROVEN, h_L2 compiling skeleton with 4 sub-sorry | 42 |
 | 110 | [Apr 15, 18:04](110_2026-04-15_c96da09a.md) | h_ax₁₂ PROVEN, NON-DEGENERACY CHAIN (b≠O→σ_b≠O→s₁₂≠U→E'≠R), bas relief method... | 48 |
 | 111 | [Apr 16, 00:17](111_2026-04-16_48ec717d.md) | S₁₃ PROVEN (swapped l₁/l₂), R'' atom PROVEN, hR''_not_πA₂ projection infrastr... | 90 |
+| 112 | [Apr 16, 14:05](112_2026-04-16_509b039b.md) | hR''_not_πA₂ + hE''_ne_R'' + h_ax₁₃ PROVEN, FTPGCoord/Dilation refactor, h_co... | 56 |
+| 113 | [Apr 16, 17:02](113_2026-04-16_f1c7f600.md) | left distrib: road getting twisty, rewinding in the branching to look for ano... | 52 |
 
 ## Memory
 
