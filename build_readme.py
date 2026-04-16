@@ -25,6 +25,7 @@ DERIVATIONS = [
     "conservation",
     "inhabitation",
     "interiority",
+    "typeline",
 ]
 
 OPEN = [
