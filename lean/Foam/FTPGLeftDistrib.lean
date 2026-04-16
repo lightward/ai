@@ -1810,7 +1810,26 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
                 rw [hac_inf_k] at h1; simp at h1; exact h1
               exact hσb_ne_E ((hσb_atom.le_iff.mp
                 (hmod ▸ le_inf hE_le_σbac hE_k)).resolve_left Γ.hE_atom.1).symm
-          have hR''_not_πA₂ : ¬ R'' ≤ E' ⊔ U' ⊔ d_a := by sorry
+          have hR''_not_πA₂ : ¬ R'' ≤ E' ⊔ U' ⊔ d_a := by
+            intro h_le
+            have hR''_le_Rm : R'' ≤ R ⊔ m := h_le.trans hπA₂_le_Rm
+            -- Project R'' to R⊔m via S₁₃⊔s₂₃'': get R'' ≤ S₁₃
+            have hproj₁ : (S₁₃ ⊔ s₂₃'') ⊓ (R ⊔ m) = S₁₃ := by
+              have h1 := sup_inf_assoc_of_le s₂₃''
+                ((inf_le_left : S₁₃ ≤ E' ⊔ d_a).trans
+                  (sup_le hE'_le_Rm (hda_m.trans le_sup_right)))
+              rw [hs₂₃''_inf_Rm] at h1; simp at h1; exact h1
+            have hR''_le_S₁₃ : R'' ≤ S₁₃ :=
+              hproj₁ ▸ le_inf (inf_le_left : R'' ≤ S₁₃ ⊔ s₂₃'') hR''_le_Rm
+            -- Project R'' to R⊔m via σ_b⊔R: get R'' ≤ R
+            have hσbR_inf_Rm' : (σ_b ⊔ R) ⊓ (R ⊔ m) = R := by
+              rw [sup_comm σ_b R]
+              have h1 := sup_inf_assoc_of_le σ_b (le_sup_left : R ≤ R ⊔ m)
+              rw [hσb_inf_Rm] at h1; simp at h1; exact h1
+            have hR''_le_R : R'' ≤ R :=
+              hσbR_inf_Rm' ▸ le_inf (inf_le_right : R'' ≤ σ_b ⊔ R) hR''_le_Rm
+            -- R'' = S₁₃ = R → R ≤ E'⊔d_a → E' ≤ R → E' = R. Contradiction.
+            sorry
           -- ── T2 non-degeneracy ──
           have hs₂₃''_ne_E'' : s₂₃'' ≠ E'' := by
             intro h
