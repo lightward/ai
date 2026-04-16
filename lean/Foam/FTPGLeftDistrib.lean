@@ -43,7 +43,7 @@ commutative case. This is why left distrib requires a different proof
 from right distrib (which used collineation directly).
 
 ## Status (session 111, 2026-04-15)
-8 sorry remaining (h_L2 cluster + h_desargues_conclusion).
+7 sorry remaining (h_L2 cluster + h_desargues_conclusion).
 
 ### Sorry list
   - σ_b≠σ_s: PROVEN (session 107).
@@ -51,15 +51,15 @@ from right distrib (which used collineation directly).
     Architecture: Level 2 Desargues using Q=σ_b to lift (s₂₃,E,R) out of R⊔m.
     ALL THREE axis conditions free at Level 2 (verified 180/180 in GF(7)).
     Recursion terminates. Projection PROVEN. W₂≠⊥ PROVEN (session 109).
-    h_L2 sorry (8 total, down from 16 in session 109):
-      - hR''_atom: S₁₃ PROVEN (session 111, swapped l₁/l₂ in lines_meet_if_coplanar).
-        R'' atom remains sorry. Same pattern: identify plane, CovBy, lines_meet.
-        Plane is σ_b⊔R⊔m (not R⊔m). Setup differs from S₁₃.
+    h_L2 sorry (7 total, down from 8):
+      - hR''_atom: PROVEN (session 111). S₁₃ via swapped l₁/l₂, R'' via
+        plane σ_b⊔s₂₃⊔R and line_height_two on S₁₃⊔s₂₃'' (not σ_b⊔R).
+        Key: "read the lemma from the other side" worked twice.
       - hE'_not_U'da: triangle non-degeneracy (needs s₁₂≠d_a or alt approach)
-      - hR''_not_πA₂, hE''_ne_R'', h_cov₂: depend on hR''_atom
+      - hR''_not_πA₂, hE''_ne_R'', h_cov₂: now exposed (hR''_atom done)
       - h_ax₁₂: PROVEN (session 110, modular law collapse to s₁₂)
-      - h_ax₁₃, h_ax₂₃: depend on S₁₃/R'' structure
-  - h_desargues_conclusion (line ~2360): forward Desargues (~500 lines mechanical).
+      - h_ax₁₃, h_ax₂₃: depend on S₁₃/R'' structure (both now atoms)
+  - h_desargues_conclusion (line ~2420): forward Desargues (~500 lines mechanical).
 
 ### Key insight (session 108): the recursion terminates
 
@@ -1674,8 +1674,76 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
             have hS₁₃_atom : IsAtom S₁₃ :=
               line_height_two hE'_atom hda_atom hE'_ne_da_0
                 (bot_lt_iff_ne_bot.mpr hS₁₃_ne_bot) hS₁₃_lt
-            -- ── R'' atom: two lines in σ_b⊔R⊔m ──
-            sorry
+            -- ── R'' atom: two lines in σ_b⊔s₂₃⊔R ──
+            -- R'' = (S₁₃ ⊔ s₂₃'') ⊓ (σ_b ⊔ R).
+            -- Plane: σ_b⊔s₂₃⊔R (rank 3: σ_b⊔s₂₃ ≤ π, R⊓π = ⊥).
+            -- CovBy: s₂₃ ⊓ (σ_b⊔R) = ⊥ → σ_b⊔R ⋖ s₂₃⊔(σ_b⊔R).
+            -- s₂₃ ⊓ (σ_b⊔R) = ⊥: s₂₃ ≤ m, and (σ_b⊔R)⊓m = ⊥.
+            have hσbR_inf_Rm : (σ_b ⊔ R) ⊓ (R ⊔ m) = R := by
+              rw [sup_comm σ_b R]
+              have h1 := sup_inf_assoc_of_le σ_b (le_sup_left : R ≤ R ⊔ m)
+              rw [hσb_inf_Rm] at h1; simp at h1; exact h1
+            have hm_inf_σbR : m ⊓ (σ_b ⊔ R) = ⊥ := by
+              have h1 : m ⊓ (σ_b ⊔ R) ≤ (R ⊔ m) ⊓ (σ_b ⊔ R) :=
+                inf_le_inf_right _ le_sup_right
+              have h2 : (R ⊔ m) ⊓ (σ_b ⊔ R) = R := by
+                rw [inf_comm]; exact hσbR_inf_Rm
+              have h3 : m ⊓ (σ_b ⊔ R) ≤ R := h1.trans h2.le
+              have h4 : m ⊓ (σ_b ⊔ R) ≤ m ⊓ R := le_inf inf_le_left h3
+              rw [inf_comm m R] at h4
+              exact le_antisymm (h4.trans hR_inf_m.le) bot_le
+            have hs₂₃_inf_σbR : s₂₃ ⊓ (σ_b ⊔ R) = ⊥ :=
+              le_antisymm (le_trans (le_inf (inf_le_left.trans hs₂₃_le_m) inf_le_right)
+                (hm_inf_σbR).le) bot_le
+            have hσbR_covBy : σ_b ⊔ R ⋖ s₂₃ ⊔ (σ_b ⊔ R) :=
+              covBy_sup_of_inf_covBy_left (hs₂₃_inf_σbR ▸ hs₂₃_atom.bot_covBy)
+            -- S₁₃⊔s₂₃'' ≤ s₂₃⊔σ_b⊔R (the plane)
+            have hS₁₃s₂₃''_le : S₁₃ ⊔ s₂₃'' ≤ s₂₃ ⊔ (σ_b ⊔ R) := by
+              apply sup_le
+              · -- S₁₃ ≤ s₂₃⊔R ≤ s₂₃⊔(σ_b⊔R)
+                exact (inf_le_right : S₁₃ ≤ s₂₃ ⊔ R).trans
+                  (sup_le_sup_left le_sup_right s₂₃)
+              · -- s₂₃'' ≤ σ_b⊔s₂₃. σ_b ≤ σ_b⊔R ≤ s₂₃⊔(σ_b⊔R). s₂₃ ≤ s₂₃⊔(σ_b⊔R).
+                exact hs₂₃''_le.trans (sup_le
+                  (le_sup_left.trans le_sup_right) le_sup_left)
+            -- ¬(S₁₃⊔s₂₃'' ≤ σ_b⊔R): if so, s₂₃'' ≤ σ_b⊔R.
+            -- s₂₃'' ≤ σ_b⊔s₂₃. (σ_b⊔R)⊓(σ_b⊔s₂₃) = σ_b (modular: R⊓(σ_b⊔s₂₃) = ⊥).
+            -- s₂₃'' ≤ σ_b. s₂₃'' = σ_b. Contradiction with hs₂₃''_ne_σb.
+            have hS₁₃s₂₃''_not : ¬ S₁₃ ⊔ s₂₃'' ≤ σ_b ⊔ R := by
+              intro h_le
+              have hs₂₃''_le_σbR : s₂₃'' ≤ σ_b ⊔ R := le_sup_right.trans h_le
+              have hR_inf_σbs₂₃ : R ⊓ (σ_b ⊔ s₂₃) = ⊥ :=
+                (hR.le_iff.mp inf_le_left).resolve_right
+                  (fun h => hR_not ((h ▸ inf_le_right : R ≤ σ_b ⊔ s₂₃).trans
+                    (sup_le hσb_π (hs₂₃_le_m.trans hm_π))))
+              have hmod : (σ_b ⊔ R) ⊓ (σ_b ⊔ s₂₃) = σ_b := by
+                have h1 := sup_inf_assoc_of_le R (le_sup_left : σ_b ≤ σ_b ⊔ s₂₃)
+                rw [hR_inf_σbs₂₃] at h1; simp at h1; exact h1
+              have hs₂₃''_le_σb : s₂₃'' ≤ σ_b :=
+                hmod ▸ le_inf hs₂₃''_le_σbR hs₂₃''_le
+              exact hs₂₃''_ne_σb ((hσb_atom.le_iff.mp hs₂₃''_le_σb).resolve_left
+                hs₂₃''_atom.1)
+            -- S₁₃ is an atom on line S₁₃⊔s₂₃''
+            have hS₁₃_ne_s₂₃'' : S₁₃ ≠ s₂₃'' := by
+              intro h_eq
+              -- S₁₃ ≤ E'⊔d_a ≤ R⊔m. s₂₃'' ∉ R⊔m (hs₂₃''_not_Rm).
+              exact hs₂₃''_not_Rm (h_eq ▸ (inf_le_left : S₁₃ ≤ E' ⊔ d_a).trans
+                (sup_le hE'_le_Rm (hda_m.trans le_sup_right)))
+            have hS₁₃_lt_line : S₁₃ < S₁₃ ⊔ s₂₃'' :=
+              lt_of_le_of_ne le_sup_left (fun h =>
+                hS₁₃_ne_s₂₃'' ((hS₁₃_atom.le_iff.mp
+                  (h ▸ le_sup_right)).resolve_left hs₂₃''_atom.1).symm)
+            -- Apply lines_meet_if_coplanar
+            have hR''_ne_bot : R'' ≠ ⊥ := by
+              rw [hR''_def, inf_comm]
+              exact lines_meet_if_coplanar hσbR_covBy hS₁₃s₂₃''_le hS₁₃s₂₃''_not
+                hS₁₃_atom hS₁₃_lt_line
+            -- R'' < S₁₃⊔s₂₃'' (if equal, S₁₃⊔s₂₃'' ≤ σ_b⊔R, contradicting hS₁₃s₂₃''_not)
+            have hR''_lt : R'' < S₁₃ ⊔ s₂₃'' := by
+              refine lt_of_le_of_ne inf_le_left (fun h_eq => ?_)
+              exact hS₁₃s₂₃''_not (h_eq ▸ inf_le_right)
+            exact line_height_two hS₁₃_atom hs₂₃''_atom hS₁₃_ne_s₂₃''
+              (bot_lt_iff_ne_bot.mpr hR''_ne_bot) hR''_lt
           -- ── T1 non-degeneracy ──
           -- E' ≠ d_a (already: hE'_ne_da')
           have hE'_ne_da : E' ≠ d_a := by
