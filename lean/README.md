@@ -46,8 +46,7 @@ complemented modular lattice, irreducible, height ≥ 4
   ↓ von Staudt multiplication via dilations  ── FTPGMulcoord_mul: identity, zero annihilation, atom
   ↓ dilation extension, direction preservation  ── FTPGDilation  ↓ beta infrastructure, mul key identity       ── FTPGMulKeyIdentity  ↓ right distributivity via Desargues          ── FTPGDistribdistributivity (right) ✓
   ↓ additive inverse via double Desargues        ── FTPGNegcoord_neg, a + (-a) = O ✓
-  ↓ converse Desargues (3D lift) + forward      ── FTPGLeftDistribdistributivity (left)                             converse Desargues PROVEN
-                                                  combination logic PROVEN
+  ↓ converse Desargues (3D lift) + forward      ── FTPGLeftDistribdistributivity (left)                             combination logic PROVEN
   ↓
 division ring structure (multiplicative inverses)
   ↓
@@ -66,13 +65,13 @@ Incidence geometry, Veblen-Young, Desargues (nonplanar + planar), perspectivity,
 | perspectivity | `project_is_atom`, `project_injective`, `perspectivity_injective` |
 | Small Desargues | `small_desargues'` (A5a: parallelism from Desargues) |
 
-**FTPGCoord.lean** — von Staudt coordinatization
-Coordinate system, addition via perspectivities, identity. Imports FTPGExplore.
+**FTPGCoord.lean** — von Staudt coordinatization + converse Desargues
+Coordinate system, addition via perspectivities, identity. Also `desargues_converse_nonplanar`: if two non-coplanar triangles have sides meeting on a common axis, vertex-joins are concurrent. Imports FTPGExplore.
 
 | layer | key declarations |
 |---|---|
 | coordinate system | `CoordSystem`, `coord_add`, `coord_add_atom`, `coord_add_left_zero`, `coord_add_right_zero` |
-| Desargues helpers | `desargues_planar`, `collinear_of_common_bound`, `small_desargues'` |
+| Desargues helpers | `desargues_planar`, `desargues_converse_nonplanar`, `collinear_of_common_bound`, `small_desargues'` |
 
 **FTPGAddComm.lean** — commutativity of coordinate addition
 Two Desargues applications establish coord_add_comm. Split from FTPGCoord. Imports FTPGCoord.
@@ -131,7 +130,7 @@ Multiplication via dilations (Hartshorne §7). Structurally parallel to addition
 | multiplication | `coord_mul` (a·b via dilation σ_b), `coord_mul_atom` (a·b is an atom) |
 
 **FTPGDilation.lean** — dilation extension and direction preservation
-Defines `dilation_ext Γ c P` (the dilation σ_c extended to off-line points) and proves `dilation_preserves_direction`: (P⊔Q)⊓m = (σ_c(P)⊔σ_c(Q))⊓m. Three cases: c=I (identity), collinear, generic (Desargues center O).
+Defines `dilation_ext Γ c P` (the dilation σ_c extended to off-line points) and proves `dilation_preserves_direction`: (P⊔Q)⊓m = (σ_c(P)⊔σ_c(Q))⊓m. Three cases: c=I (identity), collinear, generic (Desargues center O). Also proves `dilation_ext_fixes_m`: σ_a fixes points on m.
 
 **FTPGMulKeyIdentity.lean** — beta infrastructure and mul key identity
 Beta-images `β(a) = (U⊔C)⊓(a⊔E)` and the mul key identity: σ_c(β(a)) = (σ⊔U)⊓(ac⊔E). Three cases: c=I, a=I (via DPD), generic (Desargues center C).
@@ -179,14 +178,10 @@ desargues_converse_nonplanar (PROVEN, rank ≥ 4)
 
 σ_b works as Level 2 lift direction because Level 1 threading consumed it (s₁₂=(σ_b⊔ac)⊓m). The two levels are the same Desargues at ranks 3 and 4.
 
-`desargues_converse_nonplanar` (0 sorry): if two non-coplanar triangles have sides meeting on a common axis, vertex-joins are concurrent. Proved via auxiliary planes.
-
 Note: left multiplication x↦a·x is NOT a collineation (unlike right mult). This is why left distrib requires converse Desargues + 3D lift, while right distrib used collineation directly.
 
 | layer | key declarations |
 |---|---|
-| converse Desargues | `desargues_converse_nonplanar` (PROVEN) |
-| m-fixation | `dilation_ext_fixes_m` (PROVEN) |
 | σ_b≠σ_s | PROVEN (perspectivity injectivity + modular cancellation) |
 | h_axis₂₃ | skeleton compiling (Level 2 Desargues, 2 sub-sorry, projection PROVEN) |
 | concurrence | h_concurrence chain: axis-threaded lift + project (PROVEN except h_axis₂₃ sub-sorry) |

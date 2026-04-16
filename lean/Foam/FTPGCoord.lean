@@ -1088,6 +1088,139 @@ theorem small_desargues'
       (fun h => absurd h (ne_of_lt h_mB'C'_cov.lt))
   rw [hBC_eq, hB'C'_eq]
 
+/-! ## Non-planar converse Desargues
 
+If two non-coplanar triangles have corresponding sides meeting on a
+common line (the axis), then the joins of corresponding vertices are
+concurrent. This is the converse of the non-planar Desargues theorem.
+
+The proof uses three auxiliary planes ρ₁₂, ρ₁₃, ρ₂₃, each spanned by
+two vertices of T1 and one of T2. The axis condition forces the
+remaining T2 vertex into each plane. The concurrence point O lives in
+all three planes, hence on all three vertex-joins. -/
+theorem desargues_converse_nonplanar
+    {a₁ a₂ a₃ b₁ b₂ b₃ : L}
+    (ha₁ : IsAtom a₁) (ha₂ : IsAtom a₂) (ha₃ : IsAtom a₃)
+    (hb₁ : IsAtom b₁) (hb₂ : IsAtom b₂) (hb₃ : IsAtom b₃)
+    -- T1 non-degenerate (a₁ off the line a₂⊔a₃)
+    (ha₁₂ : a₁ ≠ a₂) (ha₁₃ : a₁ ≠ a₃) (_ha₂₃ : a₂ ≠ a₃)
+    (ha₁_not : ¬ a₁ ≤ a₂ ⊔ a₃)
+    -- b_i not in πA = a₁⊔a₂⊔a₃ (non-coplanarity)
+    (hb₁_not : ¬ b₁ ≤ a₁ ⊔ a₂ ⊔ a₃)
+    (hb₂_not : ¬ b₂ ≤ a₁ ⊔ a₂ ⊔ a₃)
+    (_hb₃_not : ¬ b₃ ≤ a₁ ⊔ a₂ ⊔ a₃)
+    -- T2 non-degenerate
+    (hb₁₂ : b₁ ≠ b₂) (hb₁₃ : b₁ ≠ b₃) (hb₂₃ : b₂ ≠ b₃)
+    -- a₃ ≠ b₃ (vertex-join is a line)
+    (_hab₃ : a₃ ≠ b₃)
+    -- a₃⊔b₃ ⋖ ρ₁₃ (line covered by plane — derivable from non-degeneracy,
+    -- but stated as hypothesis for modularity)
+    (h_cov₁₃ : a₃ ⊔ b₃ ⋖ a₁ ⊔ a₃ ⊔ b₁)
+    -- Axis: side-intersections are atoms (non-degenerate sides)
+    (hs₁₂ : IsAtom ((a₁ ⊔ a₂) ⊓ (b₁ ⊔ b₂)))
+    (hs₁₃ : IsAtom ((a₁ ⊔ a₃) ⊓ (b₁ ⊔ b₃)))
+    (hs₂₃ : IsAtom ((a₂ ⊔ a₃) ⊓ (b₂ ⊔ b₃))) :
+    -- Conclusion: vertex-joins concurrent
+    (a₁ ⊔ b₁) ⊓ (a₂ ⊔ b₂) ≤ a₃ ⊔ b₃ := by
+  -- ═══ Step 1: Auxiliary planes ═══
+  set πA := a₁ ⊔ a₂ ⊔ a₃
+  set ρ₁₂ := a₁ ⊔ a₂ ⊔ b₁  -- plane through a₁, a₂, b₁
+  set ρ₁₃ := a₁ ⊔ a₃ ⊔ b₁  -- plane through a₁, a₃, b₁
+  set ρ₂₃ := a₂ ⊔ a₃ ⊔ b₂  -- plane through a₂, a₃, b₂
+  -- ═══ Helper: axis point forces b into ρ ═══
+  -- If s = (a_i⊔a_j)⊓(b_i⊔b_j) is an atom, s ≤ ρ, b_i ≤ ρ, and s ≠ b_i,
+  -- then b_j ≤ ρ (since b_i⊔s = b_i⊔b_j by CovBy, and both ≤ ρ).
+  -- We apply this three times with different indices.
+  have axis_forces : ∀ {p q r ρ : L}, IsAtom p → IsAtom q → p ≠ q →
+      IsAtom ((r) ⊓ (p ⊔ q)) → (r) ⊓ (p ⊔ q) ≤ ρ → p ≤ ρ →
+      (r) ⊓ (p ⊔ q) ≠ p →
+      q ≤ ρ := by
+    intro p q r ρ hp hq hpq hs hs_le hp_le hs_ne
+    -- p ⊔ s = p ⊔ q (CovBy: s atom ≤ p⊔q, s ≠ p, p ⋖ p⊔q)
+    have h_lt : p < p ⊔ r ⊓ (p ⊔ q) :=
+      lt_of_le_of_ne le_sup_left (fun h =>
+        hs_ne ((hp.le_iff.mp (le_sup_right.trans h.symm.le)).resolve_left hs.1))
+    have h_eq : p ⊔ r ⊓ (p ⊔ q) = p ⊔ q :=
+      ((atom_covBy_join hp hq hpq).eq_or_eq h_lt.le
+        (sup_le le_sup_left inf_le_right)).resolve_left (ne_of_gt h_lt)
+    exact le_sup_right.trans (h_eq ▸ sup_le hp_le hs_le)
+  -- ═══ Step 2: b₂ ∈ ρ₁₂ ═══
+  have hb₂_in_ρ₁₂ : b₂ ≤ ρ₁₂ :=
+    axis_forces hb₁ hb₂ hb₁₂ hs₁₂
+      (inf_le_left.trans le_sup_left) le_sup_right
+      (fun h => hb₁_not (h ▸ inf_le_left |>.trans le_sup_left))
+  -- ═══ Step 3: b₃ ∈ ρ₁₃ ═══
+  have hb₃_in_ρ₁₃ : b₃ ≤ ρ₁₃ :=
+    axis_forces hb₁ hb₃ hb₁₃ hs₁₃
+      (inf_le_left.trans (sup_le (le_sup_left.trans le_sup_left)
+        (le_sup_right.trans le_sup_left)))
+      le_sup_right
+      (fun h => hb₁_not (h ▸ inf_le_left |>.trans
+        (sup_le (le_sup_left.trans le_sup_left) le_sup_right)))
+  -- ═══ Step 4: b₃ ∈ ρ₂₃ ═══
+  have hb₃_in_ρ₂₃ : b₃ ≤ ρ₂₃ :=
+    axis_forces hb₂ hb₃ hb₂₃ hs₂₃
+      (inf_le_left.trans le_sup_left) le_sup_right
+      (fun h => hb₂_not (h ▸ inf_le_left |>.trans
+        (sup_le (le_sup_right.trans le_sup_left) le_sup_right)))
+  -- ═══ Step 5: O ≤ ρ₁₃ and O ≤ ρ₂₃ ═══
+  -- O = (a₁⊔b₁) ⊓ (a₂⊔b₂).
+  -- a₁⊔b₁ ≤ ρ₁₃: a₁ ≤ ρ₁₃ and b₁ ≤ ρ₁₃.
+  have hO_ρ₁₃ : (a₁ ⊔ b₁) ⊓ (a₂ ⊔ b₂) ≤ ρ₁₃ :=
+    inf_le_left.trans (sup_le (le_sup_left.trans le_sup_left) le_sup_right)
+  -- a₂⊔b₂ ≤ ρ₂₃: a₂ ≤ ρ₂₃ and b₂ ≤ ρ₂₃.
+  have hO_ρ₂₃ : (a₁ ⊔ b₁) ⊓ (a₂ ⊔ b₂) ≤ ρ₂₃ :=
+    inf_le_right.trans (sup_le (le_sup_left.trans le_sup_left) le_sup_right)
+  -- ═══ Step 6: ρ₂₃ ⊓ ρ₁₃ ≥ a₃ ⊔ b₃ and ρ₂₃ ⊓ ρ₁₃ ≤ a₃ ⊔ b₃ ═══
+  -- a₃ ≤ ρ₂₃ (via a₂⊔a₃ ≤ ρ₂₃) and a₃ ≤ ρ₁₃ (via a₁⊔a₃ ≤ ρ₁₃).
+  -- b₃ ≤ ρ₂₃ (step 4) and b₃ ≤ ρ₁₃ (step 3).
+  -- So a₃⊔b₃ ≤ ρ₂₃ ⊓ ρ₁₃.
+  -- For equality: need ρ₂₃ ⊓ ρ₁₃ ≤ a₃⊔b₃ (the hard direction).
+  -- This uses CovBy: ρ₁₃ and ρ₂₃ are planes, a₃⊔b₃ is a line in both.
+  -- If ρ₁₃ ≠ ρ₂₃: two distinct planes → meet is a line.
+  have ha₃_both : a₃ ≤ ρ₂₃ ⊓ ρ₁₃ := le_inf
+    ((le_sup_right.trans le_sup_left : a₃ ≤ ρ₂₃))
+    ((le_sup_right.trans le_sup_left : a₃ ≤ ρ₁₃))
+  have hb₃_both : b₃ ≤ ρ₂₃ ⊓ ρ₁₃ := le_inf hb₃_in_ρ₂₃ hb₃_in_ρ₁₃
+  have h_lb : a₃ ⊔ b₃ ≤ ρ₂₃ ⊓ ρ₁₃ := sup_le ha₃_both hb₃_both
+  -- Upper bound: CovBy + ρ₂₃ ≠ ρ₁₃.
+  -- a₃⊔b₃ ⋖ ρ₁₃ (hypothesis). ρ₂₃⊓ρ₁₃ ≤ ρ₁₃. ρ₂₃⊓ρ₁₃ ≠ ρ₁₃.
+  -- By CovBy: ρ₂₃⊓ρ₁₃ = a₃⊔b₃.
+  have h_ub : ρ₂₃ ⊓ ρ₁₃ ≤ a₃ ⊔ b₃ := by
+    -- Show ρ₂₃⊓ρ₁₃ ≠ ρ₁₃ (otherwise a₂ ≤ ρ₁₃, contradicting non-degeneracy)
+    have h_ne : ρ₂₃ ⊓ ρ₁₃ ≠ ρ₁₃ := by
+      intro h_eq
+      -- h_eq : ρ₂₃ ⊓ ρ₁₃ = ρ₁₃ means ρ₁₃ ≤ ρ₂₃
+      have hρ₁₃_le : ρ₁₃ ≤ ρ₂₃ := inf_eq_left.mp (inf_comm ρ₂₃ ρ₁₃ ▸ h_eq)
+      -- a₁ ≤ ρ₁₃ ≤ ρ₂₃ = a₂⊔a₃⊔b₂.
+      have ha₁_ρ₂₃ : a₁ ≤ ρ₂₃ := (le_sup_left.trans le_sup_left : a₁ ≤ ρ₁₃).trans hρ₁₃_le
+      -- a₁ ≤ ρ₂₃ = a₂⊔a₃⊔b₂ and a₁ ≤ πA = a₁⊔a₂⊔a₃.
+      -- ρ₂₃ ⊓ πA ≥ a₂⊔a₃ (both ≤ ρ₂₃ and πA).
+      -- By modular law (a₂⊔a₃ ≤ πA):
+      -- πA ⊓ ρ₂₃ = πA ⊓ ((a₂⊔a₃)⊔b₂) = (a₂⊔a₃) ⊔ (πA⊓b₂)
+      -- πA⊓b₂ = ⊥ (b₂ ∉ πA). So πA⊓ρ₂₃ = a₂⊔a₃.
+      have hπA_ρ₂₃ : (a₁ ⊔ a₂ ⊔ a₃) ⊓ ρ₂₃ = a₂ ⊔ a₃ := by
+        show (a₁ ⊔ a₂ ⊔ a₃) ⊓ (a₂ ⊔ a₃ ⊔ b₂) = a₂ ⊔ a₃
+        have h_le : a₂ ⊔ a₃ ≤ a₁ ⊔ a₂ ⊔ a₃ :=
+          sup_le (le_sup_right.trans le_sup_left) le_sup_right
+        rw [inf_comm]
+        -- Goal: (a₂ ⊔ a₃ ⊔ b₂) ⊓ (a₁ ⊔ a₂ ⊔ a₃) = a₂ ⊔ a₃
+        rw [sup_inf_assoc_of_le b₂ h_le]
+        -- Goal: (a₂ ⊔ a₃) ⊔ b₂ ⊓ (a₁ ⊔ a₂ ⊔ a₃) = a₂ ⊔ a₃
+        have : b₂ ⊓ (a₁ ⊔ a₂ ⊔ a₃) = ⊥ :=
+          (hb₂.le_iff.mp inf_le_left).resolve_right
+            (fun h => hb₂_not (h ▸ inf_le_right))
+        rw [this, sup_bot_eq]
+      -- a₁ ≤ ρ₂₃ and a₁ ≤ πA, so a₁ ≤ πA⊓ρ₂₃ = a₂⊔a₃
+      have ha₁_le_a₂a₃ : a₁ ≤ a₂ ⊔ a₃ :=
+        (le_inf (le_sup_left.trans le_sup_left : a₁ ≤ a₁ ⊔ a₂ ⊔ a₃) ha₁_ρ₂₃).trans
+          hπA_ρ₂₃.le
+      -- a₁ ≤ a₂⊔a₃ contradicts non-degeneracy (would make T1 degenerate)
+      -- a₁ atom ≤ a₂⊔a₃ → a₁ = a₂ or a₁ = a₃ (if a₂ ≠ a₃)
+      exact ha₁_not ha₁_le_a₂a₃
+    -- Apply CovBy: a₃⊔b₃ ≤ ρ₂₃⊓ρ₁₃ ≤ ρ₁₃, a₃⊔b₃ ⋖ ρ₁₃, ρ₂₃⊓ρ₁₃ ≠ ρ₁₃.
+    exact ((h_cov₁₃.eq_or_eq h_lb inf_le_right).resolve_right h_ne).le
+  -- ═══ Conclusion ═══
+  exact (le_inf hO_ρ₂₃ hO_ρ₁₃).trans (le_antisymm h_lb h_ub ▸ le_refl _)
 
 end Foam.FTPGExplore

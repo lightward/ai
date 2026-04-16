@@ -9,6 +9,7 @@ The dilation σ_c extended to off-line points:
 - `dilation_preserves_direction`: (P⊔Q)⊓m = (σ_c(P)⊔σ_c(Q))⊓m
   3 cases: c=I identity, collinear, generic forward Desargues center O
 - `dilation_ext_identity`: σ_I(P) = P
+- `dilation_ext_fixes_m`: σ_a fixes points on m (P ≤ m, P ∉ l → σ_a(P) = P)
 ## Status
 ALL PROVEN, 0 sorry.
 -/
@@ -971,4 +972,41 @@ theorem dilation_ext_identity (Γ : CoordSystem L)
     exact hP_not_l (le_sup_left.trans (hOI_eq_PO.symm.le.trans hOI_eq_l.le))
   rw [sup_comm Γ.O P, sup_comm Γ.I P]
   exact modular_intersection hP Γ.hO Γ.hI hP_ne_O hP_ne_I Γ.hOI hI_not_PO
+
+/-! ## Dilation fixes m pointwise -/
+
+/-- The dilation σ_a fixes points on m: for P on m with P ∉ l,
+    dilation_ext Γ a P = P. Proof: (I⊔P)⊓m = P by line_direction
+    (I ∉ m, P ≤ m). Then dilation_ext = (O⊔P) ⊓ (a⊔P) = P by
+    modular_intersection (a ∉ O⊔P since P ∉ l). -/
+theorem dilation_ext_fixes_m (Γ : CoordSystem L)
+    {a P : L} (ha : IsAtom a) (hP : IsAtom P)
+    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hP_on_m : P ≤ Γ.U ⊔ Γ.V)
+    (ha_ne_O : a ≠ Γ.O) (hP_not_l : ¬ P ≤ Γ.O ⊔ Γ.U) :
+    dilation_ext Γ a P = P := by
+  unfold dilation_ext
+  -- Step 1: (I⊔P)⊓m = P by line_direction (I ∉ m, P ≤ m)
+  have hIP_inf_m : (Γ.I ⊔ P) ⊓ (Γ.U ⊔ Γ.V) = P :=
+    line_direction Γ.hI Γ.hI_not_m hP_on_m
+  rw [hIP_inf_m]
+  -- Goal: (O⊔P) ⊓ (a⊔P) = P
+  -- By modular_intersection: (P⊔O)⊓(P⊔a) = P when ¬ a ≤ P⊔O
+  rw [show Γ.O ⊔ P = P ⊔ Γ.O from sup_comm _ _, show a ⊔ P = P ⊔ a from sup_comm _ _]
+  have hO_ne_P : Γ.O ≠ P := fun h => hP_not_l (h ▸ le_sup_left)
+  have ha_ne_P : a ≠ P := fun h => hP_not_l (h ▸ ha_on)
+  have ha_not_PO : ¬ a ≤ P ⊔ Γ.O := by
+    intro h
+    -- a ≤ P⊔O and a ≤ l = O⊔U. So a ≤ l ⊓ (P⊔O).
+    -- P ∉ l, O ≤ l, O ≤ P⊔O, so l ⊓ (P⊔O) = O by modular_intersection.
+    -- Hence a ≤ O, so a = O. Contradiction.
+    have hU_ne_P : Γ.U ≠ P := fun h' => hP_not_l (h' ▸ le_sup_right)
+    have h_int : (Γ.O ⊔ Γ.U) ⊓ (Γ.O ⊔ P) = Γ.O :=
+      modular_intersection Γ.hO Γ.hU hP Γ.hOU hO_ne_P hU_ne_P hP_not_l
+    have ha_le_O : a ≤ Γ.O := by
+      have h' : a ≤ Γ.O ⊔ P := (sup_comm P Γ.O) ▸ h
+      exact (le_inf ha_on h').trans h_int.le
+    exact ha_ne_O ((Γ.hO.le_iff.mp ha_le_O).resolve_left ha.1)
+  exact modular_intersection hP Γ.hO ha hO_ne_P.symm ha_ne_P.symm
+    (Ne.symm ha_ne_O) ha_not_PO
+
 end Foam.FTPGExplore
