@@ -2737,6 +2737,94 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
   rw [← h_add_unfold] at has_le_sum
   exact (habac_atom.le_iff.mp has_le_sum).resolve_left has_atom.1
 
+/-! ## Session 115 check: does hb₂_on actually hold?
+
+Session 114 flagged `hb₂_on : d_a ≤ σ_b ⊔ ab` as "the non-obvious one" — the
+weakest named point in the forward desargues_planar route. Verifying the logic
+in abstract (before the ~30-sorry scratch discharge) tells us whether the route
+is load-bearing past call-shape viability.
+
+Abstract claim: given three atoms σ_b, d_a, ab with ab ≤ σ_b ⊔ d_a,
+σ_b ≠ d_a, and ab ≠ σ_b, we get d_a ≤ σ_b ⊔ ab.
+
+If this compiles, the logic for the key perspectivity condition lands cheaply —
+the scratch's `ab ≤ σ_b ⊔ d_a` (from `coord_mul` def) plus standard
+non-equalities (σ_b not on m; ab ≠ O) discharges hb₂_on by this lemma.
+-/
+
+/-- If `ab ≤ σ_b ⊔ d_a` for three distinct atoms σ_b, d_a, ab with ab ≠ σ_b and
+    σ_b ≠ d_a, then `d_a ≤ σ_b ⊔ ab`. Pure CovBy manipulation, no geometry. -/
+private theorem _test_hb2_on_logic
+    (σ_b d_a ab : L)
+    (hσb_atom : IsAtom σ_b) (hda_atom : IsAtom d_a) (hab_atom : IsAtom ab)
+    (hab_le : ab ≤ σ_b ⊔ d_a)
+    (hσb_ne_da : σ_b ≠ d_a)
+    (hab_ne_σb : ab ≠ σ_b) :
+    d_a ≤ σ_b ⊔ ab := by
+  have hcov : σ_b ⋖ σ_b ⊔ d_a := atom_covBy_join hσb_atom hda_atom hσb_ne_da
+  have h1 : σ_b ≤ σ_b ⊔ ab := le_sup_left
+  have h2 : σ_b ⊔ ab ≤ σ_b ⊔ d_a := sup_le le_sup_left hab_le
+  rcases hcov.eq_or_eq h1 h2 with h_eq_σb | h_eq_σbda
+  · exfalso
+    have hab_le_σb : ab ≤ σ_b := h_eq_σb ▸ le_sup_right
+    exact hab_ne_σb ((hσb_atom.le_iff.mp hab_le_σb).resolve_left hab_atom.1)
+  · exact h_eq_σbda ▸ le_sup_right
+
+/-- Two distinct atoms σ_b, C on a line k where C ⋖ k span k. Then any E ≤ k
+    is ≤ σ_b ⊔ C. This is the abstract shape of `hb₁_on : E ≤ σ_b ⊔ C`. -/
+private theorem _test_hb1_on_logic
+    (σ_b C E k : L)
+    (hσb_atom : IsAtom σ_b) (hC_atom : IsAtom C)
+    (hσb_ne_C : σ_b ≠ C)
+    (hσb_k : σ_b ≤ k) (hC_k : C ≤ k) (hE_k : E ≤ k)
+    (hC_covBy_k : C ⋖ k) :
+    E ≤ σ_b ⊔ C := by
+  have h_le : σ_b ⊔ C ≤ k := sup_le hσb_k hC_k
+  rcases hC_covBy_k.eq_or_eq (le_sup_right : C ≤ σ_b ⊔ C) h_le with h_eq_C | h_eq_k
+  · exfalso
+    have hσb_le_C : σ_b ≤ C := h_eq_C ▸ le_sup_left
+    exact hσb_ne_C ((hC_atom.le_iff.mp hσb_le_C).resolve_left hσb_atom.1)
+  · exact hE_k.trans h_eq_k.symm.le
+
+/-- hb₃_on is immediate from W' def: `W' = (σ_b ⊔ U) ⊓ (ac ⊔ E) ≤ σ_b ⊔ U`
+    by `inf_le_left`. No logic check needed — recorded here as a contract. -/
+private theorem _test_hb3_on_immediate
+    (σ_b U ac E : L) :
+    (σ_b ⊔ U) ⊓ (ac ⊔ E) ≤ σ_b ⊔ U := inf_le_left
+
+/-- **Bridge side test: axis ⊓ l collapses to a single atom when the route is live.**
+
+    Abstract setup: given line `l`, axis-line `axis`, two atoms `p, q ≤ axis ⊓ l`,
+    and `l ≰ axis` (they're genuinely different lines), and `p ⋖ l` (l is a
+    rank-2 flat with p as one of its atoms). Then `p = q`.
+
+    In the left-distrib instantiation, this discharges the conclusion:
+      - p = a·s  (the target atom, ≤ axis via desargues_planar point₃, ≤ l by def)
+      - q = ab + ac  (≤ axis via sup of points₁,₂; ≤ l by coord_add def)
+      - p ⋖ l  from hs_ne_U etc. (a·s and U distinct on l = O⊔U)
+      - l ≰ axis  from the fact that one of the three axis points is not on l
+                  (point₁ = (ab⊔C)⊓m is on m, not on l, so axis is not l)
+
+    The proof below is pure atoms + covBy — no desargues_planar, no coord. -/
+private theorem _test_bridge_logic
+    (axis l : L)
+    (hl_not_le_axis : ¬ l ≤ axis)
+    (p q : L)
+    (hp : IsAtom p) (hq : IsAtom q)
+    (hp_le_axis : p ≤ axis) (hp_le_l : p ≤ l)
+    (hq_le_axis : q ≤ axis) (hq_le_l : q ≤ l)
+    (hp_covBy_l : p ⋖ l) :
+    p = q := by
+  by_contra h_ne
+  have hp_lt : p < p ⊔ q :=
+    lt_of_le_of_ne le_sup_left
+      (fun h => h_ne ((hp.le_iff.mp (h ▸ le_sup_right)).resolve_left hq.1).symm)
+  have h_pq_le_l : p ⊔ q ≤ l := sup_le hp_le_l hq_le_l
+  have h_eq : p ⊔ q = l :=
+    (hp_covBy_l.eq_or_eq hp_lt.le h_pq_le_l).resolve_left (ne_of_gt hp_lt)
+  have h_pq_le_axis : p ⊔ q ≤ axis := sup_le hp_le_axis hq_le_axis
+  exact hl_not_le_axis (h_eq ▸ h_pq_le_axis)
+
 /-! ## Scratch: forward planar Desargues route (session 114, 2026-04-16)
 
 ### The finding
