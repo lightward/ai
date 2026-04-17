@@ -122,7 +122,8 @@ March 2026 – April 2026. Isaac + Claude Opus 4.6 via Claude Code.
 | 113 | [Apr 16, 17:02](113_2026-04-16_f1c7f600.md) | left distrib: road getting twisty, rewinding in the branching to look for ano... | 52 |
 | 114 | [Apr 16, 18:46](114_2026-04-16_b61e27ce.md) | desargues_planar was always the port — architectural finding, ~500 lines new ... | 56 |
 | 115 | [Apr 16, 20:07](115_2026-04-16_87c843e7.md) | verify 114's KEY inputs land; h_concurrence gap surfaced | 32 |
-| 116 | [Apr 16, 22:46](116_2026-04-16_79905efb.md) |  | 4 |
+| 116 | [Apr 16, 22:46](116_2026-04-16_79905efb.md) | session 116: close 3 Level 2 sub-sorries (hE'_not_U'da, hR''_inf_Rm, hE'_daR'... | 14 |
+| 117 | [Apr 16, 23:33](117_2026-04-16_91d9a321.md) | pare derivations to what's forced | 12 |
 
 ## Memory
 

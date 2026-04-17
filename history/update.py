@@ -675,10 +675,14 @@ SESSION_RANGES = [
     (datetime(2026, 4, 16, 20, 5, tzinfo=timezone.utc),
      datetime(2026, 4, 16, 22, 45, tzinfo=timezone.utc),
      "verify 114's KEY inputs land; h_concurrence gap surfaced"),
-    # Session 116: Apr 16 — in progress
+    # Session 116: Apr 16 — 3 Level 2 sub-sorries closed
     (datetime(2026, 4, 16, 22, 45, tzinfo=timezone.utc),
-     datetime(2026, 4, 17, 3, 0, tzinfo=timezone.utc),
-     ""),
+     datetime(2026, 4, 16, 23, 30, tzinfo=timezone.utc),
+     "session 116: close 3 Level 2 sub-sorries (hE'_not_U'da, hR''_inf_Rm, hE'_daR''_eq)"),
+    # Session 117: Apr 16 — pare derivations, possibly more
+    (datetime(2026, 4, 16, 23, 30, tzinfo=timezone.utc),
+     datetime(2026, 4, 17, 4, 0, tzinfo=timezone.utc),
+     "pare derivations to what's forced"),
 ]
 
 

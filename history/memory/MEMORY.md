@@ -6,10 +6,11 @@
 
 ## Current state
 
-**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — **s114 found desargues_planar cleanly handles the coord_add half. s115 found h_concurrence is separate irreducible content (T2=(U,E,d_a) is degenerate on m, forces a lift). Option 1 is forced for the coord_add half; minimum proof of h_concurrence is the real open problem.** Proof-of-concept scratch compiles. Then h_desargues_conclusion, multiplicative inverses, then axiom drops.
+**28 Lean files, 1 axiom (FTPG).** Addition is a complete abelian group. Multiplication has identity + right distributivity. Left distributivity in progress — **s116 closed 3 Level 2 sub-sorries; h_ax₂₃ L2 remains as the architectural wall (wrong-shaped triangulation, not content-level — left_distrib holds in div rings). Reframed open question: find a different lift/triangulation whose axis conditions all collapse cleanly via CovBy.** Proof-of-concept scratch compiles. Then h_desargues_conclusion, multiplicative inverses, then axiom drops.
 
-### Left distributivity (bridge gap surfaced, 2026-04-16)
+### Left distributivity (architectural wall identified, 2026-04-16)
 
+- [Session 116 three closures](project_session_116_three_closures.md) — **3 sub-sorries closed; h_ax₂₃ L2 wall is architectural, not content (div rings satisfy left_distrib); candidates for different triangulation enumerated**
 - [Session 115 bridge gap](project_session_115_bridge_gap.md) — **h_concurrence irreducible; 114's cost accounting wrong; reframed open question: minimum proof of h_concurrence**
 - [Session 114 note + addendum](feedback_session_beginnings_114.md) — desargues_planar IS a port (coord_add half); T2-on-m degeneracy makes the lift irreducible for h_concurrence; option 4 ruled out by axiom debt
 - [Left distrib proof architecture](project_session_left_distrib.md) — Level 2 Desargues terminates recursion, 2-of-3 invariant, ac-centered Desargues (**superseded by s114 finding**)
