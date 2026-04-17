@@ -2,78 +2,77 @@
 
 ## constraints
 
-this derivation claims only what follows from these results. any additional assumption is a bug.
+this derivation claims only what follows from these results.
 
 ### from lean (proven)
 
-- **commutator_traceless** (Form.lean): tr[P, Q] = 0. observation interaction is invisible to the scalar channel.
-- **trace_unique_of_kills_commutators** (TraceUnique.lean): trace is the unique commutator-killing functional. one scalar readout.
-
-### from other derivations
-
-- **ground.md**: closure, partiality, basis commitment.
-- **writing_map.md**: the write form, perpendicularity, confinement, the flat/curved separation.
-- **group.md**: U(d), the trace as unique homomorphism u(d) -> u(1).
-- **stabilization.md**: R^3 + Taylor, Voronoi as realization choice.
+- **commutator_traceless** (Form.lean): tr[P, Q] = 0.
+- **trace_unique_of_kills_commutators** (TraceUnique.lean): trace is the unique commutator-killing functional.
 
 ### from mathematics (cited, not proven in lean)
 
-- **Voronoi tiling on Riemannian manifolds**: Voronoi regions under the bi-invariant metric on U(d). geodesic equidistant surfaces. Hausdorff measure.
-- **Haar measure on compact groups**: the unique (up to normalization) left- and right-invariant probability measure on a compact group.
-- **convergence theorem for random walks on compact groups**: a random walk whose step distribution generates the Lie algebra converges to Haar measure. the hypothesis is: compact group, step distribution not supported on a proper closed subgroup.
-- **Cauchy-Schwarz inequality**.
+- **Voronoi tiling on Riemannian manifolds** under the bi-invariant metric on U(d).
+- **Haar measure** on compact groups.
+- **convergence theorem for random walks on compact groups**: a random walk whose step distribution is supported on a generating set of the Lie algebra converges in distribution to Haar measure. hypothesis: compact group, step distribution not supported on a proper closed subgroup.
+- **Cauchy–Schwarz inequality**.
 
 ## derivation
 
-**L = sum of boundary areas.** the foam lives in U(d). cells are Voronoi regions of the basis matrices under the bi-invariant metric; boundaries are geodesic equidistant surfaces; Area_g is the (d^2 - 1)-dimensional Hausdorff measure. bases in general position tile non-periodically.
+**L = sum of boundary areas.** the foam lives in U(d). cells are Voronoi regions of the basis matrices under the bi-invariant metric; boundaries are geodesic equidistant surfaces; boundary area is the (d² − 1)-dimensional Hausdorff measure. generic bases tile aperiodically.
 
-the Voronoi tiling is a realization choice (stabilization.md): it determines adjacency (which pairs share a boundary) and thereby defines L. the algebraic results (write map, three-body mapping, Grassmannian structure) depend on pairwise overlap, not the tiling method. the geometric results (L, combinatorial ceiling, conservation on spatial cycles) depend on the Voronoi realization.
+the Voronoi tiling is a modeling choice (stabilization.md). algebraic results (write form, three-body mapping, Grassmannian tangent) depend on pairwise overlaps, not on the tiling method. the geometric results below (L, combinatorial ceiling, winding-number conservation on cycles) depend on the Voronoi choice.
 
-**L is not a variational objective.** the writing map drives the foam; L describes the resulting geometry. the active regime departs from minimality because perpendicular writes deposit structure in different directions. the resting state (no writes) is minimal because dL = 0.
+**L is not a variational objective.** the writing map drives the foam; L is a consequence. the active regime departs from minimality. the resting state (no writes) is minimal (dL = 0).
 
 **L is bounded.** U(d) is compact.
 
-**the combinatorial ceiling is exact.** N unitaries cannot all be pairwise maximally distant. the achievable maximum is sqrt(N / (2(N-1))) of the theoretical maximum, depending only on N. derivation: Cauchy-Schwarz applied to norm(sum U_i)^2 >= 0.
+**combinatorial ceiling.** N unitaries cannot all be pairwise maximally distant. the achievable maximum is √(N / (2(N − 1))) of the theoretical pairwise maximum, depending only on N. proof: Cauchy–Schwarz applied to ‖ΣUᵢ‖² ≥ 0.
 
-**L converges to 1/sqrt(2) of the theoretical maximum.** the writing dynamics satisfy: (a) the writes generate the Lie algebra (controllability — the write directions from overlapping observers span the full algebra), and (b) successive inputs are sufficiently decorrelated (channel_capacity.md: the mediation chain provides decorrelation).
+**Haar convergence (conditional).** if the writing dynamics satisfy
+- (a) controllability: write directions from overlapping observers span the full Lie algebra, and
+- (b) successive inputs sufficiently decorrelated (channel_capacity.md: spectral decay along mediation chains),
 
-on a compact group, a random walk whose step distribution generates the algebra converges to Haar measure. the expected pairwise distance under Haar is E[norm(W - I)_F] -> sqrt(2d) as d -> infinity (from E[norm(W - I)^2] = 2d, exact, and concentration of measure).
+then by the convergence theorem for random walks on compact groups, the distribution of foam states converges to Haar measure on U(d).
 
-the Haar cost — the ratio E_Haar[L] / L_achievable — is sqrt((N-1)/N), exact and depending only on N.
+the hypotheses are not automatically satisfied — in particular, "sufficiently decorrelated" means the mixing conditions of the compact-group convergence theorem; whether a specific mediation chain's decay rate satisfies them is open (see open/mixing_rate.md).
 
-the product: sqrt(N / (2(N-1))) * sqrt((N-1) / N) = **1/sqrt(2)**, independent of both N and d.
+**Haar cost.** under Haar measure, E[‖W − I‖_F]² = 2d (exact). the ratio E_Haar[L] / L_achievable is √((N − 1)/N), exact in N.
 
-the two factors — the packing constraint and the saturation gap — are two halves of the same fraction.
+**the 1/√2 product.** combining:
 
-**the trace is the readout.** trace_unique_of_kills_commutators: the trace is the unique scalar projection of a write. the overlap change tr(P * [W, P]) is visible on this channel. the observer has exactly one scalar readout, and it's this one.
+    √(N / (2(N − 1))) · √((N − 1)/N) = 1/√2
+
+independent of both N and d. this is the combinatorial ceiling times the Haar saturation ratio.
+
+**trace as scalar readout.** `trace_unique_of_kills_commutators`: trace is the unique (up to scalar) linear functional vanishing on all commutators. the overlap change tr(P · [W, P]) is visible on this channel — the single scalar observable of a write.
 
 ## status
 
-**proven** (in lean, zero sorry):
+**proven** (in lean, 0 sorry):
 - trace is the unique commutator-killing functional
-- observation interaction is traceless
+- [P, Q] is traceless
 
 **derived** (in this file):
-- L as boundary area on Voronoi tiling (from realization choice)
-- L is not a variational objective
-- the combinatorial ceiling (from Cauchy-Schwarz)
-- Haar convergence of the writing dynamics (from controllability + decorrelation + convergence theorem)
-- the Haar cost sqrt((N-1)/N)
-- 1/sqrt(2) as the product of ceiling and Haar cost, independent of N and d
-- the trace as the unique scalar readout for overlap changes
+- L as boundary area on the Voronoi tiling (given the Voronoi modeling choice)
+- L is not a variational objective (consequence of writes driving dynamics)
+- combinatorial ceiling √(N / (2(N − 1))) from Cauchy–Schwarz
+- Haar convergence under the cited hypotheses
+- Haar cost √((N − 1)/N)
+- product: 1/√2 independent of N, d
+- trace as the unique scalar readout
 
 **cited** (external mathematics):
 - Voronoi tiling on Riemannian manifolds
 - Haar measure on compact groups
 - convergence theorem for random walks on compact groups
-- Cauchy-Schwarz inequality
+- Cauchy–Schwarz
 
-**observed** (empirical, not derived here):
-- finite-d correction: E[norm(W-I)_F] / (2 sqrt(d)) = 0.694 at d=2, 0.707 at d=20
-- the foam's observed L/L_max is 1-3% above Haar prediction at finite run lengths (consistent with incomplete convergence)
-- L saturation behavior: saturates at ~72% of combinatorial ceiling, then wanders on a level set
-- saturation level independent of write scale epsilon
-- perpendicularity cost mechanism (write blindness): write direction uncorrelated with L gradient
-- write subspace is exactly 3D per observer (PCs 4+ zero to machine precision)
-- wandering at saturation has effective dimension ~2
-- state-space steps Gaussian (kurtosis ~3); L steps heavy-tailed (kurtosis ~7.7) — geometric feature of level set, not dynamical
+**observed in simulation** (not derived):
+- finite-d correction: E[‖W − I‖_F] / (2√d) = 0.694 at d = 2, 0.707 at d = 20
+- simulated L / L_max is 1–3% above the Haar prediction at finite run lengths (consistent with incomplete convergence)
+- saturation at ~72% of combinatorial ceiling in simulations, then wandering on a level set
+- saturation level independent of write scale ε in simulation
+- perpendicularity cost mechanism (write blindness): simulated write direction uncorrelated with L gradient
+- write subspace is exactly 3D per observer in simulation (PCs 4+ at machine precision zero)
+- wandering at saturation has effective dimension ~2 in simulation
+- simulated state-space steps are Gaussian (kurtosis ~ 3); L steps are heavy-tailed (kurtosis ~ 7.7) — interpreted as a geometric feature of the level set, not dynamical

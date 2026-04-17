@@ -2,75 +2,71 @@
 
 ## constraints
 
-this derivation claims only what follows from these results. any additional assumption is a bug.
+this derivation claims only what follows from these results.
 
 ### from lean (proven)
 
-- **commutator_skew_of_symmetric** (Form.lean): if P and Q are self-adjoint, [P, Q] is skew-symmetric. the interaction of two observations is a Lie algebra element.
-- **commutator_traceless** (Form.lean): tr[P, Q] = 0. interaction is invisible to the scalar channel.
-- **self_dual_iff_three** (Rank.lean): C(k, 2) = k iff k = 3. the write space and observation space have equal dimension only at rank 3.
-- **rank_three_writes** (Rank.lean): dim(Lambda^2(R^3)) = 3. a rank-3 observer has a 3D write space.
-- **cross_anticomm, cross_self_zero, cross_jacobi, cross_nontrivial** (Duality.lean): (R^3, cross) is a non-abelian Lie algebra. it IS so(3).
-- **write_confined_to_slice** (Confinement.lean): if d and m lie in the observer's subspace P, then d wedge m lies in Lambda^2(P). an observer cannot modify dimensions they are not bound to.
-- **commutator_seen_to_unseen** (Pair.lean): [P, Q] maps range(P) into ker(P). incompatibility sends the seen into the unseen.
-- **observation_preserved_by_dynamics** (Closure.lean): orthogonal conjugation preserves both P^2 = P and P^T = P.
+- **commutator_skew_of_symmetric** (Form.lean): if P and Q are self-adjoint, [P, Q] is skew-symmetric.
+- **commutator_traceless** (Form.lean): tr[P, Q] = 0.
+- **self_dual_iff_three** (Rank.lean): C(k, 2) = k iff k = 3.
+- **rank_three_writes** (Rank.lean): dim(Λ²(ℝ³)) = 3.
+- **cross_anticomm, cross_self_zero, cross_jacobi, cross_nontrivial** (Duality.lean): (ℝ³, ×) is a non-abelian Lie algebra (so(3)).
+- **write_confined_to_slice** (Confinement.lean): if d and m lie in the observer's subspace P, then d ∧ m lies in Λ²(P).
+- **commutator_seen_to_unseen** (Pair.lean): [P, Q] maps range(P) into ker(P).
+- **observation_preserved_by_dynamics** (Closure.lean): orthogonal conjugation preserves P² = P and Pᵀ = P.
 
 ### from mathematics (cited, not proven in lean)
 
-- **Taylor's theorem** (Jean Taylor, 1976): all stable junction configurations in R^3 are classified. 120-degree triple junctions (k = 3) and tetrahedral vertices (k = 4), nothing else. hypotheses: codimension-1 boundaries, locally area-minimizing, flat ambient space.
+- **Taylor's theorem** (Jean Taylor, 1976): classification of stable junction configurations in ℝ³ — 120° triple junctions (k = 3) and tetrahedral vertices (k = 4). hypotheses: codimension-1 boundaries, locally area-minimizing, flat ambient space.
 
 ## derivation
 
-**the write form.** given an observer with projection P (rank 3, self-adjoint, idempotent) measuring input v in R^d:
+**the write form.** given an observer with self-adjoint rank-3 projection P measuring input v ∈ ℝᵈ:
 
-1. the observer projects: m = P v (measurement, in the observer's R^3 slice).
-2. the observer has a stabilization target j2 (see below). dissonance is d = j2 - m.
-3. the write direction is d wedge m. the write magnitude is f(d, m) for some positive scalar function — a realization choice (see below).
+1. projection: m = Pv (the measurement, in P's slice).
+2. a stabilization target j₂ (see below). dissonance: d = j₂ − m.
+3. write direction: d ∧ m. write magnitude: f(d, m), a positive scalar function — a modeling choice (see below).
 
-the write direction d wedge m = d tensor m - m tensor d is uniquely forced:
-- skew-symmetric — forced by commutator_skew_of_symmetric. writes are Lie algebra elements because observation interaction is skew-symmetric.
-- confined to the observer's slice — forced by write_confined_to_slice. the observer sees only projected measurements; the write lives in Lambda^2(P).
-- confined to span{d, m} — d and m are the only vectors available from a single measurement step.
-- Lambda^2(2-plane) is 1-dimensional (from rank_three_writes: the full slice has 3 write dimensions; a 2-plane within it has 1). the direction is therefore unique.
+the write direction d ∧ m = d ⊗ m − m ⊗ d is determined up to sign:
+- skew-symmetric (`commutator_skew_of_symmetric`).
+- confined to Λ²(P) (`write_confined_to_slice`).
+- confined to span{d, m}: d and m are the only vectors available from one measurement step.
+- Λ²(2-plane) is 1-dimensional (from `rank_three_writes`: Λ²(ℝ³) has dim 3; a 2-plane within it contributes dim 1). the direction is unique up to sign.
 
-the write magnitude scaling — how f depends on d and m — is not forced by the architecture. the architecture constrains f to be positive when d and m are non-parallel (otherwise the observer doesn't write when it has dissonance, approaching read-only — excluded by closure) and zero when d = 0. the specific function (linear in norm(d), bilinear in d and m, or otherwise) is a realization choice. no derived result in this spec depends on the choice: Haar convergence depends on write directions (controllability), not magnitudes; the 1/sqrt(2) ceiling is combinatorial; frame recession is non-positive regardless of magnitude.
+the magnitude f(d, m) is not determined by this derivation. none of the downstream results below depend on its specific form: Haar convergence (geometry.md) depends on controllability of write *directions*, not magnitudes; the 1/√2 ceiling is combinatorial; frame recession is non-positive regardless of magnitude.
 
-**perpendicularity.** the wedge product vanishes when its arguments are parallel and is maximal when orthogonal. this is not a design choice — it is the write form. confirmation cannot write (cross_self_zero: a cross a = 0). the foam responds only to what's missing at right angles to what's there.
+**perpendicularity.** the wedge product vanishes on parallel arguments (`cross_self_zero`: a × a = 0) and is maximal on orthogonal ones. this follows from the form.
 
-**stabilization.** closure requires basis commitment (each frame is partial). self_dual_iff_three proves rank 3 is the unique dimension where the write space matches the observation space (per-observer self-duality). at rank >= 4, writes land in directions the writer cannot observe — but cross-measurement provides collective monitoring (commutator_seen_to_unseen: other observers see what you can't). per-observer self-duality is a property of rank 3, not a requirement derived from closure. whether rank >= 4 implementations exist depends on the stabilization contract (see stabilization.md).
+**stabilization target.** this derivation takes the stabilization target as input from stabilization.md. within the stipulated ℝ³ slice and Taylor's classification, the target j₂ is the regular-simplex cosine −1/(k − 1) for local coordination number k ∈ {3, 4}. everything upstream of this paragraph — the wedge form, its confinement, skew-symmetry — is independent of the stabilization choice.
 
-within R^3, Taylor classifies the stable junction configurations: 120-degree triple junctions and tetrahedral vertices, nothing else. Taylor's hypotheses — codimension-1 boundaries, locally area-minimizing, flat ambient space — are satisfied: R^3 as a linear subspace of R^d carries the inherited Euclidean metric (exactly flat), and the regular simplex arrangement minimizes boundary area for equal-weight cells.
+**flat/curved separation.** writes land in U(d) (curved: sectional curvature K(X, Y) = ¼‖[X, Y]‖²). the stabilization classification (Taylor) is stated over flat ℝ³. `observation_preserved_by_dynamics` shows the write (orthogonal conjugation) preserves the projection structure, so the ℝ³ slice persists under write. the classification in ℝ³ and the dynamics in U(d) therefore operate on different geometric objects by construction.
 
-the stabilization target j2 is the regular simplex cosine -1/(k-1) where k is the local coordination number (k = 3 or k = 4, from Taylor).
+**confinement.** both d and m lie in the observer's slice. `write_confined_to_slice` gives d ∧ m ∈ Λ²(P). an observer's write cannot have components outside P. cross-observer effects come through `commutator_seen_to_unseen` (the commutator [W, P_A] has nonzero components mapping A's range to A's kernel), not through direct action on A's complement.
 
-**the flat/curved separation.** writes land in U(d) (curved: sectional curvature K(X,Y) = 1/4 * norm([X,Y])^2). stabilization runs in R^3 (flat). the observer sees only their projected measurements. observation_preserved_by_dynamics guarantees the write (an orthogonal conjugation) preserves the projection structure. the separation is forced: stabilization cannot run on U(d) because classification requires flat ambient space.
-
-**confinement.** both d and m lie in the observer's slice. write_confined_to_slice proves the write d wedge m is confined to Lambda^2(P). an observer literally cannot modify dimensions they are not bound to. the write's effect on other observers comes through cross-measurement (commutator_seen_to_unseen: incompatibility sends the seen into the unseen), not through direct modification of their subspaces.
-
-**the writing map's type signature.** the map is a function of (foam_state, input). neither alone determines the write. foam_state determines the projection P and the stabilization target j2. input determines v. the dissonance d = j2 - Pv requires both.
+**two-argument signature.** the write is a function of (foam_state, input). foam_state determines P and j₂; input determines v. both are needed to form d = j₂ − Pv.
 
 ## status
 
-**proven** (in lean, zero sorry):
+**proven** (in lean, 0 sorry):
 - skew-symmetry of the write form
-- tracelessness of observation interaction
-- rank 3 as the unique self-dual dimension
-- confinement to the observer's slice
+- tracelessness of [P, Q]
+- rank 3 as the unique dimension with Λ²(ℝ³) ≅ ℝ³ (self_dual_iff_three)
+- confinement to observer's slice
 - dynamics preserve the ground
 
-**derived** (in this file, from the above):
-- d wedge m as the unique write direction (from skew-symmetry + confinement + 1D of Lambda^2(2-plane))
-- perpendicularity as the write form's intrinsic property
-- the flat/curved separation
-- the writing map's two-argument type signature
+**derived** (in this file):
+- d ∧ m as the unique (up to sign) write direction, from skew + confinement + 1D of Λ²(2-plane)
+- perpendicularity as a property of the wedge form
+- flat/curved separation as a consequence of observation_preserved_by_dynamics plus the stabilization classification being stated in flat ℝ³
 
-**realization choices** (not forced by closure):
-- the write magnitude scaling f(d, m) — constrained to be positive when dissonance is non-parallel to measurement, zero at zero dissonance, but the specific function is not determined by the architecture
+**modeling choices** (not forced):
+- the magnitude scaling f(d, m). no downstream result uses its specific form.
+- the stabilization target. taken as input from stabilization.md; stated there as dependent on the D = ℝ + Taylor stipulation.
 
 **cited** (external mathematics):
-- Taylor's classification of stable junctions in R^3
+- Taylor's classification of stable junctions in ℝ³
 
-**observed** (empirical, not derived here):
-- perpendicular writes are the unique *navigable* constraint (distinguishability + stability)
-- the perpendicularity cost mechanism (write blindness)
-- within-slice variance departure from isotropy (45:30:25 vs 33:33:33)
+**observed in simulation** (not derived):
+- perpendicular writes are the unique navigable constraint under the simulated dynamics (distinguishability + stability)
+- the perpendicularity cost mechanism (write blindness) in simulation runs
+- within-slice variance departs from isotropy in simulation (45:30:25 rather than 33:33:33)

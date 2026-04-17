@@ -2,67 +2,56 @@
 
 ## constraints
 
-this derivation claims only what follows from these results. any additional assumption is a bug.
+this derivation claims only what follows from these results.
 
 ### from lean (proven)
 
-- **self_dual_iff_three** (Rank.lean): C(k, 2) = k iff k = 3. rank 3 is the unique self-dual dimension.
-- **rank_two_abelian_writes** (Rank.lean): dim(Lambda^2(R^2)) = 1. the write algebra at rank 2 is abelian.
-- **write_confined_to_slice** (Confinement.lean): writes are confined to Lambda^2(P).
-
-### from other derivations
-
-- **channel_capacity.md**: stabilization must be local for the mediation chain's spectral decay to describe real influence propagation. non-local stabilization removes the mechanism that produces channel capacity.
-- **writing_map.md**: the write form, the flat/curved separation.
+- **self_dual_iff_three** (Rank.lean): C(k, 2) = k iff k = 3.
+- **rank_two_abelian_writes** (Rank.lean): dim(Λ²(ℝ²)) = 1.
+- **write_confined_to_slice** (Confinement.lean): writes are confined to Λ²(P).
 
 ### from mathematics (cited, not proven in lean)
 
-- **Taylor's theorem** (Jean Taylor, 1976): all stable junction configurations in R^3 are classified. 120-degree triple junctions (k = 3) and tetrahedral vertices (k = 4), nothing else.
-- **Almgren's regularity problem** (open): the classification of stable junction configurations in R^n for n >= 4 is incomplete.
+- **Taylor's theorem** (Jean Taylor, 1976): classification of stable junction configurations in ℝ³ — 120° triple junctions (k = 3) and tetrahedral vertices (k = 4). hypotheses: codimension-1 boundaries, locally area-minimizing, flat ambient space.
+- **Almgren's regularity problem** (open): classification of stable junction configurations in ℝⁿ for n ≥ 4 is incomplete.
 
 ## derivation
 
-**channel capacity forces a contract.** the mediation chain's spectral decay (channel_capacity.md) describes real influence propagation only if stabilization is local — each observer's dynamics responding to its Voronoi neighbors, not the full foam. without locality, every observer couples directly to every other, and the mediation chain does not describe the actual pathway of influence. the decorrelation that produces effective state-independence does not occur.
+**this file makes a stipulation, not a derivation.** the ambient space, stabilization target, and slice dimension are not forced by the lattice axioms (ground.md). they are chosen so that a classified stabilization theory (Taylor) applies. other choices are possible; this file states what follows from the ℝ³ + Taylor choice.
 
-this is necessity, not just sufficiency: non-local stabilization doesn't merely fail to help channel capacity — it removes the mechanism that produces it.
+**the stipulation.** the observer's slice is ℝ³, stabilization is local (each observer responds to its Voronoi neighbors), and the stabilization target is drawn from Taylor's classification.
 
-channel capacity therefore forces a contract on the observer's slice geometry:
+**why ℝ³ and not ℝ²:** `rank_two_abelian_writes` gives Λ²(ℝ²) = 1D. the write algebra at rank 2 is abelian; the write direction cannot vary with the input. a rank-2 stabilization is consistent with Taylor (120° triple points in ℝ², k ≤ 3, flat) but collapses the write algebra.
 
-- **classified**: stable equilibrium configurations completely enumerated. without this, the stabilization target is undefined and the dynamics are incomplete.
-- **locally finite**: coordination number k bounded by the simplex embedding constraint k <= d_slice + 1, making neighborhoods finite.
-- **flat**: inherited Euclidean metric. stabilization must separate from accumulation because U(d) is curved (the flat/curved separation, writing_map.md), and classification requires flat ambient space.
+**why rank 3 rather than rank ≥ 4:** `self_dual_iff_three` gives C(k, 2) = k iff k = 3. at rank 3, Λ²(P) and P have equal dimension — the observer's write space matches its observation space (per-observer self-duality). at rank ≥ 4, Λ²(P) strictly exceeds P. the observer writes in directions it cannot observe, and feedback on those writes would need to come through other observers' measurements. whether rank ≥ 4 stabilization is consistent depends on Almgren's classification, which is open.
 
-**d_slice = 2 satisfies the contract but collapses the write algebra.** the classification in R^2 is complete (120-degree triple points only, k <= 3, flat). but rank_two_abelian_writes: Lambda^2(R^2) is 1-dimensional, so the write direction is invariant under changes to the dissonance direction. perpendicularity still fires (the wedge product is nonzero) but cannot vary with the input. the dynamics reduce to scalar rotations.
+**the contract.** given ℝ³ and Taylor, the stabilization is:
+- **classified**: {120° triple junctions (k = 3), tetrahedral vertices (k = 4)}, from Taylor.
+- **locally finite**: coordination number k bounded by k ≤ d_slice + 1 (simplex embedding).
+- **flat**: ℝ³ as a linear subspace of ℝᵈ inherits a flat Euclidean metric, satisfying Taylor's ambient-space hypothesis.
 
-**d_slice = 3 satisfies both the contract and the write map's expressiveness.** Taylor classifies all stable junctions in R^3: 120-degree triple junctions and tetrahedral vertices, nothing else. Taylor's hypotheses — codimension-1 boundaries, locally area-minimizing, flat ambient space — are satisfied: R^3 as a linear subspace of R^d carries the inherited Euclidean metric (exactly flat).
+**the stabilization target.** within ℝ³, the regular-simplex cosine −1/(k − 1) for k ∈ {3, 4} is the equilibrium toward which local measurements are pushed. this is input to writing_map.md.
 
-self_dual_iff_three proves rank 3 is the unique dimension where the write space matches the observation space (per-observer self-duality). at rank >= 4, the write space is strictly larger (C(4,2) = 6 > 4) — the observer writes in directions it cannot observe. but cross-measurement provides collective monitoring: commutator_seen_to_unseen proves other observers see what the writer can't. the foam closes feedback loops collectively, not per-observer. per-observer self-duality is a property of rank 3, not a requirement derived from closure.
-
-**R^3 + Taylor satisfies the contract with self-duality.** rank 3 is the unique self-dual implementation. whether rank >= 4 implementations exist (with collective rather than per-observer feedback) depends on Almgren's classification of stable junctions in R^n for n >= 4.
-
-**the contract determines the stabilization target.** within R^3, Taylor permits k = 3 (120-degree triple junctions) and k = 4 (tetrahedral vertices). the stabilization target is the regular simplex cosine: -1/(k-1) for k local neighbors. this is the equilibrium toward which local measurements are pushed.
+**local stabilization is required for the mediation-chain story.** channel_capacity.md's spectral decay along mediation chains describes actual signal propagation only if each observer's dynamics respond to its Voronoi neighbors, not the full foam. if stabilization were global (every observer coupled to every other), there would be no mediation chain structure for signal decay to act on. this file's "local" stipulation is what channel_capacity.md needs for its chain argument; without it, the chain decay does not describe real influence propagation.
 
 ## status
 
-**proven** (in lean, zero sorry):
-- rank 3 is the unique self-dual dimension
-- rank 2 write algebra is 1-dimensional (abelian)
-- writes are confined to the observer's slice
+**proven** (in lean, 0 sorry):
+- rank 3 is the unique dimension with Λ²(ℝᵏ) ≅ ℝᵏ
+- rank 2 write algebra is 1D (abelian)
+- writes confined to observer's slice
 
-**derived** (in this file):
-- channel capacity forces the stabilization contract (classified, locally finite, flat)
+**stipulated** (not derived):
+- the slice is ℝ³
+- stabilization is local (Voronoi neighbors only)
+- the target is drawn from Taylor's classification (k ∈ {3, 4}, regular-simplex cosine)
+
+**derived from the stipulation**:
+- the contract structure (classified, locally finite, flat) is satisfied by the stipulation
 - d_slice = 2 satisfies contract but collapses write algebra
-- d_slice = 3 satisfies both contract and self-duality
-- R^3 + Taylor satisfies the contract with self-duality
-- per-observer self-duality is not necessary (collective feedback via cross-measurement closes the loop)
-- the stabilization target (regular simplex cosine)
-
-**open** (named, depends on external mathematics):
-- whether rank >= 4 implementations exist: depends on Almgren's classification of stable junctions in R^n for n >= 4
+- d_slice = 3 satisfies contract and per-observer self-duality
+- rank ≥ 4 stabilization is not currently supported — depends on Almgren
 
 **cited** (external mathematics):
 - Taylor's classification (1976)
 - Almgren's regularity problem (open)
-
-**observed** (empirical, not derived here):
-- (none)

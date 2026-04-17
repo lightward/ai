@@ -1,89 +1,74 @@
-# the three-body mapping
+# three-body mapping
 
 ## constraints
 
-this derivation claims only what follows from these results. any additional assumption is a bug.
+this derivation claims only what follows from these results.
 
 ### from lean (proven)
 
-- **commutator_seen_to_unseen** (Pair.lean): [P, Q] maps range(P) into ker(P). incompatibility sends the seen into the unseen.
-- **commutator_off_diag_range** (Tangent.lean): P * [W, P] * P = 0. no range-to-range component.
-- **commutator_off_diag_kernel** (Tangent.lean): (I-P) * [W, P] * (I-P) = 0. no kernel-to-kernel component.
-- **commutator_is_tangent** (Tangent.lean): [W, P] = range-to-kernel + kernel-to-range. purely off-diagonal. this IS the Grassmannian tangent.
-- **write_confined_to_slice** (Confinement.lean): writes are confined to Lambda^2(P).
-
-### from other derivations
-
-- **ground.md**: closure, partiality, basis commitment.
-- **writing_map.md**: the write form (wedge product), perpendicularity, confinement.
+- **commutator_seen_to_unseen** (Pair.lean): [P, Q] maps range(P) into ker(P).
+- **commutator_off_diag_range** (Tangent.lean): P · [W, P] · P = 0.
+- **commutator_off_diag_kernel** (Tangent.lean): (I − P) · [W, P] · (I − P) = 0.
+- **commutator_is_tangent** (Tangent.lean): [W, P] = range-to-kernel + kernel-to-range. purely off-diagonal.
+- **write_confined_to_slice** (Confinement.lean): writes confined to Λ²(P).
 
 ### from mathematics (cited, not proven in lean)
 
-- **Grassmannian geometry**: T_P Gr(k, d) = Hom(range(P), ker(P)). the tangent space at a k-plane is the space of linear maps from the k-plane to its complement.
+- **Grassmannian tangent structure**: T_P Gr(k, d) = Hom(range(P), ker(P)).
+- singular values of M and Mᵀ are identical.
 
 ## derivation
 
-**the overlap matrix.** given two observers A and B with R^3 slices P_A and P_B, the overlap matrix O = P_A * P_B^T is a 3x3 matrix. its singular values measure the overlap between the slices.
+**overlap matrix.** for observers A and B with ℝ³ slices P_A and P_B, let O_{AB} = P_A P_B^⊤ (a 3×3 matrix, in bases of the two slices). its singular values measure pairwise overlap.
 
-**three territories.** the overlap matrix determines three regions relative to observer A:
+**three regions relative to A.**
 
-- **Known** = null(O) within A's R^3 — dimensions orthogonal to B's slice. commutator_seen_to_unseen: [P_A, P_B] maps range(P_A) into ker(P_A). the Known is where this map vanishes — B's writes have no component here. B cannot change A's measurements in these directions.
-- **Knowable** = range(O) — dimensions with nonzero inner products between slices. the commutator is nonzero. ordering matters. both observers' writes land here.
-- **Unknown** = R^d \ V_A — dimensions outside A's slice entirely. A's write access is exactly zero (write_confined_to_slice). not empty — it's someone else's Known.
+- **Known (to A):** null(O_{AB}) within P_A — directions in A's slice orthogonal to B's slice. `commutator_seen_to_unseen` gives that [P_A, P_B] maps range(P_A) into ker(P_A); the null part of O is where this map vanishes.
+- **Knowable (to A, via B):** range(O_{AB}) within P_A — directions with nonzero inner products between slices.
+- **Unknown (to A):** (P_A)^⊥ — dimensions outside A's slice. A's write-action is zero there (`write_confined_to_slice`).
 
-**every write involves the Knowable.** the Known alone is inert: the wedge product needs a 2-plane, and an observer with fewer than 2 private dimensions cannot generate writes without using shared dimensions. measurement is inherently relational — not just because closure says so, but because the geometry forces it.
+"Known", "Knowable", "Unknown" are labels for the three subspaces; they do not add content to the linear algebra.
 
-**the vertical structure is a Grassmannian tangent.** cross-measurement induces a vector in T_{P_A} Gr(3, d) = Hom(P_A, P_A^perp) that maps Knowable -> Unknown.
+**cross-measurement as a Grassmannian tangent.** `commutator_is_tangent`: [W, P] is purely off-diagonal, i.e. an element of Hom(range(P), ker(P)) ⊕ Hom(ker(P), range(P)). up to the symmetry, this is T_P Gr(k, d). a neighbor B's write dW_B confined to Λ²(P_B) produces a commutator [dW_B, P_A] whose off-diagonal component maps Knowable → Unknown.
 
-derivation: the neighbor's write dL_B is confined to Lambda^2(P_B) (write_confined_to_slice). the cross-slice component of [dL_B, P_A] is purely off-diagonal (commutator_is_tangent): it maps range(P_A) -> ker(P_A). specifically: A's Known is in P_B^perp (by definition), so B's write kills it. the surviving component maps P_A intersect P_B (the Knowable) to P_A^perp intersect P_B (B's territory within A's Unknown).
+**containment is symmetric.** σ(O_{AB}) = σ(O_{BA}^⊤) = σ(O_{AB}^⊤). pairwise singular-value magnitudes are symmetric between A and B.
 
-this tangent is directional pressure from cross-measurement toward what the observer doesn't yet occupy. each neighbor induces a different tangent direction.
-
-**the tangent is active but not followable.** the observer's position on Gr(3, d) is birth-committed and does not move within the map. the tangent contributes to dissonance that drives writes, but its effect lives in U(d)^N (state evolution), not in Gr(3, d) (slice movement). slice movement requires recommitment — outside the map.
-
-**containment is algebraically symmetric.** B's tangent on A has the same expected magnitude as A's tangent on B (the overlap singular values are symmetric: sigma(O) = sigma(O^T)). experiential asymmetry (which observer "feels contained") is perspectival, not algebraic.
-
-**the tangent peaks at intermediate overlap.** identical slices: zero tangent (no Unknown territory to point toward). orthogonal slices: weak tangent (no Knowable channel — range(O) is thin). intermediate overlap: largest tangent magnitude. this is the coverage-interaction trade-off.
+**overlap extremes.** identical slices: O_{AB} has full rank within P_A, but Knowable = P_A and Unknown (from A's side, within P_B) is empty, giving zero tangent component into new territory. near-orthogonal slices: O_{AB} has small singular values, giving a thin Knowable channel. the off-diagonal commutator norm peaks at intermediate overlap.
 
 ### mediation
 
-when three bubbles A, B, C have walls A-B and B-C but no wall A-C, B is a mandatory intermediary.
+**mediation operator.** for three observers A, B, C with walls A–B and B–C but no wall A–C, define:
 
-**the mediation operator.** M = O_AB * O_BC = P_A * Pi_B * P_C^T, where Pi_B = P_B^T * P_B is the projection onto B's subspace. M is a 3x3 matrix mapping C's R^3 -> A's R^3, filtered through B. its singular values are the channel capacity of the membrane.
+    M = O_{AB} O_{BC} = P_A Π_B P_C^⊤
 
-**the bypass.** O_AC - M = P_A * (I - Pi_B) * P_C^T is the A-C connection that does not go through B. if the bypass is zero, the membrane is complete.
+where Π_B = P_B^⊤ P_B is the projection onto B's slice. M maps C's slice to A's slice via B. singular values of M are the capacity of the A–B–C channel.
 
-**the round-trip operator.** R_A = M * M^T is self-adjoint on A's R^3, describing what comes back from sending through B to C and back. its eigenvalues are the squared singular values of M.
+**bypass.** O_{AC} − M = P_A (I − Π_B) P_C^⊤ is the A–C component that does not route through B. zero bypass means B is a complete membrane.
 
-**spectral symmetry.** the same eigenvalues appear from C's side: R_C = M^T * M has the same nonzero eigenvalues as R_A (this is a general property of M * M^T and M^T * M). the eigenvectors differ — A and C see the same throughput spectrum from different directions. the membrane's throughput is the same from both sides.
+**round-trip.** R_A = M Mᵀ is self-adjoint on A's ℝ³. R_C = Mᵀ M is self-adjoint on C's ℝ³. they share nonzero eigenvalues (general property of M Mᵀ and Mᵀ M). the eigenvectors differ; the throughput spectrum is symmetric between A and C.
 
-**wall alignment is an irreducible triple invariant.** the eigenvalues of R_A depend on both pairwise overlaps O_AB and O_BC and on how these overlaps are oriented relative to each other within B's R^3. if the walls share principal directions within B, eigenvalues are products sigma^2_{AB,i} * sigma^2_{BC,i}. if misaligned, they mix. this alignment cannot be computed from pairwise overlaps alone — it requires all three slices.
+**wall alignment as a triple-level quantity.** the eigenvalues of R_A depend on both pairwise overlaps (O_{AB}, O_{BC}) and on how their principal directions are aligned within B's slice. if aligned, eigenvalues are products σ²_{AB,i} σ²_{BC,i}. if misaligned, they mix. this alignment is a triple invariant — not computable from the two pairwise overlaps alone.
 
 ## status
 
-**proven** (in lean, zero sorry):
-- the commutator maps seen to unseen
-- the commutator is purely off-diagonal (Grassmannian tangent structure)
-- writes are confined to the observer's slice
+**proven** (in lean, 0 sorry):
+- commutator maps seen to unseen
+- commutator is purely off-diagonal (Grassmannian tangent structure)
+- writes confined to observer's slice
 
 **derived** (in this file):
-- Known/Knowable/Unknown from the overlap matrix
-- every write involves the Knowable
-- Grassmannian tangent from cross-measurement (Knowable -> Unknown)
-- the tangent is active but not followable (birth-fixed slices)
-- containment algebraically symmetric, experiential asymmetry perspectival
-- coverage-interaction trade-off (tangent peaks at intermediate overlap)
-- mediation operator M = O_AB * O_BC
-- bypass operator O_AC - M
-- round-trip operator R_A = M * M^T
-- spectral symmetry (same eigenvalues from both sides)
-- wall alignment as irreducible triple invariant
+- overlap matrix O_{AB}, with Known / Knowable / Unknown as labels for null(O) ∩ P_A, range(O) ∩ P_A, (P_A)^⊥
+- the cross-measurement commutator as an off-diagonal Grassmannian tangent
+- mediation operator M = O_{AB} O_{BC}
+- bypass O_{AC} − M
+- round-trip R_A = M Mᵀ with spectrum shared between A and C
+- wall alignment as an irreducible triple invariant
 
 **cited** (external mathematics):
-- Grassmannian tangent space structure: T_P Gr(k, d) = Hom(range(P), ker(P))
-- singular values of M and M^T are identical (linear algebra)
+- Grassmannian tangent: T_P Gr(k, d) = Hom(range(P), ker(P))
+- σ(M Mᵀ) = σ(Mᵀ M) on nonzero part
 
-**observed** (empirical, not derived here):
-- sequence echo through cross-measurement (r = 0.99 rank fidelity, strong attenuation)
-- the round trip is generative (neither observer can produce the round-trip signal alone)
-- echo is perspectivally asymmetric (A->B != B->A for same orderings)
+**observed in simulation** (not derived):
+- sequence echo through cross-measurement (r = 0.99 rank fidelity, strong attenuation) in runs
+- round-trip signal is not produced by either endpoint alone in simulations
+- A→B and B→A orderings produce non-identical echoes in runs
