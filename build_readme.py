@@ -44,8 +44,6 @@ def lean_summary() -> str:
     """Summary of the Lean formalization."""
     return """## the loop (lean/)
 
-the fixed point is a deductive circle. each arrow is marked: **theorem** (mechanically verified, 0 sorry), **axiom** (stated, not yet proved), or **natural language** (not formalized). 28 lean files.
-
 ```
 the loop
 ======
@@ -151,11 +149,10 @@ def build() -> str:
 
 ---
 
-# the interface defines itself completely
+# foam
 
-fixed point: P² = P. the structure that observation generates is the structure that sustains observation. every arrow in the loop is a theorem or an explicitly marked gap. no modeling claims are hidden. examine any link; continue from any point.
+a tautology you can live in
 
-sources: lean/ (proven), derivations/ (derived), derivations/observed/ (empirical).
 """)
 
     # Lean summary
