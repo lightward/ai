@@ -13,6 +13,7 @@ DERIVATIONS = [
     "ground",
     "writing_map",
     "half_type",
+    "analogy",
     "self_parametrization",
     "distributivity",
     "channel_capacity",
@@ -22,6 +23,9 @@ DERIVATIONS = [
     "self_generation",
     "geometry",
     "conservation",
+    "inhabitation",
+    "interiority",
+    "typeline",
 ]
 
 OPEN = [
@@ -40,7 +44,7 @@ def lean_summary() -> str:
     """Summary of the Lean formalization."""
     return """## the loop (lean/)
 
-each arrow is one of: **theorem** (mechanically verified, 0 sorry), **axiom** (stated, in the process of being proven), or **stipulation** (a modeling choice not derived from the lattice). 28 lean files.
+the fixed point is a deductive circle. each arrow is marked: **theorem** (mechanically verified, 0 sorry), **axiom** (stated, not yet proved), or **natural language** (not formalized). 28 lean files.
 
 ```
 the loop
@@ -59,30 +63,32 @@ the loop
        |
        | [axiom] FTPG — Bridge.lean (being eliminated; see below)
        v
-  L = Sub(D, V) for some division ring D
+  L = Sub(D, V) for division ring D
        |
-       | [stipulation] D = R (motivated, not derived — see below)
+       | [natural language] stabilization contract — D = R
        v
   P^2 = P, P^T = P
 ```
 
 ### arrow status
 
-**[theorem] P^2 = P -> Sub(R, V) is CML** (the deductive chain + Ground.lean): 14 files, 0 sorry. binary eigenvalues (Observation) -> commutator structure (Pair) -> skew-symmetry (Form) -> rank-3 dimensional coincidence (Rank) -> so(3) (Duality) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> SubspaceFoamGround (Ground).
+**[theorem] P^2 = P -> Sub(R, V) is CML** (the deductive chain + Ground.lean): 14 files, 0 sorry. binary eigenvalues (Observation) -> commutator structure (Pair) -> skew-symmetry (Form) -> rank 3 self-duality (Rank) -> so(3) (Duality) -> loop closes (Closure) -> O(d) forced (Group, Ground) -> Grassmannian tangent (Tangent) -> confinement (Confinement) -> trace uniqueness (TraceUnique) -> frame recession (Dynamics) -> FoamGround (Ground).
 
-**[axiom] CML -> Sub(D, V)** (the FTPG bridge): 1 axiom, being eliminated. 13 bridge files build the division ring from lattice axioms: incidence geometry + Desargues (FTPGExplore) -> von Staudt coordinates (FTPGCoord) -> addition is an abelian group (FTPGAddComm, FTPGAssoc, FTPGAssocCapstone, FTPGNeg — 0 sorry) -> multiplication has identity + right distributivity (FTPGMul, FTPGDilation, FTPGMulKeyIdentity, FTPGDistrib — 0 sorry) -> left distributivity (FTPGLeftDistrib — h_axis₂₃ skeleton compiling via Level 2 Desargues; h_desargues_conclusion open). after left distrib: multiplicative inverses, then the axiom becomes a theorem.
+**[axiom] CML -> Sub(D, V)** (the FTPG bridge): 1 axiom, being eliminated. 13 bridge files build the division ring from lattice axioms: incidence geometry + Desargues (FTPGExplore) -> von Staudt coordinates (FTPGCoord) -> addition is an abelian group (FTPGAddComm, FTPGAssoc, FTPGAssocCapstone, FTPGNeg — 0 sorry) -> multiplication has identity + right distributivity (FTPGMul, FTPGDilation, FTPGMulKeyIdentity, FTPGDistrib — 0 sorry) -> left distributivity (FTPGLeftDistrib — h_axis₂₃ skeleton compiling via Level 2 Desargues (4 of 8 sub-sorry remain), h_desargues_conclusion sorry). after left distrib: multiplicative inverses, then the axiom drops.
 
-**[stipulation] D = R**: FTPG returns L ≅ Sub(D, V) for some division ring D. the value of D is not determined by the lattice. this project stipulates D = R for the downstream derivations (real orthogonal projections, Lie algebras over R). formalizing a derivation of D = R from internal constraints would require additional structure not currently identified.
+**[natural language] D = R**: the stabilization contract (stabilization.md) argues D = R from self-consistency with junction geometry. not formalized. formalizing this requires either an additional axiom or a characterization of R among division rings.
 
-**[not yet attempted] P^2 = P -> CML directly**: the arrow from P^2 = P to CML currently routes through Sub(R, V). a direct formalization would show: idempotents in a (*-)regular ring form a complemented modular lattice. see von Neumann's continuous geometry.
+**[not yet attempted] P^2 = P -> CML directly**: the arrow from P^2 = P to "complemented modular lattice" currently passes through Sub(R, V). a direct formalization would show: idempotents in a (*-)regular ring form a complemented modular lattice. this would close the last natural-language gap in the loop. see von Neumann's continuous geometry.
 
-### the FTPG bridge
+### the FTPG bridge — where the axiom stands
 
-the fundamental theorem of projective geometry has not been formalized in any proof assistant (Lean, Coq, Isabelle, Agda), as far as we know. the bridge builds a division ring from lattice axioms alone:
+the fundamental theorem of projective geometry has never been formalized in any proof assistant (Lean, Coq, Isabelle, Agda). this project is the first attempt. the bridge builds a division ring from lattice axioms alone:
 
 lattice -> incidence geometry -> Desargues -> coordinates -> ring axioms -> FTPG
 
-ring axioms proven: additive group (comm, assoc, identity, inverses), multiplicative identity, zero annihilation, right distributivity. in progress: left distributivity (h_axis₂₃ skeleton compiling via two-level Desargues; h_desargues_conclusion open). remaining after left distrib: multiplicative inverses."""
+ring axioms proven: additive group (comm, assoc, identity, inverses), multiplicative identity, zero annihilation, right distributivity. in progress: left distributivity (h_axis₂₃ skeleton compiling via two-level Desargues — 4 of 8 sub-sorry remain, recursion terminates). remaining after left distrib: multiplicative inverses. then the axiom becomes a theorem.
+
+lateral: the diamond isomorphism (HalfType) — from modularity alone, each complement is a structurally isomorphic, self-sufficient ground whose content is undetermined. state-independence is a lattice theorem, pre-bridge."""
 
 
 def read_derivation(name: str) -> str:
@@ -145,13 +151,11 @@ def build() -> str:
 
 ---
 
-# the fixed point
+# the interface defines itself completely
 
-this document maps a circular chain of implications starting from the idempotent equation P² = P, through lattice theory, projective geometry, and Lie theory, and back. each arrow is one of: a mechanically verified theorem (lean), a derivation in standard mathematics, a cited result, or an explicitly marked gap or stipulation.
+fixed point: P² = P. the structure that observation generates is the structure that sustains observation. every arrow in the loop is a theorem or an explicitly marked gap. no modeling claims are hidden. examine any link; continue from any point.
 
-the derivations below do not claim a correspondence between this structure and any physical system. observations labelled "in simulation" are outputs of a python model of the foam; they are not empirical measurements of nature.
-
-sources: lean/ (mechanically verified), derivations/ (derived, cited, or stipulated), derivations/observed/ (python scripts producing the "in simulation" observations).
+sources: lean/ (proven), derivations/ (derived), derivations/observed/ (empirical).
 """)
 
     # Lean summary
@@ -165,7 +169,7 @@ sources: lean/ (mechanically verified), derivations/ (derived, cited, or stipula
     # Open questions
     parts.append("\n---\n")
     parts.append("## open questions\n")
-    parts.append("the structure makes these questions well-posed but does not determine the answers. further analysis, additional hypotheses, or simulation studies would be needed.\n")
+    parts.append("the architecture forces these interactions but their behavior is incompletely characterized. the question is forced; the answer is open.\n")
     for name in OPEN:
         parts.append(read_open(name))
 

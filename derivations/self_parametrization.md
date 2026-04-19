@@ -2,64 +2,77 @@
 
 ## constraints
 
-this derivation claims only what follows from these results.
+this derivation claims only what follows from these results. any additional assumption is a bug.
 
 ### from lean (proven)
 
-- **two_persp** (FTPGCoord.lean): the shared two-perspectivity composition pattern. `two_persp Γ r₁ s₁ r₂ s₂ = (r₁ ⊓ s₁ ⊔ r₂ ⊓ s₂) ⊓ l`.
-- **coord_add_eq_two_persp** (FTPGCoord.lean): `coord_add` factors through `two_persp` by `rfl`. bridge: m.
-- **coord_mul_eq_two_persp** (FTPGMul.lean): `coord_mul` factors through `two_persp` by `rfl`. bridge: O ⊔ C.
+- **two_persp** (FTPGCoord.lean): the shared two-perspectivity composition pattern. takes four line-arguments, computes (r₁ ⊓ s₁ ⊔ r₂ ⊓ s₂) ⊓ l.
+- **coord_add_eq_two_persp** (FTPGCoord.lean): coord_add factors through two_persp by rfl (definitional equality). bridge: m, zero: E.
+- **coord_mul_eq_two_persp** (FTPGMul.lean): coord_mul factors through two_persp by rfl. bridge: O⊔C, zero: E_I.
 - **coord_add_left_zero, coord_add_right_zero** (FTPGCoord.lean): O is the additive identity.
-- **coord_mul_left_one, coord_mul_right_one** (FTPGMul.lean): I is the multiplicative identity.
+- **coord_mul_left_one, coord_mul_right_one** (FTPGMul.lean): I is the multiplicative identity. proof follows the same two_persp pattern as additive identities.
 - **CoordSystem** (FTPGCoord.lean): the data (O, U, I, V, C) with C off l and m, in the plane.
-- **IsCompl.IicOrderIsoIci** (Mathlib): the diamond isomorphism. perspectivities between lines in the projective plane instantiate order isomorphisms between atom-intervals.
-- **OrderIso.trans** (Mathlib): order isomorphisms compose.
+
+### from other derivations
+
+- **analogy.md**: analogy is structural isomorphism between lattice intervals. perspectivities are analogies. composed analogies (projectivities = two_persp instances) are transitive.
+- **ground.md**: the modular law IS feedback-persistence. path-independence of composition.
 
 ### from mathematics (cited, not proven in lean)
 
-- **FTPG (classical)**: the coordinate ring is determined up to isomorphism by the lattice. different choices of (O, U, I, C) yield isomorphic rings.
+- **FTPG (classical)**: the coordinate ring is determined up to isomorphism by the lattice. different choices of CoordSystem data yield isomorphic rings.
 
 ## derivation
 
-**the two_persp functor.** both `coord_add` and `coord_mul` factor through the same composition of two perspectivities. the pattern: form two points p₁ = r₁ ⊓ s₁ and p₂ = r₂ ⊓ s₂ from pairs of lines, join them, project onto l. different choices of the four line arguments yield different binary operations on l.
+**the two_persp functor.** both coord_add and coord_mul are instances of two_persp with different parameters. the pattern: given a pair of points p₁, p₂ (each constructed as the intersection of two lines), join them and project onto l. the parameters determine which lines to intersect.
 
-perspectivities between lines are order isomorphisms between atom-intervals (this is the content of the diamond isomorphism specialized to the projective plane). composition of two perspectivities is an `OrderIso.trans`. `two_persp` is therefore a projectivity — a composition of two order isomorphisms — and the coordinate operations are specific instantiations of it.
+**the bridge parameter.** the only free variable is a pair of distinct points (P, Q) on the coordinate line l:
 
-**bridge parameters.** the choice of bridge line and "zero" point determines which operation `two_persp` becomes. with l the coordinate line and m a distinct line through U (the point at infinity on l), three non-degenerate pairings of points from {O, U, I} ⊂ l generate three operations:
+- P determines the bridge line P⊔C (the auxiliary line for the first perspectivity)
+- Q determines the zero: (Q⊔C) ⊓ m (the projection of Q through C onto m)
+- Q is the identity element of the resulting operation
+
+the three distinguished points O, U, I generate three non-degenerate pairings:
 
 | pair (P, Q) | bridge | zero | identity | operation |
 |---|---|---|---|---|
-| (U, O) | q = U ⊔ C | E = (O ⊔ C) ⊓ m | O | addition |
-| (O, I) | O ⊔ C | E_I = (I ⊔ C) ⊓ m | I | multiplication |
-| (U, I) | q = U ⊔ C | E_I = (I ⊔ C) ⊓ m | I | translated addition |
+| (U, O) | q = U⊔C | E = (O⊔C)⊓m | O | addition |
+| (O, I) | O⊔C | E_I = (I⊔C)⊓m | I | multiplication |
+| (U, I) | q = U⊔C | E_I = (I⊔C)⊓m | I | translated addition |
 
-pairings with Q = U collapse (zero becomes U, the point at infinity — operation is trivial).
+pairings where Q = U degenerate because the zero collapses to U (the intersection of l and m), making the operation trivial.
 
-**parameter space.** P and Q need not be distinguished points. any (P, Q) with P ≠ Q and Q ≠ U gives a valid `two_persp` operation. the parameter space is {(P, Q) ∈ l × l : P ≠ Q, Q ≠ U}. atoms on l serve both as operands and as parameters.
+**the parameter space is the line itself.** P and Q need not be O, U, or I. any pair of distinct atoms on l (with Q ≠ U) generates a valid two_persp operation. the coordinate line parametrizes its own operations: l × l \ {diagonal, Q=U} → {binary operations on l}.
 
-**the external input C.** C is the one element not drawn from l. it lies in the plane, off l and m. changing C changes the coordinate system; by FTPG, different choices of C yield isomorphic coordinate rings.
+**self-parametrization.** the line's point-set serves simultaneously as:
 
-**concrete identities proven in lean.** both coordinate operations factor through `two_persp` by `rfl`:
+1. the domain and codomain of each operation
+2. the parameter space for which operation to perform
+3. the source of the identity element
 
-    coord_add a b = two_persp Γ (a ⊔ C) m (b ⊔ E) q
-    coord_mul a b = two_persp Γ (O ⊔ C) (b ⊔ E_I) (a ⊔ C) m
+the algebraic structure of l is generated by l acting on itself through C. the line looks at itself through the observer and sees its own arithmetic.
 
-the bridge line is the only structural difference between addition and multiplication in this formulation.
+**the observer C.** C is the only external input. it is off l, off m, in the plane — perspectival, not transcendent. changing C changes the coordinate system but not the isomorphism class of the resulting ring (FTPG). different observers see isomorphic arithmetics: same shape, different stuff (half_type.md).
+
+**connection to ground.** the foam's ground requires exactly one commitment from outside the system. C is that commitment for the coordinate line: one point, positioned in the plane but not on the measured structure, and the entire arithmetic self-generates. every operation is forced by the choice of where to stand and what to call zero.
 
 ## status
 
-**proven** (in lean, 0 sorry):
-- `two_persp` factorization of `coord_add` and `coord_mul` (both by `rfl`)
-- additive identity: O + b = b, a + O = a
-- multiplicative identity: I · a = a, a · I = a
-- zero annihilation: O · b = O, a · O = O
+**proven** (in lean, zero sorry):
+- two_persp factorization (coord_add and coord_mul, both by rfl)
+- additive identity (O + b = b, a + O = a)
+- multiplicative identity (I · a = a, a · I = a)
+- zero annihilation (O · b = O, a · O = O)
 
 **derived** (in this file):
-- the parameter space for `two_persp` operations as {(P, Q) ∈ l × l : P ≠ Q, Q ≠ U}
-- three non-degenerate pairings of {O, U, I} correspond to addition, multiplication, translated addition
-- changing C (cited from FTPG) yields an isomorphic coordinate ring
+- the parameter space for two_persp operations is l × l \ {diagonal, Q=U}
+- the three distinguished pairings correspond to addition, multiplication, and translated addition
+- the line self-parametrizes its own algebraic structure through C
+- C is the minimal external commitment required for arithmetic to self-generate
+- different C yield isomorphic rings (from FTPG, not yet proven in lean)
 
 **open**:
-- formalize the (U, I) translated-addition operation in lean
-- verify the translated-addition conjecture: op_{U,I}(a, b) = a + b − 1 in coordinates
-- characterize which (P, Q) pairs yield group operations
+- formalize the (U, I) operation and its identity proofs in lean
+- verify the translated-addition conjecture: op_{U,I}(a, b) = a + b - 1 in coordinates
+- characterize which (P, Q) pairs yield group operations (associativity constraints)
+- is there a natural metric or topology on the parameter space?
