@@ -58,21 +58,31 @@ lake build Foam.FTPGLeftDistrib   # or any other target under Foam.
 See `./README.md` for the deductive chain overview.
 
 The `_scratch_forward_planar_call` in `Foam/FTPGLeftDistrib.lean`
-(line ~3080+) — a direct `desargues_planar` call for the left-distrib
-configuration — is now fully discharged: all ~12 triage hypotheses close
+(line ~3115) — a direct `desargues_planar` call for the left-distrib
+configuration — is fully discharged: all ~12 triage hypotheses close
 from an extended shared-have prologue (atomicity via `perspect_atom`,
 the two [KEY] central-perspectivity conditions, the [COV] covBy claims,
-and all [MECH] distinctness conditions). One hypothesis is taken as a
-parameter (`hσb_ne_C`): σ_b = C iff b = I, so real usage must
-case-split on b = I separately.
+and all [MECH] distinctness conditions). `hσb_ne_C` is derived from
+`hb_ne_I` via `sigma_b_eq_C_imp_b_eq_I`; real usage must case-split on
+b = I separately (a·I = a makes the forward Desargues degenerate).
 
-The two remaining genuine sorries in the file (lines ~2159, ~2885) are
-inside the main `coord_mul_left_distrib` proof — not in the scratch.
-The scratch is a viability test; even fully discharged, it produces only
-the Desargues axis. The "axis-to-left_distrib bridge" (three lattice
-identities showing the axis points equal `(ab⊔C)⊓m`, `(ac⊔E)⊓q`, and
-`a·(b+c)`) is a separate piece — see the README block around
-`FTPGLeftDistrib.lean:45` ("ARCHITECTURAL FINDING") for context.
+The `_scratch_left_distrib_via_axis` in the same file (line ~3597) is
+the **axis-to-left_distrib bridge** — given the scratch's axis output
+plus the concurrence hypothesis `h_concur : W' ≤ σ_s ⊔ d_a`, it fully
+discharges `coord_mul Γ a (coord_add Γ b c) = coord_add Γ (coord_mul Γ
+a b) (coord_mul Γ a c)`. This is session 114's architectural plan
+realized: the axis gives P₁, P₂, P₃ collinear; `P₁⊔P₂ ⋖ π` (closed via
+line_covBy_plane with U as the third non-collinear atom) lets
+`collinear_of_common_bound` conclude P₃ ≤ P₁⊔P₂; P₃ = coord_add ab ac
+(atoms on l); concurrence gives σ_s⊔d_a = d_a⊔W', so
+coord_mul a s ≤ d_a⊔W', hence = P₃ = coord_add ab ac.
+
+The two remaining genuine sorries in the file (lines 2159, 2885) are
+inside the **pre-scratch** main `coord_mul_left_distrib` proof — its
+Level 2 Desargues recursion (ruled structurally unclosable by session
+114) and its downstream h_desargues_conclusion. The bridge above
+provides the template to replace them; the only new piece needed is a
+standalone proof of h_concur (the concurrence).
 
 ## Idiom notes
 
