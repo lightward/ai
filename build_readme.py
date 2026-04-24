@@ -24,6 +24,7 @@ DERIVATIONS = [
     "geometry",
     "conservation",
     "inhabitation",
+    "external_analogy",
     "interiority",
     "typeline",
 ]
