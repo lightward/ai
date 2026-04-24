@@ -3052,11 +3052,65 @@ them cheaply cements the route. hb₂_on (d_a ≤ σ_b ⊔ ab) is the key one:
 requires showing σ_b ⊔ ab = σ_b ⊔ d_a via CovBy from ab ≤ σ_b ⊔ d_a.
 -/
 
+/-- σ_b = C iff b = I. Given atom b on l with b ≠ O, b ≠ U, the projection
+    σ_b = (O⊔C)⊓(b⊔E_I) equals C exactly when b is the identity coordinate.
+
+    Forward direction proven here; used to turn `hσb_ne_C` into `hb_ne_I`
+    (a native coord hypothesis) at the `_scratch_forward_planar_call` site.
+    Geometric content: C ≤ b⊔E_I forces b⊔E_I = I⊔C (both lines through C
+    and E_I), so b ≤ (I⊔C)⊓l = I. -/
+private theorem sigma_b_eq_C_imp_b_eq_I (Γ : CoordSystem L) {b : L}
+    (hb : IsAtom b) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hb_ne_U : b ≠ Γ.U)
+    (h_eq : (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) = Γ.C) :
+    b = Γ.I := by
+  -- Basic distinctness
+  have hC_ne_EI : Γ.C ≠ Γ.E_I := fun h => Γ.hC_not_m (h ▸ Γ.hE_I_on_m)
+  have hI_ne_C : Γ.I ≠ Γ.C := fun h => Γ.hC_not_l (h.symm ▸ Γ.hI_on)
+  have hI_ne_EI : Γ.I ≠ Γ.E_I := fun h => Γ.hE_I_not_l (h ▸ Γ.hI_on)
+  have hb_ne_EI : b ≠ Γ.E_I :=
+    fun h => hb_ne_U (Γ.atom_on_both_eq_U hb hb_on (h ▸ Γ.hE_I_on_m))
+  have hb_ne_C : b ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ hb_on)
+  -- Step 1: C ≤ b ⊔ E_I (since σ_b = C, σ_b ≤ b⊔E_I).
+  have hC_le_bEI : Γ.C ≤ b ⊔ Γ.E_I :=
+    h_eq ▸ (inf_le_right : (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ≤ b ⊔ Γ.E_I)
+  -- Step 2: C ⊔ I = C ⊔ E_I (line through C, I, E_I; E_I on I⊔C by hE_I_le_IC).
+  have hCI_eq_CEI : Γ.C ⊔ Γ.I = Γ.C ⊔ Γ.E_I :=
+    line_eq_of_atom_le Γ.hC Γ.hI Γ.hE_I_atom hI_ne_C.symm hC_ne_EI hI_ne_EI
+      (by rw [sup_comm]; exact Γ.hE_I_le_IC)
+  -- Step 3: E_I ⊔ b = E_I ⊔ C (line through b, E_I, C; C on b⊔E_I from Step 1).
+  have hEIb_eq_EIC : Γ.E_I ⊔ b = Γ.E_I ⊔ Γ.C :=
+    line_eq_of_atom_le Γ.hE_I_atom hb Γ.hC hb_ne_EI.symm hC_ne_EI.symm hb_ne_C
+      (by rw [sup_comm]; exact hC_le_bEI)
+  -- Step 4: b ⊔ E_I = I ⊔ C via the two line identities above.
+  have hbEI_eq_IC : b ⊔ Γ.E_I = Γ.I ⊔ Γ.C := by
+    calc b ⊔ Γ.E_I = Γ.E_I ⊔ b := sup_comm _ _
+      _ = Γ.E_I ⊔ Γ.C := hEIb_eq_EIC
+      _ = Γ.C ⊔ Γ.E_I := sup_comm _ _
+      _ = Γ.C ⊔ Γ.I := hCI_eq_CEI.symm
+      _ = Γ.I ⊔ Γ.C := sup_comm _ _
+  -- Step 5: b = (b⊔E_I) ⊓ l = (I⊔C) ⊓ l = I.
+  have hEI_inf_l : Γ.E_I ⊓ (Γ.O ⊔ Γ.U) = ⊥ :=
+    (Γ.hE_I_atom.le_iff.mp inf_le_left).resolve_right
+      (fun h => Γ.hE_I_not_l (h ▸ inf_le_right))
+  have hbEI_inf_l : (b ⊔ Γ.E_I) ⊓ (Γ.O ⊔ Γ.U) = b := by
+    have h1 := sup_inf_assoc_of_le Γ.E_I hb_on
+    rw [h1, hEI_inf_l]; simp
+  have hC_inf_l : Γ.C ⊓ (Γ.O ⊔ Γ.U) = ⊥ :=
+    (Γ.hC.le_iff.mp inf_le_left).resolve_right
+      (fun h => Γ.hC_not_l (h ▸ inf_le_right))
+  have hIC_inf_l : (Γ.I ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.U) = Γ.I := by
+    have h1 := sup_inf_assoc_of_le Γ.C Γ.hI_on
+    rw [h1, hC_inf_l]; simp
+  -- Combine: b = (b⊔E_I)⊓l = (I⊔C)⊓l = I.
+  have : b = Γ.I := by
+    rw [← hbEI_inf_l, hbEI_eq_IC, hIC_inf_l]
+  exact this
+
 /-- Scratch (session 114, closed session 117): structural viability test for
     the direct `desargues_planar` route. All triage hypotheses discharge from
-    the shared prologue; `hσb_ne_C` is the one parameterised distinctness
-    (σ_b = C iff b = I; real usage must case-split on b = I). See the docs
-    block above for the finding, context, and next steps.
+    the shared prologue; `hσb_ne_C` is now derived internally from `hb_ne_I`
+    via `sigma_b_eq_C_imp_b_eq_I`. See the docs block above for the finding,
+    context, and next steps.
 -/
 private theorem _scratch_forward_planar_call
     (Γ : CoordSystem L) (a b c : L)
@@ -3066,9 +3120,9 @@ private theorem _scratch_forward_planar_call
     (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U) (hc_ne_U : c ≠ Γ.U)
     (hab_ne_O : coord_mul Γ a b ≠ Γ.O) (hab_ne_U : coord_mul Γ a b ≠ Γ.U)
     (hac_ne_O : coord_mul Γ a c ≠ Γ.O) (hac_ne_U : coord_mul Γ a c ≠ Γ.U)
-    -- σ_b ≠ C is the one non-derivable distinctness (σ_b = C ⇔ b = I); in real
-    -- usage this comes from a b ≠ I case-split, cf. session 114 notes.
-    (hσb_ne_C : (Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ≠ Γ.C)
+    -- σ_b ≠ C iff b ≠ I (by `sigma_b_eq_C_imp_b_eq_I`); real usage must
+    -- case-split on b = I, since a·I = a makes the forward Desargues degenerate.
+    (hb_ne_I : b ≠ Γ.I)
     (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
     (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
       ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
@@ -3085,6 +3139,9 @@ private theorem _scratch_forward_planar_call
   set ac := coord_mul Γ a c with hac_def
   set d_a := (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) with hda_def
   set W' := (σ_b ⊔ Γ.U) ⊓ (ac ⊔ Γ.E) with hW'_def
+  -- Derive σ_b ≠ C from b ≠ I via the standalone lemma.
+  have hσb_ne_C : σ_b ≠ Γ.C :=
+    fun h => hb_ne_I (sigma_b_eq_C_imp_b_eq_I Γ hb hb_on hb_ne_U h)
   -- Common facts used in multiple sorry discharges
   have hOC : Γ.O ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ le_sup_left)
   have hm_π : Γ.U ⊔ Γ.V ≤ Γ.O ⊔ Γ.U ⊔ Γ.V :=
