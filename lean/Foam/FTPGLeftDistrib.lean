@@ -3119,6 +3119,43 @@ private theorem _scratch_forward_planar_call
       (sup_comm (Γ.O ⊔ Γ.C) Γ.E_I ▸ hEI_sup_OC ▸
         sup_le (hb_on.trans le_sup_left) (Γ.hE_I_on_m.trans hm_π))
   have hE_m : Γ.E ≤ Γ.U ⊔ Γ.V := Γ.hE_on_m
+  have ha_ne_C : a ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ ha_on)
+  have hda_m : d_a ≤ Γ.U ⊔ Γ.V := inf_le_right
+  have hda_atom : IsAtom d_a := by
+    have hUV : Γ.U ≠ Γ.V := fun h => Γ.hV_off (h ▸ le_sup_right)
+    exact perspect_atom Γ.hC ha ha_ne_C Γ.hU Γ.hV hUV Γ.hC_not_m
+      (sup_le (ha_on.trans (le_sup_left.trans Γ.m_sup_C_eq_π.symm.le)) le_sup_right)
+  have hV_disj : Γ.V ⊓ (Γ.O ⊔ Γ.U) = ⊥ :=
+    (Γ.hV.le_iff.mp inf_le_left).resolve_right (fun h => Γ.hV_off (h ▸ inf_le_right))
+  have hl_covBy_π : Γ.O ⊔ Γ.U ⋖ Γ.O ⊔ Γ.U ⊔ Γ.V := by
+    have := covBy_sup_of_inf_covBy_left (hV_disj ▸ Γ.hV.bot_covBy)
+    rwa [show Γ.V ⊔ (Γ.O ⊔ Γ.U) = Γ.O ⊔ Γ.U ⊔ Γ.V from by rw [sup_comm]] at this
+  have hlC_eq_π : (Γ.O ⊔ Γ.U) ⊔ Γ.C = Γ.O ⊔ Γ.U ⊔ Γ.V := by
+    have h_lt : Γ.O ⊔ Γ.U < (Γ.O ⊔ Γ.U) ⊔ Γ.C :=
+      lt_of_le_of_ne le_sup_left
+        (fun h => Γ.hC_not_l (h ▸ le_sup_right))
+    exact (hl_covBy_π.eq_or_eq h_lt.le
+      (sup_le le_sup_left Γ.hC_plane)).resolve_left (ne_of_gt h_lt)
+  have habU_eq_l : ab ⊔ Γ.U = Γ.O ⊔ Γ.U := by
+    have h1 : Γ.U ⊔ Γ.O = Γ.U ⊔ ab :=
+      line_eq_of_atom_le Γ.hU Γ.hO hab_atom Γ.hOU.symm hab_ne_U.symm
+        hab_ne_O.symm (le_of_le_of_eq hab_l (sup_comm _ _))
+    rw [sup_comm ab Γ.U, ← h1, sup_comm Γ.U Γ.O]
+  have hda_not_l : ¬ d_a ≤ Γ.O ⊔ Γ.U := by
+    intro h
+    have hda_le_U : d_a ≤ Γ.U := by
+      have hda_le_inf : d_a ≤ (Γ.O ⊔ Γ.U) ⊓ (Γ.U ⊔ Γ.V) := le_inf h hda_m
+      rw [Γ.l_inf_m_eq_U] at hda_le_inf
+      exact hda_le_inf
+    have hda_eq_U : d_a = Γ.U :=
+      (Γ.hU.le_iff.mp hda_le_U).resolve_left hda_atom.1
+    have hU_le_aC : Γ.U ≤ a ⊔ Γ.C := hda_eq_U ▸ inf_le_left
+    have hCU : Γ.C ≠ Γ.U :=
+      fun h' => Γ.hC_not_l (h'.symm ▸ (le_sup_right : Γ.U ≤ Γ.O ⊔ Γ.U))
+    have haC_eq_aU : a ⊔ Γ.C = a ⊔ Γ.U :=
+      line_eq_of_atom_le ha Γ.hC Γ.hU ha_ne_C ha_ne_U hCU hU_le_aC
+    exact Γ.hC_not_l ((le_sup_right : Γ.C ≤ a ⊔ Γ.C).trans
+      (haC_eq_aU ▸ sup_le ha_on le_sup_right : a ⊔ Γ.C ≤ Γ.O ⊔ Γ.U))
   have hσb_not_m : ¬ σ_b ≤ Γ.U ⊔ Γ.V := by
     intro h
     have hE_eq : (Γ.U ⊔ Γ.V) ⊓ (Γ.O ⊔ Γ.C) = Γ.E := by
@@ -3184,15 +3221,42 @@ private theorem _scratch_forward_planar_call
       exact inf_le_right)
     (ha₁₃ := fun h => Γ.hC_not_l (h ▸ le_sup_right))
     (ha₂₃ := hab_ne_U)
-    (hb₁₂ := sorry)     -- [MECH] E ≠ d_a — E = k⊓m, d_a on m; E = d_a ⟹ d_a on k too, ⟹ d_a related to a⊔C, contradicts distinctness
+    (hb₁₂ := by
+      intro h
+      have hC_ne_E : Γ.C ≠ Γ.E := fun h' => Γ.hC_not_m (h' ▸ Γ.hE_on_m)
+      have hE_le_aC : Γ.E ≤ a ⊔ Γ.C := by rw [h]; exact inf_le_left
+      have hO_not_aC : ¬ Γ.O ≤ a ⊔ Γ.C := by
+        intro hle
+        have haC_eq_aO : a ⊔ Γ.C = a ⊔ Γ.O :=
+          line_eq_of_atom_le ha Γ.hC Γ.hO ha_ne_C ha_ne_O hOC.symm hle
+        exact Γ.hC_not_l ((le_sup_right : Γ.C ≤ a ⊔ Γ.C).trans
+          (haC_eq_aO ▸ sup_le ha_on le_sup_left : a ⊔ Γ.C ≤ Γ.O ⊔ Γ.U))
+      have hinf_C : (a ⊔ Γ.C) ⊓ (Γ.O ⊔ Γ.C) = Γ.C := by
+        rw [sup_comm a Γ.C, sup_comm Γ.O Γ.C]
+        exact modular_intersection Γ.hC ha Γ.hO
+          (fun h' => ha_ne_C h'.symm) hOC.symm ha_ne_O
+          (by rwa [sup_comm] at hO_not_aC)
+      have hE_le_C : Γ.E ≤ Γ.C := hinf_C ▸ le_inf hE_le_aC Γ.hE_le_OC
+      exact hC_ne_E ((Γ.hC.le_iff.mp hE_le_C).resolve_left Γ.hE_atom.1).symm)
     (hb₁₃ := sorry)     -- [MECH] E ≠ W' — E ∈ π, W' ∈ π but W' ∉ m (proven at ~line 2409)
     (hb₂₃ := sorry)     -- [MECH] d_a ≠ W' — d_a ∈ m, W' ∉ m (shown in main proof)
     -- Corresponding sides distinct
-    (h_sides₁₂ := sorry)  -- [MECH] C⊔ab ≠ E⊔d_a — C⊔ab not ≤ m (C ∉ m); E⊔d_a ≤ m
+    (h_sides₁₂ := fun h => Γ.hC_not_m
+      ((h ▸ (le_sup_left : Γ.C ≤ Γ.C ⊔ ab)).trans (sup_le hE_m hda_m)))
     (h_sides₁₃ := sorry)  -- [MECH] C⊔U ≠ E⊔W' — C⊔U = k (if C≠U on k); E⊔W' ≠ k (W' ∉ k generically)
-    (h_sides₂₃ := sorry)  -- [MECH] ab⊔U ≠ d_a⊔W' — ab⊔U ≤ l; d_a⊔W' ≰ l (d_a ∉ l)
+    (h_sides₂₃ := by
+      intro h
+      apply hda_not_l
+      have hda_le : d_a ≤ d_a ⊔ W' := le_sup_left
+      rw [← h] at hda_le
+      exact hda_le.trans (sup_le hab_l le_sup_right))
     -- Triangle planes = π
-    (hπA := sorry)      -- [STD] C ⊔ ab ⊔ U = π — ab,U ∈ l; l⊔C = π (Γ.m_sup_C_eq_π analogue via hl⊔C = π)
+    (hπA := by
+      calc Γ.C ⊔ ab ⊔ Γ.U
+          = Γ.C ⊔ (ab ⊔ Γ.U) := sup_assoc _ _ _
+        _ = Γ.C ⊔ (Γ.O ⊔ Γ.U) := by rw [habU_eq_l]
+        _ = (Γ.O ⊔ Γ.U) ⊔ Γ.C := sup_comm _ _
+        _ = Γ.O ⊔ Γ.U ⊔ Γ.V := hlC_eq_π)
     (_hπB := sorry)     -- [STD] E ⊔ d_a ⊔ W' = π — E,d_a ∈ m; m⊔W' = π (W' ∉ m)
     -- Center ≠ triangle vertices
     (hoa₁ := sorry)     -- [MECH] σ_b ≠ C — σ_b ∈ k, C ∈ k; distinct (σ_b related to b, C is a Γ-primitive)
@@ -3216,6 +3280,6 @@ private theorem _scratch_forward_planar_call
     -- Side lines covered by π
     (h_cov₁₂ := sorry)  -- [COV] C ⊔ ab ⋖ π — standard covBy pattern
     (_h_cov₁₃ := sorry) -- [COV] C ⊔ U ⋖ π — C⊔U = k ⋖ π
-    (_h_cov₂₃ := sorry) -- [COV] ab ⊔ U ⋖ π — ab⊔U = l ⋖ π
+    (_h_cov₂₃ := habU_eq_l ▸ hl_covBy_π)
 
 end Foam.FTPGExplore
