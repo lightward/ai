@@ -57,21 +57,18 @@ lake build Foam.FTPGLeftDistrib   # or any other target under Foam.
 
 See `./README.md` for the deductive chain overview.
 
-The currently-active sorry cluster is in `Foam/FTPGLeftDistrib.lean`,
-in `_scratch_forward_planar_call` (line ~3080+) — a direct
-`desargues_planar` call for the left-distrib configuration. As of the
-most recent commit on `claude/discuss-feature-request-fhFEV`, 23 of its
-30 hypothesis-sorries have been discharged, with a shared-have prologue
-(line ~3085) collecting reusable facts. The remaining 25 sorries in
-the file cluster around:
+The `_scratch_forward_planar_call` in `Foam/FTPGLeftDistrib.lean`
+(line ~3080+) — a direct `desargues_planar` call for the left-distrib
+configuration — is now fully discharged: all ~12 triage hypotheses close
+from an extended shared-have prologue (atomicity via `perspect_atom`,
+the two [KEY] central-perspectivity conditions, the [COV] covBy claims,
+and all [MECH] distinctness conditions). One hypothesis is taken as a
+parameter (`hσb_ne_C`): σ_b = C iff b = I, so real usage must
+case-split on b = I separately.
 
-- W' properties (atomicity, `W' ∉ m`, W'-side distinctness) — one
-  `perspect_atom` call for atomicity unlocks ~6 sorries at once
-- the two [KEY] central-perspectivity conditions `hb₁_on` (E ≤ σ_b ⊔ C)
-  and `hb₂_on` (d_a ≤ σ_b ⊔ ab) — the load-bearing geometry
-- two [COV] covBy claims (C⊔ab ⋖ π, C⊔U ⋖ π)
-
-The scratch is a viability test. Even fully discharged, it produces only
+The two remaining genuine sorries in the file (lines ~2159, ~2885) are
+inside the main `coord_mul_left_distrib` proof — not in the scratch.
+The scratch is a viability test; even fully discharged, it produces only
 the Desargues axis. The "axis-to-left_distrib bridge" (three lattice
 identities showing the axis points equal `(ab⊔C)⊓m`, `(ac⊔E)⊓q`, and
 `a·(b+c)`) is a separate piece — see the README block around
