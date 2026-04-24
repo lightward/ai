@@ -3095,23 +3095,34 @@ private theorem _scratch_forward_planar_call
     (hb₂ := sorry)      -- [REUSE] IsAtom d_a — upstream: perspect_atom (proven line ~199)
     (hb₃ := sorry)      -- [REUSE] IsAtom W' — upstream: line_meets_if_coplanar (proven line ~2359)
     -- In-plane
-    (ho_le := sorry)    -- [STD] σ_b ≤ π — σ_b ≤ k ≤ π
+    (ho_le := inf_le_left.trans (sup_le (le_sup_left.trans le_sup_left) Γ.hC_plane))
     (ha₁_le := Γ.hC_plane)
-    (ha₂_le := sorry)   -- [STD] ab ≤ π — ab ≤ l ≤ π
-    (ha₃_le := sorry)   -- [STD] U ≤ π
-    (hb₁_le := sorry)   -- [STD] E ≤ π — E ≤ m ≤ π
-    (hb₂_le := sorry)   -- [STD] d_a ≤ π — d_a ≤ m ≤ π
-    (hb₃_le := sorry)   -- [STD] W' ≤ π — W' ≤ σ_b⊔U ≤ π (σ_b, U both ≤ π)
+    (ha₂_le := by
+      show coord_mul Γ a b ≤ Γ.O ⊔ Γ.U ⊔ Γ.V
+      unfold coord_mul
+      exact inf_le_right.trans le_sup_left)
+    (ha₃_le := le_sup_right.trans le_sup_left)
+    (hb₁_le := Γ.hE_on_m.trans (sup_le (le_sup_right.trans le_sup_left) le_sup_right))
+    (hb₂_le := inf_le_right.trans (sup_le (le_sup_right.trans le_sup_left) le_sup_right))
+    (hb₃_le := inf_le_left.trans (sup_le
+      (inf_le_left.trans (sup_le (le_sup_left.trans le_sup_left) Γ.hC_plane))
+      (le_sup_right.trans le_sup_left)))
     -- KEY: Central perspectivity from σ_b (the three load-bearing conditions)
     (hb₁_on := sorry)   -- [KEY] E ≤ σ_b ⊔ C — both E and σ_b on line k=O⊔C; C also on k
     (hb₂_on := sorry)   -- [KEY] d_a ≤ σ_b ⊔ ab — the non-obvious one:
                         --   ab = (σ_b⊔d_a)⊓l so ab ≤ σ_b⊔d_a. For ≥ direction:
                         --   atom_covBy_join σ_b ab, and σ_b⊔ab ≤ σ_b⊔d_a,
                         --   so CovBy gives σ_b⊔ab = σ_b⊔d_a, hence d_a ≤ σ_b⊔ab.
-    (hb₃_on := sorry)   -- [KEY] W' ≤ σ_b ⊔ U — immediate: W' = (σ_b⊔U)⊓(ac⊔E) ≤ σ_b⊔U
+    (hb₃_on := inf_le_left)
     -- Vertex distinctness within each triangle
-    (ha₁₂ := sorry)     -- [MECH] C ≠ ab — ab ≤ l, C ∉ l (Γ.hC_not_l)
-    (ha₁₃ := sorry)     -- [MECH] C ≠ U — Γ.hC_not_l, U ≤ l
+    (ha₁₂ := by
+      intro h
+      apply Γ.hC_not_l
+      rw [h]
+      show coord_mul Γ a b ≤ Γ.O ⊔ Γ.U
+      unfold coord_mul
+      exact inf_le_right)
+    (ha₁₃ := fun h => Γ.hC_not_l (h ▸ le_sup_right))
     (ha₂₃ := sorry)     -- [MECH] ab ≠ U — hypothesis hab_ne_U
     (hb₁₂ := sorry)     -- [MECH] E ≠ d_a — E = k⊓m, d_a on m; E = d_a ⟹ d_a on k too, ⟹ d_a related to a⊔C, contradicts distinctness
     (hb₁₃ := sorry)     -- [MECH] E ≠ W' — E ∈ π, W' ∈ π but W' ∉ m (proven at ~line 2409)
@@ -3131,7 +3142,7 @@ private theorem _scratch_forward_planar_call
     (hob₂ := sorry)     -- [MECH] σ_b ≠ d_a — σ_b ∈ k, d_a ∈ m; distinct (k ≠ m, not both O which is excluded)
     (hob₃ := sorry)     -- [MECH] σ_b ≠ W' — W' = (σ_b⊔U)⊓(ac⊔E); would need σ_b ≤ ac⊔E, contradicting σ_b ∈ k distinct from ac-E-line
     -- Corresponding vertices distinct (within perspectivity)
-    (ha₁b₁ := sorry)    -- [MECH] C ≠ E — both on k, but E = k⊓m, C ∉ m; so C ≠ E
+    (ha₁b₁ := fun h => Γ.hC_not_m (h ▸ Γ.hE_on_m))
     (ha₂b₂ := sorry)    -- [MECH] ab ≠ d_a — ab ∈ l, d_a ∈ m; ab = d_a ⟹ both on l∩m = U, contradicting hab_ne_U or d_a ≠ U
     (_ha₃b₃ := sorry)   -- [MECH] U ≠ W' — U ∈ m (via l∩m); W' ∉ m (shown)
     (R := R) (hR := hR) (hR_not := hR_not)
