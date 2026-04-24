@@ -3833,11 +3833,198 @@ private theorem _scratch_left_distrib_via_axis (Γ : CoordSystem L)
       rw [hP3_def, habU_eq_l]
     exact h_eq ▸ h_P3_raw
   -- ═══ Step 5: P₁⊔P₂ ⋖ π ═══
-  -- Sketch: P₁ atom on m, P₂ atom on q, m≠q (distinct lines through U),
-  -- P₁ ≠ U (else P₁ = ab → ab ≤ m, contradiction), P₂ ≠ U similarly.
-  -- Then P₁ ≠ P₂ span a line; U ∉ P₁⊔P₂ gives a third non-collinear atom in π.
+  -- P₁ atom on m, P₂ atom on q; both distinct from U; U ≰ P₁⊔P₂
+  -- (else U⊔P₁ = m and U⊔P₂ = q collapse, forcing m = q). Then
+  -- P₁⊔P₂⊔U = π via P₁⊔U = m, P₂⊔U = q, m⊔q = π. Apply line_covBy_plane.
+  have hm_cov : m ⋖ π := Γ.m_covBy_π
+  have hUC_ne : Γ.U ≠ Γ.C :=
+    fun h => Γ.hC_not_l (h.symm ▸ (le_sup_right : Γ.U ≤ l))
+  have hC_inf_m : Γ.C ⊓ m = ⊥ :=
+    (Γ.hC.le_iff.mp inf_le_left).resolve_right
+      (fun h => Γ.hC_not_m (h ▸ inf_le_right))
+  have hq_inf_m : q ⊓ m = Γ.U := by
+    show (Γ.U ⊔ Γ.C) ⊓ m = Γ.U
+    rw [sup_inf_assoc_of_le Γ.C (le_sup_left : Γ.U ≤ m)]
+    rw [hC_inf_m, sup_bot_eq]
+  have hV_disj_q : Γ.V ⊓ q = ⊥ := by
+    rcases Γ.hV.le_iff.mp inf_le_left with h | h
+    · exact h
+    · exfalso
+      have hV_le_q : Γ.V ≤ q := h ▸ inf_le_right
+      exact hUV_ne ((Γ.hU.le_iff.mp
+        (hq_inf_m ▸ le_inf hV_le_q (le_sup_right : Γ.V ≤ m))).resolve_left Γ.hV.1).symm
+  have hq_cov : q ⋖ π := by
+    have hVq_eq_π : Γ.V ⊔ q = π := by
+      show Γ.V ⊔ (Γ.U ⊔ Γ.C) = Γ.O ⊔ Γ.U ⊔ Γ.V
+      calc Γ.V ⊔ (Γ.U ⊔ Γ.C)
+          = (Γ.U ⊔ Γ.V) ⊔ Γ.C := by simp only [sup_comm, sup_left_comm]
+        _ = Γ.O ⊔ Γ.U ⊔ Γ.V := Γ.m_sup_C_eq_π
+    exact hVq_eq_π ▸ covBy_sup_of_inf_covBy_left (hV_disj_q ▸ Γ.hV.bot_covBy)
+  -- P₁ atom (from line_meets_m_at_atom applied to ab⊔C meeting m)
+  have hab_ne_C : ab ≠ Γ.C := fun h => Γ.hC_not_l (h ▸ hab_l)
+  have hab_not_m : ¬ ab ≤ m :=
+    fun h => hab_ne_U (Γ.atom_on_both_eq_U hab_atom hab_l h)
+  have hP1_atom : IsAtom P₁ := by
+    rw [hP1_def]
+    exact line_meets_m_at_atom hab_atom Γ.hC hab_ne_C
+      (sup_le hab_π Γ.hC_plane) hm_π hm_cov hab_not_m
+  -- P₂ atom (from line_meets_m_at_atom applied to ac⊔E meeting q)
+  have hlq_eq_U : l ⊓ q = Γ.U := by
+    rw [inf_comm, hq_inf_m.symm]
+    show q ⊓ l = q ⊓ m
+    rw [hq_inf_m]
+    -- q ⊓ l = (U ⊔ C) ⊓ l; C ⊓ l = ⊥, so = U ⊔ ⊥ = U
+    rw [hq_def, sup_inf_assoc_of_le Γ.C (le_sup_right : Γ.U ≤ l)]
+    have : Γ.C ⊓ l = ⊥ :=
+      (Γ.hC.le_iff.mp inf_le_left).resolve_right
+        (fun h => Γ.hC_not_l (h ▸ inf_le_right))
+    rw [this, sup_bot_eq]
+  have hac_not_q : ¬ ac ≤ q := fun h => hac_ne_U
+    ((Γ.hU.le_iff.mp (hlq_eq_U ▸ le_inf hac_l h)).resolve_left hac_atom.1)
+  have hP2_atom : IsAtom P₂ := by
+    rw [hP2_def]
+    exact line_meets_m_at_atom hac_atom Γ.hE_atom hac_ne_E
+      (sup_le hac_π hE_π) hq_π hq_cov hac_not_q
+  -- P₁ ≠ U
+  have hP1_ne_U : P₁ ≠ Γ.U := by
+    intro h
+    -- P₁ = (ab⊔C) ⊓ m = U. So U ≤ ab⊔C.
+    -- (ab⊔C) ⊓ l = ab (modular, C ⊓ l = ⊥).
+    -- U ≤ ab⊔C and U ≤ l, so U ≤ ab. ab atom, so ab = U. Contradiction.
+    have hU_le_abC : Γ.U ≤ ab ⊔ Γ.C :=
+      h ▸ (inf_le_left : P₁ ≤ ab ⊔ Γ.C)
+    have hC_inf_l : Γ.C ⊓ l = ⊥ :=
+      (Γ.hC.le_iff.mp inf_le_left).resolve_right
+        (fun h' => Γ.hC_not_l (h' ▸ inf_le_right))
+    have habC_inf_l : (ab ⊔ Γ.C) ⊓ l = ab := by
+      have h1 := sup_inf_assoc_of_le Γ.C hab_l
+      rw [hC_inf_l] at h1; simp at h1; exact h1
+    have hU_le_ab : Γ.U ≤ ab :=
+      habC_inf_l ▸ le_inf hU_le_abC (le_sup_right : Γ.U ≤ l)
+    exact hab_ne_U ((hab_atom.le_iff.mp hU_le_ab).resolve_left Γ.hU.1).symm
+  -- P₂ ≠ U
+  have hP2_ne_U : P₂ ≠ Γ.U := by
+    intro h
+    have hU_le_acE : Γ.U ≤ ac ⊔ Γ.E :=
+      h ▸ (inf_le_left : P₂ ≤ ac ⊔ Γ.E)
+    exact Γ.hU.1 (le_antisymm (hU_disj_acE ▸ le_inf le_rfl hU_le_acE) bot_le)
+  -- P₁ ≠ P₂
+  have hP1_ne_P2 : P₁ ≠ P₂ := by
+    intro h
+    -- P₁ ≤ m, P₂ ≤ q; if P₁ = P₂ then P₁ ≤ m ⊓ q = U, so P₁ = U.
+    have hP1_le_m : P₁ ≤ m := inf_le_right
+    have hP2_le_q : P₂ ≤ q := by rw [hP2_def]; exact inf_le_right
+    have hP1_le_mq : P₁ ≤ m ⊓ q := le_inf hP1_le_m (h ▸ hP2_le_q)
+    have hmq_eq_U : m ⊓ q = Γ.U := by rw [inf_comm]; exact hq_inf_m
+    exact hP1_ne_U ((Γ.hU.le_iff.mp (hmq_eq_U ▸ hP1_le_mq)).resolve_left hP1_atom.1)
+  -- U ≰ P₁⊔P₂ (else line-uniqueness collapses m = q)
+  have hU_not_P1P2 : ¬ Γ.U ≤ P₁ ⊔ P₂ := by
+    intro hU_le
+    -- Line U⊔P₁ contains U, P₁. Line U⊔P₂ contains U, P₂. Both ≤ P₁⊔P₂.
+    -- U⊔P₁ ≤ m (both atoms on m, line height 2 → =m).
+    -- U⊔P₂ ≤ q (both atoms on q, line height 2 → =q).
+    -- If U, P₁, P₂ collinear (U ≤ P₁⊔P₂), then U⊔P₁ = U⊔P₂ (both lines through
+    -- U containing P₁, P₂ respectively). So m = q. Contradiction.
+    have hP1_le_m : P₁ ≤ m := inf_le_right
+    have hP2_le_q : P₂ ≤ q := by rw [hP2_def]; exact inf_le_right
+    have hUP1_le_m : Γ.U ⊔ P₁ ≤ m := sup_le le_sup_left hP1_le_m
+    have hUP2_le_q : Γ.U ⊔ P₂ ≤ q := sup_le le_sup_left hP2_le_q
+    have hcov_UP1 : Γ.U ⋖ Γ.U ⊔ P₁ :=
+      atom_covBy_join Γ.hU hP1_atom (Ne.symm hP1_ne_U)
+    have hcov_UP2 : Γ.U ⋖ Γ.U ⊔ P₂ :=
+      atom_covBy_join Γ.hU hP2_atom (Ne.symm hP2_ne_U)
+    -- m: U ⋖ m has height 2 (U, V atoms on m distinct)
+    have hcov_Um : Γ.U ⋖ m := by
+      rw [hm_def]
+      exact atom_covBy_join Γ.hU Γ.hV hUV_ne
+    have hcov_Uq : Γ.U ⋖ q := by
+      rw [hq_def]
+      exact atom_covBy_join Γ.hU Γ.hC hUC_ne
+    -- U ⊔ P₁ = m via covBy
+    have hUP1_eq_m : Γ.U ⊔ P₁ = m :=
+      (hcov_Um.eq_or_eq hcov_UP1.lt.le hUP1_le_m).resolve_left
+        (ne_of_gt hcov_UP1.lt)
+    have hUP2_eq_q : Γ.U ⊔ P₂ = q :=
+      (hcov_Uq.eq_or_eq hcov_UP2.lt.le hUP2_le_q).resolve_left
+        (ne_of_gt hcov_UP2.lt)
+    -- Line P₁⊔P₂ has height 2 (two distinct atoms)
+    have hcov_P1P2 : P₁ ⋖ P₁ ⊔ P₂ :=
+      atom_covBy_join hP1_atom hP2_atom hP1_ne_P2
+    -- U ⊔ P₁ ≤ P₁ ⊔ P₂ (since U ≤ P₁⊔P₂ and P₁ ≤ P₁⊔P₂)
+    have hUP1_le_P1P2 : Γ.U ⊔ P₁ ≤ P₁ ⊔ P₂ := sup_le hU_le le_sup_left
+    -- P₁ ⋖ P₁⊔P₂ and U⊔P₁ contains P₁: so U⊔P₁ = P₁ or = P₁⊔P₂
+    -- U⊔P₁ ≠ P₁ (U ≠ P₁), so U⊔P₁ = P₁⊔P₂. Hence m = P₁⊔P₂.
+    have hUP1_gt_P1 : P₁ < Γ.U ⊔ P₁ :=
+      lt_of_le_of_ne le_sup_right (fun h =>
+        hP1_ne_U ((hP1_atom.le_iff.mp (h ▸ le_sup_left)).resolve_left Γ.hU.1).symm)
+    have hm_eq_P1P2 : m = P₁ ⊔ P₂ := by
+      rw [← hUP1_eq_m]
+      exact (hcov_P1P2.eq_or_eq hUP1_gt_P1.le hUP1_le_P1P2).resolve_left
+        (ne_of_gt hUP1_gt_P1)
+    -- Similarly U⊔P₂ ≤ P₁⊔P₂ (by sup_le of hU_le and le_sup_right) and > P₂
+    have hUP2_le_P1P2 : Γ.U ⊔ P₂ ≤ P₁ ⊔ P₂ := sup_le hU_le le_sup_right
+    have hcov_P1P2' : P₂ ⋖ P₁ ⊔ P₂ := by
+      rw [show P₁ ⊔ P₂ = P₂ ⊔ P₁ from sup_comm _ _]
+      exact atom_covBy_join hP2_atom hP1_atom (Ne.symm hP1_ne_P2)
+    have hUP2_gt_P2 : P₂ < Γ.U ⊔ P₂ :=
+      lt_of_le_of_ne le_sup_right (fun h =>
+        hP2_ne_U ((hP2_atom.le_iff.mp (h ▸ le_sup_left)).resolve_left Γ.hU.1).symm)
+    have hq_eq_P1P2 : q = P₁ ⊔ P₂ := by
+      rw [← hUP2_eq_q]
+      exact (hcov_P1P2'.eq_or_eq hUP2_gt_P2.le hUP2_le_P1P2).resolve_left
+        (ne_of_gt hUP2_gt_P2)
+    -- m = P₁⊔P₂ = q → m = q → U⊔V = U⊔C → V ≤ U⊔C → contradiction via
+    -- already-proven V ⊓ q = ⊥.
+    have hm_eq_q : m = q := hm_eq_P1P2.trans hq_eq_P1P2.symm
+    have hV_le_q : Γ.V ≤ q := hm_eq_q ▸ (le_sup_right : Γ.V ≤ m)
+    exact Γ.hV.1 (le_antisymm (hV_disj_q ▸ le_inf le_rfl hV_le_q) bot_le)
+  -- P₁⊔P₂⊔U = π: P₁⊔U ≥ line ⊇ m (via UP1_eq_m above), similarly q. m⊔q = π.
+  have hP1P2U_eq_π : P₁ ⊔ P₂ ⊔ Γ.U = π := by
+    -- From above: U⊔P₁ = m, U⊔P₂ = q.
+    have hP1_le_m : P₁ ≤ m := inf_le_right
+    have hP2_le_q : P₂ ≤ q := by rw [hP2_def]; exact inf_le_right
+    have hcov_UP1 : Γ.U ⋖ Γ.U ⊔ P₁ :=
+      atom_covBy_join Γ.hU hP1_atom (Ne.symm hP1_ne_U)
+    have hcov_UP2 : Γ.U ⋖ Γ.U ⊔ P₂ :=
+      atom_covBy_join Γ.hU hP2_atom (Ne.symm hP2_ne_U)
+    have hcov_Um : Γ.U ⋖ m := by
+      rw [hm_def]; exact atom_covBy_join Γ.hU Γ.hV hUV_ne
+    have hcov_Uq : Γ.U ⋖ q := by
+      rw [hq_def]; exact atom_covBy_join Γ.hU Γ.hC hUC_ne
+    have hUP1_le_m : Γ.U ⊔ P₁ ≤ m := sup_le le_sup_left hP1_le_m
+    have hUP2_le_q : Γ.U ⊔ P₂ ≤ q := sup_le le_sup_left hP2_le_q
+    have hUP1_eq_m : Γ.U ⊔ P₁ = m :=
+      (hcov_Um.eq_or_eq hcov_UP1.lt.le hUP1_le_m).resolve_left
+        (ne_of_gt hcov_UP1.lt)
+    have hUP2_eq_q : Γ.U ⊔ P₂ = q :=
+      (hcov_Uq.eq_or_eq hcov_UP2.lt.le hUP2_le_q).resolve_left
+        (ne_of_gt hcov_UP2.lt)
+    -- m ⊔ q = π (using Γ.m_sup_C_eq_π)
+    have hmq_eq_π : m ⊔ q = π := by
+      show m ⊔ (Γ.U ⊔ Γ.C) = π
+      calc m ⊔ (Γ.U ⊔ Γ.C)
+          = m ⊔ Γ.C := by rw [show Γ.U ⊔ Γ.C = Γ.C ⊔ Γ.U from sup_comm _ _,
+                               ← sup_assoc, show m ⊔ Γ.C = Γ.C ⊔ m from sup_comm _ _,
+                               sup_assoc, sup_of_le_left (le_sup_left : Γ.U ≤ m),
+                               show Γ.C ⊔ m = m ⊔ Γ.C from sup_comm _ _]
+        _ = π := Γ.m_sup_C_eq_π
+    have hP1_le_π : P₁ ≤ π := hP1_le_m.trans hm_π
+    have hP2_le_π : P₂ ≤ π := hP2_le_q.trans hq_π
+    apply le_antisymm
+    · exact sup_le (sup_le hP1_le_π hP2_le_π) hU_π
+    · -- π = m ⊔ q ≤ (U⊔P₁) ⊔ (U⊔P₂) ≤ P₁ ⊔ P₂ ⊔ U
+      have hm_le : m ≤ P₁ ⊔ P₂ ⊔ Γ.U := by
+        rw [← hUP1_eq_m]
+        exact sup_le le_sup_right (le_sup_left.trans le_sup_left)
+      have hq_le : q ≤ P₁ ⊔ P₂ ⊔ Γ.U := by
+        rw [← hUP2_eq_q]
+        exact sup_le le_sup_right (le_sup_right.trans le_sup_left)
+      exact hmq_eq_π ▸ sup_le hm_le hq_le
+  -- line_covBy_plane: P₁⊔P₂ ⋖ P₁⊔P₂⊔U; combined with = π
   have hP1P2_cov : P₁ ⊔ P₂ ⋖ π := by
-    sorry
+    have h := line_covBy_plane hP1_atom hP2_atom Γ.hU
+      hP1_ne_P2 hP1_ne_U hP2_ne_U hU_not_P1P2
+    rwa [hP1P2U_eq_π] at h
   -- ═══ Step 6: P₃ ≤ P₁⊔P₂ via collinear_of_common_bound ═══
   have hP3_le_P1P2 : P₃ ≤ P₁ ⊔ P₂ :=
     collinear_of_common_bound hP1P2_cov h_axis_le h_axis_ne
