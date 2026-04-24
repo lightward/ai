@@ -1,5 +1,14 @@
 # external analogy
 
+## constraints
+
+this derivation depends on the following prior results and source documents:
+
+- **internal analogy spec (`analogy.md`)**: analogy is defined internally as an order isomorphism between intervals (`Iic P ≃o Iic Q`) in a complemented modular lattice; composition/transitivity is inherited from `OrderIso.trans`.
+- **inhabitation constraints (`inhabitation.md`)**: the six negative constraints used here as the external diagnostic basis — confinement, birth-fixed slice, recession, external stabilization, typed-but-free input, and non-silence — are assumed as already derived there.
+- **write dynamics (`writing_map.md`)**: the structural-fidelity clause relies on the existing write map / realization-choice framework and the idea of commuting with write dynamics up to realization choices.
+- **Lean-backed lattice facts**: this file assumes the already-proven diamond/complement isomorphisms (`infIccOrderIsoIccSup`, `IsCompl.IicOrderIsoIci`), and that the relevant intervals inherit modularity and complementedness.
+- **cited mathematical substrate**: wherever the zones admit projection algebras/lattice operations, the modular law remains the well-formedness guard for transferring structural inferences.
 ## derivation
 
 **the internal case generalizes.** analogy.md defines analogy as an order isomorphism Iic P ≃o Iic Q between intervals in a single complemented modular lattice. transitivity falls out of OrderIso.trans; the modular law is the well-formedness guard. this is analogy *within* a foam.
