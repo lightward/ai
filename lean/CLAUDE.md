@@ -57,32 +57,62 @@ lake build Foam.FTPGLeftDistrib   # or any other target under Foam.
 
 See `./README.md` for the deductive chain overview.
 
-The `_scratch_forward_planar_call` in `Foam/FTPGLeftDistrib.lean`
-(line ~3115) — a direct `desargues_planar` call for the left-distrib
-configuration — is fully discharged: all ~12 triage hypotheses close
-from an extended shared-have prologue (atomicity via `perspect_atom`,
-the two [KEY] central-perspectivity conditions, the [COV] covBy claims,
-and all [MECH] distinctness conditions). `hσb_ne_C` is derived from
-`hb_ne_I` via `sigma_b_eq_C_imp_b_eq_I`; real usage must case-split on
-b = I separately (a·I = a makes the forward Desargues degenerate).
+`Foam/FTPGLeftDistrib.lean` is the only file in the bridge with a remaining
+`sorry`. As of session 118 the file is ~1184 lines; it has been pared down
+to the active proof path (the pre-scratch `coord_mul_left_distrib` body and
+its Level 2 sub-sorries are gone). Three pieces compose:
 
-The `_scratch_left_distrib_via_axis` in the same file (line ~3597) is
-the **axis-to-left_distrib bridge** — given the scratch's axis output
-plus the concurrence hypothesis `h_concur : W' ≤ σ_s ⊔ d_a`, it fully
-discharges `coord_mul Γ a (coord_add Γ b c) = coord_add Γ (coord_mul Γ
-a b) (coord_mul Γ a c)`. This is session 114's architectural plan
-realized: the axis gives P₁, P₂, P₃ collinear; `P₁⊔P₂ ⋖ π` (closed via
-line_covBy_plane with U as the third non-collinear atom) lets
-`collinear_of_common_bound` conclude P₃ ≤ P₁⊔P₂; P₃ = coord_add ab ac
-(atoms on l); concurrence gives σ_s⊔d_a = d_a⊔W', so
-coord_mul a s ≤ d_a⊔W', hence = P₃ = coord_add ab ac.
+1. `_scratch_forward_planar_call` (~line 119) — the direct `desargues_planar`
+   call for the left-distrib configuration. **Fully discharged.** All ~12
+   triage hypotheses close from a shared prologue (atomicity via
+   `perspect_atom`, the two [KEY] central-perspectivity conditions, the
+   [COV] covBy claims, the [MECH] distinctness conditions). `hσb_ne_C` is
+   derived from `hb_ne_I` via `sigma_b_eq_C_imp_b_eq_I`; real usage must
+   case-split on `b = I` separately (a·I = a makes the forward Desargues
+   degenerate).
 
-The two remaining genuine sorries in the file (lines 2159, 2885) are
-inside the **pre-scratch** main `coord_mul_left_distrib` proof — its
-Level 2 Desargues recursion (ruled structurally unclosable by session
-114) and its downstream h_desargues_conclusion. The bridge above
-provides the template to replace them; the only new piece needed is a
-standalone proof of h_concur (the concurrence).
+2. `_scratch_left_distrib_via_axis` (~line 601) — the **axis-to-left_distrib
+   bridge**. Given the scratch's axis output plus the concurrence hypothesis
+   `h_concur : W' ≤ σ_s ⊔ d_a`, fully discharges
+   `coord_mul Γ a (coord_add Γ b c) = coord_add Γ (coord_mul Γ a b)
+   (coord_mul Γ a c)`. Realizes session 114's plan: the axis gives P₁, P₂,
+   P₃ collinear; `P₁⊔P₂ ⋖ π` (via `line_covBy_plane` with U as the third
+   non-collinear atom) lets `collinear_of_common_bound` conclude
+   `P₃ ≤ P₁⊔P₂`; `P₃ = coord_add ab ac` (atoms on l); concurrence gives
+   `σ_s ⊔ d_a = d_a ⊔ W'`, so `coord_mul a s ≤ d_a⊔W' = P₃ = coord_add ab ac`.
+
+3. `concurrence` (~line 1127) — the **sole remaining `sorry`**. Statement:
+   for triangles T1 = (σ_b, ac, σ_s) in π and T2 = (U, E, d_a) collinear on
+   m, `W' = (σ_b⊔U)⊓(ac⊔E) ≤ σ_s⊔d_a`. Session 114's architectural finding
+   ruled out the `desargues_converse_nonplanar` lift+recurse route
+   (structurally non-terminating at Level 2 `h_ax₂₃`). Two open routes:
+   - a planar converse Desargues lemma (T2 on m makes the natural axis lie
+     on m, so a 3D lift may not be needed);
+   - a direct construction exploiting axis = m.
+
+The main theorem `coord_mul_left_distrib` (~line 1154) is a one-line
+composition of the three pieces; it becomes sorry-free the moment
+`concurrence` closes.
+
+## Attacking `concurrence`
+
+The full strategic landscape is in `concurrence`'s docstring inside
+`Foam/FTPGLeftDistrib.lean` (above its declaration). Three open routes:
+
+1. **Planar converse Desargues as a top-level lemma** (FTPGCoord). The
+   classical converse for two coplanar triangles, proven via a single
+   3D lift. `concurrence` becomes a thin specialization (T2 collinear on m).
+2. **Direct construction exploiting axis = m.** Since T2 = (U, E, d_a)
+   sits on m, all three pairwise side-intersections are atoms on m. The
+   pairing's natural axis is m itself. A `small_desargues'`-style
+   argument may reduce concurrence to lattice distinctness.
+3. **Two forward Desargues calls.** Speculative.
+
+Session 114's lift+recurse via `desargues_converse_nonplanar` is gone;
+its structural non-termination at "Level 2 h_ax₂₃" is captured in the
+docstring. The 1500-line scaffold deleted in session 117 is in git
+history (`git show 5fe8073:lean/Foam/FTPGLeftDistrib.lean`) if any
+specific helper is wanted.
 
 ## Idiom notes
 

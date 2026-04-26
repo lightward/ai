@@ -159,34 +159,34 @@ Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ �
 | left inverse | `coord_add_left_neg` (PROVEN — double Desargues + coplanarity) |
 | right inverse | `coord_add_right_neg` (from left inverse + `coord_add_comm`) |
 
-**FTPGLeftDistrib.lean** — left distributivity (in progress)
+**FTPGLeftDistrib.lean** — left distributivity (in progress, single isolated sorry)
 
-Proves a·(b+c) = a·b + a·c via two pieces: concurrence (W' ≤ σ_s⊔d_a) + forward Desargues (axis = addition line). Combination logic PROVEN. σ_b≠σ_s PROVEN. h_axis₂₃ skeleton compiling (Level 2 Desargues, 4 of 8 sub-sorry remain). h_desargues_conclusion still sorry.
+Proves a·(b+c) = a·b + a·c via three pieces: forward Desargues (`_scratch_forward_planar_call`), an axis-to-distributivity bridge (`_scratch_left_distrib_via_axis`), and a concurrence lemma (`concurrence : W' ≤ σ_s⊔d_a`). The first two are fully discharged; `concurrence` is the sole remaining sorry.
 
-**Two-level Desargues architecture:**
+**Architecture (post session 117 cleanup):**
 
 ```
-desargues_converse_nonplanar (PROVEN, rank ≥ 4)
-  ├── Level 2: Q=σ_b lifts (s₂₃,E,R) out of R⊔m
-  │   E'' = (s₁₂⊔s₂₃'')⊓(σ_b⊔E), R'' = (S₁₃⊔s₂₃'')⊓(σ_b⊔R)
-  │   3 axis conditions: ALL FREE. Recursion terminates.
-  │   Conclusion → da' ∈ E'⊔s₂₃ → h_axis₂₃
-  └── Level 1: R lifts (U,E,d_a) out of π
-      h_axis₁₂=s₁₂ ✓, h_axis₁₃=E ✓, h_axis₂₃ ← from Level 2
-      Conclusion → W' ≤ σ_s⊔d_a → left distributivity
+desargues_planar (FTPGCoord, PROVEN)
+  → _scratch_forward_planar_call: axis through P₁, P₂, P₃ in π
+                                                  ↓
+                                  _scratch_left_distrib_via_axis:
+                                  axis collinearity ∧ concurrence  ⇒
+                                  coord_mul a (coord_add b c) =
+                                    coord_add (coord_mul a b) (coord_mul a c)
+                                                  ↑
+                              concurrence : W' ≤ σ_s⊔d_a  ←  SOLE SORRY
 ```
 
-σ_b works as Level 2 lift direction because Level 1 threading consumed it (s₁₂=(σ_b⊔ac)⊓m). The two levels are the same Desargues at ranks 3 and 4.
+Note: left multiplication x↦a·x is NOT a collineation (unlike right mult). This is why left distrib needs a separate concurrence step, while right distrib used the collineation directly.
 
-Note: left multiplication x↦a·x is NOT a collineation (unlike right mult). This is why left distrib requires converse Desargues + 3D lift, while right distrib used collineation directly.
+The previous lift+recurse route via `desargues_converse_nonplanar` (session 114, "Level 1/Level 2 architecture") was found structurally non-terminating at Level 2 `h_ax₂₃` and is gone from the file. Open routes for `concurrence`: a planar converse Desargues lemma; a direct construction exploiting that the natural axis lies on m.
 
-| layer | key declarations |
+| layer | status |
 |---|---|
-| σ_b≠σ_s | PROVEN (perspectivity injectivity + modular cancellation) |
-| h_axis₂₃ | skeleton compiling (Level 2 Desargues, 4 sub-sorry remaining of 8) |
-| concurrence | h_concurrence chain: axis-threaded lift + project (PROVEN except h_axis₂₃ sub-sorry) |
-| forward Desargues | h_desargues_conclusion (1 sorry, ~500 lines mechanical) |
-| combination | PROVEN |
+| `_scratch_forward_planar_call` | PROVEN (forward Desargues, ~12 triage hypotheses discharged) |
+| `_scratch_left_distrib_via_axis` | PROVEN (axis collinearity + concurrence ⇒ left distrib) |
+| `concurrence : W' ≤ σ_s⊔d_a` | SORRY (geometrically: planar converse Desargues, T2 on m) |
+| `coord_mul_left_distrib` | one-line composition; closes when `concurrence` closes |
 
 ### The deductive chain (from P² = P)
 

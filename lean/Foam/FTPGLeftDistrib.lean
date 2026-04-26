@@ -1116,12 +1116,62 @@ For triangles T1 = (σ_b, ac, σ_s), T2 = (U, E, d_a) in π, the vertex-joins
 `σ_b ⊔ U`, `ac ⊔ E`, and `σ_s ⊔ d_a` meet at a common point; equivalently
 `W' = (σ_b ⊔ U) ⊓ (ac ⊔ E)` lies on `σ_s ⊔ d_a`.
 
-Both triangles are coplanar in π (T2 is even collinear on m), and the natural
-axis of their side-intersections lies entirely on m. Session 114's Level-1/
-Level-2 recursive lift via `desargues_converse_nonplanar` hits a structural
-axis-atomicity wall at Level 2 (non-terminating). A different route is
-required — e.g., a planar converse Desargues lemma, or a direct construction
-exploiting that the axis = m.
+### Configuration
+* T1 lives in plane π = O⊔U⊔V (the ambient plane). Its three vertices:
+  - `σ_b = (O⊔C) ⊓ (b⊔E_I)` on line k = O⊔C
+  - `ac  = coord_mul a c     ` on line l = O⊔U
+  - `σ_s = (O⊔C) ⊓ (s⊔E_I)`   on line k (where s = b + c)
+* T2 lies on line m = U⊔V. Its three vertices:
+  - `U`, `E = (O⊔C) ⊓ m`, `d_a = (a⊔C) ⊓ m`, all on m.
+* Geometrically T2 is degenerate (collinear), so all three "T2 sides"
+  (U⊔E), (E⊔d_a), (d_a⊔U) collapse to m itself. Consequently the three
+  side-intersections of (T1, T2) all lie on m — the axis of the pairing
+  *is* m.
+
+### What's known
+* The forward Desargues call `_scratch_forward_planar_call` (above) gives
+  a separate axis through (ab⊔C)⊓m, (ac⊔E)⊓q, and l⊓(d_a⊔W') in π,
+  centered on σ_b. That axis lives in π but is **not** m (it threads a
+  different point pairing).
+* `_scratch_left_distrib_via_axis` (above) consumes the concurrence
+  hypothesis to derive left distributivity. Closing `concurrence` closes
+  the whole chain.
+
+### Why this is hard
+The claim is the converse of planar Desargues for the (T1, T2) pairing
+above. Forward Desargues (`desargues_planar`, FTPGCoord:478) lifts one
+triangle out of π to apply the non-planar version, then transfers
+collinearity back via `lift_side_intersection`. The converse direction
+needs an analogous planar→nonplanar lift, but `desargues_converse_nonplanar`
+(FTPGCoord:1101) requires the lifted side-intersections to be atoms — and
+when the lifted T2' is axis-threaded through the original side-intersections,
+verifying *all three* lifted-side atomicities via another converse Desargues
+call is structurally non-terminating (session 114's "Level 2 h_ax₂₃" wall).
+
+### Open routes
+1. **Planar converse Desargues as a top-level lemma.** State the converse
+   for two coplanar triangles directly, prove it via a single 3D lift
+   that does not require recursive converse calls. Specialize here.
+2. **Direct construction exploiting axis = m.** Since T2 is on m, the
+   pairwise side-intersections (l_i⊔l_j)⊓m for T1 = (l_1, l_2, l_3) =
+   (σ_b, ac, σ_s) are three atoms on the line m. The vertex-joins l_i⊔p_i
+   (with p_i ∈ {U, E, d_a}) are three lines in π. Concurrence says they
+   meet at a single atom W' ∈ π. A `small_desargues'`-style argument
+   (FTPGCoord:865) might reduce concurrence to a lattice-distinctness
+   check, since `small_desargues'` is the planar Desargues with three
+   lines through a common point on a common base line.
+3. **Two forward Desargues calls.** Set up two forward Desargues
+   configurations whose conclusions are the desired concurrence as a
+   direct consequence of axis collinearity in each. (Speculative.)
+
+### Notes
+* The hypothesis `R, hR, hR_not, h_irred` carries the rank-≥-4 +
+  irreducibility data needed for any 3D lift (route 1) or for invoking
+  `desargues_planar` / `desargues_converse_nonplanar` directly.
+* `b ≠ I` is *not* required here — it is enforced upstream in
+  `coord_mul_left_distrib` because the *forward* call degenerates at
+  `b = I`. The concurrence claim itself is well-formed for any
+  non-degenerate b, c.
 
 Currently `sorry`. This is the sole remaining gap in left distributivity. -/
 theorem concurrence (Γ : CoordSystem L)
