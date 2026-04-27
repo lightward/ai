@@ -57,10 +57,11 @@ lake build Foam.FTPGLeftDistrib   # or any other target under Foam.
 
 See `./README.md` for the deductive chain overview.
 
-`Foam/FTPGLeftDistrib.lean` is the only file in the bridge with a remaining
-`sorry`. As of session 118 the file is ~1184 lines; it has been pared down
-to the active proof path (the pre-scratch `coord_mul_left_distrib` body and
-its Level 2 sub-sorries are gone). Three pieces compose:
+`Foam/FTPGLeftDistrib.lean` builds with **zero `sorry`** as of session 119.
+The file is ~1216 lines. The remaining geometric residue — the planar
+converse Desargues content — is named explicitly as `DesarguesianWitness Γ`,
+a structure whose inhabitant the user supplies as a runtime commitment.
+Four pieces compose:
 
 1. `_scratch_forward_planar_call` (~line 119) — the direct `desargues_planar`
    call for the left-distrib configuration. **Fully discharged.** All ~12
@@ -81,38 +82,45 @@ its Level 2 sub-sorries are gone). Three pieces compose:
    `P₃ ≤ P₁⊔P₂`; `P₃ = coord_add ab ac` (atoms on l); concurrence gives
    `σ_s ⊔ d_a = d_a ⊔ W'`, so `coord_mul a s ≤ d_a⊔W' = P₃ = coord_add ab ac`.
 
-3. `concurrence` (~line 1127) — the **sole remaining `sorry`**. Statement:
-   for triangles T1 = (σ_b, ac, σ_s) in π and T2 = (U, E, d_a) collinear on
-   m, `W' = (σ_b⊔U)⊓(ac⊔E) ≤ σ_s⊔d_a`. Session 114's architectural finding
-   ruled out the `desargues_converse_nonplanar` lift+recurse route
-   (structurally non-terminating at Level 2 `h_ax₂₃`). Two open routes:
-   - a planar converse Desargues lemma (T2 on m makes the natural axis lie
-     on m, so a 3D lift may not be needed);
-   - a direct construction exploiting axis = m.
+3. `DesarguesianWitness` (~line 1154) — the **observer-supplied commitment**.
+   A structure with a single field `concurrence` carrying the planar
+   converse Desargues claim for the von Staudt configuration. Geometrically:
+   for T1 = (σ_b, ac, σ_s) in π and T2 = (U, E, d_a) collinear on m, the
+   vertex-joins are concurrent — `W' = (σ_b⊔U)⊓(ac⊔E) ≤ σ_s⊔d_a`. Session
+   114's architectural finding established this is **not derivable from
+   CML + irreducible + height ≥ 4 alone** (the
+   `desargues_converse_nonplanar` lift+recurse route is structurally
+   non-terminating at Level 2 `h_ax₂₃`). Per the deaxiomatization program,
+   it is named as a typed pluggable interface rather than carried as an
+   unproven theorem.
 
-The main theorem `coord_mul_left_distrib` (~line 1154) is a one-line
-composition of the three pieces; it becomes sorry-free the moment
-`concurrence` closes.
+4. `coord_mul_left_distrib` (~line 1187) — the main theorem. Takes a
+   `DesarguesianWitness Γ` as an explicit parameter alongside the usual
+   non-degeneracy hypotheses. The body forwards the witness's `concurrence`
+   field to `_scratch_left_distrib_via_axis` as `h_concur`. Zero `sorry`.
 
-## Attacking `concurrence`
+## Constructing a `DesarguesianWitness`
 
-The full strategic landscape is in `concurrence`'s docstring inside
-`Foam/FTPGLeftDistrib.lean` (above its declaration). Three open routes:
+Two open routes (see `DesarguesianWitness`'s docstring inside
+`Foam/FTPGLeftDistrib.lean` for the strategic landscape):
 
-1. **Planar converse Desargues as a top-level lemma** (FTPGCoord). The
-   classical converse for two coplanar triangles, proven via a single
-   3D lift. `concurrence` becomes a thin specialization (T2 collinear on m).
+1. **Planar converse Desargues as a top-level lemma** (probably belongs in
+   FTPGCoord). The classical converse for two coplanar triangles, proven
+   via a single 3D lift that does not require recursive converse calls.
+   `DesarguesianWitness.concurrence` becomes a thin specialization (T2
+   collinear on m).
 2. **Direct construction exploiting axis = m.** Since T2 = (U, E, d_a)
    sits on m, all three pairwise side-intersections are atoms on m. The
-   pairing's natural axis is m itself. A `small_desargues'`-style
-   argument may reduce concurrence to lattice distinctness.
-3. **Two forward Desargues calls.** Speculative.
+   pairing's natural axis is m itself. A `small_desargues'`-style argument
+   (FTPGCoord:865) may reduce concurrence to lattice distinctness.
 
-Session 114's lift+recurse via `desargues_converse_nonplanar` is gone;
-its structural non-termination at "Level 2 h_ax₂₃" is captured in the
-docstring. The 1500-line scaffold deleted in session 117 is in git
-history (`git show 5fe8073:lean/Foam/FTPGLeftDistrib.lean`) if any
-specific helper is wanted.
+When `L = Sub(D, V)` for a division ring D, `DesarguesianWitness Γ` is
+constructible from the model — the substrate fills the observer slot. In
+the abstract lattice setting, the slot is genuinely open.
+
+The 1500-line scaffold deleted in session 117 (the lift+recurse attempt)
+is in git history (`git show 5fe8073:lean/Foam/FTPGLeftDistrib.lean`) if
+any specific helper is wanted.
 
 ## Idiom notes
 

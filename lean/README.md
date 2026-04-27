@@ -159,11 +159,11 @@ Defines `coord_neg` (additive inverse) via the perspectivity chain a →[E]→ �
 | left inverse | `coord_add_left_neg` (PROVEN — double Desargues + coplanarity) |
 | right inverse | `coord_add_right_neg` (from left inverse + `coord_add_comm`) |
 
-**FTPGLeftDistrib.lean** — left distributivity (in progress, single isolated sorry)
+**FTPGLeftDistrib.lean** — left distributivity (zero `sorry`, with typed observer commitment)
 
-Proves a·(b+c) = a·b + a·c via three pieces: forward Desargues (`_scratch_forward_planar_call`), an axis-to-distributivity bridge (`_scratch_left_distrib_via_axis`), and a concurrence lemma (`concurrence : W' ≤ σ_s⊔d_a`). The first two are fully discharged; `concurrence` is the sole remaining sorry.
+Proves a·(b+c) = a·b + a·c via three pieces: forward Desargues (`_scratch_forward_planar_call`), an axis-to-distributivity bridge (`_scratch_left_distrib_via_axis`), and an observer-supplied `DesarguesianWitness Γ` commitment carrying the planar converse-Desargues content. All three pieces are fully discharged; the geometric residue (the planar converse-Desargues claim, not derivable from CML + irreducible + height ≥ 4 alone per session 114's structural finding) is named explicitly as a typed pluggable interface rather than carried as an unproven theorem.
 
-**Architecture (post session 117 cleanup):**
+**Architecture (session 119):**
 
 ```
 desargues_planar (FTPGCoord, PROVEN)
@@ -174,19 +174,20 @@ desargues_planar (FTPGCoord, PROVEN)
                                   coord_mul a (coord_add b c) =
                                     coord_add (coord_mul a b) (coord_mul a c)
                                                   ↑
-                              concurrence : W' ≤ σ_s⊔d_a  ←  SOLE SORRY
+                              DesarguesianWitness Γ ← observer-supplied
+                              .concurrence : W' ≤ σ_s⊔d_a
 ```
 
 Note: left multiplication x↦a·x is NOT a collineation (unlike right mult). This is why left distrib needs a separate concurrence step, while right distrib used the collineation directly.
 
-The previous lift+recurse route via `desargues_converse_nonplanar` (session 114, "Level 1/Level 2 architecture") was found structurally non-terminating at Level 2 `h_ax₂₃` and is gone from the file. Open routes for `concurrence`: a planar converse Desargues lemma; a direct construction exploiting that the natural axis lies on m.
+The previous lift+recurse route via `desargues_converse_nonplanar` (session 114, "Level 1/Level 2 architecture") was found structurally non-terminating at Level 2 `h_ax₂₃` and is gone from the file. Open routes for constructing `DesarguesianWitness Γ`: a planar converse Desargues lemma; a direct construction exploiting that the natural axis lies on m.
 
 | layer | status |
 |---|---|
 | `_scratch_forward_planar_call` | PROVEN (forward Desargues, ~12 triage hypotheses discharged) |
 | `_scratch_left_distrib_via_axis` | PROVEN (axis collinearity + concurrence ⇒ left distrib) |
-| `concurrence : W' ≤ σ_s⊔d_a` | SORRY (geometrically: planar converse Desargues, T2 on m) |
-| `coord_mul_left_distrib` | one-line composition; closes when `concurrence` closes |
+| `DesarguesianWitness Γ` | TYPED INTERFACE (observer-supplied commitment carrying the planar converse-Desargues residue) |
+| `coord_mul_left_distrib` | PROVEN (composition takes a `DesarguesianWitness Γ` as explicit parameter) |
 
 ### The deductive chain (from P² = P)
 

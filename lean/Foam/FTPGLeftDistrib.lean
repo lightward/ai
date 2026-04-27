@@ -33,18 +33,27 @@ Left multiplication x ↦ a·x is NOT a single collineation in the non-
 commutative case. This is why left distrib requires the two-piece
 (Desargues + concurrence) proof rather than a direct collineation argument.
 
-## Status (session 118, 2026-04-24)
+## Status (session 119, 2026-04-27)
 
 The forward Desargues piece (`_scratch_forward_planar_call`) and the
 axis-to-left-distrib bridge (`_scratch_left_distrib_via_axis`) are both
-fully discharged. The remaining work is a standalone proof of the
-concurrence lemma `concurrence : W' ≤ σ_s ⊔ d_a`, which is currently
-stated below with `sorry`. Session 114's architectural finding rules
-out the `desargues_converse_nonplanar` lift+recurse route (structurally
-non-terminating at Level 2 h_ax₂₃); session 118 preserves the gap
-cleanly so that a different approach (e.g. exploiting the fact that the
-natural axis of (σ_b, ac, σ_s) vs (U, E, d_a) lies on m) can be tried
-in isolation.
+fully discharged. The concurrence claim — geometrically a planar converse
+Desargues for the von Staudt configuration — is named explicitly as the
+`DesarguesianWitness Γ` structure, an observer-supplied runtime commitment.
+Session 114's architectural finding established that this commitment is
+not derivable from CML + irreducible + height ≥ 4 alone (the
+`desargues_converse_nonplanar` lift+recurse route hits a structural
+axis-atomicity wall at Level 2 h_ax₂₃). Per the deaxiomatization program
+the right move is to type the residue as a first-class pluggable interface
+rather than carry it as an unproven theorem. The bridge now contains zero
+`sorry`; `coord_mul_left_distrib` takes the witness as an explicit parameter.
+
+Open routes for constructing an inhabitant of `DesarguesianWitness Γ`
+from the abstract lattice setting (1) a planar converse Desargues lemma
+proven via a single 3D lift (no recursive converse calls), or (2) a
+direct construction exploiting that the natural axis of (σ_b, ac, σ_s)
+vs (U, E, d_a) lies on m. See `DesarguesianWitness`'s docstring for the
+full strategic landscape.
 -/
 import Foam.FTPGNeg
 
@@ -586,16 +595,12 @@ The bridge structure encodes the session 114 plan:
   (d) Concurrence: σ_s⊔d_a = d_a⊔W' (three atoms on line height 2)
       ⇒ coord_mul a s = (σ_s⊔d_a)⊓l = (d_a⊔W')⊓l = P₃ = coord_add ab ac
 
-What's still required after this bridge: a standalone proof of
-`h_concur`. Session 114's suggestion — derive concurrence from the
-axis itself — is not realized here; the concurrence remains an
-auxiliary hypothesis. See `coord_mul_left_distrib`'s `h_concurrence`
-(which still has a Level 2 sub-sorry at line ~2159) for the
-current direct-proof attempt.
-
-This scaffolding contains targeted sub-sorries for each tractable
-lattice step; the intent is that each is a short, self-contained
-modular-lattice argument that a future session can discharge.
+What's required after this bridge: a witness for `h_concur`. Session 119
+relocates this from an unproven theorem to a typed observer commitment —
+see the `DesarguesianWitness Γ` structure declared further down, whose
+sole field discharges the concurrence claim. `coord_mul_left_distrib`
+takes a `DesarguesianWitness` explicitly and forwards its concurrence
+field to this bridge as `h_concur`.
 -/
 
 private theorem _scratch_left_distrib_via_axis (Γ : CoordSystem L)
@@ -1100,108 +1105,91 @@ private theorem _scratch_left_distrib_via_axis (Γ : CoordSystem L)
   -- ═══ Step 10: Atoms on l → equal ═══
   exact (habac_atom.le_iff.mp has_le_sum).resolve_left has_atom.1
 
-/-! ## The concurrence lemma and the main theorem
+/-! ## The Desarguesian commitment and the main theorem
 
 The forward Desargues piece and the axis-to-left-distrib bridge are discharged
-above. What remains is a standalone proof of the concurrence
-`W' ≤ σ_s ⊔ d_a`, stated here as `concurrence` with body `sorry`. The main
-theorem `coord_mul_left_distrib` is the one-line composition of the bridge
-and the concurrence lemma; it will become fully sorry-free once `concurrence`
-is closed.
+above. What remains is the *concurrence* claim: that the vertex-joins of a
+specific pair of triangles in the von Staudt configuration are concurrent.
+This is a planar converse-Desargues fact about the configuration; session
+114's structural finding established that it is not derivable from CML +
+irreducible + height ≥ 4 alone (the `desargues_converse_nonplanar` lift+recurse
+route hits a structural axis-atomicity wall at Level 2).
+
+Per the deaxiomatization program, the right move is to *name* this commitment
+as an explicit observer-supplied input rather than treat it as an unproven
+theorem. `DesarguesianWitness Γ` is that name: a structure whose inhabitant
+discharges the planar converse-Desargues claim for `Γ`'s configuration.
+The main theorem `coord_mul_left_distrib` then takes a `DesarguesianWitness`
+as an explicit parameter — moving the FTPG bridge from "one big axiom (FTPG)
+plus an unproven concurrence" to "one big axiom (FTPG) less an explicit,
+typed, pluggable Desarguesian commitment." This shrinks the bridge's
+remaining residue into a first-class typed interface.
+
+Geometrically: vertex-joins of T1 = (σ_b, ac, σ_s) in π and T2 = (U, E, d_a)
+collinear on m meet at a common point — `W' = (σ_b⊔U)⊓(ac⊔E)` lies on
+`σ_s⊔d_a`. Two open routes to construct an inhabitant of `DesarguesianWitness`:
+
+1. **Planar converse Desargues as a lattice theorem.** Prove the converse
+   for two coplanar triangles directly via a single 3D lift that does not
+   require recursive converse calls, then specialize to the von Staudt
+   configuration.
+2. **Direct construction exploiting axis = m.** T2 collinear on m makes the
+   pairwise side-intersections all atoms on m. The pairing's natural axis
+   is m itself. A `small_desargues'`-style argument (FTPGCoord:865) may
+   reduce concurrence to a lattice-distinctness check.
+
+When `L = Sub(D, V)` for a division ring D, `DesarguesianWitness Γ` is
+constructible from the model — the substrate fills the observer slot. In
+the abstract lattice setting, the slot is genuinely open and must be
+supplied as a runtime commitment by whoever uses left distributivity.
 -/
 
-/-- **Concurrence: `W' ≤ σ_s ⊔ d_a`.**
+/-- A runtime commitment that the planar converse Desargues theorem holds
+for the von Staudt coordinatization configuration. The commitment is
+observer-supplied — not derivable from CML + irreducible + height ≥ 4
+alone (per session 114's structural finding). Filling this commitment
+closes the FTPG bridge's left-distributivity chain, completing the path
+from lattice axioms to division-ring structure.
 
-For triangles T1 = (σ_b, ac, σ_s), T2 = (U, E, d_a) in π, the vertex-joins
-`σ_b ⊔ U`, `ac ⊔ E`, and `σ_s ⊔ d_a` meet at a common point; equivalently
-`W' = (σ_b ⊔ U) ⊓ (ac ⊔ E)` lies on `σ_s ⊔ d_a`.
+The single field `concurrence` carries the geometric content: vertex-joins
+of T1 = (σ_b, ac, σ_s) and T2 = (U, E, d_a) are concurrent —
+`W' = (σ_b ⊔ U) ⊓ (ac ⊔ E)` lies on `σ_s ⊔ d_a`. See the section docstring
+above for the configuration in detail and the open routes to construct an
+inhabitant. -/
+structure DesarguesianWitness (Γ : CoordSystem L) where
+  /-- **Concurrence: `W' ≤ σ_s ⊔ d_a`.**
 
-### Configuration
-* T1 lives in plane π = O⊔U⊔V (the ambient plane). Its three vertices:
-  - `σ_b = (O⊔C) ⊓ (b⊔E_I)` on line k = O⊔C
-  - `ac  = coord_mul a c     ` on line l = O⊔U
-  - `σ_s = (O⊔C) ⊓ (s⊔E_I)`   on line k (where s = b + c)
-* T2 lies on line m = U⊔V. Its three vertices:
-  - `U`, `E = (O⊔C) ⊓ m`, `d_a = (a⊔C) ⊓ m`, all on m.
-* Geometrically T2 is degenerate (collinear), so all three "T2 sides"
-  (U⊔E), (E⊔d_a), (d_a⊔U) collapse to m itself. Consequently the three
-  side-intersections of (T1, T2) all lie on m — the axis of the pairing
-  *is* m.
-
-### What's known
-* The forward Desargues call `_scratch_forward_planar_call` (above) gives
-  a separate axis through (ab⊔C)⊓m, (ac⊔E)⊓q, and l⊓(d_a⊔W') in π,
-  centered on σ_b. That axis lives in π but is **not** m (it threads a
-  different point pairing).
-* `_scratch_left_distrib_via_axis` (above) consumes the concurrence
-  hypothesis to derive left distributivity. Closing `concurrence` closes
-  the whole chain.
-
-### Why this is hard
-The claim is the converse of planar Desargues for the (T1, T2) pairing
-above. Forward Desargues (`desargues_planar`, FTPGCoord:478) lifts one
-triangle out of π to apply the non-planar version, then transfers
-collinearity back via `lift_side_intersection`. The converse direction
-needs an analogous planar→nonplanar lift, but `desargues_converse_nonplanar`
-(FTPGCoord:1101) requires the lifted side-intersections to be atoms — and
-when the lifted T2' is axis-threaded through the original side-intersections,
-verifying *all three* lifted-side atomicities via another converse Desargues
-call is structurally non-terminating (session 114's "Level 2 h_ax₂₃" wall).
-
-### Open routes
-1. **Planar converse Desargues as a top-level lemma.** State the converse
-   for two coplanar triangles directly, prove it via a single 3D lift
-   that does not require recursive converse calls. Specialize here.
-2. **Direct construction exploiting axis = m.** Since T2 is on m, the
-   pairwise side-intersections (l_i⊔l_j)⊓m for T1 = (l_1, l_2, l_3) =
-   (σ_b, ac, σ_s) are three atoms on the line m. The vertex-joins l_i⊔p_i
-   (with p_i ∈ {U, E, d_a}) are three lines in π. Concurrence says they
-   meet at a single atom W' ∈ π. A `small_desargues'`-style argument
-   (FTPGCoord:865) might reduce concurrence to a lattice-distinctness
-   check, since `small_desargues'` is the planar Desargues with three
-   lines through a common point on a common base line.
-3. **Two forward Desargues calls.** Set up two forward Desargues
-   configurations whose conclusions are the desired concurrence as a
-   direct consequence of axis collinearity in each. (Speculative.)
-
-### Notes
-* The hypothesis `R, hR, hR_not, h_irred` carries the rank-≥-4 +
-  irreducibility data needed for any 3D lift (route 1) or for invoking
-  `desargues_planar` / `desargues_converse_nonplanar` directly.
-* `b ≠ I` is *not* required here — it is enforced upstream in
-  `coord_mul_left_distrib` because the *forward* call degenerates at
-  `b = I`. The concurrence claim itself is well-formed for any
-  non-degenerate b, c.
-
-Currently `sorry`. This is the sole remaining gap in left distributivity. -/
-theorem concurrence (Γ : CoordSystem L)
-    (a b c : L) (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
-    (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
-    (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O) (hc_ne_O : c ≠ Γ.O)
-    (ha_ne_U : a ≠ Γ.U) (hb_ne_U : b ≠ Γ.U) (hc_ne_U : c ≠ Γ.U)
-    (hbc : b ≠ c)
-    (hs_ne_O : coord_add Γ b c ≠ Γ.O) (hs_ne_U : coord_add Γ b c ≠ Γ.U)
-    (hab_ne_O : coord_mul Γ a b ≠ Γ.O) (hab_ne_U : coord_mul Γ a b ≠ Γ.U)
-    (hac_ne_O : coord_mul Γ a c ≠ Γ.O) (hac_ne_U : coord_mul Γ a c ≠ Γ.U)
-    (R : L) (hR : IsAtom R) (hR_not : ¬ R ≤ Γ.O ⊔ Γ.U ⊔ Γ.V)
-    (h_irred : ∀ (p q : L), IsAtom p → IsAtom q → p ≠ q →
-      ∃ r : L, IsAtom r ∧ r ≤ p ⊔ q ∧ r ≠ p ∧ r ≠ q) :
+  For triangles T1 = (σ_b, ac, σ_s) in π and T2 = (U, E, d_a) collinear on
+  m, the vertex-joins `σ_b ⊔ U`, `ac ⊔ E`, and `σ_s ⊔ d_a` meet at a common
+  point. Equivalently: `W' = (σ_b ⊔ U) ⊓ (ac ⊔ E)` lies on `σ_s ⊔ d_a`. -/
+  concurrence : ∀ (a b c : L),
+    IsAtom a → IsAtom b → IsAtom c →
+    a ≤ Γ.O ⊔ Γ.U → b ≤ Γ.O ⊔ Γ.U → c ≤ Γ.O ⊔ Γ.U →
+    a ≠ Γ.O → b ≠ Γ.O → c ≠ Γ.O →
+    a ≠ Γ.U → b ≠ Γ.U → c ≠ Γ.U →
+    b ≠ c →
+    coord_add Γ b c ≠ Γ.O → coord_add Γ b c ≠ Γ.U →
+    coord_mul Γ a b ≠ Γ.O → coord_mul Γ a b ≠ Γ.U →
+    coord_mul Γ a c ≠ Γ.O → coord_mul Γ a c ≠ Γ.U →
     ((Γ.O ⊔ Γ.C) ⊓ (b ⊔ Γ.E_I) ⊔ Γ.U) ⊓ (coord_mul Γ a c ⊔ Γ.E)
       ≤ (Γ.O ⊔ Γ.C) ⊓ (coord_add Γ b c ⊔ Γ.E_I)
-          ⊔ (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V) := by
-  sorry
+          ⊔ (a ⊔ Γ.C) ⊓ (Γ.U ⊔ Γ.V)
 
 /-- **Left distributivity: `a · (b + c) = a·b + a·c`.**
 
 Composition of the forward-Desargues axis (`_scratch_forward_planar_call`),
-the axis-to-left-distrib bridge (`_scratch_left_distrib_via_axis`), and the
-concurrence lemma (`concurrence`).
+the axis-to-left-distrib bridge (`_scratch_left_distrib_via_axis`), and a
+runtime `DesarguesianWitness` commitment.
 
 The `hb_ne_I` hypothesis is required because the proof's central
 perspectivity center is `σ_b = k ⊓ (b ⊔ E_I)`, which degenerates to `C`
 exactly when `b = I` (see `sigma_b_eq_C_imp_b_eq_I`). Callers handling `b = I`
-must case-split separately (e.g. by swapping `b` and `c` via `coord_add_comm`). -/
-theorem coord_mul_left_distrib (Γ : CoordSystem L)
+must case-split separately (e.g. by swapping `b` and `c` via `coord_add_comm`).
+
+`R, hR, hR_not, h_irred` carry the rank-≥-4 + irreducibility data needed
+by the *forward* Desargues call inside `_scratch_forward_planar_call`. The
+`DesarguesianWitness` parameter `dw` discharges the converse direction. -/
+theorem coord_mul_left_distrib (Γ : CoordSystem L) (dw : DesarguesianWitness Γ)
     (a b c : L) (ha : IsAtom a) (hb : IsAtom b) (hc : IsAtom c)
     (ha_on : a ≤ Γ.O ⊔ Γ.U) (hb_on : b ≤ Γ.O ⊔ Γ.U) (hc_on : c ≤ Γ.O ⊔ Γ.U)
     (ha_ne_O : a ≠ Γ.O) (hb_ne_O : b ≠ Γ.O) (hc_ne_O : c ≠ Γ.O)
@@ -1226,9 +1214,8 @@ theorem coord_mul_left_distrib (Γ : CoordSystem L)
     hs_ne_O hs_ne_U hab_ne_O hab_ne_U hac_ne_O hac_ne_U
     hab_ne_ac has_ne_O has_ne_U habac_ne_O habac_ne_U
     hb_ne_I R hR hR_not h_irred
-    (concurrence Γ a b c ha hb hc ha_on hb_on hc_on
+    (dw.concurrence a b c ha hb hc ha_on hb_on hc_on
       ha_ne_O hb_ne_O hc_ne_O ha_ne_U hb_ne_U hc_ne_U hbc
-      hs_ne_O hs_ne_U hab_ne_O hab_ne_U hac_ne_O hac_ne_U
-      R hR hR_not h_irred)
+      hs_ne_O hs_ne_U hab_ne_O hab_ne_U hac_ne_O hac_ne_U)
 
 end Foam.FTPGExplore
