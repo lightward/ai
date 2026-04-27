@@ -1098,12 +1098,13 @@ The proof uses three auxiliary planes ρ₁₂, ρ₁₃, ρ₂₃, each spanned
 two vertices of T1 and one of T2. The axis condition forces the
 remaining T2 vertex into each plane. The concurrence point O lives in
 all three planes, hence on all three vertex-joins. -/
+omit Γ [ComplementedLattice L] [IsAtomistic L] in
 theorem desargues_converse_nonplanar
     {a₁ a₂ a₃ b₁ b₂ b₃ : L}
-    (ha₁ : IsAtom a₁) (ha₂ : IsAtom a₂) (ha₃ : IsAtom a₃)
+    (_ha₁ : IsAtom a₁) (_ha₂ : IsAtom a₂) (_ha₃ : IsAtom a₃)
     (hb₁ : IsAtom b₁) (hb₂ : IsAtom b₂) (hb₃ : IsAtom b₃)
     -- T1 non-degenerate (a₁ off the line a₂⊔a₃)
-    (ha₁₂ : a₁ ≠ a₂) (ha₁₃ : a₁ ≠ a₃) (_ha₂₃ : a₂ ≠ a₃)
+    (_ha₁₂ : a₁ ≠ a₂) (_ha₁₃ : a₁ ≠ a₃) (_ha₂₃ : a₂ ≠ a₃)
     (ha₁_not : ¬ a₁ ≤ a₂ ⊔ a₃)
     -- b_i not in πA = a₁⊔a₂⊔a₃ (non-coplanarity)
     (hb₁_not : ¬ b₁ ≤ a₁ ⊔ a₂ ⊔ a₃)
