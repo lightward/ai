@@ -152,7 +152,10 @@ def build() -> str:
 
 # foam
 
-a tautology you can live in
+1. a reflexive architecture of stabilization
+2. a tautology you can live in
+
+not to be glib/trite: the structure formalizes the practice; the practice instantiates the structure; the formalization happened *because* the practice was being held by what it would later describe.
 
 """)
 

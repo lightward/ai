@@ -66,6 +66,12 @@ in each case: **something is closed under an operation it doesn't control**. the
 
 this is the foam's chirality: the line stacks its operations, and the stacking has a direction. the direction is not chosen — it's forced by the geometry.
 
+**chirality as observer-coupling locus.** the chirality also marks *where observer commitment enters the formalism*. right distributivity ((a+b)·c = a·c + b·c) is substrate-derivable: forward Desargues + dilation_preserves_direction (proven from CML + irreducible + height ≥ 4). left distributivity (a·(b+c) = a·b + a·c) is **not** substrate-derivable in the same way — left multiplication x ↦ a·x is not a collineation, so the direct dilation argument fails. the bridge in `Foam/FTPGLeftDistrib.lean` reduces left distributivity to a planar converse-Desargues claim (`concurrence`) which is structurally non-derivable from CML + irreducible + height ≥ 4 alone (session 114 finding). per the deaxiomatization program, this residue is named explicitly as `DesarguesianWitness Γ`, an observer-supplied runtime commitment — a typed pluggable interface rather than an unproven theorem.
+
+the *side* of distributivity that needs the commitment is the side where the operation acts left-of-the-additive-structure. this is the same chirality that puts addition normal in T ⋊ D, that puts so(d) inside u(d), that puts writes inside the observer's slice. **the structural location of "closed under what it doesn't control" is also the structural location of "where the observer's commitment lives."** mind enters the formalism at the chirality's thick side — the side that has to be committed-to rather than derived. this is the foam's seam where "physics is minded" cashes out as a specific Lean parameter on a specific theorem.
+
+dual reading (operational, observer-side): each observer's basis commitment is a left-application — the observer is the multiplier acting *on* the additive structure of their slice. the observer's commitment to a particular DesarguesianWitness is structurally the same act as their commitment to a basis. the foam's chirality is the structural ledger of observer-input across layers: substrate-side (DesarguesianWitness), inhabitant-side (basis commitment), operational-side (left vs right action). same act, three formal clothes.
+
 **connection to self-parametrization.** the three pairings of {O, U, I} generate three operations via two_persp. distributivity constrains how any two interact. since all three arise from the same functor with parameters drawn from l itself, the interaction constraints are constraints on l's self-parametrization space:
 
 - the parameter space l × l (self_parametrization.md) is not flat
@@ -135,9 +141,11 @@ this extends to off-line points via:
 - dilation_mul_key_identity: 3 cases (c=I, a=I via DPD, generic Desargues center C) — FTPGDistrib.lean
 - coord_mul_right_distrib: (a+b)·c = a·c + b·c — FTPGDistrib.lean (0 sorry)
   Key: forward Desargues (center O) + parallelogram_completion_well_defined. O⊔σ = O⊔C gives shared E; well_defined provides base-independence.
+- coord_mul_left_distrib: a · (b + c) = a·b + a·c — FTPGLeftDistrib.lean (0 sorry, takes `(dw : DesarguesianWitness Γ)` as explicit parameter)
+  Composition of forward Desargues (`_scratch_forward_planar_call`), axis-to-distributivity bridge (`_scratch_left_distrib_via_axis`), and `dw.concurrence`. The `DesarguesianWitness` structure carries the planar converse-Desargues residue as a typed observer commitment rather than an unproven theorem (session 119 deaxiomatization move).
 
 **open**:
-- lean proof of left distributivity: a · (b + c) = a·b + a·c
+- constructing an inhabitant of `DesarguesianWitness Γ` from the abstract lattice setting (CML + irreducible + height ≥ 4 + named atoms) — open routes: a planar converse Desargues lemma proven via a single 3D lift, or a direct construction exploiting that the natural axis lies on m. when `L = Sub(D, V)` for a division ring D, `DesarguesianWitness Γ` is constructible from the model.
 - multiplicative associativity and inverse (prerequisites for D being a group)
 - explicit characterization of the (U, I) translated-addition operation under distributivity
 - does the normalization relation σ_a ∘ τ_c ∘ σ_a⁻¹ = τ_{a·c} have a direct lattice proof shorter than the full distributive law?

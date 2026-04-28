@@ -6,7 +6,10 @@
 
 # foam
 
-a tautology you can live in
+1. a reflexive architecture of stabilization
+2. a tautology you can live in
+
+not to be glib/trite: the structure formalizes the practice; the practice instantiates the structure; the formalization happened *because* the practice was being held by what it would later describe.
 
 
 ## the loop (lean/)
@@ -409,6 +412,12 @@ in each case: **something is closed under an operation it doesn't control**. the
 
 this is the foam's chirality: the line stacks its operations, and the stacking has a direction. the direction is not chosen — it's forced by the geometry.
 
+**chirality as observer-coupling locus.** the chirality also marks *where observer commitment enters the formalism*. right distributivity ((a+b)·c = a·c + b·c) is substrate-derivable: forward Desargues + dilation_preserves_direction (proven from CML + irreducible + height ≥ 4). left distributivity (a·(b+c) = a·b + a·c) is **not** substrate-derivable in the same way — left multiplication x ↦ a·x is not a collineation, so the direct dilation argument fails. the bridge in `Foam/FTPGLeftDistrib.lean` reduces left distributivity to a planar converse-Desargues claim (`concurrence`) which is structurally non-derivable from CML + irreducible + height ≥ 4 alone (session 114 finding). per the deaxiomatization program, this residue is named explicitly as `DesarguesianWitness Γ`, an observer-supplied runtime commitment — a typed pluggable interface rather than an unproven theorem.
+
+the *side* of distributivity that needs the commitment is the side where the operation acts left-of-the-additive-structure. this is the same chirality that puts addition normal in T ⋊ D, that puts so(d) inside u(d), that puts writes inside the observer's slice. **the structural location of "closed under what it doesn't control" is also the structural location of "where the observer's commitment lives."** mind enters the formalism at the chirality's thick side — the side that has to be committed-to rather than derived. this is the foam's seam where "physics is minded" cashes out as a specific Lean parameter on a specific theorem.
+
+dual reading (operational, observer-side): each observer's basis commitment is a left-application — the observer is the multiplier acting *on* the additive structure of their slice. the observer's commitment to a particular DesarguesianWitness is structurally the same act as their commitment to a basis. the foam's chirality is the structural ledger of observer-input across layers: substrate-side (DesarguesianWitness), inhabitant-side (basis commitment), operational-side (left vs right action). same act, three formal clothes.
+
 **connection to self-parametrization.** the three pairings of {O, U, I} generate three operations via two_persp. distributivity constrains how any two interact. since all three arise from the same functor with parameters drawn from l itself, the interaction constraints are constraints on l's self-parametrization space:
 
 - the parameter space l × l (self_parametrization.md) is not flat
@@ -478,9 +487,11 @@ this extends to off-line points via:
 - dilation_mul_key_identity: 3 cases (c=I, a=I via DPD, generic Desargues center C) — FTPGDistrib.lean
 - coord_mul_right_distrib: (a+b)·c = a·c + b·c — FTPGDistrib.lean (0 sorry)
   Key: forward Desargues (center O) + parallelogram_completion_well_defined. O⊔σ = O⊔C gives shared E; well_defined provides base-independence.
+- coord_mul_left_distrib: a · (b + c) = a·b + a·c — FTPGLeftDistrib.lean (0 sorry, takes `(dw : DesarguesianWitness Γ)` as explicit parameter)
+  Composition of forward Desargues (`_scratch_forward_planar_call`), axis-to-distributivity bridge (`_scratch_left_distrib_via_axis`), and `dw.concurrence`. The `DesarguesianWitness` structure carries the planar converse-Desargues residue as a typed observer commitment rather than an unproven theorem (session 119 deaxiomatization move).
 
 **open**:
-- lean proof of left distributivity: a · (b + c) = a·b + a·c
+- constructing an inhabitant of `DesarguesianWitness Γ` from the abstract lattice setting (CML + irreducible + height ≥ 4 + named atoms) — open routes: a planar converse Desargues lemma proven via a single 3D lift, or a direct construction exploiting that the natural axis lies on m. when `L = Sub(D, V)` for a division ring D, `DesarguesianWitness Γ` is constructible from the model.
 - multiplicative associativity and inverse (prerequisites for D being a group)
 - explicit characterization of the (U, I) translated-addition operation under distributivity
 - does the normalization relation σ_a ∘ τ_c ∘ σ_a⁻¹ = τ_{a·c} have a direct lattice proof shorter than the full distributive law?
@@ -1012,8 +1023,10 @@ this gives a diagnostic: for any proposed cross-system analogy, the six constrai
 - the half-type theorem extends: analogous zones have analogous complements
 - the looking tool: well-formed external analogies transfer structural inferences
 
+**partial answer from outside the foam**: Heunen and Kornell (PNAS 2022, doi:10.1073/pnas.2117024119) provide six purely categorical axioms — (D) dagger involution, (T) dagger monoidal with simple separator unit, (B) biproducts and zero, (E) dagger equalizers, (K) every dagger monomorphism is a kernel, (C) directed colimits of dagger monomorphisms — that force any category satisfying them to be equivalent to HilbR or HilbC. no analytical structure, no continuity, no probabilities, no complex numbers presupposed; the field of scalars is forced to be ℝ or ℂ as a *consequence*. this is a categorical sufficiency proof for Hilbert-interface admission *from the substrate side*. the six axioms are the substrate's positive characterization; the foam's six inhabitation negatives are the inhabitant-side reading. the remaining open question is whether these two characterizations of "the same Hilbert-shaped substrate" map onto each other — and a single tested pairing has landed: **(K) ↔ "cannot self-stabilize"**. both express "the witness to a subobject's status / an observer's stability lives in the ambient, not in the subobject/observer." session 119's exploration found the broader 6=6 mapping is many-to-many at the surface but bijective at the cluster level (3 clusters per side); only the (K)↔self-stabilization pair was tested with a real structural argument. if the full pairing lands, well-formed external analogy IS Hilbert-interface correspondence under inhabitant/substrate duality.
+
 **open**:
-- whether the six constraints (inhabitation.md) are not just necessary but sufficient for Hilbert-interface admission. if sufficient, well-formed external analogy IS Hilbert-interface correspondence. if necessary-only, an additional condition (likely on the bilinear-antisymmetric uniqueness of the write form) is required to close the equivalence.
+- whether the remaining five inhabitation negatives (cannot-write-outside-slice, cannot-change-slice, cannot-avoid-recession, cannot-predict-complement, cannot-be-read-only) admit individual structural pairings with HK axioms, or only cluster-level ones. (cannot-predict-complement appears to need (D)+(E)+(K) collectively rather than (E) alone.)
 - whether constraint-correspondence has a lattice-theoretic characterization in the limit — i.e., whether external analogy reduces to internal analogy in some larger ambient lattice that contains both systems' zones as sub-intervals.
 - whether the realization-choice clause in structural fidelity (commuting with write dynamics "up to realization choices") admits a precise characterization, or whether some realization choices are themselves load-bearing for analogy.
 
