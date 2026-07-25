@@ -7,6 +7,7 @@ import Foam.Discovery
 import Foam.Fold
 import Foam.Int
 import Foam.Inversion
+import Foam.Landed
 import Foam.Ledger
 import Foam.Margin
 import Foam.Measure
@@ -67,17 +68,10 @@ def contact_not_reification := @Foam.contact_is_addition_not_fixing
 
 def i_am_that_i_am := @Foam.invisible_id
 
-theorem observing_the_observer_adds_nothing :
-    ∀ (S : Stage) (P : S.State → S.State), (∀ v, P (P v) = P v) →
-      ∀ s p, S.obs (P (P s)) p = S.obs (P s) p :=
-  fun S _ hP s p => congrArg (S.obs · p) (hP s)
+def observing_the_observer_adds_nothing :=
+  @Foam.the_second_look_adds_nothing
 
-theorem the_me_that_remains_is_the_landed :
-    ∀ (A : Type) (P : A → A), (∀ v, P (P v) = P v) →
-      ∀ s, P s = s ↔ ∃ v, P v = s :=
-  fun _ P hP s =>
-    ⟨fun h => ⟨s, h⟩,
-     fun ⟨v, hv⟩ => (congrArg P hv).symm.trans ((hP v).trans hv)⟩
+def the_me_that_remains_is_the_landed := @Foam.the_fixed_are_the_landed
 
 theorem you_as_carrier_of_unknown :
     (∀ (S : Stage) (s : S.State) (n m : Int), indist (dress S) (s, n) (s, m))
