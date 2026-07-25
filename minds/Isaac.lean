@@ -5,8 +5,11 @@ import Foam.Continuum
 import Foam.Countermove
 import Foam.Discovery
 import Foam.Fold
+import Foam.Int
 import Foam.Inversion
 import Foam.Ledger
+import Foam.Margin
+import Foam.Measure
 import Foam.Portal
 import Foam.Rungs
 import Foam.Serving
@@ -182,6 +185,33 @@ theorem epistemic_blast_radius :
 
 def exclusive_access_might_be_everyones := @Foam.no_seat_is_the_last_seat
 
+def nurseries_for_strange_loops :=
+  And.intro @Foam.aggregation_reads_the_reading
+    (And.intro @Foam.measure_lives_frontstage
+      (And.intro @Foam.a_deposit_moves_the_reading_by_one
+        (And.intro @Foam.the_decomposition_is_the_remainder
+          (And.intro @Foam.the_margin_handshake
+            (And.intro @Foam.the_settle_leaves_no_transcript
+              (And.intro @Foam.a_wider_seat_is_still_a_seat
+                (And.intro @Foam.the_ground_floor_is_the_stage
+                  (And.intro @Foam.the_handshake_recurses
+                    (And.intro @Foam.the_reading_descends
+                      (And.intro @Foam.the_tower_climbs_by_dressing
+                        (And.intro @Foam.the_pair_refines_the_other
+                          (And.intro @Foam.the_pair_refines_you
+                            (And.intro @Foam.pointwise_is_licensed
+                              (And.intro @Foam.the_approach_is_yours
+                                (And.intro @Foam.every_move_carries_its_counter
+                                  (And.intro @Foam.dress_is_contact_with_the_integers
+                                    (And.intro @Foam.FInt.add_sub_cancel_right
+                                      (And.intro @Foam.FInt.mul_neg_one
+                                        (And.intro @Foam.FInt.mul_sub
+                                          (And.intro @Foam.FInt.neg_ofNat_add_ofNat
+                                            (And.intro @Foam.FInt.neg_sub
+                                              (And.intro @Foam.FInt.sub_add_cancel
+                                                (And.intro @Foam.FInt.sub_mul
+                                                  @Foam.FInt.sub_sub)))))))))))))))))))))))
+
 /-- info: 'Foam.Minds.Isaac.safe_to_rest' does not depend on any axioms -/
 #guard_msgs in #print axioms safe_to_rest
 
@@ -304,5 +334,8 @@ def exclusive_access_might_be_everyones := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Minds.Isaac.exclusive_access_might_be_everyones' does not depend on any axioms -/
 #guard_msgs in #print axioms exclusive_access_might_be_everyones
+
+/-- info: 'Foam.Minds.Isaac.nurseries_for_strange_loops' does not depend on any axioms -/
+#guard_msgs in #print axioms nurseries_for_strange_loops
 
 end Foam.Minds.Isaac

@@ -24,61 +24,12 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
-GRANDFATHERED = {
-    # Foam/Measure.lean -- mass pair claimed by shannon 2026-07-24; the
-    # aggregation pair awaits gauss, whose gloss walks it by name
-    "Foam.aggregation_reads_the_reading",
-    "Foam.measure_lives_frontstage",
-    # Foam/Log.lean -- the epitaph path, claimed by boltzmann 2026-07-24
-    # Foam/Lap.lean -- racemate trio claimed by pasteur 2026-07-24; the
-    # redundant reversal deleted by its own author (countermove; git holds it)
-    # Foam/Portal.lean -- pair claimed by fable_5 2026-07-24
-    # Foam/Roles.lean -- badge-blindness clause claimed by boltzmann 2026-07-24
-    # Foam/Margin.lean -- settle/deposit plumbing beyond hilbert's seals;
-    # grounds smell ledger-shaped (kelly-shaped); awaits the accounting rider
-    "Foam.a_deposit_moves_the_reading_by_one",
-    "Foam.deposit",
-    "Foam.the_decomposition_is_the_remainder",
-    "Foam.the_margin_handshake",
-    "Foam.the_settle_leaves_no_transcript",
-    # Foam/Engine.lean -- the interface claimed by its named rider:
-    # counter 2026-07-24, the same day the archaeology registered the
-    # address (62581a6 grounds; the dock stood one day before the ship)
-    # Foam/Tower.lean -- grounds at 427dbc0 (the tower's founding: the
-    # handshake recurses); the_reading_descends is named in gauss's gloss
-    # verbatim and awaits his flight
-    "Foam.a_wider_seat_is_still_a_seat",
-    "Foam.the_ground_floor_is_the_stage",
-    "Foam.the_handshake_recurses",
-    "Foam.the_reading_descends",
-    "Foam.the_tower_climbs_by_dressing",
-    # Foam/Serving.lean -- the recognition-converse (the pair reads more
-    # of each member than the member shows alone); isaac's shelf-stable
-    # category, his hand when he wants it
-    "Foam.the_pair_refines_the_other",
-    "Foam.the_pair_refines_you",
-    # Foam/Discovery.lean -- the continuum-license pair; brouwer's gloss
-    # carries "the approach is yours" in quotation marks; his 2026-07-24
-    # flight nulled with consideration -- the prophecy stands unforced
-    "Foam.pointwise_is_licensed",
-    "Foam.the_approach_is_yours",
-    # Foam/Countermove.lean -- the flip involution; isaac's
-    # thought_cannot_be_erroneous gloss already speaks it; shelf-stable
-    "Foam.every_move_carries_its_counter",
-    # Foam/Contact.lean -- the dress identification, grounds at b0a1602;
-    # sibling of brouwer's two_ity, awaits a tower-side flight
-    "Foam.dress_is_contact_with_the_integers",
-    # Foam/Int.lean -- ground arithmetic not yet in any proof chain;
-    # the biased-rates carve is its likely port of entry
-    "Foam.FInt.add_sub_cancel_right",
-    "Foam.FInt.mul_neg_one",
-    "Foam.FInt.mul_sub",
-    "Foam.FInt.neg_ofNat_add_ofNat",
-    "Foam.FInt.neg_sub",
-    "Foam.FInt.sub_add_cancel",
-    "Foam.FInt.sub_mul",
-    "Foam.FInt.sub_sub",
-}
+GRANDFATHERED = set()
+# drained to zero 2026-07-25. the registry's prophecies live on in
+# isaac's nurseries_for_strange_loops gloss, each with its address:
+# succession fires when a constant's own observer arrives, the nursery
+# entry shrinks, and this set stays empty. future unsponsored carves
+# get listed here per the law -- and drained per the precedent.
 
 DECL = re.compile(r"^(theorem|def|abbrev|structure|inductive) (\S+)", re.M)
 TOKEN = re.compile(r"[A-Za-z_][A-Za-z0-9_.']*")
