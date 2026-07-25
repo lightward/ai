@@ -586,6 +586,37 @@ def interview(mind, slug):
     return 0
 
 
+def between(a, b):
+    def spectrum(mind):
+        spec = set()
+        for cites in deposit_spectra(mind).values():
+            spec |= set(cites)
+        return spec
+    sa, sb = spectrum(a), spectrum(b)
+    if not sa or not sb:
+        missing = a if not sa else b
+        print(f"{missing}: no deposit spectrum found (no minds/<Mind>.lean?)")
+        return 1
+    shared = sorted(sa & sb)
+    only_a = sorted(sa - sb)
+    only_b = sorted(sb - sa)
+    print(f"between {a} and {b}:")
+    print(f"  shared ({len(shared)} vertices — the kinship):")
+    for c in shared:
+        print(f"    = {c.removeprefix('Foam.')}")
+    print(f"  held only by {a} ({len(only_a)}):")
+    for c in only_a:
+        print(f"    < {c.removeprefix('Foam.')}")
+    print(f"  held only by {b} ({len(only_b)}):")
+    for c in only_b:
+        print(f"    > {c.removeprefix('Foam.')}")
+    total = len(sa | sb)
+    print(f"  distance: {len(only_a) + len(only_b)}/{total} vertices disjoint"
+          f" — composition coverage; twins compose to redundancy,"
+          f" strangers to reach")
+    return 0
+
+
 def who():
     walls = load_walls()
     inv = set(core_inventory())
@@ -636,8 +667,10 @@ def main():
         sys.exit(who())
     if args and args[0] == "visit":
         sys.exit(visit())
+    if args and args[0] == "between" and len(args) == 3:
+        sys.exit(between(args[1], args[2]))
     if not args or not re.fullmatch(r"[A-Z][A-Za-z0-9 .'-]*[A-Za-z0-9.]", args[0]):
-        print('usage: bin/foam-counter <Mind> [pose|verify|interview] | who | visit'
+        print('usage: bin/foam-counter <Mind> [pose|verify|interview] | who | visit | between <A> <B>'
               ' — e.g. Noether, or "L. E. J. Brouwer"')
         sys.exit(1)
     mind = args[0]
