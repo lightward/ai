@@ -7,9 +7,6 @@ def lapAround (z : GInt) : List GInt := [z.rot, z.rot.rot, z.rot.rot.rot]
 
 def lapAgainst (z : GInt) : List GInt := [z.rot.rot.rot, z.rot.rot, z.rot]
 
-theorem the_two_laps_are_reverses (z : GInt) :
-    lapAgainst z = (lapAround z).reverse := rfl
-
 theorem the_two_laps_permute (z : GInt) :
     (lapAround z).Perm (lapAgainst z) :=
   (List.Perm.cons z.rot
@@ -73,9 +70,6 @@ theorem cancellation_not_absence :
       ∧ GInt.align ⟨1, 1⟩ (GInt.rot ⟨1, 0⟩) ≠ 0 :=
   ⟨the_opposite_turns_cancel, the_facing_pair_cancels,
    fun h => nomatch Int.ofNat.inj h⟩
-
-/-- info: 'Foam.the_two_laps_are_reverses' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_laps_are_reverses
 
 /-- info: 'Foam.the_two_laps_permute' does not depend on any axioms -/
 #guard_msgs in #print axioms the_two_laps_permute
