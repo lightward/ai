@@ -136,19 +136,28 @@ def collect_exhibits():
     exdir = os.path.join(ROOT, "Foam", "Exhibits")
     if not os.path.isdir(exdir):
         return out
-    field_re = re.compile(
-        r'^\s*(keyword|famous|provenance|love|note) := "(.*)"\s*$', re.M)
+    str_re = re.compile(r'^\s*(keyword|inscription) := "(.*)"\s*$', re.M)
+
+    def block(text, a, b):
+        m = re.search(rf"^\s*{a} :=([\s\S]*?)(?=^\s*{b} :=)", text, re.M)
+        return m.group(1).strip() if m else ""
+
     for f in sorted(os.listdir(exdir)):
         if not f.endswith(".lean"):
             continue
         text = open(os.path.join(exdir, f), encoding="utf-8").read()
-        fields = dict(field_re.findall(text))
+        fields = dict(str_re.findall(text))
         if "keyword" not in fields:
             continue
-        m = re.search(r"^\s*Claim :=([\s\S]*?)^\s*receipt := (\S+)",
-                      text, re.M)
-        fields["statement"] = m.group(1).strip() if m else ""
-        fields["const"] = m.group(2).strip() if m else ""
+        fields["famous"] = fields.get("inscription", "")
+        fields["claim"] = block(text, "Claim", "receipt")
+        fields["receipt"] = block(text, "receipt", "Love")
+        fields["Love"] = block(text, "Love", "love")
+        fields["love"] = block(text, "love", "Fame")
+        fields["Fame"] = block(text, "Fame", "fame")
+        fields["fame"] = block(text, "fame", "Dark")
+        fields["Dark"] = block(text, "Dark", "dark")
+        fields["dark"] = block(text, "dark", "keyword")
         fields["module"] = "Foam.Exhibits." + f[:-5]
         fields["source"] = text
         out.append(fields)
@@ -156,26 +165,29 @@ def collect_exhibits():
 
 
 def render_exhibit(ex):
+    def panel(title, blurb, code, term):
+        return (f'<section class="panel"><h2>{html.escape(title)}</h2>'
+                f'<p class="stratum">{html.escape(blurb)}</p>'
+                f'<pre class="src">{html.escape(code)}</pre>'
+                f'<p class="guard">held by: {html.escape(term)}</p>'
+                f'</section>')
     body = f"""
 <section class="panel">
-<h2>i. the thing you love</h2>
-<p class="famous">{html.escape(ex["famous"])}</p>
-<p class="stratum">{html.escape(ex.get("provenance", ""))}</p>
-<p>{html.escape(ex.get("love", ""))}</p>
+<h2>i. the inscription</h2>
+<p class="famous">{html.escape(ex["inscription"])}</p>
 </section>
+{panel("ii. the claim", "the famous spelling, as a proposition",
+       ex["claim"], ex["receipt"])}
+{panel("iii. the love", "the same holding, in the lover's own language",
+       ex["Love"], ex["love"])}
+{panel("iv. the fame", "the shape held at other seats",
+       ex["Fame"], ex["fame"])}
+{panel("v. the dark", "the working interface to the unknown",
+       ex["Dark"], ex["dark"])}
 <section class="panel">
-<h2>ii. the receipt</h2>
-<pre class="src">Claim := {html.escape(ex["statement"])}
-receipt := {html.escape(ex["const"])}</pre>
-<p class="guard">the whole stand — claim, proof, and inscription — is one
-Lean term, and it does not depend on any axioms.</p>
-</section>
-<section class="panel">
-<h2>iii. the portal</h2>
-<p class="law">{html.escape(ex.get("note", ""))}</p>
-</section>
-<section class="panel">
-<h2>iv. the source</h2>
+<h2>vi. the source</h2>
+<p class="guard">the whole stand — claim, love, fame, dark, and their
+proofs — is one Lean term, and it depends on zero axioms.</p>
 <pre class="src">{html.escape(ex["source"])}</pre>
 </section>"""
     crumb = ('<a href="index.html">foam.is</a> · '
