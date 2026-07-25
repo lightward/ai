@@ -1,0 +1,71 @@
+import Foam
+import Foam.Engine
+import Foam.Generator
+import Foam.Inversion
+import Foam.Margin
+import Foam.Surprise
+
+namespace Foam.Minds.Counter
+
+def the_brief_reads_only_the_record := @Foam.the_selection_reads_only_the_record
+
+def any_mind_may_sit_the_seat := @Foam.the_implementation_stays_backstage
+
+def the_gate_agrees_or_names_the_gap := @Foam.the_window_agrees_or_names_the_gap
+
+theorem a_green_gate_stamps_the_walls {H : Type} (q : List (H × H))
+    (e : H × H) (a b : H) (hfresh : (a, b) ∉ q) :
+    ((e :: q).length = q.length + 1)
+      ∧ (∀ {x y : H}, Nonempty (Path q x y) → Nonempty (Path (e :: q) x y))
+      ∧ Nonempty (Path ((a, b) :: q) a b) :=
+  ⟨the_deposit_writes_one_mark q e,
+   fun h => old_reach_survives_the_deposit e h,
+   (only_surprise_extends_reach q a b hfresh).2⟩
+
+def growth_charges_the_flight_drains := @Foam.drain_chargeIn
+
+theorem the_loop_comes_home_losing_nothing (E : Engine) (s : E.State) :
+    E.turn (E.turn (E.turn (E.turn s))) = s
+      ∧ ∀ a b : E.State, E.turn a = E.turn b → a = b :=
+  ⟨(the_three_turns_undo E s).1, fun _ _ h => the_turn_loses_no_state E h⟩
+
+def quiescent_is_correct := @Foam.the_turn_goes_unheard
+
+def schedule_is_gauge := @Foam.any_settling_cadence_reads_the_same
+
+theorem the_counter_is_counted (E : Engine) (S : Stage) (s : S.State)
+    (n m : Int) (h : n ≠ m) :
+    Invisible E.gauge E.turn
+      ∧ (indist (dress S) (s, n) (s, m)
+          ∧ (movedIn S).obs (s, n) none ≠ (movedIn S).obs (s, m) none) :=
+  ⟨the_turn_is_invisible_to_the_charge E,
+   a_wider_seat_reads_the_remainder S s n m h⟩
+
+/-- info: 'Foam.Minds.Counter.the_brief_reads_only_the_record' does not depend on any axioms -/
+#guard_msgs in #print axioms the_brief_reads_only_the_record
+
+/-- info: 'Foam.Minds.Counter.any_mind_may_sit_the_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms any_mind_may_sit_the_seat
+
+/-- info: 'Foam.Minds.Counter.the_gate_agrees_or_names_the_gap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_gate_agrees_or_names_the_gap
+
+/-- info: 'Foam.Minds.Counter.a_green_gate_stamps_the_walls' does not depend on any axioms -/
+#guard_msgs in #print axioms a_green_gate_stamps_the_walls
+
+/-- info: 'Foam.Minds.Counter.growth_charges_the_flight_drains' does not depend on any axioms -/
+#guard_msgs in #print axioms growth_charges_the_flight_drains
+
+/-- info: 'Foam.Minds.Counter.the_loop_comes_home_losing_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_loop_comes_home_losing_nothing
+
+/-- info: 'Foam.Minds.Counter.quiescent_is_correct' does not depend on any axioms -/
+#guard_msgs in #print axioms quiescent_is_correct
+
+/-- info: 'Foam.Minds.Counter.schedule_is_gauge' does not depend on any axioms -/
+#guard_msgs in #print axioms schedule_is_gauge
+
+/-- info: 'Foam.Minds.Counter.the_counter_is_counted' does not depend on any axioms -/
+#guard_msgs in #print axioms the_counter_is_counted
+
+end Foam.Minds.Counter

@@ -41,20 +41,9 @@ GRANDFATHERED = {
     "Foam.the_decomposition_is_the_remainder",
     "Foam.the_margin_handshake",
     "Foam.the_settle_leaves_no_transcript",
-    # Foam/Engine.lean -- NOT demos: the interface awaiting its rider.
-    # grounds at 62581a6: "an engine INTERFACE, something for other minds
-    # to run their constructivism on, blind to the implementation...
-    # the dial IS this interface." the rider was named 2026-07-24:
-    # counter-as-vehicle, fate-management under CFC. drain_chargeIn is the
-    # pressure sensor's formal basis (grounds trace to the old tree's
-    # engine/heart). archaeology refused the deletion; the debt stands
-    # with its address.
-    "Foam.compassEngine",
-    "Foam.twoWheels",
-    "Foam.drain_chargeIn",
-    "Foam.the_implementation_stays_backstage",
-    "Foam.the_three_turns_undo",
-    "Foam.the_turn_loses_no_state",
+    # Foam/Engine.lean -- the interface claimed by its named rider:
+    # counter 2026-07-24, the same day the archaeology registered the
+    # address (62581a6 grounds; the dock stood one day before the ship)
     # Foam/Tower.lean -- grounds at 427dbc0 (the tower's founding: the
     # handshake recurses); the_reading_descends is named in gauss's gloss
     # verbatim and awaits his flight
