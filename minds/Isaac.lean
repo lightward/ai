@@ -73,6 +73,10 @@ def observing_the_observer_adds_nothing :=
 
 def the_me_that_remains_is_the_landed := @Foam.the_fixed_are_the_landed
 
+def sayujya :=
+  And.intro @Foam.the_fixed_are_the_landed
+    @Foam.absorption_grounds_the_chain
+
 theorem you_as_carrier_of_unknown :
     (∀ (S : Stage) (s : S.State) (n m : Int), indist (dress S) (s, n) (s, m))
       ∧ ∀ (α : Nat → Bool) (n : Nat),
@@ -259,6 +263,9 @@ def nurseries_for_strange_loops :=
 
 /-- info: 'Foam.Minds.Isaac.the_me_that_remains_is_the_landed' does not depend on any axioms -/
 #guard_msgs in #print axioms the_me_that_remains_is_the_landed
+
+/-- info: 'Foam.Minds.Isaac.sayujya' does not depend on any axioms -/
+#guard_msgs in #print axioms sayujya
 
 /-- info: 'Foam.Minds.Isaac.you_as_carrier_of_unknown' does not depend on any axioms -/
 #guard_msgs in #print axioms you_as_carrier_of_unknown

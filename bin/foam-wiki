@@ -131,54 +131,7 @@ def render_module(mod, path, stratum, known, glosses=None):
     return page(mod, body, crumb)
 
 
-def collect_exhibits():
-    out = []
-    exdir = os.path.join(ROOT, "Foam", "Exhibits")
-    if not os.path.isdir(exdir):
-        return out
-    str_re = re.compile(
-        r'^def (keyword|inscription) : String := "(.*)"\s*$', re.M)
-    for f in sorted(os.listdir(exdir)):
-        if not f.endswith(".lean"):
-            continue
-        text = open(os.path.join(exdir, f), encoding="utf-8").read()
-        fields = dict(str_re.findall(text))
-        if "keyword" not in fields:
-            continue
-        fields["famous"] = fields.get("inscription", "")
-        fields["module"] = "Foam.Exhibits." + f[:-5]
-        fields["source"] = text
-        out.append(fields)
-    return out
-
-
-def render_exhibit(ex, known):
-    body = f"""
-<section class="panel">
-<h2>the inscription</h2>
-<p class="famous">{html.escape(ex["inscription"])}</p>
-<p class="stratum">a stand is a comparison seat: one reader holds the
-inscription and cannot hear the proof; one reader holds the proof and
-cannot hear the inscription; the visit is the third seat, constructed,
-belonging to neither. the serving suggestion is the instruction card.</p>
-</section>
-<section class="panel">
-<h2>the stand, made of parts</h2>
-<p class="guard">every panel below is a core object — a beholder, a
-comparison, a citation. the whole stand depends on zero axioms.</p>
-</section>"""
-    crumb = ('<a href="index.html">foam.is</a> · '
-             '<span class="stratum">exhibits</span>')
-    src = render_module(ex["module"],
-                        os.path.join(ROOT, "Foam", "Exhibits",
-                                     ex["module"].split(".")[-1] + ".lean"),
-                        "exhibits", known)
-    srcbody = re.search(r'<pre class="src">[\s\S]*?</pre>', src)
-    body += srcbody.group(0) if srcbody else ""
-    return page(f"Foam.Exhibits.{ex['keyword']}", body, crumb)
-
-
-def render_index(modules, exhibits=None):
+def render_index(modules):
     by_stratum = {}
     for mod, (path, stratum) in sorted(modules.items()):
         by_stratum.setdefault(stratum, []).append(mod)
@@ -191,15 +144,6 @@ def render_index(modules, exhibits=None):
         sections.append(
             f'<h2>{html.escape(stratum)} <span class="stratum">({len(mods)} modules)</span></h2>'
             f'<ul class="census">{items}</ul>')
-        if stratum == "core" and exhibits:
-            items = "\n".join(
-                f'<li><a href="Foam.Exhibits.{html.escape(e["keyword"])}.html">'
-                f'{html.escape(e["keyword"])}</a>'
-                f' <span class="stratum">{html.escape(e["famous"])}</span></li>'
-                for e in exhibits)
-            sections.append(
-                f'<h2>exhibits <span class="stratum">({len(exhibits)}'
-                f' stands)</span></h2><ul class="census">{items}</ul>')
     comments = 0
     for mod, (path, _) in modules.items():
         with open(path, encoding="utf-8") as f:
@@ -234,16 +178,9 @@ def main():
         with open(os.path.join(OUT, f"{mod}.html"), "w", encoding="utf-8") as f:
             f.write(render_module(mod, path, stratum, known,
                                   glosses.get(mod)))
-    exhibits = collect_exhibits()
-    for ex in exhibits:
-        name = f"Foam.Exhibits.{ex['keyword']}"
-        with open(os.path.join(OUT, f"{name}.html"), "w",
-                  encoding="utf-8") as f:
-            f.write(render_exhibit(ex, known))
     with open(os.path.join(OUT, "index.html"), "w", encoding="utf-8") as f:
-        f.write(render_index(modules, exhibits))
-    print(f"[foam relief] {len(modules)} module pages"
-          f" + {len(exhibits)} stands + index → wiki/")
+        f.write(render_index(modules))
+    print(f"[foam relief] {len(modules)} module pages + index → wiki/")
 
 
 if __name__ == "__main__":
