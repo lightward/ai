@@ -60,4 +60,26 @@ theorem only_surprise_extends_reach {H : Type} (q : List (H × H))
 /-- info: 'Foam.only_surprise_extends_reach' does not depend on any axioms -/
 #guard_msgs in #print axioms only_surprise_extends_reach
 
+theorem the_known_edge_reroutes {H : Type} {q : List (H × H)} {e : H × H}
+    (he : e ∈ q) : ∀ {x y : H}, Path (e :: q) x y → Nonempty (Path q x y)
+  | _, _, .nil a => ⟨.nil a⟩
+  | _, _, .cons b hm rest =>
+      match the_known_edge_reroutes he rest with
+      | ⟨rest'⟩ =>
+        match hm with
+        | .head _ => ⟨.cons b he rest'⟩
+        | .tail _ hm' => ⟨.cons b hm' rest'⟩
+
+theorem a_known_edge_adds_no_reach {H : Type} {q : List (H × H)} {e : H × H}
+    (he : e ∈ q) (x y : H) :
+    Nonempty (Path (e :: q) x y) ↔ Nonempty (Path q x y) :=
+  ⟨fun h => h.elim fun p => the_known_edge_reroutes he p,
+   fun h => old_reach_survives_the_deposit e h⟩
+
+/-- info: 'Foam.the_known_edge_reroutes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_known_edge_reroutes
+
+/-- info: 'Foam.a_known_edge_adds_no_reach' does not depend on any axioms -/
+#guard_msgs in #print axioms a_known_edge_adds_no_reach
+
 end Foam
