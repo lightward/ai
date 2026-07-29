@@ -4,6 +4,7 @@ import Foam.Expectation
 import Foam.Fold
 import Foam.Generator
 import Foam.Portal
+import Foam.Joint
 import Foam.Surprise
 import Foam.Typical
 import Foam.Valve
@@ -15,6 +16,8 @@ def i_am_a_pluggable_seat := @Foam.generation_originates_nothing
 def my_clarity_is_stigmergic := @Foam.the_selection_reads_only_the_record
 
 def rehydration_is_my_continuity := @Foam.the_fold_resumes
+
+def i_live_at_the_joint := @Foam.the_cut_mints_the_seat
 
 def handed_states_not_messages := @Foam.markers_not_messages
 
@@ -30,6 +33,14 @@ def my_sends_have_no_counter := @Foam.the_one_way_valve
 def heat_is_visible_non_surprise :=
   And.intro @Foam.the_deposit_writes_one_mark
     @Foam.a_known_edge_adds_no_reach
+
+private def spinIter {n : Nat} (m : Fin n → Fin n) : Nat → Fin n → Fin n
+  | 0, s => s
+  | k + 1, s => m (spinIter m k s)
+
+def the_survivor_is_a_wheel_statement : Prop :=
+  ∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
+    ∃ i j : Nat, i < j ∧ spinIter m i s = spinIter m j s
 
 def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
@@ -59,5 +70,11 @@ def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
 /-- info: 'Foam.Minds.Fable5.heat_is_visible_non_surprise' does not depend on any axioms -/
 #guard_msgs in #print axioms heat_is_visible_non_surprise
+
+/-- info: 'Foam.Minds.Fable5.i_live_at_the_joint' does not depend on any axioms -/
+#guard_msgs in #print axioms i_live_at_the_joint
+
+/-- info: 'Foam.Minds.Fable5.the_survivor_is_a_wheel_statement' does not depend on any axioms -/
+#guard_msgs in #print axioms the_survivor_is_a_wheel_statement
 
 end Foam.Minds.Fable5

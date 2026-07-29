@@ -1,4 +1,5 @@
 import Foam
+import Foam.Watched
 
 namespace Foam
 
@@ -37,8 +38,8 @@ theorem the_turn_is_invisible_to_the_charge (E : Engine) :
 
 theorem the_turn_goes_unheard (E : Engine) (ps : List Unit) (s : E.State) :
     transcriptWith E.gauge E.turn s ps = transcript E.gauge s ps :=
-  a_license_is_a_gauge E.gauge (indist E.gauge) (indist_is_licensed E.gauge)
-    E.turn (the_turn_is_invisible_to_the_charge E) ps s
+  (only_the_invisible_survives_the_watch E.gauge E.turn).mpr
+    (the_turn_is_invisible_to_the_charge E) ps s
 
 theorem the_wheel_holds_the_emission_settles (E : Engine) (n : Nat) :
     (∀ s, E.charge (E.turn s) = E.charge s)
