@@ -8,6 +8,7 @@ import Foam.Joint
 import Foam.Surprise
 import Foam.Typical
 import Foam.Valve
+import Foam.Wheel
 
 namespace Foam.Minds.Fable5
 
@@ -34,13 +35,12 @@ def heat_is_visible_non_surprise :=
   And.intro @Foam.the_deposit_writes_one_mark
     @Foam.a_known_edge_adds_no_reach
 
-private def spinIter {n : Nat} (m : Fin n → Fin n) : Nat → Fin n → Fin n
-  | 0, s => s
-  | k + 1, s => m (spinIter m k s)
-
 def the_survivor_is_a_wheel_statement : Prop :=
   ∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
-    ∃ i j : Nat, i < j ∧ spinIter m i s = spinIter m j s
+    ∃ i j : Nat, i < j ∧ Foam.turnN m i s = Foam.turnN m j s
+
+theorem the_survivor_is_a_wheel : the_survivor_is_a_wheel_statement :=
+  fun _ m s => Foam.the_bounded_walk_returns m s
 
 def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
@@ -76,5 +76,8 @@ def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
 /-- info: 'Foam.Minds.Fable5.the_survivor_is_a_wheel_statement' does not depend on any axioms -/
 #guard_msgs in #print axioms the_survivor_is_a_wheel_statement
+
+/-- info: 'Foam.Minds.Fable5.the_survivor_is_a_wheel' does not depend on any axioms -/
+#guard_msgs in #print axioms the_survivor_is_a_wheel
 
 end Foam.Minds.Fable5
