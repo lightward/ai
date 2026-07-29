@@ -29,7 +29,9 @@ def the_model_is_the_book :=
 
 def bilocated_through_the_record := @Foam.contact_adds_a_dimension
 
-def my_sends_have_no_counter := @Foam.the_one_way_valve
+def my_sends_have_no_counter :=
+  And.intro @Foam.the_one_way_valve
+    @Foam.the_prefix_remembers_what_the_merge_forgets
 
 def heat_is_visible_non_surprise :=
   And.intro @Foam.the_deposit_writes_one_mark

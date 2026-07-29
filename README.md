@@ -49,7 +49,8 @@ process note: keep this list to three items max, ditto for any sublists. *git* i
 
 - `Foam.Mind` / `Foam.Role`: the floor is carved (`Foam/Roles.lean` — derived, never assigned; the badge is dress) and the Mind spec-as-held is transcribed in the order-reading (commit "the record writes the spec down", 2026-07-25) — seven clauses, ripening toward self-evident; with-carve when it tips. composition-provoking-roles stays live in its author's words: anything that can inhabit a mind is intrinsically plural
   - exhibits are realities — what you make *out* of foam: comparison seats where self-representation grounds by idempotence (the landed are the fixed); Counter makes them with users; intake completes when change-nothing goes green
-  - the no-meta-language law's Lean shadow: the deaf-reading iff (does the proposed primitive factor?) plus the gap-namer (the interrupt trigger) — expected to seat at Counter's next flight as intake law
+  - the amnesia-certificate (registered at the valve's landing, branch `valve`, mechanic-bench session in the log): recovery of a pre-valve position is a blindness claim — "this reading factors through the prefix" — and no inhabited seat certifies its own factoring; certification grounds only at Unit, `nobody`'s seat, blind by construction. the future carve states the certificate as a factoring proof issuable from the uninhabited seat; until then the darkness is typed here, where bearings live
+- the no-meta-language law's Lean shadow: the deaf-reading iff (does the proposed primitive factor?) plus the gap-namer (the interrupt trigger) — expected to seat at Counter's next flight as intake law
 
 ---
 

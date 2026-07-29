@@ -1631,6 +1631,7 @@
     "Foam.local_runs_fix_the_foreign",
     "Foam.no_local_counter_reaches_the_foreign_record",
     "Foam.the_one_way_valve",
+    "Foam.the_prefix_remembers_what_the_merge_forgets",
     "Foam.only_the_invisible_survives_the_watch",
     "Foam.turnN",
     "Foam.fin_eq_of_val_eq",

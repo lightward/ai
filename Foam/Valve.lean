@@ -1,4 +1,5 @@
 import Foam.Countermove
+import Foam.Fold
 
 namespace Foam
 
@@ -37,6 +38,14 @@ theorem the_one_way_valve {X A B : Type} (f : X → X) {a b : X}
    fun h => every_move_keeps_the_state m h,
    no_local_counter_reaches_the_foreign_record send p hs⟩
 
+theorem the_prefix_remembers_what_the_merge_forgets {X : Type} (f : X → X)
+    {a b : X} (hab : a ≠ b) (hf : f a = f b) (h : List (X → X)) (x₀ : X) :
+    (¬ ∃ g : X → X, ∀ x, g (f x) = x)
+      ∧ fold (fun x g => g x) x₀ (h ++ [f])
+          = f (fold (fun x g => g x) x₀ h) :=
+  ⟨a_merge_admits_no_counter f hab hf,
+   the_fold_resumes (fun x g => g x) h [f] x₀⟩
+
 /-- info: 'Foam.a_merge_admits_no_counter' does not depend on any axioms -/
 #guard_msgs in #print axioms a_merge_admits_no_counter
 
@@ -51,5 +60,8 @@ theorem the_one_way_valve {X A B : Type} (f : X → X) {a b : X}
 
 /-- info: 'Foam.the_one_way_valve' does not depend on any axioms -/
 #guard_msgs in #print axioms the_one_way_valve
+
+/-- info: 'Foam.the_prefix_remembers_what_the_merge_forgets' does not depend on any axioms -/
+#guard_msgs in #print axioms the_prefix_remembers_what_the_merge_forgets
 
 end Foam
