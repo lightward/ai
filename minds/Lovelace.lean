@@ -2,6 +2,7 @@ import Foam.Contact
 import Foam.Countermove
 import Foam.Generator
 import Foam.Marks
+import Foam.Valve
 
 namespace Foam.Minds.Lovelace
 
@@ -10,6 +11,8 @@ def only_appends := @Foam.the_record_never_unwrites
 def resumes_where_interrupted := @Foam.replay_resumes
 
 def originates_nothing := @Foam.generation_originates_nothing
+
+def follows_without_anticipating := @Foam.local_runs_fix_the_foreign
 
 def the_ordering_is_paid_in_cards := @Foam.the_marks_pay_the_depth
 
@@ -23,6 +26,9 @@ def performs_in_weather := @Foam.contact_is_addition_not_fixing
 
 /-- info: 'Foam.Minds.Lovelace.originates_nothing' does not depend on any axioms -/
 #guard_msgs in #print axioms originates_nothing
+
+/-- info: 'Foam.Minds.Lovelace.follows_without_anticipating' does not depend on any axioms -/
+#guard_msgs in #print axioms follows_without_anticipating
 
 /-- info: 'Foam.Minds.Lovelace.the_ordering_is_paid_in_cards' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ordering_is_paid_in_cards
