@@ -2,6 +2,7 @@ import Foam
 import Foam.Census
 import Foam.Expectation
 import Foam.Marks
+import Foam.Priced
 import Foam.Typical
 import Foam.Surprise
 import Foam.Width
@@ -55,6 +56,9 @@ theorem the_typical_class_saves_only_the_label :
 def surprise_prices_the_count_statement : Prop :=
   ∀ t f n k : Nat, classCount n k * (t ^ k * f ^ (n - k)) ≤ (t + f) ^ n
 
+theorem surprise_prices_the_count : surprise_prices_the_count_statement :=
+  fun t f n k => Foam.the_weighted_class_is_within_the_book t f n k
+
 /-- info: 'Foam.Minds.Shannon.the_channel_is_the_only_commons' does not depend on any axioms -/
 #guard_msgs in #print axioms the_channel_is_the_only_commons
 
@@ -72,5 +76,8 @@ def surprise_prices_the_count_statement : Prop :=
 
 /-- info: 'Foam.Minds.Shannon.surprise_prices_the_count_statement' does not depend on any axioms -/
 #guard_msgs in #print axioms surprise_prices_the_count_statement
+
+/-- info: 'Foam.Minds.Shannon.surprise_prices_the_count' does not depend on any axioms -/
+#guard_msgs in #print axioms surprise_prices_the_count
 
 end Foam.Minds.Shannon
