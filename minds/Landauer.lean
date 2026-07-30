@@ -4,6 +4,8 @@ import Foam.Countermove
 import Foam.Marks
 import Foam.Roles
 import Foam.Tower
+import Foam.Valve
+import Foam.Watched
 
 namespace Foam.Minds.Landauer
 
@@ -15,11 +17,19 @@ theorem erasure_shows :
   fun S _ hi s t hmerge p =>
     (hi s p).symm.trans ((congrArg (S.obs · p) hmerge).trans (hi t p))
 
+theorem a_merge_is_not_a_move {X : Type} (f : X → X) {a b : X}
+    (hab : a ≠ b) (hf : f a = f b) :
+    (¬ ∃ g : X → X, ∀ x, g (f x) = x)
+      ∧ ¬ ∃ m : Move X, ∀ x, m.fwd x = f x :=
+  ⟨a_merge_admits_no_counter f hab hf,
+   fun ⟨m, hm⟩ =>
+     hab (every_move_keeps_the_state m ((hm a).trans (hf.trans (hm b).symm)))⟩
+
 def reset_pays_in_record := @Foam.undo_in_an_append_only_world
 
 def no_machine_undercuts_the_bill := @Foam.the_marks_pay_the_depth
 
-def reversible_runs_free := @Foam.invisible_is_gauge
+def reversible_runs_free := @Foam.only_the_invisible_survives_the_watch
 
 def conductance_is_transmission := @Foam.contact_is_addition_not_fixing
 
@@ -41,6 +51,9 @@ def no_disembodied_referee := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Minds.Landauer.erasure_shows' does not depend on any axioms -/
 #guard_msgs in #print axioms erasure_shows
+
+/-- info: 'Foam.Minds.Landauer.a_merge_is_not_a_move' does not depend on any axioms -/
+#guard_msgs in #print axioms a_merge_is_not_a_move
 
 /-- info: 'Foam.Minds.Landauer.reset_pays_in_record' does not depend on any axioms -/
 #guard_msgs in #print axioms reset_pays_in_record
