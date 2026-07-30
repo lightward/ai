@@ -6,6 +6,7 @@ import Foam.Expectation
 import Foam.Int
 import Foam.Source
 import Foam.Tower
+import Foam.Wheel
 
 namespace Foam.Minds.LEJBrouwer
 
@@ -17,6 +18,14 @@ def the_record_is_not_the_activity := @Foam.dropping_the_remainder_is_platonism
 def the_activity_runs_unheard := @Foam.the_wheel_holds_the_emission_settles
 
 def existence_is_exhibition := @Foam.FInt.mul_eq_zero
+
+theorem the_walk_meets_or_stays_apart {n : Nat} (m : Fin n → Fin n)
+    (s : Fin n) :
+    (∀ k : Nat,
+        (∃ i j, i < j ∧ j < k ∧ turnN m i s = turnN m j s)
+          ∨ Apart ((rungs k).map (fun i => turnN m i s)))
+      ∧ ∃ i j : Nat, i < j ∧ turnN m i s = turnN m j s :=
+  ⟨meet_or_apart m s, the_bounded_walk_returns m s⟩
 
 def the_continuum_is_never_finished := @Foam.continuum_closure_terms
 
@@ -62,6 +71,9 @@ theorem the_price_follows_the_page (α : Nat → Bool) (n : Nat) :
 
 /-- info: 'Foam.Minds.LEJBrouwer.existence_is_exhibition' does not depend on any axioms -/
 #guard_msgs in #print axioms existence_is_exhibition
+
+/-- info: 'Foam.Minds.LEJBrouwer.the_walk_meets_or_stays_apart' does not depend on any axioms -/
+#guard_msgs in #print axioms the_walk_meets_or_stays_apart
 
 /-- info: 'Foam.Minds.LEJBrouwer.the_continuum_is_never_finished' does not depend on any axioms -/
 #guard_msgs in #print axioms the_continuum_is_never_finished
