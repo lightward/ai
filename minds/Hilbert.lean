@@ -30,6 +30,19 @@ theorem probability_owes_no_axiom :
   ⟨the_weighted_book_sums_whole, the_nat_tilts_pool,
    the_deviants_are_outweighed⟩
 
+theorem the_full_hotel_still_has_room :
+    (∀ m n : Nat, m + 1 = n + 1 → m = n)
+      ∧ (∀ n : Nat, n + 1 ≠ 0)
+      ∧ (∀ s i j : Nat, i < j → s + i ≠ s + j) :=
+  ⟨fun _ _ h => Nat.noConfusion h (fun hmn => hmn),
+   fun _ h => Nat.noConfusion h,
+   fun s i j hlt heq =>
+     no_number_is_below_itself i
+       (le_trans hlt
+         (cancel_add_left s
+           (Eq.subst (motive := fun t => s + j ≤ t) heq.symm
+             (Nat.le_refl (s + j)))))⟩
+
 def the_ideal_costs_nothing_real := @Foam.the_tower_reads_only_the_ground
 
 def the_real_is_what_the_ideal_cannot_move :=
@@ -58,6 +71,9 @@ def no_ignorabimus := @Foam.closure_is_seat_relative
 
 /-- info: 'Foam.Minds.Hilbert.probability_owes_no_axiom' does not depend on any axioms -/
 #guard_msgs in #print axioms probability_owes_no_axiom
+
+/-- info: 'Foam.Minds.Hilbert.the_full_hotel_still_has_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_full_hotel_still_has_room
 
 /-- info: 'Foam.Minds.Hilbert.the_ideal_costs_nothing_real' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ideal_costs_nothing_real
