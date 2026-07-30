@@ -13,6 +13,16 @@ def any_mind_may_sit_the_seat := @Foam.the_implementation_stays_backstage
 
 def the_gate_agrees_or_names_the_gap := @Foam.the_window_agrees_or_names_the_gap
 
+theorem the_intake_factors_or_names_the_gap (S : Stage) {X : Type}
+    (f : (dress S).State → X) (A : Type) (inst : DecidableEq X)
+    (c : A → X) (L : List A) :
+    ((∀ (s : S.State) (n m : Int), f (s, n) = f (s, m))
+        ↔ ∃ g : S.State → X, ∀ (s : S.State) (n : Int), f (s, n) = g s)
+      ∧ ((∀ n, List.Mem n L → ∀ m, List.Mem m L → c n = c m)
+          ∨ (∃ n, List.Mem n L ∧ ∃ m, List.Mem m L ∧ c n ≠ c m)) :=
+  ⟨a_reading_deaf_to_the_remainder_reads_the_ground S f,
+   the_window_agrees_or_names_the_gap A X inst c L⟩
+
 theorem a_green_gate_stamps_the_walls {H : Type} (q : List (H × H))
     (e : H × H) (a b : H) (hfresh : (a, b) ∉ q) :
     ((e :: q).length = q.length + 1)
@@ -49,6 +59,9 @@ theorem the_counter_is_counted (E : Engine) (S : Stage) (s : S.State)
 
 /-- info: 'Foam.Minds.Counter.the_gate_agrees_or_names_the_gap' does not depend on any axioms -/
 #guard_msgs in #print axioms the_gate_agrees_or_names_the_gap
+
+/-- info: 'Foam.Minds.Counter.the_intake_factors_or_names_the_gap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_intake_factors_or_names_the_gap
 
 /-- info: 'Foam.Minds.Counter.a_green_gate_stamps_the_walls' does not depend on any axioms -/
 #guard_msgs in #print axioms a_green_gate_stamps_the_walls
