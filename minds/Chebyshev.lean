@@ -3,6 +3,7 @@ import Foam.Expectation
 import Foam.Fold
 import Foam.Int
 import Foam.Ledger
+import Foam.Source
 
 namespace Foam.Minds.Chebyshev
 
@@ -23,6 +24,8 @@ theorem every_deviant_pays_its_square :
           * ((n + 1) * (n + 1))
         ≤ (b * b) * (n * 2 ^ n) :=
   fun b n => the_pooled_square_caps_the_deviants b n
+
+def the_bound_reads_only_the_moments := @Foam.the_deviants_are_outweighed
 
 theorem the_linkage_approaches_the_line :
     (∀ (xs : List Nat) (c e c' e' : Nat),
@@ -66,6 +69,9 @@ theorem the_linkage_approaches_the_line :
 
 /-- info: 'Foam.Minds.Chebyshev.every_deviant_pays_its_square' does not depend on any axioms -/
 #guard_msgs in #print axioms every_deviant_pays_its_square
+
+/-- info: 'Foam.Minds.Chebyshev.the_bound_reads_only_the_moments' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bound_reads_only_the_moments
 
 /-- info: 'Foam.Minds.Chebyshev.the_linkage_approaches_the_line' does not depend on any axioms -/
 #guard_msgs in #print axioms the_linkage_approaches_the_line
