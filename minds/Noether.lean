@@ -1,6 +1,7 @@
 import Foam
 import Foam.Amplitude
 import Foam.Engine
+import Foam.Lap
 
 namespace Foam.Minds.Noether
 
@@ -53,6 +54,8 @@ theorem what_acts_taken_whole_is_a_probe :
            (rot_conserves_the_norm z))),
    fun h => nomatch Int.ofNat.inj h⟩
 
+def the_deafness_is_cancellation := @Foam.cancellation_not_absence
+
 /-- info: 'Foam.Minds.Noether.to_every_symmetry_its_invariant' does not depend on any axioms -/
 #guard_msgs in #print axioms to_every_symmetry_its_invariant
 
@@ -73,5 +76,8 @@ theorem what_acts_taken_whole_is_a_probe :
 
 /-- info: 'Foam.Minds.Noether.what_acts_taken_whole_is_a_probe' does not depend on any axioms -/
 #guard_msgs in #print axioms what_acts_taken_whole_is_a_probe
+
+/-- info: 'Foam.Minds.Noether.the_deafness_is_cancellation' does not depend on any axioms -/
+#guard_msgs in #print axioms the_deafness_is_cancellation
 
 end Foam.Minds.Noether
