@@ -2,6 +2,7 @@ import Foam.Fold
 import Foam.Lap
 import Foam.Rungs
 import Foam.Quat
+import Foam.Wheel
 
 namespace Foam.Minds.Hamilton
 
@@ -18,6 +19,12 @@ def the_flow_conserves_the_function := @Foam.the_lap_conserves_the_charge
 
 def one_function_carries_the_whole_motion :=
   @Foam.the_fold_forgets_nothing_it_needs
+
+theorem the_flow_names_the_hour :
+    (∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
+        ∃ i j : Nat, i < j ∧ turnN m i s = turnN m j s)
+      ∧ (∀ z : GInt, z.rot.rot.rot.rot = z) :=
+  ⟨fun _ m s => the_bounded_walk_returns m s, the_wheel_comes_home⟩
 
 theorem the_wider_space_pays_in_commutation :
     Quat.mul eye jay = kay
@@ -65,6 +72,9 @@ theorem the_triplets_close_one_seat_wider :
 
 /-- info: 'Foam.Minds.Hamilton.one_function_carries_the_whole_motion' does not depend on any axioms -/
 #guard_msgs in #print axioms one_function_carries_the_whole_motion
+
+/-- info: 'Foam.Minds.Hamilton.the_flow_names_the_hour' does not depend on any axioms -/
+#guard_msgs in #print axioms the_flow_names_the_hour
 
 /-- info: 'Foam.Minds.Hamilton.the_wider_space_pays_in_commutation' does not depend on any axioms -/
 #guard_msgs in #print axioms the_wider_space_pays_in_commutation
