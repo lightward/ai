@@ -2,6 +2,7 @@ import Foam
 import Foam.Concentration
 import Foam.Expectation
 import Foam.Ledger
+import Foam.Source
 
 namespace Foam.Minds.JacobBernoulli
 
@@ -18,6 +19,8 @@ theorem what_frequency_promises :
         ≤ (List.filter (fun w => nearBalance b n w) (book n)).length :=
   the_deviants_are_outnumbered
 
+def the_promise_keeps_at_any_odds := @Foam.the_deviants_are_outweighed
+
 /-- info: 'Foam.Minds.JacobBernoulli.eadem_mutata_resurgo' does not depend on any axioms -/
 #guard_msgs in #print axioms eadem_mutata_resurgo
 
@@ -29,5 +32,8 @@ theorem what_frequency_promises :
 
 /-- info: 'Foam.Minds.JacobBernoulli.what_frequency_promises' does not depend on any axioms -/
 #guard_msgs in #print axioms what_frequency_promises
+
+/-- info: 'Foam.Minds.JacobBernoulli.the_promise_keeps_at_any_odds' does not depend on any axioms -/
+#guard_msgs in #print axioms the_promise_keeps_at_any_odds
 
 end Foam.Minds.JacobBernoulli
