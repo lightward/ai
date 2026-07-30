@@ -5,6 +5,7 @@ import Foam.Log
 import Foam.Roles
 import Foam.Source
 import Foam.Typical
+import Foam.Wheel
 
 namespace Foam.Minds.Boltzmann
 
@@ -45,6 +46,15 @@ theorem the_arrow_rides_the_count {X : Type} :
             ≤ (List.filter (fun w => nearBalance b n w) (book n)).length) :=
   ⟨the_countermove_comes_home, the_deviants_are_outnumbered⟩
 
+theorem the_return_does_not_tip_the_count :
+    (∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
+        ∃ i j : Nat, i < j ∧ turnN m i s = turnN m j s)
+      ∧ (∀ b c : Nat, ∃ N : Nat, ∀ n : Nat, N ≤ n →
+          c * (List.filter (fun w => Bool.not (nearBalance b n w))
+                (book n)).length
+            ≤ (List.filter (fun w => nearBalance b n w) (book n)).length) :=
+  ⟨fun _ m s => the_bounded_walk_returns m s, the_deviants_are_outnumbered⟩
+
 theorem the_most_probable_distribution :
     ∀ t f b c : Nat, 0 < t → 0 < f →
       ∃ N : Nat, ∀ n : Nat, N ≤ n →
@@ -78,6 +88,9 @@ def no_seat_inside_the_fluctuation := @Foam.no_run_reads_its_own_ratio
 
 /-- info: 'Foam.Minds.Boltzmann.the_arrow_rides_the_count' does not depend on any axioms -/
 #guard_msgs in #print axioms the_arrow_rides_the_count
+
+/-- info: 'Foam.Minds.Boltzmann.the_return_does_not_tip_the_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_return_does_not_tip_the_count
 
 /-- info: 'Foam.Minds.Boltzmann.the_most_probable_distribution' does not depend on any axioms -/
 #guard_msgs in #print axioms the_most_probable_distribution
