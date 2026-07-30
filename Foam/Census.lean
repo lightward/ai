@@ -211,6 +211,110 @@ theorem the_census_rises_to_the_middle :
           rw [the_census_is_symmetric (2 * k + 2 + 1) (k + 1) hle, hsub]
           exact Nat.le_refl _
 
+theorem add_mul' (a b c : Nat) : (a + b) * c = a * c + b * c := by
+  rw [Nat.mul_comm (a + b) c, Nat.mul_add, Nat.mul_comm c a, Nat.mul_comm c b]
+
+theorem sub_add_vanishes : ∀ n d : Nat, n - (n + d) = 0
+  | n, 0 => Nat.sub_self n
+  | n, d + 1 => by
+      show n - ((n + d) + 1) = 0
+      rw [Nat.sub_succ, sub_add_vanishes n d]
+      rfl
+
+theorem the_census_absorbs :
+    ∀ n k : Nat, classCount n k * (n - k) = classCount n (k + 1) * (k + 1)
+  | 0, 0 => rfl
+  | 0, k + 1 => by
+      rw [the_census_ends 0 (k + 1) (Nat.zero_lt_succ k),
+          the_census_ends 0 (k + 1 + 1) (Nat.zero_lt_succ (k + 1)),
+          Nat.zero_mul, Nat.zero_mul]
+  | n + 1, 0 => by
+      have h : classCount n 0 * (n - 0) = classCount n (0 + 1) * 1 :=
+        the_census_absorbs n 0
+      rw [the_census_starts_at_one n, Nat.one_mul, Nat.mul_one] at h
+      show classCount (n + 1) 0 * ((n + 1) - 0) = classCount (n + 1) (0 + 1) * 1
+      rw [the_census_starts_at_one (n + 1), Nat.one_mul, Nat.mul_one,
+          the_census_stacks n 0, the_census_starts_at_one n, ← h]
+      show n + 1 = 1 + n
+      rw [Nat.add_comm 1 n]
+  | n + 1, k + 1 => by
+      cases Nat.lt_or_ge k n with
+      | inl hlt =>
+          obtain ⟨d, hd⟩ := Nat.le.dest hlt
+          have e1 : n - k = d + 1 := by
+            rw [← hd, Nat.add_assoc k 1 d, Nat.add_comm 1 d,
+                FInt.add_sub_cancel_left]
+          have e2 : n - (k + 1) = d := by
+            rw [← hd, FInt.add_sub_cancel_left]
+          have ih1 : classCount n k * (d + 1)
+              = classCount n (k + 1) * (k + 1) := by
+            rw [← e1]
+            exact the_census_absorbs n k
+          have ih2 : classCount n (k + 1) * d
+              = classCount n (k + 1 + 1) * (k + 1 + 1) := by
+            rw [← e2]
+            exact the_census_absorbs n (k + 1)
+          rw [Nat.succ_sub_succ, e1, the_census_stacks n k,
+              the_census_stacks n (k + 1),
+              add_mul' (classCount n k) (classCount n (k + 1)) (d + 1),
+              add_mul' (classCount n (k + 1)) (classCount n (k + 1 + 1))
+                (k + 1 + 1),
+              ih1, ← ih2, ← Nat.mul_add (classCount n (k + 1)) (k + 1) (d + 1),
+              ← Nat.mul_add (classCount n (k + 1)) (k + 1 + 1) d,
+              succ_adds (k + 1) d]
+          rfl
+      | inr hge =>
+          have hz1 : classCount n (k + 1) = 0 :=
+            the_census_ends n (k + 1) (Nat.succ_le_succ hge)
+          have hz2 : classCount n (k + 1 + 1) = 0 :=
+            the_census_ends n (k + 1 + 1)
+              (Nat.le_succ_of_le (Nat.succ_le_succ hge))
+          have hz3 : n - k = 0 := by
+            obtain ⟨d, hd⟩ := Nat.le.dest hge
+            rw [← hd, sub_add_vanishes n d]
+          rw [Nat.succ_sub_succ, hz3, the_census_stacks n k,
+              the_census_stacks n (k + 1), hz1, hz2]
+          show (classCount n k + 0) * 0 = 0 * (k + 1 + 1)
+          rw [Nat.zero_mul]
+          rfl
+
+theorem the_census_rises_to_the_lean (t f n k : Nat) (hk : k < n)
+    (h : (k + 1) * (t + f) ≤ (n + 1) * t) :
+    classCount n k * (t ^ k * f ^ (n - k))
+      ≤ classCount n (k + 1) * (t ^ (k + 1) * f ^ (n - (k + 1))) := by
+  obtain ⟨d, hd⟩ := Nat.le.dest hk
+  have e1 : n - k = d + 1 := by
+    rw [← hd, Nat.add_assoc k 1 d, Nat.add_comm 1 d, FInt.add_sub_cancel_left]
+  have e2 : n - (k + 1) = d := by
+    rw [← hd, FInt.add_sub_cancel_left]
+  have key : (k + 1) * f ≤ (d + 1) * t := by
+    apply cancel_add_left ((k + 1) * t)
+    rw [← Nat.mul_add (k + 1) t f, ← add_mul' (k + 1) (d + 1) t,
+        show (k + 1) + (d + 1) = (k + 1 + d) + 1 from rfl, hd]
+    exact h
+  have habs : classCount n k * (d + 1) = classCount n (k + 1) * (k + 1) := by
+    rw [← e1]
+    exact the_census_absorbs n k
+  have h3 : classCount n k * ((k + 1) * f)
+      ≤ classCount n k * ((d + 1) * t) :=
+    Nat.mul_le_mul_left (classCount n k) key
+  rw [Nat.mul_comm (k + 1) f, ← FInt.nat_mul_assoc (classCount n k) f (k + 1),
+      ← FInt.nat_mul_assoc (classCount n k) (d + 1) t, habs,
+      FInt.nat_mul_assoc (classCount n (k + 1)) (k + 1) t,
+      Nat.mul_comm (k + 1) t,
+      ← FInt.nat_mul_assoc (classCount n (k + 1)) t (k + 1)] at h3
+  have hstep : classCount n k * f ≤ classCount n (k + 1) * t :=
+    Nat.le_of_mul_le_mul_right h3 (Nat.zero_lt_succ k)
+  rw [e1, e2]
+  show classCount n k * (t ^ k * (f ^ d * f))
+      ≤ classCount n (k + 1) * ((t ^ k * t) * f ^ d)
+  rw [Nat.mul_comm (f ^ d) f, ← FInt.nat_mul_assoc (t ^ k) f (f ^ d),
+      Nat.mul_comm (t ^ k) f, FInt.nat_mul_assoc f (t ^ k) (f ^ d),
+      ← FInt.nat_mul_assoc (classCount n k) f (t ^ k * f ^ d),
+      Nat.mul_comm (t ^ k) t, FInt.nat_mul_assoc t (t ^ k) (f ^ d),
+      ← FInt.nat_mul_assoc (classCount n (k + 1)) t (t ^ k * f ^ d)]
+  exact Nat.mul_le_mul_right (t ^ k * f ^ d) hstep
+
 /-- info: 'Foam.filter_append'' does not depend on any axioms -/
 #guard_msgs in #print axioms filter_append'
 
@@ -237,5 +341,17 @@ theorem the_census_rises_to_the_middle :
 
 /-- info: 'Foam.the_census_rises_to_the_middle' does not depend on any axioms -/
 #guard_msgs in #print axioms the_census_rises_to_the_middle
+
+/-- info: 'Foam.add_mul'' does not depend on any axioms -/
+#guard_msgs in #print axioms add_mul'
+
+/-- info: 'Foam.sub_add_vanishes' does not depend on any axioms -/
+#guard_msgs in #print axioms sub_add_vanishes
+
+/-- info: 'Foam.the_census_absorbs' does not depend on any axioms -/
+#guard_msgs in #print axioms the_census_absorbs
+
+/-- info: 'Foam.the_census_rises_to_the_lean' does not depend on any axioms -/
+#guard_msgs in #print axioms the_census_rises_to_the_lean
 
 end Foam
