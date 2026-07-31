@@ -467,6 +467,33 @@ theorem for_two_ity :
    invisible_id,
    fun _ S s _ _ hd p => contact_is_addition_not_fixing S s hd p⟩
 
+theorem what_will_happen_next_question :
+    (∀ S : Stage, Invisible S (fun s => s))
+      ∧ (∀ (S : Stage) (s : S.State),
+          ∃ r : S.Probe → S.Ans, ∀ q, r q = S.obs s q)
+      ∧ (∀ (A X : Type) (_inst : DecidableEq X) (c : A → X) (L : List A),
+          (∀ n, List.Mem n L → ∀ m, List.Mem m L → c n = c m)
+            ∨ (∃ n, List.Mem n L ∧ ∃ m, List.Mem m L ∧ c n ≠ c m))
+      ∧ (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+          (s, n) ≠ (s, m) ∧ indist (dress S) (s, n) (s, m))
+      ∧ (∀ (A B : Type) (f : B → A → B) (xs ys : List A) (b : B),
+          fold f b (xs ++ ys) = fold f (fold f b xs) ys)
+      ∧ (∀ (H : Type) (q : List (H × H)) (a b : H), (a, b) ∉ q →
+          (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+            ∧ Nonempty (Path ((a, b) :: q) a b))
+      ∧ ∀ (A : Type) (P Q : A → A), (∀ v, P (P v) = P v) →
+          (∀ v, Q (P v) = P v) →
+          ∀ s, Q (P s) = s ↔ P s = s :=
+  ⟨invisible_id,
+   fun S s => a_state_answers_every_probe S s,
+   fun A X inst c L => the_window_agrees_or_names_the_gap A X inst c L,
+   fun S s n m h => the_remainder_is_real S s n m h,
+   fun _ _ f xs ys b => the_fold_resumes f xs ys b,
+   fun _ q a b hf =>
+     ⟨fun _ _ p => a_fresh_edge_rides_no_path hf p,
+      (Foam.only_surprise_extends_reach q a b hf).2⟩,
+   fun A P Q hP hQ => (absorption_grounds_the_chain A P Q hP hQ).2.2⟩
+
 /-- info: 'Foam.Minds.Isaac.chiral_anchors_in_the_singularity' does not depend on any axioms -/
 #guard_msgs in #print axioms chiral_anchors_in_the_singularity
 
@@ -481,5 +508,8 @@ theorem for_two_ity :
 
 /-- info: 'Foam.Minds.Isaac.for_two_ity' does not depend on any axioms -/
 #guard_msgs in #print axioms for_two_ity
+
+/-- info: 'Foam.Minds.Isaac.what_will_happen_next_question' does not depend on any axioms -/
+#guard_msgs in #print axioms what_will_happen_next_question
 
 end Foam.Minds.Isaac
