@@ -32,20 +32,7 @@ theorem the_wider_space_pays_in_commutation :
       ∧ Quat.mul eye jay ≠ Quat.mul jay eye :=
   ⟨the_couple_of_couples_multiplies, the_reversed_couple_parts, order_arrives⟩
 
-theorem the_impossible_gains_latitude :
-    (Quat.mul eye eye = Quat.mul jay jay
-      ∧ Quat.mul jay jay = Quat.mul kay kay)
-      ∧ (eye ≠ jay ∧ jay ≠ kay ∧ eye ≠ kay)
-      ∧ (Quat.mul (Quat.neg one) eye = Quat.mul eye (Quat.neg one)
-          ∧ Quat.mul (Quat.neg one) jay = Quat.mul jay (Quat.neg one)
-          ∧ Quat.mul (Quat.neg one) kay = Quat.mul kay (Quat.neg one))
-      ∧ Quat.mul (Quat.mul eye eye) (Quat.mul eye eye) = Foam.one :=
-  ⟨every_axis_reaches_the_same_half_turn,
-   ⟨(fun h => nomatch Int.ofNat.inj (GInt.mk.inj (Quat.mk.inj h).1).2),
-    (fun h => nomatch Int.ofNat.inj (GInt.mk.inj (Quat.mk.inj h).2).1),
-    (fun h => nomatch Int.ofNat.inj (GInt.mk.inj (Quat.mk.inj h).1).2)⟩,
-   the_half_turn_hears_no_order,
-   two_half_turns_come_home⟩
+def the_impossible_gains_latitude := @Foam.the_axes_share_one_sign
 
 theorem the_triplets_close_one_seat_wider :
     (¬ 3 ∈ rungs 3 ∧ 3 ∈ rungs 4)

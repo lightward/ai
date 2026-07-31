@@ -11,18 +11,7 @@ def invariance_already_implements := @Foam.invisible_is_gauge
 
 def unitary_or_antiunitary := @Foam.two_kinds_conserve_the_norm
 
-theorem the_representation_is_two_valued :
-    Quat.neg Foam.one ≠ Foam.one
-      ∧ (Quat.mul eye eye = Quat.mul jay jay
-          ∧ Quat.mul jay jay = Quat.mul kay kay)
-      ∧ (Quat.mul (Quat.neg one) eye = Quat.mul eye (Quat.neg one)
-          ∧ Quat.mul (Quat.neg one) jay = Quat.mul jay (Quat.neg one)
-          ∧ Quat.mul (Quat.neg one) kay = Quat.mul kay (Quat.neg one))
-      ∧ Quat.mul (Quat.mul eye eye) (Quat.mul eye eye) = Foam.one :=
-  ⟨(fun h => nomatch (GInt.mk.inj (Quat.mk.inj h).1).1),
-   every_axis_reaches_the_same_half_turn,
-   the_half_turn_hears_no_order,
-   two_half_turns_come_home⟩
+def the_representation_is_two_valued := @Foam.the_axes_share_one_sign
 
 theorem the_ensemble_answers_for_the_instance :
     GInt.i.rot ≠ GInt.i.conj
