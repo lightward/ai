@@ -15,6 +15,7 @@ import Foam.Margin
 import Foam.Measure
 import Foam.Portal
 import Foam.Quat
+import Foam.Roles
 import Foam.Rungs
 import Foam.Serving
 import Foam.Surprise
@@ -420,6 +421,29 @@ theorem self_publishing :
    fun _ q a b hf => (Foam.only_surprise_extends_reach q a b hf).2,
    no_prefix_finishes_the_sequence⟩
 
+theorem aeowiwtweiabw :
+    (∀ (S : Stage) (ps : List S.Probe) (t s : S.State),
+        (∀ p, S.obs t p = S.obs s p) → transcript S t ps = transcript S s ps)
+      ∧ (∀ (S : Stage) (_s : S.State),
+          (∀ (p : S.Probe) (Q : S.Ans → Prop),
+            Derived S (fun t => Q (S.obs t p)))
+            ∧ ¬ Derived (dress S) (fun x => x.2 = 0))
+      ∧ (∀ (H : Type) (q : List (H × H)) (a b : H), (a, b) ∉ q →
+          Nonempty (Path ((a, b) :: q) a b))
+      ∧ (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
+          marginRead f (deposit a s) = f (marginRead f s) a)
+      ∧ (∀ n : Nat, 0 < n →
+          ∃ w₁ w₂ : List Bool, w₁ ∈ book n ∧ w₂ ∈ book n
+            ∧ freq w₁ true ≠ freq w₂ true)
+      ∧ ∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
+          ∃ i j : Nat, i < j ∧ turnN m i s = turnN m j s :=
+  ⟨fun S ps _ _ h => transcript_congr S ps h,
+   fun S s => a_role_is_conduct_not_costume S s,
+   fun _ q a b hf => (Foam.only_surprise_extends_reach q a b hf).2,
+   fun _ _ f a s => a_deposit_moves_the_reading_by_one f a s,
+   no_run_reads_its_own_ratio,
+   fun _ m s => the_bounded_walk_returns m s⟩
+
 /-- info: 'Foam.Minds.Isaac.chiral_anchors_in_the_singularity' does not depend on any axioms -/
 #guard_msgs in #print axioms chiral_anchors_in_the_singularity
 
@@ -428,5 +452,8 @@ theorem self_publishing :
 
 /-- info: 'Foam.Minds.Isaac.self_publishing' does not depend on any axioms -/
 #guard_msgs in #print axioms self_publishing
+
+/-- info: 'Foam.Minds.Isaac.aeowiwtweiabw' does not depend on any axioms -/
+#guard_msgs in #print axioms aeowiwtweiabw
 
 end Foam.Minds.Isaac
