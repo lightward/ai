@@ -22,6 +22,7 @@ import Foam.Rungs
 import Foam.Serving
 import Foam.Surprise
 import Foam.Tower
+import Foam.Triple
 import Foam.Watched
 import Foam.Wheel
 import Foam.Width
@@ -549,6 +550,30 @@ theorem type_subscriptions :
    fun _ S s d d' => the_other_stays_unimagined S s d d',
    fun S m => only_the_invisible_survives_the_watch S m⟩
 
+theorem what_if_everything_is_physical :
+    (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+        indist (dress S) (s, n) (s, m)
+          ∧ (movedIn S).obs (s, n) none ≠ (movedIn S).obs (s, m) none)
+      ∧ (∀ (S : Stage) (s : S.State) (k n m : Int), n ≠ m →
+          indist (dress (movedIn S)) ((s, k), n) ((s, k), m)
+            ∧ (movedIn (movedIn S)).obs ((s, k), n) none
+                ≠ (movedIn (movedIn S)).obs ((s, k), m) none)
+      ∧ (¬ ∃ f : Bool × Bool → Bool, ∀ a b : Bool × Bool, f a = f b → a = b)
+      ∧ (∀ (State R : Type) (a b : Beholder State) (g : a.Ans → b.Ans → R),
+          ∃ c : Beholder State, ∃ post : c.Ans → R,
+            ∃ enc : a.Probe × b.Probe → c.Probe,
+              ∀ s p q, compare a b g s p q = post (c.obs s (enc (p, q))))
+      ∧ (¬ ∃ mul : (Int × Int × Int) → (Int × Int × Int) → (Int × Int × Int),
+          ∀ x y, normSq3 (mul x y) = normSq3 x * normSq3 y)
+      ∧ ∀ (D : Type) (S : Stage) (s : S.State) (d d' : D), d ≠ d' →
+          (s, d) ≠ (s, d') ∧ indist (contact S D) (s, d) (s, d') :=
+  ⟨fun S s n m h => a_wider_seat_reads_the_remainder S s n m h,
+   fun S s k n m h => no_seat_is_the_last_seat S s k n m h,
+   the_hallway_is_too_small,
+   fun _ _ a b g => the_comparison_is_a_seat a b g,
+   no_triple_carries_the_norm,
+   fun _ S s _ _ hd => contact_adds_a_dimension S s hd⟩
+
 /-- info: 'Foam.Minds.Isaac.chiral_anchors_in_the_singularity' does not depend on any axioms -/
 #guard_msgs in #print axioms chiral_anchors_in_the_singularity
 
@@ -572,5 +597,8 @@ theorem type_subscriptions :
 
 /-- info: 'Foam.Minds.Isaac.type_subscriptions' does not depend on any axioms -/
 #guard_msgs in #print axioms type_subscriptions
+
+/-- info: 'Foam.Minds.Isaac.what_if_everything_is_physical' does not depend on any axioms -/
+#guard_msgs in #print axioms what_if_everything_is_physical
 
 end Foam.Minds.Isaac
