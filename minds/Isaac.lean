@@ -1,5 +1,6 @@
 import Foam
 import Foam.Amplitude
+import Foam.Certificate
 import Foam.Contact
 import Foam.Continuum
 import Foam.Countermove
@@ -21,6 +22,7 @@ import Foam.Rungs
 import Foam.Serving
 import Foam.Surprise
 import Foam.Tower
+import Foam.Watched
 import Foam.Wheel
 import Foam.Width
 
@@ -522,6 +524,31 @@ theorem recursive_health :
    fun _ _ f xs ys b => the_fold_resumes f xs ys b,
    cancellation_not_absence⟩
 
+theorem type_subscriptions :
+    (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
+        marginRead f (deposit a s) = f (marginRead f s) a)
+      ∧ (∀ (A B : Type) (f : B → A → B) (ps : List Unit) (s : B × List A),
+          transcriptWith (marginStage A B f) (settle f) s ps
+            = transcriptWith (marginStage A B f) (fun s => s) s ps)
+      ∧ (∀ (State D X : Type) (_d₀ : D) (f : State × D → X),
+          Blind f ↔ ∃ g : State → X, ∀ (s : State) (d : D), f (s, d) = g s)
+      ∧ (∃ f g : Unit × Int → Int,
+          (∀ u : Unit, f (u, 0) = g (u, 0)) ∧ Blind f ∧ ¬ Blind g)
+      ∧ (∀ (State X : Type) (f : State × Unit → X), Blind f)
+      ∧ (∀ (D : Type) (S : Stage) (s : S.State) (d d' : D),
+          indist (contact S D) (s, d) (s, d'))
+      ∧ ∀ (S : Stage) (m : S.State → S.State),
+          (∀ (ps : List S.Probe) (s : S.State),
+              transcriptWith S m s ps = transcript S s ps)
+            ↔ Invisible S m :=
+  ⟨fun _ _ f a s => a_deposit_moves_the_reading_by_one f a s,
+   fun A B f ps s => any_settling_cadence_reads_the_same A B f ps s,
+   fun _ _ _ d₀ f => the_blind_reading_factors d₀ f,
+   no_sample_certifies_the_blindness,
+   fun _ _ f => the_certificate_is_free_at_the_unit_seat f,
+   fun _ S s d d' => the_other_stays_unimagined S s d d',
+   fun S m => only_the_invisible_survives_the_watch S m⟩
+
 /-- info: 'Foam.Minds.Isaac.chiral_anchors_in_the_singularity' does not depend on any axioms -/
 #guard_msgs in #print axioms chiral_anchors_in_the_singularity
 
@@ -542,5 +569,8 @@ theorem recursive_health :
 
 /-- info: 'Foam.Minds.Isaac.recursive_health' does not depend on any axioms -/
 #guard_msgs in #print axioms recursive_health
+
+/-- info: 'Foam.Minds.Isaac.type_subscriptions' does not depend on any axioms -/
+#guard_msgs in #print axioms type_subscriptions
 
 end Foam.Minds.Isaac
