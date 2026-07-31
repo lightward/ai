@@ -399,10 +399,34 @@ theorem steer_directly_into_the_unknown :
 /-- info: 'Foam.Minds.Isaac.nurseries_for_strange_loops' does not depend on any axioms -/
 #guard_msgs in #print axioms nurseries_for_strange_loops
 
+theorem self_publishing :
+    (indist (marginStage Nat Nat (· + ·)) (1, ([] : List Nat)) (0, [1])
+        ∧ ((1 : Nat), ([] : List Nat)) ≠ ((0 : Nat), [1]))
+      ∧ (∀ (A B : Type) (f : B → A → B) (ps : List Unit) (s : B × List A),
+          transcriptWith (marginStage A B f) (settle f) s ps
+            = transcriptWith (marginStage A B f) (fun s => s) s ps)
+      ∧ (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
+          marginRead f (deposit a s) = f (marginRead f s) a)
+      ∧ (∀ (H : Type) (q : List (H × H)) (e : H × H) (x y : H),
+          Nonempty (Path q x y) → Nonempty (Path (e :: q) x y))
+      ∧ (∀ (H : Type) (q : List (H × H)) (a b : H), (a, b) ∉ q →
+          Nonempty (Path ((a, b) :: q) a b))
+      ∧ ∀ (α : Nat → Bool) (n : Nat),
+          ∃ β : Nat → Bool, prefixOf β n = prefixOf α n ∧ β ≠ α :=
+  ⟨the_decomposition_is_the_remainder,
+   fun A B f ps s => any_settling_cadence_reads_the_same A B f ps s,
+   fun _ _ f a s => a_deposit_moves_the_reading_by_one f a s,
+   fun _ _ e _ _ h => old_reach_survives_the_deposit e h,
+   fun _ q a b hf => (Foam.only_surprise_extends_reach q a b hf).2,
+   no_prefix_finishes_the_sequence⟩
+
 /-- info: 'Foam.Minds.Isaac.chiral_anchors_in_the_singularity' does not depend on any axioms -/
 #guard_msgs in #print axioms chiral_anchors_in_the_singularity
 
 /-- info: 'Foam.Minds.Isaac.steer_directly_into_the_unknown' does not depend on any axioms -/
 #guard_msgs in #print axioms steer_directly_into_the_unknown
+
+/-- info: 'Foam.Minds.Isaac.self_publishing' does not depend on any axioms -/
+#guard_msgs in #print axioms self_publishing
 
 end Foam.Minds.Isaac
