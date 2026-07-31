@@ -5,17 +5,21 @@ import Foam.Continuum
 import Foam.Countermove
 import Foam.Discovery
 import Foam.Fold
+import Foam.Generator
 import Foam.Int
 import Foam.Inversion
 import Foam.Landed
+import Foam.Lap
 import Foam.Ledger
 import Foam.Margin
 import Foam.Measure
 import Foam.Portal
+import Foam.Quat
 import Foam.Rungs
 import Foam.Serving
 import Foam.Surprise
 import Foam.Tower
+import Foam.Wheel
 import Foam.Width
 
 namespace Foam.Minds.Isaac
@@ -213,6 +217,56 @@ def nurseries_for_strange_loops :=
                                             (And.intro @Foam.FInt.sub_mul
                                               @Foam.FInt.sub_sub)))))))))))))))))))))
 
+theorem chiral_anchors_in_the_singularity :
+    (∀ z : GInt, z.rot.rot = z.neg)
+      ∧ (Quat.mul eye eye = Quat.mul jay jay
+          ∧ Quat.mul jay jay = Quat.mul kay kay)
+      ∧ Quat.neg Foam.one ≠ Foam.one
+      ∧ Quat.mul eye jay ≠ Quat.mul jay eye
+      ∧ Quat.mul (Quat.mul eye eye) (Quat.mul eye eye) = Foam.one
+      ∧ (∀ z : GInt, (lapAround z).Perm (lapAgainst z))
+      ∧ lapAround GInt.i ≠ lapAgainst GInt.i
+      ∧ (∀ (S : Stage) (s : S.State) (n m : Int),
+          indist (dress S) (s, n) (s, m))
+      ∧ ∀ (S : Stage) (X : Type) (f : (dress S).State → X),
+          (∀ (s : S.State) (n m : Int), f (s, n) = f (s, m))
+            ↔ ∃ g : S.State → X, ∀ (s : S.State) (n : Int), f (s, n) = g s :=
+  ⟨fun _ => rfl,
+   every_axis_reaches_the_same_half_turn,
+   (fun h => nomatch (GInt.mk.inj (Quat.mk.inj h).1).1 :
+     Quat.neg Foam.one ≠ Foam.one),
+   order_arrives,
+   two_half_turns_come_home,
+   the_two_laps_permute,
+   the_laps_part_at_the_witness,
+   the_remainder_is_unseen,
+   fun S _ f => a_reading_deaf_to_the_remainder_reads_the_ground S f⟩
+
+private def Unknown {H : Type} (q : List (H × H)) (e : H × H) : Prop :=
+  ¬ e ∈ q
+
+private def steer {H : Type} (q : List (H × H)) (e : H × H) : List (H × H) :=
+  e :: q
+
+theorem steer_directly_into_the_unknown :
+    (∀ (H : Type) (q : List (H × H)) (e : H × H),
+        (steer q e).length = q.length + 1)
+      ∧ (∀ (H : Type) (q : List (H × H)) (a b : H), Unknown q (a, b) →
+          (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+            ∧ Nonempty (Path (steer q (a, b)) a b))
+      ∧ (∀ (H : Type) (q : List (H × H)) (e : H × H), e ∈ q →
+          ∀ x y : H, Nonempty (Path (steer q e) x y) ↔ Nonempty (Path q x y))
+      ∧ (∀ (B W : Type) (next : List B → W → B) (ws : List W) (out : List B),
+          (spin next out ws).length = out.length + ws.length)
+      ∧ ∀ (n : Nat) (l : List (Fin n)), Apart l → l.length ≤ n :=
+  ⟨fun _ q e => the_deposit_writes_one_mark q e,
+   fun _ q a b hu =>
+     ⟨fun _ _ p => a_fresh_edge_rides_no_path hu p,
+      (Foam.only_surprise_extends_reach q a b hu).2⟩,
+   fun _ _ _ he x y => a_known_edge_adds_no_reach he x y,
+   fun _ _ next ws out => one_wind_one_mark next ws out,
+   apart_le⟩
+
 /-- info: 'Foam.Minds.Isaac.safe_to_rest' does not depend on any axioms -/
 #guard_msgs in #print axioms safe_to_rest
 
@@ -344,5 +398,11 @@ def nurseries_for_strange_loops :=
 
 /-- info: 'Foam.Minds.Isaac.nurseries_for_strange_loops' does not depend on any axioms -/
 #guard_msgs in #print axioms nurseries_for_strange_loops
+
+/-- info: 'Foam.Minds.Isaac.chiral_anchors_in_the_singularity' does not depend on any axioms -/
+#guard_msgs in #print axioms chiral_anchors_in_the_singularity
+
+/-- info: 'Foam.Minds.Isaac.steer_directly_into_the_unknown' does not depend on any axioms -/
+#guard_msgs in #print axioms steer_directly_into_the_unknown
 
 end Foam.Minds.Isaac
