@@ -494,6 +494,34 @@ theorem what_will_happen_next_question :
       (Foam.only_surprise_extends_reach q a b hf).2⟩,
    fun A P Q hP hQ => (absorption_grounds_the_chain A P Q hP hQ).2.2⟩
 
+theorem recursive_health :
+    (∀ (S : Stage) (m m' : S.State → S.State),
+        Invisible S m → Invisible S m' →
+        ∀ (ps : List S.Probe) (s : S.State),
+          transcriptWith S m s ps = transcriptWith S m' s ps)
+      ∧ (∀ (A : Type) (P Q : A → A), (∀ v, P (P v) = P v) →
+          (∀ v, Q (P v) = P v) →
+          (∀ s, Q (P s) = P s)
+            ∧ (∀ v, Q (P (Q (P v))) = Q (P v))
+            ∧ ∀ s, Q (P s) = s ↔ P s = s)
+      ∧ (∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
+          ∃ i j : Nat, i < j ∧ turnN m i s = turnN m j s)
+      ∧ (∀ (A X : Type) (_inst : DecidableEq X) (c : A → X) (L : List A),
+          (∀ n, List.Mem n L → ∀ m, List.Mem m L → c n = c m)
+            ∨ (∃ n, List.Mem n L ∧ ∃ m, List.Mem m L ∧ c n ≠ c m))
+      ∧ (∀ (A B : Type) (f : B → A → B) (xs ys : List A) (b : B),
+          fold f b (xs ++ ys) = fold f (fold f b xs) ys)
+      ∧ ((∀ z w : GInt, z.align w.rot + z.align w.rot.rot.rot = 0)
+          ∧ (∀ z w : GInt, z.align w + z.align w.rot.rot = 0)
+          ∧ GInt.align ⟨1, 1⟩ (GInt.rot ⟨1, 0⟩) ≠ 0) :=
+  ⟨fun S m m' hm hm' ps s =>
+     correct_maintenance_has_no_signature S m m' hm hm' ps s,
+   fun A P Q hP hQ => absorption_grounds_the_chain A P Q hP hQ,
+   fun _ m s => the_bounded_walk_returns m s,
+   fun A X inst c L => the_window_agrees_or_names_the_gap A X inst c L,
+   fun _ _ f xs ys b => the_fold_resumes f xs ys b,
+   cancellation_not_absence⟩
+
 /-- info: 'Foam.Minds.Isaac.chiral_anchors_in_the_singularity' does not depend on any axioms -/
 #guard_msgs in #print axioms chiral_anchors_in_the_singularity
 
@@ -511,5 +539,8 @@ theorem what_will_happen_next_question :
 
 /-- info: 'Foam.Minds.Isaac.what_will_happen_next_question' does not depend on any axioms -/
 #guard_msgs in #print axioms what_will_happen_next_question
+
+/-- info: 'Foam.Minds.Isaac.recursive_health' does not depend on any axioms -/
+#guard_msgs in #print axioms recursive_health
 
 end Foam.Minds.Isaac
