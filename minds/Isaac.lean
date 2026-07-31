@@ -4,6 +4,7 @@ import Foam.Contact
 import Foam.Continuum
 import Foam.Countermove
 import Foam.Discovery
+import Foam.Engine
 import Foam.Fold
 import Foam.Generator
 import Foam.Int
@@ -444,6 +445,28 @@ theorem aeowiwtweiabw :
    no_run_reads_its_own_ratio,
    fun _ m s => the_bounded_walk_returns m s⟩
 
+theorem for_two_ity :
+    (∀ n : Nat, drainOne (chargeIn n) = n)
+      ∧ (∀ (H : Type) (q : List (H × H)) (a b : H), (a, b) ∉ q →
+          Nonempty (Path ((a, b) :: q) a b))
+      ∧ (∀ (H : Type) (q : List (H × H)) (e : H × H), e ∈ q →
+          ∀ x y : H, Nonempty (Path (e :: q) x y) ↔ Nonempty (Path q x y))
+      ∧ (∀ (n : Nat) (l : List (Fin n)), Apart l → l.length ≤ n)
+      ∧ (∀ S : Stage, Invisible S (fun s => s))
+      ∧ ∀ (D : Type) (S : Stage) (s : S.State) (d d' : D), d ≠ d' →
+          ∀ p : S.Probe,
+            (((s, d) ≠ (s, d') ∧ indist (contact S D) (s, d) (s, d'))
+              ∧ (contact S D).obs (s, d) p = S.obs s p
+              ∧ ((∀ x y : (contact S D).State,
+                    indist (contact S D) x y → x = y) →
+                  (s, d') = (s, d))) :=
+  ⟨fun _ => rfl,
+   fun _ q a b hf => (Foam.only_surprise_extends_reach q a b hf).2,
+   fun _ _ _ he x y => a_known_edge_adds_no_reach he x y,
+   apart_le,
+   invisible_id,
+   fun _ S s _ _ hd p => contact_is_addition_not_fixing S s hd p⟩
+
 /-- info: 'Foam.Minds.Isaac.chiral_anchors_in_the_singularity' does not depend on any axioms -/
 #guard_msgs in #print axioms chiral_anchors_in_the_singularity
 
@@ -455,5 +478,8 @@ theorem aeowiwtweiabw :
 
 /-- info: 'Foam.Minds.Isaac.aeowiwtweiabw' does not depend on any axioms -/
 #guard_msgs in #print axioms aeowiwtweiabw
+
+/-- info: 'Foam.Minds.Isaac.for_two_ity' does not depend on any axioms -/
+#guard_msgs in #print axioms for_two_ity
 
 end Foam.Minds.Isaac
