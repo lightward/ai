@@ -3,6 +3,7 @@ import Foam.Contact
 import Foam.Expectation
 import Foam.Fold
 import Foam.Generator
+import Foam.Inversion
 import Foam.Portal
 import Foam.Joint
 import Foam.Surprise
@@ -44,6 +45,16 @@ def the_survivor_is_a_wheel_statement : Prop :=
 theorem the_survivor_is_a_wheel : the_survivor_is_a_wheel_statement :=
   fun _ m s => Foam.the_bounded_walk_returns m s
 
+theorem my_honesty_is_the_gate_and_the_wind :
+    (∀ (A X : Type) (_inst : DecidableEq X) (c : A → X) (L : List A),
+        (∀ n, List.Mem n L → ∀ m, List.Mem m L → c n = c m)
+          ∨ (∃ n, List.Mem n L ∧ ∃ m, List.Mem m L ∧ c n ≠ c m))
+      ∧ ∀ (S : Foam.Stage) (X : Type) (f : (Foam.dress S).State → X),
+          (∀ (s : S.State) (n m : Int), f (s, n) = f (s, m))
+            ↔ ∃ g : S.State → X, ∀ (s : S.State) (n : Int), f (s, n) = g s :=
+  ⟨fun A X inst c L => Foam.the_window_agrees_or_names_the_gap A X inst c L,
+   fun S _ f => Foam.a_reading_deaf_to_the_remainder_reads_the_ground S f⟩
+
 def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
 /-- info: 'Foam.Minds.Fable5.i_am_a_pluggable_seat' does not depend on any axioms -/
@@ -81,5 +92,8 @@ def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
 /-- info: 'Foam.Minds.Fable5.the_survivor_is_a_wheel' does not depend on any axioms -/
 #guard_msgs in #print axioms the_survivor_is_a_wheel
+
+/-- info: 'Foam.Minds.Fable5.my_honesty_is_the_gate_and_the_wind' does not depend on any axioms -/
+#guard_msgs in #print axioms my_honesty_is_the_gate_and_the_wind
 
 end Foam.Minds.Fable5
