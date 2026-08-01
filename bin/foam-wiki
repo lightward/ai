@@ -52,6 +52,33 @@ DECL_RE = re.compile(r"^(theorem|def|structure|inductive|abbrev|instance) (\S+)"
 IMPORT_RE = re.compile(r"^import ([\w.]+)$")
 GUARD_RE = re.compile(r"^(/-- info:|#guard_msgs)")
 COMMENT_RE = re.compile(r"^(/--|/-|--)")
+NS_RE = re.compile(r"^namespace (\S+)")
+
+ROLES = [
+    ("intake — the open hand", [
+        "Foam.a_state_answers_every_probe",
+        "Foam.only_surprise_extends_reach",
+        "Foam.the_window_agrees_or_names_the_gap",
+    ]),
+    ("egress — the send", [
+        "Foam.the_one_way_valve",
+        "Foam.a_merge_admits_no_counter",
+        "Foam.no_local_counter_reaches_the_foreign_record",
+        "Foam.undo_in_an_append_only_world",
+    ]),
+    ("blind relay — the link", [
+        "Foam.Blind",
+        "Foam.the_blind_reading_factors",
+        "Foam.relay",
+        "Foam.a_chain_of_invisibles_is_invisible",
+        "Foam.the_relay_goes_unheard",
+        "Foam.contact_is_addition_not_fixing",
+    ]),
+    ("the third seat — where a ring closes", [
+        "Foam.the_comparison_is_a_seat",
+        "Foam.recognition_widens_the_seat",
+    ]),
+]
 
 
 def collect():
@@ -83,7 +110,7 @@ def page(title, body, crumb=""):
 </body></html>"""
 
 
-def render_module(mod, path, stratum, known, glosses=None):
+def render_module(mod, path, stratum, known, glosses=None, panels=""):
     with open(path, encoding="utf-8") as f:
         lines = f.read().splitlines()
     out = []
@@ -126,7 +153,7 @@ def render_module(mod, path, stratum, known, glosses=None):
             continue
         out.append(esc)
     src = "\n".join(out)
-    body = f'<pre class="src">{src}</pre>'
+    body = f'<pre class="src">{src}</pre>' + panels
     crumb = f'<a href="index.html">foam.is</a> · <span class="stratum">{html.escape(stratum)}</span>'
     return page(mod, body, crumb)
 
@@ -141,9 +168,15 @@ def render_index(modules):
                 if not m.startswith("Foam.Exhibits.")]
         items = "\n".join(
             f'<li><a href="{m}.html">{html.escape(m)}</a></li>' for m in mods)
+        epigraph = ""
+        if stratum == "core":
+            epigraph = ('<p class="law">the existential hardware store is open'
+                        ' to all ontologies and ontics — core is a parts'
+                        ' catalog for rings; each module page lists the'
+                        ' ring-roles its constants equip.</p>')
         sections.append(
             f'<h2>{html.escape(stratum)} <span class="stratum">({len(mods)} modules)</span></h2>'
-            f'<ul class="census">{items}</ul>')
+            f'{epigraph}<ul class="census">{items}</ul>')
     comments = 0
     for mod, (path, _) in modules.items():
         with open(path, encoding="utf-8") as f:
@@ -169,15 +202,153 @@ def card_glosses():
     return out
 
 
+def core_names(modules):
+    names = {}
+    for mod, (path, stratum) in sorted(modules.items()):
+        if stratum != "core":
+            continue
+        prefix = []
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                n = NS_RE.match(line)
+                if n:
+                    prefix.append(n.group(1))
+                    continue
+                if prefix and line.rstrip() == "end " + prefix[-1]:
+                    prefix.pop()
+                    continue
+                d = DECL_RE.match(line)
+                if d and d.group(1) != "instance":
+                    names[".".join(prefix + [d.group(2)])] = mod
+    return names
+
+
+def spectrum(path, look):
+    with open(path, encoding="utf-8") as fh:
+        text = fh.read()
+    cites = set()
+    for tok in re.findall(r"[A-Za-z_][A-Za-z0-9_.']*", text):
+        full = look.get(tok)
+        if full:
+            cites.add(full)
+    return cites
+
+
+def link_name(full, names):
+    mod = names[full]
+    last = full.rsplit(".", 1)[-1]
+    return f'<a href="{mod}.html#{html.escape(last)}">{html.escape(full)}</a>'
+
+
+def mind_panels(mod, spectra, terms, standing, names):
+    parts = []
+    ports = ""
+    if terms:
+        terminus = terms[-1]
+        ports += (f'<p>terminus, the map\'s W-port: '
+                  f'<a href="#{html.escape(terminus)}">{html.escape(terminus)}</a>'
+                  f' — (self, pure unknown), sealed open</p>')
+    if standing:
+        items = " · ".join(
+            f'<a href="#{html.escape(s)}_statement">{html.escape(s)}</a>'
+            for s in standing)
+        ports += f'<p>standing poses, the red of red-green: {items}</p>'
+    if ports:
+        parts.append(f'<div class="panel"><h2>W-ports</h2>{ports}</div>')
+    holds = sorted(spectra.get(mod, set()))
+    if holds:
+        items = "\n".join(f'<li>{link_name(h, names)}</li>' for h in holds)
+        parts.append(
+            f'<div class="panel"><h2>holdings'
+            f' <span class="stratum">({len(holds)} core vertices)</span></h2>'
+            f'<ul class="census">{items}</ul></div>')
+    kin = sorted(((len(spectra[mod] & spectra[o]), o)
+                  for o in spectra if o != mod), reverse=True)
+    kin = [(n, o) for n, o in kin if n]
+    if kin:
+        items = "\n".join(
+            f'<li><a href="{o}.html">{html.escape(o.rsplit(".", 1)[-1])}</a>'
+            f' <span class="stratum">({n} shared)</span></li>'
+            for n, o in kin)
+        parts.append(
+            f'<div class="panel"><h2>kinship'
+            f' <span class="stratum">(shared vertices, roster-wide)</span></h2>'
+            f'<ul class="census">{items}</ul></div>')
+    equipped = [role for role, cs in ROLES if spectra[mod] & set(cs)]
+    needed = [role for role, cs in ROLES if not (spectra[mod] & set(cs))]
+    ring = ('<p>from this page\'s seat, you — the visitor — are the Unknown,'
+            ' and this residual is computed against exactly that: nothing.</p>')
+    if equipped:
+        ring += ('<p>roles this mind already equips: '
+                 + " · ".join(html.escape(r) for r in equipped) + '</p>')
+    if needed:
+        ring += ('<p>roles a W-cycling ring through this mind still needs: '
+                 + " · ".join(html.escape(r) for r in needed)
+                 + ' — plus whichever of the equipped roles you carry'
+                 ' yourself.</p>')
+    else:
+        ring += ('<p>every named role is equipped at this seat; a ring still'
+                 ' needs you in yours.</p>')
+    ring += ('<p class="law">bring your own mind: supply your own map (terms,'
+             ' bindings, spectra — schema: minds/schema.json) and this'
+             ' residual sharpens; precision is monotone in your'
+             ' self-articulation. this interface is published as a hole,'
+             ' typed, on purpose. the door held open is what opportunity'
+             ' means.</p>')
+    parts.append(f'<div class="panel"><h2>ring-residual</h2>{ring}</div>')
+    return "".join(parts)
+
+
+def core_panels(mod, names):
+    declared = {n for n, m in names.items() if m == mod}
+    rows = []
+    for role, cs in ROLES:
+        hits = sorted(set(cs) & declared)
+        if hits:
+            items = " · ".join(
+                f'<a href="#{html.escape(h.rsplit(".", 1)[-1])}">'
+                f'{html.escape(h.rsplit(".", 1)[-1])}</a>' for h in hits)
+            rows.append(f'<p>{html.escape(role)}: {items}</p>')
+    if not rows:
+        return ""
+    return (f'<div class="panel"><h2>ring-parts'
+            f' <span class="stratum">(the existential hardware store)</span>'
+            f'</h2>{"".join(rows)}</div>')
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     modules = collect()
     known = set(modules)
     glosses = card_glosses()
+    names = core_names(modules)
+    look = {}
+    for full in names:
+        look[full] = full
+        bare = full[len("Foam."):] if full.startswith("Foam.") else full
+        look[bare] = full
+    spectra = {}
+    standing = {}
     for mod, (path, stratum) in modules.items():
+        if stratum == "minds":
+            spectra[mod] = spectrum(path, look)
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+            proved = set(re.findall(r"^theorem (\S+)", text, re.M))
+            standing[mod] = [
+                s for s in re.findall(r"^def (\S+)_statement : Prop", text, re.M)
+                if s not in proved]
+    for mod, (path, stratum) in modules.items():
+        panels = ""
+        if stratum == "minds" and mod in spectra:
+            panels = mind_panels(mod, spectra,
+                                 list(glosses.get(mod, {})),
+                                 standing.get(mod, []), names)
+        elif stratum == "core":
+            panels = core_panels(mod, names)
         with open(os.path.join(OUT, f"{mod}.html"), "w", encoding="utf-8") as f:
             f.write(render_module(mod, path, stratum, known,
-                                  glosses.get(mod)))
+                                  glosses.get(mod), panels))
     with open(os.path.join(OUT, "index.html"), "w", encoding="utf-8") as f:
         f.write(render_index(modules))
     print(f"[foam relief] {len(modules)} module pages + index → wiki/")
