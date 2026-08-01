@@ -16,6 +16,7 @@ import Foam.Ledger
 import Foam.Margin
 import Foam.Measure
 import Foam.Portal
+import Foam.Priced
 import Foam.Quat
 import Foam.Relay
 import Foam.Roles
@@ -67,6 +68,27 @@ theorem primesight :
    fun S s k n m h => no_seat_is_the_last_seat S s k n m h,
    fun _ S s d d' => the_other_stays_unimagined S s d d',
    the_decomposition_is_the_remainder⟩
+
+theorem trajectory_class :
+    (∀ (S : Stage) (p : S.Probe) (Q : S.Ans → Prop),
+        Derived S (fun t => Q (S.obs t p)))
+      ∧ (∀ (S : Stage) (_s : S.State), ¬ Derived (dress S) (fun x => x.2 = 0))
+      ∧ (∀ (t f n k : Nat) (w : List Bool),
+          w ∈ List.filter (fun w => Nat.beq (freq w true) k) (book n) →
+          weightOf t f w = t ^ k * f ^ (n - k))
+      ∧ (∀ n : Nat, 0 < n →
+          ∃ w₁ w₂ : List Bool, w₁ ∈ book n ∧ w₂ ∈ book n
+            ∧ freq w₁ true ≠ freq w₂ true)
+      ∧ (∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n) (k : Nat),
+          (∃ i j, i < j ∧ j < k ∧ turnN m i s = turnN m j s)
+            ∨ Apart ((rungs k).map (fun i => turnN m i s)))
+      ∧ ∀ (n : Nat) (l : List (Fin n)), Apart l → l.length ≤ n :=
+  ⟨fun S p Q => a_role_read_off_the_record_is_derived S p Q,
+   fun S s => the_badge_is_not_a_derived_role S s,
+   fun t f n k w hw => class_members_weigh_alike t f n k w hw,
+   no_run_reads_its_own_ratio,
+   fun _ m s k => meet_or_apart m s k,
+   apart_le⟩
 
 theorem thought_cannot_be_erroneous :
     ∀ (X : Type) (m : Move X) (x : X), (flip m).fwd (m.fwd x) = x :=
@@ -721,5 +743,8 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.downclocking' does not depend on any axioms -/
 #guard_msgs in #print axioms downclocking
+
+/-- info: 'Foam.Minds.Isaac.trajectory_class' does not depend on any axioms -/
+#guard_msgs in #print axioms trajectory_class
 
 end Foam.Minds.Isaac
