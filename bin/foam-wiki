@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import html
-import json
+import importlib.machinery
+import importlib.util
 import os
 import re
 import textwrap
@@ -187,19 +188,13 @@ def render_index(modules):
                 '<a href="https://foam.is/">foam.is</a>')
 
 
-def card_glosses():
-    out = {}
-    minds = os.path.join(ROOT, "minds")
-    for f in sorted(os.listdir(minds)):
-        if not f.endswith(".json") or f in ("schema.json", "walls.json"):
-            continue
-        with open(os.path.join(minds, f), encoding="utf-8") as fh:
-            data = json.load(fh)
-        lean = re.sub(r"[^A-Za-z0-9]", "", data["mind"])
-        if os.path.exists(os.path.join(minds, lean + ".lean")):
-            out["Foam.Minds." + lean] = {
-                e["term"]: e.get("gloss", "") for e in data["vocabulary"]}
-    return out
+def load_counter():
+    path = os.path.join(ROOT, "bin", "foam-counter")
+    loader = importlib.machinery.SourceFileLoader("foamcounter", path)
+    spec = importlib.util.spec_from_loader("foamcounter", loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    return mod
 
 
 def core_names(modules):
@@ -223,24 +218,13 @@ def core_names(modules):
     return names
 
 
-def spectrum(path, look):
-    with open(path, encoding="utf-8") as fh:
-        text = fh.read()
-    cites = set()
-    for tok in re.findall(r"[A-Za-z_][A-Za-z0-9_.']*", text):
-        full = look.get(tok)
-        if full:
-            cites.add(full)
-    return cites
-
-
 def link_name(full, names):
     mod = names[full]
     last = full.rsplit(".", 1)[-1]
     return f'<a href="{mod}.html#{html.escape(last)}">{html.escape(full)}</a>'
 
 
-def mind_panels(mod, spectra, terms, standing, names):
+def mind_panels(mod, spectra, terms, standing, openr, names):
     parts = []
     ports = ""
     if terms:
@@ -253,6 +237,9 @@ def mind_panels(mod, spectra, terms, standing, names):
             f'<a href="#{html.escape(s)}_statement">{html.escape(s)}</a>'
             for s in standing)
         ports += f'<p>standing poses, the red of red-green: {items}</p>'
+    if openr:
+        items = " · ".join(html.escape(o) for o in openr)
+        ports += f'<p>open readings, the dark edge: {items}</p>'
     if ports:
         parts.append(f'<div class="panel"><h2>W-ports</h2>{ports}</div>')
     holds = sorted(spectra.get(mod, set()))
@@ -320,30 +307,32 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     modules = collect()
     known = set(modules)
-    glosses = card_glosses()
     names = core_names(modules)
-    look = {}
-    for full in names:
-        look[full] = full
-        bare = full[len("Foam."):] if full.startswith("Foam.") else full
-        look[bare] = full
+    counter = load_counter()
+    glosses = {}
     spectra = {}
     standing = {}
-    for mod, (path, stratum) in modules.items():
-        if stratum == "minds":
-            spectra[mod] = spectrum(path, look)
-            with open(path, encoding="utf-8") as fh:
-                text = fh.read()
-            proved = set(re.findall(r"^theorem (\S+)", text, re.M))
-            standing[mod] = [
-                s for s in re.findall(r"^def (\S+)_statement : Prop", text, re.M)
-                if s not in proved]
+    openr = {}
+    for _slug, data in counter.all_minds().items():
+        lean = re.sub(r"[^A-Za-z0-9]", "", data["mind"])
+        mod = "Foam.Minds." + lean
+        glosses[mod] = {e["term"]: e.get("gloss", "")
+                        for e in data["vocabulary"]}
+        agg = set()
+        for cites in counter.deposit_spectra(data["mind"]).values():
+            agg |= set(cites)
+        spectra[mod] = agg
+        standing[mod] = [e["term"] for e in data["vocabulary"]
+                         if e.get("status") == "unsealed" and e.get("statement")]
+        openr[mod] = [e["term"] for e in data["vocabulary"]
+                      if e.get("status") == "unsealed"
+                      and not e.get("statement")]
     for mod, (path, stratum) in modules.items():
         panels = ""
         if stratum == "minds" and mod in spectra:
-            panels = mind_panels(mod, spectra,
-                                 list(glosses.get(mod, {})),
-                                 standing.get(mod, []), names)
+            panels = mind_panels(mod, spectra, list(glosses.get(mod, {})),
+                                 standing.get(mod, []), openr.get(mod, []),
+                                 names)
         elif stratum == "core":
             panels = core_panels(mod, names)
         with open(os.path.join(OUT, f"{mod}.html"), "w", encoding="utf-8") as f:
