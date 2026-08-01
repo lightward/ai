@@ -638,6 +638,48 @@ theorem downclocking :
    fun E ps s => the_turn_goes_unheard E ps s,
    fun S s => a_role_is_conduct_not_costume S s⟩
 
+theorem the_collapse_law :
+    (∀ (S : Stage) (m : S.State → S.State),
+        (∀ (ps : List S.Probe) (s : S.State),
+            transcriptWith S m s ps = transcript S s ps)
+          ↔ Invisible S m)
+      ∧ (¬ ∃ g : Bool → Bool,
+          ∀ s : Bool × Bool, g (you.obs s ()) = other.obs s ())
+      ∧ (∀ (H : Type) (q : List (H × H)) (a b : H), (a, b) ∉ q →
+          (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+            ∧ Nonempty (Path ((a, b) :: q) a b))
+      ∧ (∀ (H : Type) (q : List (H × H)) (e : H × H),
+          (e :: q).length = q.length + 1)
+      ∧ ∀ (S : Stage) (P : S.State → S.State), (∀ v, P (P v) = P v) →
+          ∀ (s : S.State) (p : S.Probe), S.obs (P (P s)) p = S.obs (P s) p :=
+  ⟨fun S m => only_the_invisible_survives_the_watch S m,
+   a_reading_answers_its_probe_alone,
+   fun _ q a b hf =>
+     ⟨fun _ _ p => a_fresh_edge_rides_no_path hf p,
+      (Foam.only_surprise_extends_reach q a b hf).2⟩,
+   fun _ q e => the_deposit_writes_one_mark q e,
+   fun S P hP s p => the_second_look_adds_nothing S P hP s p⟩
+
+theorem safe_force :
+    (∀ (A : Type) (P Q : A → A), (∀ v, P (P v) = P v) →
+        (∀ v, Q (P v) = P v) →
+        (∀ s, Q (P s) = P s)
+          ∧ (∀ v, Q (P (Q (P v))) = Q (P v))
+          ∧ ∀ s, Q (P s) = s ↔ P s = s)
+      ∧ (∀ (X A B : Type) (f : X → X) (a b : X), a ≠ b → f a = f b →
+          ∀ (m : Move X) (send : A × B → A × B) (p : A × B),
+            (send p).2 ≠ p.2 →
+            (¬ ∃ g : X → X, ∀ x, g (f x) = x)
+              ∧ (∀ {c d : X}, m.fwd c = m.fwd d → c = d)
+              ∧ ¬ ∃ ms : List (A → A), runLocal ms (send p) = p)
+      ∧ ∀ (A X : Type) (_inst : DecidableEq X) (c : A → X) (L : List A),
+          (∀ n, List.Mem n L → ∀ m, List.Mem m L → c n = c m)
+            ∨ (∃ n, List.Mem n L ∧ ∃ m, List.Mem m L ∧ c n ≠ c m) :=
+  ⟨fun A P Q hP hQ => absorption_grounds_the_chain A P Q hP hQ,
+   fun _ _ _ f _ _ hab hf m send p hs =>
+     the_one_way_valve f hab hf m send p hs,
+   fun A X inst c L => the_window_agrees_or_names_the_gap A X inst c L⟩
+
 theorem type_subscriptions :
     (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
         marginRead f (deposit a s) = f (marginRead f s) a)
@@ -771,5 +813,11 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.composability' does not depend on any axioms -/
 #guard_msgs in #print axioms composability
+
+/-- info: 'Foam.Minds.Isaac.the_collapse_law' does not depend on any axioms -/
+#guard_msgs in #print axioms the_collapse_law
+
+/-- info: 'Foam.Minds.Isaac.safe_force' does not depend on any axioms -/
+#guard_msgs in #print axioms safe_force
 
 end Foam.Minds.Isaac
