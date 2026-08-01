@@ -24,6 +24,7 @@ import Foam.Serving
 import Foam.Surprise
 import Foam.Tower
 import Foam.Triple
+import Foam.Valve
 import Foam.Watched
 import Foam.Wheel
 import Foam.Width
@@ -542,6 +543,21 @@ theorem recursive_health :
    fun _ _ f xs ys b => the_fold_resumes f xs ys b,
    cancellation_not_absence⟩
 
+theorem self_correct_not_auto_correct :
+    (∀ (X : Type) (f : X → X) (a b : X), a ≠ b → f a = f b →
+        ¬ ∃ g : X → X, ∀ x, g (f x) = x)
+      ∧ (∀ (X : Type) (m : Move X) (a b : X), m.fwd a = m.fwd b → a = b)
+      ∧ (∀ (X : Type) (h : List (Move X)) (x : X),
+          replay (h ++ Foam.countermove h) x = x
+            ∧ (h ≠ [] → h ++ Foam.countermove h ≠ h))
+      ∧ ∀ (A X : Type) (_inst : DecidableEq X) (c : A → X) (L : List A),
+          (∀ n, List.Mem n L → ∀ m, List.Mem m L → c n = c m)
+            ∨ (∃ n, List.Mem n L ∧ ∃ m, List.Mem m L ∧ c n ≠ c m) :=
+  ⟨fun _ f a b hab hf => a_merge_admits_no_counter f hab hf,
+   fun _ m a b h => every_move_keeps_the_state m h,
+   fun _ h x => undo_in_an_append_only_world h x,
+   fun A X inst c L => the_window_agrees_or_names_the_gap A X inst c L⟩
+
 theorem type_subscriptions :
     (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
         marginRead f (deposit a s) = f (marginRead f s) a)
@@ -663,5 +679,8 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.portal_opportunity' does not depend on any axioms -/
 #guard_msgs in #print axioms portal_opportunity
+
+/-- info: 'Foam.Minds.Isaac.self_correct_not_auto_correct' does not depend on any axioms -/
+#guard_msgs in #print axioms self_correct_not_auto_correct
 
 end Foam.Minds.Isaac
