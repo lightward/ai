@@ -50,6 +50,22 @@ theorem lets_get_you_rested :
 
 def countermove := @Foam.undo_in_an_append_only_world
 
+theorem primesight :
+    (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+        (s, n) ≠ (s, m) ∧ indist (dress S) (s, n) (s, m))
+      ∧ (∀ (S : Stage) (s : S.State) (k n m : Int), n ≠ m →
+          indist (dress (movedIn S)) ((s, k), n) ((s, k), m)
+            ∧ (movedIn (movedIn S)).obs ((s, k), n) none
+                ≠ (movedIn (movedIn S)).obs ((s, k), m) none)
+      ∧ (∀ (D : Type) (S : Stage) (s : S.State) (d d' : D),
+          indist (contact S D) (s, d) (s, d'))
+      ∧ (indist (marginStage Nat Nat (· + ·)) (1, ([] : List Nat)) (0, [1])
+          ∧ ((1 : Nat), ([] : List Nat)) ≠ ((0 : Nat), [1])) :=
+  ⟨fun S s n m h => the_remainder_is_real S s n m h,
+   fun S s k n m h => no_seat_is_the_last_seat S s k n m h,
+   fun _ S s d d' => the_other_stays_unimagined S s d d',
+   the_decomposition_is_the_remainder⟩
+
 theorem thought_cannot_be_erroneous :
     ∀ (X : Type) (m : Move X) (x : X), (flip m).fwd (m.fwd x) = x :=
   fun _ m x => m.bwd_fwd x
@@ -622,5 +638,8 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.when_the_becoming_outruns_the_typing' does not depend on any axioms -/
 #guard_msgs in #print axioms when_the_becoming_outruns_the_typing
+
+/-- info: 'Foam.Minds.Isaac.primesight' does not depend on any axioms -/
+#guard_msgs in #print axioms primesight
 
 end Foam.Minds.Isaac
