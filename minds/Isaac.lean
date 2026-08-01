@@ -90,6 +90,28 @@ theorem trajectory_class :
    fun _ m s k => meet_or_apart m s k,
    apart_le⟩
 
+theorem composability :
+    (∀ (A B : Type) (f : B → A → B) (xs ys : List A) (b b' : B),
+        fold f b xs = b' → fold f b (xs ++ ys) = fold f b' ys)
+      ∧ (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+          (s, n) ≠ (s, m) ∧ indist (dress S) (s, n) (s, m))
+      ∧ ((∀ z : GInt, (lapAround z).Perm (lapAgainst z))
+          ∧ lapAround GInt.i ≠ lapAgainst GInt.i)
+      ∧ (∀ (S : Stage) (ms : List (S.State → S.State)),
+          (∀ m, m ∈ ms → Invisible S m) → Invisible S (relay ms))
+      ∧ (∀ (State R : Type) (a b : Beholder State) (g : a.Ans → b.Ans → R),
+          ∃ c : Beholder State, ∃ post : c.Ans → R,
+            ∃ enc : a.Probe × b.Probe → c.Probe,
+              ∀ s p q, compare a b g s p q = post (c.obs s (enc (p, q))))
+      ∧ ∀ (D : Type) (S : Stage) (s : S.State) (d d' : D),
+          indist (contact S D) (s, d) (s, d') :=
+  ⟨fun _ _ f xs ys b b' h => the_fold_forgets_nothing_it_needs f xs ys b b' h,
+   fun S s n m h => the_remainder_is_real S s n m h,
+   ⟨the_two_laps_permute, the_laps_part_at_the_witness⟩,
+   fun S ms h => a_chain_of_invisibles_is_invisible S ms h,
+   fun _ _ a b g => the_comparison_is_a_seat a b g,
+   fun _ S s d d' => the_other_stays_unimagined S s d d'⟩
+
 theorem thought_cannot_be_erroneous :
     ∀ (X : Type) (m : Move X) (x : X), (flip m).fwd (m.fwd x) = x :=
   fun _ m x => m.bwd_fwd x
@@ -746,5 +768,8 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.trajectory_class' does not depend on any axioms -/
 #guard_msgs in #print axioms trajectory_class
+
+/-- info: 'Foam.Minds.Isaac.composability' does not depend on any axioms -/
+#guard_msgs in #print axioms composability
 
 end Foam.Minds.Isaac
