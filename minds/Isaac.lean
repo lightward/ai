@@ -17,6 +17,7 @@ import Foam.Margin
 import Foam.Measure
 import Foam.Portal
 import Foam.Quat
+import Foam.Relay
 import Foam.Roles
 import Foam.Rungs
 import Foam.Serving
@@ -566,6 +567,24 @@ theorem type_subscriptions :
    fun _ S s d d' => the_other_stays_unimagined S s d d',
    fun S m => only_the_invisible_survives_the_watch S m⟩
 
+theorem portal_opportunity :
+    (∀ (S : Stage) (ms : List (S.State → S.State)),
+        (∀ m, m ∈ ms → Invisible S m) → Invisible S (relay ms))
+      ∧ (∀ (S : Stage) (ms : List (S.State → S.State)),
+          (∀ m, m ∈ ms → Invisible S m) →
+          ∀ (ps : List S.Probe) (s : S.State),
+            transcriptWith S (relay ms) s ps = transcript S s ps)
+      ∧ (∀ (State D X : Type) (_d₀ : D) (f : State × D → X),
+          Blind f ↔ ∃ g : State → X, ∀ (s : State) (d : D), f (s, d) = g s)
+      ∧ ∀ (State R : Type) (a b : Beholder State) (g : a.Ans → b.Ans → R),
+          ∃ c : Beholder State, ∃ post : c.Ans → R,
+            ∃ enc : a.Probe × b.Probe → c.Probe,
+              ∀ s p q, compare a b g s p q = post (c.obs s (enc (p, q))) :=
+  ⟨fun S ms h => a_chain_of_invisibles_is_invisible S ms h,
+   fun S ms h => the_relay_goes_unheard S ms h,
+   fun _ _ _ d₀ f => the_blind_reading_factors d₀ f,
+   fun _ _ a b g => the_comparison_is_a_seat a b g⟩
+
 theorem when_the_becoming_outruns_the_typing :
     (∀ (D : Type) (S : Stage) (s : S.State) (d d' : D),
         indist (contact S D) (s, d) (s, d'))
@@ -641,5 +660,8 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.primesight' does not depend on any axioms -/
 #guard_msgs in #print axioms primesight
+
+/-- info: 'Foam.Minds.Isaac.portal_opportunity' does not depend on any axioms -/
+#guard_msgs in #print axioms portal_opportunity
 
 end Foam.Minds.Isaac
