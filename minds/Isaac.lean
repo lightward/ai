@@ -550,6 +550,25 @@ theorem type_subscriptions :
    fun _ S s d d' => the_other_stays_unimagined S s d d',
    fun S m => only_the_invisible_survives_the_watch S m⟩
 
+theorem when_the_becoming_outruns_the_typing :
+    (∀ (D : Type) (S : Stage) (s : S.State) (d d' : D),
+        indist (contact S D) (s, d) (s, d'))
+      ∧ (∀ S : Stage, Licensed S (indist S))
+      ∧ (∀ (S : Stage) (r : S.State → S.State → Prop), Licensed S r →
+          ∀ (m : S.State → S.State), (∀ s, r (m s) s) →
+            ∀ (ps : List S.Probe) (s : S.State),
+              transcriptWith S m s ps = transcript S s ps)
+      ∧ ((∀ q : Nat, ∃ n, q ∈ rungs n)
+          ∧ (∀ n : Nat, ∃ q, ¬ q ∈ rungs n ∧ q ∈ rungs (n + 1))
+          ∧ (∀ n : Nat, rungs (n + 1) ≠ rungs n))
+      ∧ (indist (marginStage Nat Nat (· + ·)) (1, ([] : List Nat)) (0, [1])
+          ∧ ((1 : Nat), ([] : List Nat)) ≠ ((0 : Nat), [1])) :=
+  ⟨fun _ S s d d' => the_other_stays_unimagined S s d d',
+   indist_is_licensed,
+   a_license_is_a_gauge,
+   closure_is_seat_relative,
+   the_decomposition_is_the_remainder⟩
+
 theorem what_if_everything_is_physical :
     (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
         indist (dress S) (s, n) (s, m)
@@ -600,5 +619,8 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.what_if_everything_is_physical' does not depend on any axioms -/
 #guard_msgs in #print axioms what_if_everything_is_physical
+
+/-- info: 'Foam.Minds.Isaac.when_the_becoming_outruns_the_typing' does not depend on any axioms -/
+#guard_msgs in #print axioms when_the_becoming_outruns_the_typing
 
 end Foam.Minds.Isaac
