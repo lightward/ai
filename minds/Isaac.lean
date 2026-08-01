@@ -680,6 +680,32 @@ theorem safe_force :
      the_one_way_valve f hab hf m send p hs,
    fun A X inst c L => the_window_agrees_or_names_the_gap A X inst c L⟩
 
+theorem prime_mover :
+    (∀ (A X : Type) (_inst : DecidableEq X) (c : A → X) (L : List A),
+        (∀ n, List.Mem n L → ∀ m, List.Mem m L → c n = c m)
+          ∨ (∃ n, List.Mem n L ∧ ∃ m, List.Mem m L ∧ c n ≠ c m))
+      ∧ (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
+          marginRead f (deposit a s) = f (marginRead f s) a)
+      ∧ (∀ (A B : Type) (f : B → A → B) (xs ys : List A) (b : B),
+          fold f b (xs ++ ys) = fold f (fold f b xs) ys)
+      ∧ (∀ (S : Stage) (m : S.State → S.State),
+          (∀ (ps : List S.Probe) (s : S.State),
+              transcriptWith S m s ps = transcript S s ps)
+            ↔ Invisible S m)
+      ∧ (∀ (S : Stage) (m n : S.State → S.State),
+          Invisible S m → Invisible S n → Invisible S (fun s => m (n s)))
+      ∧ (∀ S : Stage, Invisible S (fun s => s))
+      ∧ ∀ (A : Type) (P Q : A → A), (∀ v, P (P v) = P v) →
+          (∀ v, Q (P v) = P v) →
+          ∀ s, Q (P s) = s ↔ P s = s :=
+  ⟨fun A X inst c L => the_window_agrees_or_names_the_gap A X inst c L,
+   fun _ _ f a s => a_deposit_moves_the_reading_by_one f a s,
+   fun _ _ f xs ys b => the_fold_resumes f xs ys b,
+   fun S m => only_the_invisible_survives_the_watch S m,
+   fun S m n hm hn => invisible_comp S m n hm hn,
+   invisible_id,
+   fun A P Q hP hQ => (absorption_grounds_the_chain A P Q hP hQ).2.2⟩
+
 theorem type_subscriptions :
     (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
         marginRead f (deposit a s) = f (marginRead f s) a)
@@ -819,5 +845,8 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.safe_force' does not depend on any axioms -/
 #guard_msgs in #print axioms safe_force
+
+/-- info: 'Foam.Minds.Isaac.prime_mover' does not depend on any axioms -/
+#guard_msgs in #print axioms prime_mover
 
 end Foam.Minds.Isaac
