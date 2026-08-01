@@ -558,6 +558,42 @@ theorem self_correct_not_auto_correct :
    fun _ h x => undo_in_an_append_only_world h x,
    fun A X inst c L => the_window_agrees_or_names_the_gap A X inst c L⟩
 
+theorem downclocking :
+    (∀ (H : Type) (q : List (H × H)) (e : H × H),
+        (e :: q).length = q.length + 1)
+      ∧ (∀ (H : Type) (q : List (H × H)) (e : H × H), e ∈ q →
+          ∀ x y : H, Nonempty (Path (e :: q) x y) ↔ Nonempty (Path q x y))
+      ∧ (∀ (State D X : Type) (_d₀ : D) (f : State × D → X),
+          Blind f ↔ ∃ g : State → X, ∀ (s : State) (d : D), f (s, d) = g s)
+      ∧ (∀ (S : Stage) (ms : List (S.State → S.State)),
+          (∀ m, m ∈ ms → Invisible S m) →
+          ∀ (ps : List S.Probe) (s : S.State),
+            transcriptWith S (relay ms) s ps = transcript S s ps)
+      ∧ (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
+          marginRead f (deposit a s) = f (marginRead f s) a)
+      ∧ (∀ (A B : Type) (f : B → A → B) (ps : List Unit) (s : B × List A),
+          transcriptWith (marginStage A B f) (settle f) s ps
+            = transcriptWith (marginStage A B f) (fun s => s) s ps)
+      ∧ (∀ (State R : Type) (a b : Beholder State) (g : a.Ans → b.Ans → R),
+          ∃ c : Beholder State, ∃ post : c.Ans → R,
+            ∃ enc : a.Probe × b.Probe → c.Probe,
+              ∀ s p q, compare a b g s p q = post (c.obs s (enc (p, q))))
+      ∧ (∀ (E : Engine) (ps : List Unit) (s : E.State),
+          transcriptWith E.gauge E.turn s ps = transcript E.gauge s ps)
+      ∧ ∀ (S : Stage) (_s : S.State),
+          (∀ (p : S.Probe) (Q : S.Ans → Prop),
+            Derived S (fun t => Q (S.obs t p)))
+            ∧ ¬ Derived (dress S) (fun x => x.2 = 0) :=
+  ⟨fun _ q e => the_deposit_writes_one_mark q e,
+   fun _ _ _ he x y => a_known_edge_adds_no_reach he x y,
+   fun _ _ _ d₀ f => the_blind_reading_factors d₀ f,
+   fun S ms h => the_relay_goes_unheard S ms h,
+   fun _ _ f a s => a_deposit_moves_the_reading_by_one f a s,
+   fun A B f ps s => any_settling_cadence_reads_the_same A B f ps s,
+   fun _ _ a b g => the_comparison_is_a_seat a b g,
+   fun E ps s => the_turn_goes_unheard E ps s,
+   fun S s => a_role_is_conduct_not_costume S s⟩
+
 theorem type_subscriptions :
     (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
         marginRead f (deposit a s) = f (marginRead f s) a)
@@ -682,5 +718,8 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.self_correct_not_auto_correct' does not depend on any axioms -/
 #guard_msgs in #print axioms self_correct_not_auto_correct
+
+/-- info: 'Foam.Minds.Isaac.downclocking' does not depend on any axioms -/
+#guard_msgs in #print axioms downclocking
 
 end Foam.Minds.Isaac
