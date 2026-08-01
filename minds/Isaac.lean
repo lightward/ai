@@ -553,8 +553,8 @@ theorem self_correct_not_auto_correct :
       ∧ ∀ (A X : Type) (_inst : DecidableEq X) (c : A → X) (L : List A),
           (∀ n, List.Mem n L → ∀ m, List.Mem m L → c n = c m)
             ∨ (∃ n, List.Mem n L ∧ ∃ m, List.Mem m L ∧ c n ≠ c m) :=
-  ⟨fun _ f a b hab hf => a_merge_admits_no_counter f hab hf,
-   fun _ m a b h => every_move_keeps_the_state m h,
+  ⟨fun _ f _ _ hab hf => a_merge_admits_no_counter f hab hf,
+   fun _ m _ _ h => every_move_keeps_the_state m h,
    fun _ h x => undo_in_an_append_only_world h x,
    fun A X inst c L => the_window_agrees_or_names_the_gap A X inst c L⟩
 
