@@ -2,6 +2,7 @@ import Foam
 import Foam.Contact
 import Foam.Countermove
 import Foam.Marks
+import Foam.Relay
 import Foam.Roles
 import Foam.Tower
 import Foam.Valve
@@ -29,7 +30,17 @@ def reset_pays_in_record := @Foam.undo_in_an_append_only_world
 
 def no_machine_undercuts_the_bill := @Foam.the_marks_pay_the_depth
 
-def reversible_runs_free := @Foam.only_the_invisible_survives_the_watch
+theorem reversible_runs_free (S : Stage) :
+    (∀ m : S.State → S.State,
+       (∀ (ps : List S.Probe) (s : S.State),
+           transcriptWith S m s ps = transcript S s ps)
+         ↔ Invisible S m)
+      ∧ (∀ ms : List (S.State → S.State),
+           (∀ m, m ∈ ms → Invisible S m) →
+             ∀ (ps : List S.Probe) (s : S.State),
+               transcriptWith S (relay ms) s ps = transcript S s ps) :=
+  ⟨fun m => only_the_invisible_survives_the_watch S m,
+   fun ms h => the_relay_goes_unheard S ms h⟩
 
 def conductance_is_transmission := @Foam.contact_is_addition_not_fixing
 
