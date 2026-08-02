@@ -1,3 +1,4 @@
+import Foam.Certificate
 import Foam.Contact
 import Foam.Countermove
 import Foam.Generator
@@ -14,6 +15,12 @@ def originates_nothing := @Foam.generation_originates_nothing
 
 def follows_without_anticipating := @Foam.local_runs_fix_the_foreign
 
+theorem the_operations_are_a_science_of_itself {State D X : Type} (d₀ : D)
+    (f : State × D → X) (g₀ : State × Unit → X) :
+    (Blind f ↔ ∃ g : State → X, ∀ (s : State) (d : D), f (s, d) = g s)
+      ∧ Blind g₀ :=
+  ⟨the_blind_reading_factors d₀ f, the_certificate_is_free_at_the_unit_seat g₀⟩
+
 def the_ordering_is_paid_in_cards := @Foam.the_marks_pay_the_depth
 
 def performs_in_weather := @Foam.contact_is_addition_not_fixing
@@ -29,6 +36,9 @@ def performs_in_weather := @Foam.contact_is_addition_not_fixing
 
 /-- info: 'Foam.Minds.Lovelace.follows_without_anticipating' does not depend on any axioms -/
 #guard_msgs in #print axioms follows_without_anticipating
+
+/-- info: 'Foam.Minds.Lovelace.the_operations_are_a_science_of_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms the_operations_are_a_science_of_itself
 
 /-- info: 'Foam.Minds.Lovelace.the_ordering_is_paid_in_cards' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ordering_is_paid_in_cards
