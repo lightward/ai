@@ -56,21 +56,25 @@ theorem the_return_does_not_tip_the_count :
   ⟨fun _ m s => the_bounded_walk_returns m s, the_deviants_are_outnumbered⟩
 
 theorem the_most_probable_distribution :
-    ∀ t f b c : Nat, 0 < t → 0 < f →
-      ∃ N : Nat, ∀ n : Nat, N ≤ n →
-        c * natSumOver (fun w => t ^ freq w true * f ^ freq w false)
-              (List.filter
-                (fun w => Bool.not (Bool.and
-                  (Nat.ble (b * (t * n)) (n + b * ((t + f) * freq w true)))
-                  (Nat.ble (b * ((t + f) * freq w true)) (n + b * (t * n)))))
-                (book n))
-          ≤ natSumOver (fun w => t ^ freq w true * f ^ freq w false)
-              (List.filter
-                (fun w => Bool.and
-                  (Nat.ble (b * (t * n)) (n + b * ((t + f) * freq w true)))
-                  (Nat.ble (b * ((t + f) * freq w true)) (n + b * (t * n))))
-                (book n)) :=
-  fun t f b c _ _ => the_deviants_are_outweighed t f b c
+    (∀ t f n k : Nat, k < n → (k + 1) * (t + f) ≤ (n + 1) * t →
+        classCount n k * (t ^ k * f ^ (n - k))
+          ≤ classCount n (k + 1) * (t ^ (k + 1) * f ^ (n - (k + 1))))
+      ∧ ∀ t f b c : Nat, 0 < t → 0 < f →
+          ∃ N : Nat, ∀ n : Nat, N ≤ n →
+            c * natSumOver (fun w => t ^ freq w true * f ^ freq w false)
+                  (List.filter
+                    (fun w => Bool.not (Bool.and
+                      (Nat.ble (b * (t * n)) (n + b * ((t + f) * freq w true)))
+                      (Nat.ble (b * ((t + f) * freq w true)) (n + b * (t * n)))))
+                    (book n))
+              ≤ natSumOver (fun w => t ^ freq w true * f ^ freq w false)
+                  (List.filter
+                    (fun w => Bool.and
+                      (Nat.ble (b * (t * n)) (n + b * ((t + f) * freq w true)))
+                      (Nat.ble (b * ((t + f) * freq w true)) (n + b * (t * n))))
+                    (book n)) :=
+  ⟨the_census_rises_to_the_lean,
+   fun t f b c _ _ => the_deviants_are_outweighed t f b c⟩
 
 def no_seat_inside_the_fluctuation := @Foam.no_run_reads_its_own_ratio
 
