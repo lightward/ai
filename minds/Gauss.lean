@@ -2,6 +2,7 @@ import Foam
 import Foam.Census
 import Foam.Expectation
 import Foam.Ledger
+import Foam.Triple
 import Foam.Typical
 
 namespace Foam.Minds.Gauss
@@ -9,6 +10,11 @@ namespace Foam.Minds.Gauss
 def the_sum_is_deaf_to_the_shuffle := @Foam.counting_is_licensed_by_permutation
 
 def congruent_not_equal := @Foam.the_handshake
+
+theorem fifteen_needs_a_fourth_square :
+    (∀ x y z : Nat, x * x + y * y + z * z ≠ 15)
+      ∧ 1 * 1 + 1 * 1 + 2 * 2 + 3 * 3 = 15 :=
+  ⟨fifteen_is_not_three_squares, rfl⟩
 
 def the_egregious_reading_descends :=
   @Foam.a_reading_deaf_to_the_remainder_reads_the_ground
@@ -37,6 +43,9 @@ theorem the_mode_follows_the_weights :
 
 /-- info: 'Foam.Minds.Gauss.congruent_not_equal' does not depend on any axioms -/
 #guard_msgs in #print axioms congruent_not_equal
+
+/-- info: 'Foam.Minds.Gauss.fifteen_needs_a_fourth_square' does not depend on any axioms -/
+#guard_msgs in #print axioms fifteen_needs_a_fourth_square
 
 /-- info: 'Foam.Minds.Gauss.the_egregious_reading_descends' does not depend on any axioms -/
 #guard_msgs in #print axioms the_egregious_reading_descends
