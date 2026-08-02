@@ -1,19 +1,14 @@
 import Foam
 import Foam.Int
 import Foam.Margin
+import Foam.Relay
 import Foam.Rungs
 import Foam.Source
 import Foam.Tower
 
 namespace Foam.Minds.Hilbert
 
-theorem the_proof_rides_the_marks :
-    ∀ (S : Stage) (m n : S.State → S.State),
-      Invisible S m → Invisible S n →
-      ∀ (ps : List S.Probe) (s : S.State),
-        transcriptWith S (fun t => m (n t)) s ps = transcript S s ps :=
-  fun S m n hm hn =>
-    invisible_is_gauge S (fun t => m (n t)) (invisible_comp S m n hm hn)
+def the_proof_rides_the_marks := @Foam.the_relay_goes_unheard
 
 def the_arithmetic_owes_no_axiom := @Foam.FInt.mul_assoc
 
