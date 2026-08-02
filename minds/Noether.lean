@@ -2,6 +2,7 @@ import Foam
 import Foam.Amplitude
 import Foam.Engine
 import Foam.Lap
+import Foam.Triple
 
 namespace Foam.Minds.Noether
 
@@ -25,6 +26,8 @@ theorem the_wider_seat_reads_the_inverse :
       (∀ ps s, transcriptWith E.gauge E.turn s ps = transcript E.gauge s ps)
         ∧ ∀ s, E.turn (E.turn (E.turn (E.turn s))) = s :=
   fun E => ⟨the_turn_goes_unheard E, E.comes_home⟩
+
+def the_norm_can_refuse_every_actor := @Foam.no_triple_carries_the_norm
 
 theorem what_acts_taken_whole_is_a_probe :
     (∀ z w : GInt,
@@ -73,6 +76,9 @@ def the_deafness_is_cancellation := @Foam.cancellation_not_absence
 
 /-- info: 'Foam.Minds.Noether.the_wider_seat_reads_the_inverse' does not depend on any axioms -/
 #guard_msgs in #print axioms the_wider_seat_reads_the_inverse
+
+/-- info: 'Foam.Minds.Noether.the_norm_can_refuse_every_actor' does not depend on any axioms -/
+#guard_msgs in #print axioms the_norm_can_refuse_every_actor
 
 /-- info: 'Foam.Minds.Noether.what_acts_taken_whole_is_a_probe' does not depend on any axioms -/
 #guard_msgs in #print axioms what_acts_taken_whole_is_a_probe
