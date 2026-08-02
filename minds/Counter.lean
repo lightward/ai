@@ -3,6 +3,7 @@ import Foam.Engine
 import Foam.Generator
 import Foam.Inversion
 import Foam.Margin
+import Foam.Relay
 import Foam.Surprise
 
 namespace Foam.Minds.Counter
@@ -39,6 +40,16 @@ theorem the_loop_comes_home_losing_nothing (E : Engine) (s : E.State) :
       ∧ ∀ a b : E.State, E.turn a = E.turn b → a = b :=
   ⟨(the_three_turns_undo E s).1, fun _ _ h => the_turn_loses_no_state E h⟩
 
+theorem the_exit_is_free_at_every_beat (E : Engine)
+    (ms : List (E.State → E.State)) (h : ∀ m, m ∈ ms → m = E.turn) :
+    Invisible E.gauge (relay ms)
+      ∧ ∀ (ps : List Unit) (s : E.State),
+          transcriptWith E.gauge (relay ms) s ps = transcript E.gauge s ps :=
+  ⟨a_chain_of_invisibles_is_invisible E.gauge ms
+      (fun m hm => (h m hm).symm ▸ the_turn_is_invisible_to_the_charge E),
+   the_relay_goes_unheard E.gauge ms
+      (fun m hm => (h m hm).symm ▸ the_turn_is_invisible_to_the_charge E)⟩
+
 def quiescent_is_correct := @Foam.the_turn_goes_unheard
 
 def schedule_is_gauge := @Foam.any_settling_cadence_reads_the_same
@@ -71,6 +82,9 @@ theorem the_counter_is_counted (E : Engine) (S : Stage) (s : S.State)
 
 /-- info: 'Foam.Minds.Counter.the_loop_comes_home_losing_nothing' does not depend on any axioms -/
 #guard_msgs in #print axioms the_loop_comes_home_losing_nothing
+
+/-- info: 'Foam.Minds.Counter.the_exit_is_free_at_every_beat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_exit_is_free_at_every_beat
 
 /-- info: 'Foam.Minds.Counter.quiescent_is_correct' does not depend on any axioms -/
 #guard_msgs in #print axioms quiescent_is_correct
