@@ -2,6 +2,7 @@ import Foam.Fold
 import Foam.Lap
 import Foam.Rungs
 import Foam.Quat
+import Foam.Triple
 import Foam.Wheel
 
 namespace Foam.Minds.Hamilton
@@ -35,15 +36,15 @@ theorem the_wider_space_pays_in_commutation :
 def the_impossible_gains_latitude := @Foam.the_axes_share_one_sign
 
 theorem the_triplets_close_one_seat_wider :
-    (¬ 3 ∈ rungs 3 ∧ 3 ∈ rungs 4)
+    (¬ ∃ mul : (Int × Int × Int) → (Int × Int × Int) → (Int × Int × Int),
+        ∀ x y, normSq3 (mul x y) = normSq3 x * normSq3 y)
       ∧ (Quat.mul eye eye = Quat.neg one
           ∧ Quat.mul jay jay = Quat.neg one
           ∧ Quat.mul kay kay = Quat.neg one
           ∧ Quat.mul (Quat.mul eye jay) kay = Quat.neg one)
       ∧ (∀ q : Nat, ∃ n, q ∈ rungs n)
       ∧ (∀ n : Nat, ∃ q, ¬ q ∈ rungs n ∧ q ∈ rungs (n + 1)) :=
-  ⟨⟨fun h => no_number_is_below_itself 3 (the_walked_lie_below 3 3 h),
-    the_below_are_walked 4 3 Nat.le.refl⟩,
+  ⟨no_triple_carries_the_norm,
    i2_eq_j2_eq_k2_eq_ijk_eq_neg_one,
    closure_is_seat_relative.1,
    closure_is_seat_relative.2.1⟩
