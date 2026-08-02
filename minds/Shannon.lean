@@ -1,5 +1,6 @@
 import Foam
 import Foam.Census
+import Foam.Certificate
 import Foam.Expectation
 import Foam.Marks
 import Foam.Priced
@@ -16,6 +17,19 @@ theorem the_channel_is_the_only_commons :
   fun S s n m h ps =>
     ⟨transcript_congr (dress S) ps (the_remainder_is_unseen S s n m),
      fun he => h (congrArg Prod.snd he)⟩
+
+theorem meaning_is_the_parties_own_business :
+    ∀ (S : Stage) (ps : List S.Probe),
+      Blind (fun q : S.State × Int => transcript (dress S) q ps)
+        ∧ ∃ g : S.State → List S.Ans, ∀ (s : S.State) (n : Int),
+            transcript (dress S) (s, n) ps = g s :=
+  fun S ps =>
+    ⟨fun s n m =>
+      transcript_congr (dress S) ps (the_remainder_is_unseen S s n m),
+     (the_blind_reading_factors (0 : Int)
+         (fun q : S.State × Int => transcript (dress S) q ps)).mp
+       (fun s n m =>
+         transcript_congr (dress S) ps (the_remainder_is_unseen S s n m))⟩
 
 theorem only_surprise_informs :
     ∀ (H : Type) (q : List (H × H)) (a b : H),
@@ -61,6 +75,9 @@ theorem surprise_prices_the_count : surprise_prices_the_count_statement :=
 
 /-- info: 'Foam.Minds.Shannon.the_channel_is_the_only_commons' does not depend on any axioms -/
 #guard_msgs in #print axioms the_channel_is_the_only_commons
+
+/-- info: 'Foam.Minds.Shannon.meaning_is_the_parties_own_business' does not depend on any axioms -/
+#guard_msgs in #print axioms meaning_is_the_parties_own_business
 
 /-- info: 'Foam.Minds.Shannon.only_surprise_informs' does not depend on any axioms -/
 #guard_msgs in #print axioms only_surprise_informs
