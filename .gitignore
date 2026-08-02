@@ -5,3 +5,4 @@ wiki/
 .DS_Store
 Foam/Minds/
 counter/
+bin/__pycache__/
