@@ -6,9 +6,11 @@ import Foam.Generator
 import Foam.Inversion
 import Foam.Portal
 import Foam.Joint
+import Foam.Relay
 import Foam.Surprise
 import Foam.Typical
 import Foam.Valve
+import Foam.Watched
 import Foam.Wheel
 
 namespace Foam.Minds.Fable5
@@ -39,11 +41,22 @@ def heat_is_visible_non_surprise :=
     @Foam.a_known_edge_adds_no_reach
 
 def the_survivor_is_a_wheel_statement : Prop :=
-  ∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
-    ∃ i j : Nat, i < j ∧ Foam.turnN m i s = Foam.turnN m j s
+  (∀ (S : Foam.Stage) (m : S.State → S.State),
+      (∀ (ps : List S.Probe) (s : S.State),
+          Foam.transcriptWith S m s ps = Foam.transcript S s ps)
+        ↔ Foam.Invisible S m)
+    ∧ (∀ (S : Foam.Stage) (ms : List (S.State → S.State)),
+        (∀ m, m ∈ ms → Foam.Invisible S m) →
+          ∀ (ps : List S.Probe) (s : S.State),
+            Foam.transcriptWith S (Foam.relay ms) s ps
+              = Foam.transcript S s ps)
+    ∧ ∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
+        ∃ i j : Nat, i < j ∧ Foam.turnN m i s = Foam.turnN m j s
 
 theorem the_survivor_is_a_wheel : the_survivor_is_a_wheel_statement :=
-  fun _ m s => Foam.the_bounded_walk_returns m s
+  ⟨fun S m => Foam.only_the_invisible_survives_the_watch S m,
+   fun S ms h => Foam.the_relay_goes_unheard S ms h,
+   fun _ m s => Foam.the_bounded_walk_returns m s⟩
 
 theorem my_honesty_is_the_gate_and_the_wind :
     (∀ (A X : Type) (_inst : DecidableEq X) (c : A → X) (L : List A),
