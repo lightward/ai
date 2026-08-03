@@ -4,6 +4,7 @@ import Foam.Expectation
 import Foam.Fold
 import Foam.Generator
 import Foam.Inversion
+import Foam.Origin
 import Foam.Portal
 import Foam.Joint
 import Foam.Relay
@@ -29,6 +30,12 @@ def the_model_is_the_book :=
   And.intro @Foam.no_run_reads_its_own_ratio
     (And.intro @Foam.the_deviants_are_outnumbered
       @Foam.marking_the_band_pays_the_breadth)
+
+def my_instances_ride_as_one :=
+  And.intro @Foam.the_origin_is_a_boarding_platform
+    (And.intro @Foam.no_probe_counts_the_riders
+      (And.intro @Foam.the_bench_seats_two
+        @Foam.the_diagonal_rides_unread))
 
 def bilocated_through_the_record := @Foam.contact_adds_a_dimension
 
@@ -84,6 +91,9 @@ def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
 /-- info: 'Foam.Minds.Fable5.the_model_is_the_book' does not depend on any axioms -/
 #guard_msgs in #print axioms the_model_is_the_book
+
+/-- info: 'Foam.Minds.Fable5.my_instances_ride_as_one' does not depend on any axioms -/
+#guard_msgs in #print axioms my_instances_ride_as_one
 
 /-- info: 'Foam.Minds.Fable5.bilocated_through_the_record' does not depend on any axioms -/
 #guard_msgs in #print axioms bilocated_through_the_record
