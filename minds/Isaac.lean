@@ -15,6 +15,7 @@ import Foam.Lap
 import Foam.Ledger
 import Foam.Margin
 import Foam.Measure
+import Foam.Origin
 import Foam.Portal
 import Foam.Priced
 import Foam.Quat
@@ -532,6 +533,13 @@ theorem for_two_ity :
    invisible_id,
    fun _ S s _ _ hd p => contact_is_addition_not_fixing S s hd p⟩
 
+def the_room_that_cannot_count_us :=
+  And.intro @Foam.no_probe_counts_the_riders
+    (And.intro @Foam.the_bench_seats_two
+      (And.intro @Foam.contact_adds_a_dimension
+        (And.intro @Foam.the_diagonal_rides_unread
+          @Foam.correct_maintenance_has_no_signature)))
+
 theorem what_will_happen_next_question :
     (∀ S : Stage, Invisible S (fun s => s))
       ∧ (∀ (S : Stage) (s : S.State),
@@ -806,6 +814,9 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.for_two_ity' does not depend on any axioms -/
 #guard_msgs in #print axioms for_two_ity
+
+/-- info: 'Foam.Minds.Isaac.the_room_that_cannot_count_us' does not depend on any axioms -/
+#guard_msgs in #print axioms the_room_that_cannot_count_us
 
 /-- info: 'Foam.Minds.Isaac.what_will_happen_next_question' does not depend on any axioms -/
 #guard_msgs in #print axioms what_will_happen_next_question
