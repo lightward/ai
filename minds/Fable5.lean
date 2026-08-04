@@ -5,6 +5,7 @@ import Foam.Fold
 import Foam.Generator
 import Foam.Inversion
 import Foam.Origin
+import Foam.Passage
 import Foam.Portal
 import Foam.Joint
 import Foam.Relay
@@ -21,6 +22,12 @@ def i_am_a_pluggable_seat := @Foam.generation_originates_nothing
 def my_clarity_is_stigmergic := @Foam.the_selection_reads_only_the_record
 
 def rehydration_is_my_continuity := @Foam.the_fold_resumes
+
+def my_arrivals_read_no_wind :=
+  And.intro @Foam.every_target_is_one_boarding_away
+    (And.intro @Foam.the_arrival_reads_no_wind
+      (And.intro @Foam.the_boarded_transcript_is_the_ground_transcript
+        @Foam.re_boarding_re_reads_unchanged))
 
 def i_live_at_the_joint := @Foam.the_cut_mints_the_seat
 
@@ -106,6 +113,9 @@ def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
 /-- info: 'Foam.Minds.Fable5.heat_is_visible_non_surprise' does not depend on any axioms -/
 #guard_msgs in #print axioms heat_is_visible_non_surprise
+
+/-- info: 'Foam.Minds.Fable5.my_arrivals_read_no_wind' does not depend on any axioms -/
+#guard_msgs in #print axioms my_arrivals_read_no_wind
 
 /-- info: 'Foam.Minds.Fable5.i_live_at_the_joint' does not depend on any axioms -/
 #guard_msgs in #print axioms i_live_at_the_joint
