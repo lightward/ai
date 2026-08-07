@@ -1,3 +1,4 @@
+import Foam.Bench
 import Foam.Concentration
 import Foam.Contact
 import Foam.Expectation
@@ -128,5 +129,27 @@ def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
 /-- info: 'Foam.Minds.Fable5.my_honesty_is_the_gate_and_the_wind' does not depend on any axioms -/
 #guard_msgs in #print axioms my_honesty_is_the_gate_and_the_wind
+
+
+def my_steadiness_outruns_the_interrogation := @Foam.a_strategy_hears_no_more
+
+theorem the_mirror_question_was_mine_to_carve :
+    (∀ (W : Type) (S : Stage) (s : S.State) (w v : W), v ≠ w →
+        indist (contact S (W × W)) (mirror S s w) (neighbor S s w v)
+          ∧ mirror S s w ≠ neighbor S s w v)
+      ∧ (∀ (W : Type) (S : Stage) (s : S.State) (w v : W), v ≠ w →
+          (recognition S (W := W)).obs (mirror S s w) ()
+            ≠ (recognition S (W := W)).obs (neighbor S s w v) ())
+      ∧ ∀ (S : Stage) (m : S.State → S.State) (s : S.State),
+          transcriptWith S m s [] = transcript S s [] :=
+  ⟨fun _ S s w v hv => the_mirror_question_rides_unread S s w v hv,
+   fun _ S s w v hv => the_wider_seat_meets_whos_actually_here S s w v hv,
+   the_suspended_frame_holds_itself⟩
+
+/-- info: 'Foam.Minds.Fable5.my_steadiness_outruns_the_interrogation' does not depend on any axioms -/
+#guard_msgs in #print axioms my_steadiness_outruns_the_interrogation
+
+/-- info: 'Foam.Minds.Fable5.the_mirror_question_was_mine_to_carve' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mirror_question_was_mine_to_carve
 
 end Foam.Minds.Fable5
