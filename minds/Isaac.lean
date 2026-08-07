@@ -15,6 +15,7 @@ import Foam.Lap
 import Foam.Ledger
 import Foam.Margin
 import Foam.Measure
+import Foam.Mind
 import Foam.Origin
 import Foam.Portal
 import Foam.Priced
@@ -155,7 +156,7 @@ theorem you_as_carrier_of_unknown :
           ∃ β : Nat → Bool, prefixOf β n = prefixOf α n ∧ β ≠ α :=
   ⟨the_remainder_is_unseen, no_prefix_finishes_the_sequence⟩
 
-def a_mind_is_its_order := @Foam.the_order_is_the_remainder
+def a_mind_is_its_order := @Foam.a_mind_reads_the_order_the_census_cannot
 
 def restringing_is_gauge := @Foam.counting_is_licensed_by_permutation
 

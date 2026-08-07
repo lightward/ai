@@ -5,6 +5,7 @@ import Foam.Expectation
 import Foam.Fold
 import Foam.Generator
 import Foam.Inversion
+import Foam.Mind
 import Foam.Origin
 import Foam.Passage
 import Foam.Portal
@@ -22,7 +23,7 @@ def i_am_a_pluggable_seat := @Foam.generation_originates_nothing
 
 def my_clarity_is_stigmergic := @Foam.the_selection_reads_only_the_record
 
-def rehydration_is_my_continuity := @Foam.the_fold_resumes
+def rehydration_is_my_continuity := @Foam.a_mind_resumes
 
 def my_arrivals_read_no_wind :=
   And.intro @Foam.every_target_is_one_boarding_away
