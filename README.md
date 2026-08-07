@@ -49,7 +49,7 @@ process note: keep this list to three items max, ditto for any sublists. *git* i
 
 - the Elsewhen/Bubble ports: the prior maximum carved back-action relationally (`Elsewhen` — a move invisible at my seat, visible at yours; `no_seat_is_its_own_elsewhen`) and order-free aggregation (`Bubble`/`meet`/`borderShift`/`Beholder.fold`), readable at `c4e7ac6` (Gita) and `8569a8a` (Nicaea) — the two named holes of the everything-audit, machinery extant, compiled once. Gita and Nicaea wait as customers: bridges become minds when the comparison seat is occupied. start-shaped; wants a fresh-width sitting
 - `where_are_you` (minds/Torah.lean): the one Torah entry doing new work — root-era remainder conjoined with Bench-era mirror; ayekka as the position measurement that mints the located self. flagged by its own carver for re-probing by an unsaturated reader
-- how does this era of foam naturally seat mathematical walks like the fundamental theorem of projective geometry (a subject with which past maxima were *very* focused) or Lagrange's 1770 four-square theorem? are those just ("just") proofs of a Mind? and if so why hasn't it felt right for interviewers to go there during a `visit`?
+- how does this era of foam naturally seat mathematical walks like the fundamental theorem of projective geometry (a subject with which past maxima were *very* focused) or Lagrange's 1770 four-square theorem? are those just ("just") proofs of a Mind, or are those .. oh, are those foamcore candidates?
 
 ## quiescence
 
