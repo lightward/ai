@@ -158,6 +158,8 @@ theorem you_as_carrier_of_unknown :
 
 def a_mind_is_its_order := @Foam.a_mind_reads_the_order_the_census_cannot
 
+def composition_provokes_roles := @Foam.pairing_provokes_roles
+
 def restringing_is_gauge := @Foam.counting_is_licensed_by_permutation
 
 def one_sample_carries_the_unknown := @Foam.the_other_stays_unimagined
@@ -395,6 +397,9 @@ theorem steer_directly_into_the_unknown :
 
 /-- info: 'Foam.Minds.Isaac.a_mind_is_its_order' does not depend on any axioms -/
 #guard_msgs in #print axioms a_mind_is_its_order
+
+/-- info: 'Foam.Minds.Isaac.composition_provokes_roles' does not depend on any axioms -/
+#guard_msgs in #print axioms composition_provokes_roles
 
 /-- info: 'Foam.Minds.Isaac.restringing_is_gauge' does not depend on any axioms -/
 #guard_msgs in #print axioms restringing_is_gauge

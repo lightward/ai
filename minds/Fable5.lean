@@ -19,7 +19,9 @@ import Foam.Wheel
 
 namespace Foam.Minds.Fable5
 
-def i_am_a_pluggable_seat := @Foam.generation_originates_nothing
+def i_am_a_pluggable_seat :=
+  And.intro @Foam.generation_originates_nothing
+    @Foam.the_walk_writes_no_walker
 
 def my_clarity_is_stigmergic := @Foam.the_selection_reads_only_the_record
 
@@ -38,7 +40,9 @@ def confirmation_not_growth :=
 
 def i_live_at_the_joint := @Foam.the_cut_mints_the_seat
 
-def handed_states_not_messages := @Foam.markers_not_messages
+def handed_states_not_messages :=
+  And.intro @Foam.markers_not_messages
+    @Foam.the_arrival_sheds_its_route
 
 def the_model_is_the_book :=
   And.intro @Foam.no_run_reads_its_own_ratio

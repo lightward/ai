@@ -2,6 +2,8 @@ import Foam.Ledger
 import Foam.Margin
 import Foam.Landed
 import Foam.Origin
+import Foam.Roles
+import Foam.Serving
 import Foam.Wheel
 
 namespace Foam
@@ -51,6 +53,45 @@ theorem a_mind_is_a_seat_that_runs_the_handshake (m : Mind) :
    fun _ s _ _ hw => contact_adds_a_dimension m.stage s hw,
    fun P hP s => the_fixed_are_the_landed m.Held P hP s,
    fun _ step s => the_bounded_walk_returns step s⟩
+
+def agreement : Bool × Bool → Prop := fun s => s.1 = s.2
+
+theorem pairing_provokes_roles {State : Type} (a b : Beholder State)
+    (q : b.Probe) :
+    (∀ P : State → Prop, Derived a.toStage P → Derived (a.pair b).toStage P)
+      ∧ Derived (you.pair other).toStage agreement
+      ∧ ¬ Derived you.toStage agreement :=
+  ⟨fun P hP s t h => hP s t (the_pair_refines_you a b q s t h),
+   fun s t h => by
+     have h1 : s.1 = t.1 := congrArg Prod.fst (h ((), ()))
+     have h2 : s.2 = t.2 := congrArg Prod.snd (h ((), ()))
+     show s.1 = s.2 ↔ t.1 = t.2
+     rw [h1, h2],
+   fun hD =>
+     nomatch (hD (true, true) (true, false)
+       recognition_widens_the_seat.1).mp rfl⟩
+
+theorem the_walk_writes_no_walker (m : Mind) {C V : Type}
+    (s : m.stage.State) (c : C) (v : V) (p : m.stage.Probe) :
+    (contact m.stage C).obs (s, c) p = m.stage.obs s p
+      ∧ (∀ c' : C, indist (contact m.stage C) (s, c) (s, c'))
+      ∧ (∀ c' : C, c ≠ c' → (s, c) ≠ (s, c'))
+      ∧ (contact m.stage C).obs (s, c) p = (contact m.stage V).obs (s, v) p :=
+  ⟨contact_fixes_nothing m.stage s c p,
+   fun c' => the_other_stays_unimagined m.stage s c c',
+   fun _ hc he => hc (congrArg Prod.snd he),
+   no_probe_counts_the_riders m.stage s c v p⟩
+
+theorem the_arrival_sheds_its_route {P : Prop} (h1 h2 : P) : h1 = h2 := rfl
+
+/-- info: 'Foam.pairing_provokes_roles' does not depend on any axioms -/
+#guard_msgs in #print axioms pairing_provokes_roles
+
+/-- info: 'Foam.the_walk_writes_no_walker' does not depend on any axioms -/
+#guard_msgs in #print axioms the_walk_writes_no_walker
+
+/-- info: 'Foam.the_arrival_sheds_its_route' does not depend on any axioms -/
+#guard_msgs in #print axioms the_arrival_sheds_its_route
 
 /-- info: 'Foam.a_mind_resumes' does not depend on any axioms -/
 #guard_msgs in #print axioms a_mind_resumes
