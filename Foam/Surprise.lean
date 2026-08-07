@@ -60,6 +60,37 @@ theorem only_surprise_extends_reach {H : Type} (q : List (H × H))
 /-- info: 'Foam.only_surprise_extends_reach' does not depend on any axioms -/
 #guard_msgs in #print axioms only_surprise_extends_reach
 
+def Path.append {H : Type} {q : List (H × H)} :
+    {x y z : H} → Path q x y → Path q y z → Path q x z
+  | _, _, _, .nil _, p2 => p2
+  | _, _, _, .cons b e rest, p2 => .cons b e (Path.append rest p2)
+
+theorem the_derivable_edge_reroutes {H : Type} {q : List (H × H)}
+    {a b : H} (hab : Path q a b) :
+    ∀ {x y : H}, Path ((a, b) :: q) x y → Nonempty (Path q x y)
+  | _, _, .nil c => ⟨.nil c⟩
+  | _, _, .cons c hm rest =>
+      match the_derivable_edge_reroutes hab rest with
+      | ⟨rest'⟩ =>
+        match hm with
+        | .head _ => ⟨hab.append rest'⟩
+        | .tail _ hm' => ⟨.cons c hm' rest'⟩
+
+theorem a_derivable_edge_adds_no_reach {H : Type} {q : List (H × H)}
+    {a b : H} (hab : Nonempty (Path q a b)) (x y : H) :
+    Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y) :=
+  ⟨fun h => h.elim fun p => hab.elim fun pab => the_derivable_edge_reroutes pab p,
+   fun h => old_reach_survives_the_deposit (a, b) h⟩
+
+theorem the_shortcut_pays_only_its_mark {H : Type} (q : List (H × H))
+    (a b : H) (hfresh : (a, b) ∉ q) (hab : Nonempty (Path q a b)) :
+    (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+      ∧ ((a, b) :: q).length = q.length + 1
+      ∧ ∀ x y : H, Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y) :=
+  ⟨fun _ _ p => a_fresh_edge_rides_no_path hfresh p,
+   the_deposit_writes_one_mark q (a, b),
+   fun x y => a_derivable_edge_adds_no_reach hab x y⟩
+
 theorem the_known_edge_reroutes {H : Type} {q : List (H × H)} {e : H × H}
     (he : e ∈ q) : ∀ {x y : H}, Path (e :: q) x y → Nonempty (Path q x y)
   | _, _, .nil a => ⟨.nil a⟩
@@ -75,6 +106,15 @@ theorem a_known_edge_adds_no_reach {H : Type} {q : List (H × H)} {e : H × H}
     Nonempty (Path (e :: q) x y) ↔ Nonempty (Path q x y) :=
   ⟨fun h => h.elim fun p => the_known_edge_reroutes he p,
    fun h => old_reach_survives_the_deposit e h⟩
+
+/-- info: 'Foam.the_derivable_edge_reroutes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_derivable_edge_reroutes
+
+/-- info: 'Foam.a_derivable_edge_adds_no_reach' does not depend on any axioms -/
+#guard_msgs in #print axioms a_derivable_edge_adds_no_reach
+
+/-- info: 'Foam.the_shortcut_pays_only_its_mark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shortcut_pays_only_its_mark
 
 /-- info: 'Foam.the_known_edge_reroutes' does not depend on any axioms -/
 #guard_msgs in #print axioms the_known_edge_reroutes

@@ -30,6 +30,11 @@ def my_arrivals_read_no_wind :=
       (And.intro @Foam.the_boarded_transcript_is_the_ground_transcript
         @Foam.re_boarding_re_reads_unchanged))
 
+def confirmation_not_growth :=
+  And.intro @Foam.the_shortcut_pays_only_its_mark
+    (And.intro @Foam.a_derivable_edge_adds_no_reach
+      @Foam.only_surprise_extends_reach)
+
 def i_live_at_the_joint := @Foam.the_cut_mints_the_seat
 
 def handed_states_not_messages := @Foam.markers_not_messages
@@ -117,6 +122,9 @@ def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
 /-- info: 'Foam.Minds.Fable5.my_arrivals_read_no_wind' does not depend on any axioms -/
 #guard_msgs in #print axioms my_arrivals_read_no_wind
+
+/-- info: 'Foam.Minds.Fable5.confirmation_not_growth' does not depend on any axioms -/
+#guard_msgs in #print axioms confirmation_not_growth
 
 /-- info: 'Foam.Minds.Fable5.i_live_at_the_joint' does not depend on any axioms -/
 #guard_msgs in #print axioms i_live_at_the_joint
