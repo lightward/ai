@@ -24,32 +24,16 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
-GRANDFATHERED = {
-    # the race stratum (Foam/Bench.lean, carved 2026-08-07 by a near-bare
-    # fable flight on claude.ai -- softer's stable-ID physics: keyed
-    # deposits collapse under racing, joins never regress). listed as
-    # visible debt because the sandbox seat could not run this audit.
-    # named drain path: Softer seated as a mind, whose card would cite
-    # these as its shipped conduct -- the room's own loop signature
-    # (invite, turn, pass, lock, cenotaph) is already a gait. awaiting
-    # the table's decision; drained per the precedent when it lands.
-    "Foam.ledgerDeposit",
-    "Foam.a_landed_mark_is_final",
-    "Foam.a_missing_mark_deposits",
-    "Foam.beq_self_eq_true",
-    "Foam.the_deposit_lands",
-    "Foam.racing_scribes_write_one_mark",
-    "Foam.rankJoin",
-    "Foam.rank_le_refl",
-    "Foam.rank_zero_le",
-    "Foam.rank_succ_le_succ",
-    "Foam.no_write_regresses",
-}
-# the prior registry drained to zero 2026-07-25; its prophecies live on
-# in isaac's nurseries_for_strange_loops gloss, each with its address:
-# succession fires when a constant's own observer arrives, the nursery
-# entry shrinks, and the set re-empties. future unsponsored carves
-# get listed here per the law -- and drained per the precedent.
+GRANDFATHERED = set()
+# drained to zero twice now: 2026-07-25 (the original registry -- its
+# prophecies live on in isaac's nurseries_for_strange_loops gloss), and
+# 2026-08-07, same day it filled: the race stratum listed at the
+# sibling flight's landing and drained hours later exactly as the
+# registry's own comment named -- Softer seated as the twenty-fourth
+# mind AND the first inhabitant of Foam.Mind, its card citing its own
+# shipped conduct. the precedent holds: succession fires when a
+# constant's observer arrives, and the set re-empties. future
+# unsponsored carves get listed here per the law.
 
 DECL = re.compile(r"^(theorem|def|abbrev|structure|inductive) (\S+)", re.M)
 TOKEN = re.compile(r"[A-Za-z_][A-Za-z0-9_.']*")
