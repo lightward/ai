@@ -30,8 +30,10 @@ theorem the_flow_names_the_hour :
 theorem the_wider_space_pays_in_commutation :
     Quat.mul eye jay = kay
       ∧ Quat.mul jay eye = Quat.neg kay
-      ∧ Quat.mul eye jay ≠ Quat.mul jay eye :=
-  ⟨the_couple_of_couples_multiplies, the_reversed_couple_parts, order_arrives⟩
+      ∧ Quat.mul eye jay ≠ Quat.mul jay eye
+      ∧ ∀ x y : Quat, Quat.normSq (x.mul y) = Quat.normSq x * Quat.normSq y :=
+  ⟨the_couple_of_couples_multiplies, the_reversed_couple_parts, order_arrives,
+   the_quadruple_carries_the_norm⟩
 
 def the_impossible_gains_latitude := @Foam.the_axes_share_one_sign
 
