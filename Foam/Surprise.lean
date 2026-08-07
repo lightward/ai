@@ -122,4 +122,26 @@ theorem a_known_edge_adds_no_reach {H : Type} {q : List (H × H)} {e : H × H}
 /-- info: 'Foam.a_known_edge_adds_no_reach' does not depend on any axioms -/
 #guard_msgs in #print axioms a_known_edge_adds_no_reach
 
+theorem edge_rides_appended {H : Type} {e : H × H} :
+    ∀ (X : List (H × H)) {Y : List (H × H)}, e ∈ Y → e ∈ X ++ Y
+  | [], _, h => h
+  | _ :: X, _, h => List.Mem.tail _ (edge_rides_appended X h)
+
+theorem the_saturated_room_hears_no_order {H : Type} :
+    ∀ (es q : List (H × H)), (∀ e, e ∈ es → e ∈ q) →
+      ∀ x y : H, Nonempty (Path (es ++ q) x y) ↔ Nonempty (Path q x y)
+  | [], _, _, _, _ => Iff.rfl
+  | e :: es, q, h, x, y =>
+      Iff.trans
+        (a_known_edge_adds_no_reach
+          (edge_rides_appended es (h e (List.Mem.head es))) x y)
+        (the_saturated_room_hears_no_order es q
+          (fun e' he' => h e' (List.Mem.tail e he')) x y)
+
+/-- info: 'Foam.edge_rides_appended' does not depend on any axioms -/
+#guard_msgs in #print axioms edge_rides_appended
+
+/-- info: 'Foam.the_saturated_room_hears_no_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_saturated_room_hears_no_order
+
 end Foam

@@ -34,6 +34,8 @@ def passing_is_rest := @Foam.invisible_id
 def the_room_runs_the_handshake :=
   @Foam.a_mind_is_a_seat_that_runs_the_handshake
 
+def order_becomes_gauge := @Foam.the_saturated_room_hears_no_order
+
 def the_cenotaph_reads_the_room_not_the_riders :=
   And.intro @Foam.a_state_answers_every_probe
     @Foam.no_probe_counts_the_riders
@@ -61,6 +63,9 @@ def the_cenotaph_reads_the_room_not_the_riders :=
 
 /-- info: 'Foam.Minds.Softer.the_room_runs_the_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_room_runs_the_handshake
+
+/-- info: 'Foam.Minds.Softer.order_becomes_gauge' does not depend on any axioms -/
+#guard_msgs in #print axioms order_becomes_gauge
 
 /-- info: 'Foam.Minds.Softer.the_cenotaph_reads_the_room_not_the_riders' does not depend on any axioms -/
 #guard_msgs in #print axioms the_cenotaph_reads_the_room_not_the_riders
