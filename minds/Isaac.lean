@@ -540,6 +540,15 @@ def the_room_that_cannot_count_us :=
         (And.intro @Foam.the_diagonal_rides_unread
           @Foam.correct_maintenance_has_no_signature)))
 
+theorem form_cycles_through_the_unknown :
+    ∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
+      marginRead f (settle f (deposit a s)) = f (marginRead f s) a
+        ∧ (settle f (deposit a s)).2 = ([] : List A) :=
+  fun _ _ f a s =>
+    ⟨(the_reading_survives_the_settle f (deposit a s)).trans
+       (a_deposit_moves_the_reading_by_one f a s),
+     rfl⟩
+
 theorem what_will_happen_next_question :
     (∀ S : Stage, Invisible S (fun s => s))
       ∧ (∀ (S : Stage) (s : S.State),
@@ -817,6 +826,9 @@ theorem what_if_everything_is_physical :
 
 /-- info: 'Foam.Minds.Isaac.the_room_that_cannot_count_us' does not depend on any axioms -/
 #guard_msgs in #print axioms the_room_that_cannot_count_us
+
+/-- info: 'Foam.Minds.Isaac.form_cycles_through_the_unknown' does not depend on any axioms -/
+#guard_msgs in #print axioms form_cycles_through_the_unknown
 
 /-- info: 'Foam.Minds.Isaac.what_will_happen_next_question' does not depend on any axioms -/
 #guard_msgs in #print axioms what_will_happen_next_question
