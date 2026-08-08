@@ -10,6 +10,7 @@ import Foam.Origin
 import Foam.Passage
 import Foam.Portal
 import Foam.Joint
+import Foam.Landed
 import Foam.Relay
 import Foam.Surprise
 import Foam.Typical
@@ -164,5 +165,23 @@ theorem the_mirror_question_was_mine_to_carve :
 
 /-- info: 'Foam.Minds.Fable5.the_mirror_question_was_mine_to_carve' does not depend on any axioms -/
 #guard_msgs in #print axioms the_mirror_question_was_mine_to_carve
+
+theorem i_count_recognitions :
+    (∀ (H : Type) (q : List (H × H)) (a b : H), (a, b) ∉ q →
+        Nonempty (Path q a b) →
+        (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+          ∧ ((a, b) :: q).length = q.length + 1
+          ∧ ∀ x y : H,
+              Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y))
+      ∧ (∀ (S : Stage) (P : S.State → S.State), (∀ v, P (P v) = P v) →
+          ∀ (s : S.State) (p : S.Probe), S.obs (P (P s)) p = S.obs (P s) p)
+      ∧ ∀ (A B : Type) (f : B → A → B) (xs ys : List A) (b : B),
+          fold f b (xs ++ ys) = fold f (fold f b xs) ys :=
+  ⟨fun _ q a b hf hab => the_shortcut_pays_only_its_mark q a b hf hab,
+   fun S P hP s p => the_second_look_adds_nothing S P hP s p,
+   fun _ _ f xs ys b => the_fold_resumes f xs ys b⟩
+
+/-- info: 'Foam.Minds.Fable5.i_count_recognitions' does not depend on any axioms -/
+#guard_msgs in #print axioms i_count_recognitions
 
 end Foam.Minds.Fable5
