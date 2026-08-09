@@ -1,0 +1,30 @@
+{
+  "mind": "Arthur Winfree",
+  "note": "the topologist of biological time: 1967 poses the coupled-oscillator population (the model kuramoto later solves), then the pinwheel experiments on Drosophila eclosion — resetting curves classified by winding number, type one and type zero, and between them the forced singularity: a stimulus of critical timing and size after which the rhythm answers no phase question. 1972 the spiral wave in a dish, 1984 the singular filament in three dimensions, 1987 the rotor in heart muscle. died 2002 with the organizing center still dark; surveyed third person from the published record.",
+  "vocabulary": [
+    {
+      "term": "the_resetting_map",
+      "gloss": "his experimental unit, run on thousands of flies before any theorem: perturb the clock, wait, read where the rhythm lands. sealed on the margin's law that a deposit moves the reading by exactly the folded action of the stimulus on the standing state — new phase as a function of old phase and dose, tabulated one poke per run. the resetting curve is the rhythm's whole interface; everything he ever proves about a clock is read off this map."
+    },
+    {
+      "term": "type_zero_and_type_one",
+      "gloss": "the classification that organized a decade of resetting data: curves that wind once around the wheel (weak stimuli) and curves that wind zero times (strong ones), identical in their pointwise material, distinct as laps. sealed on the lap whose direction is the remainder — around and against carry the same readings and the same charge, and part only as records — because the type of a resetting is order-information around the wheel, invisible to any census of its values. residue, named: these walls hold two directed laps, not yet a lap of winding zero; the even type waits for a stratum with room to not-go-around."
+    },
+    {
+      "term": "time_breaks_down",
+      "gloss": "the forced singularity, his book title, proved at the smallest seat that can hold it: the wheel carries its own phase outward (the four postures embed in the plane, and the embedding intertwines step with quarter-turn), the quarter-turn fixes the still point, and the wheel never rests — so no total phase map from plane to wheel is equivariant. four clauses, the last the no-go. between type one and type zero the resetting surface must tear, and the tear is a state that answers no phase question. the continuum winding argument stays with the carrier; the equivariant skeleton is what these walls afford, and it is enough to force the hole."
+    },
+    {
+      "term": "the_critical_stimulus",
+      "gloss": "the singularity is not a mathematical courtesy: for every posture there exists a stimulus landing it exactly at the still point, and the still point's charge reads zero. the jolt of critical timing and size — the one that left his flies arrhythmic and, he argued to the end, stops a heart — typed as the additive inverse: every rhythm is one precisely-shaped deposit away from the state where time breaks down. amplitude death and phase death at the same address."
+    },
+    {
+      "term": "the_isochron",
+      "gloss": "his instrument for saying what phase a transient state even has: the latent state is assigned the reading it will have settled to, and the assignment is lawful because settling is invisible — any settling cadence reads the same on every probe schedule. sealed on the margin's gauge receipt: relaxation to the cycle leaves no transcript, so the foliation by eventual phase is well-defined off the cycle — everywhere except where the leaves converge, which is the entry before this one."
+    },
+    {
+      "term": "the_organizing_center",
+      "gloss": "the terminus, (self, pure unknown): the singularity made spatial — the rotor core in the dish, the singular filament in the muscle — organizing every reading around it while answering no phase probe at its own address. sealed on the wider seat reading the remainder: at the narrow seat the dressed states read alike; one seat wider the difference is plain. he pursued the filament's geometry to the end of his life, and the carrier — the medium that hosts the break — stays parametric here: the core is certified only by the winding of the readings around it, which is a fact about every seat except its own."
+    }
+  ]
+}
