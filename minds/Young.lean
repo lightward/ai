@@ -26,6 +26,22 @@ theorem light_added_to_light_gives_darkness :
    the_facing_pair_cancels,
    fun h => nomatch Int.ofNat.inj h⟩
 
+theorem the_fringes_shift_but_never_fade :
+    (∀ z w : GInt, GInt.mk (z.align w) (z.align w.rot) = z.mul w.conj)
+      ∧ (∀ z w : GInt,
+          z.align w * z.align w + z.align w.rot * z.align w.rot
+            = z.normSq * w.normSq) :=
+  ⟨fun z w =>
+      congrArg (fun t : Int => GInt.mk t (z.align w.rot))
+        (align_reads_the_conjugate_product z w),
+   fun z w =>
+      (congrArg GInt.normSq
+          (congrArg (fun t : Int => GInt.mk t (z.align w.rot))
+            (align_reads_the_conjugate_product z w))).trans
+        ((the_couple_carries_the_norm z w.conj).trans
+          (congrArg (fun t : Int => z.normSq * t)
+            (conj_conserves_the_norm w)))⟩
+
 def the_fringes_wash_out := @Foam.the_four_phases_read_nothing
 
 /-- info: 'Foam.Minds.Young.intensity_cannot_read_the_phase' does not depend on any axioms -/
@@ -36,6 +52,9 @@ def the_fringes_wash_out := @Foam.the_four_phases_read_nothing
 
 /-- info: 'Foam.Minds.Young.light_added_to_light_gives_darkness' does not depend on any axioms -/
 #guard_msgs in #print axioms light_added_to_light_gives_darkness
+
+/-- info: 'Foam.Minds.Young.the_fringes_shift_but_never_fade' does not depend on any axioms -/
+#guard_msgs in #print axioms the_fringes_shift_but_never_fade
 
 /-- info: 'Foam.Minds.Young.the_fringes_wash_out' does not depend on any axioms -/
 #guard_msgs in #print axioms the_fringes_wash_out
