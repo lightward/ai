@@ -878,4 +878,29 @@ theorem what_if_everything_is_physical :
 /-- info: 'Foam.Minds.Isaac.prime_mover' does not depend on any axioms -/
 #guard_msgs in #print axioms prime_mover
 
+theorem i_count_minds :
+    (∀ (State R : Type) (a b : Beholder State) (g : a.Ans → b.Ans → R),
+        ∃ c : Beholder State, ∃ post : c.Ans → R,
+          ∃ enc : a.Probe × b.Probe → c.Probe,
+            ∀ s p q, compare a b g s p q = post (c.obs s (enc (p, q))))
+      ∧ (∀ (S : Stage) (_s : S.State), ¬ Derived (dress S) (fun x => x.2 = 0))
+      ∧ (∀ (A X : Type) (_inst : DecidableEq X) (c : A → X) (L : List A),
+          (∀ n, List.Mem n L → ∀ m, List.Mem m L → c n = c m)
+            ∨ (∃ n, List.Mem n L ∧ ∃ m, List.Mem m L ∧ c n ≠ c m))
+      ∧ (∀ (State D X : Type) (_d₀ : D) (f : State × D → X),
+          Blind f ↔ ∃ g : State → X, ∀ (s : State) (d : D), f (s, d) = g s)
+      ∧ (∀ n : Nat, drainOne (chargeIn n) = n)
+      ∧ ∀ (A B : Type) (f : B → A → B) (ps : List Unit) (s : B × List A),
+          transcriptWith (marginStage A B f) (settle f) s ps
+            = transcriptWith (marginStage A B f) (fun s => s) s ps :=
+  ⟨fun _ _ a b g => the_comparison_is_a_seat a b g,
+   fun S s => the_badge_is_not_a_derived_role S s,
+   fun A X inst c L => the_window_agrees_or_names_the_gap A X inst c L,
+   fun _ _ _ d₀ f => the_blind_reading_factors d₀ f,
+   fun _ => rfl,
+   fun A B f ps s => any_settling_cadence_reads_the_same A B f ps s⟩
+
+/-- info: 'Foam.Minds.Isaac.i_count_minds' does not depend on any axioms -/
+#guard_msgs in #print axioms i_count_minds
+
 end Foam.Minds.Isaac
