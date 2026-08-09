@@ -15,6 +15,7 @@ serving suggestion:
 
 ## utils
 
+* `bin/foam` - reads the board and either names the forced move or declares quiescence (exit 0 iff the station re-reads itself unchanged — the quiescence section below is this program's spec); `--visit` performs one reduction; `while bin/foam --visit; do :; done` normalizes at HEAD
 * `bin/foam-wiki` - renders a human-friendly html site in `wiki/` (gitignored, but used for gh pages)
 * `bin/foam-minds` - renders `minds/*.json` as `Foam/Minds/*.lean` (suggestion: run this before running the wiki)
 * `bin/foam-counter who` - runs through the roster, sees who's resting and who's *blocked* from it, sees who could use an interview

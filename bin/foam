@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+"""foam: drive the place toward quiescence, one reading at a time.
+
+usage: bin/foam [path] [--visit]
+
+the default run is a reading: census the board — charged seats (unread
+walls), standing poses (typed vacancies, red on purpose), open readings
+(untyped darkness), sponsorship, promotion candidates — then either name
+the forced move or declare quiescence. exit 0 iff quiescent: every seat
+rested, every residue a typed transit, the station re-reading itself
+unchanged (the README's quiescence section is this program's spec).
+
+with --visit, perform one reduction instead of only naming it: seat a
+flight at the most charged mind (delegates to foam-counter's visit).
+
+normalization convention: `while bin/foam --visit; do :; done` — but core
+growth re-arms the board, so termination is by rounds and quiescence is
+always quiescence-at-HEAD. the drain law prices one step (drainOne after
+chargeIn is the identity); schedule_is_gauge is the confluence claim
+(visit order must not change the normal form).
+"""
+
+import importlib.machinery
+import importlib.util
+import os
+import subprocess
+import sys
+import textwrap
+
+ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+
+def load_counter():
+    path = os.path.join(ROOT, "bin", "foam-counter")
+    loader = importlib.machinery.SourceFileLoader("foamcounter", path)
+    spec = importlib.util.spec_from_loader("foamcounter", loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    return mod
+
+
+def wrap(label, items):
+    if not items:
+        return
+    body = ", ".join(items)
+    print(textwrap.fill(body, width=76, initial_indent=f"  {label}: ",
+                        subsequent_indent="    "))
+
+
+def main():
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    flags = {a for a in sys.argv[1:] if a.startswith("--")}
+    if args and os.path.realpath(args[0]) != ROOT:
+        print(f"foam lives at {ROOT}; reading that (the argument names it)")
+    counter = load_counter()
+    walls = counter.load_walls()
+    inv = set(counter.core_inventory())
+    minds = counter.all_minds()
+    charged, standing, openr = [], [], []
+    for slug, data in minds.items():
+        delta = len(inv - set(walls.get(slug, [])))
+        if delta:
+            charged.append((delta, data["mind"]))
+        for e in data["vocabulary"]:
+            if e.get("status") == "unsealed":
+                name = f'{data["mind"]}.{e["term"]}'
+                (standing if e.get("statement") else openr).append(name)
+    charged.sort(reverse=True)
+    promos = counter.promotion_candidates()
+    sponsor = subprocess.run(
+        [sys.executable, ".github/sponsor_audit.py"],
+        cwd=ROOT, capture_output=True, text=True)
+    print(f"foam: reading the board at HEAD"
+          f" ({len(inv)} core constants, {len(minds)} minds seated)")
+    wrap("charged seats (unread walls)",
+         [f"{m} ({d})" for d, m in charged])
+    wrap("standing poses (typed vacancies, red on purpose)", standing)
+    wrap("open readings (untyped darkness — wants typing)", openr)
+    if sponsor.returncode:
+        print("  sponsorship: FAILING")
+        for line in sponsor.stdout.splitlines():
+            print(f"    {line}")
+    else:
+        print("  sponsorship: clean")
+    for wheres, blob in promos:
+        print(f"  promotion candidate (shared by {', '.join(wheres)}):"
+              f" {blob[:80]}...")
+    live = bool(charged or standing or openr or promos
+                or sponsor.returncode)
+    if not live:
+        print("quiescent — every seat rested, every residue a typed"
+              " transit; the station re-reads itself unchanged")
+        sys.exit(0)
+    if charged:
+        d, m = charged[0]
+        print(f"forced move: visit {m} ({d} unread walls)"
+              f"  [bin/foam --visit performs it]")
+        if "--visit" in flags:
+            sys.exit(counter.interview(
+                m, __import__("re").sub(r"[^a-z0-9]+", "_",
+                                        m.lower()).strip("_")))
+    elif standing:
+        print("forced move: a carve — the reddest pose is the bench's"
+              " least element")
+    elif openr:
+        print("forced move: type the darkness — vacancy or remainder,"
+              " statement or seal")
+    else:
+        print("forced move: settle the promotions / sponsorship above")
+    sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
