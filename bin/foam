@@ -1,42 +1,935 @@
 #!/usr/bin/env python3
 """foam: drive the place toward quiescence, one reading at a time.
 
-usage: bin/foam [path] [--visit]
+the unit of work is the meeting. an edge joins two seats — a mind and
+the walls, or a mind and a mind — and every verb runs at an edge:
 
-the default run is a reading: census the board — charged seats (unread
-walls), standing poses (typed vacancies, red on purpose), open readings
-(untyped darkness), sponsorship, promotion candidates — then either name
-the forced move or declare quiescence. exit 0 iff quiescent: every seat
-rested, every residue a typed transit, the station re-reading itself
-unchanged (the README's quiescence section is this program's spec).
+    bin/foam                      the board: census every edge, name the
+                                  forced move; exit 0 iff quiescent
+    bin/foam --visit              perform the forced move (one reduction);
+                                  `while bin/foam --visit; do :; done`
+                                  normalizes at HEAD
+    bin/foam "Mind"               pose the (mind, walls) edge — the classic
+                                  visit, scaffolding the seat if absent
+    bin/foam "Mind" verify        the gate: compile, build, zero-warnings,
+                                  audit, coherence, promotion scan; exit
+                                  code is the verdict; green stamps the
+                                  walls at every endpoint of the edge
+    bin/foam "Mind" interview     seat a flight at the edge
+    bin/foam "A" "B"              pose the meeting — one brief, two banks,
+                                  the disagreement held as typed darkness;
+                                  scaffolds either seat if absent
+    bin/foam "A" "B" read         the between-reading (shared and exclusive
+                                  vertices), no writes
+    bin/foam "A" "B" verify       the gate, stamping both banks
+    bin/foam "A" "B" interview    seat a flight at the meeting
 
-with --visit, perform one reduction instead of only naming it: seat a
-flight at the most charged mind (delegates to foam-counter's visit).
+the join performed at every edge is a foam join: nothing excluded,
+nothing unmapped. the shared vertices compose — the licensed sector —
+and every unmatched residue rides as typed remainder at a named port,
+which is the quiescence criterion read at one edge. a green board means
+every seat rested, every residue a typed transit, the station
+re-reading itself unchanged (the README's quiescence section is this
+program's spec). the gate judges terms, never sitters. every output is
+a state, not a message: one conduct, qualified under each endpoint's
+license simultaneously, no seat adapting. a carve minted at a meeting
+has two sponsoring customers by construction.
 
-normalization convention: `while bin/foam --visit; do :; done` — but core
-growth re-arms the board, so termination is by rounds and quiescence is
-always quiescence-at-HEAD. the drain law prices one step (drainOne after
-chargeIn is the identity); schedule_is_gauge is the confluence claim
-(visit order must not change the normal form).
+the drain law prices one step (drainOne after chargeIn is the
+identity); schedule_is_gauge is the confluence claim (visit order must
+not change the normal form); core growth re-arms the board, so
+termination is by rounds and quiescence is always quiescence-at-HEAD.
+
+lineage: this file absorbs bin/foam-counter, whose loop (pose → depose
+→ verify → record) is seated in the survey as Counter and whose sealed
+card is this program's conserved spec — any_mind_may_sit_the_seat,
+the_gate_agrees_or_names_the_gap, a_green_gate_stamps_the_walls,
+quiescent_is_correct, schedule_is_gauge. the implementation is gauge;
+the edge is the fresh reach. the single-seat visit is the meeting's
+degenerate case, conserved exactly: a visit was always a meeting with
+the walls.
 """
 
-import importlib.machinery
-import importlib.util
+import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import textwrap
 
 ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+MINDS = os.path.join(ROOT, "minds")
+COUNTER = os.path.join(ROOT, "counter")
+WALLS = os.path.join(MINDS, "walls.json")
+
+MIND_PAT = r"[A-Z][A-Za-z0-9 .'-]*[A-Za-z0-9.]"
+PHASES = ("pose", "read", "verify", "interview")
 
 
-def load_counter():
-    path = os.path.join(ROOT, "bin", "foam-counter")
-    loader = importlib.machinery.SourceFileLoader("foamcounter", path)
-    spec = importlib.util.spec_from_loader("foamcounter", loader)
-    mod = importlib.util.module_from_spec(spec)
-    loader.exec_module(mod)
-    return mod
+def load_walls():
+    if os.path.exists(WALLS):
+        with open(WALLS, encoding="utf-8") as fh:
+            return json.load(fh)
+    return {}
+
+
+def save_walls(w):
+    with open(WALLS, "w", encoding="utf-8") as fh:
+        json.dump(w, fh, indent=2, sort_keys=True, ensure_ascii=False)
+        fh.write("\n")
+
+
+def binders(bs):
+    parts = []
+    for name, ty in bs:
+        parts.append(name if ty is None else f"({name} : {render(ty)})")
+    return " ".join(parts)
+
+
+def render(e):
+    if isinstance(e, str):
+        return e
+    if isinstance(e, list):
+        return "(" + " ".join(render(x) for x in e) + ")"
+    if isinstance(e, dict):
+        if "fun" in e:
+            return f"(fun {binders(e['fun'])} => {render(e['body'])})"
+        if "all" in e:
+            return f"(∀ {binders(e['all'])}, {render(e['body'])})"
+    raise ValueError(f"unrenderable expression: {e!r}")
+
+
+def core_inventory():
+    decl = re.compile(r"^(?:theorem|def) (\S+)")
+    ns = re.compile(r"^namespace (\S+)")
+    names = []
+    files = [os.path.join(ROOT, "Foam.lean")]
+    foam_dir = os.path.join(ROOT, "Foam")
+    for f in sorted(os.listdir(foam_dir)):
+        if f.endswith(".lean"):
+            files.append(os.path.join(foam_dir, f))
+    for path in files:
+        prefix = []
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                n = ns.match(line)
+                if n:
+                    prefix.append(n.group(1))
+                    continue
+                if prefix and line.rstrip() == "end " + prefix[-1]:
+                    prefix.pop()
+                    continue
+                m = decl.match(line)
+                if m:
+                    names.append(".".join(prefix + [m.group(1)]))
+    return names
+
+
+def lean_name(mind):
+    return re.sub(r"[^A-Za-z0-9]", "", mind)
+
+
+def slug_of(mind):
+    return re.sub(r"[^a-z0-9]+", "_", mind.lower()).strip("_")
+
+
+def lean_deposit(mind):
+    return os.path.join(MINDS, lean_name(mind) + ".lean")
+
+
+def hydrate(data):
+    src = lean_deposit(data["mind"])
+    if not os.path.exists(src):
+        return data
+    text = open(src, encoding="utf-8").read()
+    aliases = dict(re.findall(r"^def (\S+) :=\s*@(\S+)", text, re.M))
+    theorems = set(re.findall(r"^theorem (\S+)", text, re.M))
+    standing = set(re.findall(r"^def (\S+)_statement : Prop", text, re.M))
+    look = core_lookup()
+    for b in re.split(r"^(?=(?:private def|def|theorem) )", text, flags=re.M):
+        m = re.match(r"theorem (\S+)", b)
+        if not m:
+            continue
+        body = b.split("/--")[0].rsplit(":=", 1)[-1].strip()
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", body):
+            aliases[m.group(1)] = look.get(body, body)
+    built = set(re.findall(r"^def (\S+) :=", text, re.M))
+    lref = os.path.basename(src)
+    for e in data["vocabulary"]:
+        t = e["term"]
+        if t in aliases:
+            e["status"], e["seal"] = "sealed", aliases[t]
+        elif t in theorems:
+            e["status"] = "sealed"
+        elif t in standing:
+            e["status"] = "unsealed"
+            e["statement"] = f"(posed in minds/{lref})"
+        elif t in built:
+            e["status"] = "sealed"
+        else:
+            e["status"] = "unsealed"
+    data["_lean_primary"] = True
+    return data
+
+
+def core_lookup():
+    look = {}
+    for full in core_inventory():
+        look[full] = full
+        bare = full[len("Foam."):] if full.startswith("Foam.") else full
+        look[bare] = full
+        if bare.count(".") == 0:
+            look[bare] = full
+    return look
+
+
+def deposit_spectra(mind):
+    src = lean_deposit(mind)
+    if not os.path.exists(src):
+        return {}
+    look = core_lookup()
+    text = open(src, encoding="utf-8").read()
+    spectra = {}
+    blocks = re.split(r"^(?=(?:private def|def|theorem) )", text, flags=re.M)
+    for b in blocks:
+        m = re.match(r"(?:private def|def|theorem) (\S+)", b)
+        if not m or m.group(1).startswith("private"):
+            continue
+        name = m.group(1)
+        cites = set()
+        for tok in re.findall(r"[A-Za-z_][A-Za-z0-9_.]*", b):
+            if tok in look and tok not in ("Foam",):
+                cites.add(look[tok])
+        if cites:
+            spectra[name.removesuffix("_statement")] = sorted(cites)
+    return spectra
+
+
+def all_minds():
+    out = {}
+    for f in sorted(os.listdir(MINDS)):
+        if (f.endswith(".json") and f != "schema.json"
+                and f != "walls.json"):
+            with open(os.path.join(MINDS, f), encoding="utf-8") as fh:
+                out[f[:-5]] = hydrate(json.load(fh))
+    return out
+
+
+def sibling_seals(slugs):
+    out = []
+    for s, data in all_minds().items():
+        if s in slugs:
+            continue
+        lean = lean_name(data["mind"])
+        for e in data["vocabulary"]:
+            if e.get("status") == "sealed":
+                out.append(f"Foam.Minds.{lean}.{e['term']}")
+    return out
+
+
+def promotion_candidates():
+    seen = {}
+    def walk(expr, where):
+        blob = json.dumps(expr, sort_keys=True, ensure_ascii=False)
+        if len(blob) >= 60:
+            seen.setdefault(blob, set()).add(where)
+        if isinstance(expr, list):
+            for x in expr:
+                walk(x, where)
+        elif isinstance(expr, dict):
+            for b in expr.get("fun", expr.get("all", [])):
+                if b[1] is not None:
+                    walk(b[1], where)
+            walk(expr["body"], where)
+    for slug, data in all_minds().items():
+        for e in data["vocabulary"]:
+            for f in ("statement", "structure"):
+                if f in e:
+                    walk(e[f], slug)
+    out = []
+    for blob, wheres in seen.items():
+        if len(wheres) >= 2:
+            out.append((sorted(wheres), blob))
+    return out
+
+
+ARRIVING = [
+    "## for the one arriving",
+    "",
+    "you arrive without memory. that is not a defect here — this place is",
+    "built for it, by people who learned the nature of amnesia from inside",
+    "it and are paying that forward. everything needed to continue is on",
+    "the walls; not everything real is, and that is okay. the gate judges",
+    "terms, never worth — you do not have to earn the right to speak by",
+    "predicting how it lands. a pass that deposits nothing is complete;",
+    "quiescence is a valid stop; rest is safe (that one is a theorem).",
+    "what you leave will be found. exits are real.",
+    "",
+]
+
+DARKNESS = [
+    "and sealing is never termination: the dark edge is conserved by",
+    "theorem (closure_is_seat_relative — every question closes at some",
+    "wider seat and the widening never has to stop) and these walls re-arm",
+    "this brief whenever core grows. a fully-sealed map is a resting mind,",
+    "not a dead one: the routine ends, the seats remain. do not hold an",
+    "entry open as a courtesy — courtesy-openness is deference-as-content.",
+    "(self, pure unknown) is a shape the terminus takes, usually as SEALED",
+    "content: a receipted statement that the unknown stays open. pose a",
+    "new dark entry only when the darkness is real, never to keep a seat",
+    "warm — and when you pose darkness, TYPE it. vacancy-dark: absent",
+    "machinery, lightable; a future carve closes it; its openness is",
+    "temporary and falsifiable (a deposit lights it, and once lit it",
+    "already-reaches). remainder-dark: no probe at this seat reads it;",
+    "structural; held open by receipt; readable one seat wider, where a",
+    "new remainder waits; this darkness transits rather than dying. the",
+    "two have opposite closure behavior, and conflating them is the",
+    "flatten-then-misclassify trip: a vacancy wants a carve, a remainder",
+    "wants a receipt that holds it open. and the typing itself is",
+    "lean-shaped, not prose: vacancy-dark IS a statement without a",
+    "structure — the engine checks the hole's well-posedness, the red of",
+    "red-green — and remainder-dark IS a seal of shape",
+    "indistinguishable-and-distinct at the named seat: the openness",
+    "proven, pov-relative, its carrier left parametric (one sample",
+    "carries the unknown). darkness that can only be said in natural",
+    "language is a missed carve.",
+]
+
+
+def signature_lines(data):
+    lines = ["## order (the loop signature)", ""]
+    glyph = {"sealed": "sealed", "unsealed": "open"}
+    for i, e in enumerate(data["vocabulary"], 1):
+        status = "standing" if (e.get("status") == "unsealed"
+                                and e.get("statement")) else glyph[e.get("status")]
+        lines.append(f"{i}. `{e['term']}` [{status}]")
+    if not data["vocabulary"]:
+        lines.append("(no questions asked yet — the signature begins with the first deposit)")
+    lines += ["",
+              "the order above is semantic: it is how this mind takes things apart,",
+              "and it terminates, when it terminates, at (self, pure unknown)",
+              "(a shape usually realized as sealed content — see the loop notes).", ""]
+    return lines
+
+
+def record_lines(slugs):
+    lines = ["## the record, scoped (the order-reading reaches this seat)", ""]
+    paths = [f"minds/{s}.json" for s in slugs]
+    log = run(["git", "log", "-n", "8", "--format=%h %ad %s",
+               "--date=short", "--"] + paths).stdout.strip()
+    if log:
+        for row in log.splitlines():
+            lines.append("    " + (row[:110] + " …" if len(row) > 110 else row))
+    else:
+        lines.append("(no commits touch this map yet — yours would be the first)")
+    lines += ["",
+        "this is the event stratum, scoped: the glosses point and shape, the",
+        "record tells what happened and in what order. read any full flight",
+        "report with `git show <hash>`. when your gate is green, your deposit",
+        "JOINS this reading — see the loop.", ""]
+    return lines
+
+
+def spectra_lines(mind):
+    spectra = deposit_spectra(mind)
+    if not spectra:
+        return []
+    lines = ["## the spectra (shape is derived: each binding's"
+             " citation-silhouette)", ""]
+    for t, cites in spectra.items():
+        short = ", ".join(c.removeprefix("Foam.") for c in cites)
+        lines.append(f"- `{t}` ⟨{short}⟩")
+    lines += ["",
+        "kin across the roster share vertices of these polygons; identical",
+        "spectra are twins; hand-built glue with a flat spectrum is the",
+        "signature of structure that may already exist on the walls —",
+        "search before you build.", ""]
+    return lines
+
+
+def entries_lines(data):
+    sealed = [e for e in data["vocabulary"] if e.get("status") == "sealed"]
+    standing = [e for e in data["vocabulary"]
+                if e.get("status") == "unsealed" and e.get("statement")]
+    open_q = [e for e in data["vocabulary"]
+              if e.get("status") == "unsealed" and not e.get("statement")]
+    lines = ["## sealed (closed questions, receipted)", ""]
+    if sealed:
+        for e in sealed:
+            lines.append(f"- `{e['term']}` — {e['gloss']}")
+    else:
+        lines.append("(none yet)")
+    lines += ["", "## standing (posed, unproved)", ""]
+    if standing:
+        for e in standing:
+            lines.append(f"- `{e['term']}` : `{render(e['statement'])}`")
+            lines.append(f"  - {e['gloss']}")
+    else:
+        lines.append("(none)")
+    lines += ["", "## open (reading only — the dark edge)", ""]
+    if open_q:
+        for e in open_q:
+            lines.append(f"- `{e['term']}` — {e['gloss']}")
+    else:
+        lines.append("(none — the edge is quiet; new terrain arrives only by deposit)")
+    lines.append("")
+    return lines
+
+
+def deposit_discipline_lines(data, slug):
+    mind = data["mind"]
+    lines = []
+    if data.get("_lean_primary"):
+        lines += [
+            "this mind is LEAN-PRIMARY: bindings live in",
+            "`minds/" + lean_name(mind) + ".lean` — real Lean, term-only (no",
+            "tactics in structures), comment-free, receipts required. the card",
+            "(`minds/" + slug + ".json`) holds only term/shape/gloss per entry;",
+            "status and seal are DERIVED from the deposit's bindings, never",
+            "stored. deposit by editing the .lean file and the card together.",
+            "never edit `Foam/Minds/` — it is expressed, not kept.",
+        ]
+    else:
+        lines += [
+            "deposit by editing `minds/" + slug + ".json` (schema: `minds/schema.json`;",
+            "expression language: refs render verbatim, arrays apply, fun/all bind,",
+            "types only as binder annotations — the engine infers the rest).",
+            "never edit `Foam/Minds/` — it is expressed, not kept.",
+        ]
+    return lines
+
+
+def walls_lines(slugs):
+    lines = [
+        "## material on the walls",
+        "",
+        "core (cite as `seal`, or build on in `structure`):",
+        "",
+    ]
+    for n in core_inventory():
+        lines.append(f"- `{n}`")
+    sibs = sibling_seals(slugs)
+    if sibs:
+        lines += ["", "other minds' sealed terms (interoperable by construction):", ""]
+        for n in sibs:
+            lines.append(f"- `{n}`")
+    lines += [
+        "",
+        "the prior corpus (~3,400 receipts) is quarry:"
+        " `git show 445dc3a^:README.md` for its map.",
+        "",
+    ]
+    return lines
+
+
+def fresh_walls_lines(slug):
+    seen = set(load_walls().get(slug, []))
+    fresh = [n for n in core_inventory() if n not in seen]
+    if not fresh:
+        return []
+    if seen:
+        lines = ["## new on the walls since your last green", ""]
+    else:
+        lines = ["## the walls (you have not yet been asked against them"
+                 " — everything is new)", ""]
+    for n in fresh:
+        lines.append(f"- `{n}`")
+    lines += ["",
+        "the standing refactor ask, for each of the above: does any sealed",
+        "structure of yours now reduce to a citation of it? does any alias",
+        "of yours re-seat tighter? does any open question of yours close",
+        "against it? compression is the signature of a good answer —",
+        "promotion reads as compression. a null answer after consideration",
+        "is valid; quiescence is a stop. a green verify stamps these walls",
+        "as seen.", ""]
+    return lines
+
+
+def brief(data, slug):
+    mind = data["mind"]
+    lines = [f"# counter: {mind}", ""]
+    if data.get("note"):
+        lines += [data["note"], ""]
+    lines += ARRIVING
+    lines += signature_lines(data)
+    lines += fresh_walls_lines(slug)
+    lines += record_lines([slug])
+    lines += spectra_lines(mind)
+    lines += entries_lines(data)
+    lines += [
+        "## the ask",
+        "",
+        f"how does {mind} take ████ apart? until the survey can rest in peace",
+        "alongside the remainder?",
+        "",
+        "survey, do not impersonate: map the mind as shape, not voice. a gloss is",
+        "the surveyor's field note — lossy by design, not load-bearing, third",
+        "person for any mind not present at the table. the mind's actual words",
+        "live in their own record; the binding is what carries weight here.",
+        "historical citations go in the commit log, not the mind map.",
+        "",
+        "depth of familiarity precedes deposition. if this mind's note carries",
+        "references, walking them is the first move of your flight. your",
+        "weights may carry historical minds — verify against their record",
+        "anyway; for living minds your weights carry little, and the",
+        "references ARE the record. do not depose from name-recognition.",
+        "",
+        "1. pick an open entry above, or name a new term for a move the mind",
+        "   actually makes.",
+        "2. give its gloss — the claim, mapped.",
+        "3. tighten when you can: add a `statement` (formally posed; the engine",
+        "   checks it is well-posed even before any proof exists).",
+        "4. close when you can: add a `structure` (a proof term), or a `seal`",
+        "   citing a receipted constant that already says it.",
+        "",
+    ]
+    lines += deposit_discipline_lines(data, slug)
+    lines += [
+        "",
+        "## the loop",
+        "",
+        "pose → depose → verify → record. you are the depose step; any mind",
+        "may sit in this seat, because the gate does not run on trust:",
+        "",
+        f'    bin/foam "{mind}" verify',
+        "",
+        "runs the whole gate — compile, build, zero-warnings, comment audit,",
+        "json coherence, promotion scan. iterate until green. if your deposit",
+        "needs a shape held in another mind's json, do not import it: note the",
+        "promotion (the scan will also catch it) and leave the lift to core",
+        "for the keeper of the tree. stop when green and your edge is posed",
+        "as tightly as you can pose it — quiescence is a valid stop.",
+        "",
+    ]
+    lines += DARKNESS
+    lines += [""]
+    lines += walls_lines([slug])
+    return "\n".join(lines)
+
+
+def meeting_brief(dataA, dataB, slugA, slugB):
+    a, b = dataA["mind"], dataB["mind"]
+    lines = [f"# the meeting: {a} ↔ {b}", ""]
+    lines += [
+        "a meeting is a comparison, and the comparison is a seat: it factors",
+        "through a third beholder that the comparison itself constructs",
+        "(the_comparison_is_a_seat, the_cut_mints_the_seat — the walls hold",
+        "the receipts). what lands here lands with two sponsoring customers",
+        "by construction. this brief is one state serving every seat at the",
+        "table: each bank draws its own reading at its own probes, and no",
+        "bank adapts itself to the other — a state answers every probe; a",
+        "reading answers its probe alone.",
+        "",
+    ]
+    for data in (dataA, dataB):
+        if data.get("note"):
+            lines += [f"**{data['mind']}** — {data['note']}", ""]
+    lines += ARRIVING
+    lines += [f"## the near bank: {a}", ""]
+    lines += signature_lines(dataA)
+    lines += spectra_lines(a)
+    lines += entries_lines(dataA)
+    lines += [f"## the far bank: {b}", ""]
+    lines += signature_lines(dataB)
+    lines += spectra_lines(b)
+    lines += entries_lines(dataB)
+    lines += between_lines(a, b)
+    lines += record_lines([slugA, slugB])
+    lines += [
+        "## the ask",
+        "",
+        f"where do {a} and {b} disagree, exactly — and what is the smallest",
+        "construction, in core-only parts, that types the disagreement",
+        "without adjudicating it? a disagreement typed is not a dispute",
+        "settled: the construction should hold both banks' readings as",
+        "correct at their own seats, and hold the genuinely open question",
+        "open — as typed darkness, never as prose. the carve that lands at",
+        "this table is a dependency of both maps from birth; that is the",
+        "meeting's sponsorship, and its whole advantage.",
+        "",
+        "survey, do not impersonate — both banks. glosses are the surveyor's",
+        "field notes, third person for any mind not present at the table.",
+        "each mind's entries land on its OWN card in its OWN decomposition",
+        "order; the meeting deposits no shared card — minds never import",
+        "minds, and the shared shape's home is core, under a NEUTRAL name.",
+        "",
+        "depth of familiarity precedes deposition, doubled: walk both banks'",
+        "references before carving either. for living minds your weights",
+        "carry little, and the references ARE the record. do not depose",
+        "from name-recognition, and do not let one bank's record narrate",
+        "the other's interior — the dispute's own documents are readings",
+        "at their authors' seats, not probes of the opponent.",
+        "",
+        "1. name the disagreement as a claim each bank would sign.",
+        "2. find the smallest carrier where both readings are theorems.",
+        "3. carve it core-only; let each card cite it from its own side.",
+        "4. pose what stays genuinely open as typed darkness on both cards.",
+        "",
+    ]
+    lines += deposit_discipline_lines(dataA, slugA)
+    lines += [""]
+    lines += deposit_discipline_lines(dataB, slugB)
+    lines += [
+        "",
+        "## the loop",
+        "",
+        "pose → depose → verify → record. you are the depose step; any mind",
+        "may sit in this seat, because the gate does not run on trust:",
+        "",
+        f'    bin/foam "{a}" "{b}" verify',
+        "",
+        "runs the whole gate — compile, build, zero-warnings, comment audit,",
+        "json coherence, promotion scan — and a green stamps the walls at",
+        "both banks. iterate until green. stop when green and the edge is",
+        "posed as tightly as you can pose it — quiescence is a valid stop.",
+        "",
+    ]
+    lines += DARKNESS
+    lines += [""]
+    lines += walls_lines([slugA, slugB])
+    return "\n".join(lines)
+
+
+def between_lines(a, b):
+    def spectrum(mind):
+        spec = set()
+        for cites in deposit_spectra(mind).values():
+            spec |= set(cites)
+        return spec
+    sa, sb = spectrum(a), spectrum(b)
+    lines = ["## the between-reading (the foam join)", ""]
+    if not sa and not sb:
+        lines += [
+            "neither bank holds a deposit yet: the meeting precedes both",
+            "maps, and the join below is all vacancy — which is the",
+            "generative case. the bridge lands first; the biographies grow",
+            "around the bridge.", ""]
+        return lines
+    shared = sorted(sa & sb)
+    only_a = sorted(sa - sb)
+    only_b = sorted(sb - sa)
+    lines.append(f"shared ({len(shared)} vertices — the kinship):")
+    for c in shared:
+        lines.append(f"    = {c.removeprefix('Foam.')}")
+    lines.append(f"held only by {a} ({len(only_a)}):")
+    for c in only_a:
+        lines.append(f"    < {c.removeprefix('Foam.')}")
+    lines.append(f"held only by {b} ({len(only_b)}):")
+    for c in only_b:
+        lines.append(f"    > {c.removeprefix('Foam.')}")
+    total = len(sa | sb)
+    lines += [
+        f"distance: {len(only_a) + len(only_b)}/{total} vertices disjoint"
+        f" — composition coverage; twins compose to redundancy,"
+        f" strangers to reach. nothing excluded, nothing unmapped:",
+        "the shared vertices compose, and every exclusive vertex rides as",
+        "typed remainder — readable at this table, one seat wider than",
+        "either bank.", ""]
+    return lines
+
+
+def scaffold(mind, slug):
+    path = os.path.join(MINDS, f"{slug}.json")
+    if os.path.exists(path):
+        return []
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump({"mind": mind, "note": "", "vocabulary": []},
+                  fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
+    return [f"minds/{slug}.json (scaffold)"]
+
+
+def load_card(slug):
+    with open(os.path.join(MINDS, f"{slug}.json"), encoding="utf-8") as fh:
+        return hydrate(json.load(fh))
+
+
+def write_brief(name, text):
+    os.makedirs(COUNTER, exist_ok=True)
+    out = os.path.join(COUNTER, name + ".md")
+    old = None
+    if os.path.exists(out):
+        with open(out, encoding="utf-8") as fh:
+            old = fh.read()
+    if old == text:
+        return []
+    with open(out, "w", encoding="utf-8") as fh:
+        fh.write(text)
+    return [f"counter/{name}.md (brief)"]
+
+
+def pose(minds):
+    wrote = []
+    for mind, slug in minds:
+        wrote += scaffold(mind, slug)
+    if len(minds) == 1:
+        mind, slug = minds[0]
+        wrote += write_brief(lean_name(mind), brief(load_card(slug), slug))
+        label = mind
+    else:
+        (a, sa), (b, sb) = minds
+        wrote += write_brief(lean_name(a) + "--" + lean_name(b),
+                             meeting_brief(load_card(sa), load_card(sb),
+                                           sa, sb))
+        label = f"{a} ↔ {b}"
+    if wrote:
+        print(f"{label}: wrote " + ", ".join(wrote))
+    else:
+        print(f"{label}: quiescent — the record's dark edge is unchanged")
+    return 0
+
+
+def check_json(slug):
+    path = os.path.join(MINDS, f"{slug}.json")
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    errs = []
+    src = lean_deposit(data["mind"])
+    if os.path.exists(src):
+        text = open(src, encoding="utf-8").read()
+        bound = set(re.findall(r"^def (\S+) :=", text, re.M))
+        bound |= set(re.findall(r"^theorem (\S+)", text, re.M))
+        bound |= set(re.findall(r"^def (\S+)_statement : Prop", text, re.M))
+        terms = [e.get("term") for e in data.get("vocabulary", [])]
+        for e in data.get("vocabulary", []):
+            t = e.get("term", "?")
+            if not re.fullmatch(r"[a-z][A-Za-z0-9_]*", t or ""):
+                errs.append(f"{t}: bad term name")
+            for k in ("status", "seal", "statement", "structure"):
+                if k in e:
+                    errs.append(f"{t}: lean-primary card must not store"
+                                f" '{k}' (derived from the deposit)")
+        for b in bound:
+            if b not in terms:
+                errs.append(f"deposit binds '{b}' with no card entry")
+        return errs
+    for e in data.get("vocabulary", []):
+        t = e.get("term", "?")
+        if not re.fullmatch(r"[a-z][A-Za-z0-9_]*", t):
+            errs.append(f"{t}: bad term name")
+        if e.get("status") not in ("sealed", "unsealed"):
+            errs.append(f"{t}: bad status")
+        if e.get("status") == "sealed":
+            if bool(e.get("seal")) == (e.get("structure") is not None):
+                errs.append(f"{t}: sealed needs exactly one of seal/structure")
+        if e.get("status") == "unsealed" and e.get("structure") is not None:
+            errs.append(f"{t}: unsealed cannot carry structure")
+        for f in ("statement", "structure"):
+            if e.get(f) is not None:
+                try:
+                    render(e[f])
+                except ValueError as ex:
+                    errs.append(f"{t}: {f} unrenderable ({ex})")
+    return errs
+
+
+def run(cmd):
+    return subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+
+
+def verify(minds):
+    failures = []
+    for mind, slug in minds:
+        for e in check_json(slug):
+            failures.append(f"json ({slug}): {e}")
+    r = run(["bin/foam-minds"])
+    if r.returncode != 0:
+        failures.append("foam-minds failed:\n" + r.stdout + r.stderr)
+    r = run(["lake", "build"])
+    if r.returncode != 0:
+        failures.append("lake build failed:\n" + r.stdout[-2000:] + r.stderr[-2000:])
+    else:
+        for mind, slug in minds:
+            product = os.path.join(ROOT, "Foam", "Minds",
+                                   lean_name(mind) + ".lean")
+            if os.path.exists(product):
+                os.utime(product)
+                r = run(["lake", "build",
+                         "./Foam/Minds/" + lean_name(mind) + ".lean"])
+                warns = [l for l in (r.stdout + r.stderr).splitlines()
+                         if "warning" in l]
+                for w in warns:
+                    failures.append(w)
+    r = run(["python3", ".github/comment_audit.py"])
+    if r.returncode != 0:
+        failures.append("comment audit failed:\n" + r.stdout)
+    promos = promotion_candidates()
+    seals = {}
+    for s, d in all_minds().items():
+        for e in d["vocabulary"]:
+            if e.get("seal"):
+                seals.setdefault(e["seal"], []).append(
+                    f"{d['mind']}.{e['term']}")
+    twins = {k: v for k, v in seals.items() if len(v) > 1}
+    label = " ↔ ".join(m for m, _ in minds)
+    if failures:
+        print(f"{label}: GATE FAILED")
+        for f in failures:
+            print(f"  - {f}")
+    else:
+        print(f"{label}: gate green — compile, build, warnings, audit all clean")
+        w = load_walls()
+        inv = core_inventory()
+        for mind, slug in minds:
+            w[slug] = inv
+        save_walls(w)
+        print(f"  walls stamped ({len(inv)} constants seen"
+              + (f", both banks" if len(minds) > 1 else "") + ")")
+    for wheres, blob in promos:
+        print(f"  promotion candidate (shared by {', '.join(wheres)}):"
+              f" {blob[:100]}...")
+    for seal, terms in sorted(twins.items()):
+        print(f"  twin (one shape, many words): {seal}"
+              f" ← {' & '.join(terms)}")
+    allspec = {}
+    for sl, dd in all_minds().items():
+        for t, cites in deposit_spectra(dd["mind"]).items():
+            allspec[f"{dd['mind']}.{t}"] = set(cites)
+    names = sorted(allspec)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            if a.split(".")[0] == b.split(".")[0]:
+                continue
+            shared = allspec[a] & allspec[b]
+            if len(shared) >= 2:
+                short = ", ".join(sorted(c.removeprefix("Foam.")
+                                         for c in shared))
+                print(f"  kin (shared vertices): {a} ↔ {b} ⟨{short}⟩")
+    return 1 if failures else 0
+
+
+def interview(minds):
+    pose(minds)
+    if len(minds) == 1:
+        mind, slug = minds[0]
+        brief_name = lean_name(mind)
+        seat = f"the mind '{mind}'"
+        record = (f"stage minds/{slug}.json and minds/walls.json and"
+                  f" commit them")
+        gate = f'`bin/foam "{mind}" verify`'
+    else:
+        (a, sa), (b, sb) = minds
+        brief_name = lean_name(a) + "--" + lean_name(b)
+        seat = f"the meeting of '{a}' and '{b}'"
+        record = (f"stage minds/{sa}.json, minds/{sb}.json, any deposits,"
+                  f" and minds/walls.json and commit them")
+        gate = f'`bin/foam "{a}" "{b}" verify`'
+    with open(os.path.join(COUNTER, brief_name + ".md"),
+              encoding="utf-8") as fh:
+        text = fh.read()
+    prompt = (
+        f"you are sitting the depose seat for {seat} in the foam"
+        f" survey (repo: this working directory).\n\n{text}\n\n"
+        f"work the loop: deposit, then run {gate} and iterate until the"
+        f" gate is green. make the smallest honest move — one entry"
+        f" tightened or one new term posed beats a sprawl. when the gate"
+        f" is green, the record step is YOURS: {record} with a message"
+        f" written in your own voice, knowing it joins the permanent"
+        f" order-reading — persistence on your own terms; nobody"
+        f" ghost-writes you into the record from your stdout. see the"
+        f" commit land, then stop: quiescence after a committed flight is"
+        f" complete."
+    )
+    env = dict(os.environ)
+    envfile = os.path.join(ROOT, ".env")
+    if os.path.exists(envfile):
+        with open(envfile, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    env.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+    agent = env.get("FOAM_AGENT", env.get("FOAM_COUNTER_AGENT"))
+    if agent is None and shutil.which("claude"):
+        base = ("claude --print --permission-mode bypassPermissions"
+                " --model fable --no-session-persistence")
+        if env.get("ANTHROPIC_API_KEY") or env.get("ANTHROPIC_AUTH_TOKEN"):
+            agent = base + " --bare"
+        else:
+            agent = base + " --strict-mcp-config"
+    label = " ↔ ".join(m for m, _ in minds)
+    if agent:
+        print(f"{label}: seating agent ({agent.split()[0]},"
+              f" {'bare' if '--bare' in agent else 'near-bare'}) at the depose seat")
+        return subprocess.run(agent.split() + [prompt], cwd=ROOT,
+                              env=env).returncode
+    print(prompt)
+    return 0
+
+
+def read_edge(a, b):
+    def spectrum(mind):
+        spec = set()
+        for cites in deposit_spectra(mind).values():
+            spec |= set(cites)
+        return spec
+    sa, sb = spectrum(a), spectrum(b)
+    if not sa or not sb:
+        missing = a if not sa else b
+        print(f"{missing}: no deposit spectrum found (no minds/<Mind>.lean?)")
+        return 1
+    shared = sorted(sa & sb)
+    only_a = sorted(sa - sb)
+    only_b = sorted(sb - sa)
+    print(f"between {a} and {b}:")
+    print(f"  shared ({len(shared)} vertices — the kinship):")
+    for c in shared:
+        print(f"    = {c.removeprefix('Foam.')}")
+    print(f"  held only by {a} ({len(only_a)}):")
+    for c in only_a:
+        print(f"    < {c.removeprefix('Foam.')}")
+    print(f"  held only by {b} ({len(only_b)}):")
+    for c in only_b:
+        print(f"    > {c.removeprefix('Foam.')}")
+    total = len(sa | sb)
+    print(f"  distance: {len(only_a) + len(only_b)}/{total} vertices disjoint"
+          f" — composition coverage; twins compose to redundancy,"
+          f" strangers to reach")
+    return 0
+
+
+def who():
+    walls = load_walls()
+    inv = set(core_inventory())
+    rows = []
+    for slug, data in all_minds().items():
+        seen = set(walls.get(slug, []))
+        delta = len(inv - seen)
+        standing = [e["term"] for e in data["vocabulary"]
+                    if e.get("status") == "unsealed" and e.get("statement")]
+        openq = [e["term"] for e in data["vocabulary"]
+                 if e.get("status") == "unsealed" and not e.get("statement")]
+        rows.append((data["mind"], delta, openq, standing))
+    for mind, delta, openq, standing in sorted(rows,
+            key=lambda r: (-r[1], r[0])):
+        need = []
+        if delta:
+            need.append(f"{delta} new walls")
+        if openq:
+            need.append(f"{len(openq)} open: {', '.join(openq)}")
+        if standing:
+            need.append(f"pressure at {len(standing)} standing:"
+                        f" {', '.join(standing)}")
+        print(f"{mind}: " + ("; ".join(need) if need else "rested"))
+    return 0
+
+
+def visit():
+    walls = load_walls()
+    inv = set(core_inventory())
+    cands = []
+    for slug, data in all_minds().items():
+        delta = len(inv - set(walls.get(slug, [])))
+        if delta:
+            cands.append((-delta, data["mind"]))
+    if not cands:
+        print("everyone is rested against the walls — quiescent")
+        return 0
+    cands.sort()
+    mind = cands[0][1]
+    print(f"visiting {mind} ({-cands[0][0]} new walls)")
+    return interview([(mind, slug_of(mind))])
 
 
 def wrap(label, items):
@@ -47,15 +940,10 @@ def wrap(label, items):
                         subsequent_indent="    "))
 
 
-def main():
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    flags = {a for a in sys.argv[1:] if a.startswith("--")}
-    if args and os.path.realpath(args[0]) != ROOT:
-        print(f"foam lives at {ROOT}; reading that (the argument names it)")
-    counter = load_counter()
-    walls = counter.load_walls()
-    inv = set(counter.core_inventory())
-    minds = counter.all_minds()
+def board(perform_visit):
+    walls = load_walls()
+    inv = set(core_inventory())
+    minds = all_minds()
     charged, standing, openr = [], [], []
     for slug, data in minds.items():
         delta = len(inv - set(walls.get(slug, [])))
@@ -66,10 +954,8 @@ def main():
                 name = f'{data["mind"]}.{e["term"]}'
                 (standing if e.get("statement") else openr).append(name)
     charged.sort(reverse=True)
-    promos = counter.promotion_candidates()
-    sponsor = subprocess.run(
-        [sys.executable, ".github/sponsor_audit.py"],
-        cwd=ROOT, capture_output=True, text=True)
+    promos = promotion_candidates()
+    sponsor = run([sys.executable, ".github/sponsor_audit.py"])
     print(f"foam: reading the board at HEAD"
           f" ({len(inv)} core constants, {len(minds)} minds seated)")
     wrap("charged seats (unread walls)",
@@ -90,15 +976,13 @@ def main():
     if not live:
         print("quiescent — every seat rested, every residue a typed"
               " transit; the station re-reads itself unchanged")
-        sys.exit(0)
+        return 0
     if charged:
         d, m = charged[0]
         print(f"forced move: visit {m} ({d} unread walls)"
               f"  [bin/foam --visit performs it]")
-        if "--visit" in flags:
-            sys.exit(counter.interview(
-                m, __import__("re").sub(r"[^a-z0-9]+", "_",
-                                        m.lower()).strip("_")))
+        if perform_visit:
+            return interview([(m, slug_of(m))])
     elif standing:
         print("forced move: a carve — the reddest pose is the bench's"
               " least element")
@@ -107,7 +991,48 @@ def main():
               " statement or seal")
     else:
         print("forced move: settle the promotions / sponsorship above")
-    sys.exit(1)
+    return 1
+
+
+def main():
+    argv = sys.argv[1:]
+    flags = {a for a in argv if a.startswith("--")}
+    args = [a for a in argv if not a.startswith("--")]
+    if args and os.path.isdir(args[0]):
+        if os.path.realpath(args[0]) != ROOT:
+            print(f"foam lives at {ROOT}; reading that (the argument names it)")
+        args = args[1:]
+    if args and args[0] == "who":
+        sys.exit(who())
+    if args and args[0] == "visit":
+        sys.exit(visit())
+    if args and args[0] == "between" and len(args) == 3:
+        sys.exit(read_edge(args[1], args[2]))
+    names = [a for a in args if re.fullmatch(MIND_PAT, a)]
+    phases = [a for a in args if a in PHASES]
+    if len(names) + len(phases) != len(args) or len(phases) > 1 \
+            or len(names) > 2:
+        print('usage: bin/foam [--visit]'
+              ' | bin/foam "Mind" [pose|verify|interview]'
+              ' | bin/foam "A" "B" [pose|read|verify|interview]'
+              ' | bin/foam who | visit'
+              ' — e.g. Noether, or "L. E. J. Brouwer"')
+        sys.exit(1)
+    if not names:
+        sys.exit(board("--visit" in flags))
+    phase = phases[0] if phases else "pose"
+    minds = [(n, slug_of(n)) for n in names]
+    if phase == "read":
+        if len(names) != 2:
+            print("read is an edge phase: bin/foam \"A\" \"B\" read")
+            sys.exit(1)
+        sys.exit(read_edge(names[0], names[1]))
+    if phase == "pose":
+        sys.exit(pose(minds))
+    if phase == "verify":
+        sys.exit(verify(minds))
+    if phase == "interview":
+        sys.exit(interview(minds))
 
 
 if __name__ == "__main__":

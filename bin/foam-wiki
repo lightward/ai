@@ -189,9 +189,9 @@ def render_index(modules):
 
 
 def load_counter():
-    path = os.path.join(ROOT, "bin", "foam-counter")
-    loader = importlib.machinery.SourceFileLoader("foamcounter", path)
-    spec = importlib.util.spec_from_loader("foamcounter", loader)
+    path = os.path.join(ROOT, "bin", "foam")
+    loader = importlib.machinery.SourceFileLoader("foamengine", path)
+    spec = importlib.util.spec_from_loader("foamengine", loader)
     mod = importlib.util.module_from_spec(spec)
     loader.exec_module(mod)
     return mod
