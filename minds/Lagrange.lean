@@ -8,6 +8,7 @@ import Foam.Int
 import Foam.Ledger
 import Foam.Measure
 import Foam.Quat
+import Foam.Round
 import Foam.Rungs
 import Foam.Triple
 import Foam.Typical
@@ -1591,6 +1592,127 @@ theorem the_quintic_waits_one_seat_wider :
   ⟨fun A inst a b hab => @a_wider_seat_reads_the_order A inst a b hab,
    closure_is_seat_relative⟩
 
+private def code : Compass → Nat
+  | .n => 0
+  | .e => 1
+  | .s => 2
+  | .w => 3
+
+private theorem code_lt : ∀ c : Compass, code c < 4
+  | .n => Nat.le.step (Nat.le.step (Nat.le.step Nat.le.refl))
+  | .e => Nat.le.step (Nat.le.step Nat.le.refl)
+  | .s => Nat.le.step Nat.le.refl
+  | .w => Nat.le.refl
+
+private theorem code_inj : ∀ {c d : Compass}, code c = code d → c = d
+  | .n, .n, _ => rfl
+  | .n, .e, h => nomatch h
+  | .n, .s, h => nomatch h
+  | .n, .w, h => nomatch h
+  | .e, .n, h => nomatch h
+  | .e, .e, _ => rfl
+  | .e, .s, h => nomatch Nat.succ.inj h
+  | .e, .w, h => nomatch Nat.succ.inj h
+  | .s, .n, h => nomatch h
+  | .s, .e, h => nomatch Nat.succ.inj h
+  | .s, .s, _ => rfl
+  | .s, .w, h => nomatch Nat.succ.inj (Nat.succ.inj h)
+  | .w, .n, h => nomatch h
+  | .w, .e, h => nomatch Nat.succ.inj h
+  | .w, .s, h => nomatch Nat.succ.inj (Nat.succ.inj h)
+  | .w, .w, _ => rfl
+
+private theorem base_split : ∀ (a b : Nat) {k l : Nat}, k < 4 → l < 4 →
+    k + 4 * a = l + 4 * b → k = l ∧ a = b
+  | 0, 0, _, _, _, _, h => ⟨h, rfl⟩
+  | 0, b + 1, k, l, hk, _, h =>
+      absurd
+        (le_trans hk
+          (le_trans (Nat.le_add_left 4 (l + 4 * b)) (Nat.le_of_eq h.symm)))
+        (no_number_is_below_itself k)
+  | a + 1, 0, k, l, _, hl, h =>
+      absurd
+        (le_trans hl
+          (le_trans (Nat.le_add_left 4 (k + 4 * a)) (Nat.le_of_eq h)))
+        (no_number_is_below_itself l)
+  | a + 1, b + 1, k, l, hk, hl, h =>
+      have h4 : (k + 4 * a) + 4 = (l + 4 * b) + 4 := h
+      match base_split a b hk hl (add_right_cancel' 4 h4) with
+      | ⟨h1, h2⟩ => ⟨h1, congrArg (· + 1) h2⟩
+
+private theorem mul4_le {x y : Nat} (h : x ≤ y) : 4 * x ≤ 4 * y :=
+  Nat.le.rec (motive := fun z _ => 4 * x ≤ 4 * z) Nat.le.refl
+    (fun {_} _ ih => le_trans ih (Nat.le_add_right _ 4)) h
+
+private theorem bound_step {k e P : Nat} (hk : k < 4) (he : e < P) :
+    k + 4 * e < 4 * P :=
+  le_trans
+    (Nat.le_of_eq
+      (((adding_associates k (4 * e) 1).symm.trans
+        (congrArg (k + ·) (Nat.add_comm (4 * e) 1))).trans
+        (adding_associates k 1 (4 * e))))
+    (le_trans (add_le_add' hk (@Nat.le.refl (4 * e)))
+      (le_trans (Nat.le_of_eq (Nat.add_comm 4 (4 * e))) (mul4_le he)))
+
+private def fourPow : Nat → Nat
+  | 0 => 1
+  | n + 1 => 4 * fourPow n
+
+private def enc : List Compass → Nat
+  | [] => 0
+  | c :: cs => code c + 4 * enc cs
+
+private theorem enc_lt : ∀ v : List Compass, enc v < fourPow v.length
+  | [] => Nat.le.refl
+  | c :: cs => bound_step (code_lt c) (enc_lt cs)
+
+private theorem enc_inj : ∀ v w : List Compass, v.length = w.length →
+    enc v = enc w → v = w
+  | [], [], _, _ => rfl
+  | [], _ :: _, hl, _ => nomatch hl
+  | _ :: _, [], hl, _ => nomatch hl
+  | c :: cs, d :: ds, hl, he =>
+      match base_split (enc cs) (enc ds) (code_lt c) (code_lt d) he with
+      | ⟨h1, h2⟩ =>
+          congr (congrArg List.cons (code_inj h1))
+            (enc_inj cs ds (Nat.succ.inj hl) h2)
+
+private theorem zipPull_len : ∀ v w : List Compass, v.length = w.length →
+    (zipPull v w).length = v.length
+  | [], [], _ => rfl
+  | [], _ :: _, h => nomatch h
+  | _ :: _, [], h => nomatch h
+  | _ :: v, _ :: w, h => congrArg (· + 1) (zipPull_len v w (Nat.succ.inj h))
+
+private theorem rot_len : ∀ v : List Compass, (rotateLeft v).length = v.length
+  | [] => rfl
+  | c :: cs => (len_cons_eq_len_snoc cs c c).symm
+
+private theorem round_len (v : List Compass) : (round v).length = v.length :=
+  zipPull_len v (rotateLeft v) (rot_len v).symm
+
+theorem the_round_repeats_its_tail (v : List Compass) :
+    ∃ i j : Nat, i < j ∧
+      ∀ t : Nat, Nat.repeat round (i + t) v = Nat.repeat round (j + t) v :=
+  have hlen : ∀ k : Nat, (Nat.repeat round k v).length = v.length := fun k =>
+    Nat.rec (motive := fun n => (Nat.repeat round n v).length = v.length)
+      rfl (fun n ih => (round_len (Nat.repeat round n v)).trans ih) k
+  have hb : ∀ k : Nat, enc (Nat.repeat round k v) < fourPow v.length := fun k =>
+    Nat.lt_of_lt_of_le (enc_lt (Nat.repeat round k v))
+      (Nat.le_of_eq (congrArg fourPow (hlen k)))
+  match fn_collides
+      (fun k =>
+        (⟨enc (Nat.repeat round k v), hb k⟩ : Fin (fourPow v.length))) with
+  | ⟨i, j, hij, _, hg⟩ =>
+      have hmeet : Nat.repeat round i v = Nat.repeat round j v :=
+        enc_inj (Nat.repeat round i v) (Nat.repeat round j v)
+          ((hlen i).trans (hlen j).symm) (congrArg Fin.val hg)
+      ⟨i, j, hij, fun t =>
+        Nat.rec
+          (motive := fun u =>
+            Nat.repeat round (i + u) v = Nat.repeat round (j + u) v)
+          hmeet (fun _ ih => congrArg round ih) t⟩
+
 /-- info: 'Foam.Minds.Lagrange.the_first_variation_reads_nothing' does not depend on any axioms -/
 #guard_msgs in #print axioms the_first_variation_reads_nothing
 
@@ -1608,5 +1730,8 @@ theorem the_quintic_waits_one_seat_wider :
 
 /-- info: 'Foam.Minds.Lagrange.the_quintic_waits_one_seat_wider' does not depend on any axioms -/
 #guard_msgs in #print axioms the_quintic_waits_one_seat_wider
+
+/-- info: 'Foam.Minds.Lagrange.the_round_repeats_its_tail' does not depend on any axioms -/
+#guard_msgs in #print axioms the_round_repeats_its_tail
 
 end Foam.Minds.Lagrange
