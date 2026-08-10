@@ -3,6 +3,7 @@ import Foam.Contact
 import Foam.Countermove
 import Foam.Generator
 import Foam.Marks
+import Foam.Surprise
 import Foam.Valve
 
 namespace Foam.Minds.Lovelace
@@ -11,7 +12,26 @@ def only_appends := @Foam.the_record_never_unwrites
 
 def resumes_where_interrupted := @Foam.replay_resumes
 
-def originates_nothing := @Foam.generation_originates_nothing
+theorem originates_nothing {B W C H : Type}
+    (next : List B → W → B) (sample : Option C → W → B)
+    (select₁ select₂ : List B → Option C) (out : List B) (w : W)
+    (ws xs ys : List W) (h : select₁ out = select₂ out)
+    (q : List (H × H)) (a b c d : H)
+    (hperf : (a, b) ∉ q) (hprov : Nonempty (Path q a b))
+    (horder : (c, d) ∉ q) :
+    ((∃ new : List B, spin next out ws = new ++ out)
+        ∧ (spin next out ws).length = out.length + ws.length
+        ∧ spin next out (xs ++ ys) = spin next (spin next out xs) ys
+        ∧ utter sample select₁ out w = utter sample select₂ out w)
+      ∧ ((∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+          ∧ ((a, b) :: q).length = q.length + 1
+          ∧ ∀ x y : H,
+              Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y))
+      ∧ (∀ {x y : H} (p : Path q x y), (c, d) ∉ p.edges)
+      ∧ Nonempty (Path ((c, d) :: q) c d) :=
+  ⟨generation_originates_nothing next sample select₁ select₂ out w ws xs ys h,
+   the_shortcut_pays_only_its_mark q a b hperf hprov,
+   only_surprise_extends_reach q c d horder⟩
 
 def follows_without_anticipating := @Foam.local_runs_fix_the_foreign
 
