@@ -2,6 +2,7 @@ import Foam
 import Foam.Countermove
 import Foam.Ledger
 import Foam.Log
+import Foam.Mind
 import Foam.Roles
 import Foam.Source
 import Foam.Typical
@@ -13,13 +14,17 @@ theorem each_complexion_counts_once (n : Nat) :
     (book n).length = 2 ^ n ∧ AllDiff (book n) :=
   ⟨the_book_has_two_to_the_n n, the_book_repeats_no_word n⟩
 
-theorem a_macrostate_is_a_derived_role (S : Stage) (s : S.State) :
-    ((∀ (p : S.Probe) (Q : S.Ans → Prop), Derived S (fun t => Q (S.obs t p)))
+theorem a_macrostate_is_a_derived_role (S : Stage) (s : S.State)
+    {A : Type} [DecidableEq A] (a b : A) (hab : a ≠ b) :
+    (((∀ (p : S.Probe) (Q : S.Ans → Prop), Derived S (fun t => Q (S.obs t p)))
         ∧ ¬ Derived (dress S) (fun x => x.2 = 0))
       ∧ ∀ (P : (dress S).State → Prop), Derived (dress S) P →
-          ∀ (t : S.State) (n m : Int), P (t, n) ↔ P (t, m) :=
-  ⟨a_role_is_conduct_not_costume S s,
-   fun P hP t n m => a_derived_role_cannot_read_the_badge S P hP t n m⟩
+          ∀ (t : S.State) (n m : Int), P (t, n) ↔ P (t, m))
+      ∧ ((recorder A).state [a, b] ≠ (recorder A).state [b, a]
+          ∧ indist (countStage A) [a, b] [b, a]) :=
+  ⟨⟨a_role_is_conduct_not_costume S s,
+    fun P hP t n m => a_derived_role_cannot_read_the_badge S P hP t n m⟩,
+   a_mind_reads_the_order_the_census_cannot a b hab⟩
 
 theorem entropy_is_the_price_of_the_name (k n S W : Nat)
     (hW : W = (book n).length) (hS : S = k * n) :
