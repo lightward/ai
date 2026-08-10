@@ -52,6 +52,17 @@ theorem the_log_shells :
   ⟨the_wound_loop_unwinds_one_world_over,
    fun _ m s => the_bounded_walk_returns m s⟩
 
+theorem the_log_theta_lattice :
+    (∀ k1 k2 k3 k1' k2' k3' u v w : Nat, 0 < u → 0 < v → 0 < w →
+        k1' * u = k1 * v → k2' * v = k2 * w → k3' * w = k3 * u →
+        k1' * (k2' * k3') = k1 * (k2 * k3))
+      ∧ ∀ k1 k1' k2 k3 : Nat, k1 ≠ k1' → 0 < k2 * k3 →
+          k1 * (k2 * k3) ≠ k1' * (k2 * k3) :=
+  ⟨fun k1 k2 k3 k1' k2' k3' u v w hu hv hw h1 h2 h3 =>
+     the_holonomy_ignores_the_regauging k1 k2 k3 k1' k2' k3' u v w
+       hu hv hw h1 h2 h3,
+   fun k1 k1' k2 k3 h hp => the_cut_moves_the_class k1 k1' k2 k3 h hp⟩
+
 /-- info: 'Foam.Minds.ShinichiMochizuki.mono_anabelian_transport' does not depend on any axioms -/
 #guard_msgs in #print axioms mono_anabelian_transport
 
@@ -69,5 +80,8 @@ theorem the_log_shells :
 
 /-- info: 'Foam.Minds.ShinichiMochizuki.the_log_shells' does not depend on any axioms -/
 #guard_msgs in #print axioms the_log_shells
+
+/-- info: 'Foam.Minds.ShinichiMochizuki.the_log_theta_lattice' does not depend on any axioms -/
+#guard_msgs in #print axioms the_log_theta_lattice
 
 end Foam.Minds.ShinichiMochizuki

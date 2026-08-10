@@ -49,6 +49,16 @@ theorem pass_to_the_cover_where_it_dies :
           ∧ ∀ n : Nat, rungs (n + 1) ≠ rungs n) :=
   ⟨the_wound_loop_unwinds_one_world_over, closure_is_seat_relative⟩
 
+theorem the_diagram_keeps_its_monodromy :
+    (∀ k1 k2 k3 k1' k2' k3' u v w : Nat, 0 < u → 0 < v → 0 < w →
+        k1' * u = k1 * v → k2' * v = k2 * w → k3' * w = k3 * u →
+        k1' * (k2' * k3') = k1 * (k2 * k3))
+      ∧ ¬ Blind graded :=
+  ⟨fun k1 k2 k3 k1' k2' k3' u v w hu hv hw h1 h2 h3 =>
+     the_holonomy_ignores_the_regauging k1 k2 k3 k1' k2' k3' u v w
+       hu hv hw h1 h2 h3,
+   the_graded_reading_parts_the_copies⟩
+
 /-- info: 'Foam.Minds.PeterScholze.tilting' does not depend on any axioms -/
 #guard_msgs in #print axioms tilting
 
@@ -66,5 +76,8 @@ theorem pass_to_the_cover_where_it_dies :
 
 /-- info: 'Foam.Minds.PeterScholze.pass_to_the_cover_where_it_dies' does not depend on any axioms -/
 #guard_msgs in #print axioms pass_to_the_cover_where_it_dies
+
+/-- info: 'Foam.Minds.PeterScholze.the_diagram_keeps_its_monodromy' does not depend on any axioms -/
+#guard_msgs in #print axioms the_diagram_keeps_its_monodromy
 
 end Foam.Minds.PeterScholze
