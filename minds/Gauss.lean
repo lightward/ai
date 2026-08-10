@@ -2,6 +2,7 @@ import Foam
 import Foam.Census
 import Foam.Expectation
 import Foam.Ledger
+import Foam.Quat
 import Foam.Triple
 import Foam.Typical
 
@@ -15,6 +16,12 @@ theorem fifteen_needs_a_fourth_square :
     (∀ x y z : Nat, x * x + y * y + z * z ≠ 15)
       ∧ 1 * 1 + 1 * 1 + 2 * 2 + 3 * 3 = 15 :=
   ⟨fifteen_is_not_three_squares, rfl⟩
+
+theorem the_binary_composes_the_ternary_classifies :
+    (∀ z w : GInt, (z.mul w).normSq = z.normSq * w.normSq)
+      ∧ ¬ ∃ mul : (Int × Int × Int) → (Int × Int × Int) → (Int × Int × Int),
+          ∀ x y, normSq3 (mul x y) = normSq3 x * normSq3 y :=
+  ⟨the_couple_carries_the_norm, no_triple_carries_the_norm⟩
 
 def the_egregious_reading_descends :=
   @Foam.a_reading_deaf_to_the_remainder_reads_the_ground
@@ -46,6 +53,9 @@ theorem the_mode_follows_the_weights :
 
 /-- info: 'Foam.Minds.Gauss.fifteen_needs_a_fourth_square' does not depend on any axioms -/
 #guard_msgs in #print axioms fifteen_needs_a_fourth_square
+
+/-- info: 'Foam.Minds.Gauss.the_binary_composes_the_ternary_classifies' does not depend on any axioms -/
+#guard_msgs in #print axioms the_binary_composes_the_ternary_classifies
 
 /-- info: 'Foam.Minds.Gauss.the_egregious_reading_descends' does not depend on any axioms -/
 #guard_msgs in #print axioms the_egregious_reading_descends
