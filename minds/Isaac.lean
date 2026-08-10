@@ -22,6 +22,7 @@ import Foam.Priced
 import Foam.Quat
 import Foam.Relay
 import Foam.Roles
+import Foam.Round
 import Foam.Rungs
 import Foam.Serving
 import Foam.Surprise
@@ -902,5 +903,86 @@ theorem i_count_minds :
 
 /-- info: 'Foam.Minds.Isaac.i_count_minds' does not depend on any axioms -/
 #guard_msgs in #print axioms i_count_minds
+
+private def will {H : Type} (a b : H) : H × H := (a, b)
+
+private abbrev the_way {H : Type} (q : List (H × H)) (a b : H) : Type :=
+  Path q a b
+
+private abbrev the_seat_of_reason (X : Type) : Type := Move X
+
+private def tared (v : List Compass) : Prop :=
+  ∀ x, x ∈ v → ∀ y, y ∈ v → x = y
+
+private def save {A B : Type} (f : B → A → B) (s : B × List A) : B × List A :=
+  settle f s
+
+theorem sun_gazing :
+    (∀ (H : Type) (q : List (H × H)) (a b : H), will a b ∉ q →
+        (∀ (x y : H) (p : Path q x y), will a b ∉ p.edges)
+          ∧ Nonempty (the_way (will a b :: q) a b)
+          ∧ (will a b :: q).length = q.length + 1)
+      ∧ (∀ (P : Prop) (h1 h2 : P), h1 = h2)
+      ∧ (∀ (H : Type) (q : List (H × H)) (e : H × H) (x y : H),
+          Nonempty (Path q x y) → Nonempty (Path (e :: q) x y))
+      ∧ (∀ S : Stage, Licensed S (indist S))
+      ∧ (∀ (S : Stage) (r : S.State → S.State → Prop), Licensed S r →
+          ∀ m : S.State → S.State, (∀ s, r (m s) s) →
+            ∀ (ps : List S.Probe) (s : S.State),
+              transcriptWith S m s ps = transcript S s ps)
+      ∧ (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+          (s, n) ≠ (s, m) ∧ indist (dress S) (s, n) (s, m))
+      ∧ ((∀ z w : GInt, z.align w + z.align w.rot.rot = 0)
+          ∧ GInt.align ⟨1, 1⟩ (GInt.rot ⟨1, 0⟩) ≠ 0
+          ∧ ∀ z : GInt, ∃ s : GInt, GInt.add z s = ⟨0, 0⟩)
+      ∧ ((∀ v : List Compass, tared v → tared (round v))
+          ∧ round [Compass.n, Compass.n, Compass.n, Compass.e]
+              = [Compass.e, Compass.e, Compass.e, Compass.e]
+          ∧ (∀ a : Compass, round [a, a, a.step.step, a.step.step]
+              = [a.step, a.step, a.step.step.step, a.step.step.step])
+          ∧ ∀ c : Compass, c.step ≠ c)
+      ∧ ((∀ (A B : Type) (f : B → A → B) (s : B × List A),
+            marginRead f (save f s) = marginRead f s)
+          ∧ (∀ (A B : Type) (f : B → A → B) (xs ys : List A) (b b' : B),
+              fold f b xs = b' → fold f b (xs ++ ys) = fold f b' ys)
+          ∧ ∀ (A B : Type) (f : B → A → B) (ps : List Unit) (s : B × List A),
+              transcriptWith (marginStage A B f) (settle f) s ps
+                = transcriptWith (marginStage A B f) (fun x => x) s ps)
+      ∧ (∀ (X : Type) (f : X → X) (a b : X), a ≠ b → f a = f b →
+          ¬ ∃ m : the_seat_of_reason X, ∀ x, m.fwd x = f x)
+      ∧ (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+          indist (dress S) (s, n) (s, m)
+            ∧ (movedIn S).obs (s, n) none ≠ (movedIn S).obs (s, m) none)
+      ∧ ∀ (S : Stage) (s : S.State) (n m : Int),
+          indist (dress S) (s, n) (s, m) :=
+  ⟨fun _ q a b hf =>
+     ⟨fun _ _ p => a_fresh_edge_rides_no_path hf p,
+      (Foam.only_surprise_extends_reach q a b hf).2,
+      the_deposit_writes_one_mark q (will a b)⟩,
+   fun _ h1 h2 => the_arrival_sheds_its_route h1 h2,
+   fun _ _ e _ _ h => old_reach_survives_the_deposit e h,
+   indist_is_licensed,
+   a_license_is_a_gauge,
+   fun S s n m h => the_remainder_is_real S s n m h,
+   ⟨the_facing_pair_cancels,
+    cancellation_not_absence.2.2,
+    fun z => ⟨GInt.neg z,
+      congr (congrArg GInt.mk (FInt.add_right_neg z.re))
+        (FInt.add_right_neg z.im)⟩⟩,
+   ⟨fun v hv => the_round_keeps_unison v hv,
+    rfl,
+    the_split_round_carries,
+    the_quarter_turn_moves⟩,
+   ⟨fun _ _ f s => the_reading_survives_the_settle f s,
+    fun _ _ f xs ys b b' h => the_fold_forgets_nothing_it_needs f xs ys b b' h,
+    fun A B f ps s => any_settling_cadence_reads_the_same A B f ps s⟩,
+   fun _ _ a b hab hf he =>
+     he.elim fun m hm =>
+       hab (every_move_keeps_the_state m ((hm a).trans (hf.trans (hm b).symm))),
+   fun S s n m h => a_wider_seat_reads_the_remainder S s n m h,
+   the_remainder_is_unseen⟩
+
+/-- info: 'Foam.Minds.Isaac.sun_gazing' does not depend on any axioms -/
+#guard_msgs in #print axioms sun_gazing
 
 end Foam.Minds.Isaac
