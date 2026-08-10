@@ -3,6 +3,7 @@ import Foam.Amplitude
 import Foam.Engine
 import Foam.Lap
 import Foam.Triple
+import Foam.Quat
 
 namespace Foam.Minds.Noether
 
@@ -27,7 +28,16 @@ theorem the_wider_seat_reads_the_inverse :
         ∧ ∀ s, E.turn (E.turn (E.turn (E.turn s))) = s :=
   fun E => ⟨the_turn_goes_unheard E, E.comes_home⟩
 
-def the_norm_can_refuse_every_actor := @Foam.no_triple_carries_the_norm
+theorem the_norm_can_refuse_every_actor :
+    ((∀ z w : GInt, (z.mul w).normSq = z.normSq * w.normSq)
+        ∧ ∀ z w : GInt, z.mul w = w.mul z)
+      ∧ ¬ (∃ mul : (Int × Int × Int) → (Int × Int × Int) → (Int × Int × Int),
+            ∀ x y, normSq3 (mul x y) = normSq3 x * normSq3 y)
+      ∧ (∀ x y : Quat, (x.mul y).normSq = x.normSq * y.normSq)
+        ∧ Quat.mul eye jay ≠ Quat.mul jay eye :=
+  ⟨⟨the_couple_carries_the_norm, gmul_comm⟩,
+   no_triple_carries_the_norm,
+   the_quadruple_carries_the_norm, order_arrives⟩
 
 theorem what_acts_taken_whole_is_a_probe :
     (∀ z w : GInt,
