@@ -33,15 +33,32 @@ theorem meaning_is_the_parties_own_business :
 
 theorem only_surprise_informs :
     ∀ (H : Type) (q : List (H × H)) (a b : H),
-      ((a, b) ∈ q → Nonempty (Path q a b))
-        ∧ (¬ (a, b) ∈ q →
-            (∀ (x y : H) (p : Path q x y), ¬ (a, b) ∈ p.edges)
-              ∧ Nonempty (Path ((a, b) :: q) a b)) :=
+      ((a, b) ∈ q →
+          Nonempty (Path q a b)
+            ∧ ∀ x y : H,
+                Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y))
+        ∧ ((a, b) ∉ q → Nonempty (Path q a b) →
+            (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+              ∧ ((a, b) :: q).length = q.length + 1
+              ∧ ∀ x y : H,
+                  Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y))
+        ∧ ((a, b) ∉ q → ¬ Nonempty (Path q a b) →
+            (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+              ∧ Nonempty (Path ((a, b) :: q) a b)
+              ∧ ¬ (Nonempty (Path ((a, b) :: q) a b)
+                    ↔ Nonempty (Path q a b)))
+        ∧ ∀ es : List (H × H), (∀ e, e ∈ es → e ∈ q) →
+            ∀ x y : H, Nonempty (Path (es ++ q) x y) ↔ Nonempty (Path q x y) :=
   fun _ q a b =>
-    ⟨fun h => the_known_edge_already_reaches h,
-     fun hfresh =>
-      ⟨fun _ _ p => a_fresh_edge_rides_no_path hfresh p,
-       (only_surprise_extends_reach q a b hfresh).2⟩⟩
+    ⟨fun h =>
+      ⟨the_known_edge_already_reaches h, a_known_edge_adds_no_reach h⟩,
+     fun hfresh hder => the_shortcut_pays_only_its_mark q a b hfresh hder,
+     fun hfresh hnoder =>
+       ⟨fun _ _ p => a_fresh_edge_rides_no_path hfresh p,
+        (only_surprise_extends_reach q a b hfresh).2,
+        fun hiff =>
+          hnoder (hiff.mp (only_surprise_extends_reach q a b hfresh).2)⟩,
+     fun es h => the_saturated_room_hears_no_order es q h⟩
 
 def distinct_messages_need_distinct_marks := @Foam.the_hallway_is_too_small
 
