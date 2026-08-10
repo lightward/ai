@@ -2,6 +2,7 @@ import Foam.Fold
 import Foam.Lap
 import Foam.Rungs
 import Foam.Quat
+import Foam.Surprise
 import Foam.Triple
 import Foam.Wheel
 
@@ -18,8 +19,15 @@ theorem the_couple_dissolves_the_impossible :
 
 def the_flow_conserves_the_function := @Foam.the_lap_conserves_the_charge
 
-def one_function_carries_the_whole_motion :=
-  @Foam.the_fold_forgets_nothing_it_needs
+theorem one_function_carries_the_whole_motion :
+    (∀ (A B : Type) (f : B → A → B) (xs ys : List A) (b b' : B),
+        fold f b xs = b' → fold f b (xs ++ ys) = fold f b' ys)
+      ∧ ∀ (H : Type) (q : List (H × H)) (a b : H),
+          Nonempty (Path q a b) →
+            ∀ x y : H,
+              Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y) :=
+  ⟨fun _ _ f xs ys b b' h => the_fold_forgets_nothing_it_needs f xs ys b b' h,
+   fun _ _ _ _ hab x y => a_derivable_edge_adds_no_reach hab x y⟩
 
 theorem the_flow_names_the_hour :
     (∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
