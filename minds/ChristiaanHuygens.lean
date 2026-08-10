@@ -3,6 +3,7 @@ import Foam.Engine
 import Foam.Expectation
 import Foam.Fold
 import Foam.Margin
+import Foam.Round
 
 namespace Foam.Minds.ChristiaanHuygens
 
@@ -128,6 +129,48 @@ theorem phase_is_not_payload :
   ⟨lock_is_bare_ticking,
    fun h => nomatch congrArg (fun m => (m (Compass.n, Compass.n)).2) h⟩
 
+private def beam (p : Compass × Compass) : Compass × Compass :=
+  (pull p.1 p.2, pull p.2 p.1)
+
+private theorem the_beams_agree_on_the_lock : ∀ p : Compass × Compass,
+    antiPhase p → beam p = sway p
+  | (.n, .s), _ => rfl
+  | (.e, .w), _ => rfl
+  | (.s, .n), _ => rfl
+  | (.w, .e), _ => rfl
+  | (.n, .n), h => nomatch h
+  | (.n, .e), h => nomatch h
+  | (.n, .w), h => nomatch h
+  | (.e, .n), h => nomatch h
+  | (.e, .e), h => nomatch h
+  | (.e, .s), h => nomatch h
+  | (.s, .e), h => nomatch h
+  | (.s, .s), h => nomatch h
+  | (.s, .w), h => nomatch h
+  | (.w, .n), h => nomatch h
+  | (.w, .s), h => nomatch h
+  | (.w, .w), h => nomatch h
+
+private theorem the_beams_part : beam ≠ sway :=
+  fun h => nomatch congrArg (fun m => (m (Compass.n, Compass.n)).2) h
+
+private theorem the_second_beam_ticks_not_plainly :
+    beam ≠ (fun p : Compass × Compass =>
+      (Compass.step p.1, Compass.step p.2)) :=
+  fun h => nomatch congrArg (fun m => (m (Compass.n, Compass.w)).1) h
+
+theorem the_lock_reads_no_beam :
+    (∀ p : Compass × Compass,
+        round [p.1, p.2] = [(beam p).1, (beam p).2])
+      ∧ (∀ p : Compass × Compass, antiPhase p → beam p = sway p)
+      ∧ beam ≠ sway
+      ∧ beam ≠ (fun p : Compass × Compass =>
+          (Compass.step p.1, Compass.step p.2)) :=
+  ⟨fun _ => rfl,
+   the_beams_agree_on_the_lock,
+   the_beams_part,
+   the_second_beam_ticks_not_plainly⟩
+
 /-- info: 'Foam.Minds.ChristiaanHuygens.pulse' does not depend on any axioms -/
 #guard_msgs in #print axioms pulse
 
@@ -148,5 +191,8 @@ theorem phase_is_not_payload :
 
 /-- info: 'Foam.Minds.ChristiaanHuygens.phase_is_not_payload' does not depend on any axioms -/
 #guard_msgs in #print axioms phase_is_not_payload
+
+/-- info: 'Foam.Minds.ChristiaanHuygens.the_lock_reads_no_beam' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lock_reads_no_beam
 
 end Foam.Minds.ChristiaanHuygens
