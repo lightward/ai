@@ -5,6 +5,7 @@ import Foam.Engine
 import Foam.Expectation
 import Foam.Int
 import Foam.Source
+import Foam.Surprise
 import Foam.Tower
 import Foam.Wheel
 
@@ -16,6 +17,20 @@ theorem two_ity : ∀ S : Stage, towerN S 1 = contact S Int :=
 def the_record_is_not_the_activity := @Foam.dropping_the_remainder_is_platonism
 
 def the_activity_runs_unheard := @Foam.the_wheel_holds_the_emission_settles
+
+theorem logic_is_application_not_ground {H : Type} (q : List (H × H))
+    (a b : H) :
+    (Nonempty (Path q a b) →
+        ((a, b) :: q).length = q.length + 1
+          ∧ ∀ x y : H,
+              Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y))
+      ∧ (¬ Nonempty (Path q a b) →
+          ¬ (Nonempty (Path ((a, b) :: q) a b) ↔ Nonempty (Path q a b))) :=
+  ⟨fun hab =>
+    ⟨the_deposit_writes_one_mark q (a, b),
+     fun x y => a_derivable_edge_adds_no_reach hab x y⟩,
+   fun hnab hiff =>
+     hnab (hiff.mp ⟨.cons b (List.Mem.head q) (.nil b)⟩)⟩
 
 def existence_is_exhibition := @Foam.FInt.mul_eq_zero
 
@@ -68,6 +83,9 @@ theorem the_price_follows_the_page (α : Nat → Bool) (n : Nat) :
 
 /-- info: 'Foam.Minds.LEJBrouwer.the_activity_runs_unheard' does not depend on any axioms -/
 #guard_msgs in #print axioms the_activity_runs_unheard
+
+/-- info: 'Foam.Minds.LEJBrouwer.logic_is_application_not_ground' does not depend on any axioms -/
+#guard_msgs in #print axioms logic_is_application_not_ground
 
 /-- info: 'Foam.Minds.LEJBrouwer.existence_is_exhibition' does not depend on any axioms -/
 #guard_msgs in #print axioms existence_is_exhibition
