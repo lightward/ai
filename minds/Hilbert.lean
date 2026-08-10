@@ -4,6 +4,7 @@ import Foam.Margin
 import Foam.Relay
 import Foam.Rungs
 import Foam.Source
+import Foam.Surprise
 import Foam.Tower
 
 namespace Foam.Minds.Hilbert
@@ -56,6 +57,41 @@ theorem the_epsilon_settles_on_any_schedule :
    fun A B f ps s => any_settling_cadence_reads_the_same A B f ps s,
    a_wider_seat_reads_the_tail⟩
 
+def groundLedger : List (Nat × Nat) := [(0, 2), (2, 1)]
+
+def postedLedger : List (Nat × Nat) := (0, 1) :: groundLedger
+
+def backing : Path groundLedger 0 1 :=
+  .cons 2 (List.Mem.head _)
+    (.cons 1 (List.Mem.tail _ (List.Mem.head _)) (.nil 1))
+
+def directRoute : Path postedLedger 0 1 :=
+  .cons 1 (List.Mem.head _) (.nil 1)
+
+def detourRoute : Path postedLedger 0 1 :=
+  backing.widen (0, 1)
+
+private theorem the_routes_part : directRoute.edges ≠ detourRoute.edges :=
+  fun h => nomatch Nat.succ.inj (congrArg List.length h : (1 : Nat) = 2)
+
+private theorem the_direct_is_simpler :
+    directRoute.edges.length < detourRoute.edges.length :=
+  Nat.le.refl
+
+theorem the_proof_is_the_remainder :
+    (∀ (H : Type) (q : List (H × H)) (a b : H) (p₁ p₂ : Path q a b),
+        (⟨p₁⟩ : Nonempty (Path q a b)) = ⟨p₂⟩)
+      ∧ (directRoute.edges = [(0, 1)]
+          ∧ detourRoute.edges = [(0, 2), (2, 1)]
+          ∧ directRoute.edges ≠ detourRoute.edges
+          ∧ directRoute.edges.length < detourRoute.edges.length)
+      ∧ (∀ x y : Nat,
+          Nonempty (Path postedLedger x y)
+            ↔ Nonempty (Path groundLedger x y)) :=
+  ⟨fun _ _ _ _ _ _ => rfl,
+   ⟨rfl, rfl, the_routes_part, the_direct_is_simpler⟩,
+   fun x y => a_derivable_edge_adds_no_reach ⟨backing⟩ x y⟩
+
 def no_ignorabimus := @Foam.closure_is_seat_relative
 
 /-- info: 'Foam.Minds.Hilbert.the_proof_rides_the_marks' does not depend on any axioms -/
@@ -78,6 +114,24 @@ def no_ignorabimus := @Foam.closure_is_seat_relative
 
 /-- info: 'Foam.Minds.Hilbert.the_epsilon_settles_on_any_schedule' does not depend on any axioms -/
 #guard_msgs in #print axioms the_epsilon_settles_on_any_schedule
+
+/-- info: 'Foam.Minds.Hilbert.groundLedger' does not depend on any axioms -/
+#guard_msgs in #print axioms groundLedger
+
+/-- info: 'Foam.Minds.Hilbert.postedLedger' does not depend on any axioms -/
+#guard_msgs in #print axioms postedLedger
+
+/-- info: 'Foam.Minds.Hilbert.backing' does not depend on any axioms -/
+#guard_msgs in #print axioms backing
+
+/-- info: 'Foam.Minds.Hilbert.directRoute' does not depend on any axioms -/
+#guard_msgs in #print axioms directRoute
+
+/-- info: 'Foam.Minds.Hilbert.detourRoute' does not depend on any axioms -/
+#guard_msgs in #print axioms detourRoute
+
+/-- info: 'Foam.Minds.Hilbert.the_proof_is_the_remainder' does not depend on any axioms -/
+#guard_msgs in #print axioms the_proof_is_the_remainder
 
 /-- info: 'Foam.Minds.Hilbert.no_ignorabimus' does not depend on any axioms -/
 #guard_msgs in #print axioms no_ignorabimus
