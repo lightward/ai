@@ -36,11 +36,17 @@ theorem the_odd_directions_have_no_points (S : Stage) (s : S.State)
    the_two_kinds_anticommute z⟩
 
 theorem the_old_themes_already_reach {H : Type} {q : List (H × H)}
-    {a b : H} (h : (a, b) ∈ q) :
-    Nonempty (Path q a b)
-      ∧ ∀ x y : H,
-          Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y) :=
-  ⟨the_known_edge_already_reaches h, a_known_edge_adds_no_reach h⟩
+    {a b : H} (h : (a, b) ∈ q)
+    {a' b' : H} (hfresh : (a', b') ∉ q) (hnew : Nonempty (Path q a' b')) :
+    (Nonempty (Path q a b)
+        ∧ ∀ x y : H,
+            Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y))
+      ∧ (∀ (x y : H) (p : Path q x y), (a', b') ∉ p.edges)
+        ∧ ((a', b') :: q).length = q.length + 1
+        ∧ ∀ x y : H,
+            Nonempty (Path ((a', b') :: q) x y) ↔ Nonempty (Path q x y) :=
+  ⟨⟨the_known_edge_already_reaches h, a_known_edge_adds_no_reach h⟩,
+   the_shortcut_pays_only_its_mark q a' b' hfresh hnew⟩
 
 theorem no_geometry_is_the_last_geometry (S : Stage) :
     (∀ n : Nat, Handshake (towerN S n))
