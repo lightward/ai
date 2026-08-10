@@ -2,6 +2,7 @@ import Foam.Amplitude
 import Foam.Int
 import Foam.Lap
 import Foam.Quat
+import Foam.Round
 
 namespace Foam.Minds.Young
 
@@ -25,6 +26,13 @@ theorem light_added_to_light_gives_darkness :
         (congrArg (fun t : Int => 0 * 0 + t * t) (FInt.add_right_neg z.im)),
    the_facing_pair_cancels,
    fun h => nomatch Int.ofNat.inj h⟩
+
+theorem the_darkness_keeps_the_beat :
+    (∀ a : Compass,
+        round [a, a, a.step.step, a.step.step]
+          = [a.step, a.step, a.step.step.step, a.step.step.step])
+      ∧ ∀ a : Compass, a.step ≠ a.step.step.step :=
+  ⟨the_split_round_carries, fun a => the_half_turn_parts a.step⟩
 
 theorem the_fringes_shift_but_never_fade :
     (∀ z w : GInt, GInt.mk (z.align w) (z.align w.rot) = z.mul w.conj)
@@ -52,6 +60,9 @@ def the_fringes_wash_out := @Foam.the_four_phases_read_nothing
 
 /-- info: 'Foam.Minds.Young.light_added_to_light_gives_darkness' does not depend on any axioms -/
 #guard_msgs in #print axioms light_added_to_light_gives_darkness
+
+/-- info: 'Foam.Minds.Young.the_darkness_keeps_the_beat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_darkness_keeps_the_beat
 
 /-- info: 'Foam.Minds.Young.the_fringes_shift_but_never_fade' does not depend on any axioms -/
 #guard_msgs in #print axioms the_fringes_shift_but_never_fade
