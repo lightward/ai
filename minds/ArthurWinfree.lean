@@ -2,6 +2,7 @@ import Foam
 import Foam.Engine
 import Foam.Lap
 import Foam.Margin
+import Foam.Round
 
 namespace Foam.Minds.ArthurWinfree
 
@@ -50,6 +51,47 @@ theorem the_critical_stimulus :
         (FInt.add_right_neg z.im)⟩,
    rfl⟩
 
+private theorem the_wheel_keeps_unit_charge :
+    ∀ c : Compass, GInt.normSq (onTheWheel c) = 1
+  | .n => rfl
+  | .e => rfl
+  | .s => rfl
+  | .w => rfl
+
+private theorem the_wheel_misses_the_still_point :
+    ∀ c : Compass, onTheWheel c ≠ (⟨0, 0⟩ : GInt)
+  | .n, h => nomatch Int.ofNat.inj (GInt.mk.inj h).1
+  | .e, h => nomatch Int.ofNat.inj (GInt.mk.inj h).2
+  | .s, h => nomatch (GInt.mk.inj h).1
+  | .w, h => nomatch (GInt.mk.inj h).2
+
+private theorem the_critical_dose_lands_at_zero (c : Compass) :
+    GInt.add (onTheWheel c) (GInt.neg (onTheWheel c)) = (⟨0, 0⟩ : GInt) :=
+  congr (congrArg GInt.mk (FInt.add_right_neg (onTheWheel c).re))
+    (FInt.add_right_neg (onTheWheel c).im)
+
+private theorem the_landing_is_no_posture (c : Compass) :
+    ∀ c' : Compass,
+      GInt.add (onTheWheel c) (GInt.neg (onTheWheel c)) ≠ onTheWheel c' :=
+  fun c' h =>
+    the_wheel_misses_the_still_point c'
+      (((the_critical_dose_lands_at_zero c).symm.trans h).symm)
+
+theorem time_cannot_break_on_the_wheel :
+    (∀ c : Compass, GInt.normSq (onTheWheel c) = 1)
+      ∧ (∀ c : Compass, onTheWheel c ≠ (⟨0, 0⟩ : GInt))
+      ∧ (∀ (v : List Compass) (x : Compass), x ∈ round v →
+          GInt.normSq (onTheWheel x) = 1)
+      ∧ ∀ c : Compass, ∃ s : GInt,
+          GInt.add (onTheWheel c) s = (⟨0, 0⟩ : GInt)
+            ∧ ∀ c' : Compass, GInt.add (onTheWheel c) s ≠ onTheWheel c' :=
+  ⟨the_wheel_keeps_unit_charge,
+   the_wheel_misses_the_still_point,
+   fun _ x _ => the_wheel_keeps_unit_charge x,
+   fun c => ⟨GInt.neg (onTheWheel c),
+     the_critical_dose_lands_at_zero c,
+     the_landing_is_no_posture c⟩⟩
+
 def the_isochron := @Foam.any_settling_cadence_reads_the_same
 
 def the_organizing_center := @Foam.a_wider_seat_reads_the_remainder
@@ -65,6 +107,9 @@ def the_organizing_center := @Foam.a_wider_seat_reads_the_remainder
 
 /-- info: 'Foam.Minds.ArthurWinfree.the_critical_stimulus' does not depend on any axioms -/
 #guard_msgs in #print axioms the_critical_stimulus
+
+/-- info: 'Foam.Minds.ArthurWinfree.time_cannot_break_on_the_wheel' does not depend on any axioms -/
+#guard_msgs in #print axioms time_cannot_break_on_the_wheel
 
 /-- info: 'Foam.Minds.ArthurWinfree.the_isochron' does not depend on any axioms -/
 #guard_msgs in #print axioms the_isochron
