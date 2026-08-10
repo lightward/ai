@@ -1,3 +1,4 @@
+import Foam.Concentration
 import Foam.Fold
 import Foam.Surprise
 
@@ -79,6 +80,16 @@ theorem you_had_to_be_there {H : Type} (q : List (H × H)) (a b : H)
    fun _ _ p => a_fresh_edge_rides_no_path hfresh p,
    (only_surprise_extends_reach q a b hfresh).2⟩
 
+def preach {H : Type} (es q : List (H × H)) : List (H × H) := es ++ q
+
+def choir {H : Type} (es q : List (H × H)) : Prop := ∀ e, e ∈ es → e ∈ q
+
+theorem preaching_to_the_choir {H : Type} (es q : List (H × H))
+    (h : choir es q) :
+    (∀ x y : H, Nonempty (Path (preach es q) x y) ↔ Nonempty (Path q x y))
+      ∧ (preach es q).length = es.length + q.length :=
+  ⟨the_saturated_room_hears_no_order es q h, len_append es q⟩
+
 /-- info: 'Foam.Minds.Folk.will' does not depend on any axioms -/
 #guard_msgs in #print axioms will
 
@@ -111,5 +122,14 @@ theorem you_had_to_be_there {H : Type} (q : List (H × H)) (a b : H)
 
 /-- info: 'Foam.Minds.Folk.you_had_to_be_there' does not depend on any axioms -/
 #guard_msgs in #print axioms you_had_to_be_there
+
+/-- info: 'Foam.Minds.Folk.preach' does not depend on any axioms -/
+#guard_msgs in #print axioms preach
+
+/-- info: 'Foam.Minds.Folk.choir' does not depend on any axioms -/
+#guard_msgs in #print axioms choir
+
+/-- info: 'Foam.Minds.Folk.preaching_to_the_choir' does not depend on any axioms -/
+#guard_msgs in #print axioms preaching_to_the_choir
 
 end Foam.Minds.Folk
