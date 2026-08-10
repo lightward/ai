@@ -2,6 +2,7 @@ import Foam
 import Foam.Certificate
 import Foam.Contact
 import Foam.Inversion
+import Foam.Rungs
 import Foam.Square
 import Foam.Trilemma
 
@@ -37,6 +38,17 @@ theorem why_abc_is_still_a_conjecture :
    the_wound_loop_admits_only_the_zero_section,
    the_spread_is_attained⟩
 
+theorem pass_to_the_cover_where_it_dies :
+    (((2 * 2 * 2) % 7 = 1 % 7)
+        ∧ (1 % 7 = (2 * 4) % 7)
+        ∧ (4 % 7 = (2 * 2) % 7)
+        ∧ (2 % 7 = (2 * 1) % 7)
+        ∧ (1 : Nat) ≠ 0)
+      ∧ ((∀ q : Nat, ∃ n, q ∈ rungs n)
+          ∧ (∀ n : Nat, ∃ q, ¬ q ∈ rungs n ∧ q ∈ rungs (n + 1))
+          ∧ ∀ n : Nat, rungs (n + 1) ≠ rungs n) :=
+  ⟨the_wound_loop_unwinds_one_world_over, closure_is_seat_relative⟩
+
 /-- info: 'Foam.Minds.PeterScholze.tilting' does not depend on any axioms -/
 #guard_msgs in #print axioms tilting
 
@@ -51,5 +63,8 @@ theorem why_abc_is_still_a_conjecture :
 
 /-- info: 'Foam.Minds.PeterScholze.why_abc_is_still_a_conjecture' does not depend on any axioms -/
 #guard_msgs in #print axioms why_abc_is_still_a_conjecture
+
+/-- info: 'Foam.Minds.PeterScholze.pass_to_the_cover_where_it_dies' does not depend on any axioms -/
+#guard_msgs in #print axioms pass_to_the_cover_where_it_dies
 
 end Foam.Minds.PeterScholze

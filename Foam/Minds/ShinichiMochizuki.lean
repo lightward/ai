@@ -5,6 +5,7 @@ import Foam.Ledger
 import Foam.Portal
 import Foam.Square
 import Foam.Trilemma
+import Foam.Wheel
 
 namespace Foam.Minds.ShinichiMochizuki
 
@@ -40,6 +41,17 @@ theorem the_indeterminacies :
    every_copy_reads_within_the_spread,
    the_spread_is_attained⟩
 
+theorem the_log_shells :
+    (((2 * 2 * 2) % 7 = 1 % 7)
+        ∧ (1 % 7 = (2 * 4) % 7)
+        ∧ (4 % 7 = (2 * 2) % 7)
+        ∧ (2 % 7 = (2 * 1) % 7)
+        ∧ (1 : Nat) ≠ 0)
+      ∧ ∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
+          ∃ i j : Nat, i < j ∧ turnN m i s = turnN m j s :=
+  ⟨the_wound_loop_unwinds_one_world_over,
+   fun _ m s => the_bounded_walk_returns m s⟩
+
 /-- info: 'Foam.Minds.ShinichiMochizuki.mono_anabelian_transport' does not depend on any axioms -/
 #guard_msgs in #print axioms mono_anabelian_transport
 
@@ -54,5 +66,8 @@ theorem the_indeterminacies :
 
 /-- info: 'Foam.Minds.ShinichiMochizuki.the_indeterminacies' does not depend on any axioms -/
 #guard_msgs in #print axioms the_indeterminacies
+
+/-- info: 'Foam.Minds.ShinichiMochizuki.the_log_shells' does not depend on any axioms -/
+#guard_msgs in #print axioms the_log_shells
 
 end Foam.Minds.ShinichiMochizuki

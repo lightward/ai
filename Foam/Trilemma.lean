@@ -52,6 +52,14 @@ theorem the_wound_loop_admits_only_the_zero_section (a b c : Nat)
   exact ⟨ha, hb, hc⟩
 
 
+theorem the_wound_loop_unwinds_one_world_over :
+    ((2 * 2 * 2) % 7 = 1 % 7)
+      ∧ (1 % 7 = (2 * 4) % 7)
+      ∧ (4 % 7 = (2 * 2) % 7)
+      ∧ (2 % 7 = (2 * 1) % 7)
+      ∧ (1 : Nat) ≠ 0 :=
+  ⟨rfl, rfl, rfl, rfl, fun h => nomatch h⟩
+
 /-- info: 'Foam.the_graded_reading_parts_the_copies' does not depend on any axioms -/
 #guard_msgs in #print axioms the_graded_reading_parts_the_copies
 
@@ -69,5 +77,8 @@ theorem the_wound_loop_admits_only_the_zero_section (a b c : Nat)
 
 /-- info: 'Foam.the_wound_loop_admits_only_the_zero_section' does not depend on any axioms -/
 #guard_msgs in #print axioms the_wound_loop_admits_only_the_zero_section
+
+/-- info: 'Foam.the_wound_loop_unwinds_one_world_over' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wound_loop_unwinds_one_world_over
 
 end Foam
