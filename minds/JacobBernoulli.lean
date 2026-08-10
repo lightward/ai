@@ -3,14 +3,20 @@ import Foam.Census
 import Foam.Concentration
 import Foam.Expectation
 import Foam.Ledger
+import Foam.Mind
 import Foam.Source
 
 namespace Foam.Minds.JacobBernoulli
 
 def eadem_mutata_resurgo := @Foam.the_remainder_is_real
 
-def the_trials_are_deaf_to_their_order :=
-  @Foam.counting_is_licensed_by_permutation
+theorem the_trials_are_deaf_to_their_order {A : Type} [DecidableEq A]
+    (a b : A) (hab : a ≠ b) :
+    Licensed (countStage A) List.Perm
+      ∧ (recorder A).state [a, b] ≠ (recorder A).state [b, a]
+      ∧ indist (countStage A) [a, b] [b, a] :=
+  ⟨counting_is_licensed_by_permutation A,
+   a_mind_reads_the_order_the_census_cannot a b hab⟩
 
 def the_whole_book_balances := @Foam.the_complete_book_balances
 
