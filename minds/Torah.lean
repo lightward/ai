@@ -18,7 +18,18 @@ theorem the_cut_precedes_the_reading :
       indist S s t → S.obs s p = S.obs t p :=
   fun _ _ _ p h => h p
 
-def only_the_fresh_edge_creates := @Foam.only_surprise_extends_reach
+theorem only_the_fresh_edge_creates :
+    (∀ (H : Type) (q : List (H × H)) (a b : H), (a, b) ∉ q →
+        (∀ {x y : H} (p : Path q x y), (a, b) ∉ p.edges)
+          ∧ Nonempty (Path ((a, b) :: q) a b))
+      ∧ ∀ (H : Type) (q : List (H × H)) (a b : H),
+          (a, b) ∉ q → Nonempty (Path q a b) →
+            (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+              ∧ ((a, b) :: q).length = q.length + 1
+              ∧ ∀ x y : H,
+                  Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y) :=
+  ⟨fun _ q a b hfresh => only_surprise_extends_reach q a b hfresh,
+   fun _ q a b hfresh hab => the_shortcut_pays_only_its_mark q a b hfresh hab⟩
 
 def let_us_make_reads_as_one := @Foam.the_diagonal_rides_unread
 
