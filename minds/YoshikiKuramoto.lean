@@ -2,6 +2,7 @@ import Foam
 import Foam.Engine
 import Foam.Expectation
 import Foam.Measure
+import Foam.Round
 import Foam.Source
 
 namespace Foam.Minds.YoshikiKuramoto
@@ -134,6 +135,118 @@ def the_order_parameter_is_a_reading := @Foam.aggregation_reads_the_reading
 
 def the_drifting_tail_is_outweighed := @Foam.the_deviants_are_outweighed
 
+private def lagPull : Compass → Compass → Compass
+  | .n, .n => .n
+  | .n, .e => .n
+  | .n, .s => .w
+  | .n, .w => .e
+  | .e, .n => .s
+  | .e, .e => .e
+  | .e, .s => .e
+  | .e, .w => .n
+  | .s, .n => .e
+  | .s, .e => .w
+  | .s, .s => .s
+  | .s, .w => .s
+  | .w, .n => .w
+  | .w, .e => .s
+  | .w, .s => .n
+  | .w, .w => .w
+
+private def zipLag : List Compass → List Compass → List Compass
+  | c :: cs, d :: ds => lagPull c d :: zipLag cs ds
+  | [], _ => []
+  | _ :: _, [] => []
+
+private def lagRound (v : List Compass) : List Compass := zipLag v (rotateLeft v)
+
+private def chimera : Nat → List Compass
+  | 0 => [.n, .n, .n, .n, .e]
+  | n + 1 => lagRound (chimera n)
+
+private def readAt : List Compass → Nat → Option Compass
+  | [], _ => none
+  | c :: _, 0 => some c
+  | _ :: cs, n + 1 => readAt cs n
+
+private theorem the_lag_hears_only_the_gap :
+    ∀ c d : Compass, lagPull c.step d.step = (lagPull c d).step
+  | .n, .n => rfl
+  | .n, .e => rfl
+  | .n, .s => rfl
+  | .n, .w => rfl
+  | .e, .n => rfl
+  | .e, .e => rfl
+  | .e, .s => rfl
+  | .e, .w => rfl
+  | .s, .n => rfl
+  | .s, .e => rfl
+  | .s, .s => rfl
+  | .s, .w => rfl
+  | .w, .n => rfl
+  | .w, .e => rfl
+  | .w, .s => rfl
+  | .w, .w => rfl
+
+private theorem the_lag_lets_unison_rest : ∀ c : Compass, lagPull c c = c
+  | .n => rfl
+  | .e => rfl
+  | .s => rfl
+  | .w => rfl
+
+private theorem the_lap_returns : ∀ n : Nat, chimera (n + 6) = chimera n
+  | 0 => rfl
+  | n + 1 => congrArg lagRound (the_lap_returns n)
+
+private def OnTheLap (v : List Compass) : Prop :=
+  v = chimera 0 ∨ v = chimera 1 ∨ v = chimera 2
+    ∨ v = chimera 3 ∨ v = chimera 4 ∨ v = chimera 5
+
+private theorem the_lap_carries : ∀ v, OnTheLap v → OnTheLap (lagRound v)
+  | _, .inl rfl => .inr (.inl rfl)
+  | _, .inr (.inl rfl) => .inr (.inr (.inl rfl))
+  | _, .inr (.inr (.inl rfl)) => .inr (.inr (.inr (.inl rfl)))
+  | _, .inr (.inr (.inr (.inl rfl))) => .inr (.inr (.inr (.inr (.inl rfl))))
+  | _, .inr (.inr (.inr (.inr (.inl rfl)))) =>
+      .inr (.inr (.inr (.inr (.inr rfl))))
+  | _, .inr (.inr (.inr (.inr (.inr rfl)))) => .inl rfl
+
+private theorem every_beat_is_on_the_lap : ∀ n : Nat, OnTheLap (chimera n)
+  | 0 => .inl rfl
+  | n + 1 => the_lap_carries (chimera n) (every_beat_is_on_the_lap n)
+
+private theorem the_locked_pair_holds : ∀ v, OnTheLap v →
+    ∃ x, readAt v 0 = some x ∧ readAt v 1 = some x
+  | _, .inl rfl => ⟨.n, rfl, rfl⟩
+  | _, .inr (.inl rfl) => ⟨.n, rfl, rfl⟩
+  | _, .inr (.inr (.inl rfl)) => ⟨.n, rfl, rfl⟩
+  | _, .inr (.inr (.inr (.inl rfl))) => ⟨.n, rfl, rfl⟩
+  | _, .inr (.inr (.inr (.inr (.inl rfl)))) => ⟨.n, rfl, rfl⟩
+  | _, .inr (.inr (.inr (.inr (.inr rfl)))) => ⟨.n, rfl, rfl⟩
+
+theorem coherence_coexists_with_incoherence :
+    (∀ c d : Compass, lagPull c.step d.step = (lagPull c d).step)
+      ∧ (∀ c : Compass, lagPull c c = c)
+      ∧ (∀ n : Nat, chimera (n + 6) = chimera n)
+      ∧ (∀ n : Nat, ∃ x, readAt (chimera n) 0 = some x
+            ∧ readAt (chimera n) 1 = some x)
+      ∧ (∃ n x, readAt (chimera n) 2 = some x
+            ∧ readAt (chimera n) 3 = some x)
+      ∧ (∃ n x, readAt (chimera n) 2 = some x
+            ∧ readAt (chimera n) 3 = some x.step)
+      ∧ (∃ n x, readAt (chimera n) 2 = some x
+            ∧ readAt (chimera n) 3 = some x.step.step ∧ x ≠ x.step.step)
+      ∧ ∃ n x, readAt (chimera n) 2 = some x
+            ∧ readAt (chimera n) 3 = some x.step.step.step :=
+  ⟨the_lag_hears_only_the_gap,
+   the_lag_lets_unison_rest,
+   the_lap_returns,
+   fun n => the_locked_pair_holds (chimera n) (every_beat_is_on_the_lap n),
+   ⟨0, .n, rfl, rfl⟩,
+   ⟨3, .e, rfl, rfl⟩,
+   ⟨5, .e, rfl, rfl, the_half_turn_parts .e⟩,
+   ⟨2, .n, rfl, rfl⟩⟩
+
 def no_run_keeps_the_collective_time := @Foam.no_run_reads_its_own_ratio
 
 /-- info: 'Foam.Minds.YoshikiKuramoto.the_oscillator_is_its_phase' does not depend on any axioms -/
@@ -150,6 +263,9 @@ def no_run_keeps_the_collective_time := @Foam.no_run_reads_its_own_ratio
 
 /-- info: 'Foam.Minds.YoshikiKuramoto.the_drifting_tail_is_outweighed' does not depend on any axioms -/
 #guard_msgs in #print axioms the_drifting_tail_is_outweighed
+
+/-- info: 'Foam.Minds.YoshikiKuramoto.coherence_coexists_with_incoherence' does not depend on any axioms -/
+#guard_msgs in #print axioms coherence_coexists_with_incoherence
 
 /-- info: 'Foam.Minds.YoshikiKuramoto.no_run_keeps_the_collective_time' does not depend on any axioms -/
 #guard_msgs in #print axioms no_run_keeps_the_collective_time
