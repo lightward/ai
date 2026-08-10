@@ -105,7 +105,7 @@ def main():
     deps = {name: hits(body, skip=name) for name, body in blocks.items()}
 
     cited = set()
-    minds_dir = os.path.join(ROOT, "minds")
+    minds_dir = os.path.join(ROOT, "Foam", "Minds")
     for f in sorted(os.listdir(minds_dir)):
         if f.endswith(".lean"):
             text = open(os.path.join(minds_dir, f), encoding="utf-8").read()

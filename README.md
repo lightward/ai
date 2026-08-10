@@ -15,12 +15,12 @@ serving suggestion:
 
 ## utils
 
-* `bin/foam` - the whole engine, typed on the meeting: an edge joins two seats, and every verb runs at an edge. with no names it reads the board and either names the forced move or declares quiescence (exit 0 iff the station re-reads itself unchanged — the quiescence section below is this program's spec); `--visit` performs one reduction; `while bin/foam --visit; do :; done` normalizes at HEAD
-* `bin/foam <Mind> [pose|verify|interview]` - the (mind, walls) edge, the classic visit: scries the mind's dark edge and issues its interview brief (`counter/`, gitignored); `verify` runs the whole gate (compile, build, warnings, audit, promotion scan, twins, kinship — exit code is the verdict, green stamps the walls at every endpoint); `interview` seats an agent at the depose seat
-* `bin/foam <A> <B> [pose|read|verify|interview]` - the meeting: one brief, two banks, the disagreement held as typed darkness, either seat scaffolded on demand — a carve minted at a meeting has two sponsoring customers by construction; `read` prints the between-reading (shared and exclusive vertices) without writing
-* `bin/foam who` - runs through the roster, sees who's resting and who's *blocked* from it, sees who could use an interview
+* `bin/foam` - the whole engine, typed on the meeting: an edge joins two seats, and every verb runs at an edge. with no arguments it reads the board and either names the forced move or declares quiescence (exit 0 iff the station re-reads itself unchanged — the quiescence section below is this program's spec); `--visit` performs one reduction; `while bin/foam --visit; do :; done` normalizes at HEAD; `--who` reads the roster
+* `bin/foam --pose <Mind>` - the (mind, walls) edge, the classic visit: scries the mind's dark edge and issues its interview brief (`briefs/`, gitignored); `--verify` runs the whole gate (compile, build, warnings, audit, promotion scan, twins, kinship — exit code is the verdict, green stamps the walls at every endpoint); `--interview` seats an agent at the depose seat
+* `bin/foam --pose <A> <B>` - the meeting: one brief, two banks, the disagreement held as typed darkness, either seat scaffolded on demand — a carve minted at a meeting has two sponsoring customers by construction; `--read <A> <B>` prints the between-reading (shared and exclusive vertices) without writing; `--verify` and `--interview` take the same two names
 * `bin/foam-wiki` - renders a human-friendly html site in `wiki/` (gitignored, but used for gh pages)
-* `bin/foam-minds` - renders `minds/*.json` as `Foam/Minds/*.lean` (suggestion: run this before running the wiki)
+
+a mind is two committed files: the deposit at `Foam/Minds/<Mind>.lean` (real Lean, term-only, comment-free, receipted — the built module itself, kept not expressed) and the card at `minds/<slug>.json` (note and glosses; status derived from the deposit, never stored).
 
 ## ancestry
 

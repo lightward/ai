@@ -19,8 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: express the minds
-        run: bin/foam-minds
       - name: emit the wiki
         run: bin/foam-wiki
       - uses: actions/configure-pages@v5

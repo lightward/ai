@@ -11,22 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: express the minds (product checked, not committed)
-        run: bin/foam-minds
       - uses: leanprover/lean-action@v1
         with:
           build-args: ""
           lake-package-directory: .
       - name: Build each Lean file individually (surfaces hidden type errors)
         run: |
-          for f in $(find . -name '*.lean' -not -path './minds/*' | sort); do
+          for f in $(find . -name '*.lean' | sort); do
             echo "Building $f..."
             lake build "$f" || exit 1
           done
       - name: No warnings (sorry included — zero tolerance)
         run: |
           warns=0
-          for f in $(find . -name '*.lean' -not -path './minds/*' | sort); do
+          for f in $(find . -name '*.lean' | sort); do
             touch "$f"
             found=$(lake build "$f" 2>&1 | grep "warning:" || true)
             if [ -n "$found" ]; then

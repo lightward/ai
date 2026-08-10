@@ -3,6 +3,5 @@
 .env
 wiki/
 .DS_Store
-Foam/Minds/
-counter/
+briefs/
 bin/__pycache__/

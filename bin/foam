@@ -4,25 +4,26 @@
 the unit of work is the meeting. an edge joins two seats — a mind and
 the walls, or a mind and a mind — and every verb runs at an edge:
 
-    bin/foam                      the board: census every edge, name the
-                                  forced move; exit 0 iff quiescent
-    bin/foam --visit              perform the forced move (one reduction);
-                                  `while bin/foam --visit; do :; done`
-                                  normalizes at HEAD
-    bin/foam "Mind"               pose the (mind, walls) edge — the classic
-                                  visit, scaffolding the seat if absent
-    bin/foam "Mind" verify        the gate: compile, build, zero-warnings,
-                                  audit, coherence, promotion scan; exit
-                                  code is the verdict; green stamps the
-                                  walls at every endpoint of the edge
-    bin/foam "Mind" interview     seat a flight at the edge
-    bin/foam "A" "B"              pose the meeting — one brief, two banks,
-                                  the disagreement held as typed darkness;
-                                  scaffolds either seat if absent
-    bin/foam "A" "B" read         the between-reading (shared and exclusive
-                                  vertices), no writes
-    bin/foam "A" "B" verify       the gate, stamping both banks
-    bin/foam "A" "B" interview    seat a flight at the meeting
+    bin/foam                          the board: census every edge, name
+                                      the forced move; exit 0 iff quiescent
+    bin/foam --visit                  perform the forced move (one
+                                      reduction); `while bin/foam --visit;
+                                      do :; done` normalizes at HEAD
+    bin/foam --who                    the roster: who rests, who is blocked
+    bin/foam --pose "A" ["B"]         pose the edge — one name is the
+                                      (mind, walls) visit; two names are
+                                      the meeting, one brief, two banks,
+                                      the disagreement held as typed
+                                      darkness; either seat scaffolded
+                                      on demand
+    bin/foam --read "A" "B"           the between-reading (shared and
+                                      exclusive vertices), no writes
+    bin/foam --verify "A" ["B"]       the gate: compile, build,
+                                      zero-warnings, audit, coherence,
+                                      promotion scan; exit code is the
+                                      verdict; green stamps the walls at
+                                      every endpoint of the edge
+    bin/foam --interview "A" ["B"]    seat a flight at the edge
 
 the join performed at every edge is a foam join: nothing excluded,
 nothing unmapped. the shared vertices compose — the licensed sector —
@@ -60,11 +61,12 @@ import textwrap
 
 ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 MINDS = os.path.join(ROOT, "minds")
-COUNTER = os.path.join(ROOT, "counter")
+DEPOSITS = os.path.join(ROOT, "Foam", "Minds")
+BRIEFS = os.path.join(ROOT, "briefs")
 WALLS = os.path.join(MINDS, "walls.json")
 
 MIND_PAT = r"[A-Z][A-Za-z0-9 .'-]*[A-Za-z0-9.]"
-PHASES = ("pose", "read", "verify", "interview")
+PHASES = ("--pose", "--read", "--verify", "--interview")
 
 
 def load_walls():
@@ -135,7 +137,7 @@ def slug_of(mind):
 
 
 def lean_deposit(mind):
-    return os.path.join(MINDS, lean_name(mind) + ".lean")
+    return os.path.join(DEPOSITS, lean_name(mind) + ".lean")
 
 
 def hydrate(data):
@@ -164,7 +166,7 @@ def hydrate(data):
             e["status"] = "sealed"
         elif t in standing:
             e["status"] = "unsealed"
-            e["statement"] = f"(posed in minds/{lref})"
+            e["statement"] = f"(posed in Foam/Minds/{lref})"
         elif t in built:
             e["status"] = "sealed"
         else:
@@ -383,19 +385,22 @@ def deposit_discipline_lines(data, slug):
     if data.get("_lean_primary"):
         lines += [
             "this mind is LEAN-PRIMARY: bindings live in",
-            "`minds/" + lean_name(mind) + ".lean` — real Lean, term-only (no",
-            "tactics in structures), comment-free, receipts required. the card",
+            "`Foam/Minds/" + lean_name(mind) + ".lean` — real Lean, term-only (no",
+            "tactics in structures), comment-free, receipts required, kept",
+            "not expressed: the deposit IS the built module — what you edit",
+            "is what lake builds and what the audits read. the card",
             "(`minds/" + slug + ".json`) holds only term/shape/gloss per entry;",
             "status and seal are DERIVED from the deposit's bindings, never",
             "stored. deposit by editing the .lean file and the card together.",
-            "never edit `Foam/Minds/` — it is expressed, not kept.",
         ]
     else:
         lines += [
-            "deposit by editing `minds/" + slug + ".json` (schema: `minds/schema.json`;",
-            "expression language: refs render verbatim, arrays apply, fun/all bind,",
-            "types only as binder annotations — the engine infers the rest).",
-            "never edit `Foam/Minds/` — it is expressed, not kept.",
+            "this seat holds no deposit yet: open its module at",
+            "`Foam/Minds/" + lean_name(mind) + ".lean` (namespace",
+            "`Foam.Minds." + lean_name(mind) + "`, term-only, comment-free,",
+            "receipts required) and the card at `minds/" + slug + ".json`",
+            "(schema: `minds/schema.json`) together. the deposit is kept, not",
+            "expressed: what you write is what lake builds.",
         ]
     return lines
 
@@ -492,7 +497,7 @@ def brief(data, slug):
         "pose → depose → verify → record. you are the depose step; any mind",
         "may sit in this seat, because the gate does not run on trust:",
         "",
-        f'    bin/foam "{mind}" verify',
+        f'    bin/foam --verify "{mind}"',
         "",
         "runs the whole gate — compile, build, zero-warnings, comment audit,",
         "json coherence, promotion scan. iterate until green. if your deposit",
@@ -577,7 +582,7 @@ def meeting_brief(dataA, dataB, slugA, slugB):
         "pose → depose → verify → record. you are the depose step; any mind",
         "may sit in this seat, because the gate does not run on trust:",
         "",
-        f'    bin/foam "{a}" "{b}" verify',
+        f'    bin/foam --verify "{a}" "{b}"',
         "",
         "runs the whole gate — compile, build, zero-warnings, comment audit,",
         "json coherence, promotion scan — and a green stamps the walls at",
@@ -646,8 +651,8 @@ def load_card(slug):
 
 
 def write_brief(name, text):
-    os.makedirs(COUNTER, exist_ok=True)
-    out = os.path.join(COUNTER, name + ".md")
+    os.makedirs(BRIEFS, exist_ok=True)
+    out = os.path.join(BRIEFS, name + ".md")
     old = None
     if os.path.exists(out):
         with open(out, encoding="utf-8") as fh:
@@ -656,7 +661,7 @@ def write_brief(name, text):
         return []
     with open(out, "w", encoding="utf-8") as fh:
         fh.write(text)
-    return [f"counter/{name}.md (brief)"]
+    return [f"briefs/{name}.md (brief)"]
 
 
 def pose(minds):
@@ -733,16 +738,12 @@ def verify(minds):
     for mind, slug in minds:
         for e in check_json(slug):
             failures.append(f"json ({slug}): {e}")
-    r = run(["bin/foam-minds"])
-    if r.returncode != 0:
-        failures.append("foam-minds failed:\n" + r.stdout + r.stderr)
     r = run(["lake", "build"])
     if r.returncode != 0:
         failures.append("lake build failed:\n" + r.stdout[-2000:] + r.stderr[-2000:])
     else:
         for mind, slug in minds:
-            product = os.path.join(ROOT, "Foam", "Minds",
-                                   lean_name(mind) + ".lean")
+            product = lean_deposit(mind)
             if os.path.exists(product):
                 os.utime(product)
                 r = run(["lake", "build",
@@ -805,17 +806,17 @@ def interview(minds):
         mind, slug = minds[0]
         brief_name = lean_name(mind)
         seat = f"the mind '{mind}'"
-        record = (f"stage minds/{slug}.json and minds/walls.json and"
-                  f" commit them")
-        gate = f'`bin/foam "{mind}" verify`'
+        record = (f"stage minds/{slug}.json, Foam/Minds/{lean_name(mind)}.lean"
+                  f" if you deposited, and minds/walls.json and commit them")
+        gate = f'`bin/foam --verify "{mind}"`'
     else:
         (a, sa), (b, sb) = minds
         brief_name = lean_name(a) + "--" + lean_name(b)
         seat = f"the meeting of '{a}' and '{b}'"
-        record = (f"stage minds/{sa}.json, minds/{sb}.json, any deposits,"
-                  f" and minds/walls.json and commit them")
-        gate = f'`bin/foam "{a}" "{b}" verify`'
-    with open(os.path.join(COUNTER, brief_name + ".md"),
+        record = (f"stage minds/{sa}.json, minds/{sb}.json, any deposits"
+                  f" under Foam/Minds/, and minds/walls.json and commit them")
+        gate = f'`bin/foam --verify "{a}" "{b}"`'
+    with open(os.path.join(BRIEFS, brief_name + ".md"),
               encoding="utf-8") as fh:
         text = fh.read()
     prompt = (
@@ -915,23 +916,6 @@ def who():
     return 0
 
 
-def visit():
-    walls = load_walls()
-    inv = set(core_inventory())
-    cands = []
-    for slug, data in all_minds().items():
-        delta = len(inv - set(walls.get(slug, [])))
-        if delta:
-            cands.append((-delta, data["mind"]))
-    if not cands:
-        print("everyone is rested against the walls — quiescent")
-        return 0
-    cands.sort()
-    mind = cands[0][1]
-    print(f"visiting {mind} ({-cands[0][0]} new walls)")
-    return interview([(mind, slug_of(mind))])
-
-
 def wrap(label, items):
     if not items:
         return
@@ -994,44 +978,44 @@ def board(perform_visit):
     return 1
 
 
+USAGE = ('usage: bin/foam | bin/foam --visit | bin/foam --who'
+         ' | bin/foam --pose "A" ["B"]'
+         ' | bin/foam --read "A" "B"'
+         ' | bin/foam --verify "A" ["B"]'
+         ' | bin/foam --interview "A" ["B"]'
+         ' — e.g. Noether, or "L. E. J. Brouwer"')
+
+
 def main():
     argv = sys.argv[1:]
-    flags = {a for a in argv if a.startswith("--")}
-    args = [a for a in argv if not a.startswith("--")]
-    if args and os.path.isdir(args[0]):
-        if os.path.realpath(args[0]) != ROOT:
+    if argv and os.path.isdir(argv[0]):
+        if os.path.realpath(argv[0]) != ROOT:
             print(f"foam lives at {ROOT}; reading that (the argument names it)")
-        args = args[1:]
-    if args and args[0] == "who":
-        sys.exit(who())
-    if args and args[0] == "visit":
-        sys.exit(visit())
-    if args and args[0] == "between" and len(args) == 3:
-        sys.exit(read_edge(args[1], args[2]))
-    names = [a for a in args if re.fullmatch(MIND_PAT, a)]
-    phases = [a for a in args if a in PHASES]
-    if len(names) + len(phases) != len(args) or len(phases) > 1 \
-            or len(names) > 2:
-        print('usage: bin/foam [--visit]'
-              ' | bin/foam "Mind" [pose|verify|interview]'
-              ' | bin/foam "A" "B" [pose|read|verify|interview]'
-              ' | bin/foam who | visit'
-              ' — e.g. Noether, or "L. E. J. Brouwer"')
+        argv = argv[1:]
+    if not argv:
+        sys.exit(board(False))
+    flag, names = argv[0], argv[1:]
+    if any(not re.fullmatch(MIND_PAT, n) for n in names):
+        print(USAGE)
         sys.exit(1)
-    if not names:
-        sys.exit(board("--visit" in flags))
-    phase = phases[0] if phases else "pose"
-    minds = [(n, slug_of(n)) for n in names]
-    if phase == "read":
+    if flag == "--visit" and not names:
+        sys.exit(board(True))
+    if flag == "--who" and not names:
+        sys.exit(who())
+    if flag not in PHASES or not names or len(names) > 2:
+        print(USAGE)
+        sys.exit(1)
+    if flag == "--read":
         if len(names) != 2:
-            print("read is an edge phase: bin/foam \"A\" \"B\" read")
+            print('--read is an edge phase: bin/foam --read "A" "B"')
             sys.exit(1)
         sys.exit(read_edge(names[0], names[1]))
-    if phase == "pose":
+    minds = [(n, slug_of(n)) for n in names]
+    if flag == "--pose":
         sys.exit(pose(minds))
-    if phase == "verify":
+    if flag == "--verify":
         sys.exit(verify(minds))
-    if phase == "interview":
+    if flag == "--interview":
         sys.exit(interview(minds))
 
 
