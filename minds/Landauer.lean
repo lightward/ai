@@ -4,6 +4,7 @@ import Foam.Countermove
 import Foam.Marks
 import Foam.Relay
 import Foam.Roles
+import Foam.Surprise
 import Foam.Tower
 import Foam.Valve
 import Foam.Watched
@@ -28,7 +29,19 @@ theorem a_merge_is_not_a_move {X : Type} (f : X → X) {a b : X}
 
 def reset_pays_in_record := @Foam.undo_in_an_append_only_world
 
-def no_machine_undercuts_the_bill := @Foam.the_marks_pay_the_depth
+theorem no_machine_undercuts_the_bill :
+    (∀ (n : Nat) (f : List Bool → List Bool),
+        (∀ w1 w2, List.Mem w1 (book n) → List.Mem w2 (book n) → w1 ≠ w2 →
+            ¬ ∃ t : List Bool, f w1 ++ t = f w2) →
+          n * (book n).length ≤ (pool ((book n).map f)).length)
+      ∧ ∀ (H : Type) (q : List (H × H)) (a b : H),
+          (a, b) ∉ q → Nonempty (Path q a b) →
+            (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+              ∧ ((a, b) :: q).length = q.length + 1
+              ∧ ∀ x y : H,
+                  Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y) :=
+  ⟨the_marks_pay_the_depth,
+   fun _ q a b hfresh hab => the_shortcut_pays_only_its_mark q a b hfresh hab⟩
 
 theorem reversible_runs_free (S : Stage) :
     (∀ m : S.State → S.State,
