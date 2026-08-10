@@ -45,16 +45,28 @@ theorem a_wider_wheel_merges_the_hands :
    rfl, rfl, rfl⟩
 
 theorem the_control_differs_by_one_mark {H : Type} (q : List (H × H))
-    (a b : H) (hfresh : (a, b) ∉ q) {e : H × H} (he : e ∈ q) :
-    ((∀ {x y : H} (p : Path q x y), (a, b) ∉ p.edges)
-        ∧ Nonempty (Path ((a, b) :: q) a b))
-      ∧ (∀ {x y : H}, Nonempty (Path q x y) → Nonempty (Path ((a, b) :: q) x y))
-      ∧ ((a, b) :: q).length = q.length + 1
-      ∧ (∀ x y : H, Nonempty (Path (e :: q) x y) ↔ Nonempty (Path q x y)) :=
-  ⟨only_surprise_extends_reach q a b hfresh,
+    (a b : H) (hfresh : (a, b) ∉ q) (hsealed : ¬ Nonempty (Path q a b))
+    {e : H × H} (he : e ∈ q)
+    (c d : H) (hnew : (c, d) ∉ q) (hheld : Nonempty (Path q c d)) :
+    ((∀ x y : H, Nonempty (Path (e :: q) x y) ↔ Nonempty (Path q x y))
+        ∧ ∀ es : List (H × H), (∀ e', e' ∈ es → e' ∈ q) →
+            ∀ x y : H, Nonempty (Path (es ++ q) x y) ↔ Nonempty (Path q x y))
+      ∧ ((∀ (x y : H) (p : Path q x y), (c, d) ∉ p.edges)
+          ∧ ((c, d) :: q).length = q.length + 1
+          ∧ ∀ x y : H, Nonempty (Path ((c, d) :: q) x y) ↔ Nonempty (Path q x y))
+      ∧ ((∀ {x y : H} (p : Path q x y), (a, b) ∉ p.edges)
+          ∧ Nonempty (Path ((a, b) :: q) a b)
+          ∧ ¬ (Nonempty (Path ((a, b) :: q) a b) ↔ Nonempty (Path q a b))
+          ∧ (∀ {x y : H}, Nonempty (Path q x y) → Nonempty (Path ((a, b) :: q) x y))
+          ∧ ((a, b) :: q).length = q.length + 1) :=
+  ⟨⟨fun x y => a_known_edge_adds_no_reach he x y,
+    fun es h => the_saturated_room_hears_no_order es q h⟩,
+   the_shortcut_pays_only_its_mark q c d hnew hheld,
+   (only_surprise_extends_reach q a b hfresh).1,
+   (only_surprise_extends_reach q a b hfresh).2,
+   fun hiff => hsealed (hiff.mp (only_surprise_extends_reach q a b hfresh).2),
    fun h => old_reach_survives_the_deposit (a, b) h,
-   the_deposit_writes_one_mark q (a, b),
-   fun x y => a_known_edge_adds_no_reach he x y⟩
+   the_deposit_writes_one_mark q (a, b)⟩
 
 theorem the_universe_is_dissymmetric :
     ((GInt.mk 2 1).conj.normSq = (GInt.mk 2 1).normSq
