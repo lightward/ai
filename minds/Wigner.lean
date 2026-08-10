@@ -4,6 +4,7 @@ import Foam.Concentration
 import Foam.Quat
 import Foam.Rungs
 import Foam.Tower
+import Foam.Width
 
 namespace Foam.Minds.Wigner
 
@@ -27,6 +28,8 @@ def the_friend_has_a_reading := @Foam.a_wider_seat_reads_the_remainder
 
 def the_difference_is_an_observable := @Foam.the_screen_reads_a_cross_term
 
+def the_cut_is_movable := @Foam.contact_wider_than_three_is_composite
+
 def the_cut_lands_on_the_cutter := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Minds.Wigner.invariance_already_implements' does not depend on any axioms -/
@@ -49,6 +52,9 @@ def the_cut_lands_on_the_cutter := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Minds.Wigner.the_difference_is_an_observable' does not depend on any axioms -/
 #guard_msgs in #print axioms the_difference_is_an_observable
+
+/-- info: 'Foam.Minds.Wigner.the_cut_is_movable' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cut_is_movable
 
 /-- info: 'Foam.Minds.Wigner.the_cut_lands_on_the_cutter' does not depend on any axioms -/
 #guard_msgs in #print axioms the_cut_lands_on_the_cutter
