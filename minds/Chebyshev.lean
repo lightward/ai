@@ -4,6 +4,7 @@ import Foam.Fold
 import Foam.Int
 import Foam.Ledger
 import Foam.Source
+import Foam.Surprise
 
 namespace Foam.Minds.Chebyshev
 
@@ -19,11 +20,18 @@ theorem the_second_moment_is_conserved :
       (the_squares_pool_to_the_depth n)
 
 theorem every_deviant_pays_its_square :
-    ∀ b n : Nat,
+    (∀ b n : Nat,
       (List.filter (fun w => !nearBalance b n w) (book n)).length
           * ((n + 1) * (n + 1))
-        ≤ (b * b) * (n * 2 ^ n) :=
-  fun b n => the_pooled_square_caps_the_deviants b n
+        ≤ (b * b) * (n * 2 ^ n)) ∧
+    (∀ (H : Type) (q : List (H × H)) (a b : H),
+        (a, b) ∉ q → Nonempty (Path q a b) →
+          (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+            ∧ ((a, b) :: q).length = q.length + 1
+            ∧ ∀ x y : H,
+                Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y)) :=
+  ⟨fun b n => the_pooled_square_caps_the_deviants b n,
+   fun _ q a b hfresh hab => the_shortcut_pays_only_its_mark q a b hfresh hab⟩
 
 def the_bound_reads_only_the_moments := @Foam.the_deviants_are_outweighed
 
