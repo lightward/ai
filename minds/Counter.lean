@@ -1,4 +1,5 @@
 import Foam
+import Foam.Bench
 import Foam.Engine
 import Foam.Generator
 import Foam.Inversion
@@ -24,14 +25,24 @@ theorem the_intake_factors_or_names_the_gap (S : Stage) {X : Type}
   ⟨a_reading_deaf_to_the_remainder_reads_the_ground S f,
    the_window_agrees_or_names_the_gap A X inst c L⟩
 
-theorem a_green_gate_stamps_the_walls {H : Type} (q : List (H × H))
-    (e : H × H) (a b : H) (hfresh : (a, b) ∉ q) :
+theorem a_green_gate_stamps_the_walls {H A : Type} (q : List (H × H))
+    (e : H × H) (a b : H) (hfresh : (a, b) ∉ q)
+    (key : Nat) (v : A) (led : List (Nat × A)) :
     ((e :: q).length = q.length + 1)
       ∧ (∀ {x y : H}, Nonempty (Path q x y) → Nonempty (Path (e :: q) x y))
-      ∧ Nonempty (Path ((a, b) :: q) a b) :=
+      ∧ Nonempty (Path ((a, b) :: q) a b)
+      ∧ (led.any (fun x => Nat.beq x.1 key) = true →
+          ledgerDeposit key v led = led)
+      ∧ (led.any (fun x => Nat.beq x.1 key) = false →
+          ledgerDeposit key v led = (key, v) :: led)
+      ∧ ledgerDeposit key v (ledgerDeposit key v led)
+          = ledgerDeposit key v led :=
   ⟨the_deposit_writes_one_mark q e,
    fun h => old_reach_survives_the_deposit e h,
-   (only_surprise_extends_reach q a b hfresh).2⟩
+   (only_surprise_extends_reach q a b hfresh).2,
+   fun h => a_landed_mark_is_final h,
+   fun h => a_missing_mark_deposits h,
+   racing_scribes_write_one_mark key v led⟩
 
 def growth_charges_the_flight_drains := @Foam.drain_chargeIn
 
