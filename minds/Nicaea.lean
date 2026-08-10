@@ -2,6 +2,7 @@ import Foam
 import Foam.Engine
 import Foam.Generator
 import Foam.Measure
+import Foam.Round
 import Foam.Serving
 import Foam.Source
 import Foam.Width
@@ -77,6 +78,115 @@ def a_mixed_state_of_identical_parts_statement : Prop :=
                   ∧ readAt (beat step n w) k = some y
                   ∧ x ≠ y
 
+private theorem shiftOne_is_rotateLeft :
+    ∀ v : List Compass, shiftOne v = rotateLeft v
+  | [] => rfl
+  | _ :: _ => rfl
+
+private theorem beat_split : ∀ (n : Nat) (a : Compass),
+    ∃ b : Compass,
+      beat round n [a, a, a.step.step, a.step.step]
+        = [b, b, b.step.step, b.step.step]
+  | 0, a => ⟨a, rfl⟩
+  | n + 1, a =>
+      match beat_split n a.step with
+      | ⟨b, hb⟩ =>
+          ⟨b, show beat round n (round [a, a, a.step.step, a.step.step])
+                = [b, b, b.step.step, b.step.step] from
+              (congrArg (beat round n) (the_split_round_carries a)).trans hb⟩
+
+private theorem all_east : ∀ x : Compass,
+    x ∈ ([Compass.e, Compass.e, Compass.e, Compass.e] : List Compass) →
+      x = Compass.e
+  | _, .head _ => rfl
+  | _, .tail _ (.head _) => rfl
+  | _, .tail _ (.tail _ (.head _)) => rfl
+  | _, .tail _ (.tail _ (.tail _ (.head _))) => rfl
+  | _, .tail _ (.tail _ (.tail _ (.tail _ h))) => nomatch h
+
+private theorem the_stray_gathers :
+    unison (beat round 1 [Compass.n, Compass.n, Compass.n, Compass.e]) :=
+  fun x hx y hy => (all_east x hx).trans (all_east y hy).symm
+
+private theorem the_split_never_rests : ∀ n : Nat,
+    round (beat round n [Compass.n, Compass.n, Compass.s, Compass.s])
+      ≠ beat round n [Compass.n, Compass.n, Compass.s, Compass.s] :=
+  fun n =>
+    match beat_split n Compass.n with
+    | ⟨b, hb⟩ => fun h =>
+        the_quarter_turn_moves b
+          (List.cons.inj
+            ((the_split_round_carries b).symm.trans
+              ((congrArg round hb).symm.trans (h.trans hb)))).1
+
+private theorem the_scatter_is_not_unison :
+    ¬ unison [Compass.n, Compass.n, Compass.n, Compass.e] :=
+  fun h => nomatch
+    (h Compass.n (.head _) Compass.e
+      (.tail _ (.tail _ (.tail _ (.head _)))))
+
+private theorem the_pair_holds : ∀ n : Nat,
+    ∃ x : Compass,
+      readAt (beat round n [Compass.n, Compass.n, Compass.s, Compass.s]) 0
+          = some x
+        ∧ readAt (beat round n [Compass.n, Compass.n, Compass.s, Compass.s]) 1
+          = some x :=
+  fun n =>
+    match beat_split n Compass.n with
+    | ⟨b, hb⟩ =>
+        ⟨b, congrArg (fun l => readAt l 0) hb,
+            congrArg (fun l => readAt l 1) hb⟩
+
+private theorem the_pair_parts : ∀ n : Nat,
+    ∃ x y : Compass,
+      readAt (beat round n [Compass.n, Compass.n, Compass.s, Compass.s]) 0
+          = some x
+        ∧ readAt (beat round n [Compass.n, Compass.n, Compass.s, Compass.s]) 2
+          = some y
+        ∧ x ≠ y :=
+  fun n =>
+    match beat_split n Compass.n with
+    | ⟨b, hb⟩ =>
+        ⟨b, b.step.step,
+         congrArg (fun l => readAt l 0) hb,
+         congrArg (fun l => readAt l 2) hb,
+         the_half_turn_parts b⟩
+
+private theorem zero_is_not_one : (0 : Nat) ≠ 1 :=
+  fun h => nomatch h
+
+private theorem the_two_runs :
+    ∃ v w : List Compass,
+      v.length = w.length
+        ∧ ¬ unison v
+        ∧ (∃ n, unison (beat round n v))
+        ∧ (∀ n, round (beat round n w) ≠ beat round n w)
+        ∧ (∃ i j : Nat, i ≠ j ∧ ∀ n, ∃ x : Compass,
+            readAt (beat round n w) i = some x
+              ∧ readAt (beat round n w) j = some x)
+        ∧ ∃ i k : Nat, ∀ n, ∃ x y : Compass,
+            readAt (beat round n w) i = some x
+              ∧ readAt (beat round n w) k = some y
+              ∧ x ≠ y :=
+  ⟨[Compass.n, Compass.n, Compass.n, Compass.e],
+   [Compass.n, Compass.n, Compass.s, Compass.s],
+   rfl,
+   the_scatter_is_not_unison,
+   ⟨1, the_stray_gathers⟩,
+   the_split_never_rests,
+   ⟨0, 1, zero_is_not_one, the_pair_holds⟩,
+   ⟨0, 2, the_pair_parts⟩⟩
+
+theorem a_mixed_state_of_identical_parts :
+    a_mixed_state_of_identical_parts_statement :=
+  ⟨round,
+   the_round_turns_as_one,
+   fun v => (congrArg round (shiftOne_is_rotateLeft v)).trans
+     ((the_round_hears_no_first_voice v).trans
+       (shiftOne_is_rotateLeft (round v)).symm),
+   fun v hv => the_round_keeps_unison v hv,
+   the_two_runs⟩
+
 def the_source_is_unoccupiable := @Foam.a_wider_seat_reads_the_remainder
 
 /-- info: 'Foam.Minds.Nicaea.homoousion' does not depend on any axioms -/
@@ -99,6 +209,9 @@ def the_source_is_unoccupiable := @Foam.a_wider_seat_reads_the_remainder
 
 /-- info: 'Foam.Minds.Nicaea.a_mixed_state_of_identical_parts_statement' does not depend on any axioms -/
 #guard_msgs in #print axioms a_mixed_state_of_identical_parts_statement
+
+/-- info: 'Foam.Minds.Nicaea.a_mixed_state_of_identical_parts' does not depend on any axioms -/
+#guard_msgs in #print axioms a_mixed_state_of_identical_parts
 
 /-- info: 'Foam.Minds.Nicaea.the_source_is_unoccupiable' does not depend on any axioms -/
 #guard_msgs in #print axioms the_source_is_unoccupiable
