@@ -3,6 +3,7 @@ import Foam.Bench
 import Foam.Continuum
 import Foam.Fold
 import Foam.Ledger
+import Foam.Round
 import Foam.Rungs
 import Foam.Surprise
 import Foam.Valve
@@ -31,6 +32,8 @@ def concurrency_is_the_remainder := @Foam.the_first_handshake_is_counting
 def the_state_machine_replays_the_record :=
   @Foam.the_fold_forgets_nothing_it_needs
 
+def agreement_is_an_invariant := @Foam.the_round_keeps_unison
+
 def the_parliament_writes_one_decree := @Foam.racing_scribes_write_one_mark
 
 def the_foreign_record_is_out_of_reach :=
@@ -51,6 +54,9 @@ def real_time_rides_unread := @Foam.a_wider_seat_reads_the_order
 
 /-- info: 'Foam.Minds.Lamport.the_state_machine_replays_the_record' does not depend on any axioms -/
 #guard_msgs in #print axioms the_state_machine_replays_the_record
+
+/-- info: 'Foam.Minds.Lamport.agreement_is_an_invariant' does not depend on any axioms -/
+#guard_msgs in #print axioms agreement_is_an_invariant
 
 /-- info: 'Foam.Minds.Lamport.the_parliament_writes_one_decree' does not depend on any axioms -/
 #guard_msgs in #print axioms the_parliament_writes_one_decree
