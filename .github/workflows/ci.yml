@@ -42,3 +42,9 @@ jobs:
         run: python3 .github/comment_audit.py
       - name: Core sponsorship (no stratum without a sponsoring mind)
         run: python3 .github/sponsor_audit.py
+      - name: The recitation certifies (transcribe, compile the emission, twice for determinism)
+        run: |
+          lake exe transcribe > /tmp/genome.lean
+          lake env lean /tmp/genome.lean
+          lake exe transcribe > /tmp/genome2.lean
+          diff /tmp/genome.lean /tmp/genome2.lean
