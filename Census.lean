@@ -30,7 +30,7 @@ def autoDetail (n : Name) : Bool :=
 def keepKind (env : Environment) (n : Name) (c : ConstantInfo) : Bool :=
   match c with
   | .defnInfo _ => (env.getProjectionFnInfo? n).isNone
-  | .thmInfo _ => true
+  | .thmInfo _ => (env.getProjectionFnInfo? n).isNone
   | .inductInfo _ => true
   | _ => false
 
