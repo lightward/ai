@@ -1,5 +1,6 @@
 import Foam
 import Foam.Certificate
+import Foam.Coil
 import Foam.Contact
 import Foam.Inversion
 import Foam.Rungs
@@ -59,6 +60,35 @@ theorem the_diagram_keeps_its_monodromy :
        hu hv hw h1 h2 h3,
    the_graded_reading_parts_the_copies⟩
 
+theorem the_return_prices_the_stroke_at_zero :
+    (∀ (h : Int × Int) (s : Int),
+        coilClass (coil.meet h (Sum.inr s)) = coilClass h ↔ s = 0)
+      ∧ ∀ (h : Int × Int) (d s : Int),
+          coilClass (coil.meet (coil.meet h (Sum.inl d)) (Sum.inr s))
+              = coilClass h
+            ↔ s = 0 :=
+  let razor : ∀ a s : Int, a + s = a → s = 0 := fun a s e =>
+    (((((FInt.zero_add s).symm.trans
+            (congrArg (· + s) (FInt.add_left_neg a).symm)).trans
+          (FInt.add_assoc (-a) a s)).trans
+        (congrArg ((-a) + ·) e)).trans
+      (FInt.add_left_neg a))
+  ⟨fun h s =>
+    ⟨fun e => razor (coilClass h) s
+        ((the_stroke_moves_the_class_by_its_size h s).symm.trans e),
+     fun e => (the_stroke_moves_the_class_by_its_size h s).trans
+        ((congrArg (coilClass h + ·) e).trans (Int.add_zero (coilClass h)))⟩,
+   fun h d s =>
+    ⟨fun e => razor (coilClass h) s
+        (((congrArg (· + s) (the_shuffle_conserves_the_class h d).symm).trans
+            (the_stroke_moves_the_class_by_its_size
+              (coil.meet h (Sum.inl d)) s).symm).trans e),
+     fun e => (the_stroke_moves_the_class_by_its_size
+          (coil.meet h (Sum.inl d)) s).trans
+        (((congrArg (· + s) (the_shuffle_conserves_the_class h d)).trans
+            (congrArg (coilClass h + ·) e)).trans
+          (Int.add_zero (coilClass h)))⟩⟩
+
 /-- info: 'Foam.Maps.PeterScholze.tilting' does not depend on any axioms -/
 #guard_msgs in #print axioms tilting
 
@@ -79,5 +109,8 @@ theorem the_diagram_keeps_its_monodromy :
 
 /-- info: 'Foam.Maps.PeterScholze.the_diagram_keeps_its_monodromy' does not depend on any axioms -/
 #guard_msgs in #print axioms the_diagram_keeps_its_monodromy
+
+/-- info: 'Foam.Maps.PeterScholze.the_return_prices_the_stroke_at_zero' does not depend on any axioms -/
+#guard_msgs in #print axioms the_return_prices_the_stroke_at_zero
 
 end Foam.Maps.PeterScholze
