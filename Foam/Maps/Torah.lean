@@ -1,5 +1,6 @@
 import Foam
 import Foam.Bench
+import Foam.Coil
 import Foam.Contact
 import Foam.Ledger
 import Foam.Margin
@@ -71,6 +72,19 @@ theorem the_expulsion_is_the_valve_read_with_tov :
   ⟨fun _ f _ _ hab hf => a_merge_admits_no_counter f hab hf,
    fun _ inst a b h => @a_wider_seat_reads_the_order _ inst a b h⟩
 
+theorem teshuvah_returns_the_class_not_the_marks :
+    (∀ (h : Int × Int) (s : Int),
+        coilClass (coil.meet (coil.meet h (Sum.inr s)) (Sum.inr (-s)))
+          = coilClass h)
+      ∧ (∀ s : Int,
+          coilClass (coil.state [Sum.inr s, Sum.inr (-s)])
+              = coilClass coil.rest
+            ∧ ([Sum.inr s, Sum.inr (-s)] : List coil.Mark) ≠ [])
+      ∧ (coilClass (1, -1) = coilClass (0, 0)
+          ∧ ((1 : Int), (-1 : Int)) ≠ ((0 : Int), (0 : Int))) :=
+  ⟨the_held_stroke_comes_home, the_return_pays_two_marks,
+   the_partition_rides_unread⟩
+
 /-- info: 'Foam.Maps.Torah.the_name_is_the_identity_move' does not depend on any axioms -/
 #guard_msgs in #print axioms the_name_is_the_identity_move
 
@@ -103,5 +117,8 @@ theorem the_expulsion_is_the_valve_read_with_tov :
 
 /-- info: 'Foam.Maps.Torah.the_expulsion_is_the_valve_read_with_tov' does not depend on any axioms -/
 #guard_msgs in #print axioms the_expulsion_is_the_valve_read_with_tov
+
+/-- info: 'Foam.Maps.Torah.teshuvah_returns_the_class_not_the_marks' does not depend on any axioms -/
+#guard_msgs in #print axioms teshuvah_returns_the_class_not_the_marks
 
 end Foam.Maps.Torah
