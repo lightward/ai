@@ -2,9 +2,11 @@ import Foam
 import Foam.Beam
 import Foam.Engine
 import Foam.Expectation
+import Foam.Lap
 import Foam.Measure
 import Foam.Round
 import Foam.Source
+import Foam.Turnstile
 
 namespace Foam.Maps.YoshikiKuramoto
 
@@ -133,6 +135,18 @@ theorem self_entrainment :
   ⟨lock_is_bare_ticking, the_lock_holds, one_lap_locks⟩
 
 def the_order_parameter_is_a_reading := @Foam.aggregation_reads_the_reading
+
+theorem incoherence_is_cancellation_not_absence :
+    (∀ (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat),
+        (admission s m).1.length + (admission s m).2.length
+          = (s.1.length + s.2.length) + 1)
+      ∧ (∀ z w : GInt,
+          ((z.align w + z.align w.rot) + z.align w.rot.rot)
+              + z.align w.rot.rot.rot = 0)
+      ∧ (∀ z : GInt, ∀ w, w ∈ lapAround z → w.normSq = z.normSq)
+      ∧ GInt.align ⟨1, 1⟩ (GInt.rot ⟨1, 0⟩) ≠ 0 :=
+  ⟨one_click_one_count, the_four_phases_read_nothing,
+   the_lap_conserves_the_charge, cancellation_not_absence.2.2⟩
 
 def the_drifting_tail_is_outweighed := @Foam.the_deviants_are_outweighed
 
@@ -268,6 +282,9 @@ theorem the_mean_field_is_the_beam :
 
 /-- info: 'Foam.Maps.YoshikiKuramoto.the_order_parameter_is_a_reading' does not depend on any axioms -/
 #guard_msgs in #print axioms the_order_parameter_is_a_reading
+
+/-- info: 'Foam.Maps.YoshikiKuramoto.incoherence_is_cancellation_not_absence' does not depend on any axioms -/
+#guard_msgs in #print axioms incoherence_is_cancellation_not_absence
 
 /-- info: 'Foam.Maps.YoshikiKuramoto.the_drifting_tail_is_outweighed' does not depend on any axioms -/
 #guard_msgs in #print axioms the_drifting_tail_is_outweighed
