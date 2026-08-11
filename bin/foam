@@ -138,50 +138,38 @@ def lean_deposit(mind):
     return os.path.join(DEPOSITS, lean_name(mind) + ".lean")
 
 
+def deposit_members(mind):
+    prefix = "Foam.Maps." + lean_name(mind) + "."
+    members = {}
+    for full in mirror()["census"]:
+        if full.startswith(prefix):
+            term = full[len(prefix):]
+            if "." not in term:
+                members[term] = full
+    return members
+
+
 def hydrate(data):
     src = lean_deposit(data["mind"])
     if not os.path.exists(src):
         return data
-    text = open(src, encoding="utf-8").read()
-    aliases = dict(re.findall(r"^def (\S+) :=\s*@(\S+)", text, re.M))
-    theorems = set(re.findall(r"^theorem (\S+)", text, re.M))
-    standing = set(re.findall(r"^def (\S+)_statement : Prop", text, re.M))
-    look = core_lookup()
-    for b in re.split(r"^(?=(?:private def|def|theorem) )", text, flags=re.M):
-        m = re.match(r"theorem (\S+)", b)
-        if not m:
-            continue
-        body = b.split("/--")[0].rsplit(":=", 1)[-1].strip()
-        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", body):
-            aliases[m.group(1)] = look.get(body, body)
-    built = set(re.findall(r"^def (\S+) :=", text, re.M))
+    members = deposit_members(data["mind"])
+    alias = mirror().get("alias", {})
     lref = os.path.basename(src)
     for e in data["vocabulary"]:
         t = e["term"]
-        if t in aliases:
-            e["status"], e["seal"] = "sealed", aliases[t]
-        elif t in theorems:
+        if t in members:
             e["status"] = "sealed"
-        elif t in standing:
+            tgt = alias.get(members[t])
+            if tgt is not None and not tgt.startswith("Foam.Maps."):
+                e["seal"] = tgt
+        elif t + "_statement" in members:
             e["status"] = "unsealed"
             e["statement"] = f"(posed in Foam/Maps/{lref})"
-        elif t in built:
-            e["status"] = "sealed"
         else:
             e["status"] = "unsealed"
     data["_lean_primary"] = True
     return data
-
-
-def core_lookup():
-    look = {}
-    for full in core_inventory():
-        look[full] = full
-        bare = full[len("Foam."):] if full.startswith("Foam.") else full
-        look[bare] = full
-        if bare.count(".") == 0:
-            look[bare] = full
-    return look
 
 
 def deposit_spectra(mind):
@@ -686,10 +674,15 @@ def check_json(slug):
     errs = []
     src = lean_deposit(data["mind"])
     if os.path.exists(src):
-        text = open(src, encoding="utf-8").read()
-        bound = set(re.findall(r"^def (\S+) :=", text, re.M))
-        bound |= set(re.findall(r"^theorem (\S+)", text, re.M))
-        bound |= set(re.findall(r"^def (\S+)_statement : Prop", text, re.M))
+        members = deposit_members(data["mind"])
+        kinds = mirror().get("kind", {})
+        alias = mirror().get("alias", {})
+        bound = set()
+        for term, full in members.items():
+            if term.endswith("_statement"):
+                bound.add(term[: -len("_statement")])
+            elif kinds.get(full) == "thm" or full in alias:
+                bound.add(term)
         terms = [e.get("term") for e in data.get("vocabulary", [])]
         for e in data.get("vocabulary", []):
             t = e.get("term", "?")

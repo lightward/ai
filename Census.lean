@@ -76,18 +76,33 @@ def main : IO UInt32 := do
   let mut out := "{\n  \"census\": [\n"
   out := out ++ String.intercalate ",\n"
     (sorted.toList.map (fun n => s!"    \"{n}\""))
-  out := out ++ "\n  ],\n  \"graph\": {\n"
+  out := out ++ "\n  ],\n  \"kind\": {\n"
+  let mut kindRows : List String := []
+  let mut aliasRows : List String := []
   let mut rows : List String := []
   for n in sorted do
     match env.constants.find? n with
     | none => pure ()
     | some c =>
+        let k := match c with
+          | .thmInfo _ => "thm"
+          | .defnInfo _ => "def"
+          | .inductInfo _ => "ind"
+          | _ => "other"
+        kindRows := kindRows ++ [s!"    \"{n}\": \"{k}\""]
+        match c.value? (allowOpaque := true) with
+        | some (.const t _) => aliasRows := aliasRows ++ [s!"    \"{n}\": \"{t}\""]
+        | _ => pure ()
         let deps := crawl env (fun u => sorted.contains u)
           #[n] (rawUses c).toList #[]
         let sortedDeps := deps.qsort (fun a b => a.toString < b.toString)
         rows := rows ++ [s!"    \"{n}\": ["
           ++ String.intercalate ", "
               (sortedDeps.toList.map (fun d => s!"\"{d}\"")) ++ "]"]
+  out := out ++ String.intercalate ",\n" kindRows
+  out := out ++ "\n  },\n  \"alias\": {\n"
+  out := out ++ String.intercalate ",\n" aliasRows
+  out := out ++ "\n  },\n  \"graph\": {\n"
   out := out ++ String.intercalate ",\n" rows ++ "\n  }\n}"
   IO.println out
   return 0
