@@ -4,6 +4,7 @@ import Foam.Int
 import Foam.Lap
 import Foam.Quat
 import Foam.Round
+import Foam.Turnstile
 
 namespace Foam.Maps.Young
 
@@ -27,6 +28,16 @@ theorem light_added_to_light_gives_darkness :
         (congrArg (fun t : Int => 0 * 0 + t * t) (FInt.add_right_neg z.im)),
    the_facing_pair_cancels,
    fun h => nomatch Int.ofNat.inj h⟩
+
+theorem the_darkness_is_the_criterion :
+    (∀ (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat),
+        (admission s m).1.length + (admission s m).2.length
+          = (s.1.length + s.2.length) + 1)
+      ∧ GInt.normSq GInt.one ≠ GInt.normSq GInt.zero
+      ∧ (GInt.one.add GInt.one.rot.rot).normSq = GInt.normSq GInt.zero :=
+  ⟨one_click_one_count,
+   light_added_to_light_gives_darkness.2.2,
+   light_added_to_light_gives_darkness.1 GInt.one⟩
 
 theorem the_darkness_keeps_the_beat :
     (∀ a : Compass,
@@ -71,6 +82,9 @@ def the_fringes_wash_out := @Foam.the_four_phases_read_nothing
 
 /-- info: 'Foam.Maps.Young.light_added_to_light_gives_darkness' does not depend on any axioms -/
 #guard_msgs in #print axioms light_added_to_light_gives_darkness
+
+/-- info: 'Foam.Maps.Young.the_darkness_is_the_criterion' does not depend on any axioms -/
+#guard_msgs in #print axioms the_darkness_is_the_criterion
 
 /-- info: 'Foam.Maps.Young.the_darkness_keeps_the_beat' does not depend on any axioms -/
 #guard_msgs in #print axioms the_darkness_keeps_the_beat
