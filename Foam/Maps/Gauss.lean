@@ -3,6 +3,7 @@ import Foam.Census
 import Foam.Expectation
 import Foam.Ledger
 import Foam.Quat
+import Foam.Square
 import Foam.Triple
 import Foam.Typical
 
@@ -11,6 +12,16 @@ namespace Foam.Maps.Gauss
 def the_sum_is_deaf_to_the_shuffle := @Foam.counting_is_licensed_by_permutation
 
 def congruent_not_equal := @Foam.the_handshake
+
+theorem congruence_mends_what_equality_breaks :
+    (∀ a b : Nat, sq (a * b) = sq a * sq b)
+      ∧ sq (1 + 1) ≠ sq 1 + sq 1
+      ∧ (∀ a b : Bool, Bool.and (Bool.and a b) (Bool.and a b)
+          = Bool.and (Bool.and a a) (Bool.and b b))
+      ∧ (∀ a b : Bool, Bool.and (Bool.xor a b) (Bool.xor a b)
+          = Bool.xor (Bool.and a a) (Bool.and b b)) :=
+  ⟨the_square_carries_the_product, the_square_breaks_the_sum,
+    the_narrow_carrier_carries_the_product, the_narrow_carrier_mends_the_sum⟩
 
 theorem fifteen_needs_a_fourth_square :
     (∀ x y z : Nat, x * x + y * y + z * z ≠ 15)
@@ -50,6 +61,9 @@ theorem the_mode_follows_the_weights :
 
 /-- info: 'Foam.Maps.Gauss.congruent_not_equal' does not depend on any axioms -/
 #guard_msgs in #print axioms congruent_not_equal
+
+/-- info: 'Foam.Maps.Gauss.congruence_mends_what_equality_breaks' does not depend on any axioms -/
+#guard_msgs in #print axioms congruence_mends_what_equality_breaks
 
 /-- info: 'Foam.Maps.Gauss.fifteen_needs_a_fourth_square' does not depend on any axioms -/
 #guard_msgs in #print axioms fifteen_needs_a_fourth_square
