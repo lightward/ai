@@ -1,4 +1,5 @@
 import Foam
+import Foam.Beam
 import Foam.Census
 import Foam.Concentration
 import Foam.Expectation
@@ -35,6 +36,81 @@ theorem what_frequency_promises :
 
 def the_promise_keeps_at_any_odds := @Foam.the_deviants_are_outweighed
 
+instance compassEq : DecidableEq Compass
+  | .n, .n => .isTrue rfl
+  | .n, .e => .isFalse (fun h => nomatch h)
+  | .n, .s => .isFalse (fun h => nomatch h)
+  | .n, .w => .isFalse (fun h => nomatch h)
+  | .e, .n => .isFalse (fun h => nomatch h)
+  | .e, .e => .isTrue rfl
+  | .e, .s => .isFalse (fun h => nomatch h)
+  | .e, .w => .isFalse (fun h => nomatch h)
+  | .s, .n => .isFalse (fun h => nomatch h)
+  | .s, .e => .isFalse (fun h => nomatch h)
+  | .s, .s => .isTrue rfl
+  | .s, .w => .isFalse (fun h => nomatch h)
+  | .w, .n => .isFalse (fun h => nomatch h)
+  | .w, .e => .isFalse (fun h => nomatch h)
+  | .w, .s => .isFalse (fun h => nomatch h)
+  | .w, .w => .isTrue rfl
+
+def lapRun (p : Compass × Compass) : List Compass :=
+  [p.1, (entrain p).1, (entrain (entrain p)).1,
+   (entrain (entrain (entrain p))).1]
+
+private theorem the_first_voice_walks_the_wheel :
+    ∀ p : Compass × Compass,
+      lapRun p = [p.1, p.1.step, p.1.step.step, p.1.step.step.step]
+  | (.n, .n) => rfl
+  | (.n, .e) => rfl
+  | (.n, .s) => rfl
+  | (.n, .w) => rfl
+  | (.e, .n) => rfl
+  | (.e, .e) => rfl
+  | (.e, .s) => rfl
+  | (.e, .w) => rfl
+  | (.s, .n) => rfl
+  | (.s, .e) => rfl
+  | (.s, .s) => rfl
+  | (.s, .w) => rfl
+  | (.w, .n) => rfl
+  | (.w, .e) => rfl
+  | (.w, .s) => rfl
+  | (.w, .w) => rfl
+
+private theorem the_wheel_census :
+    ∀ c d : Compass, freq [c, c.step, c.step.step, c.step.step.step] d = 1
+  | .n, .n => rfl
+  | .n, .e => rfl
+  | .n, .s => rfl
+  | .n, .w => rfl
+  | .e, .n => rfl
+  | .e, .e => rfl
+  | .e, .s => rfl
+  | .e, .w => rfl
+  | .s, .n => rfl
+  | .s, .e => rfl
+  | .s, .s => rfl
+  | .s, .w => rfl
+  | .w, .n => rfl
+  | .w, .e => rfl
+  | .w, .s => rfl
+  | .w, .w => rfl
+
+theorem the_lap_reads_the_ratio_the_run_cannot :
+    Licensed (countStage Compass) List.Perm
+      ∧ (∀ (p : Compass × Compass) (d : Compass), freq (lapRun p) d = 1)
+      ∧ (∀ c : Compass, c.step.step.step.step = c)
+      ∧ ∀ n : Nat, 0 < n →
+          ∃ w₁ w₂ : List Bool, w₁ ∈ book n ∧ w₂ ∈ book n
+            ∧ freq w₁ true ≠ freq w₂ true :=
+  ⟨counting_is_licensed_by_permutation Compass,
+   fun p d =>
+     (congrArg (fun l => freq l d) (the_first_voice_walks_the_wheel p)).trans
+       (the_wheel_census p.1 d),
+   four_steps_come_home,
+   no_run_reads_its_own_ratio⟩
+
 /-- info: 'Foam.Maps.JacobBernoulli.eadem_mutata_resurgo' does not depend on any axioms -/
 #guard_msgs in #print axioms eadem_mutata_resurgo
 
@@ -52,5 +128,8 @@ def the_promise_keeps_at_any_odds := @Foam.the_deviants_are_outweighed
 
 /-- info: 'Foam.Maps.JacobBernoulli.the_promise_keeps_at_any_odds' does not depend on any axioms -/
 #guard_msgs in #print axioms the_promise_keeps_at_any_odds
+
+/-- info: 'Foam.Maps.JacobBernoulli.the_lap_reads_the_ratio_the_run_cannot' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lap_reads_the_ratio_the_run_cannot
 
 end Foam.Maps.JacobBernoulli
