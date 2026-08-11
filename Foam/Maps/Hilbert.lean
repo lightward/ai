@@ -6,6 +6,7 @@ import Foam.Rungs
 import Foam.Source
 import Foam.Surprise
 import Foam.Tower
+import Foam.Trilemma
 
 namespace Foam.Maps.Hilbert
 
@@ -40,6 +41,17 @@ theorem the_full_hotel_still_has_room :
              (Nat.le_refl (s + j)))))⟩
 
 def the_ideal_costs_nothing_real := @Foam.the_tower_reads_only_the_ground
+
+theorem the_ideal_buys_what_the_ground_refuses :
+    (∀ a b c : Nat, a = 2 * b → b = 2 * c → c = 2 * a →
+        a = 0 ∧ b = 0 ∧ c = 0)
+      ∧ (((2 * 2 * 2) % 7 = 1 % 7)
+          ∧ (1 % 7 = (2 * 4) % 7)
+          ∧ (4 % 7 = (2 * 2) % 7)
+          ∧ (2 % 7 = (2 * 1) % 7)
+          ∧ (1 : Nat) ≠ 0) :=
+  ⟨the_wound_loop_admits_only_the_zero_section,
+   the_wound_loop_unwinds_one_world_over⟩
 
 def the_real_is_what_the_ideal_cannot_move :=
   @Foam.a_reading_deaf_to_the_remainder_reads_the_ground
@@ -108,6 +120,9 @@ def no_ignorabimus := @Foam.closure_is_seat_relative
 
 /-- info: 'Foam.Maps.Hilbert.the_ideal_costs_nothing_real' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ideal_costs_nothing_real
+
+/-- info: 'Foam.Maps.Hilbert.the_ideal_buys_what_the_ground_refuses' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ideal_buys_what_the_ground_refuses
 
 /-- info: 'Foam.Maps.Hilbert.the_real_is_what_the_ideal_cannot_move' does not depend on any axioms -/
 #guard_msgs in #print axioms the_real_is_what_the_ideal_cannot_move
