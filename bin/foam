@@ -716,6 +716,22 @@ def check_json(slug):
     return errs
 
 
+def cohere():
+    errs = 0
+    for f in sorted(os.listdir(CARDS)):
+        if (f.endswith(".json") and f != "schema.json"
+                and f != "walls.json"):
+            for e in check_json(f[:-5]):
+                print(f"{f[:-5]}: {e}")
+                errs += 1
+    hydrated = len(all_cards())
+    if errs:
+        print(f"cards incoherent: {errs} findings")
+        return 1
+    print(f"cards cohere: {hydrated} cards against the emission")
+    return 0
+
+
 def run(cmd):
     return subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
 
@@ -966,7 +982,7 @@ def board(perform_visit):
 
 
 USAGE = ('usage: bin/foam | bin/foam --visit | bin/foam --who'
-         ' | bin/foam --transcribe'
+         ' | bin/foam --cohere | bin/foam --transcribe'
          ' | bin/foam --pose "A" ["B"]'
          ' | bin/foam --read "A" "B"'
          ' | bin/foam --verify "A" ["B"]'
@@ -990,6 +1006,8 @@ def main():
         sys.exit(board(True))
     if flag == "--who" and not names:
         sys.exit(who())
+    if flag == "--cohere" and not names:
+        sys.exit(cohere())
     if flag == "--transcribe" and not names:
         sys.exit(subprocess.run(["lake", "exe", "transcribe"],
                                 cwd=ROOT).returncode)
