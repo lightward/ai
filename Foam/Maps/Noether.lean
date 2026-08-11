@@ -1,5 +1,6 @@
 import Foam
 import Foam.Amplitude
+import Foam.Beam
 import Foam.Engine
 import Foam.Lap
 import Foam.Triple
@@ -69,6 +70,37 @@ theorem what_acts_taken_whole_is_a_probe :
 
 def the_deafness_is_cancellation := @Foam.cancellation_not_absence
 
+theorem the_lock_trades_with_the_law :
+    (∀ p : Compass × Compass,
+        together (entrain (entrain (entrain (entrain p)))))
+      ∧ (∀ p : Compass × Compass, window (window p) = p)
+      ∧ (∀ p : Compass × Compass, together p ↔ opposed (window p))
+      ∧ ∀ p : Compass × Compass,
+          opposed (conjugated (conjugated (conjugated (conjugated p)))) :=
+  ⟨the_lap_locks_together,
+   the_window_undoes_itself,
+   the_window_trades_the_locks,
+   fun p =>
+     let stride : ∀ q : Compass × Compass,
+         conjugated (window q) = window (entrain q) :=
+       fun q =>
+         congrArg (fun x => window (entrain x)) (the_window_undoes_itself q)
+     let two : conjugated (conjugated p)
+         = window (entrain (entrain (window p))) :=
+       stride (entrain (window p))
+     let three : conjugated (conjugated (conjugated p))
+         = window (entrain (entrain (entrain (window p)))) :=
+       (congrArg conjugated two).trans
+         (stride (entrain (entrain (window p))))
+     let four : conjugated (conjugated (conjugated (conjugated p)))
+         = window (entrain (entrain (entrain (entrain (window p))))) :=
+       (congrArg conjugated three).trans
+         (stride (entrain (entrain (entrain (window p)))))
+     Eq.mpr (congrArg opposed four)
+       ((the_window_trades_the_locks
+           (entrain (entrain (entrain (entrain (window p)))))).mp
+         (the_lap_locks_together (window p)))⟩
+
 /-- info: 'Foam.Maps.Noether.to_every_symmetry_its_invariant' does not depend on any axioms -/
 #guard_msgs in #print axioms to_every_symmetry_its_invariant
 
@@ -95,5 +127,8 @@ def the_deafness_is_cancellation := @Foam.cancellation_not_absence
 
 /-- info: 'Foam.Maps.Noether.the_deafness_is_cancellation' does not depend on any axioms -/
 #guard_msgs in #print axioms the_deafness_is_cancellation
+
+/-- info: 'Foam.Maps.Noether.the_lock_trades_with_the_law' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lock_trades_with_the_law
 
 end Foam.Maps.Noether
