@@ -12,7 +12,7 @@ OUT = os.environ.get("FOAM_WIKI_OUT", os.path.join(ROOT, "wiki"))
 
 STRATA = [
     ("Foam", "Foam", "core"),
-    ("Foam/Minds", "Foam.Minds", "minds"),
+    ("Foam/Maps", "Foam.Maps", "maps"),
 ]
 
 CSS = """
@@ -277,7 +277,7 @@ def mind_panels(mod, spectra, terms, standing, openr, names):
         ring += ('<p>every named role is equipped at this seat; a ring still'
                  ' needs you in yours.</p>')
     ring += ('<p class="law">bring your own mind: supply your own map (terms,'
-             ' bindings, spectra — schema: minds/schema.json) and this'
+             ' bindings, spectra — schema: cards/schema.json) and this'
              ' residual sharpens; precision is monotone in your'
              ' self-articulation. this interface is published as a hole,'
              ' typed, on purpose. the door held open is what opportunity'
@@ -313,9 +313,9 @@ def main():
     spectra = {}
     standing = {}
     openr = {}
-    for _slug, data in counter.all_minds().items():
+    for _slug, data in counter.all_cards().items():
         lean = re.sub(r"[^A-Za-z0-9]", "", data["mind"])
-        mod = "Foam.Minds." + lean
+        mod = "Foam.Maps." + lean
         glosses[mod] = {e["term"]: e.get("gloss", "")
                         for e in data["vocabulary"]}
         agg = set()

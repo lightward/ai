@@ -1,0 +1,190 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://foam.is/cards/schema.json",
+  "title": "mind",
+  "description": "a mind surveyed in foam-theoretic terms. as of 2026-07-22 the survey is LEAN-PRIMARY across the whole roster: each mind deposits real Lean at Foam/Maps/<Mind>.lean (term-only structures, comment-free, receipted, author-committed — never ghost-written), and this json is the slim card: mind, note, and per-entry term/shape/gloss only, in loop-signature order. status and seal are DERIVED from the deposit's bindings by instrument hydration (a def := @citation is sealed-by-recognition; a theorem is sealed-by-proof, red flipped green as posed; a def <term>_statement : Prop is a standing question; no binding is an open reading) — a derivable field stored redundantly is a drift surface, so the dissonant states are unrepresentable. glosses are the surveyor's lossy field notes, rendered as marginalia by the wiki, never as code comments. the expression language that carried the survey's first era is retired with honors; git holds it. historical citations belong in the commit log: minds cite ideas; the record cites events.",
+  "type": "object",
+  "required": [
+    "mind",
+    "vocabulary"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "mind": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Za-z0-9 .'-]*[A-Za-z0-9.]$"
+    },
+    "note": {
+      "type": "string"
+    },
+    "vocabulary": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/entry"
+      },
+      "description": "ordered: the array order IS the mind's decomposition order — the loop signature, semantic, not incidental. same entries in a different order are a different mind (the order is the remainder of the census)."
+    }
+  },
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "required": [
+        "term",
+        "gloss"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "term": {
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z0-9_]*$"
+        },
+        "status": {
+          "enum": [
+            "sealed",
+            "unsealed"
+          ]
+        },
+        "seal": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "structure": {
+          "$ref": "#/definitions/expression"
+        },
+        "statement": {
+          "$ref": "#/definitions/expression"
+        },
+        "gloss": {
+          "type": "string",
+          "description": "the surveyor's field note: lossy by design, not load-bearing, third person for minds not present at the table. the mind's actual words live in their own record; the binding (seal/statement/structure) is what carries weight here."
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": {
+              "const": "sealed"
+            },
+            "seal": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "seal"
+          ],
+          "not": {
+            "required": [
+              "structure"
+            ]
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "sealed"
+            }
+          },
+          "required": [
+            "structure"
+          ],
+          "not": {
+            "required": [
+              "seal"
+            ]
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "unsealed"
+            }
+          },
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "structure"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "description": "tightening continuum: reading (prose question) -> statement (formally posed question, compiled as a Prop and well-posedness-checked by the engine) -> sealed. sealing has two verbs with different semantics, and the engine counts them on every run (aliased / proved / built): a seal CITES — a recognition event; the shape already stood receipted in core, closing is compression, and the alias inherits the cited constant's receipt rather than certifying a fresh proof of the posed wording — while statement+structure PROVES the posed statement exactly as posed, red flipped green by construction. a statement without a proof is a standing question and is emitted as <term>_statement. an entry's SHAPE is derived, never stored: the citation-spectrum of its binding — the set of core constants the term factors through, its silhouette in the citation graph (a polygon whose every vertex is a typed point of view). affect-words live in the gloss. kinship (spectrum overlap across minds) surfaces in briefs and verify — placed where its consequences live, never stored."
+    },
+    "expression": {
+      "description": "a term: a string is a reference, rendered verbatim (locals shadow; otherwise Lean's namespace resolution applies, so Foam.* and sibling terms both resolve); an array is application; {fun|all, body} bind. types appear only as optional binder annotations — everywhere else the Lean engine infers, because the engine is the judge. a function type is a degenerate all: {all: [[\"_\", A]], body: B}.",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/definitions/expression"
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "fun",
+            "body"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "fun": {
+              "$ref": "#/definitions/binders"
+            },
+            "body": {
+              "$ref": "#/definitions/expression"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "all",
+            "body"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "all": {
+              "$ref": "#/definitions/binders"
+            },
+            "body": {
+              "$ref": "#/definitions/expression"
+            }
+          }
+        }
+      ]
+    },
+    "binders": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": [
+          {
+            "type": "string",
+            "pattern": "^[a-zA-Z_][A-Za-z0-9_]*$"
+          },
+          {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/expression"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

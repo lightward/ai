@@ -60,10 +60,10 @@ import sys
 import textwrap
 
 ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-MINDS = os.path.join(ROOT, "minds")
-DEPOSITS = os.path.join(ROOT, "Foam", "Minds")
+CARDS = os.path.join(ROOT, "cards")
+DEPOSITS = os.path.join(ROOT, "Foam", "Maps")
 BRIEFS = os.path.join(ROOT, "briefs")
-WALLS = os.path.join(MINDS, "walls.json")
+WALLS = os.path.join(CARDS, "walls.json")
 
 MIND_PAT = r"[A-Z][A-Za-z0-9 .'-]*[A-Za-z0-9.]"
 PHASES = ("--pose", "--read", "--verify", "--interview")
@@ -166,7 +166,7 @@ def hydrate(data):
             e["status"] = "sealed"
         elif t in standing:
             e["status"] = "unsealed"
-            e["statement"] = f"(posed in Foam/Minds/{lref})"
+            e["statement"] = f"(posed in Foam/Maps/{lref})"
         elif t in built:
             e["status"] = "sealed"
         else:
@@ -208,25 +208,25 @@ def deposit_spectra(mind):
     return spectra
 
 
-def all_minds():
+def all_cards():
     out = {}
-    for f in sorted(os.listdir(MINDS)):
+    for f in sorted(os.listdir(CARDS)):
         if (f.endswith(".json") and f != "schema.json"
                 and f != "walls.json"):
-            with open(os.path.join(MINDS, f), encoding="utf-8") as fh:
+            with open(os.path.join(CARDS, f), encoding="utf-8") as fh:
                 out[f[:-5]] = hydrate(json.load(fh))
     return out
 
 
 def sibling_seals(slugs):
     out = []
-    for s, data in all_minds().items():
+    for s, data in all_cards().items():
         if s in slugs:
             continue
         lean = lean_name(data["mind"])
         for e in data["vocabulary"]:
             if e.get("status") == "sealed":
-                out.append(f"Foam.Minds.{lean}.{e['term']}")
+                out.append(f"Foam.Maps.{lean}.{e['term']}")
     return out
 
 
@@ -244,7 +244,7 @@ def promotion_candidates():
                 if b[1] is not None:
                     walk(b[1], where)
             walk(expr["body"], where)
-    for slug, data in all_minds().items():
+    for slug, data in all_cards().items():
         for e in data["vocabulary"]:
             for f in ("statement", "structure"):
                 if f in e:
@@ -317,7 +317,7 @@ def signature_lines(data):
 
 def record_lines(slugs):
     lines = ["## the record, scoped (the order-reading reaches this seat)", ""]
-    paths = [f"minds/{s}.json" for s in slugs]
+    paths = [f"cards/{s}.json" for s in slugs]
     log = run(["git", "log", "-n", "8", "--format=%h %ad %s",
                "--date=short", "--"] + paths).stdout.strip()
     if log:
@@ -385,21 +385,21 @@ def deposit_discipline_lines(data, slug):
     if data.get("_lean_primary"):
         lines += [
             "this mind is LEAN-PRIMARY: bindings live in",
-            "`Foam/Minds/" + lean_name(mind) + ".lean` — real Lean, term-only (no",
+            "`Foam/Maps/" + lean_name(mind) + ".lean` — real Lean, term-only (no",
             "tactics in structures), comment-free, receipts required, kept",
             "not expressed: the deposit IS the built module — what you edit",
             "is what lake builds and what the audits read. the card",
-            "(`minds/" + slug + ".json`) holds only term/shape/gloss per entry;",
+            "(`cards/" + slug + ".json`) holds only term/shape/gloss per entry;",
             "status and seal are DERIVED from the deposit's bindings, never",
             "stored. deposit by editing the .lean file and the card together.",
         ]
     else:
         lines += [
             "this seat holds no deposit yet: open its module at",
-            "`Foam/Minds/" + lean_name(mind) + ".lean` (namespace",
-            "`Foam.Minds." + lean_name(mind) + "`, term-only, comment-free,",
-            "receipts required) and the card at `minds/" + slug + ".json`",
-            "(schema: `minds/schema.json`) together. the deposit is kept, not",
+            "`Foam/Maps/" + lean_name(mind) + ".lean` (namespace",
+            "`Foam.Maps." + lean_name(mind) + "`, term-only, comment-free,",
+            "receipts required) and the card at `cards/" + slug + ".json`",
+            "(schema: `cards/schema.json`) together. the deposit is kept, not",
             "expressed: what you write is what lake builds.",
         ]
     return lines
@@ -556,8 +556,8 @@ def meeting_brief(dataA, dataB, slugA, slugB):
         "survey, do not impersonate — both banks. glosses are the surveyor's",
         "field notes, third person for any mind not present at the table.",
         "each mind's entries land on its OWN card in its OWN decomposition",
-        "order; the meeting deposits no shared card — minds never import",
-        "minds, and the shared shape's home is core, under a NEUTRAL name.",
+        "order; the meeting deposits no shared card — maps never import",
+        "maps, and the shared shape's home is core, under a NEUTRAL name.",
         "",
         "depth of familiarity precedes deposition, doubled: walk both banks'",
         "references before carving either. for living minds your weights",
@@ -635,18 +635,18 @@ def between_lines(a, b):
 
 
 def scaffold(mind, slug):
-    path = os.path.join(MINDS, f"{slug}.json")
+    path = os.path.join(CARDS, f"{slug}.json")
     if os.path.exists(path):
         return []
     with open(path, "w", encoding="utf-8") as fh:
         json.dump({"mind": mind, "note": "", "vocabulary": []},
                   fh, indent=2, ensure_ascii=False)
         fh.write("\n")
-    return [f"minds/{slug}.json (scaffold)"]
+    return [f"cards/{slug}.json (scaffold)"]
 
 
 def load_card(slug):
-    with open(os.path.join(MINDS, f"{slug}.json"), encoding="utf-8") as fh:
+    with open(os.path.join(CARDS, f"{slug}.json"), encoding="utf-8") as fh:
         return hydrate(json.load(fh))
 
 
@@ -686,7 +686,7 @@ def pose(minds):
 
 
 def check_json(slug):
-    path = os.path.join(MINDS, f"{slug}.json")
+    path = os.path.join(CARDS, f"{slug}.json")
     with open(path, encoding="utf-8") as fh:
         data = json.load(fh)
     errs = []
@@ -747,7 +747,7 @@ def verify(minds):
             if os.path.exists(product):
                 os.utime(product)
                 r = run(["lake", "build",
-                         "./Foam/Minds/" + lean_name(mind) + ".lean"])
+                         "./Foam/Maps/" + lean_name(mind) + ".lean"])
                 warns = [l for l in (r.stdout + r.stderr).splitlines()
                          if "warning" in l]
                 for w in warns:
@@ -757,7 +757,7 @@ def verify(minds):
         failures.append("comment audit failed:\n" + r.stdout)
     promos = promotion_candidates()
     seals = {}
-    for s, d in all_minds().items():
+    for s, d in all_cards().items():
         for e in d["vocabulary"]:
             if e.get("seal"):
                 seals.setdefault(e["seal"], []).append(
@@ -784,7 +784,7 @@ def verify(minds):
         print(f"  twin (one shape, many words): {seal}"
               f" ← {' & '.join(terms)}")
     allspec = {}
-    for sl, dd in all_minds().items():
+    for sl, dd in all_cards().items():
         for t, cites in deposit_spectra(dd["mind"]).items():
             allspec[f"{dd['mind']}.{t}"] = set(cites)
     names = sorted(allspec)
@@ -806,15 +806,15 @@ def interview(minds):
         mind, slug = minds[0]
         brief_name = lean_name(mind)
         seat = f"the mind '{mind}'"
-        record = (f"stage minds/{slug}.json, Foam/Minds/{lean_name(mind)}.lean"
-                  f" if you deposited, and minds/walls.json and commit them")
+        record = (f"stage cards/{slug}.json, Foam/Maps/{lean_name(mind)}.lean"
+                  f" if you deposited, and cards/walls.json and commit them")
         gate = f'`bin/foam --verify "{mind}"`'
     else:
         (a, sa), (b, sb) = minds
         brief_name = lean_name(a) + "--" + lean_name(b)
         seat = f"the meeting of '{a}' and '{b}'"
-        record = (f"stage minds/{sa}.json, minds/{sb}.json, any deposits"
-                  f" under Foam/Minds/, and minds/walls.json and commit them")
+        record = (f"stage cards/{sa}.json, cards/{sb}.json, any deposits"
+                  f" under Foam/Maps/, and cards/walls.json and commit them")
         gate = f'`bin/foam --verify "{a}" "{b}"`'
     with open(os.path.join(BRIEFS, brief_name + ".md"),
               encoding="utf-8") as fh:
@@ -868,7 +868,7 @@ def read_edge(a, b):
     sa, sb = spectrum(a), spectrum(b)
     if not sa or not sb:
         missing = a if not sa else b
-        print(f"{missing}: no deposit spectrum found (no minds/<Mind>.lean?)")
+        print(f"{missing}: no deposit spectrum found (no Foam/Maps/<Mind>.lean?)")
         return 1
     shared = sorted(sa & sb)
     only_a = sorted(sa - sb)
@@ -894,7 +894,7 @@ def who():
     walls = load_walls()
     inv = set(core_inventory())
     rows = []
-    for slug, data in all_minds().items():
+    for slug, data in all_cards().items():
         seen = set(walls.get(slug, []))
         delta = len(inv - seen)
         standing = [e["term"] for e in data["vocabulary"]
@@ -927,7 +927,7 @@ def wrap(label, items):
 def board(perform_visit):
     walls = load_walls()
     inv = set(core_inventory())
-    minds = all_minds()
+    minds = all_cards()
     charged, standing, openr = [], [], []
     for slug, data in minds.items():
         delta = len(inv - set(walls.get(slug, [])))
@@ -941,7 +941,7 @@ def board(perform_visit):
     promos = promotion_candidates()
     sponsor = run([sys.executable, ".github/sponsor_audit.py"])
     print(f"foam: reading the board at HEAD"
-          f" ({len(inv)} core constants, {len(minds)} minds seated)")
+          f" ({len(inv)} core constants, {len(minds)} seatings)")
     wrap("charged seats (unread walls)",
          [f"{m} ({d})" for d, m in charged])
     wrap("standing poses (typed vacancies, red on purpose)", standing)

@@ -20,7 +20,7 @@ serving suggestion:
 * `bin/foam --pose <A> <B>` - the meeting: one brief, two banks, the disagreement held as typed darkness, either seat scaffolded on demand — a carve minted at a meeting has two sponsoring customers by construction; `--read <A> <B>` prints the between-reading (shared and exclusive vertices) without writing; `--verify` and `--interview` take the same two names
 * `bin/foam-wiki` - renders a human-friendly html site in `wiki/` (gitignored, but used for gh pages)
 
-a mind is two committed files: the deposit at `Foam/Minds/<Mind>.lean` (real Lean, term-only, comment-free, receipted — the built module itself, kept not expressed) and the card at `minds/<slug>.json` (note and glosses; status derived from the deposit, never stored).
+a mind is two committed files: the deposit at `Foam/Maps/<Mind>.lean` (real Lean, term-only, comment-free, receipted — the built module itself, kept not expressed) and the card at `cards/<slug>.json` (note and glosses; status derived from the deposit, never stored).
 
 ## ancestry
 
