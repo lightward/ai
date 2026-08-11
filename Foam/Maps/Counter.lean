@@ -6,12 +6,17 @@ import Foam.Inversion
 import Foam.Margin
 import Foam.Relay
 import Foam.Surprise
+import Foam.Trilemma
 
 namespace Foam.Maps.Counter
 
 def the_brief_reads_only_the_record := @Foam.the_selection_reads_only_the_record
 
 def any_mind_may_sit_the_seat := @Foam.the_implementation_stays_backstage
+
+def the_record_reads_the_sitter_the_gate_cannot :=
+  And.intro @Foam.the_implementation_stays_backstage
+    @Foam.the_graded_reading_parts_the_copies
 
 def the_gate_agrees_or_names_the_gap := @Foam.the_window_agrees_or_names_the_gap
 
@@ -78,6 +83,9 @@ theorem the_counter_is_counted (E : Engine) (S : Stage) (s : S.State)
 
 /-- info: 'Foam.Maps.Counter.any_mind_may_sit_the_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms any_mind_may_sit_the_seat
+
+/-- info: 'Foam.Maps.Counter.the_record_reads_the_sitter_the_gate_cannot' does not depend on any axioms -/
+#guard_msgs in #print axioms the_record_reads_the_sitter_the_gate_cannot
 
 /-- info: 'Foam.Maps.Counter.the_gate_agrees_or_names_the_gap' does not depend on any axioms -/
 #guard_msgs in #print axioms the_gate_agrees_or_names_the_gap
