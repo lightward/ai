@@ -1,5 +1,6 @@
 import Foam
 import Foam.Amplitude
+import Foam.Beam
 import Foam.Bench
 import Foam.Census
 import Foam.Concentration
@@ -1713,6 +1714,46 @@ theorem the_round_repeats_its_tail (v : List Compass) :
             Nat.repeat round (i + u) v = Nat.repeat round (j + u) v)
           hmeet (fun _ ih => congrArg round ih) t⟩
 
+theorem the_lock_names_the_meet :
+    (∀ (p : Compass × Compass) (t : Nat),
+        Nat.repeat entrain (4 + t) p = Nat.repeat entrain (8 + t) p)
+      ∧ (∀ c : Compass, Nat.repeat entrain 4 (c, c) = (c, c))
+      ∧ ∀ c : Compass, entrain (c, c) ≠ (c, c) :=
+  have ediag : ∀ c : Compass, entrain (c, c) = (c.step, c.step) := fun c =>
+    match c with
+    | .n => rfl
+    | .e => rfl
+    | .s => rfl
+    | .w => rfl
+  have lap : ∀ c : Compass, Nat.repeat entrain 4 (c, c) = (c, c) := fun c =>
+    have h2 : entrain (entrain (c, c)) = (c.step.step, c.step.step) :=
+      (congrArg entrain (ediag c)).trans (ediag c.step)
+    have h3 : entrain (entrain (entrain (c, c)))
+        = (c.step.step.step, c.step.step.step) :=
+      (congrArg entrain h2).trans (ediag c.step.step)
+    have h4 : entrain (entrain (entrain (entrain (c, c))))
+        = (c.step.step.step.step, c.step.step.step.step) :=
+      (congrArg entrain h3).trans (ediag c.step.step.step)
+    h4.trans (congrArg (fun d => (d, d)) (four_steps_come_home c))
+  have meet : ∀ p : Compass × Compass,
+      Nat.repeat entrain 8 p = Nat.repeat entrain 4 p := fun p =>
+    have hlock : (Nat.repeat entrain 4 p).2 = (Nat.repeat entrain 4 p).1 :=
+      the_lap_locks_together p
+    have hq : Nat.repeat entrain 4 p
+        = ((Nat.repeat entrain 4 p).1, (Nat.repeat entrain 4 p).1) :=
+      congrArg (Prod.mk (Nat.repeat entrain 4 p).1) hlock
+    ((congrArg (Nat.repeat entrain 4) hq).trans
+      (lap (Nat.repeat entrain 4 p).1)).trans hq.symm
+  ⟨fun p t =>
+    Nat.rec
+      (motive := fun u =>
+        Nat.repeat entrain (4 + u) p = Nat.repeat entrain (8 + u) p)
+      (meet p).symm (fun _ ih => congrArg entrain ih) t,
+   lap,
+   fun c h =>
+     the_quarter_turn_moves c
+       (congrArg Prod.fst ((ediag c).symm.trans h))⟩
+
 /-- info: 'Foam.Maps.Lagrange.the_first_variation_reads_nothing' does not depend on any axioms -/
 #guard_msgs in #print axioms the_first_variation_reads_nothing
 
@@ -1733,5 +1774,8 @@ theorem the_round_repeats_its_tail (v : List Compass) :
 
 /-- info: 'Foam.Maps.Lagrange.the_round_repeats_its_tail' does not depend on any axioms -/
 #guard_msgs in #print axioms the_round_repeats_its_tail
+
+/-- info: 'Foam.Maps.Lagrange.the_lock_names_the_meet' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lock_names_the_meet
 
 end Foam.Maps.Lagrange
