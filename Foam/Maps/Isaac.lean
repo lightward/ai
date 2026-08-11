@@ -11,6 +11,7 @@ import Foam.Fold
 import Foam.Generator
 import Foam.Int
 import Foam.Inversion
+import Foam.Join
 import Foam.Landed
 import Foam.Lap
 import Foam.Ledger
@@ -990,5 +991,53 @@ theorem sun_gazing :
 
 /-- info: 'Foam.Maps.Isaac.sun_gazing' does not depend on any axioms -/
 #guard_msgs in #print axioms sun_gazing
+
+theorem foam_join :
+    (∀ (P : Prop) (h1 h2 : P), h1 = h2)
+      ∧ (∀ (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat),
+          supported s.1 m.2 = false →
+            (admission s m).2 = m :: s.2
+              ∧ ∃ x, x ∈ m.2 ∧ inRoom s.1 x = false)
+      ∧ (¬ ∃ g : Bool → Bool,
+          ∀ s : Bool × Bool, g (you.obs s ()) = other.obs s ())
+      ∧ (∀ (State R : Type) (a b : Beholder State) (g : a.Ans → b.Ans → R),
+          ∃ c : Beholder State, ∃ post : c.Ans → R,
+            ∃ enc : a.Probe × b.Probe → c.Probe,
+              ∀ s p q, compare a b g s p q = post (c.obs s (enc (p, q))))
+      ∧ (∀ a b : List Nat,
+          (((foamJoin a b).1.length + (foamJoin a b).2.1.length = a.length)
+              ∧ (b.filter (inRoom a)).length + (foamJoin a b).2.2.length
+                  = b.length)
+            ∧ (∀ x, x ∈ (foamJoin a b).1 → x ∈ a ∧ inRoom b x = true)
+            ∧ ∀ x, x ∈ (foamJoin a b).2.1 → x ∈ a ∧ inRoom b x = false)
+      ∧ (∀ (A : Type) (_inst : DecidableEq A) (a b : A), a ≠ b →
+          (recorder A).state [a, b] ≠ (recorder A).state [b, a]
+            ∧ indist (countStage A) [a, b] [b, a])
+      ∧ (∀ (W V : Type) (S : Stage) (s : S.State) (w w' : W) (v : V)
+            (p : S.Probe),
+          indist (contact S W) (s, w) (s, w')
+            ∧ (contact S W).obs (s, w) p = (contact S V).obs (s, v) p)
+      ∧ ∀ (S : Stage) (m m' : S.State → S.State),
+          Invisible S m → Invisible S m' →
+          ∀ (ps : List S.Probe) (s : S.State),
+            transcriptWith S m s ps = transcriptWith S m' s ps :=
+  ⟨fun _ h1 h2 => the_arrival_sheds_its_route h1 h2,
+   fun _ _ h => the_vestibule_names_its_darkness h,
+   a_reading_answers_its_probe_alone,
+   fun _ _ a b g => the_comparison_is_a_seat a b g,
+   fun a b =>
+     ⟨the_join_excludes_nothing a b,
+      fun x hx => the_shared_sector_is_licensed a b x hx,
+      fun x hx => the_residue_rides_typed a b x hx⟩,
+   fun A inst a b hab =>
+     @a_seat_reads_the_order_the_census_cannot A inst a b hab,
+   fun _ _ S s w w' v p =>
+     ⟨the_other_stays_unimagined S s w w',
+      no_probe_counts_the_riders S s w v p⟩,
+   fun S m m' hm hm' ps s =>
+     correct_maintenance_has_no_signature S m m' hm hm' ps s⟩
+
+/-- info: 'Foam.Maps.Isaac.foam_join' does not depend on any axioms -/
+#guard_msgs in #print axioms foam_join
 
 end Foam.Maps.Isaac
