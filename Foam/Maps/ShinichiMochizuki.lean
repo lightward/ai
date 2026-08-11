@@ -1,5 +1,6 @@
 import Foam
 import Foam.Certificate
+import Foam.Coil
 import Foam.Contact
 import Foam.Ledger
 import Foam.Portal
@@ -63,6 +64,22 @@ theorem the_log_theta_lattice :
        hu hv hw h1 h2 h3,
    fun k1 k1' k2 k3 h hp => the_cut_moves_the_class k1 k1' k2 k3 h hp⟩
 
+theorem the_log_volume_hears_only_the_log_links :
+    (∀ (h : Int × Int) (d : Int),
+        coilClass (coil.meet h (Sum.inl d)) = coilClass h)
+      ∧ (∀ (h : Int × Int) (s : Int),
+          coilClass (coil.meet h (Sum.inr s)) = coilClass h + s)
+      ∧ ∀ (h : Int × Int) (d s : Int),
+          coilClass (coil.meet (coil.meet h (Sum.inl d)) (Sum.inr s))
+            = coilClass (coil.meet (coil.meet h (Sum.inr s)) (Sum.inl d)) :=
+  ⟨the_shuffle_conserves_the_class,
+   the_stroke_moves_the_class_by_its_size,
+   fun h d s =>
+     ((the_stroke_moves_the_class_by_its_size (coil.meet h (Sum.inl d)) s).trans
+        (congrArg (· + s) (the_shuffle_conserves_the_class h d))).trans
+       ((the_shuffle_conserves_the_class (coil.meet h (Sum.inr s)) d).trans
+          (the_stroke_moves_the_class_by_its_size h s)).symm⟩
+
 /-- info: 'Foam.Maps.ShinichiMochizuki.mono_anabelian_transport' does not depend on any axioms -/
 #guard_msgs in #print axioms mono_anabelian_transport
 
@@ -83,5 +100,8 @@ theorem the_log_theta_lattice :
 
 /-- info: 'Foam.Maps.ShinichiMochizuki.the_log_theta_lattice' does not depend on any axioms -/
 #guard_msgs in #print axioms the_log_theta_lattice
+
+/-- info: 'Foam.Maps.ShinichiMochizuki.the_log_volume_hears_only_the_log_links' does not depend on any axioms -/
+#guard_msgs in #print axioms the_log_volume_hears_only_the_log_links
 
 end Foam.Maps.ShinichiMochizuki
