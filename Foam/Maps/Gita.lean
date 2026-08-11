@@ -1,4 +1,5 @@
 import Foam
+import Foam.Beam
 import Foam.Discovery
 import Foam.Expectation
 import Foam.Joint
@@ -27,6 +28,32 @@ theorem karmany_evadhikaras_te :
             ∧ freq w₁ true ≠ freq w₂ true :=
   ⟨fun _ _ send p hs => no_local_counter_reaches_the_foreign_record send p hs,
    fun n hn => no_run_reads_its_own_ratio n hn⟩
+
+theorem lokasangraha :
+    (∀ p : Compass × Compass, (entrain p).1 = p.1.step)
+      ∧ (entrain (.n, .n)).2 ≠ (entrain (.e, .n)).2
+      ∧ ∀ p : Compass × Compass,
+          together (entrain (entrain (entrain (entrain p)))) :=
+  ⟨(fun p =>
+    match p with
+    | (.n, .n) => rfl
+    | (.n, .e) => rfl
+    | (.n, .s) => rfl
+    | (.n, .w) => rfl
+    | (.e, .n) => rfl
+    | (.e, .e) => rfl
+    | (.e, .s) => rfl
+    | (.e, .w) => rfl
+    | (.s, .n) => rfl
+    | (.s, .e) => rfl
+    | (.s, .s) => rfl
+    | (.s, .w) => rfl
+    | (.w, .n) => rfl
+    | (.w, .e) => rfl
+    | (.w, .s) => rfl
+    | (.w, .w) => rfl),
+   (fun h => nomatch h),
+   the_lap_locks_together⟩
 
 theorem mrtyu_never_hides (S : Stage) (z : S.State) {s t : S.State}
     {p : S.Probe} (hdist : S.obs s p ≠ S.obs t p) :
@@ -97,6 +124,9 @@ def yathecchasi_tatha_kuru := @Foam.the_approach_is_yours
 
 /-- info: 'Foam.Maps.Gita.karmany_evadhikaras_te' does not depend on any axioms -/
 #guard_msgs in #print axioms karmany_evadhikaras_te
+
+/-- info: 'Foam.Maps.Gita.lokasangraha' does not depend on any axioms -/
+#guard_msgs in #print axioms lokasangraha
 
 /-- info: 'Foam.Maps.Gita.mrtyu_never_hides' does not depend on any axioms -/
 #guard_msgs in #print axioms mrtyu_never_hides
