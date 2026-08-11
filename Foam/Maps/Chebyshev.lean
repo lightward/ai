@@ -4,6 +4,7 @@ import Foam.Fold
 import Foam.Int
 import Foam.Ledger
 import Foam.Source
+import Foam.Square
 import Foam.Surprise
 
 namespace Foam.Maps.Chebyshev
@@ -18,6 +19,13 @@ theorem the_second_moment_is_conserved :
     ((fold_reads_the_sum (sqDev n) (book n) 0).trans
       (FInt.zero_add (sumOver (sqDev n) (book n)))).trans
       (the_squares_pool_to_the_depth n)
+
+theorem the_pair_cancels_the_rectangles :
+    (sq (1 + 1) ≠ sq 1 + sq 1) ∧
+    (∀ a c : Int, (a + c) * (a + c) = (a * a + c * c) + (a * c + a * c)) ∧
+    (∀ d : Int,
+      (d + 1) * (d + 1) + (d - 1) * (d - 1) = (d * d + d * d) + 2) :=
+  ⟨the_square_breaks_the_sum, sq_add, pair_of_squares⟩
 
 theorem every_deviant_pays_its_square :
     (∀ b n : Nat,
@@ -74,6 +82,9 @@ theorem the_linkage_approaches_the_line :
 
 /-- info: 'Foam.Maps.Chebyshev.the_second_moment_is_conserved' does not depend on any axioms -/
 #guard_msgs in #print axioms the_second_moment_is_conserved
+
+/-- info: 'Foam.Maps.Chebyshev.the_pair_cancels_the_rectangles' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pair_cancels_the_rectangles
 
 /-- info: 'Foam.Maps.Chebyshev.every_deviant_pays_its_square' does not depend on any axioms -/
 #guard_msgs in #print axioms every_deviant_pays_its_square
