@@ -1,5 +1,6 @@
 import Foam
 import Foam.Amplitude
+import Foam.Beam
 import Foam.Certificate
 import Foam.Contact
 import Foam.Continuum
@@ -935,7 +936,10 @@ theorem sun_gazing :
       ∧ ((∀ z w : GInt, z.align w + z.align w.rot.rot = 0)
           ∧ GInt.align ⟨1, 1⟩ (GInt.rot ⟨1, 0⟩) ≠ 0
           ∧ ∀ z : GInt, ∃ s : GInt, GInt.add z s = ⟨0, 0⟩)
-      ∧ ((∀ v : List Compass, tared v → tared (round v))
+      ∧ ((∀ p : Compass × Compass,
+            together (entrain (entrain (entrain (entrain p)))))
+          ∧ (∀ c : Compass, entrain (c, c) = (c.step, c.step))
+          ∧ (∀ v : List Compass, tared v → tared (round v))
           ∧ round [Compass.n, Compass.n, Compass.n, Compass.e]
               = [Compass.e, Compass.e, Compass.e, Compass.e]
           ∧ (∀ a : Compass, round [a, a, a.step.step, a.step.step]
@@ -969,7 +973,9 @@ theorem sun_gazing :
     fun z => ⟨GInt.neg z,
       congr (congrArg GInt.mk (FInt.add_right_neg z.re))
         (FInt.add_right_neg z.im)⟩⟩,
-   ⟨fun v hv => the_round_keeps_unison v hv,
+   ⟨the_lap_locks_together,
+    fun | .n => rfl | .e => rfl | .s => rfl | .w => rfl,
+    fun v hv => the_round_keeps_unison v hv,
     rfl,
     the_split_round_carries,
     the_quarter_turn_moves⟩,
