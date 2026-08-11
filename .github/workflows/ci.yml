@@ -44,6 +44,8 @@ jobs:
         run: python3 .github/sponsor_audit.py
       - name: The cards cohere (the emission and the survey agree, every push)
         run: bin/foam --cohere
+      - name: Foam admits itself (the import graph through Foam.admission)
+        run: lake exe admit
       - name: The recitation certifies (transcribe, compile the emission, twice for determinism)
         run: |
           lake exe transcribe > /tmp/genome.lean

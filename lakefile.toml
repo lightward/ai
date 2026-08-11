@@ -12,3 +12,7 @@ root = "Transcribe"
 [[lean_exe]]
 name = "census"
 root = "Census"
+
+[[lean_exe]]
+name = "admit"
+root = "Admit"
