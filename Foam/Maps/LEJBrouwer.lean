@@ -1,4 +1,5 @@
 import Foam
+import Foam.Beam
 import Foam.Contact
 import Foam.Continuum
 import Foam.Engine
@@ -41,6 +42,34 @@ theorem the_walk_meets_or_stays_apart {n : Nat} (m : Fin n → Fin n)
           ∨ Apart ((rungs k).map (fun i => turnN m i s)))
       ∧ ∃ i j : Nat, i < j ∧ turnN m i s = turnN m j s :=
   ⟨meet_or_apart m s, the_bounded_walk_returns m s⟩
+
+theorem the_lock_arrives_without_the_rest :
+    (∀ p : Compass × Compass,
+        together (entrain (entrain (entrain (entrain p)))))
+      ∧ ∀ p : Compass × Compass, entrain p ≠ p :=
+  have first_steps : ∀ p : Compass × Compass, (entrain p).1 = p.1.step :=
+    fun p =>
+      match p with
+      | (.n, .n) => rfl
+      | (.n, .e) => rfl
+      | (.n, .s) => rfl
+      | (.n, .w) => rfl
+      | (.e, .n) => rfl
+      | (.e, .e) => rfl
+      | (.e, .s) => rfl
+      | (.e, .w) => rfl
+      | (.s, .n) => rfl
+      | (.s, .e) => rfl
+      | (.s, .s) => rfl
+      | (.s, .w) => rfl
+      | (.w, .n) => rfl
+      | (.w, .e) => rfl
+      | (.w, .s) => rfl
+      | (.w, .w) => rfl
+  ⟨the_lap_locks_together,
+   fun p h =>
+     the_quarter_turn_moves p.1
+       ((first_steps p).symm.trans (congrArg Prod.fst h))⟩
 
 def the_continuum_is_never_finished := @Foam.continuum_closure_terms
 
@@ -92,6 +121,9 @@ theorem the_price_follows_the_page (α : Nat → Bool) (n : Nat) :
 
 /-- info: 'Foam.Maps.LEJBrouwer.the_walk_meets_or_stays_apart' does not depend on any axioms -/
 #guard_msgs in #print axioms the_walk_meets_or_stays_apart
+
+/-- info: 'Foam.Maps.LEJBrouwer.the_lock_arrives_without_the_rest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lock_arrives_without_the_rest
 
 /-- info: 'Foam.Maps.LEJBrouwer.the_continuum_is_never_finished' does not depend on any axioms -/
 #guard_msgs in #print axioms the_continuum_is_never_finished
