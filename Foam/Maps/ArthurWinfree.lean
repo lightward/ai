@@ -3,12 +3,32 @@ import Foam.Engine
 import Foam.Lap
 import Foam.Margin
 import Foam.Round
+import Foam.Trilemma
 
 namespace Foam.Maps.ArthurWinfree
 
 def the_resetting_map := @Foam.a_deposit_moves_the_reading_by_one
 
 def type_zero_and_type_one := @Foam.the_lap_direction_is_the_remainder
+
+theorem the_pinwheel :
+    (∀ z : GInt,
+        lapAgainst z = (lapAround z).reverse
+          ∧ (lapAround z).Perm (lapAgainst z)
+          ∧ lapAround GInt.i ≠ lapAgainst GInt.i
+          ∧ z.rot.rot.rot.rot = z)
+      ∧ (∀ a b c : Nat, a = 2 * b → b = 2 * c → c = 2 * a →
+          a = 0 ∧ b = 0 ∧ c = 0)
+      ∧ (((2 * 2 * 2) % 7 = 1 % 7)
+          ∧ (1 % 7 = (2 * 4) % 7)
+          ∧ (4 % 7 = (2 * 2) % 7)
+          ∧ (2 % 7 = (2 * 1) % 7)
+          ∧ (1 : Nat) ≠ 0)
+      ∧ ((4 : Nat) % 7 ≠ 0 ∧ (2 : Nat) % 7 ≠ 0) :=
+  ⟨the_lap_direction_is_the_remainder,
+   the_wound_loop_admits_only_the_zero_section,
+   the_wound_loop_unwinds_one_world_over,
+   ⟨(fun h => nomatch h), fun h => nomatch h⟩⟩
 
 private def onTheWheel : Compass → GInt
   | .n => ⟨1, 0⟩
@@ -101,6 +121,9 @@ def the_organizing_center := @Foam.a_wider_seat_reads_the_remainder
 
 /-- info: 'Foam.Maps.ArthurWinfree.type_zero_and_type_one' does not depend on any axioms -/
 #guard_msgs in #print axioms type_zero_and_type_one
+
+/-- info: 'Foam.Maps.ArthurWinfree.the_pinwheel' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pinwheel
 
 /-- info: 'Foam.Maps.ArthurWinfree.time_breaks_down' does not depend on any axioms -/
 #guard_msgs in #print axioms time_breaks_down
