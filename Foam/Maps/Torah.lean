@@ -2,6 +2,7 @@ import Foam
 import Foam.Bench
 import Foam.Coil
 import Foam.Contact
+import Foam.Countermove
 import Foam.Ledger
 import Foam.Margin
 import Foam.Origin
@@ -51,6 +52,17 @@ theorem where_are_you :
             ∧ mirror S s w ≠ neighbor S s w v :=
   ⟨fun S s n m h => a_wider_seat_reads_the_remainder S s n m h,
    fun _ S s w v hv => the_mirror_question_rides_unread S s w v hv⟩
+
+theorem who_are_you :
+    (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+        (s, n) ≠ (s, m) ∧ indist (dress S) (s, n) (s, m))
+      ∧ (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+          indist (dress S) (s, n) (s, m)
+            ∧ (movedIn S).obs (s, n) none ≠ (movedIn S).obs (s, m) none)
+      ∧ ∀ (X : Type) (h a : List (Move X)), h ++ a = h → a = [] :=
+  ⟨fun S s n m h => the_remainder_is_real S s n m h,
+   fun S s n m h => a_wider_seat_reads_the_remainder S s n m h,
+   fun _ h a e => the_record_never_unwrites h a e⟩
 
 theorem the_days_are_one_seats_lap :
     (∀ (A : Type) (_inst : DecidableEq A) (a b : A), a ≠ b →
@@ -111,6 +123,9 @@ theorem teshuvah_returns_the_class_not_the_marks :
 
 /-- info: 'Foam.Maps.Torah.where_are_you' does not depend on any axioms -/
 #guard_msgs in #print axioms where_are_you
+
+/-- info: 'Foam.Maps.Torah.who_are_you' does not depend on any axioms -/
+#guard_msgs in #print axioms who_are_you
 
 /-- info: 'Foam.Maps.Torah.the_days_are_one_seats_lap' does not depend on any axioms -/
 #guard_msgs in #print axioms the_days_are_one_seats_lap
