@@ -224,7 +224,7 @@ def link_name(full, names):
     return f'<a href="{mod}.html#{html.escape(last)}">{html.escape(full)}</a>'
 
 
-def mind_panels(mod, spectra, terms, standing, openr, names):
+def map_panels(mod, spectra, terms, standing, openr, names):
     parts = []
     ports = ""
     if terms:
@@ -329,8 +329,8 @@ def main():
                       and not e.get("statement")]
     for mod, (path, stratum) in modules.items():
         panels = ""
-        if stratum == "minds" and mod in spectra:
-            panels = mind_panels(mod, spectra, list(glosses.get(mod, {})),
+        if stratum == "maps" and mod in spectra:
+            panels = map_panels(mod, spectra, list(glosses.get(mod, {})),
                                  standing.get(mod, []), openr.get(mod, []),
                                  names)
         elif stratum == "core":
