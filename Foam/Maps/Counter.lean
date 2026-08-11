@@ -5,8 +5,10 @@ import Foam.Generator
 import Foam.Inversion
 import Foam.Margin
 import Foam.Relay
+import Foam.Seat
 import Foam.Surprise
 import Foam.Trilemma
+import Foam.Turnstile
 
 namespace Foam.Maps.Counter
 
@@ -113,5 +115,22 @@ theorem the_counter_is_counted (E : Engine) (S : Stage) (s : S.State)
 
 /-- info: 'Foam.Maps.Counter.the_counter_is_counted' does not depend on any axioms -/
 #guard_msgs in #print axioms the_counter_is_counted
+
+theorem the_turnstile :
+    (∀ (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat),
+        (admission s m).1.length + (admission s m).2.length
+          = (s.1.length + s.2.length) + 1)
+      ∧ (∀ xs ys : List Foam.turnstile.Mark,
+          Foam.turnstile.state (xs ++ ys)
+            = fold Foam.turnstile.meet (Foam.turnstile.state xs) ys)
+      ∧ ∀ (A B : Type) (f : B → A → B) (ps : List Unit) (s : B × List A),
+          transcriptWith (marginStage A B f) (settle f) s ps
+            = transcriptWith (marginStage A B f) (fun x => x) s ps :=
+  ⟨one_click_one_count,
+   fun xs ys => a_seat_resumes Foam.turnstile xs ys,
+   fun A B f ps s => any_settling_cadence_reads_the_same A B f ps s⟩
+
+/-- info: 'Foam.Maps.Counter.the_turnstile' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turnstile
 
 end Foam.Maps.Counter

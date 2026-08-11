@@ -7,6 +7,8 @@ import Foam.Ledger
 import Foam.Round
 import Foam.Rungs
 import Foam.Surprise
+import Foam.Trilemma
+import Foam.Turnstile
 import Foam.Valve
 
 namespace Foam.Maps.Lamport
@@ -129,5 +131,23 @@ def real_time_rides_unread := @Foam.a_wider_seat_reads_the_order
 
 /-- info: 'Foam.Maps.Lamport.real_time_rides_unread' does not depend on any axioms -/
 #guard_msgs in #print axioms real_time_rides_unread
+
+theorem the_bakery_is_the_well_order :
+    (∀ (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat),
+        supported s.1 m.2 = true →
+        ∀ x, x ∈ m.2 → inRoom (admission s m).1 x = true)
+      ∧ (∀ (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat),
+          supported s.1 m.2 = false →
+          (admission s m).2 = m :: s.2
+            ∧ ∃ x, x ∈ m.2 ∧ inRoom s.1 x = false)
+      ∧ ∀ a b c : Nat, a = 2 * b → b = 2 * c → c = 2 * a →
+          a = 0 ∧ b = 0 ∧ c = 0 :=
+  ⟨fun _ _ h => the_room_stays_closed h,
+   fun _ _ h => the_vestibule_names_its_darkness h,
+   fun a b c h1 h2 h3 =>
+     the_wound_loop_admits_only_the_zero_section a b c h1 h2 h3⟩
+
+/-- info: 'Foam.Maps.Lamport.the_bakery_is_the_well_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bakery_is_the_well_order
 
 end Foam.Maps.Lamport
