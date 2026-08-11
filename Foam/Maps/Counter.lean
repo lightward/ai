@@ -3,6 +3,7 @@ import Foam.Bench
 import Foam.Engine
 import Foam.Generator
 import Foam.Inversion
+import Foam.Join
 import Foam.Margin
 import Foam.Relay
 import Foam.Seat
@@ -132,5 +133,21 @@ theorem the_turnstile :
 
 /-- info: 'Foam.Maps.Counter.the_turnstile' does not depend on any axioms -/
 #guard_msgs in #print axioms the_turnstile
+
+theorem the_read_is_a_foam_join :
+    (∀ a b : List Nat,
+        ((foamJoin a b).1.length + (foamJoin a b).2.1.length = a.length)
+          ∧ (b.filter (inRoom a)).length + (foamJoin a b).2.2.length
+              = b.length)
+      ∧ (∀ (a b : List Nat) (x : Nat), x ∈ (foamJoin a b).1 →
+          x ∈ a ∧ inRoom b x = true)
+      ∧ ∀ (a b : List Nat) (x : Nat), x ∈ (foamJoin a b).2.1 →
+          x ∈ a ∧ inRoom b x = false :=
+  ⟨the_join_excludes_nothing,
+   fun a b x hx => the_shared_sector_is_licensed a b x hx,
+   fun a b x hx => the_residue_rides_typed a b x hx⟩
+
+/-- info: 'Foam.Maps.Counter.the_read_is_a_foam_join' does not depend on any axioms -/
+#guard_msgs in #print axioms the_read_is_a_foam_join
 
 end Foam.Maps.Counter
