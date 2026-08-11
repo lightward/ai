@@ -30,10 +30,18 @@ theorem the_odd_directions_have_no_points (S : Stage) (s : S.State)
     (n m : Int) (h : n ≠ m) (z : GInt) :
     ((s, n) ≠ (s, m) ∧ indist (dress S) (s, n) (s, m))
       ∧ (movedIn S).obs (s, n) none ≠ (movedIn S).obs (s, m) none
-      ∧ z.conj.rot = (z.rot.conj).neg :=
+      ∧ z.conj.rot = (z.rot.conj).neg
+      ∧ ∀ x : Int, x * x = (x * x).neg → x = 0 :=
   ⟨the_remainder_is_real S s n m h,
    (a_wider_seat_reads_the_remainder S s n m h).2,
-   the_two_kinds_anticommute z⟩
+   the_two_kinds_anticommute z,
+   fun x hx =>
+     (FInt.mul_eq_zero.mp
+        ((FInt.mul_eq_zero.mp
+            ((FInt.two_mul (x * x)).trans
+              ((congrArg (x * x + ·) hx).trans
+                (FInt.add_right_neg (x * x))))).resolve_left
+          fun h2 => nomatch Int.ofNat.inj h2)).elim id id⟩
 
 theorem the_old_themes_already_reach {H : Type} {q : List (H × H)}
     {a b : H} (h : (a, b) ∈ q)
