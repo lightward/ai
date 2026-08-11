@@ -1,4 +1,5 @@
 import Foam
+import Foam.Coil
 import Foam.Countermove
 import Foam.Ledger
 import Foam.Log
@@ -25,6 +26,22 @@ theorem a_macrostate_is_a_derived_role (S : Stage) (s : S.State)
   ⟨⟨a_role_is_conduct_not_costume S s,
     fun P hP t n m => a_derived_role_cannot_read_the_badge S P hP t n m⟩,
    a_seat_reads_the_order_the_census_cannot a b hab⟩
+
+theorem heat_moves_what_the_collision_cannot :
+    (∀ (h : Int × Int) (d : Int),
+        coilClass (coil.meet h (Sum.inl d)) = coilClass h)
+      ∧ (∀ (h : Int × Int) (s : Int),
+          coilClass (coil.meet h (Sum.inr s)) = coilClass h + s)
+      ∧ (∀ s : Int,
+          coilClass (coil.state [Sum.inr s, Sum.inr (-s)])
+              = coilClass coil.rest
+            ∧ ([Sum.inr s, Sum.inr (-s)] : List coil.Mark) ≠ [])
+      ∧ (coilClass (1, -1) = coilClass (0, 0)
+          ∧ ((1 : Int), (-1 : Int)) ≠ ((0 : Int), (0 : Int))) :=
+  ⟨the_shuffle_conserves_the_class,
+   the_stroke_moves_the_class_by_its_size,
+   the_return_pays_two_marks,
+   the_partition_rides_unread⟩
 
 theorem entropy_is_the_price_of_the_name (k n S W : Nat)
     (hW : W = (book n).length) (hS : S = k * n) :
@@ -88,6 +105,9 @@ def no_seat_inside_the_fluctuation := @Foam.no_run_reads_its_own_ratio
 
 /-- info: 'Foam.Maps.Boltzmann.a_macrostate_is_a_derived_role' does not depend on any axioms -/
 #guard_msgs in #print axioms a_macrostate_is_a_derived_role
+
+/-- info: 'Foam.Maps.Boltzmann.heat_moves_what_the_collision_cannot' does not depend on any axioms -/
+#guard_msgs in #print axioms heat_moves_what_the_collision_cannot
 
 /-- info: 'Foam.Maps.Boltzmann.entropy_is_the_price_of_the_name' does not depend on any axioms -/
 #guard_msgs in #print axioms entropy_is_the_price_of_the_name
