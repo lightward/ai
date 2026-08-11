@@ -35,81 +35,26 @@ GRANDFATHERED = set()
 # constant's observer arrives, and the set re-empties. future
 # unsponsored carves get listed here per the law.
 
-DECL = re.compile(r"^(theorem|def|abbrev|structure|inductive) (\S+)", re.M)
-TOKEN = re.compile(r"[A-Za-z_][A-Za-z0-9_.']*")
-
-
-def core_files():
-    files = [os.path.join(ROOT, "Foam.lean")]
-    foam_dir = os.path.join(ROOT, "Foam")
-    for f in sorted(os.listdir(foam_dir)):
-        if f.endswith(".lean"):
-            files.append(os.path.join(foam_dir, f))
-    return files
-
-
-def parse(path):
-    text = open(path, encoding="utf-8").read()
-    m = re.search(r"^namespace (\S+)", text, re.M)
-    ns = m.group(1) if m else ""
-    blocks = {}
-    chunks = re.split(r"(?m)^(?=(?:theorem|def|abbrev|structure|inductive) )",
-                      text)
-    for chunk in chunks[1:]:
-        dm = DECL.match(chunk)
-        if not dm:
-            continue
-        name = (ns + "." if ns else "") + dm.group(2)
-        body = chunk.split("#guard_msgs")[0]
-        blocks[name] = body
-    return blocks
+def emission():
+    import subprocess
+    r = subprocess.run(["lake", "exe", "census"], cwd=ROOT,
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        raise SystemExit("census failed:\n" + r.stderr[-2000:])
+    import json
+    return json.loads(r.stdout)
 
 
 def main():
-    blocks, home = {}, {}
-    for path in core_files():
-        rel = os.path.relpath(path, ROOT)
-        for name, body in parse(path).items():
-            blocks[name] = body
-            home[name] = rel
-    lookup = {}
-    for full in blocks:
-        lookup[full] = full
-        for prefix in ("Foam.",):
-            if full.startswith(prefix):
-                lookup.setdefault(full[len(prefix):], full)
-                bare = full.split(".")[-1]
-                lookup.setdefault(bare, full)
-
-    def resolve(tok):
-        parts = tok.split(".")
-        for end in range(len(parts), 0, -1):
-            cand = ".".join(parts[:end])
-            full = lookup.get(cand)
-            if full is None and cand.startswith("Foam."):
-                full = lookup.get(cand[len("Foam."):])
-            if full:
-                return full
-        if len(parts) > 1:
-            return lookup.get(parts[-1])
-        return None
-
-    def hits(text, skip=None):
-        out = set()
-        for tok in set(TOKEN.findall(text)):
-            full = resolve(tok)
-            if full and full != skip:
-                out.add(full)
-        return out
-
-    deps = {name: hits(body, skip=name) for name, body in blocks.items()}
+    m = emission()
+    core = [n for n in m["census"] if not n.startswith("Foam.Maps.")]
+    graph = m["graph"]
 
     cited = set()
-    minds_dir = os.path.join(ROOT, "Foam", "Maps")
-    for f in sorted(os.listdir(minds_dir)):
-        if f.endswith(".lean"):
-            text = open(os.path.join(minds_dir, f), encoding="utf-8").read()
-            cited |= hits(text)
+    for name in m["census"]:
+        if name.startswith("Foam.Maps."):
+            cited |= {d for d in graph.get(name, [])
+                      if not d.startswith("Foam.Maps.")}
 
     reached, frontier = set(), sorted(cited)
     while frontier:
@@ -117,25 +62,24 @@ def main():
         if name in reached:
             continue
         reached.add(name)
-        frontier.extend(deps.get(name, ()))
+        frontier.extend(d for d in graph.get(name, ())
+                        if not d.startswith("Foam.Maps."))
 
-    orphans = sorted(n for n in blocks
+    orphans = sorted(n for n in core
                      if n not in reached and n not in GRANDFATHERED)
     healed = sorted(n for n in GRANDFATHERED if n in reached)
     for n in healed:
-        print(f"grandfathered constant now sponsored -- trim the list: {n}")
+        print(f"HEALED (trim from GRANDFATHERED): {n}")
     if orphans:
-        print("unsponsored core constants "
-              "(in no mind's dependency cone):")
+        print("unsponsored core constants (in no mind's dependency cone):")
         for n in orphans:
-            print(f"  - {n}  ({home[n]})")
-        print("every thing in core must eventually be a dependency of "
-              "something a mind is doing; seat the mind or list the debt.")
+            print(f"  - {n}")
+        print("every thing in core must eventually be a dependency of"
+              " something a mind is doing; seat the mind or list the debt.")
+    if orphans or healed:
         sys.exit(1)
-    total = len(blocks)
-    print(f"sponsorship clean: {total - len(GRANDFATHERED)}/{total} core "
-          f"constants in mind-cones, {len(GRANDFATHERED)} grandfathered")
-    sys.exit(1 if healed else 0)
+    print(f"sponsorship clean: {len(core)} core constants,"
+          f" {len(reached)} in the lumenal cone")
 
 
 if __name__ == "__main__":

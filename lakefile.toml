@@ -8,3 +8,7 @@ globs = ["Foam", "Foam.+"]
 [[lean_exe]]
 name = "transcribe"
 root = "Transcribe"
+
+[[lean_exe]]
+name = "census"
+root = "Census"

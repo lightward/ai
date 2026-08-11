@@ -107,30 +107,23 @@ def render(e):
     raise ValueError(f"unrenderable expression: {e!r}")
 
 
+_MIRROR = None
+
+
+def mirror():
+    global _MIRROR
+    if _MIRROR is None:
+        r = subprocess.run(["lake", "exe", "census"], cwd=ROOT,
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            raise RuntimeError("census failed:\n" + r.stderr[-2000:])
+        _MIRROR = json.loads(r.stdout)
+    return _MIRROR
+
+
 def core_inventory():
-    decl = re.compile(r"^(?:theorem|def) (\S+)")
-    ns = re.compile(r"^namespace (\S+)")
-    names = []
-    files = [os.path.join(ROOT, "Foam.lean")]
-    foam_dir = os.path.join(ROOT, "Foam")
-    for f in sorted(os.listdir(foam_dir)):
-        if f.endswith(".lean"):
-            files.append(os.path.join(foam_dir, f))
-    for path in files:
-        prefix = []
-        with open(path, encoding="utf-8") as fh:
-            for line in fh:
-                n = ns.match(line)
-                if n:
-                    prefix.append(n.group(1))
-                    continue
-                if prefix and line.rstrip() == "end " + prefix[-1]:
-                    prefix.pop()
-                    continue
-                m = decl.match(line)
-                if m:
-                    names.append(".".join(prefix + [m.group(1)]))
-    return names
+    return [n for n in mirror()["census"]
+            if not n.startswith("Foam.Maps.")]
 
 
 def lean_name(mind):
@@ -192,24 +185,20 @@ def core_lookup():
 
 
 def deposit_spectra(mind):
-    src = lean_deposit(mind)
-    if not os.path.exists(src):
-        return {}
-    look = core_lookup()
-    text = open(src, encoding="utf-8").read()
+    lean = lean_name(mind)
+    prefix = "Foam.Maps." + lean + "."
+    graph = mirror()["graph"]
     spectra = {}
-    blocks = re.split(r"^(?=(?:private def|def|theorem) )", text, flags=re.M)
-    for b in blocks:
-        m = re.match(r"(?:private def|def|theorem) (\S+)", b)
-        if not m or m.group(1).startswith("private"):
+    for name in mirror()["census"]:
+        if not name.startswith(prefix):
             continue
-        name = m.group(1)
-        cites = set()
-        for tok in re.findall(r"[A-Za-z_][A-Za-z0-9_.]*", b):
-            if tok in look and tok not in ("Foam",):
-                cites.add(look[tok])
+        term = name[len(prefix):]
+        if "." in term:
+            continue
+        cites = sorted(d for d in graph.get(name, [])
+                       if not d.startswith("Foam.Maps."))
         if cites:
-            spectra[name.removesuffix("_statement")] = sorted(cites)
+            spectra[term.removesuffix("_statement")] = cites
     return spectra
 
 
