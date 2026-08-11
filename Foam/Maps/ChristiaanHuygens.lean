@@ -1,4 +1,5 @@
 import Foam
+import Foam.Beam
 import Foam.Engine
 import Foam.Expectation
 import Foam.Fold
@@ -171,6 +172,16 @@ theorem the_lock_reads_no_beam :
    the_beams_part,
    the_second_beam_ticks_not_plainly⟩
 
+theorem the_beam_decides_the_parity :
+    (∀ p : Compass × Compass,
+        together (entrain (entrain (entrain (entrain p)))))
+      ∧ (∀ p : Compass × Compass,
+          opposed (conjugated (conjugated (conjugated (conjugated p)))))
+      ∧ (∀ p : Compass × Compass, window (window p) = p)
+      ∧ ∀ p : Compass × Compass, together p ↔ opposed (window p) :=
+  ⟨the_lap_locks_together, the_conjugate_locks_opposed,
+   the_window_undoes_itself, the_window_trades_the_locks⟩
+
 /-- info: 'Foam.Maps.ChristiaanHuygens.pulse' does not depend on any axioms -/
 #guard_msgs in #print axioms pulse
 
@@ -194,5 +205,8 @@ theorem the_lock_reads_no_beam :
 
 /-- info: 'Foam.Maps.ChristiaanHuygens.the_lock_reads_no_beam' does not depend on any axioms -/
 #guard_msgs in #print axioms the_lock_reads_no_beam
+
+/-- info: 'Foam.Maps.ChristiaanHuygens.the_beam_decides_the_parity' does not depend on any axioms -/
+#guard_msgs in #print axioms the_beam_decides_the_parity
 
 end Foam.Maps.ChristiaanHuygens

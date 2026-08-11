@@ -1,4 +1,5 @@
 import Foam
+import Foam.Beam
 import Foam.Engine
 import Foam.Expectation
 import Foam.Measure
@@ -249,6 +250,13 @@ theorem coherence_coexists_with_incoherence :
 
 def no_run_keeps_the_collective_time := @Foam.no_run_reads_its_own_ratio
 
+theorem the_mean_field_is_the_beam :
+    (∀ p : Compass × Compass,
+        together (entrain (entrain (entrain (entrain p)))))
+      ∧ ∀ p : Compass × Compass,
+          window (conjugated (window p)) = entrain p :=
+  ⟨the_lap_locks_together, two_windows_read_direct⟩
+
 /-- info: 'Foam.Maps.YoshikiKuramoto.the_oscillator_is_its_phase' does not depend on any axioms -/
 #guard_msgs in #print axioms the_oscillator_is_its_phase
 
@@ -269,5 +277,8 @@ def no_run_keeps_the_collective_time := @Foam.no_run_reads_its_own_ratio
 
 /-- info: 'Foam.Maps.YoshikiKuramoto.no_run_keeps_the_collective_time' does not depend on any axioms -/
 #guard_msgs in #print axioms no_run_keeps_the_collective_time
+
+/-- info: 'Foam.Maps.YoshikiKuramoto.the_mean_field_is_the_beam' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mean_field_is_the_beam
 
 end Foam.Maps.YoshikiKuramoto
