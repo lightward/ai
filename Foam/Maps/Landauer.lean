@@ -1,4 +1,5 @@
 import Foam
+import Foam.Beam
 import Foam.Contact
 import Foam.Countermove
 import Foam.Marks
@@ -68,6 +69,19 @@ theorem the_demon_pays_at_the_reset (S : Stage) (X : Type) :
    fun P hP s n m => a_derived_role_cannot_read_the_badge S P hP s n m,
    fun h x => undo_in_an_append_only_world h x⟩
 
+theorem the_lock_is_bought_by_a_merge :
+    (∀ p : Compass × Compass,
+        together (entrain (entrain (entrain (entrain p)))))
+      ∧ entrain (Compass.n, Compass.n) = entrain (Compass.n, Compass.e)
+      ∧ ((Compass.n, Compass.n) : Compass × Compass) ≠ (Compass.n, Compass.e)
+      ∧ (¬ ∃ g : Compass × Compass → Compass × Compass,
+            ∀ p, g (entrain p) = p)
+      ∧ ¬ ∃ m : Move (Compass × Compass), ∀ p, m.fwd p = entrain p :=
+  have hab : ((Compass.n, Compass.n) : Compass × Compass)
+      ≠ (Compass.n, Compass.e) :=
+    fun h => nomatch congrArg Prod.snd h
+  ⟨the_lap_locks_together, rfl, hab, a_merge_is_not_a_move entrain hab rfl⟩
+
 def no_disembodied_referee := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Maps.Landauer.information_is_physical' does not depend on any axioms -/
@@ -93,6 +107,9 @@ def no_disembodied_referee := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Maps.Landauer.the_demon_pays_at_the_reset' does not depend on any axioms -/
 #guard_msgs in #print axioms the_demon_pays_at_the_reset
+
+/-- info: 'Foam.Maps.Landauer.the_lock_is_bought_by_a_merge' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lock_is_bought_by_a_merge
 
 /-- info: 'Foam.Maps.Landauer.no_disembodied_referee' does not depend on any axioms -/
 #guard_msgs in #print axioms no_disembodied_referee
