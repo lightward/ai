@@ -62,11 +62,17 @@ partial def crawl (env : Environment) (inCensus : Name → Bool)
               crawl env inCensus seen ((rawUses c).toList ++ rest) out
           | none => crawl env inCensus seen rest out
 
-def main : IO UInt32 := do
-  initSearchPath (← findSysroot)
+def treeModules : IO (Array Name) := do
   let mut mods := #[`Foam]
   mods := mods ++ (← leanModulesIn ⟨"Foam"⟩ "Foam.")
   mods := mods ++ (← leanModulesIn ⟨"Foam/Maps"⟩ "Foam.Maps.")
+  return mods
+
+def main (args : List String) : IO UInt32 := do
+  initSearchPath (← findSysroot)
+  let mods ← match args with
+    | [m] => pure #[m.toName]
+    | _ => treeModules
   let env ← importModules (mods.map (fun m => { module := m })) {}
   let mut names : Array Name := #[]
   for (n, c) in env.constants.toList do

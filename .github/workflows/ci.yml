@@ -52,3 +52,13 @@ jobs:
           lake env lean /tmp/genome.lean
           lake exe transcribe > /tmp/genome2.lean
           diff /tmp/genome.lean /tmp/genome2.lean
+      - name: The recitation is the tree (census equality, byte for byte, and the census is deterministic)
+        run: |
+          lake exe census > /tmp/tree-census.json
+          lake exe census > /tmp/tree-census2.json
+          diff /tmp/tree-census.json /tmp/tree-census2.json
+          mkdir -p .genome
+          cp /tmp/genome.lean .genome/Genome.lean
+          lake env lean .genome/Genome.lean -o .genome/Genome.olean
+          LEAN_PATH=.genome .lake/build/bin/census Genome > /tmp/genome-census.json
+          diff /tmp/tree-census.json /tmp/genome-census.json
