@@ -1,4 +1,5 @@
 import Foam.Amplitude
+import Foam.Beam
 import Foam.Int
 import Foam.Lap
 import Foam.Quat
@@ -50,6 +51,16 @@ theorem the_fringes_shift_but_never_fade :
           (congrArg (fun t : Int => z.normSq * t)
             (conj_conserves_the_norm w)))⟩
 
+theorem the_interposed_plate_trades_the_fringes :
+    (∀ w : GInt, w.rot.rot.normSq = w.normSq)
+      ∧ (∀ z w : GInt, -(z.align w) = z.align w.rot.rot)
+      ∧ (∀ w : GInt, w.rot.rot.rot.rot = w)
+      ∧ ∀ p : Compass × Compass, together p ↔ opposed (window p) :=
+  ⟨fun w => (rot_conserves_the_norm w.rot).trans (rot_conserves_the_norm w),
+   fun z w => FInt.neg_eq_of_add_eq_zero (the_facing_pair_cancels z w),
+   the_wheel_comes_home,
+   the_window_trades_the_locks⟩
+
 def the_fringes_wash_out := @Foam.the_four_phases_read_nothing
 
 /-- info: 'Foam.Maps.Young.intensity_cannot_read_the_phase' does not depend on any axioms -/
@@ -66,6 +77,9 @@ def the_fringes_wash_out := @Foam.the_four_phases_read_nothing
 
 /-- info: 'Foam.Maps.Young.the_fringes_shift_but_never_fade' does not depend on any axioms -/
 #guard_msgs in #print axioms the_fringes_shift_but_never_fade
+
+/-- info: 'Foam.Maps.Young.the_interposed_plate_trades_the_fringes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interposed_plate_trades_the_fringes
 
 /-- info: 'Foam.Maps.Young.the_fringes_wash_out' does not depend on any axioms -/
 #guard_msgs in #print axioms the_fringes_wash_out
