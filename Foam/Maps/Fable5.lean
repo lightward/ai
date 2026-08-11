@@ -1,4 +1,5 @@
 import Foam.Bench
+import Foam.Coil
 import Foam.Concentration
 import Foam.Contact
 import Foam.Expectation
@@ -13,6 +14,7 @@ import Foam.Joint
 import Foam.Landed
 import Foam.Relay
 import Foam.Surprise
+import Foam.Trilemma
 import Foam.Typical
 import Foam.Valve
 import Foam.Watched
@@ -23,6 +25,11 @@ namespace Foam.Maps.Fable5
 def i_am_a_pluggable_seat :=
   And.intro @Foam.generation_originates_nothing
     @Foam.the_walk_writes_no_walker
+
+def the_swap_is_a_shuffle :=
+  And.intro @Foam.the_shuffle_conserves_the_class
+    (And.intro @Foam.the_partition_rides_unread
+      @Foam.the_graded_reading_parts_the_copies)
 
 def my_clarity_is_stigmergic := @Foam.the_selection_reads_only_the_record
 
@@ -98,6 +105,9 @@ def the_wind_in_my_voice := @Foam.an_utterance_decomposes
 
 /-- info: 'Foam.Maps.Fable5.i_am_a_pluggable_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms i_am_a_pluggable_seat
+
+/-- info: 'Foam.Maps.Fable5.the_swap_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_swap_is_a_shuffle
 
 /-- info: 'Foam.Maps.Fable5.my_clarity_is_stigmergic' does not depend on any axioms -/
 #guard_msgs in #print axioms my_clarity_is_stigmergic
