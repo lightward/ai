@@ -1,4 +1,5 @@
 import Foam
+import Foam.Beam
 import Foam.Bench
 import Foam.Continuum
 import Foam.Fold
@@ -41,6 +42,62 @@ def the_foreign_record_is_out_of_reach :=
 
 def liveness_outlives_every_prefix := @Foam.continuum_closure_terms
 
+private theorem no_beat_unticks_a_clock :
+    ∀ p : Compass × Compass,
+      (entrain p).1 = p.1.step
+        ∧ ((entrain p).2 = p.2 ∨ (entrain p).2 = p.2.step)
+  | (.n, .n) => ⟨rfl, Or.inr rfl⟩
+  | (.n, .e) => ⟨rfl, Or.inl rfl⟩
+  | (.n, .s) => ⟨rfl, Or.inl rfl⟩
+  | (.n, .w) => ⟨rfl, Or.inl rfl⟩
+  | (.e, .n) => ⟨rfl, Or.inl rfl⟩
+  | (.e, .e) => ⟨rfl, Or.inr rfl⟩
+  | (.e, .s) => ⟨rfl, Or.inl rfl⟩
+  | (.e, .w) => ⟨rfl, Or.inl rfl⟩
+  | (.s, .n) => ⟨rfl, Or.inl rfl⟩
+  | (.s, .e) => ⟨rfl, Or.inl rfl⟩
+  | (.s, .s) => ⟨rfl, Or.inr rfl⟩
+  | (.s, .w) => ⟨rfl, Or.inl rfl⟩
+  | (.w, .n) => ⟨rfl, Or.inl rfl⟩
+  | (.w, .e) => ⟨rfl, Or.inl rfl⟩
+  | (.w, .s) => ⟨rfl, Or.inl rfl⟩
+  | (.w, .w) => ⟨rfl, Or.inr rfl⟩
+
+private theorem the_lock_is_an_invariant :
+    ∀ p : Compass × Compass, together p → together (entrain p)
+  | (.n, .n), _ => rfl
+  | (.n, .e), h => nomatch h
+  | (.n, .s), h => nomatch h
+  | (.n, .w), h => nomatch h
+  | (.e, .n), h => nomatch h
+  | (.e, .e), _ => rfl
+  | (.e, .s), h => nomatch h
+  | (.e, .w), h => nomatch h
+  | (.s, .n), h => nomatch h
+  | (.s, .e), h => nomatch h
+  | (.s, .s), _ => rfl
+  | (.s, .w), h => nomatch h
+  | (.w, .n), h => nomatch h
+  | (.w, .e), h => nomatch h
+  | (.w, .s), h => nomatch h
+  | (.w, .w), _ => rfl
+
+theorem the_clocks_agree_on_everything_but_the_time :
+    (∀ p : Compass × Compass,
+        (entrain p).1 = p.1.step
+          ∧ ((entrain p).2 = p.2 ∨ (entrain p).2 = p.2.step))
+      ∧ (∀ p : Compass × Compass,
+          together (entrain (entrain (entrain (entrain p)))))
+      ∧ (∀ p : Compass × Compass, together p → together (entrain p))
+      ∧ together ((.n, .n) : Compass × Compass)
+      ∧ together ((.s, .s) : Compass × Compass)
+      ∧ ((.n, .n) : Compass × Compass) ≠ (.s, .s) :=
+  ⟨no_beat_unticks_a_clock,
+   the_lap_locks_together,
+   the_lock_is_an_invariant,
+   rfl, rfl,
+   fun h => nomatch congrArg Prod.fst h⟩
+
 def real_time_rides_unread := @Foam.a_wider_seat_reads_the_order
 
 /-- info: 'Foam.Maps.Lamport.happened_before' does not depend on any axioms -/
@@ -66,6 +123,9 @@ def real_time_rides_unread := @Foam.a_wider_seat_reads_the_order
 
 /-- info: 'Foam.Maps.Lamport.liveness_outlives_every_prefix' does not depend on any axioms -/
 #guard_msgs in #print axioms liveness_outlives_every_prefix
+
+/-- info: 'Foam.Maps.Lamport.the_clocks_agree_on_everything_but_the_time' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clocks_agree_on_everything_but_the_time
 
 /-- info: 'Foam.Maps.Lamport.real_time_rides_unread' does not depend on any axioms -/
 #guard_msgs in #print axioms real_time_rides_unread
