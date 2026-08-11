@@ -1,5 +1,7 @@
+import Foam.Census
 import Foam.Concentration
 import Foam.Fold
+import Foam.Square
 import Foam.Surprise
 
 namespace Foam.Maps.Folk
@@ -90,6 +92,49 @@ theorem preaching_to_the_choir {H : Type} (es q : List (H × H))
       ∧ (preach es q).length = es.length + q.length :=
   ⟨the_saturated_room_hears_no_order es q h, len_append es q⟩
 
+def parts (a b : Nat) : Nat × Nat := (a, b)
+
+def sum (x y : Nat) : Nat := x + y
+
+def whole (p : Nat × Nat) : Nat := sum p.1 p.2
+
+def greater (x y : Nat) : Prop := y < x
+
+private theorem the_excess_is_two_rectangles (a b : Nat) :
+    sq (a + b) = (sq a + sq b) + (a * b + a * b) :=
+  ((add_mul' a b (a + b)).trans
+    ((congrArg (· + b * (a + b)) (Nat.mul_add a a b)).trans
+      (congrArg (a * a + a * b + ·) (Nat.mul_add b a b)))).trans
+    ((congrArg (a * a + a * b + ·)
+        ((congrArg (· + b * b) (Nat.mul_comm b a)).trans
+          (Nat.add_comm (a * b) (b * b)))).trans
+      (nat_swap_mid (a * a) (a * b) (b * b) (a * b)))
+
+private theorem two_present_parts_read_strictly (a b : Nat) :
+    sq (a + 1) + sq (b + 1) < sq ((a + 1) + (b + 1)) :=
+  Nat.le_trans
+    (Nat.add_le_add_left (Nat.succ_le_succ (Nat.zero_le _))
+      (sq (a + 1) + sq (b + 1)))
+    (Nat.le_of_eq (the_excess_is_two_rectangles (a + 1) (b + 1)).symm)
+
+theorem the_whole_is_greater_than_the_sum_of_its_parts (a b : Nat) :
+    whole (parts a b) = sum a b
+      ∧ sq (whole (parts a b)) = sum (sq a) (sq b) + (a * b + a * b)
+      ∧ greater (sq (whole (parts (a + 1) (b + 1))))
+          (sum (sq (a + 1)) (sq (b + 1)))
+      ∧ sq (1 + 1) ≠ sq 1 + sq 1
+      ∧ a * b + a * b ≤ sum (sq a) (sq b)
+      ∧ sq (whole (parts a b)) ≤ 2 * sum (sq a) (sq b)
+      ∧ (∀ x y : Bool, Bool.and (Bool.xor x y) (Bool.xor x y)
+          = Bool.xor (Bool.and x x) (Bool.and y y)) :=
+  ⟨rfl,
+   the_excess_is_two_rectangles a b,
+   two_present_parts_read_strictly a b,
+   the_square_breaks_the_sum,
+   two_rectangles_fit_the_squares a b,
+   the_broken_sum_is_priced a b,
+   the_narrow_carrier_mends_the_sum⟩
+
 /-- info: 'Foam.Maps.Folk.will' does not depend on any axioms -/
 #guard_msgs in #print axioms will
 
@@ -131,5 +176,20 @@ theorem preaching_to_the_choir {H : Type} (es q : List (H × H))
 
 /-- info: 'Foam.Maps.Folk.preaching_to_the_choir' does not depend on any axioms -/
 #guard_msgs in #print axioms preaching_to_the_choir
+
+/-- info: 'Foam.Maps.Folk.parts' does not depend on any axioms -/
+#guard_msgs in #print axioms parts
+
+/-- info: 'Foam.Maps.Folk.sum' does not depend on any axioms -/
+#guard_msgs in #print axioms sum
+
+/-- info: 'Foam.Maps.Folk.whole' does not depend on any axioms -/
+#guard_msgs in #print axioms whole
+
+/-- info: 'Foam.Maps.Folk.greater' does not depend on any axioms -/
+#guard_msgs in #print axioms greater
+
+/-- info: 'Foam.Maps.Folk.the_whole_is_greater_than_the_sum_of_its_parts' does not depend on any axioms -/
+#guard_msgs in #print axioms the_whole_is_greater_than_the_sum_of_its_parts
 
 end Foam.Maps.Folk
