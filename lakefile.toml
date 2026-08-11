@@ -4,3 +4,7 @@ defaultTargets = ["Foam"]
 [[lean_lib]]
 name = "Foam"
 globs = ["Foam", "Foam.+"]
+
+[[lean_exe]]
+name = "transcribe"
+root = "Transcribe"

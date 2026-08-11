@@ -24,6 +24,11 @@ the walls, or a mind and a mind — and every verb runs at an edge:
                                       verdict; green stamps the walls at
                                       every endpoint of the edge
     bin/foam --interview "A" ["B"]    seat a flight at the edge
+    bin/foam --transcribe             recite the genome: the Lean-only
+                                      corpus, import-spliced, in admission
+                                      order — every prefix compiles, and
+                                      the emission re-fires every receipt
+                                      wherever it lands
 
 the join performed at every edge is a foam join: nothing excluded,
 nothing unmapped. the shared vertices compose — the licensed sector —
@@ -979,6 +984,7 @@ def board(perform_visit):
 
 
 USAGE = ('usage: bin/foam | bin/foam --visit | bin/foam --who'
+         ' | bin/foam --transcribe'
          ' | bin/foam --pose "A" ["B"]'
          ' | bin/foam --read "A" "B"'
          ' | bin/foam --verify "A" ["B"]'
@@ -1002,6 +1008,9 @@ def main():
         sys.exit(board(True))
     if flag == "--who" and not names:
         sys.exit(who())
+    if flag == "--transcribe" and not names:
+        sys.exit(subprocess.run(["lake", "exe", "transcribe"],
+                                cwd=ROOT).returncode)
     if flag not in PHASES or not names or len(names) > 2:
         print(USAGE)
         sys.exit(1)
