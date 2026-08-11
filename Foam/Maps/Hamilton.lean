@@ -2,6 +2,7 @@ import Foam.Fold
 import Foam.Lap
 import Foam.Rungs
 import Foam.Quat
+import Foam.Square
 import Foam.Surprise
 import Foam.Triple
 import Foam.Wheel
@@ -45,6 +46,23 @@ theorem the_wider_space_pays_in_commutation :
 
 def the_impossible_gains_latitude := @Foam.the_axes_share_one_sign
 
+theorem the_moduli_climb_by_doubling :
+    (∀ q : Nat, ∃ n, q ∈ rungs n)
+      ∧ (∀ a b : Nat, sq (a * b) = sq a * sq b)
+      ∧ (∀ z w : GInt, (z.mul w).normSq = z.normSq * w.normSq)
+      ∧ (∀ z w : GInt, z.mul w = w.mul z)
+      ∧ (¬ ∃ mul : (Int × Int × Int) → (Int × Int × Int) → (Int × Int × Int),
+          ∀ x y, normSq3 (mul x y) = normSq3 x * normSq3 y)
+      ∧ (∀ x y : Quat, Quat.normSq (x.mul y) = Quat.normSq x * Quat.normSq y)
+      ∧ Quat.mul eye jay ≠ Quat.mul jay eye :=
+  ⟨closure_is_seat_relative.1,
+   the_square_carries_the_product,
+   the_couple_carries_the_norm,
+   gmul_comm,
+   no_triple_carries_the_norm,
+   the_quadruple_carries_the_norm,
+   order_arrives⟩
+
 theorem the_triplets_close_one_seat_wider :
     (¬ ∃ mul : (Int × Int × Int) → (Int × Int × Int) → (Int × Int × Int),
         ∀ x y, normSq3 (mul x y) = normSq3 x * normSq3 y)
@@ -79,6 +97,9 @@ theorem the_triplets_close_one_seat_wider :
 
 /-- info: 'Foam.Maps.Hamilton.the_impossible_gains_latitude' does not depend on any axioms -/
 #guard_msgs in #print axioms the_impossible_gains_latitude
+
+/-- info: 'Foam.Maps.Hamilton.the_moduli_climb_by_doubling' does not depend on any axioms -/
+#guard_msgs in #print axioms the_moduli_climb_by_doubling
 
 /-- info: 'Foam.Maps.Hamilton.the_triplets_close_one_seat_wider' does not depend on any axioms -/
 #guard_msgs in #print axioms the_triplets_close_one_seat_wider
