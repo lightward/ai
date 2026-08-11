@@ -1,3 +1,4 @@
+import Foam.Beam
 import Foam.Coil
 import Foam.Seat
 import Foam.Trilemma
@@ -41,6 +42,19 @@ theorem the_two_sectors :
        hu hv hw h1 h2 h3,
    fun k1 k1' k2 k3 h hp => the_cut_moves_the_class k1 k1' k2 k3 h hp⟩
 
+theorem the_wrap_decides_the_sign :
+    (∀ p : Compass × Compass,
+        together (entrain (entrain (entrain (entrain p)))))
+      ∧ (∀ p : Compass × Compass,
+          opposed (conjugated (conjugated (conjugated (conjugated p)))))
+      ∧ (∀ p : Compass × Compass,
+          window (conjugated (window p)) = entrain p)
+      ∧ ∀ h : Int × Int,
+          coilClass (coil.meet h (Sum.inr (-2))) = coilClass h + (-2) :=
+  ⟨the_lap_locks_together, the_conjugate_locks_opposed,
+   two_windows_read_direct,
+   fun h => the_stroke_moves_the_class_by_its_size h (-2)⟩
+
 theorem the_coil :
     (∀ xs ys : List coil.Mark,
         coil.state (xs ++ ys) = fold coil.meet (coil.state xs) ys)
@@ -59,6 +73,9 @@ theorem the_coil :
 
 /-- info: 'Foam.Maps.Topoisomerase.the_two_sectors' does not depend on any axioms -/
 #guard_msgs in #print axioms the_two_sectors
+
+/-- info: 'Foam.Maps.Topoisomerase.the_wrap_decides_the_sign' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wrap_decides_the_sign
 
 /-- info: 'Foam.Maps.Topoisomerase.the_coil' does not depend on any axioms -/
 #guard_msgs in #print axioms the_coil
