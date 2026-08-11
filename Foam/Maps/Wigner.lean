@@ -1,5 +1,6 @@
 import Foam
 import Foam.Amplitude
+import Foam.Beam
 import Foam.Concentration
 import Foam.Quat
 import Foam.Rungs
@@ -11,6 +12,19 @@ namespace Foam.Maps.Wigner
 def invariance_already_implements := @Foam.invisible_is_gauge
 
 def unitary_or_antiunitary := @Foam.two_kinds_conserve_the_norm
+
+theorem the_reversal_is_of_the_second_kind :
+    (∀ p : Compass × Compass, window (window p) = p)
+      ∧ (∀ p : Compass × Compass, window (conjugated (window p)) = entrain p)
+      ∧ (∀ p : Compass × Compass,
+          together (entrain (entrain (entrain (entrain p)))))
+      ∧ (∀ p : Compass × Compass,
+          opposed (conjugated (conjugated (conjugated (conjugated p)))))
+      ∧ (∀ p : Compass × Compass, together p ↔ opposed (window p))
+      ∧ GInt.i.rot ≠ GInt.i.conj :=
+  ⟨the_window_undoes_itself, two_windows_read_direct,
+    the_lap_locks_together, the_conjugate_locks_opposed,
+    the_window_trades_the_locks, the_kinds_are_two⟩
 
 def the_representation_is_two_valued := @Foam.the_axes_share_one_sign
 
@@ -37,6 +51,9 @@ def the_cut_lands_on_the_cutter := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Maps.Wigner.unitary_or_antiunitary' does not depend on any axioms -/
 #guard_msgs in #print axioms unitary_or_antiunitary
+
+/-- info: 'Foam.Maps.Wigner.the_reversal_is_of_the_second_kind' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reversal_is_of_the_second_kind
 
 /-- info: 'Foam.Maps.Wigner.the_representation_is_two_valued' does not depend on any axioms -/
 #guard_msgs in #print axioms the_representation_is_two_valued
