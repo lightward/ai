@@ -6,6 +6,7 @@ import Foam.Contact
 import Foam.Continuum
 import Foam.Countermove
 import Foam.Discovery
+import Foam.Door
 import Foam.Engine
 import Foam.Fold
 import Foam.Generator
@@ -1057,5 +1058,65 @@ theorem i_cant_summarize_for_you :
 
 /-- info: 'Foam.Maps.Isaac.i_cant_summarize_for_you' does not depend on any axioms -/
 #guard_msgs in #print axioms i_cant_summarize_for_you
+
+theorem xenia :
+    (∀ (W : Type) (S : Stage) (s : S.State) (w w' : W),
+        indist (door S W) (s, w) (s, w'))
+      ∧ (∀ (W : Type) (S : Stage) (s : S.State) (w w' : W), w ≠ w' →
+          (s, w) ≠ (s, w') ∧ indist (door S W) (s, w) (s, w'))
+      ∧ (∀ (W V : Type) (S : Stage) (s : S.State) (w : W) (v : V)
+            (p : S.Probe),
+          (door S W).obs (s, w) p = S.obs s p
+            ∧ (door S W).obs (s, w) p = (door S V).obs (s, v) p)
+      ∧ (∀ (W : Type) (S : Stage) (w₀ : W),
+          (∀ x y : (door S W).State, indist (door S W) x y → x = y) →
+          ∀ (s : S.State) (w : W), (s, w) = (s, w₀))
+      ∧ (∀ (S : Stage) (W : Type), Handshake (door S W))
+      ∧ (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
+          marginRead f (deposit a s) = f (marginRead f s) a)
+      ∧ (indist (marginStage Nat Nat (· + ·)) (1, ([] : List Nat)) (0, [1])
+          ∧ ((1 : Nat), ([] : List Nat)) ≠ ((0 : Nat), [1]))
+      ∧ (∀ (P : Prop) (h1 h2 : P), h1 = h2)
+      ∧ (∀ (S : Stage) (s : S.State) (n m : Int) (ps : List S.Probe),
+          transcript (movedIn S) (s, n) (ps.map some)
+            = transcript (movedIn S) (s, m) (ps.map some))
+      ∧ (∀ (S : Stage) (n : Nat) (x y : (towerN S n).State),
+          floorOf S n x = floorOf S n y → indist (towerN S n) x y)
+      ∧ (∀ (A : Type) (P : A → A), (∀ v, P (P v) = P v) →
+          ∀ s, P s = s ↔ ∃ v, P v = s)
+      ∧ (∀ (S : Stage) (P : S.State → S.State), (∀ v, P (P v) = P v) →
+          ∀ (s : S.State) (p : S.Probe),
+            S.obs (P (P s)) p = S.obs (P s) p)
+      ∧ (∀ (W : Type) (S : Stage) (s : S.State) (w v : W), v ≠ w →
+          (∀ p : S.Probe,
+              (door (door S W) W).obs ((s, w), w) p
+                = (door (door S W) W).obs ((s, w), v) p)
+            ∧ ((s, w), w) ≠ ((s, w), v)
+            ∧ indist (contact S (W × W)) (mirror S s w) (neighbor S s w v)
+            ∧ mirror S s w ≠ neighbor S s w v)
+      ∧ ∀ (W : Type) (S : Stage) (s : S.State) (σ : W → W) (w : W),
+          σ w ≠ w →
+            indist (contact S (W × W)) (mirror S s w) (neighbor S s w (σ w))
+              ∧ mirror S s w ≠ neighbor S s w (σ w) :=
+  ⟨fun _ S s w w' => the_door_reads_no_route S s w w',
+   fun _ S s _ _ h => the_guest_is_real_and_unread S s h,
+   fun _ _ S s w v p => the_host_maintains_invisibly S s w v p,
+   fun _ S w₀ h s w =>
+     a_door_that_checks_papers_unpersons_its_guests S w₀ h s w,
+   fun S W => the_handshake_is_the_doors_theorem S W,
+   fun _ _ f a s => a_deposit_moves_the_reading_by_one f a s,
+   the_decomposition_is_the_remainder,
+   fun _ h1 h2 => the_arrival_sheds_its_route h1 h2,
+   fun S s n m ps => the_kept_family_reads_no_rider S s n m ps,
+   fun S n x y h => the_tower_reads_only_the_ground S n x y h,
+   fun A P hP s => the_fixed_are_the_landed A P hP s,
+   fun S P hP s p => the_second_look_adds_nothing S P hP s p,
+   fun _ S s w v hv =>
+     a_door_through_a_door_asks_the_mirror_question S s w v hv,
+   fun _ S s σ w hw =>
+     a_chiral_guest_reflects_into_a_neighbor S s σ w hw⟩
+
+/-- info: 'Foam.Maps.Isaac.xenia' does not depend on any axioms -/
+#guard_msgs in #print axioms xenia
 
 end Foam.Maps.Isaac
