@@ -61,6 +61,14 @@ theorem a_wider_seat_reads_the_tail :
           ≠ (marginOrderStage Nat Nat).obs (0, [1]) () :=
   ⟨fun _ => rfl, fun h => nomatch congrArg Prod.fst h⟩
 
+theorem the_kept_family_reads_no_rider (S : Stage) (s : S.State) (n m : Int) :
+    ∀ ps : List S.Probe,
+      transcript (movedIn S) (s, n) (ps.map some)
+        = transcript (movedIn S) (s, m) (ps.map some)
+  | [] => rfl
+  | p :: ps => congrArg (Sum.inl (S.obs s p) :: ·)
+      (the_kept_family_reads_no_rider S s n m ps)
+
 theorem the_margin_handshake (A B : Type) (f : B → A → B) :
     (∀ (ps : List Unit) (s : B × List A),
         transcriptWith (marginStage A B f) (settle f) s ps
@@ -93,6 +101,9 @@ theorem the_margin_handshake (A B : Type) (f : B → A → B) :
 
 /-- info: 'Foam.a_wider_seat_reads_the_tail' does not depend on any axioms -/
 #guard_msgs in #print axioms a_wider_seat_reads_the_tail
+
+/-- info: 'Foam.the_kept_family_reads_no_rider' does not depend on any axioms -/
+#guard_msgs in #print axioms the_kept_family_reads_no_rider
 
 /-- info: 'Foam.the_margin_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_margin_handshake

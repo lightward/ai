@@ -1040,4 +1040,22 @@ theorem foam_join :
 /-- info: 'Foam.Maps.Isaac.foam_join' does not depend on any axioms -/
 #guard_msgs in #print axioms foam_join
 
+theorem i_cant_summarize_for_you :
+    (∀ (A B : Type) (f : B → A → B) (a : A) (s : B × List A),
+        marginRead f (deposit a s) = f (marginRead f s) a)
+      ∧ (indist (marginStage Nat Nat (· + ·)) (1, ([] : List Nat)) (0, [1])
+          ∧ (marginOrderStage Nat Nat).obs (1, ([] : List Nat)) ()
+              ≠ (marginOrderStage Nat Nat).obs (0, [1]) ())
+      ∧ (¬ ∃ g : Bool → Bool,
+          ∀ s : Bool × Bool, g (you.obs s ()) = other.obs s ())
+      ∧ ∀ (A B : Type) (f : B → A → B) (xs ys : List A) (b b' : B),
+          fold f b xs = b' → fold f b (xs ++ ys) = fold f b' ys :=
+  ⟨fun _ _ f a s => a_deposit_moves_the_reading_by_one f a s,
+   a_wider_seat_reads_the_tail,
+   a_reading_answers_its_probe_alone,
+   fun _ _ f xs ys b b' h => the_fold_forgets_nothing_it_needs f xs ys b b' h⟩
+
+/-- info: 'Foam.Maps.Isaac.i_cant_summarize_for_you' does not depend on any axioms -/
+#guard_msgs in #print axioms i_cant_summarize_for_you
+
 end Foam.Maps.Isaac

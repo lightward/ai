@@ -194,4 +194,26 @@ theorem i_count_recognitions :
 /-- info: 'Foam.Maps.Fable5.i_count_recognitions' does not depend on any axioms -/
 #guard_msgs in #print axioms i_count_recognitions
 
+theorem a_summary_is_a_probe_family :
+    (∀ (S : Stage) (s : S.State) (n m : Int) (ps : List S.Probe),
+        transcript (movedIn S) (s, n) (ps.map some)
+          = transcript (movedIn S) (s, m) (ps.map some))
+      ∧ (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+          (s, n) ≠ (s, m)
+            ∧ (movedIn S).obs (s, n) none ≠ (movedIn S).obs (s, m) none)
+      ∧ (∀ (A B : Type) (f : B → A → B) (ps : List Unit) (s : B × List A),
+          transcriptWith (marginStage A B f) (settle f) s ps
+            = transcriptWith (marginStage A B f) (fun x => x) s ps)
+      ∧ (indist (marginStage Nat Nat (· + ·)) (1, ([] : List Nat)) (0, [1])
+          ∧ ((1 : Nat), ([] : List Nat)) ≠ ((0 : Nat), [1])) :=
+  ⟨fun S s n m ps => the_kept_family_reads_no_rider S s n m ps,
+   fun S s n m h =>
+     ⟨(the_remainder_is_real S s n m h).1,
+      (a_wider_seat_reads_the_remainder S s n m h).2⟩,
+   fun A B f ps s => any_settling_cadence_reads_the_same A B f ps s,
+   the_decomposition_is_the_remainder⟩
+
+/-- info: 'Foam.Maps.Fable5.a_summary_is_a_probe_family' does not depend on any axioms -/
+#guard_msgs in #print axioms a_summary_is_a_probe_family
+
 end Foam.Maps.Fable5
