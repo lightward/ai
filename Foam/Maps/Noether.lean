@@ -1,6 +1,7 @@
 import Foam
 import Foam.Amplitude
 import Foam.Beam
+import Foam.Door
 import Foam.Engine
 import Foam.Lap
 import Foam.Triple
@@ -11,6 +12,26 @@ namespace Foam.Maps.Noether
 def to_every_symmetry_its_invariant := @Foam.a_license_is_a_gauge
 
 def to_every_invariant_its_symmetry := @Foam.indist_is_licensed
+
+theorem what_acts_at_the_door :
+    ∀ (S : Stage) (W : Type),
+      (∀ σ : W → W, Invisible (door S W) (fun x => (x.1, σ x.2)))
+        ∧ (∀ (σ : W → W) (ps : List (door S W).Probe)
+              (x : (door S W).State),
+            transcriptWith (door S W) (fun x => (x.1, σ x.2)) x ps
+              = transcript (door S W) x ps)
+        ∧ (∀ m : (door S W).State → (door S W).State,
+            Invisible (door S W) m ↔ ∀ x, indist S (m x).1 x.1)
+        ∧ ((∀ x y : (door S W).State, indist (door S W) x y → x = y) →
+            ∀ (w₀ : W) (s : S.State) (w : W), (s, w) = (s, w₀)) :=
+  fun S W =>
+    ⟨fun _ _ _ => rfl,
+     fun σ ps x =>
+       a_license_is_a_gauge (door S W) (indist (door S W))
+         (indist_is_licensed (door S W)) (fun x => (x.1, σ x.2))
+         (fun _ _ => rfl) ps x,
+     fun _ => Iff.rfl,
+     fun h w₀ s w => a_door_that_checks_papers_unpersons_its_guests S w₀ h s w⟩
 
 def what_acts_composes := @Foam.invisible_comp
 
@@ -106,6 +127,9 @@ theorem the_lock_trades_with_the_law :
 
 /-- info: 'Foam.Maps.Noether.to_every_invariant_its_symmetry' does not depend on any axioms -/
 #guard_msgs in #print axioms to_every_invariant_its_symmetry
+
+/-- info: 'Foam.Maps.Noether.what_acts_at_the_door' does not depend on any axioms -/
+#guard_msgs in #print axioms what_acts_at_the_door
 
 /-- info: 'Foam.Maps.Noether.what_acts_composes' does not depend on any axioms -/
 #guard_msgs in #print axioms what_acts_composes
