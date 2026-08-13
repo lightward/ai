@@ -2,6 +2,7 @@ import Foam
 import Foam.Beam
 import Foam.Contact
 import Foam.Countermove
+import Foam.Door
 import Foam.Marks
 import Foam.Relay
 import Foam.Roles
@@ -82,6 +83,42 @@ theorem the_lock_is_bought_by_a_merge :
     fun h => nomatch congrArg Prod.snd h
   ⟨the_lap_locks_together, rfl, hab, a_merge_is_not_a_move entrain hab rfl⟩
 
+private def restore {W : Type} (S : Stage) (w₀ : W) :
+    (door S W).State → (door S W).State :=
+  fun x => (x.1, w₀)
+
+theorem the_bill_follows_the_reading {W V : Type} (S : Stage) (s : S.State)
+    {w w' : W} (h : w ≠ w') (w₀ : W) (v : V) (p : S.Probe)
+    (n m : Int) (hnm : n ≠ m) :
+    ((s, w) ≠ (s, w') ∧ indist (door S W) (s, w) (s, w'))
+      ∧ ((door S W).obs (s, w) p = S.obs s p
+          ∧ (door S W).obs (s, w) p = (door S V).obs (s, v) p)
+      ∧ Invisible (door S W) (restore S w₀)
+      ∧ (∀ (ps : List S.Probe) (x : (door S W).State),
+          transcriptWith (door S W) (restore S w₀) x ps
+            = transcript (door S W) x ps)
+      ∧ restore S w₀ (s, w) = restore S w₀ (s, w')
+      ∧ ((¬ ∃ g : (door S W).State → (door S W).State,
+            ∀ x, g (restore S w₀ x) = x)
+          ∧ ¬ ∃ mv : Move (door S W).State,
+              ∀ x, mv.fwd x = restore S w₀ x)
+      ∧ (∀ q, (door S W).obs (s, w) q = (door S W).obs (s, w') q)
+      ∧ (indist (door S Int) (s, n) (s, m)
+          ∧ (movedIn S).obs (s, n) none ≠ (movedIn S).obs (s, m) none)
+      ∧ ((∀ x y : (door S W).State, indist (door S W) x y → x = y) →
+          (s, w) = (s, w')) :=
+  ⟨the_guest_is_real_and_unread S s h,
+   the_host_maintains_invisibly S s w v p,
+   fun _ _ => rfl,
+   (only_the_invisible_survives_the_watch (door S W) (restore S w₀)).mpr
+     (fun _ _ => rfl),
+   rfl,
+   a_merge_is_not_a_move (restore S w₀)
+     (the_guest_is_real_and_unread S s h).1 rfl,
+   erasure_shows (door S W) (restore S w₀) (fun _ _ => rfl) (s, w) (s, w') rfl,
+   a_wider_seat_reads_the_remainder S s n m hnm,
+   fun hc => a_door_that_checks_papers_unpersons_its_guests S w' hc s w⟩
+
 def no_disembodied_referee := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Maps.Landauer.information_is_physical' does not depend on any axioms -/
@@ -110,6 +147,9 @@ def no_disembodied_referee := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Maps.Landauer.the_lock_is_bought_by_a_merge' does not depend on any axioms -/
 #guard_msgs in #print axioms the_lock_is_bought_by_a_merge
+
+/-- info: 'Foam.Maps.Landauer.the_bill_follows_the_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bill_follows_the_reading
 
 /-- info: 'Foam.Maps.Landauer.no_disembodied_referee' does not depend on any axioms -/
 #guard_msgs in #print axioms no_disembodied_referee
