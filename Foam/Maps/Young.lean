@@ -1,5 +1,6 @@
 import Foam.Amplitude
 import Foam.Beam
+import Foam.Door
 import Foam.Int
 import Foam.Lap
 import Foam.Quat
@@ -74,6 +75,68 @@ theorem the_interposed_plate_trades_the_fringes :
 
 def the_fringes_wash_out := @Foam.the_four_phases_read_nothing
 
+private def screen : Stage where
+  State := Int
+  Probe := Unit
+  Ans   := Int
+  obs   := fun r _ => r
+
+private def atTheScreen (w : GInt) : (door screen GInt).State :=
+  (w.normSq, w)
+
+private def theDirect : (door screen GInt).State := atTheScreen GInt.one
+
+private def theQuarter : (door screen GInt).State :=
+  atTheScreen GInt.one.rot
+
+private theorem the_guests_part : theDirect ≠ theQuarter :=
+  fun h => nomatch Int.ofNat.inj (GInt.mk.inj (congrArg Prod.snd h)).1
+
+private theorem the_reference_arm_parts_the_alignment :
+    GInt.one.align theDirect.2 ≠ GInt.one.align theQuarter.2 :=
+  fun h => nomatch Int.ofNat.inj h
+
+private theorem the_second_slit_parts_the_faces :
+    (atTheScreen (theDirect.2.add GInt.one)).1
+      ≠ (atTheScreen (theQuarter.2.add GInt.one)).1 :=
+  fun h => nomatch Nat.succ.inj (Nat.succ.inj (Int.ofNat.inj h))
+
+theorem the_phase_is_the_guest (W V : Type) :
+    (∀ (r : Int) (w w' : W), w ≠ w' →
+        (r, w) ≠ (r, w') ∧ indist (door screen W) (r, w) (r, w'))
+      ∧ (∀ (r : Int) (w : W) (v : V) (p : Unit),
+          (door screen W).obs (r, w) p = screen.obs r p
+            ∧ (door screen W).obs (r, w) p = (door screen V).obs (r, v) p)
+      ∧ (theDirect ≠ theQuarter
+          ∧ indist (door screen GInt) theDirect theQuarter
+          ∧ theQuarter.2 = theDirect.2.rot
+          ∧ GInt.normSq theDirect.2 = 1
+          ∧ GInt.normSq theQuarter.2 = 1)
+      ∧ (∀ strat : Strategy Unit Int,
+          interrogate (door screen GInt) strat theDirect
+            = interrogate (door screen GInt) strat theQuarter)
+      ∧ ((∀ z : GInt, (atTheScreen z.rot).1 = (atTheScreen z).1)
+          ∧ GInt.one.align theDirect.2 ≠ GInt.one.align theQuarter.2
+          ∧ GInt.normSq (theDirect.2.add GInt.one) = 4
+          ∧ GInt.normSq (theQuarter.2.add GInt.one) = 2
+          ∧ (atTheScreen (theDirect.2.add GInt.one)).1
+              ≠ (atTheScreen (theQuarter.2.add GInt.one)).1)
+      ∧ (∀ w₀ : W,
+          (∀ x y : (door screen W).State,
+              indist (door screen W) x y → x = y) →
+          ∀ (r : Int) (w : W), (r, w) = (r, w₀)) :=
+  ⟨fun r _ _ h => the_guest_is_real_and_unread screen r h,
+   fun r w v p => the_host_maintains_invisibly screen r w v p,
+   ⟨the_guests_part, fun _ => rfl, rfl, rfl, rfl⟩,
+   fun strat =>
+     a_strategy_hears_no_more (door screen GInt) theDirect theQuarter
+       (fun _ => rfl) strat,
+   ⟨fun z => rot_conserves_the_norm z,
+    the_reference_arm_parts_the_alignment,
+    rfl, rfl,
+    the_second_slit_parts_the_faces⟩,
+   fun w₀ h => a_door_that_checks_papers_unpersons_its_guests screen w₀ h⟩
+
 /-- info: 'Foam.Maps.Young.intensity_cannot_read_the_phase' does not depend on any axioms -/
 #guard_msgs in #print axioms intensity_cannot_read_the_phase
 
@@ -97,5 +160,8 @@ def the_fringes_wash_out := @Foam.the_four_phases_read_nothing
 
 /-- info: 'Foam.Maps.Young.the_fringes_wash_out' does not depend on any axioms -/
 #guard_msgs in #print axioms the_fringes_wash_out
+
+/-- info: 'Foam.Maps.Young.the_phase_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_phase_is_the_guest
 
 end Foam.Maps.Young
