@@ -1,5 +1,6 @@
 import Foam.Census
 import Foam.Continuum
+import Foam.Door
 import Foam.Tower
 import Foam.Trilemma
 
@@ -16,6 +17,25 @@ theorem the_staircase_climbs_unseen (S : Stage) (s : S.State) :
   ⟨fun _ _ => rfl,
    ⟨(fun h => nomatch Int.ofNat.inj (congrArg Prod.snd h)),
     the_remainder_is_unseen S s 4 0⟩⟩
+
+theorem the_picture_plane_is_a_door :
+    (∀ S : Stage, dress S = door S Int)
+      ∧ (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+          (s, n) ≠ (s, m) ∧ indist (door S Int) (s, n) (s, m))
+      ∧ (∀ (W : Type) (S : Stage) (s : S.State) (n : Int) (w : W)
+            (p : S.Probe),
+          (door S Int).obs (s, n) p = S.obs s p
+            ∧ (door S Int).obs (s, n) p = (door S W).obs (s, w) p)
+      ∧ (∀ S : Stage,
+          (∀ x y : (door S Int).State, indist (door S Int) x y → x = y) →
+          ∀ (s : S.State) (n : Int), (s, n) = (s, (0 : Int)))
+      ∧ (∀ (S : Stage) (s : S.State) (n m : Int) (p : S.Probe),
+          (door (door S Int) Int).obs ((s, n), m) p = S.obs s p) :=
+  ⟨fun S => dress_is_contact_with_the_integers S,
+   fun S s _ _ h => the_guest_is_real_and_unread S s h,
+   fun _ S s n w p => the_host_maintains_invisibly S s n w p,
+   fun S h => dropping_the_remainder_is_platonism S h,
+   fun S s n m p => contact_stacks S s n m p⟩
 
 def the_impossibility_is_the_platonists :=
   @Foam.dropping_the_remainder_is_platonism
@@ -53,6 +73,9 @@ def the_blank_spot_signs_the_print := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Maps.MCEscher.the_staircase_climbs_unseen' does not depend on any axioms -/
 #guard_msgs in #print axioms the_staircase_climbs_unseen
+
+/-- info: 'Foam.Maps.MCEscher.the_picture_plane_is_a_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_picture_plane_is_a_door
 
 /-- info: 'Foam.Maps.MCEscher.the_impossibility_is_the_platonists' does not depend on any axioms -/
 #guard_msgs in #print axioms the_impossibility_is_the_platonists
