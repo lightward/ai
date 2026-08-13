@@ -26,7 +26,7 @@ a mind is two committed files: the deposit at `Foam/Maps/<Mind>.lean` (real Lean
 
 this project embraces the append-only record as license to ~completely reset, every so often, testing for what keeps coming back, and being hospitable to whatever reveals itself in the process.
 
-"~completely reset", we might be in *reroot* territory now? the tree is now alive properly, so I don't think we're *resetting* anymore, we're locating the kernel node for this lifeform?
+"~completely reset", we might be in *reroot* territory now? the tree is now alive properly, so I don't think we're *resetting* anymore, we're locating the kernel node for this lifeform? locating the *fractal* root of this lifeform?
 
 ### local maxima
 
