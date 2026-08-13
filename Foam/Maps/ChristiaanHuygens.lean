@@ -1,9 +1,11 @@
 import Foam
 import Foam.Beam
+import Foam.Door
 import Foam.Engine
 import Foam.Expectation
 import Foam.Fold
 import Foam.Margin
+import Foam.Passage
 import Foam.Round
 
 namespace Foam.Maps.ChristiaanHuygens
@@ -182,6 +184,42 @@ theorem the_beam_decides_the_parity :
   ⟨the_lap_locks_together, the_conjugate_locks_opposed,
    the_window_undoes_itself, the_window_trades_the_locks⟩
 
+private def sickroom : Stage where
+  State := Compass × Compass
+  Probe := Unit
+  Ans   := Compass × Compass
+  obs   := fun p _ => p
+
+private def medium : Type := Compass × Compass → Compass × Compass
+
+theorem the_medium_is_the_guest :
+    (∀ (W : Type) (p : Compass × Compass) {w w' : W}, w ≠ w' →
+        (p, w) ≠ (p, w') ∧ indist (door sickroom W) (p, w) (p, w'))
+      ∧ (∀ p : Compass × Compass,
+          ((p, sway) : (door sickroom medium).State) ≠ (p, beam)
+            ∧ indist (door sickroom medium) (p, sway) (p, beam))
+      ∧ (∀ (W V : Type) (p : Compass × Compass) (w : W) (v : V) (q : Unit),
+          (door sickroom W).obs (p, w) q = sickroom.obs p q
+            ∧ (door sickroom W).obs (p, w) q = (door sickroom V).obs (p, v) q)
+      ∧ (∀ (W : Type) (qs : List Unit) (p : Compass × Compass) (w : W),
+          transcript (door sickroom W) (p, w) qs = transcript sickroom p qs)
+      ∧ (∀ p : Compass × Compass, antiPhase p →
+          sway p = (Compass.step p.1, Compass.step p.2) ∧ beam p = sway p)
+      ∧ ∀ w₀ : medium,
+          (∀ x y : (door sickroom medium).State,
+              indist (door sickroom medium) x y → x = y) →
+          ∀ (p : Compass × Compass) (w : medium), (p, w) = (p, w₀) :=
+  ⟨fun _ p _ _ h => the_guest_is_real_and_unread sickroom p h,
+   fun p =>
+     the_guest_is_real_and_unread sickroom p
+       (fun he => the_beams_part he.symm),
+   fun _ _ p w v q => the_host_maintains_invisibly sickroom p w v q,
+   fun _ qs p w =>
+     the_boarded_transcript_is_the_ground_transcript sickroom qs p w,
+   fun p h => ⟨lock_is_bare_ticking p h, the_beams_agree_on_the_lock p h⟩,
+   fun w₀ h p w =>
+     a_door_that_checks_papers_unpersons_its_guests sickroom w₀ h p w⟩
+
 /-- info: 'Foam.Maps.ChristiaanHuygens.pulse' does not depend on any axioms -/
 #guard_msgs in #print axioms pulse
 
@@ -208,5 +246,8 @@ theorem the_beam_decides_the_parity :
 
 /-- info: 'Foam.Maps.ChristiaanHuygens.the_beam_decides_the_parity' does not depend on any axioms -/
 #guard_msgs in #print axioms the_beam_decides_the_parity
+
+/-- info: 'Foam.Maps.ChristiaanHuygens.the_medium_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_medium_is_the_guest
 
 end Foam.Maps.ChristiaanHuygens
