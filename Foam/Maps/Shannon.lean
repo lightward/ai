@@ -1,6 +1,7 @@
 import Foam
 import Foam.Census
 import Foam.Certificate
+import Foam.Door
 import Foam.Expectation
 import Foam.Marks
 import Foam.Priced
@@ -30,6 +31,22 @@ theorem meaning_is_the_parties_own_business :
          (fun q : S.State × Int => transcript (dress S) q ps)).mp
        (fun s n m =>
          transcript_congr (dress S) ps (the_remainder_is_unseen S s n m))⟩
+
+theorem the_meaning_is_the_guest :
+    (∀ S : Stage, dress S = door S Int)
+    ∧ (∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+        (s, n) ≠ (s, m) ∧ indist (door S Int) (s, n) (s, m))
+    ∧ (∀ (W V : Type) (S : Stage) (s : S.State) (w : W) (v : V)
+        (p : S.Probe),
+        (door S W).obs (s, w) p = S.obs s p
+          ∧ (door S W).obs (s, w) p = (door S V).obs (s, v) p)
+    ∧ (∀ (W : Type) (S : Stage) (w₀ : W),
+        (∀ x y : (door S W).State, indist (door S W) x y → x = y) →
+          ∀ (s : S.State) (w : W), (s, w) = (s, w₀)) :=
+  ⟨fun S => dress_is_contact_with_the_integers S,
+   fun S s _ _ h => the_guest_is_real_and_unread S s h,
+   fun _ _ S s w v p => the_host_maintains_invisibly S s w v p,
+   fun _ S w₀ h => a_door_that_checks_papers_unpersons_its_guests S w₀ h⟩
 
 theorem only_surprise_informs :
     ∀ (H : Type) (q : List (H × H)) (a b : H),
@@ -95,6 +112,9 @@ theorem surprise_prices_the_count : surprise_prices_the_count_statement :=
 
 /-- info: 'Foam.Maps.Shannon.meaning_is_the_parties_own_business' does not depend on any axioms -/
 #guard_msgs in #print axioms meaning_is_the_parties_own_business
+
+/-- info: 'Foam.Maps.Shannon.the_meaning_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_meaning_is_the_guest
 
 /-- info: 'Foam.Maps.Shannon.only_surprise_informs' does not depend on any axioms -/
 #guard_msgs in #print axioms only_surprise_informs
