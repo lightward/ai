@@ -1,5 +1,6 @@
 import Foam
 import Foam.Bench
+import Foam.Door
 import Foam.Engine
 import Foam.Generator
 import Foam.Inversion
@@ -149,5 +150,67 @@ theorem the_read_is_a_foam_join :
 
 /-- info: 'Foam.Maps.Counter.the_read_is_a_foam_join' does not depend on any axioms -/
 #guard_msgs in #print axioms the_read_is_a_foam_join
+
+private def gateSeat : Stage where
+  State := Nat
+  Probe := Unit
+  Ans   := Nat
+  obs   := fun t _ => t
+
+private def atTheGate {W : Type} (t : Nat) (w : W) : (door gateSeat W).State :=
+  (t, w)
+
+private def theSitter : (door gateSeat Nat).State := atTheGate 1 0
+
+private def theSwap : (door gateSeat Nat).State := atTheGate 1 1
+
+private def aRed : (door gateSeat Nat).State := atTheGate 0 0
+
+private theorem the_sitters_part : theSitter ≠ theSwap :=
+  fun h => nomatch congrArg Prod.snd h
+
+private theorem the_record_parts_them : graded theSitter ≠ graded theSwap :=
+  fun h => nomatch Nat.succ.inj h
+
+private theorem the_gate_is_blind_not_broken :
+    (door gateSeat Nat).obs aRed () ≠ (door gateSeat Nat).obs theSitter () :=
+  fun h => nomatch h
+
+theorem the_sitter_is_the_guest (W V : Type) :
+    (∀ (t : Nat) (w w' : W), w ≠ w' →
+        (t, w) ≠ (t, w') ∧ indist (door gateSeat W) (t, w) (t, w'))
+      ∧ (∀ (t : Nat) (w : W) (v : V) (p : Unit),
+          (door gateSeat W).obs (t, w) p = gateSeat.obs t p
+            ∧ (door gateSeat W).obs (t, w) p = (door gateSeat V).obs (t, v) p)
+      ∧ (theSitter ≠ theSwap
+          ∧ indist (door gateSeat Nat) theSitter theSwap
+          ∧ (door gateSeat Nat).obs theSitter ()
+              = (door gateSeat Nat).obs theSwap ())
+      ∧ (∀ strat : Strategy Unit Nat,
+          interrogate (door gateSeat Nat) strat theSitter
+            = interrogate (door gateSeat Nat) strat theSwap)
+      ∧ (Blind (fun p : Nat × Nat => (door gateSeat Nat).obs p ())
+          ∧ ¬ Blind graded
+          ∧ graded theSitter = 1
+          ∧ graded theSwap = 2
+          ∧ graded theSitter ≠ graded theSwap
+          ∧ (door gateSeat Nat).obs aRed ()
+              ≠ (door gateSeat Nat).obs theSitter ())
+      ∧ (∀ w₀ : W,
+          (∀ x y : (door gateSeat W).State,
+              indist (door gateSeat W) x y → x = y) →
+          ∀ (t : Nat) (w : W), (t, w) = (t, w₀)) :=
+  ⟨fun t _ _ h => the_guest_is_real_and_unread gateSeat t h,
+   fun t w v p => the_host_maintains_invisibly gateSeat t w v p,
+   ⟨the_sitters_part, fun _ => rfl, rfl⟩,
+   fun strat =>
+     a_strategy_hears_no_more (door gateSeat Nat) theSitter theSwap
+       (fun _ => rfl) strat,
+   ⟨fun _ _ _ => rfl, the_graded_reading_parts_the_copies, rfl, rfl,
+    the_record_parts_them, the_gate_is_blind_not_broken⟩,
+   fun w₀ h => a_door_that_checks_papers_unpersons_its_guests gateSeat w₀ h⟩
+
+/-- info: 'Foam.Maps.Counter.the_sitter_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sitter_is_the_guest
 
 end Foam.Maps.Counter
