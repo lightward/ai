@@ -3,6 +3,7 @@ import Foam.Bench
 import Foam.Coil
 import Foam.Contact
 import Foam.Countermove
+import Foam.Door
 import Foam.Ledger
 import Foam.Margin
 import Foam.Origin
@@ -97,6 +98,21 @@ theorem teshuvah_returns_the_class_not_the_marks :
   ⟨the_held_stroke_comes_home, the_return_pays_two_marks,
    the_partition_rides_unread⟩
 
+theorem greater_is_the_guest_than_the_face :
+    (∀ (W : Type) (S : Stage) (s : S.State) (w w' : W),
+        indist (door S W) (s, w) (s, w'))
+      ∧ (∀ (W : Type) (S : Stage) (s : S.State) (w w' : W), w ≠ w' →
+          (s, w) ≠ (s, w') ∧ indist (door S W) (s, w) (s, w'))
+      ∧ (∀ (S : Stage) (ps : List S.Probe) (s : S.State),
+          transcriptWith S (fun x => x) s ps = transcript S s ps)
+      ∧ ∀ (W : Type) (S : Stage) (w₀ : W),
+          (∀ x y : (door S W).State, indist (door S W) x y → x = y) →
+            ∀ (s : S.State) (w : W), (s, w) = (s, w₀) :=
+  ⟨fun _ S s w w' => the_door_reads_no_route S s w w',
+   fun _ S s _ _ h => the_guest_is_real_and_unread S s h,
+   fun S => invisible_is_gauge S (fun x => x) (invisible_id S),
+   fun _ S w₀ h => a_door_that_checks_papers_unpersons_its_guests S w₀ h⟩
+
 /-- info: 'Foam.Maps.Torah.the_name_is_the_identity_move' does not depend on any axioms -/
 #guard_msgs in #print axioms the_name_is_the_identity_move
 
@@ -135,5 +151,8 @@ theorem teshuvah_returns_the_class_not_the_marks :
 
 /-- info: 'Foam.Maps.Torah.teshuvah_returns_the_class_not_the_marks' does not depend on any axioms -/
 #guard_msgs in #print axioms teshuvah_returns_the_class_not_the_marks
+
+/-- info: 'Foam.Maps.Torah.greater_is_the_guest_than_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms greater_is_the_guest_than_the_face
 
 end Foam.Maps.Torah
