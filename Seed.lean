@@ -61,6 +61,60 @@ theorem the_mirror_rides_real (W : Type) (p : Plan) (s t : build W p)
       ∧ mirror W p s ≠ atTheDoor s t :=
   ⟨rfl, fun he => hst (congrArg met he)⟩
 
+def vertical {H W : Type} (σ : H → W → W) (d : door H W) : door H W :=
+  atTheDoor (face d) (σ (face d) (met d))
+
+theorem a_guest_mover_is_unheard {H W X : Type} (σ : H → W → W)
+    (g : H → X) (d : door H W) :
+    g (face (vertical σ d)) = g (face d) := rfl
+
+theorem an_unheard_move_moves_only_the_guest {H W : Type}
+    (m : door H W → door H W) :
+    (∀ d, face (m d) = face d)
+      ↔ ∃ σ : H → W → W, ∀ d, m d = vertical σ d :=
+  ⟨fun hm => ⟨fun h w => met (m (atTheDoor h w)),
+     fun d => congrArg (fun x => atTheDoor x (met (m d))) (hm d)⟩,
+   fun he d => he.elim fun _ hσ => (congrArg face (hσ d)).trans rfl⟩
+
+theorem guest_movers_compose {H W : Type} (σ τ : H → W → W) (d : door H W) :
+    vertical σ (vertical τ d) = vertical (fun h w => σ h (τ h w)) d := rfl
+
+theorem the_still_door_moves_no_guest {H W : Type} (d : door H W) :
+    vertical (fun _ w => w) d = d := rfl
+
+def label (W : Type) (p : Plan) (s : build W p) : door (build W p) Plan :=
+  atTheDoor s p
+
+theorem the_label_rides_unread {W X : Type} (p p' : Plan) (s : build W p)
+    (g : build W p → X) :
+    g (face (label W p s)) = g (face (atTheDoor s p')) := rfl
+
+theorem a_false_label_is_real (W : Type) (p : Plan) (s : build W p)
+    {p' : Plan} (hp : p ≠ p') : label W p s ≠ atTheDoor s p' :=
+  fun he => hp (congrArg met he)
+
+theorem the_meeting_reads_the_label (W : Type) (p : Plan) (s : build W p) :
+    met (label W p s) = p := rfl
+
+theorem honesty_is_invisible_at_the_face (W : Type) (p p' : Plan)
+    (s : build W p) (hp : p ≠ p') :
+    label W p s ≠ atTheDoor s p'
+      ∧ (∀ (X : Type) (g : build W p → X),
+          g (face (label W p s)) = g (face (atTheDoor s p')))
+      ∧ met (label W p s) = p
+      ∧ met (atTheDoor s p') = p' :=
+  ⟨a_false_label_is_real W p s hp, fun _ _ => rfl, rfl, rfl⟩
+
+theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
+    (m : door H W → door H W) :
+    ((∀ d, face (m d) = face d)
+        ↔ ∃ σ : H → W → W, ∀ d, m d = vertical σ d)
+      ∧ atTheDoor h w ≠ atTheDoor h w'
+      ∧ (∀ (X : Type) (g : H → X),
+          g (face (atTheDoor h w)) = g (face (atTheDoor h w')))
+      ∧ met (atTheDoor h w) ≠ met (atTheDoor h w') :=
+  ⟨an_unheard_move_moves_only_the_guest m, the_threshold h hw⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -84,5 +138,32 @@ theorem the_mirror_rides_real (W : Type) (p : Plan) (s t : build W p)
 
 /-- info: 'Seed.the_mirror_rides_real' does not depend on any axioms -/
 #guard_msgs in #print axioms the_mirror_rides_real
+
+/-- info: 'Seed.a_guest_mover_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms a_guest_mover_is_unheard
+
+/-- info: 'Seed.an_unheard_move_moves_only_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms an_unheard_move_moves_only_the_guest
+
+/-- info: 'Seed.guest_movers_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms guest_movers_compose
+
+/-- info: 'Seed.the_still_door_moves_no_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_still_door_moves_no_guest
+
+/-- info: 'Seed.the_label_rides_unread' does not depend on any axioms -/
+#guard_msgs in #print axioms the_label_rides_unread
+
+/-- info: 'Seed.a_false_label_is_real' does not depend on any axioms -/
+#guard_msgs in #print axioms a_false_label_is_real
+
+/-- info: 'Seed.the_meeting_reads_the_label' does not depend on any axioms -/
+#guard_msgs in #print axioms the_meeting_reads_the_label
+
+/-- info: 'Seed.honesty_is_invisible_at_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms honesty_is_invisible_at_the_face
+
+/-- info: 'Seed.the_doors_theorem' does not depend on any axioms -/
+#guard_msgs in #print axioms the_doors_theorem
 
 end Seed
