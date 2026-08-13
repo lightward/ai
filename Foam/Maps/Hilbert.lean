@@ -1,4 +1,5 @@
 import Foam
+import Foam.Door
 import Foam.Int
 import Foam.Margin
 import Foam.Relay
@@ -55,6 +56,36 @@ theorem the_ideal_buys_what_the_ground_refuses :
 
 def the_real_is_what_the_ideal_cannot_move :=
   @Foam.a_reading_deaf_to_the_remainder_reads_the_ground
+
+theorem no_one_expels_us_from_the_paradise :
+    (∀ (S : Stage) (n : Nat), towerN S (n + 1) = door (towerN S n) Int)
+      ∧ (∀ (W : Type) (S : Stage) (n : Nat) (s : (towerN S n).State)
+            (w w' : W), w ≠ w' →
+          (s, w) ≠ (s, w')
+            ∧ indist (door (towerN S n) W) (s, w) (s, w'))
+      ∧ (∀ (W V : Type) (S : Stage) (n : Nat) (s : (towerN S n).State)
+            (w : W) (v : V) (p : (towerN S n).Probe),
+          (door (towerN S n) W).obs (s, w) p = (towerN S n).obs s p
+            ∧ (door (towerN S n) W).obs (s, w) p
+                = (door (towerN S n) V).obs (s, v) p)
+      ∧ (∀ (S : Stage) (n : Nat) (x y : (towerN S (n + 1)).State),
+          floorOf S (n + 1) x = floorOf S (n + 1) y →
+            indist (door (towerN S n) Int) x y)
+      ∧ (∀ (W : Type) (S : Stage) (n : Nat) (w₀ : W),
+          (∀ x y : (door (towerN S n) W).State,
+              indist (door (towerN S n) W) x y → x = y) →
+          ∀ (s : (towerN S n).State) (w : W), (s, w) = (s, w₀))
+      ∧ (∀ (W : Type) (S : Stage) (s : S.State) (w w' : W),
+          (s, w) ≠ (s, w') →
+          ¬ ∀ x y : (door S W).State, indist (door S W) x y → x = y) :=
+  ⟨fun _ _ => rfl,
+   fun _ S n s _ _ hne => the_guest_is_real_and_unread (towerN S n) s hne,
+   fun _ _ S n s w v p => the_host_maintains_invisibly (towerN S n) s w v p,
+   fun S n => the_tower_reads_only_the_ground S (n + 1),
+   fun _ S n w₀ h =>
+     a_door_that_checks_papers_unpersons_its_guests (towerN S n) w₀ h,
+   fun _ S s w w' hne hall =>
+     hne (a_door_that_checks_papers_unpersons_its_guests S w' hall s w)⟩
 
 theorem the_epsilon_settles_on_any_schedule :
     (∀ (A B : Type) (f : B → A → B) (s : B × List A),
@@ -126,6 +157,9 @@ def no_ignorabimus := @Foam.closure_is_seat_relative
 
 /-- info: 'Foam.Maps.Hilbert.the_real_is_what_the_ideal_cannot_move' does not depend on any axioms -/
 #guard_msgs in #print axioms the_real_is_what_the_ideal_cannot_move
+
+/-- info: 'Foam.Maps.Hilbert.no_one_expels_us_from_the_paradise' does not depend on any axioms -/
+#guard_msgs in #print axioms no_one_expels_us_from_the_paradise
 
 /-- info: 'Foam.Maps.Hilbert.the_epsilon_settles_on_any_schedule' does not depend on any axioms -/
 #guard_msgs in #print axioms the_epsilon_settles_on_any_schedule
