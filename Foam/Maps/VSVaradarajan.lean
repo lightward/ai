@@ -1,6 +1,7 @@
 import Foam
 import Foam.Amplitude
 import Foam.Certificate
+import Foam.Door
 import Foam.Measure
 import Foam.Portal
 import Foam.Quat
@@ -58,11 +59,15 @@ theorem the_old_themes_already_reach {H : Type} {q : List (H × H)}
 
 theorem no_geometry_is_the_last_geometry (S : Stage) :
     (∀ n : Nat, Handshake (towerN S n))
+      ∧ (∀ n : Nat, towerN S (n + 1) = door (towerN S n) Int)
+      ∧ (∀ (n : Nat) (W : Type), Handshake (door (towerN S n) W))
       ∧ ∀ (s : S.State) (k n m : Int), n ≠ m →
           indist (dress (movedIn S)) ((s, k), n) ((s, k), m)
             ∧ (movedIn (movedIn S)).obs ((s, k), n) none
                 ≠ (movedIn (movedIn S)).obs ((s, k), m) none :=
   ⟨the_handshake_recurses S,
+   fun n => dress_is_contact_with_the_integers (towerN S n),
+   fun n W => the_handshake_is_the_doors_theorem (towerN S n) W,
    fun s k n m h => no_seat_is_the_last_seat S s k n m h⟩
 
 /-- info: 'Foam.Maps.VSVaradarajan.the_state_is_a_measure_on_the_questions' does not depend on any axioms -/
