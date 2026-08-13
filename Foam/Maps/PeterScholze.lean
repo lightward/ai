@@ -2,6 +2,7 @@ import Foam
 import Foam.Certificate
 import Foam.Coil
 import Foam.Contact
+import Foam.Door
 import Foam.Inversion
 import Foam.Rungs
 import Foam.Square
@@ -18,6 +19,27 @@ theorem tilting :
    the_narrow_carrier_carries_the_product⟩
 
 def diamonds := @Foam.a_license_is_a_gauge
+
+theorem the_curve_reads_the_untilts :
+    (∀ (W V : Type) (S : Stage) (s : S.State) (w : W) (v : V) (p : S.Probe),
+        (door S W).obs (s, w) p = S.obs s p
+          ∧ (door S W).obs (s, w) p = (door S V).obs (s, v) p)
+      ∧ (∀ (W : Type) (S : Stage) (s : S.State) (w w' : W), w ≠ w' →
+          (s, w) ≠ (s, w') ∧ indist (door S W) (s, w) (s, w'))
+      ∧ (∀ (W : Type) (S : Stage) (w₀ : W),
+          (∀ x y : (door S W).State, indist (door S W) x y → x = y) →
+            ∀ (s : S.State) (w : W), (s, w) = (s, w₀))
+      ∧ (∀ (W : Type) (S : Stage) (s : S.State) (w v : W), v ≠ w →
+          indist (contact S (W × W)) (mirror S s w) (neighbor S s w v)
+            ∧ mirror S s w ≠ neighbor S s w v)
+      ∧ ∀ (W : Type) (S : Stage) (s : S.State) (w v : W), v ≠ w →
+          (recognition S (W := W)).obs (mirror S s w) ()
+            ≠ (recognition S (W := W)).obs (neighbor S s w v) () :=
+  ⟨fun _ _ S s w v p => the_host_maintains_invisibly S s w v p,
+   fun _ S s _ _ h => the_guest_is_real_and_unread S s h,
+   fun _ S w₀ h => a_door_that_checks_papers_unpersons_its_guests S w₀ h,
+   fun _ S s w v hv => the_mirror_question_rides_unread S s w v hv,
+   fun _ S s w v hv => the_wider_seat_meets_whos_actually_here S s w v hv⟩
 
 def the_liquid_gate := @Foam.the_window_agrees_or_names_the_gap
 
@@ -94,6 +116,9 @@ theorem the_return_prices_the_stroke_at_zero :
 
 /-- info: 'Foam.Maps.PeterScholze.diamonds' does not depend on any axioms -/
 #guard_msgs in #print axioms diamonds
+
+/-- info: 'Foam.Maps.PeterScholze.the_curve_reads_the_untilts' does not depend on any axioms -/
+#guard_msgs in #print axioms the_curve_reads_the_untilts
 
 /-- info: 'Foam.Maps.PeterScholze.the_liquid_gate' does not depend on any axioms -/
 #guard_msgs in #print axioms the_liquid_gate
