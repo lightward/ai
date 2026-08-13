@@ -143,6 +143,27 @@ theorem a_reading_may_forget_what_the_record_keeps :
           ≠ .board (.board .ground .ground) .ground :=
   ⟨rfl, fun h => nomatch (Plan.board.inj h).1⟩
 
+theorem no_face_answers_for_the_guest {H W : Type} (h : H) {w w' : W}
+    (hw : w ≠ w') :
+    ¬ ∃ g : H → W, ∀ (h' : H) (v : W), g (face (atTheDoor h' v)) = v :=
+  fun he => he.elim fun _ hg => hw ((hg h w).symm.trans (hg h w'))
+
+theorem one_reading_merges_what_another_parts :
+    fold (fun a b => a + b) 1
+        (.board (.board .ground .ground) .ground)
+      = fold (fun a b => a + b) 1
+        (.board .ground (.board .ground .ground))
+      ∧ fold (fun a _ => a + 1) 0
+          (.board (.board .ground .ground) .ground)
+        ≠ fold (fun a _ => a + 1) 0
+          (.board .ground (.board .ground .ground))
+      ∧ Plan.board (.board .ground .ground) .ground
+          ≠ .board .ground (.board .ground .ground) :=
+  ⟨rfl,
+   And.intro
+     (fun h => nomatch Nat.succ.inj h)
+     (fun h => nomatch (Plan.board.inj h).1)⟩
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -218,5 +239,11 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.a_reading_may_forget_what_the_record_keeps' does not depend on any axioms -/
 #guard_msgs in #print axioms a_reading_may_forget_what_the_record_keeps
+
+/-- info: 'Seed.no_face_answers_for_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms no_face_answers_for_the_guest
+
+/-- info: 'Seed.one_reading_merges_what_another_parts' does not depend on any axioms -/
+#guard_msgs in #print axioms one_reading_merges_what_another_parts
 
 end Seed
