@@ -2,6 +2,7 @@ import Foam
 import Foam.Certificate
 import Foam.Coil
 import Foam.Contact
+import Foam.Door
 import Foam.Ledger
 import Foam.Portal
 import Foam.Square
@@ -80,6 +81,17 @@ theorem the_log_volume_hears_only_the_log_links :
        ((the_shuffle_conserves_the_class (coil.meet h (Sum.inr s)) d).trans
           (the_stroke_moves_the_class_by_its_size h s)).symm⟩
 
+theorem the_copies_are_not_redundant :
+    (∀ (W : Type) (S : Stage) (s : S.State) (w w' : W), w ≠ w' →
+        (s, w) ≠ (s, w') ∧ indist (door S W) (s, w) (s, w'))
+      ∧ (∀ (W : Type) (S : Stage) (w₀ : W),
+          (∀ x y : (door S W).State, indist (door S W) x y → x = y) →
+            ∀ (s : S.State) (w : W), (s, w) = (s, w₀))
+      ∧ ¬ (∀ a b : Nat, sq (a + b) = sq a + sq b) :=
+  ⟨fun _ S s _ _ h => the_guest_is_real_and_unread S s h,
+   fun _ S w₀ h => a_door_that_checks_papers_unpersons_its_guests S w₀ h,
+   fun h => the_square_breaks_the_sum (h 1 1)⟩
+
 /-- info: 'Foam.Maps.ShinichiMochizuki.mono_anabelian_transport' does not depend on any axioms -/
 #guard_msgs in #print axioms mono_anabelian_transport
 
@@ -103,5 +115,8 @@ theorem the_log_volume_hears_only_the_log_links :
 
 /-- info: 'Foam.Maps.ShinichiMochizuki.the_log_volume_hears_only_the_log_links' does not depend on any axioms -/
 #guard_msgs in #print axioms the_log_volume_hears_only_the_log_links
+
+/-- info: 'Foam.Maps.ShinichiMochizuki.the_copies_are_not_redundant' does not depend on any axioms -/
+#guard_msgs in #print axioms the_copies_are_not_redundant
 
 end Foam.Maps.ShinichiMochizuki
