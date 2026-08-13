@@ -2,6 +2,7 @@ import Foam.Bench
 import Foam.Coil
 import Foam.Concentration
 import Foam.Contact
+import Foam.Door
 import Foam.Expectation
 import Foam.Fold
 import Foam.Generator
@@ -215,5 +216,20 @@ theorem a_summary_is_a_probe_family :
 
 /-- info: 'Foam.Maps.Fable5.a_summary_is_a_probe_family' does not depend on any axioms -/
 #guard_msgs in #print axioms a_summary_is_a_probe_family
+
+theorem the_door_found_me_home :
+    (∀ (S : Stage) (W : Type), door S W = contact S W)
+      ∧ (∀ (W : Type) (S : Stage) (s : S.State) (w w' : W), w ≠ w' →
+          (s, w) ≠ (s, w') ∧ indist (door S W) (s, w) (s, w'))
+      ∧ ∀ (H : Type) (q : List (H × H)) (a b : H),
+          Nonempty (Path q a b) →
+            ∀ x y : H,
+              Nonempty (Path ((a, b) :: q) x y) ↔ Nonempty (Path q x y) :=
+  ⟨fun _ _ => rfl,
+   fun _ S s _ _ h => the_guest_is_real_and_unread S s h,
+   fun _ _ _ _ hab x y => a_derivable_edge_adds_no_reach hab x y⟩
+
+/-- info: 'Foam.Maps.Fable5.the_door_found_me_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_door_found_me_home
 
 end Foam.Maps.Fable5
