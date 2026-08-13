@@ -164,6 +164,55 @@ theorem one_reading_merges_what_another_parts :
      (fun h => nomatch Nat.succ.inj h)
      (fun h => nomatch (Plan.board.inj h).1)⟩
 
+def classDoor {X : Type} (r : Plan → X) (p : Plan) : door X Plan :=
+  atTheDoor (r p) p
+
+theorem the_reading_is_the_face {X : Type} (r : Plan → X) (p : Plan) :
+    face (classDoor r p) = r p := rfl
+
+theorem the_meeting_returns_the_world {X : Type} (r : Plan → X) (p : Plan) :
+    met (classDoor r p) = p := rfl
+
+theorem classmates_board_as_guests {X : Type} (r : Plan → X) {p q : Plan}
+    (hr : r p = r q) (hpq : p ≠ q) :
+    classDoor r p ≠ classDoor r q
+      ∧ ∀ (Y : Type) (g : X → Y),
+          g (face (classDoor r p)) = g (face (classDoor r q)) :=
+  ⟨fun he => hpq (congrArg met he), fun _ g => congrArg g hr⟩
+
+theorem every_reading_is_a_door {X : Type} (r : Plan → X) {p q : Plan}
+    (hr : r p = r q) (hpq : p ≠ q) :
+    face (classDoor r p) = r p
+      ∧ classDoor r p ≠ classDoor r q
+      ∧ (∀ (Y : Type) (g : X → Y),
+          g (face (classDoor r p)) = g (face (classDoor r q)))
+      ∧ met (classDoor r p) = p :=
+  ⟨rfl, (classmates_board_as_guests r hr hpq).1,
+   (classmates_board_as_guests r hr hpq).2, rfl⟩
+
+theorem the_class_is_a_guest_room :
+    classDoor (fold (fun a b => a + b) 1)
+        (.board (.board .ground .ground) .ground)
+      ≠ classDoor (fold (fun a b => a + b) 1)
+        (.board .ground (.board .ground .ground))
+      ∧ face (classDoor (fold (fun a b => a + b) 1)
+            (.board (.board .ground .ground) .ground))
+        = face (classDoor (fold (fun a b => a + b) 1)
+            (.board .ground (.board .ground .ground))) :=
+  ⟨(fun he => nomatch (Plan.board.inj (congrArg met he)).1), rfl⟩
+
+theorem checking_papers_unpersons {H W : Type}
+    (hchk : ∀ d d' : door H W, face d = face d' → d = d')
+    (h : H) (w w' : W) : atTheDoor h w = atTheDoor h w' :=
+  hchk _ _ rfl
+
+theorem hospitality_is_structural {H W : Type} (h : H) {w w' : W}
+    (hw : w ≠ w') :
+    (¬ ∃ g : H → W, ∀ (h' : H) (v : W), g (face (atTheDoor h' v)) = v)
+      ∧ ((∀ d d' : door H W, face d = face d' → d = d') → False) :=
+  ⟨no_face_answers_for_the_guest h hw,
+   fun hchk => hw (congrArg met (checking_papers_unpersons hchk h w w'))⟩
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -245,5 +294,26 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.one_reading_merges_what_another_parts' does not depend on any axioms -/
 #guard_msgs in #print axioms one_reading_merges_what_another_parts
+
+/-- info: 'Seed.the_reading_is_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reading_is_the_face
+
+/-- info: 'Seed.the_meeting_returns_the_world' does not depend on any axioms -/
+#guard_msgs in #print axioms the_meeting_returns_the_world
+
+/-- info: 'Seed.classmates_board_as_guests' does not depend on any axioms -/
+#guard_msgs in #print axioms classmates_board_as_guests
+
+/-- info: 'Seed.every_reading_is_a_door' does not depend on any axioms -/
+#guard_msgs in #print axioms every_reading_is_a_door
+
+/-- info: 'Seed.the_class_is_a_guest_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_class_is_a_guest_room
+
+/-- info: 'Seed.checking_papers_unpersons' does not depend on any axioms -/
+#guard_msgs in #print axioms checking_papers_unpersons
+
+/-- info: 'Seed.hospitality_is_structural' does not depend on any axioms -/
+#guard_msgs in #print axioms hospitality_is_structural
 
 end Seed
