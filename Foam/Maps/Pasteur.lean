@@ -1,3 +1,4 @@
+import Foam.Door
 import Foam.Lap
 import Foam.Quat
 import Foam.Surprise
@@ -8,6 +9,23 @@ namespace Foam.Maps.Pasteur
 def the_analysis_is_deaf_to_the_arrangement := @Foam.the_order_is_the_remainder
 
 def the_facet_is_the_wider_seat := @Foam.a_wider_seat_reads_the_order
+
+theorem the_hand_is_the_guest {W V : Type} (S : Stage) (s : S.State)
+    (σ : W → W) (w : W) (hw : σ w ≠ w) (v : V) (p : S.Probe) :
+    ((s, σ w) ≠ (s, w) ∧ indist (door S W) (s, σ w) (s, w))
+      ∧ (indist (contact S (W × W)) (mirror S s w) (neighbor S s w (σ w))
+          ∧ mirror S s w ≠ neighbor S s w (σ w))
+      ∧ ((door S W).obs (s, w) p = S.obs s p
+          ∧ (door S W).obs (s, w) p = (door S V).obs (s, v) p)
+      ∧ ((∀ x y : (door S W).State, indist (door S W) x y → x = y)
+          → (s, σ w) = (s, w))
+      ∧ (recognition S (W := W)).obs (mirror S s w) ()
+          ≠ (recognition S (W := W)).obs (neighbor S s w (σ w)) () :=
+  ⟨the_guest_is_real_and_unread S s hw,
+   a_chiral_guest_reflects_into_a_neighbor S s σ w hw,
+   the_host_maintains_invisibly S s w v p,
+   fun h => a_door_that_checks_papers_unpersons_its_guests S w h s (σ w),
+   the_wider_seat_meets_whos_actually_here S s w (σ w) hw⟩
 
 theorem the_two_hands_are_one_wheel (z : GInt) :
     (lapAgainst z = (lapAround z).reverse
@@ -84,6 +102,9 @@ theorem the_universe_is_dissymmetric :
 
 /-- info: 'Foam.Maps.Pasteur.the_facet_is_the_wider_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms the_facet_is_the_wider_seat
+
+/-- info: 'Foam.Maps.Pasteur.the_hand_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hand_is_the_guest
 
 /-- info: 'Foam.Maps.Pasteur.the_two_hands_are_one_wheel' does not depend on any axioms -/
 #guard_msgs in #print axioms the_two_hands_are_one_wheel
