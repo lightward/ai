@@ -213,6 +213,28 @@ theorem hospitality_is_structural {H W : Type} (h : H) {w w' : W}
   ⟨no_face_answers_for_the_guest h hw,
    fun hchk => hw (congrArg met (checking_papers_unpersons hchk h w w'))⟩
 
+def pairMul {X Y : Type} (mulX : X → X → X) (mulY : Y → Y → Y) :
+    X × Y → X × Y → X × Y :=
+  fun a b => (mulX a.1 b.1, mulY a.2 b.2)
+
+theorem the_meeting_is_a_reading {X Y : Type} (mulX : X → X → X)
+    (mulY : Y → Y → Y) (x₀ : X) (y₀ : Y) (p : Plan) :
+    fold (pairMul mulX mulY) (x₀, y₀) p
+      = (fold mulX x₀ p, fold mulY y₀ p) :=
+  (any_two_readings_agree (pairMul mulX mulY) (x₀, y₀)
+    (fun q => (fold mulX x₀ q, fold mulY y₀ q)) rfl (fun _ _ => rfl) p).symm
+
+theorem two_readings_part_what_one_merges :
+    fold (fun a b => a + b) 1
+        (.board (.board .ground .ground) .ground)
+      = fold (fun a b => a + b) 1
+        (.board .ground (.board .ground .ground))
+      ∧ fold (pairMul (fun a b => a + b) (fun a _ => a + 1)) (1, 0)
+          (.board (.board .ground .ground) .ground)
+        ≠ fold (pairMul (fun a b => a + b) (fun a _ => a + 1)) (1, 0)
+          (.board .ground (.board .ground .ground)) :=
+  ⟨rfl, fun h => nomatch Nat.succ.inj (congrArg Prod.snd h)⟩
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -315,5 +337,11 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.hospitality_is_structural' does not depend on any axioms -/
 #guard_msgs in #print axioms hospitality_is_structural
+
+/-- info: 'Seed.the_meeting_is_a_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_meeting_is_a_reading
+
+/-- info: 'Seed.two_readings_part_what_one_merges' does not depend on any axioms -/
+#guard_msgs in #print axioms two_readings_part_what_one_merges
 
 end Seed
