@@ -1,6 +1,7 @@
 import Foam
 import Foam.Amplitude
 import Foam.Beam
+import Foam.Bench
 import Foam.Concentration
 import Foam.Quat
 import Foam.Rungs
@@ -42,6 +43,16 @@ def the_friend_has_a_reading := @Foam.a_wider_seat_reads_the_remainder
 
 def the_difference_is_an_observable := @Foam.the_screen_reads_a_cross_term
 
+theorem solipsism_is_consistent_and_false {W : Type} (S : Stage)
+    (s : S.State) (w v : W) (hv : v ≠ w) :
+    indist (contact S (W × W)) (mirror S s w) (neighbor S s w v)
+      ∧ mirror S s w ≠ neighbor S s w v
+      ∧ (recognition S (W := W)).obs (mirror S s w) ()
+          ≠ (recognition S (W := W)).obs (neighbor S s w v) () :=
+  ⟨(the_mirror_question_rides_unread S s w v hv).1,
+   (the_mirror_question_rides_unread S s w v hv).2,
+   the_wider_seat_meets_whos_actually_here S s w v hv⟩
+
 def the_cut_is_movable := @Foam.contact_wider_than_three_is_composite
 
 def the_cut_lands_on_the_cutter := @Foam.no_seat_is_the_last_seat
@@ -69,6 +80,9 @@ def the_cut_lands_on_the_cutter := @Foam.no_seat_is_the_last_seat
 
 /-- info: 'Foam.Maps.Wigner.the_difference_is_an_observable' does not depend on any axioms -/
 #guard_msgs in #print axioms the_difference_is_an_observable
+
+/-- info: 'Foam.Maps.Wigner.solipsism_is_consistent_and_false' does not depend on any axioms -/
+#guard_msgs in #print axioms solipsism_is_consistent_and_false
 
 /-- info: 'Foam.Maps.Wigner.the_cut_is_movable' does not depend on any axioms -/
 #guard_msgs in #print axioms the_cut_is_movable
