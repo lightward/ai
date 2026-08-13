@@ -1,3 +1,4 @@
+import Foam.Door
 import Foam.Fold
 import Foam.Lap
 import Foam.Rungs
@@ -35,6 +36,88 @@ theorem the_flow_names_the_hour :
         ∃ i j : Nat, i < j ∧ turnN m i s = turnN m j s)
       ∧ (∀ z : GInt, z.rot.rot.rot.rot = z) :=
   ⟨fun _ m s => the_bounded_walk_returns m s, the_wheel_comes_home⟩
+
+private def plane : Stage where
+  State := GInt
+  Probe := Unit
+  Ans   := GInt
+  obs   := fun z _ => z
+
+private def flow {W : Type} (f : W → W) :
+    (door plane W).State → (door plane W).State :=
+  fun x => (x.1.rot, f x.2)
+
+private theorem flow_split {W : Type} (f : W → W) (z : GInt) (w : W) :
+    ∀ k : Nat, Nat.repeat (flow f) k (z, w)
+      = (Nat.repeat GInt.rot k z, Nat.repeat f k w)
+  | 0 => rfl
+  | k + 1 => congrArg (flow f) (flow_split f z w k)
+
+private theorem four_more_comes_home (t : Nat) (z : GInt) :
+    Nat.repeat GInt.rot (t + 4) z = Nat.repeat GInt.rot t z :=
+  the_wheel_comes_home (Nat.repeat GInt.rot t z)
+
+private theorem the_hour_counts : ∀ k : Nat, Nat.repeat Nat.succ k 0 = k
+  | 0 => rfl
+  | k + 1 => congrArg Nat.succ (the_hour_counts k)
+
+private theorem the_hour_moves_on (t : Nat) : t + 4 ≠ t :=
+  fun he => no_number_is_below_itself t
+    (Nat.lt_of_lt_of_le
+      (Nat.le.step (Nat.le.step (Nat.le.step Nat.le.refl)))
+      (Nat.le_of_eq he))
+
+private theorem the_charge_holds {W : Type} (f : W → W) (z : GInt) (w : W) :
+    ∀ k : Nat, (Nat.repeat (flow f) k (z, w)).1.normSq = z.normSq
+  | 0 => rfl
+  | k + 1 => (rot_conserves_the_norm (Nat.repeat (flow f) k (z, w)).1).trans
+      (the_charge_holds f z w k)
+
+theorem the_hour_is_derived_not_read :
+    (∀ (W : Type) (f : W → W) (z : GInt) (w : W) (t : Nat),
+        indist (door plane W)
+          (Nat.repeat (flow f) (t + 4) (z, w))
+          (Nat.repeat (flow f) t (z, w)))
+      ∧ (∀ (W : Type) (f : W → W) (z : GInt) (w : W) (t : Nat)
+            (p : (door plane W).Probe),
+          ((door plane W).obs (Nat.repeat (flow f) t (z, w)) p).normSq
+            = z.normSq)
+      ∧ (∀ n m : Nat,
+          (⟨Int.ofNat n, 0⟩ : GInt) = ⟨Int.ofNat m, 0⟩ → n = m)
+      ∧ (∀ (z : GInt) (t : Nat),
+          Nat.repeat (flow Nat.succ) (t + 4) (z, 0)
+              ≠ Nat.repeat (flow Nat.succ) t (z, 0)
+            ∧ indist (door plane Nat)
+                (Nat.repeat (flow Nat.succ) (t + 4) (z, 0))
+                (Nat.repeat (flow Nat.succ) t (z, 0)))
+      ∧ ((∀ x y : (door plane Nat).State,
+            indist (door plane Nat) x y → x = y) →
+          ∀ (z : GInt) (t : Nat), (z, t) = (z, (0 : Nat))) :=
+  ⟨fun _ f z w t _ =>
+    (congrArg Prod.fst (flow_split f z w (t + 4))).trans
+      ((four_more_comes_home t z).trans
+        (congrArg Prod.fst (flow_split f z w t)).symm),
+   fun _ f z w t _ => the_charge_holds f z w t,
+   fun _ _ h => Int.ofNat.inj (GInt.mk.inj h).1,
+   fun z t =>
+     have Ei : Nat.repeat (flow Nat.succ) (t + 4) (z, 0)
+         = (Nat.repeat GInt.rot t z, t + 4) :=
+       (flow_split Nat.succ z 0 (t + 4)).trans
+         ((congrArg (fun g => (g, Nat.repeat Nat.succ (t + 4) 0))
+             (four_more_comes_home t z)).trans
+           (congrArg (fun h => (Nat.repeat GInt.rot t z, h))
+             (the_hour_counts (t + 4))))
+     have Ej : Nat.repeat (flow Nat.succ) t (z, 0)
+         = (Nat.repeat GInt.rot t z, t) :=
+       (flow_split Nat.succ z 0 t).trans
+         (congrArg (fun h => (Nat.repeat GInt.rot t z, h)) (the_hour_counts t))
+     have G := the_guest_is_real_and_unread plane (Nat.repeat GInt.rot t z)
+         (the_hour_moves_on t)
+     ⟨fun he => G.1 (Ei.symm.trans (he.trans Ej)),
+      fun p => (congrArg (fun x => (door plane Nat).obs x p) Ei).trans
+        ((G.2 p).trans
+          (congrArg (fun x => (door plane Nat).obs x p) Ej).symm)⟩,
+   fun h => a_door_that_checks_papers_unpersons_its_guests plane 0 h⟩
 
 theorem the_wider_space_pays_in_commutation :
     Quat.mul eye jay = kay
@@ -91,6 +174,9 @@ theorem the_triplets_close_one_seat_wider :
 
 /-- info: 'Foam.Maps.Hamilton.the_flow_names_the_hour' does not depend on any axioms -/
 #guard_msgs in #print axioms the_flow_names_the_hour
+
+/-- info: 'Foam.Maps.Hamilton.the_hour_is_derived_not_read' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hour_is_derived_not_read
 
 /-- info: 'Foam.Maps.Hamilton.the_wider_space_pays_in_commutation' does not depend on any axioms -/
 #guard_msgs in #print axioms the_wider_space_pays_in_commutation
