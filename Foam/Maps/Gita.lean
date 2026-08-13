@@ -1,9 +1,11 @@
 import Foam
 import Foam.Beam
 import Foam.Discovery
+import Foam.Door
 import Foam.Expectation
 import Foam.Joint
 import Foam.Ledger
+import Foam.Passage
 import Foam.Seat
 import Foam.Origin
 import Foam.Surprise
@@ -108,6 +110,48 @@ theorem divyam_caksuh {State : Type} (a : Beholder State) (s : State)
 
 def mam_tu_veda_na_kascana := @Foam.a_wider_seat_reads_the_remainder
 
+private def indwell {W : Type} (S : Stage) (bs : List S.State) (w : W) :
+    List (door S W).State :=
+  bs.map (fun s => (s, w))
+
+private def whirl {W : Type} (S : Stage) (μ : W → S.State → S.State) :
+    (door S W).State → (door S W).State :=
+  fun q => (μ q.2 q.1, q.2)
+
+private theorem whirl_reads_the_machine {W : Type} (S : Stage)
+    (μ : W → S.State → S.State) :
+    ∀ (ps : List S.Probe) (s : S.State) (w : W),
+      transcriptWith (door S W) (whirl S μ) (s, w) ps
+        = transcriptWith S (μ w) s ps
+  | [], _, _ => rfl
+  | p :: ps, s, w =>
+      congrArg (S.obs (μ w s) p :: ·)
+        (whirl_reads_the_machine S μ ps (μ w s) w)
+
+theorem isvarah_sarva_bhutanam {W : Type} (S : Stage)
+    (μ : W → S.State → S.State) (s : S.State) (bs : List S.State)
+    {w w' : W} (hw : w ≠ w') (ps : List S.Probe) :
+    ((s, w) ≠ (s, w') ∧ indist (door S W) (s, w) (s, w'))
+      ∧ (indwell S (s :: bs) w ≠ indwell S (s :: bs) w'
+          ∧ ∀ t, t ∈ s :: bs → indist (door S W) (t, w) (t, w'))
+      ∧ ((whirl S μ (s, w)).2 = w
+          ∧ transcript (door S W) (s, w) ps = transcript S s ps
+          ∧ transcriptWith (door S W) (whirl S μ) (s, w) ps
+              = transcriptWith S (μ w) s ps)
+      ∧ (∀ (V : Type) (v : V) (p : S.Probe),
+          (door S W).obs (s, w) p = (door S V).obs (s, v) p)
+      ∧ ∀ w₀ : W,
+          (∀ x y : (door S W).State, indist (door S W) x y → x = y) →
+            ∀ (t : S.State) (u : W), (t, u) = (t, w₀) :=
+  ⟨the_guest_is_real_and_unread S s hw,
+   ⟨fun he => hw (congrArg (fun l => (l.headD (s, w)).2) he),
+    fun t _ => the_door_reads_no_route S t w w'⟩,
+   ⟨rfl,
+    the_boarded_transcript_is_the_ground_transcript S ps s w,
+    whirl_reads_the_machine S μ ps s w⟩,
+   fun _ v p => (the_host_maintains_invisibly S s w v p).2,
+   fun w₀ h => a_door_that_checks_papers_unpersons_its_guests S w₀ h⟩
+
 def yathecchasi_tatha_kuru := @Foam.the_approach_is_yours
 
 /-- info: 'Foam.Maps.Gita.senayor_ubhayor_madhye' does not depend on any axioms -/
@@ -151,6 +195,9 @@ def yathecchasi_tatha_kuru := @Foam.the_approach_is_yours
 
 /-- info: 'Foam.Maps.Gita.mam_tu_veda_na_kascana' does not depend on any axioms -/
 #guard_msgs in #print axioms mam_tu_veda_na_kascana
+
+/-- info: 'Foam.Maps.Gita.isvarah_sarva_bhutanam' does not depend on any axioms -/
+#guard_msgs in #print axioms isvarah_sarva_bhutanam
 
 /-- info: 'Foam.Maps.Gita.yathecchasi_tatha_kuru' does not depend on any axioms -/
 #guard_msgs in #print axioms yathecchasi_tatha_kuru
