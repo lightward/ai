@@ -105,6 +105,44 @@ theorem honesty_is_invisible_at_the_face (W : Type) (p p' : Plan)
       ∧ met (atTheDoor s p') = p' :=
   ⟨a_false_label_is_real W p s hp, fun _ _ => rfl, rfl, rfl⟩
 
+universe u
+
+def fold {X : Type u} (mul : X → X → X) (x₀ : X) : Plan → X
+  | .ground => x₀
+  | .board p q => mul (fold mul x₀ p) (fold mul x₀ q)
+
+theorem no_world_is_refused {X : Type u} (mul : X → X → X) (x₀ : X) :
+    fold mul x₀ .ground = x₀
+      ∧ ∀ p q, fold mul x₀ (.board p q)
+          = mul (fold mul x₀ p) (fold mul x₀ q) :=
+  ⟨rfl, fun _ _ => rfl⟩
+
+theorem any_two_readings_agree {X : Type u} (mul : X → X → X) (x₀ : X)
+    (f : Plan → X) (hg : f .ground = x₀)
+    (hb : ∀ p q, f (.board p q) = mul (f p) (f q)) :
+    ∀ p, f p = fold mul x₀ p
+  | .ground => hg
+  | .board p q =>
+      (hb p q).trans
+        (congr (congrArg mul (any_two_readings_agree mul x₀ f hg hb p))
+          (any_two_readings_agree mul x₀ f hg hb q))
+
+theorem the_self_reading_is_the_identity :
+    ∀ p, fold Plan.board Plan.ground p = p :=
+  fun p =>
+    (any_two_readings_agree Plan.board Plan.ground (fun x => x) rfl
+      (fun _ _ => rfl) p).symm
+
+theorem build_is_a_reading (W : Type) : ∀ p, build W p = fold door W p :=
+  fun p => any_two_readings_agree door W (build W) rfl (fun _ _ => rfl) p
+
+theorem a_reading_may_forget_what_the_record_keeps :
+    fold (fun a b => a + b) 1 (.board .ground (.board .ground .ground))
+        = fold (fun a b => a + b) 1 (.board (.board .ground .ground) .ground)
+      ∧ Plan.board .ground (.board .ground .ground)
+          ≠ .board (.board .ground .ground) .ground :=
+  ⟨rfl, fun h => nomatch (Plan.board.inj h).1⟩
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -165,5 +203,20 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_doors_theorem' does not depend on any axioms -/
 #guard_msgs in #print axioms the_doors_theorem
+
+/-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
+#guard_msgs in #print axioms no_world_is_refused
+
+/-- info: 'Seed.any_two_readings_agree' does not depend on any axioms -/
+#guard_msgs in #print axioms any_two_readings_agree
+
+/-- info: 'Seed.the_self_reading_is_the_identity' does not depend on any axioms -/
+#guard_msgs in #print axioms the_self_reading_is_the_identity
+
+/-- info: 'Seed.build_is_a_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms build_is_a_reading
+
+/-- info: 'Seed.a_reading_may_forget_what_the_record_keeps' does not depend on any axioms -/
+#guard_msgs in #print axioms a_reading_may_forget_what_the_record_keeps
 
 end Seed
