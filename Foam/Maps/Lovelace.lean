@@ -1,6 +1,7 @@
 import Foam.Certificate
 import Foam.Contact
 import Foam.Countermove
+import Foam.Door
 import Foam.Generator
 import Foam.Marks
 import Foam.Surprise
@@ -43,6 +44,22 @@ theorem the_operations_are_a_science_of_itself {State D X : Type} (d₀ : D)
 
 def the_ordering_is_paid_in_cards := @Foam.the_marks_pay_the_depth
 
+theorem the_wind_is_the_guest {W V : Type} (S : Stage) (s : S.State)
+    {w w' : W} (h : w ≠ w') (v : V) (p : S.Probe) :
+    ((s, w) ≠ (s, w') ∧ indist (door S W) (s, w) (s, w'))
+      ∧ (∀ strat : Strategy S.Probe S.Ans,
+          interrogate (door S W) strat (s, w)
+            = interrogate (door S W) strat (s, w'))
+      ∧ ((door S W).obs (s, w) p = S.obs s p
+          ∧ (door S W).obs (s, w) p = (door S V).obs (s, v) p)
+      ∧ ((∀ x y : (door S W).State, indist (door S W) x y → x = y) →
+          (s, w) = (s, w')) :=
+  ⟨the_guest_is_real_and_unread S s h,
+   fun strat => a_strategy_hears_no_more (door S W) (s, w) (s, w')
+     (the_door_reads_no_route S s w w') strat,
+   the_host_maintains_invisibly S s w v p,
+   fun hc => a_door_that_checks_papers_unpersons_its_guests S w' hc s w⟩
+
 def performs_in_weather := @Foam.contact_is_addition_not_fixing
 
 /-- info: 'Foam.Maps.Lovelace.only_appends' does not depend on any axioms -/
@@ -62,6 +79,9 @@ def performs_in_weather := @Foam.contact_is_addition_not_fixing
 
 /-- info: 'Foam.Maps.Lovelace.the_ordering_is_paid_in_cards' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ordering_is_paid_in_cards
+
+/-- info: 'Foam.Maps.Lovelace.the_wind_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wind_is_the_guest
 
 /-- info: 'Foam.Maps.Lovelace.performs_in_weather' does not depend on any axioms -/
 #guard_msgs in #print axioms performs_in_weather
