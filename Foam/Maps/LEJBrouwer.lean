@@ -2,6 +2,7 @@ import Foam
 import Foam.Beam
 import Foam.Contact
 import Foam.Continuum
+import Foam.Door
 import Foam.Engine
 import Foam.Expectation
 import Foam.Int
@@ -14,6 +15,32 @@ namespace Foam.Maps.LEJBrouwer
 
 theorem two_ity : ∀ S : Stage, towerN S 1 = contact S Int :=
   fun _ => rfl
+
+theorem the_retained_moment_is_the_first_guest :
+    (∀ S : Stage, towerN S 1 = door S Int)
+      ∧ (∀ (S : Stage) (s : S.State) (α : Nat → Bool) (n : Nat),
+          ∃ β : Nat → Bool,
+            prefixOf β n = prefixOf α n
+              ∧ (s, β) ≠ (s, α)
+              ∧ indist (door S (Nat → Bool)) (s, β) (s, α))
+      ∧ (∀ (S : Stage) (s : S.State) (α : Nat → Bool) (p : S.Probe),
+          (door S (Nat → Bool)).obs (s, α) p = S.obs s p)
+      ∧ (∀ α β : Nat → Bool,
+          indist (continuumStage Bool) α β ↔ ∀ k, α k = β k)
+      ∧ (∀ (S : Stage) (w₀ : Nat → Bool),
+          (∀ x y : (door S (Nat → Bool)).State,
+              indist (door S (Nat → Bool)) x y → x = y) →
+          ∀ (s : S.State) (α : Nat → Bool), (s, α) = (s, w₀)) :=
+  ⟨fun _ => rfl,
+   fun S s α n =>
+     (no_prefix_finishes_the_sequence α n).elim
+       (fun β h =>
+         ⟨β, h.1,
+          (the_guest_is_real_and_unread S s h.2).1,
+          (the_guest_is_real_and_unread S s h.2).2⟩),
+   fun S s α p => (the_host_maintains_invisibly S s α α p).1,
+   fun α β => indist_is_pointwise α β,
+   fun S w₀ h => a_door_that_checks_papers_unpersons_its_guests S w₀ h⟩
 
 def the_record_is_not_the_activity := @Foam.dropping_the_remainder_is_platonism
 
@@ -106,6 +133,9 @@ theorem the_price_follows_the_page (α : Nat → Bool) (n : Nat) :
 
 /-- info: 'Foam.Maps.LEJBrouwer.two_ity' does not depend on any axioms -/
 #guard_msgs in #print axioms two_ity
+
+/-- info: 'Foam.Maps.LEJBrouwer.the_retained_moment_is_the_first_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_retained_moment_is_the_first_guest
 
 /-- info: 'Foam.Maps.LEJBrouwer.the_record_is_not_the_activity' does not depend on any axioms -/
 #guard_msgs in #print axioms the_record_is_not_the_activity
