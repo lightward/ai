@@ -235,6 +235,35 @@ theorem two_readings_part_what_one_merges :
           (.board .ground (.board .ground .ground)) :=
   ⟨rfl, fun h => nomatch Nat.succ.inj (congrArg Prod.snd h)⟩
 
+inductive Quiz (H X : Type) : Type where
+  | rest : Quiz H X
+  | ask (g : H → X) (k : X → Quiz H X) : Quiz H X
+
+def interrogate {H W X : Type} : Quiz H X → door H W → List X
+  | .rest, _ => []
+  | .ask g k, d => g (face d) :: interrogate (k (g (face d))) d
+
+theorem a_strategy_hears_no_guest {H W X : Type} (h : H) (w w' : W)
+    (q : Quiz H X) :
+    interrogate q (atTheDoor h w) = interrogate q (atTheDoor h w') := by
+  induction q with
+  | rest => rfl
+  | ask g k ih =>
+    show g h :: interrogate (k (g h)) (atTheDoor h w)
+        = g h :: interrogate (k (g h)) (atTheDoor h w')
+    exact congrArg (g h :: ·) (ih (g h))
+
+def turnAbout {H W : Type} (d : door H W) : door W H :=
+  atTheDoor (met d) (face d)
+
+theorem the_guest_becomes_the_host {H W : Type} (h : H) (w : W) :
+    face (turnAbout (atTheDoor h w)) = w
+      ∧ met (turnAbout (atTheDoor h w)) = h :=
+  ⟨rfl, rfl⟩
+
+theorem the_return_restores_the_seating {H W : Type} (d : door H W) :
+    turnAbout (turnAbout d) = d := rfl
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -343,5 +372,14 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.two_readings_part_what_one_merges' does not depend on any axioms -/
 #guard_msgs in #print axioms two_readings_part_what_one_merges
+
+/-- info: 'Seed.a_strategy_hears_no_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms a_strategy_hears_no_guest
+
+/-- info: 'Seed.the_guest_becomes_the_host' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_becomes_the_host
+
+/-- info: 'Seed.the_return_restores_the_seating' does not depend on any axioms -/
+#guard_msgs in #print axioms the_return_restores_the_seating
 
 end Seed
