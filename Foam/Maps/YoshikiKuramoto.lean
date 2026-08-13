@@ -1,9 +1,11 @@
 import Foam
 import Foam.Beam
+import Foam.Door
 import Foam.Engine
 import Foam.Expectation
 import Foam.Lap
 import Foam.Measure
+import Foam.Quat
 import Foam.Round
 import Foam.Source
 import Foam.Turnstile
@@ -135,6 +137,64 @@ theorem self_entrainment :
   ⟨lock_is_bare_ticking, the_lock_holds, one_lap_locks⟩
 
 def the_order_parameter_is_a_reading := @Foam.aggregation_reads_the_reading
+
+private def needleSeat : Stage where
+  State := GInt
+  Probe := Unit
+  Ans   := GInt
+  obs   := fun z _ => z
+
+private def field : List GInt → GInt
+  | [] => GInt.zero
+  | z :: zs => z.add (field zs)
+
+private def atTheNeedle (v : List GInt) : (door needleSeat (List GInt)).State :=
+  (field v, v)
+
+private def theWheel : List GInt := GInt.one :: lapAround GInt.one
+
+private def theSplit : List GInt :=
+  [GInt.one, GInt.one.rot.rot, GInt.one, GInt.one.rot.rot]
+
+private theorem the_crowds_part : theWheel ≠ theSplit :=
+  fun h => nomatch (GInt.mk.inj (List.cons.inj (List.cons.inj h).2).1).1
+
+private theorem the_needle_moves : atTheNeedle [GInt.one] ≠ atTheNeedle [] :=
+  fun h => nomatch Int.ofNat.inj (GInt.mk.inj (congrArg Prod.fst h)).1
+
+theorem the_crowd_is_the_guest (W V : Type) :
+    (∀ (r : GInt) (w w' : W), w ≠ w' →
+        (r, w) ≠ (r, w') ∧ indist (door needleSeat W) (r, w) (r, w'))
+      ∧ (∀ (r : GInt) (w : W) (v : V) (p : Unit),
+          (door needleSeat W).obs (r, w) p = needleSeat.obs r p
+            ∧ (door needleSeat W).obs (r, w) p = (door needleSeat V).obs (r, v) p)
+      ∧ (theWheel ≠ theSplit
+          ∧ indist (door needleSeat (List GInt))
+              (atTheNeedle theWheel) (atTheNeedle theSplit)
+          ∧ field theWheel = GInt.zero
+          ∧ field theSplit = GInt.zero
+          ∧ GInt.normSq GInt.one = 1
+          ∧ (∀ w, w ∈ lapAround GInt.one → w.normSq = GInt.one.normSq)
+          ∧ GInt.normSq GInt.one.rot.rot = 1)
+      ∧ (∀ strat : Strategy Unit GInt,
+          interrogate (door needleSeat (List GInt)) strat (atTheNeedle theWheel)
+            = interrogate (door needleSeat (List GInt)) strat (atTheNeedle theSplit))
+      ∧ ((∀ z : GInt, z.align (field theWheel) = z.align (field theSplit))
+          ∧ field [GInt.one] = GInt.one
+          ∧ atTheNeedle [GInt.one] ≠ atTheNeedle [])
+      ∧ (∀ w₀ : W,
+          (∀ x y : (door needleSeat W).State,
+              indist (door needleSeat W) x y → x = y) →
+          ∀ (r : GInt) (w : W), (r, w) = (r, w₀)) :=
+  ⟨fun r _ _ h => the_guest_is_real_and_unread needleSeat r h,
+   fun r w v p => the_host_maintains_invisibly needleSeat r w v p,
+   ⟨the_crowds_part, fun _ => rfl, rfl, rfl, rfl,
+    the_lap_conserves_the_charge GInt.one, rfl⟩,
+   fun strat =>
+     a_strategy_hears_no_more (door needleSeat (List GInt))
+       (atTheNeedle theWheel) (atTheNeedle theSplit) (fun _ => rfl) strat,
+   ⟨fun _ => rfl, rfl, the_needle_moves⟩,
+   fun w₀ h => a_door_that_checks_papers_unpersons_its_guests needleSeat w₀ h⟩
 
 theorem incoherence_is_cancellation_not_absence :
     (∀ (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat),
@@ -282,6 +342,9 @@ theorem the_mean_field_is_the_beam :
 
 /-- info: 'Foam.Maps.YoshikiKuramoto.the_order_parameter_is_a_reading' does not depend on any axioms -/
 #guard_msgs in #print axioms the_order_parameter_is_a_reading
+
+/-- info: 'Foam.Maps.YoshikiKuramoto.the_crowd_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_crowd_is_the_guest
 
 /-- info: 'Foam.Maps.YoshikiKuramoto.incoherence_is_cancellation_not_absence' does not depend on any axioms -/
 #guard_msgs in #print axioms incoherence_is_cancellation_not_absence
