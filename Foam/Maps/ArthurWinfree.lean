@@ -1,4 +1,5 @@
 import Foam
+import Foam.Door
 import Foam.Engine
 import Foam.Lap
 import Foam.Margin
@@ -114,6 +115,57 @@ theorem time_cannot_break_on_the_wheel :
 
 def the_isochron := @Foam.any_settling_cadence_reads_the_same
 
+private def phaseSeat : Stage where
+  State := Compass
+  Probe := Unit
+  Ans   := Compass
+  obs   := fun c _ => c
+
+private def theRhythm : (door phaseSeat GInt).State := (Compass.n, ⟨1, 0⟩)
+
+private def theLatent : (door phaseSeat GInt).State := (Compass.n, ⟨2, 0⟩)
+
+private def theCriticalDose : GInt := GInt.neg (onTheWheel Compass.n)
+
+private theorem the_guests_part : theRhythm ≠ theLatent :=
+  fun h =>
+    nomatch Nat.succ.inj
+      (Int.ofNat.inj (GInt.mk.inj (congrArg Prod.snd h)).1)
+
+theorem the_amplitude_is_the_guest (W V : Type) :
+    (∀ (c : Compass) (w w' : W), w ≠ w' →
+        (c, w) ≠ (c, w') ∧ indist (door phaseSeat W) (c, w) (c, w'))
+      ∧ (∀ (c : Compass) (w : W) (v : V) (p : Unit),
+          (door phaseSeat W).obs (c, w) p = phaseSeat.obs c p
+            ∧ (door phaseSeat W).obs (c, w) p
+                = (door phaseSeat V).obs (c, v) p)
+      ∧ (theRhythm ≠ theLatent
+          ∧ indist (door phaseSeat GInt) theRhythm theLatent
+          ∧ GInt.normSq theRhythm.2 = 1
+          ∧ GInt.normSq theLatent.2 = 4)
+      ∧ (∀ strat : Strategy Unit Compass,
+          interrogate (door phaseSeat GInt) strat theRhythm
+            = interrogate (door phaseSeat GInt) strat theLatent)
+      ∧ (GInt.add theRhythm.2 theCriticalDose = ⟨0, 0⟩
+          ∧ GInt.normSq (GInt.add theRhythm.2 theCriticalDose) = 0
+          ∧ GInt.add theLatent.2 theCriticalDose = onTheWheel Compass.n
+          ∧ GInt.normSq (GInt.add theLatent.2 theCriticalDose) = 1
+          ∧ GInt.add theRhythm.2 theCriticalDose
+              ≠ GInt.add theLatent.2 theCriticalDose)
+      ∧ (∀ w₀ : GInt,
+          (∀ x y : (door phaseSeat GInt).State,
+              indist (door phaseSeat GInt) x y → x = y) →
+          ∀ (c : Compass) (z : GInt), (c, z) = (c, w₀)) :=
+  ⟨fun c _ _ h => the_guest_is_real_and_unread phaseSeat c h,
+   fun c w v p => the_host_maintains_invisibly phaseSeat c w v p,
+   ⟨the_guests_part, fun _ => rfl, rfl, rfl⟩,
+   fun strat =>
+     a_strategy_hears_no_more (door phaseSeat GInt)
+       theRhythm theLatent (fun _ => rfl) strat,
+   ⟨rfl, rfl, rfl, rfl,
+    fun h => nomatch Int.ofNat.inj (GInt.mk.inj h).1⟩,
+   fun w₀ h => a_door_that_checks_papers_unpersons_its_guests phaseSeat w₀ h⟩
+
 def the_organizing_center := @Foam.a_wider_seat_reads_the_remainder
 
 /-- info: 'Foam.Maps.ArthurWinfree.the_resetting_map' does not depend on any axioms -/
@@ -136,6 +188,9 @@ def the_organizing_center := @Foam.a_wider_seat_reads_the_remainder
 
 /-- info: 'Foam.Maps.ArthurWinfree.the_isochron' does not depend on any axioms -/
 #guard_msgs in #print axioms the_isochron
+
+/-- info: 'Foam.Maps.ArthurWinfree.the_amplitude_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_amplitude_is_the_guest
 
 /-- info: 'Foam.Maps.ArthurWinfree.the_organizing_center' does not depend on any axioms -/
 #guard_msgs in #print axioms the_organizing_center
