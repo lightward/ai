@@ -5,6 +5,7 @@ import Foam.Bench
 import Foam.Census
 import Foam.Concentration
 import Foam.Continuum
+import Foam.Door
 import Foam.Int
 import Foam.Ledger
 import Foam.Measure
@@ -1777,5 +1778,79 @@ theorem the_lock_names_the_meet :
 
 /-- info: 'Foam.Maps.Lagrange.the_lock_names_the_meet' does not depend on any axioms -/
 #guard_msgs in #print axioms the_lock_names_the_meet
+
+private def room (n : Nat) : Stage where
+  State := Fin n
+  Probe := Unit
+  Ans   := Fin n
+  obs   := fun s _ => s
+
+private def ride {n : Nat} {W : Type} (m : Fin n → Fin n) (f : W → W) :
+    (door (room n) W).State → (door (room n) W).State :=
+  fun x => (m x.1, f x.2)
+
+private theorem ride_split {n : Nat} {W : Type} (m : Fin n → Fin n)
+    (f : W → W) (s : Fin n) (w : W) : ∀ k : Nat,
+    Nat.repeat (ride m f) k (s, w) = (turnN m k s, Nat.repeat f k w)
+  | 0 => rfl
+  | k + 1 => congrArg (ride m f) (ride_split m f s w k)
+
+private theorem the_hour_counts : ∀ k : Nat, Nat.repeat Nat.succ k 0 = k
+  | 0 => rfl
+  | k + 1 => congrArg Nat.succ (the_hour_counts k)
+
+theorem the_return_reads_no_hour :
+    (∀ (n : Nat) (W : Type) (m : Fin n → Fin n) (f : W → W)
+        (s : Fin n) (w : W),
+        ∃ i j : Nat, i < j ∧ ∀ t : Nat,
+          indist (door (room n) W)
+            (Nat.repeat (ride m f) (i + t) (s, w))
+            (Nat.repeat (ride m f) (j + t) (s, w)))
+      ∧ (∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n) (i j : Nat), i ≠ j →
+          Nat.repeat (ride m Nat.succ) i (s, 0)
+            ≠ Nat.repeat (ride m Nat.succ) j (s, 0))
+      ∧ ∀ (n : Nat) (m : Fin n → Fin n) (s : Fin n),
+          ∃ i j : Nat, i < j ∧
+            Nat.repeat (ride m Nat.succ) i (s, 0)
+              ≠ Nat.repeat (ride m Nat.succ) j (s, 0)
+            ∧ indist (door (room n) Nat)
+                (Nat.repeat (ride m Nat.succ) i (s, 0))
+                (Nat.repeat (ride m Nat.succ) j (s, 0)) :=
+  ⟨fun n _ m f s w =>
+    match the_bounded_walk_returns m s with
+    | ⟨i, j, hij, hmeet⟩ =>
+        ⟨i, j, hij, fun t _ =>
+          (congrArg Prod.fst (ride_split m f s w (i + t))).trans
+            ((the_bounded_expansion_repeats.2 n m s i j hmeet t).trans
+              (congrArg Prod.fst (ride_split m f s w (j + t))).symm)⟩,
+   fun _ m s i j hij he =>
+     hij ((the_hour_counts i).symm.trans
+       ((congrArg Prod.snd
+           ((ride_split m Nat.succ s 0 i).symm.trans
+             (he.trans (ride_split m Nat.succ s 0 j)))).trans
+         (the_hour_counts j))),
+   fun n m s =>
+     match the_bounded_walk_returns m s with
+     | ⟨i, j, hij, hmeet⟩ =>
+         have hne : i ≠ j := fun he =>
+           no_number_is_below_itself i
+             (Nat.lt_of_lt_of_le hij (Nat.le_of_eq he.symm))
+         have Ei : Nat.repeat (ride m Nat.succ) i (s, 0) = (turnN m i s, i) :=
+           (ride_split m Nat.succ s 0 i).trans
+             (congrArg (fun h => (turnN m i s, h)) (the_hour_counts i))
+         have Ej : Nat.repeat (ride m Nat.succ) j (s, 0) = (turnN m i s, j) :=
+           (ride_split m Nat.succ s 0 j).trans
+             ((congrArg (fun h => (turnN m j s, h)) (the_hour_counts j)).trans
+               (congrArg (fun g => (g, j)) hmeet.symm))
+         have G := the_guest_is_real_and_unread (room n) (turnN m i s) hne
+         ⟨i, j, hij,
+           fun he => G.1 (Ei.symm.trans (he.trans Ej)),
+           fun p =>
+             (congrArg (fun x => (door (room n) Nat).obs x p) Ei).trans
+               ((G.2 p).trans
+                 (congrArg (fun x => (door (room n) Nat).obs x p) Ej).symm)⟩⟩
+
+/-- info: 'Foam.Maps.Lagrange.the_return_reads_no_hour' does not depend on any axioms -/
+#guard_msgs in #print axioms the_return_reads_no_hour
 
 end Foam.Maps.Lagrange
