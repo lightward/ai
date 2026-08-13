@@ -2,6 +2,7 @@ import Foam
 import Foam.Beam
 import Foam.Bench
 import Foam.Continuum
+import Foam.Door
 import Foam.Fold
 import Foam.Ledger
 import Foam.Round
@@ -100,6 +101,54 @@ theorem the_clocks_agree_on_everything_but_the_time :
    rfl, rfl,
    fun h => nomatch congrArg Prod.fst h⟩
 
+private def clockSeat : Stage where
+  State := Nat
+  Probe := Unit
+  Ans   := Nat
+  obs   := fun n _ => n
+
+private def stampOf (held carried : Nat) : Nat := rankJoin held carried + 1
+
+private def atNoon : (door clockSeat Nat).State := (stampOf 0 0, 0)
+
+private def atOne : (door clockSeat Nat).State := (stampOf 0 0, 1)
+
+private theorem the_hours_part : atNoon ≠ atOne :=
+  fun h => nomatch congrArg Prod.snd h
+
+theorem the_wall_clock_is_the_guest (W V : Type) :
+    (∀ (n : Nat) (w w' : W), w ≠ w' →
+        (n, w) ≠ (n, w') ∧ indist (door clockSeat W) (n, w) (n, w'))
+      ∧ (∀ (n : Nat) (w : W) (v : V) (p : Unit),
+          (door clockSeat W).obs (n, w) p = clockSeat.obs n p
+            ∧ (door clockSeat W).obs (n, w) p = (door clockSeat V).obs (n, v) p)
+      ∧ (atNoon.1 = stampOf 0 0
+          ∧ atOne.1 = stampOf 0 0
+          ∧ stampOf 0 0 = 1
+          ∧ atNoon ≠ atOne
+          ∧ Nat.lt atNoon.2 atOne.2
+          ∧ indist (door clockSeat Nat) atNoon atOne)
+      ∧ (∀ strat : Strategy Unit Nat,
+          interrogate (door clockSeat Nat) strat atNoon
+            = interrogate (door clockSeat Nat) strat atOne)
+      ∧ (∀ (H : Type) (q : List (H × H)) (a b : H), (a, b) ∉ q →
+          (∀ (x y : H) (p : Path q x y), (a, b) ∉ p.edges)
+            ∧ Nonempty (Path ((a, b) :: q) a b))
+      ∧ (∀ w₀ : Nat,
+          (∀ x y : (door clockSeat Nat).State,
+              indist (door clockSeat Nat) x y → x = y) →
+          ∀ (n t : Nat), (n, t) = (n, w₀)) :=
+  ⟨fun n _ _ h => the_guest_is_real_and_unread clockSeat n h,
+   fun n w v p => the_host_maintains_invisibly clockSeat n w v p,
+   ⟨rfl, rfl, rfl, the_hours_part, Nat.le.refl, fun _ => rfl⟩,
+   fun strat =>
+     a_strategy_hears_no_more (door clockSeat Nat) atNoon atOne
+       (fun _ => rfl) strat,
+   fun _ q a b hf =>
+     ⟨fun _ _ p => (only_surprise_extends_reach q a b hf).1 p,
+      (only_surprise_extends_reach q a b hf).2⟩,
+   fun w₀ h => a_door_that_checks_papers_unpersons_its_guests clockSeat w₀ h⟩
+
 def real_time_rides_unread := @Foam.a_wider_seat_reads_the_order
 
 /-- info: 'Foam.Maps.Lamport.happened_before' does not depend on any axioms -/
@@ -128,6 +177,9 @@ def real_time_rides_unread := @Foam.a_wider_seat_reads_the_order
 
 /-- info: 'Foam.Maps.Lamport.the_clocks_agree_on_everything_but_the_time' does not depend on any axioms -/
 #guard_msgs in #print axioms the_clocks_agree_on_everything_but_the_time
+
+/-- info: 'Foam.Maps.Lamport.the_wall_clock_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wall_clock_is_the_guest
 
 /-- info: 'Foam.Maps.Lamport.real_time_rides_unread' does not depend on any axioms -/
 #guard_msgs in #print axioms real_time_rides_unread
