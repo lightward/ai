@@ -2,6 +2,7 @@ import Foam
 import Foam.Beam
 import Foam.Census
 import Foam.Concentration
+import Foam.Door
 import Foam.Expectation
 import Foam.Ledger
 import Foam.Seat
@@ -10,6 +11,78 @@ import Foam.Source
 namespace Foam.Maps.JacobBernoulli
 
 def eadem_mutata_resurgo := @Foam.the_remainder_is_real
+
+private def inscribe {A W : Type} (g : Nat → W) : List A → Nat → List (A × W)
+  | [], _ => []
+  | a :: w, i => (a, g i) :: inscribe g w (i + 1)
+
+private def face {A W : Type} : List (A × W) → List A :=
+  List.map Prod.fst
+
+private theorem the_faces_survive_the_inscription {A W : Type} (g : Nat → W) :
+    ∀ (w : List A) (i : Nat), face (inscribe g w i) = w
+  | [], _ => rfl
+  | a :: w, i =>
+      congrArg (a :: ·) (the_faces_survive_the_inscription g w (i + 1))
+
+theorem the_cause_is_the_guest {A : Type} [DecidableEq A] (W : Type) :
+    (∀ (l : List A) {w w' : W},
+        w ≠ w' →
+          (l, w) ≠ (l, w')
+            ∧ indist (door (countStage A) W) (l, w) (l, w'))
+      ∧ (∀ (V : Type) (l : List A) (w : W) (v : V) (p : A),
+          (door (countStage A) W).obs (l, w) p = (countStage A).obs l p
+            ∧ (door (countStage A) W).obs (l, w) p
+                = (door (countStage A) V).obs (l, v) p)
+      ∧ (∀ (g g' : Nat → W) (a : A) (w : List A) (i : Nat),
+          g i ≠ g' i →
+            inscribe g (a :: w) i ≠ inscribe g' (a :: w) i
+              ∧ ∀ d : A,
+                  freq (face (inscribe g (a :: w) i)) d
+                    = freq (face (inscribe g' (a :: w) i)) d)
+      ∧ (∀ (g : Nat → W) (b c : Nat),
+          ∃ N : Nat, ∀ n : Nat, N ≤ n →
+            c * (List.filter (fun j => !nearBalance b n (face j))
+                  ((book n).map (fun w => inscribe g w 0))).length
+              ≤ (List.filter (fun j => nearBalance b n (face j))
+                  ((book n).map (fun w => inscribe g w 0))).length)
+      ∧ ∀ (w₀ : W),
+          (∀ x y : (door (countStage A) W).State,
+              indist (door (countStage A) W) x y → x = y) →
+          ∀ (l : List A) (w : W), (l, w) = (l, w₀) :=
+  ⟨fun l => the_guest_is_real_and_unread (countStage A) l,
+   fun _ l w v p => the_host_maintains_invisibly (countStage A) l w v p,
+   fun g g' a w i hg =>
+     ⟨fun he => hg (congrArg (fun j => (j.headD (a, g i)).2) he),
+      fun d =>
+        (congrArg (fun j => freq j d)
+            (the_faces_survive_the_inscription g (a :: w) i)).trans
+          (congrArg (fun j => freq j d)
+              (the_faces_survive_the_inscription g' (a :: w) i)).symm⟩,
+   fun g b c =>
+     match the_deviants_are_outnumbered b c with
+     | ⟨N, hN⟩ =>
+         ⟨N, fun n hn =>
+           le_trans
+             (Nat.le_of_eq (congrArg (c * ·)
+               ((length_filter_map (fun w => inscribe g w 0)
+                   (fun j => !nearBalance b n (face j)) (book n)).trans
+                 (congrArg List.length
+                   (filter_pointwise
+                     (fun w => congrArg (fun u => !nearBalance b n u)
+                       (the_faces_survive_the_inscription g w 0))
+                     (book n))))))
+             (le_trans (hN n hn)
+               (Nat.le_of_eq
+                 ((length_filter_map (fun w => inscribe g w 0)
+                     (fun j => nearBalance b n (face j)) (book n)).trans
+                   (congrArg List.length
+                     (filter_pointwise
+                       (fun w => congrArg (nearBalance b n)
+                         (the_faces_survive_the_inscription g w 0))
+                       (book n)))).symm))⟩,
+   fun w₀ h l w =>
+     a_door_that_checks_papers_unpersons_its_guests (countStage A) w₀ h l w⟩
 
 theorem the_trials_are_deaf_to_their_order {A : Type} [DecidableEq A]
     (a b : A) (hab : a ≠ b) :
@@ -113,6 +186,9 @@ theorem the_lap_reads_the_ratio_the_run_cannot :
 
 /-- info: 'Foam.Maps.JacobBernoulli.eadem_mutata_resurgo' does not depend on any axioms -/
 #guard_msgs in #print axioms eadem_mutata_resurgo
+
+/-- info: 'Foam.Maps.JacobBernoulli.the_cause_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cause_is_the_guest
 
 /-- info: 'Foam.Maps.JacobBernoulli.the_trials_are_deaf_to_their_order' does not depend on any axioms -/
 #guard_msgs in #print axioms the_trials_are_deaf_to_their_order
