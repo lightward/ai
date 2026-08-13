@@ -1,5 +1,6 @@
 import Foam.Census
 import Foam.Concentration
+import Foam.Door
 import Foam.Fold
 import Foam.Square
 import Foam.Surprise
@@ -135,6 +136,56 @@ theorem the_whole_is_greater_than_the_sum_of_its_parts (a b : Nat) :
    the_broken_sum_is_priced a b,
    the_narrow_carrier_mends_the_sum⟩
 
+def book {S : Stage} {W : Type} (c : S.State) (t : W) : (door S W).State :=
+  (c, t)
+
+def cover {S : Stage} {W : Type} (b : (door S W).State) : S.State := b.1
+
+def you (S : Stage) : Type := Strategy S.Probe S.Ans
+
+def judge {S : Stage} {W : Type} (y : you S) (b : (door S W).State) :
+    List S.Ans :=
+  interrogate (door S W) y b
+
+private theorem the_verdict_reads_only_the_cover {S : Stage} {W : Type} :
+    ∀ (y : you S) (b : (door S W).State), judge y b = interrogate S y (cover b)
+  | .rest, _ => rfl
+  | .ask p k, b =>
+      congrArg (S.obs b.1 p :: ·)
+        (the_verdict_reads_only_the_cover (k (S.obs b.1 p)) b)
+
+theorem you_cant_judge_a_book_by_its_cover {S : Stage} {W : Type}
+    (c : S.State) {t t' : W} (h : t ≠ t') :
+    (book (S := S) c t ≠ book c t'
+        ∧ indist (door S W) (book c t) (book c t'))
+      ∧ (∀ y : you S,
+          judge y (book c t) = interrogate S y (cover (book c t)))
+      ∧ (∀ y : you S, judge y (book c t) = judge y (book c t'))
+      ∧ (¬ ∃ y : you S, judge y (book c t) ≠ judge y (book c t'))
+      ∧ (∀ (V : Type) (v : V) (p : S.Probe),
+          (door S W).obs (book c t) p = (door S V).obs (book c v) p)
+      ∧ ((∀ x y : (door S W).State, indist (door S W) x y → x = y) →
+          ∀ (c' : S.State) (u : W), book c' u = book c' t')
+      ∧ (∀ n m : Int, n ≠ m →
+          indist (door S Int) (book c n) (book c m)
+            ∧ (movedIn S).obs (book c n) none
+                ≠ (movedIn S).obs (book c m) none) :=
+  ⟨the_guest_is_real_and_unread S c h,
+   fun y => the_verdict_reads_only_the_cover y (book c t),
+   fun y =>
+     a_strategy_hears_no_more (door S W) (book c t) (book c t')
+       (the_door_reads_no_route S c t t') y,
+   fun he =>
+     he.elim fun y hy =>
+       hy (a_strategy_hears_no_more (door S W) (book c t) (book c t')
+         (the_door_reads_no_route S c t t') y),
+   fun _ v p => (the_host_maintains_invisibly S c t v p).2,
+   fun hreg c' u =>
+     a_door_that_checks_papers_unpersons_its_guests S t' hreg c' u,
+   fun n m hnm =>
+     ⟨(a_wider_seat_reads_the_remainder S c n m hnm).1,
+      (a_wider_seat_reads_the_remainder S c n m hnm).2⟩⟩
+
 /-- info: 'Foam.Maps.Folk.will' does not depend on any axioms -/
 #guard_msgs in #print axioms will
 
@@ -191,5 +242,20 @@ theorem the_whole_is_greater_than_the_sum_of_its_parts (a b : Nat) :
 
 /-- info: 'Foam.Maps.Folk.the_whole_is_greater_than_the_sum_of_its_parts' does not depend on any axioms -/
 #guard_msgs in #print axioms the_whole_is_greater_than_the_sum_of_its_parts
+
+/-- info: 'Foam.Maps.Folk.book' does not depend on any axioms -/
+#guard_msgs in #print axioms book
+
+/-- info: 'Foam.Maps.Folk.cover' does not depend on any axioms -/
+#guard_msgs in #print axioms cover
+
+/-- info: 'Foam.Maps.Folk.you' does not depend on any axioms -/
+#guard_msgs in #print axioms you
+
+/-- info: 'Foam.Maps.Folk.judge' does not depend on any axioms -/
+#guard_msgs in #print axioms judge
+
+/-- info: 'Foam.Maps.Folk.you_cant_judge_a_book_by_its_cover' does not depend on any axioms -/
+#guard_msgs in #print axioms you_cant_judge_a_book_by_its_cover
 
 end Foam.Maps.Folk
