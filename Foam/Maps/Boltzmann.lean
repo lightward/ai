@@ -1,6 +1,7 @@
 import Foam
 import Foam.Coil
 import Foam.Countermove
+import Foam.Door
 import Foam.Ledger
 import Foam.Log
 import Foam.Seat
@@ -26,6 +27,73 @@ theorem a_macrostate_is_a_derived_role (S : Stage) (s : S.State)
   ⟨⟨a_role_is_conduct_not_costume S s,
     fun P hP t n m => a_derived_role_cannot_read_the_badge S P hP t n m⟩,
    a_seat_reads_the_order_the_census_cannot a b hab⟩
+
+private def Complexion : Type := List Bool
+
+private def shelf (w : Complexion) : Nat := freq w true
+
+private def shelfSeat : Stage where
+  State := Nat
+  Probe := Unit
+  Ans   := Nat
+  obs   := fun k _ => k
+
+private def board (w : Complexion) : (door shelfSeat Complexion).State :=
+  (shelf w, w)
+
+private def hotCold : Complexion := [true, false]
+
+private def coldHot : Complexion := [false, true]
+
+private theorem the_spins_part : true ≠ false := fun h => nomatch h
+
+private theorem the_complexions_part : hotCold ≠ coldHot :=
+  fun h => the_spins_part (congrArg (fun l => List.headD l false) h)
+
+theorem the_complexion_is_the_guest (W V : Type) :
+    (∀ (k : Nat) (w w' : W), w ≠ w' →
+        (k, w) ≠ (k, w') ∧ indist (door shelfSeat W) (k, w) (k, w'))
+      ∧ (∀ (k : Nat) (w : W) (v : V) (p : Unit),
+          (door shelfSeat W).obs (k, w) p = shelfSeat.obs k p
+            ∧ (door shelfSeat W).obs (k, w) p = (door shelfSeat V).obs (k, v) p)
+      ∧ (shelf hotCold = shelf coldHot
+          ∧ swapTop hotCold = coldHot
+          ∧ hotCold ∈ book 2
+          ∧ coldHot ∈ book 2
+          ∧ hotCold ≠ coldHot
+          ∧ board hotCold ≠ board coldHot
+          ∧ indist (door shelfSeat Complexion) (board hotCold) (board coldHot))
+      ∧ (∀ (X : Type) (weighting : Nat → X),
+          weighting (shelf hotCold) = weighting (shelf coldHot))
+      ∧ (∀ strat : Strategy Unit Nat,
+          interrogate (door shelfSeat Complexion) strat (board hotCold)
+            = interrogate (door shelfSeat Complexion) strat (board coldHot))
+      ∧ ((∀ n k : Nat, classCount n k
+            = (List.filter (fun w => Nat.beq (shelf w) k) (book n)).length)
+          ∧ classCount 2 (shelf hotCold) = 2
+          ∧ ∀ n k : Nat, k ≤ 2 * n →
+              classCount (2 * n) k ≤ classCount (2 * n) n)
+      ∧ (((recorder Bool).state hotCold ≠ (recorder Bool).state coldHot
+            ∧ indist (countStage Bool) hotCold coldHot)
+          ∧ ∀ w₀ : Complexion,
+              (∀ x y : (door shelfSeat Complexion).State,
+                  indist (door shelfSeat Complexion) x y → x = y) →
+              ∀ (k : Nat) (w : Complexion), (k, w) = (k, w₀)) :=
+  ⟨fun k _ _ h => the_guest_is_real_and_unread shelfSeat k h,
+   fun k w v p => the_host_maintains_invisibly shelfSeat k w v p,
+   ⟨rfl, rfl,
+    List.Mem.tail _ (List.Mem.head _),
+    List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)),
+    the_complexions_part,
+    (the_guest_is_real_and_unread shelfSeat (shelf hotCold) the_complexions_part).1,
+    (the_guest_is_real_and_unread shelfSeat (shelf hotCold) the_complexions_part).2⟩,
+   fun _ _ => rfl,
+   fun strat =>
+     a_strategy_hears_no_more (door shelfSeat Complexion)
+       (board hotCold) (board coldHot) (fun _ => rfl) strat,
+   ⟨fun _ _ => rfl, rfl, the_middle_holds_the_most⟩,
+   ⟨a_seat_reads_the_order_the_census_cannot true false the_spins_part,
+    fun w₀ h => a_door_that_checks_papers_unpersons_its_guests shelfSeat w₀ h⟩⟩
 
 theorem heat_moves_what_the_collision_cannot :
     (∀ (h : Int × Int) (d : Int),
@@ -105,6 +173,9 @@ def no_seat_inside_the_fluctuation := @Foam.no_run_reads_its_own_ratio
 
 /-- info: 'Foam.Maps.Boltzmann.a_macrostate_is_a_derived_role' does not depend on any axioms -/
 #guard_msgs in #print axioms a_macrostate_is_a_derived_role
+
+/-- info: 'Foam.Maps.Boltzmann.the_complexion_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_complexion_is_the_guest
 
 /-- info: 'Foam.Maps.Boltzmann.heat_moves_what_the_collision_cannot' does not depend on any axioms -/
 #guard_msgs in #print axioms heat_moves_what_the_collision_cannot
