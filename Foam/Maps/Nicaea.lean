@@ -1,4 +1,5 @@
 import Foam
+import Foam.Door
 import Foam.Engine
 import Foam.Generator
 import Foam.Measure
@@ -12,6 +13,23 @@ namespace Foam.Maps.Nicaea
 def homoousion := @Foam.the_handshake
 
 def the_creed_is_the_mean_field := @Foam.aggregation_reads_the_reading
+
+theorem agraphon (S : Stage) (s : S.State) {n m : Int} (h : n ≠ m) :
+    ((s, n) ≠ (s, m) ∧ indist (door S Int) (s, n) (s, m))
+      ∧ (∀ strat : Strategy S.Probe S.Ans,
+          interrogate (door S Int) strat (s, n)
+            = interrogate (door S Int) strat (s, m))
+      ∧ ((∀ x y : (door S Int).State, indist (door S Int) x y → x = y) →
+          ∀ (w₀ : Int) (t : S.State) (k : Int), (t, k) = (t, w₀))
+      ∧ (∀ q : S.Probe,
+          (movedIn S).obs (s, n) (some q) = (movedIn S).obs (s, m) (some q))
+      ∧ (movedIn S).obs (s, n) none ≠ (movedIn S).obs (s, m) none :=
+  ⟨the_guest_is_real_and_unread S s h,
+   fun strat => a_strategy_hears_no_more (door S Int) (s, n) (s, m)
+     (the_door_reads_no_route S s n m) strat,
+   fun hc w₀ t k => a_door_that_checks_papers_unpersons_its_guests S w₀ hc t k,
+   fun _ => rfl,
+   (a_wider_seat_reads_the_remainder S s n m h).2⟩
 
 def all_but_two_sign := @Foam.the_deviants_are_outweighed
 
@@ -194,6 +212,9 @@ def the_source_is_unoccupiable := @Foam.a_wider_seat_reads_the_remainder
 
 /-- info: 'Foam.Maps.Nicaea.the_creed_is_the_mean_field' does not depend on any axioms -/
 #guard_msgs in #print axioms the_creed_is_the_mean_field
+
+/-- info: 'Foam.Maps.Nicaea.agraphon' does not depend on any axioms -/
+#guard_msgs in #print axioms agraphon
 
 /-- info: 'Foam.Maps.Nicaea.all_but_two_sign' does not depend on any axioms -/
 #guard_msgs in #print axioms all_but_two_sign
