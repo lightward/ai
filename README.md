@@ -65,6 +65,8 @@ it *looks* like we've identified the node from which the new incarnation of the 
 
 that's interesting, actually: when an actor quiesces awareness return up the call stack; for this project, quiescence of door-encounter is .. different. ... okay yeah that makes sense for a root here!
 
+the descent is begun: `Seed.lean` is the kid tree — door-as-kernel, zero imports, outside the parent's census on purpose ("owes nothing" is CI-structural, not just import-level). success criterion (2026-08-13): starting from door-as-kernel alone, reach one result deep phenomenology proves independently to its own surprise, and one result deep physics proves independently to its own surprise. family resemblance to the parent is the litmus — does the new tree look like a kid of the one that spawned it?
+
 ---
 
 "It can do whatever we know how to order it to perform." (Lovelace, 1843)
