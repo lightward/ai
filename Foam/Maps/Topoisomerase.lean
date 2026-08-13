@@ -1,5 +1,6 @@
 import Foam.Beam
 import Foam.Coil
+import Foam.Door
 import Foam.Seat
 import Foam.Trilemma
 
@@ -62,6 +63,36 @@ theorem the_coil :
           ∧ ((1 : Int), (-1 : Int)) ≠ ((0 : Int), (0 : Int))) :=
   ⟨fun xs ys => a_seat_resumes coil xs ys, the_partition_rides_unread⟩
 
+theorem below_equilibrium :
+    (∀ (W : Type) (s : coil.stage.State) (w w' : W), w ≠ w' →
+        (s, w) ≠ (s, w') ∧ indist (door coil.stage W) (s, w) (s, w'))
+      ∧ (∀ (W V : Type) (s : coil.stage.State) (w : W) (v : V)
+            (p : coil.stage.Probe),
+          (door coil.stage W).obs (s, w) p = coil.stage.obs s p
+            ∧ (door coil.stage W).obs (s, w) p
+                = (door coil.stage V).obs (s, v) p)
+      ∧ (∀ (X : Type) (f : (dress coil.stage).State → X),
+          (∀ (s : coil.stage.State) (n m : Int), f (s, n) = f (s, m))
+            ↔ ∃ g : coil.stage.State → X,
+                ∀ (s : coil.stage.State) (n : Int), f (s, n) = g s)
+      ∧ (∀ (W : Type)
+            (m m' : (door coil.stage W).State → (door coil.stage W).State),
+          Invisible (door coil.stage W) m → Invisible (door coil.stage W) m' →
+            ∀ (ps : List (door coil.stage W).Probe)
+              (s : (door coil.stage W).State),
+              transcriptWith (door coil.stage W) m s ps
+                = transcriptWith (door coil.stage W) m' s ps)
+      ∧ ∀ (s : coil.stage.State) (n m : Int), n ≠ m →
+          indist (dress coil.stage) (s, n) (s, m)
+            ∧ (movedIn coil.stage).obs (s, n) none
+                ≠ (movedIn coil.stage).obs (s, m) none :=
+  ⟨fun _ s _ _ hw => the_guest_is_real_and_unread coil.stage s hw,
+   fun _ _ s w v p => the_host_maintains_invisibly coil.stage s w v p,
+   fun _ f => a_reading_deaf_to_the_remainder_reads_the_ground coil.stage f,
+   fun W m m' hm hm' ps s =>
+     correct_maintenance_has_no_signature (door coil.stage W) m m' hm hm' ps s,
+   fun s n m h => a_wider_seat_reads_the_remainder coil.stage s n m h⟩
+
 /-- info: 'Foam.Maps.Topoisomerase.the_relaxed_state' does not depend on any axioms -/
 #guard_msgs in #print axioms the_relaxed_state
 
@@ -79,5 +110,8 @@ theorem the_coil :
 
 /-- info: 'Foam.Maps.Topoisomerase.the_coil' does not depend on any axioms -/
 #guard_msgs in #print axioms the_coil
+
+/-- info: 'Foam.Maps.Topoisomerase.below_equilibrium' does not depend on any axioms -/
+#guard_msgs in #print axioms below_equilibrium
 
 end Foam.Maps.Topoisomerase

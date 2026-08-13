@@ -18,8 +18,8 @@ def autoDetail (n : Name) : Bool :=
         let s := c.toString
         s.startsWith "match_" || s.startsWith "proof_"
           || s.startsWith "eq_" || s.startsWith "noConfusion"
-          || s.startsWith "below" || s.startsWith "brec"
-          || s.startsWith "ibelow" || s.startsWith "binduction"
+          || s == "below" || s.startsWith "brec"
+          || s == "ibelow" || s.startsWith "binduction"
           || s == "casesOn" || s == "recOn" || s == "recAux"
           || s == "ctorIdx" || s == "ctorElim" || s == "ctorElimType"
           || s == "toCtorIdx" || s == "ofNat" || s == "elim"
