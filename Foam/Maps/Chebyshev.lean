@@ -1,8 +1,10 @@
 import Foam.Concentration
+import Foam.Door
 import Foam.Expectation
 import Foam.Fold
 import Foam.Int
 import Foam.Ledger
+import Foam.Rungs
 import Foam.Source
 import Foam.Square
 import Foam.Surprise
@@ -42,6 +44,73 @@ theorem every_deviant_pays_its_square :
    fun _ q a b hfresh hab => the_shortcut_pays_only_its_mark q a b hfresh hab⟩
 
 def the_bound_reads_only_the_moments := @Foam.the_deviants_are_outweighed
+
+private def Source : Type := List Nat
+
+private def pooled (f : Nat → Nat) : List Nat → Nat
+  | [] => 0
+  | x :: xs => f x + pooled f xs
+
+private def rung (k : Nat) (xs : Source) : Nat :=
+  pooled (fun x => Nat.pow x k) xs
+
+private def moments (xs : Source) : Nat × Nat := (rung 1 xs, rung 2 xs)
+
+private def momentSeat : Stage where
+  State := Nat × Nat
+  Probe := Bool
+  Ans   := Nat
+  obs   := fun m p => cond p m.1 m.2
+
+private def board (xs : Source) : (door momentSeat Source).State :=
+  (moments xs, xs)
+
+private def skewLow : Source := [0, 3, 3]
+
+private def skewHigh : Source := [1, 1, 4]
+
+private theorem the_next_rung_parts : rung 3 skewLow ≠ rung 3 skewHigh :=
+  fun h =>
+    no_number_is_below_itself (rung 3 skewHigh)
+      (h ▸ lt_of_ble_false (rung 3 skewHigh) (rung 3 skewLow) rfl)
+
+private theorem the_books_part : skewLow ≠ skewHigh :=
+  fun h => the_next_rung_parts (congrArg (rung 3) h)
+
+theorem the_source_is_the_guest (W V : Type) :
+    (∀ (m : Nat × Nat) (w w' : W), w ≠ w' →
+        (m, w) ≠ (m, w') ∧ indist (door momentSeat W) (m, w) (m, w'))
+      ∧ (∀ (m : Nat × Nat) (w : W) (v : V) (p : Bool),
+          (door momentSeat W).obs (m, w) p = momentSeat.obs m p
+            ∧ (door momentSeat W).obs (m, w) p
+                = (door momentSeat V).obs (m, v) p)
+      ∧ (rung 1 skewLow = rung 1 skewHigh
+          ∧ rung 2 skewLow = rung 2 skewHigh
+          ∧ skewLow ≠ skewHigh
+          ∧ board skewLow ≠ board skewHigh
+          ∧ indist (door momentSeat Source) (board skewLow) (board skewHigh))
+      ∧ (∀ (X : Type) (reading : Nat × Nat → X),
+          reading (moments skewLow) = reading (moments skewHigh))
+      ∧ (∀ strat : Strategy Bool Nat,
+          interrogate (door momentSeat Source) strat (board skewLow)
+            = interrogate (door momentSeat Source) strat (board skewHigh))
+      ∧ (rung 3 skewLow ≠ rung 3 skewHigh
+          ∧ rung 3 skewLow + 12 = rung 3 skewHigh)
+      ∧ (∀ w₀ : Source,
+          (∀ x y : (door momentSeat Source).State,
+              indist (door momentSeat Source) x y → x = y) →
+          ∀ (m : Nat × Nat) (xs : Source), (m, xs) = (m, w₀)) :=
+  ⟨fun m _ _ h => the_guest_is_real_and_unread momentSeat m h,
+   fun m w v p => the_host_maintains_invisibly momentSeat m w v p,
+   ⟨rfl, rfl, the_books_part,
+    (the_guest_is_real_and_unread momentSeat (moments skewLow) the_books_part).1,
+    (the_guest_is_real_and_unread momentSeat (moments skewLow) the_books_part).2⟩,
+   fun _ _ => rfl,
+   fun strat =>
+     a_strategy_hears_no_more (door momentSeat Source)
+       (board skewLow) (board skewHigh) (fun _ => rfl) strat,
+   ⟨the_next_rung_parts, rfl⟩,
+   fun w₀ h => a_door_that_checks_papers_unpersons_its_guests momentSeat w₀ h⟩
 
 theorem the_linkage_approaches_the_line :
     (∀ (xs : List Nat) (c e c' e' : Nat),
@@ -91,6 +160,9 @@ theorem the_linkage_approaches_the_line :
 
 /-- info: 'Foam.Maps.Chebyshev.the_bound_reads_only_the_moments' does not depend on any axioms -/
 #guard_msgs in #print axioms the_bound_reads_only_the_moments
+
+/-- info: 'Foam.Maps.Chebyshev.the_source_is_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_source_is_the_guest
 
 /-- info: 'Foam.Maps.Chebyshev.the_linkage_approaches_the_line' does not depend on any axioms -/
 #guard_msgs in #print axioms the_linkage_approaches_the_line
