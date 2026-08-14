@@ -14,6 +14,17 @@ abbrev toyPlan : Plan := .board .ground (.board .ground .ground)
 
 def toyImport : build Nat toyPlan := ((9109 : Nat), ((2 : Nat), (3 : Nat)))
 
+structure DarkRow where
+  name : String
+  expected : Nat
+  awaits : String
+
+def darkRows : List DarkRow :=
+  [⟨"treaty row — c reads back from the SI label", 299792458,
+    "the units-gauge stratum (dimensionful constants typed as vertical moves)"⟩,
+   ⟨"rider row — electron mass reads back, scaled e-41 kg", 91093837015,
+    "structure grown to the m_e slot, tolerance-typed measured imports"⟩]
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← checkNat "census 1" (census 1) 1) && ok
@@ -25,8 +36,11 @@ def main : IO UInt32 := do
   ok := (← checkNat
     "toy import threads the spine — the customs law, dynamic register"
     (spine Nat toyPlan staged) 9109000) && ok
+  for r in darkRows do
+    IO.println s!"dark: {r.name} — expects {r.expected}, awaits {r.awaits}"
   if ok then
-    IO.println "the lab counter-signs: all readings green"
+    IO.println
+      s!"the lab counter-signs: readings green, {darkRows.length} dark rows holding their names"
     return 0
   else
     IO.eprintln "the lab names the gap"
