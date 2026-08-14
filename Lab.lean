@@ -81,7 +81,9 @@ def openRows : List OpenRow :=
    ⟨"frontier row — no bound is the last bound: the room at k+1 provably exceeds the room at k",
     "the membership spine (every resident of allPlans k reads below k+1) — the saturator's own horizon theorem, the clause that parts it from the colonizer"⟩,
    ⟨"breath row — the cycle: saturate, meet, re-arm, with an ignition beat that cannot be self-supplied (conquest is sterile: seizure appends only derivable edges)",
-    "the kid's reach spine (paths over the room) to state seizure-sterility natively — the yield as the cycle's governor, typed"⟩]
+    "the kid's reach spine (paths over the room) to state seizure-sterility natively — the yield as the cycle's governor, typed"⟩,
+   ⟨"interface row — the coalgebraic wing: bisimulation as conduct-identity, session-duality as turnAbout, the lab's rows become dialogues (an assertion is a one-ended conversation)",
+    "the final coalgebra (behavior as the type of pure conduct), the protocol as shared language over the air gap, certification-by-interaction with the interior riding unread"⟩]
 
 def darkRows : List DarkRow :=
   [⟨"rider row — electron mass reads back, scaled e-41 kg (codata 2018: 9.1093837015(28)e-31)",
@@ -133,6 +135,10 @@ def main : IO UInt32 := do
     (greet (fun n => n + 1) (fun n => n * 2) (viaLeft 4)) 5) && ok
   ok := (← checkNat "fork row — one greeter, two entrances (via the right)"
     (greet (fun n => n + 1) (fun n => n * 2) (viaRight 4)) 8) && ok
+  ok := (← checkTrue
+    "hello row — someone else's hello world, answered across the air gap"
+    ((behavior paceOne [(), (), ()] == behavior paceThree [(), (), ()])
+      && (behavior paceOne [(), (), ()] == true))) && ok
   let quiz : Quiz Nat Nat :=
     .ask (fun h => h * 2) (fun _ => .ask (fun h => h + 1) (fun _ => .rest))
   ok := (← checkTrue

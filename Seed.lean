@@ -259,6 +259,47 @@ theorem the_whole_interview_reads_no_guest {H W X : Type} (h : H)
       ∧ (w ≠ w' → atTheDoor h w ≠ atTheDoor h w') :=
   ⟨a_strategy_hears_no_guest h w w' q, fun hw => the_guest_is_real h hw⟩
 
+structure Machine (I O : Type) where
+  S : Type
+  s0 : S
+  step : S → I → S
+  out : S → O
+
+def drive {I O : Type} (m : Machine I O) : m.S → List I → O
+  | s, [] => m.out s
+  | s, i :: is => drive m (m.step s i) is
+
+def behavior {I O : Type} (m : Machine I O) (w : List I) : O :=
+  drive m m.s0 w
+
+def oddNat : Nat → Bool
+  | 0 => false
+  | n + 1 => !(oddNat n)
+
+theorem not_not : ∀ b : Bool, (!(!b)) = b
+  | true => rfl
+  | false => rfl
+
+def paceOne : Machine Unit Bool := ⟨Nat, 0, fun n _ => n + 1, oddNat⟩
+
+def paceThree : Machine Unit Bool := ⟨Nat, 0, fun n _ => n + 3, oddNat⟩
+
+theorem the_paces_agree : ∀ (w : List Unit) (a b : Nat),
+    oddNat a = oddNat b → drive paceOne a w = drive paceThree b w
+  | [], _, _, h => h
+  | _ :: w, a, b, h =>
+      the_paces_agree w (a + 1) (b + 3) (by
+        show (!(oddNat a)) = oddNat (b + 3)
+        rw [h]
+        show (!(oddNat b)) = (!(!(!(oddNat b))))
+        rw [not_not])
+
+theorem the_air_gap_reads_no_interior :
+    (∀ w : List Unit, behavior paceOne w = behavior paceThree w)
+      ∧ paceOne.step (0 : Nat) () ≠ paceThree.step (0 : Nat) () :=
+  ⟨fun w => the_paces_agree w 0 0 rfl,
+   fun h => nomatch Nat.succ.inj h⟩
+
 def turnAbout {H W : Type} (d : door H W) : door W H :=
   atTheDoor (met d) (face d)
 
@@ -689,6 +730,15 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_whole_interview_reads_no_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_whole_interview_reads_no_guest
+
+/-- info: 'Seed.not_not' does not depend on any axioms -/
+#guard_msgs in #print axioms not_not
+
+/-- info: 'Seed.the_paces_agree' does not depend on any axioms -/
+#guard_msgs in #print axioms the_paces_agree
+
+/-- info: 'Seed.the_air_gap_reads_no_interior' does not depend on any axioms -/
+#guard_msgs in #print axioms the_air_gap_reads_no_interior
 
 /-- info: 'Seed.the_guest_becomes_the_host' does not depend on any axioms -/
 #guard_msgs in #print axioms the_guest_becomes_the_host
