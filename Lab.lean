@@ -146,6 +146,10 @@ def main : IO UInt32 := do
     "register row — the run agrees with the fold (a machine reads the lineage, counts the census)"
     (behavior (tally Measured) (pour lineagePlan electronLineage)) 2) && ok
   ok := (← checkTrue
+    "resume row — the session continues from the parked seat (rehydration, dynamic register)"
+    (behavior paceOne [(), (), ()]
+      == drive paceOne (park paceOne (0 : Nat) [(), ()]) [()])) && ok
+  ok := (← checkTrue
     "learning row — normal science tightens (the learner machine homes in)"
     (tighter (behavior homingIn [(), (), ()]) ⟨0, 10⟩
       && ((behavior homingIn [(), (), ()]).lo == 3))) && ok

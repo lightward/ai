@@ -726,6 +726,21 @@ theorem the_homing_reading_tightens :
     the_learner_only_tightens homingIn
       (fun s _ => and_glue (ble_le_succ s) (ble_refl 10)) w (0 : Nat)
 
+def park {I O : Type} (m : Machine I O) : m.S → List I → m.S
+  | s, [] => s
+  | s, i :: w => park m (m.step s i) w
+
+theorem the_drive_resumes {I O : Type} (m : Machine I O) :
+    ∀ (w w' : List I) (s : m.S),
+      drive m s (w ++ w') = drive m (park m s w) w'
+  | [], _, _ => rfl
+  | i :: w, w', s => the_drive_resumes m w w' (m.step s i)
+
+theorem the_session_continues_from_the_parked_seat {I O : Type}
+    (m : Machine I O) (w w' : List I) :
+    behavior m (w ++ w') = drive m (park m m.s0 w) w' :=
+  the_drive_resumes m w w' m.s0
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -828,6 +843,12 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_homing_reading_tightens' does not depend on any axioms -/
 #guard_msgs in #print axioms the_homing_reading_tightens
+
+/-- info: 'Seed.the_drive_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_drive_resumes
+
+/-- info: 'Seed.the_session_continues_from_the_parked_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_session_continues_from_the_parked_seat
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused
