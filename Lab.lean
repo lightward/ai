@@ -14,15 +14,21 @@ abbrev toyPlan : Plan := .board .ground (.board .ground .ground)
 
 def toyImport : build Nat toyPlan := ((9109 : Nat), ((2 : Nat), (3 : Nat)))
 
+def meterVote : Nat := 299792458
+
+theorem the_treaty_reads_exactly :
+    readAcross meterVote lightPace = 299792458 := rfl
+
+/-- info: 'the_treaty_reads_exactly' does not depend on any axioms -/
+#guard_msgs in #print axioms the_treaty_reads_exactly
+
 structure DarkRow where
   name : String
   expected : Nat
   awaits : String
 
 def darkRows : List DarkRow :=
-  [⟨"treaty row — c reads back from the SI label", 299792458,
-    "the units-gauge stratum (dimensionful constants typed as vertical moves)"⟩,
-   ⟨"rider row — electron mass reads back, scaled e-41 kg", 91093837015,
+  [⟨"rider row — electron mass reads back, scaled e-41 kg", 91093837015,
     "structure grown to the m_e slot, tolerance-typed measured imports"⟩]
 
 def main : IO UInt32 := do
@@ -36,6 +42,9 @@ def main : IO UInt32 := do
   ok := (← checkNat
     "toy import threads the spine — the customs law, dynamic register"
     (spine Nat toyPlan staged) 9109000) && ok
+  ok := (← checkNat
+    "treaty row — c reads back from the SI label (the vote is the section)"
+    (readAcross meterVote lightPace) 299792458) && ok
   for r in darkRows do
     IO.println s!"dark: {r.name} — expects {r.expected}, awaits {r.awaits}"
   if ok then

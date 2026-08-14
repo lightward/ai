@@ -313,6 +313,19 @@ theorem imports_compose {W W' W'' : Type} (f : W → W') (g : W' → W'') :
       congr (congrArg atTheDoor (imports_compose f g p (face d)))
         (imports_compose f g q (met d))
 
+def lightPace : Nat := 1
+
+def readAcross (vote pace : Nat) : Nat := pace * vote
+
+theorem one_times : ∀ n : Nat, 1 * n = n
+  | 0 => rfl
+  | n + 1 => congrArg (· + 1) (one_times n)
+
+theorem the_pace_reads_one_at_home : readAcross 1 lightPace = 1 := rfl
+
+theorem any_vote_reads_itself (n : Nat) : readAcross n lightPace = n :=
+  one_times n
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -442,5 +455,14 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.imports_compose' does not depend on any axioms -/
 #guard_msgs in #print axioms imports_compose
+
+/-- info: 'Seed.one_times' does not depend on any axioms -/
+#guard_msgs in #print axioms one_times
+
+/-- info: 'Seed.the_pace_reads_one_at_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pace_reads_one_at_home
+
+/-- info: 'Seed.any_vote_reads_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms any_vote_reads_itself
 
 end Seed
