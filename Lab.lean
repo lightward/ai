@@ -80,7 +80,7 @@ def openRows : List OpenRow :=
 def darkRows : List DarkRow :=
   [⟨"rider row — electron mass reads back, scaled e-41 kg (codata 2018: 9.1093837015(28)e-31)",
     ⟨91093836987, 91093837043⟩,
-    "structure grown to the m_e slot (next vertebra: the turn — dynamics)"⟩]
+    "spec-side dynamics — trajectories under red-driven grafting; the interior cannot throw, so time is the meeting's ledger"⟩]
 
 def main : IO UInt32 := do
   let mut ok := true
@@ -123,6 +123,16 @@ def main : IO UInt32 := do
     (fold (fun a b => a + b) 1 (graft ancestor child)
       == fold (fun a b => a + b)
           (fold (fun a b => a + b) 1 ancestor) child)) && ok
+  IO.println "chronicle — the first tick (time lives at the meeting):"
+  let want := 3
+  let s0 : Plan := .ground
+  let r0 := fold (fun a b => a + b) 1 s0
+  IO.println s!"  throw: expectation {want}, reading {r0} — the row reds, resolve is invoked"
+  let s1 : Plan := graft s0 (.board .ground (.board .ground .ground))
+  let r1 := fold (fun a b => a + b) 1 s1
+  ok := (← checkNat
+    "  resolve: the graft grows the stage — the row greens, one tick of kid-time"
+    r1 want) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
