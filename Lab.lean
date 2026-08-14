@@ -146,6 +146,10 @@ def main : IO UInt32 := do
     "register row — the run agrees with the fold (a machine reads the lineage, counts the census)"
     (behavior (tally Measured) (pour lineagePlan electronLineage)) 2) && ok
   ok := (← checkTrue
+    "learning row — normal science tightens (the learner machine homes in)"
+    (tighter (behavior homingIn [(), (), ()]) ⟨0, 10⟩
+      && ((behavior homingIn [(), (), ()]).lo == 3))) && ok
+  ok := (← checkTrue
     "rest row — the still face is not a dead machine (constant behavior, ticking interior)"
     ((behavior restingCounter [] == true)
       && (behavior restingCounter [(), (), (), ()] == true))) && ok

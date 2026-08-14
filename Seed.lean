@@ -692,6 +692,40 @@ theorem the_run_agrees_with_the_fold {W : Type} (p : Plan) (s : build W p) :
   (drive_counts (pour p s) 0).trans
     ((zero_plus (pour p s).length).trans (the_manifest_counts_the_guests p s))
 
+theorem ble_refl : ∀ n : Nat, Nat.ble n n = true
+  | 0 => rfl
+  | n + 1 => ble_refl n
+
+theorem ble_le_succ : ∀ n : Nat, Nat.ble n (n + 1) = true
+  | 0 => rfl
+  | n + 1 => ble_le_succ n
+
+theorem tighter_refl (a : Measured) : tighter a a = true :=
+  and_glue (ble_refl a.lo) (ble_refl a.hi)
+
+theorem tighter_trans {a b c : Measured} (h1 : tighter a b = true)
+    (h2 : tighter b c = true) : tighter a c = true :=
+  and_glue (ble_trans _ _ _ (and_split h2).1 (and_split h1).1)
+    (ble_trans _ _ _ (and_split h1).2 (and_split h2).2)
+
+theorem the_learner_only_tightens {I : Type} (m : Machine I Measured)
+    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true) :
+    ∀ (w : List I) (s : m.S), tighter (drive m s w) (m.out s) = true
+  | [], s => tighter_refl (m.out s)
+  | i :: w, s =>
+      tighter_trans (the_learner_only_tightens m hlearn w (m.step s i))
+        (hlearn s i)
+
+def homingIn : Machine Unit Measured :=
+  ⟨Nat, 0, fun n _ => n + 1, fun n => ⟨n, 10⟩⟩
+
+theorem the_homing_reading_tightens :
+    ∀ w : List Unit,
+      tighter (behavior homingIn w) (⟨0, 10⟩ : Measured) = true :=
+  fun w =>
+    the_learner_only_tightens homingIn
+      (fun s _ => and_glue (ble_le_succ s) (ble_refl 10)) w (0 : Nat)
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -776,6 +810,24 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_run_agrees_with_the_fold' does not depend on any axioms -/
 #guard_msgs in #print axioms the_run_agrees_with_the_fold
+
+/-- info: 'Seed.ble_refl' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_refl
+
+/-- info: 'Seed.ble_le_succ' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_le_succ
+
+/-- info: 'Seed.tighter_refl' does not depend on any axioms -/
+#guard_msgs in #print axioms tighter_refl
+
+/-- info: 'Seed.tighter_trans' does not depend on any axioms -/
+#guard_msgs in #print axioms tighter_trans
+
+/-- info: 'Seed.the_learner_only_tightens' does not depend on any axioms -/
+#guard_msgs in #print axioms the_learner_only_tightens
+
+/-- info: 'Seed.the_homing_reading_tightens' does not depend on any axioms -/
+#guard_msgs in #print axioms the_homing_reading_tightens
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused
