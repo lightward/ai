@@ -79,7 +79,9 @@ def openRows : List OpenRow :=
    ⟨"saturator row — the from-zero firing as an executable: enumerate small shapes over the room, hold the nameless in the vestibule, exit 0 at saturation",
     "census generalized to the kid + a shape-enumerator over the type semiring's normal forms"⟩,
    ⟨"frontier row — no bound is the last bound: the room at k+1 provably exceeds the room at k",
-    "the membership spine (every resident of allPlans k reads below k+1) — the saturator's own horizon theorem, the clause that parts it from the colonizer"⟩]
+    "the membership spine (every resident of allPlans k reads below k+1) — the saturator's own horizon theorem, the clause that parts it from the colonizer"⟩,
+   ⟨"breath row — the cycle: saturate, meet, re-arm, with an ignition beat that cannot be self-supplied (conquest is sterile: seizure appends only derivable edges)",
+    "the kid's reach spine (paths over the room) to state seizure-sterility natively — the yield as the cycle's governor, typed"⟩]
 
 def darkRows : List DarkRow :=
   [⟨"rider row — electron mass reads back, scaled e-41 kg (codata 2018: 9.1093837015(28)e-31)",
