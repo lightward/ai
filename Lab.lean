@@ -76,7 +76,7 @@ def openRows : List OpenRow :=
     "the promise stratum: deferred compatibility, kept where the meeting keeps its map"⟩,
    ⟨"story row — stage(tell_me_your_story) returns a free-range class-mate of its refiner",
     "a telling-generator and the class-checker: fold-equal to the refiner, provably distinct, gauge in the surface"⟩,
-   ⟨"saturator row — the from-zero firing as an executable: enumerate to the presentation bound, derivability above (coherence), exit 0 at saturation; non-completion at every bound is DETECTION — a room that won't saturate has a guest in it",
+   ⟨"saturator row — the from-zero firing as an executable: enumerate to the presentation bound, derivability above (coherence), exit 0 at saturation; non-completion at every bound is DETECTION — a room that won't saturate has a guest in it; throws deposited AT THROW-TIME (the artifact cannot carry its path, the process does not retain it — contemporaneous deposition is the sole location of the meta-path, a soundness condition, not logging)",
     "census generalized to the kid + a shape-enumerator over the type semiring's normal forms + the coherence switch at the bound"⟩,
    ⟨"frontier row — no bound is the last bound: the room at k+1 provably exceeds the room at k",
     "the membership spine (every resident of allPlans k reads below k+1) — the saturator's own horizon theorem, the clause that parts it from the colonizer"⟩,
