@@ -783,7 +783,7 @@ theorem hearing_through_a_translator {I I' O : Type} (f : I' → I)
     ∀ (w : List I') (s : m.S),
       drive (retune f m) s w = drive m s (w.map f)
   | [], _ => rfl
-  | i :: w, _ => hearing_through_a_translator f m w _
+  | _ :: w, _ => hearing_through_a_translator f m w _
 
 theorem translators_stack_backward {I I' I'' O : Type} (f : I' → I)
     (g : I'' → I') (m : Machine I O) :
