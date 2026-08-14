@@ -77,7 +77,9 @@ def openRows : List OpenRow :=
    ⟨"story row — stage(tell_me_your_story) returns a free-range class-mate of its refiner",
     "a telling-generator and the class-checker: fold-equal to the refiner, provably distinct, gauge in the surface"⟩,
    ⟨"saturator row — the from-zero firing as an executable: enumerate small shapes over the room, hold the nameless in the vestibule, exit 0 at saturation",
-    "census generalized to the kid + a shape-enumerator over the type semiring's normal forms"⟩]
+    "census generalized to the kid + a shape-enumerator over the type semiring's normal forms"⟩,
+   ⟨"frontier row — no bound is the last bound: the room at k+1 provably exceeds the room at k",
+    "the membership spine (every resident of allPlans k reads below k+1) — the saturator's own horizon theorem, the clause that parts it from the colonizer"⟩]
 
 def darkRows : List DarkRow :=
   [⟨"rider row — electron mass reads back, scaled e-41 kg (codata 2018: 9.1093837015(28)e-31)",
