@@ -142,6 +142,9 @@ def main : IO UInt32 := do
     "manifest row — the customs thread the manifest (map through reground)"
     ((pour toyPlan (reground (fun w => w * 1000) toyPlan toyImport))
       == [9109000, 2000, 3000])) && ok
+  ok := (← checkNat
+    "register row — the run agrees with the fold (a machine reads the lineage, counts the census)"
+    (behavior (tally Measured) (pour lineagePlan electronLineage)) 2) && ok
   ok := (← checkTrue
     "rest row — the still face is not a dead machine (constant behavior, ticking interior)"
     ((behavior restingCounter [] == true)

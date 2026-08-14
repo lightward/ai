@@ -679,6 +679,19 @@ theorem the_customs_thread_the_manifest {W W' : Type} (f : W → W') :
           the_customs_thread_the_manifest f q (met d)]
       exact (map_append f (pour p (face d)) (pour q (met d))).symm
 
+def tally (W : Type) : Machine W Nat :=
+  ⟨Nat, 0, fun n _ => n + 1, fun n => n⟩
+
+theorem drive_counts {W : Type} :
+    ∀ (w : List W) (s : Nat), drive (tally W) s w = s + w.length
+  | [], _ => rfl
+  | _ :: w, s => (drive_counts w (s + 1)).trans (succ_adds s w.length)
+
+theorem the_run_agrees_with_the_fold {W : Type} (p : Plan) (s : build W p) :
+    behavior (tally W) (pour p s) = fold (fun a b => a + b) 1 p :=
+  (drive_counts (pour p s) 0).trans
+    ((zero_plus (pour p s).length).trans (the_manifest_counts_the_guests p s))
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -757,6 +770,12 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_customs_thread_the_manifest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_customs_thread_the_manifest
+
+/-- info: 'Seed.drive_counts' does not depend on any axioms -/
+#guard_msgs in #print axioms drive_counts
+
+/-- info: 'Seed.the_run_agrees_with_the_fold' does not depend on any axioms -/
+#guard_msgs in #print axioms the_run_agrees_with_the_fold
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused
