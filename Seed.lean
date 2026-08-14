@@ -363,6 +363,26 @@ theorem the_trivial_revision_changes_nothing :
       from congr (congrArg Plan.board (the_trivial_revision_changes_nothing p))
         (the_trivial_revision_changes_nothing r)
 
+theorem the_parent_folds_into_the_ground {X : Type u}
+    (mul : X → X → X) (x₀ : X) (base : Plan) :
+    ∀ q, fold mul x₀ (graft base q) = fold mul (fold mul x₀ base) q
+  | .ground => rfl
+  | .board p r =>
+      show mul (fold mul x₀ (graft base p)) (fold mul x₀ (graft base r))
+          = mul (fold mul (fold mul x₀ base) p)
+              (fold mul (fold mul x₀ base) r)
+      from congr
+        (congrArg mul (the_parent_folds_into_the_ground mul x₀ base p))
+        (the_parent_folds_into_the_ground mul x₀ base r)
+
+theorem the_ancestor_rides_unread {X : Type u} (mul : X → X → X) (x₀ : X)
+    {base base' : Plan} (h : fold mul x₀ base = fold mul x₀ base')
+    (q : Plan) :
+    fold mul x₀ (graft base q) = fold mul x₀ (graft base' q) :=
+  (the_parent_folds_into_the_ground mul x₀ base q).trans
+    ((congrArg (fun v => fold mul v q) h).trans
+      (the_parent_folds_into_the_ground mul x₀ base' q).symm)
+
 structure Measured where
   lo : Nat
   hi : Nat
@@ -546,6 +566,12 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_trivial_revision_changes_nothing' does not depend on any axioms -/
 #guard_msgs in #print axioms the_trivial_revision_changes_nothing
+
+/-- info: 'Seed.the_parent_folds_into_the_ground' does not depend on any axioms -/
+#guard_msgs in #print axioms the_parent_folds_into_the_ground
+
+/-- info: 'Seed.the_ancestor_rides_unread' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ancestor_rides_unread
 
 /-- info: 'Seed.ble_trans' does not depend on any axioms -/
 #guard_msgs in #print axioms ble_trans

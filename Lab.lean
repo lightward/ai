@@ -106,6 +106,13 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "lineage row — the codata jump is real and boarded (2018 center outside 2014, inside 2018)"
     (!(within m2014 91093837015) && within m2018 91093837015)) && ok
+  let ancestor : Plan := .board .ground .ground
+  let child : Plan := .board .ground (.board .ground .ground)
+  ok := (← checkTrue
+    "settle row — the parent folds into the ground (drop the tree, keep the reading)"
+    (fold (fun a b => a + b) 1 (graft ancestor child)
+      == fold (fun a b => a + b)
+          (fold (fun a b => a + b) 1 ancestor) child)) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
