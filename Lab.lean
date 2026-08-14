@@ -54,6 +54,14 @@ def checkTrue (name : String) (got : Bool) : IO Bool := do
     IO.eprintln s!"red: {name}"
     return false
 
+def m2014 : Measured := ⟨91093834500, 91093836700⟩
+
+def m2018 : Measured := ⟨91093836987, 91093837043⟩
+
+abbrev lineagePlan : Plan := graft .ground (.board .ground .ground)
+
+def electronLineage : build Measured lineagePlan := atTheDoor m2014 m2018
+
 structure DarkRow where
   name : String
   expects : Measured
@@ -89,6 +97,15 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "toy tolerance — the refined reading still lands, dynamic register"
     (tighter fine coarse && within fine 100 && within coarse 100)) && ok
+  ok := (← checkNat
+    "lineage row — the 2014 stage still answers at the face (spine reads lo)"
+    (spine Measured lineagePlan electronLineage).lo 91093834500) && ok
+  ok := (← checkNat
+    "lineage row — the 2018 revision boards as the guest (met reads lo)"
+    (met electronLineage).lo 91093836987) && ok
+  ok := (← checkTrue
+    "lineage row — the codata jump is real and boarded (2018 center outside 2014, inside 2018)"
+    (!(within m2014 91093837015) && within m2018 91093837015)) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

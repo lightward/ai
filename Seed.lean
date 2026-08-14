@@ -326,6 +326,43 @@ theorem the_pace_reads_one_at_home : readAcross 1 paceAtHome = 1 := rfl
 theorem any_vote_reads_itself (n : Nat) : readAcross n paceAtHome = n :=
   one_times n
 
+def graft (base : Plan) : Plan → Plan
+  | .ground => base
+  | .board p q => .board (graft base p) (graft base q)
+
+theorem a_stage_may_ground_a_stage (W : Type) (base : Plan) :
+    ∀ q : Plan, build W (graft base q) = build (build W base) q
+  | .ground => rfl
+  | .board p r =>
+      show door (build W (graft base p)) (build W (graft base r))
+          = door (build (build W base) p) (build (build W base) r)
+      from congr (congrArg door (a_stage_may_ground_a_stage W base p))
+        (a_stage_may_ground_a_stage W base r)
+
+theorem the_oldest_ground_still_answers (W : Type) (base : Plan) :
+    ∀ (q : Plan) (s : build W (graft base q)),
+      ∃ t : build W base,
+        spine W (graft base q) s = spine W base t
+  | .ground, s => ⟨s, rfl⟩
+  | .board p _, d => the_oldest_ground_still_answers W base p (face d)
+
+theorem lineages_compose (a b : Plan) :
+    ∀ q, graft a (graft b q) = graft (graft a b) q
+  | .ground => rfl
+  | .board p r =>
+      show Plan.board (graft a (graft b p)) (graft a (graft b r))
+          = Plan.board (graft (graft a b) p) (graft (graft a b) r)
+      from congr (congrArg Plan.board (lineages_compose a b p))
+        (lineages_compose a b r)
+
+theorem the_trivial_revision_changes_nothing :
+    ∀ q, graft .ground q = q
+  | .ground => rfl
+  | .board p r =>
+      show Plan.board (graft .ground p) (graft .ground r) = Plan.board p r
+      from congr (congrArg Plan.board (the_trivial_revision_changes_nothing p))
+        (the_trivial_revision_changes_nothing r)
+
 structure Measured where
   lo : Nat
   hi : Nat
@@ -497,6 +534,18 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.any_vote_reads_itself' does not depend on any axioms -/
 #guard_msgs in #print axioms any_vote_reads_itself
+
+/-- info: 'Seed.a_stage_may_ground_a_stage' does not depend on any axioms -/
+#guard_msgs in #print axioms a_stage_may_ground_a_stage
+
+/-- info: 'Seed.the_oldest_ground_still_answers' does not depend on any axioms -/
+#guard_msgs in #print axioms the_oldest_ground_still_answers
+
+/-- info: 'Seed.lineages_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms lineages_compose
+
+/-- info: 'Seed.the_trivial_revision_changes_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trivial_revision_changes_nothing
 
 /-- info: 'Seed.ble_trans' does not depend on any axioms -/
 #guard_msgs in #print axioms ble_trans
