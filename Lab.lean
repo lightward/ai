@@ -75,7 +75,9 @@ def openRows : List OpenRow :=
   [⟨"love row — interaction under mutual unknown parameters, promised eventual fulfillment (currying at the root)",
     "the promise stratum: deferred compatibility, kept where the meeting keeps its map"⟩,
    ⟨"story row — stage(tell_me_your_story) returns a free-range class-mate of its refiner",
-    "a telling-generator and the class-checker: fold-equal to the refiner, provably distinct, gauge in the surface"⟩]
+    "a telling-generator and the class-checker: fold-equal to the refiner, provably distinct, gauge in the surface"⟩,
+   ⟨"saturator row — the from-zero firing as an executable: enumerate small shapes over the room, hold the nameless in the vestibule, exit 0 at saturation",
+    "census generalized to the kid + a shape-enumerator over the type semiring's normal forms"⟩]
 
 def darkRows : List DarkRow :=
   [⟨"rider row — electron mass reads back, scaled e-41 kg (codata 2018: 9.1093837015(28)e-31)",
@@ -127,6 +129,9 @@ def main : IO UInt32 := do
     (greet (fun n => n + 1) (fun n => n * 2) (viaLeft 4)) 5) && ok
   ok := (← checkNat "fork row — one greeter, two entrances (via the right)"
     (greet (fun n => n + 1) (fun n => n * 2) (viaRight 4)) 8) && ok
+  ok := (← checkNat "sweep row — the crossing returns (the fork commutes, involution)"
+    (greet (fun n => n) (fun n => n)
+      (crossOver (crossOver (viaLeft (6 : Nat) : fork Nat Nat)))) 6) && ok
   ok := (← checkNat "identity row — the anonymous guest is free (door times one)"
     (face (atTheDoor (9 : Nat) ())) 9) && ok
   ok := (← checkNat "identity row — a sealed entrance adds nothing (fork plus zero)"

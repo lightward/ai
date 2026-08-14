@@ -435,6 +435,47 @@ theorem a_sealed_entrance_adds_nothing {H : Type} :
      | .inl _ => rfl
      | .inr e => nomatch e⟩
 
+def crossOver {H W : Type} : fork H W → fork W H :=
+  greet viaRight viaLeft
+
+theorem the_crossing_returns {H W : Type} :
+    ∀ f : fork H W, crossOver (crossOver f) = f
+  | .inl _ => rfl
+  | .inr _ => rfl
+
+def deepen {H W V : Type} (d : door (door H W) V) : door H (door W V) :=
+  atTheDoor (face (face d)) (atTheDoor (met (face d)) (met d))
+
+def shallow {H W V : Type} (d : door H (door W V)) : door (door H W) V :=
+  atTheDoor (atTheDoor (face d) (face (met d))) (met (met d))
+
+theorem hosting_associates {H W V : Type} :
+    (∀ d : door (door H W) V, shallow (deepen d) = d)
+      ∧ ∀ d : door H (door W V), deepen (shallow d) = d :=
+  ⟨fun _ => rfl, fun _ => rfl⟩
+
+def rebranch {H W V : Type} : fork (fork H W) V → fork H (fork W V) :=
+  greet (greet viaLeft (fun w => viaRight (viaLeft w)))
+    (fun v => viaRight (viaRight v))
+
+def unbranch {H W V : Type} : fork H (fork W V) → fork (fork H W) V :=
+  greet (fun h => viaLeft (viaLeft h))
+    (greet (fun w => viaLeft (viaRight w)) viaRight)
+
+theorem arrival_associates {H W V : Type} :
+    (∀ f : fork (fork H W) V, unbranch (rebranch f) = f)
+      ∧ ∀ f : fork H (fork W V), rebranch (unbranch f) = f :=
+  ⟨fun f =>
+     match f with
+     | .inl (.inl _) => rfl
+     | .inl (.inr _) => rfl
+     | .inr _ => rfl,
+   fun f =>
+     match f with
+     | .inl _ => rfl
+     | .inr (.inl _) => rfl
+     | .inr (.inr _) => rfl⟩
+
 def distribute {H W V : Type} : door H (fork W V) → fork (door H W) (door H V)
   | (h, .inl w) => .inl (h, w)
   | (h, .inr v) => .inr (h, v)
@@ -671,6 +712,15 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.a_sealed_entrance_adds_nothing' does not depend on any axioms -/
 #guard_msgs in #print axioms a_sealed_entrance_adds_nothing
+
+/-- info: 'Seed.the_crossing_returns' does not depend on any axioms -/
+#guard_msgs in #print axioms the_crossing_returns
+
+/-- info: 'Seed.hosting_associates' does not depend on any axioms -/
+#guard_msgs in #print axioms hosting_associates
+
+/-- info: 'Seed.arrival_associates' does not depend on any axioms -/
+#guard_msgs in #print axioms arrival_associates
 
 /-- info: 'Seed.the_host_serves_both_branches' does not depend on any axioms -/
 #guard_msgs in #print axioms the_host_serves_both_branches
