@@ -165,6 +165,10 @@ def main : IO UInt32 := do
     (behavior (retune (fun (_ : Bool) => ()) paceOne) [true, false, true]
       == behavior paceOne [(), (), ()])) && ok
   ok := (← checkTrue
+    "voice row — speaking through a translator (revoice equals hear-then-map)"
+    (behavior (revoice (fun b => !b) paceOne) [(), (), ()]
+      == !(behavior paceOne [(), (), ()]))) && ok
+  ok := (← checkTrue
     "rest row — the still face is not a dead machine (constant behavior, ticking interior)"
     ((behavior restingCounter [] == true)
       && (behavior restingCounter [(), (), (), ()] == true))) && ok

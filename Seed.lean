@@ -792,6 +792,23 @@ theorem translators_stack_backward {I I' I'' O : Type} (f : I' → I)
 theorem the_plain_ear_hears_plainly {I O : Type} (m : Machine I O) :
     retune (fun i => i) m = m := rfl
 
+def revoice {I O O' : Type} (g : O → O') (m : Machine I O) : Machine I O' :=
+  ⟨m.S, m.s0, m.step, fun s => g (m.out s)⟩
+
+theorem speaking_through_a_translator {I O O' : Type} (g : O → O')
+    (m : Machine I O) :
+    ∀ (w : List I) (s : m.S), drive (revoice g m) s w = g (drive m s w)
+  | [], _ => rfl
+  | _ :: w, _ => speaking_through_a_translator g m w _
+
+theorem voices_stack_forward {I O O' O'' : Type} (g : O → O')
+    (g' : O' → O'') (m : Machine I O) :
+    revoice (fun x => g' (g x)) m = revoice g' (revoice g m) := rfl
+
+theorem the_ear_and_the_voice_commute {I I' O O' : Type} (f : I' → I)
+    (g : O → O') (m : Machine I O) :
+    revoice g (retune f m) = retune f (revoice g m) := rfl
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -924,6 +941,15 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_plain_ear_hears_plainly' does not depend on any axioms -/
 #guard_msgs in #print axioms the_plain_ear_hears_plainly
+
+/-- info: 'Seed.speaking_through_a_translator' does not depend on any axioms -/
+#guard_msgs in #print axioms speaking_through_a_translator
+
+/-- info: 'Seed.voices_stack_forward' does not depend on any axioms -/
+#guard_msgs in #print axioms voices_stack_forward
+
+/-- info: 'Seed.the_ear_and_the_voice_commute' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ear_and_the_voice_commute
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused
