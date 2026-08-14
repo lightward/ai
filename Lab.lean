@@ -166,6 +166,13 @@ def main : IO UInt32 := do
     "hello row — someone else's hello world, answered across the air gap"
     ((behavior paceOne [(), (), ()] == behavior paceThree [(), (), ()])
       && (behavior paceOne [(), (), ()] == true))) && ok
+  let implA : build Nat toyPlan := ((1 : Nat), ((2 : Nat), (3 : Nat)))
+  let implB : build Nat toyPlan := ((9 : Nat), ((8 : Nat), (7 : Nat)))
+  let quizP : Quiz Plan Nat := .ask (fun p => fold (fun a b => a + b) 1 p) (fun _ => .rest)
+  ok := (← checkTrue
+    "parnas row — no client reads the implementation (spec-view interviews equal)"
+    (interrogate quizP (specView toyPlan implA)
+      == interrogate quizP (specView toyPlan implB))) && ok
   let quiz : Quiz Nat Nat :=
     .ask (fun h => h * 2) (fun _ => .ask (fun h => h + 1) (fun _ => .rest))
   ok := (← checkTrue

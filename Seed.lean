@@ -760,6 +760,21 @@ def graphDoor {A X : Type} (r : A → X) (a : A) : door X A :=
 theorem the_special_was_the_general {X : Type} (r : Plan → X) (p : Plan) :
     classDoor r p = graphDoor r p := rfl
 
+def specView {W : Type} (p : Plan) (s : build W p) : door Plan (build W p) :=
+  turnAbout (label W p s)
+
+theorem the_spec_hides_the_implementation {W X : Type} (p : Plan)
+    (s s' : build W p) (g : Plan → X) :
+    face (specView p s) = p
+      ∧ g (face (specView p s)) = g (face (specView p s'))
+      ∧ (s ≠ s' → specView p s ≠ specView p s') :=
+  ⟨rfl, rfl, fun hs he => hs (congrArg met he)⟩
+
+theorem no_client_reads_the_implementation {W X : Type} (p : Plan)
+    (s s' : build W p) (q : Quiz Plan X) :
+    interrogate q (specView p s) = interrogate q (specView p s') :=
+  a_strategy_hears_no_guest p s s' q
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -877,6 +892,12 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_special_was_the_general' does not depend on any axioms -/
 #guard_msgs in #print axioms the_special_was_the_general
+
+/-- info: 'Seed.the_spec_hides_the_implementation' does not depend on any axioms -/
+#guard_msgs in #print axioms the_spec_hides_the_implementation
+
+/-- info: 'Seed.no_client_reads_the_implementation' does not depend on any axioms -/
+#guard_msgs in #print axioms no_client_reads_the_implementation
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused
