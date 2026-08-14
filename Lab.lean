@@ -133,6 +133,10 @@ def main : IO UInt32 := do
     (greet (fun n => n + 1) (fun n => n * 2) (viaLeft 4)) 5) && ok
   ok := (← checkNat "fork row — one greeter, two entrances (via the right)"
     (greet (fun n => n + 1) (fun n => n * 2) (viaRight 4)) 8) && ok
+  ok := (← checkNat
+    "seat row — what one seat maintains, the other watches (audible across the swap)"
+    (face (steer (fun _ w => w + 1)
+      (turnAbout (atTheDoor (5 : Nat) (0 : Nat))))) 1) && ok
   ok := (← checkNat "sweep row — the crossing returns (the fork commutes, involution)"
     (greet (fun n => n) (fun n => n)
       (crossOver (crossOver (viaLeft (6 : Nat) : fork Nat Nat)))) 6) && ok

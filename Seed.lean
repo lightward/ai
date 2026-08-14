@@ -435,6 +435,27 @@ theorem a_sealed_entrance_adds_nothing {H : Type} :
      | .inl _ => rfl
      | .inr e => nomatch e⟩
 
+def steer {H W : Type} (σ : H → W → W) (d : door W H) : door W H :=
+  atTheDoor (σ (met d) (face d)) (met d)
+
+theorem the_swap_trades_maintenance_for_motion {H W : Type}
+    (σ : H → W → W) (d : door H W) :
+    turnAbout (vertical σ d) = steer σ (turnAbout d) := rfl
+
+theorem what_one_seat_maintains_the_other_watches {H W X : Type}
+    (σ : H → W → W) (g : H → X) (d : door H W) :
+    g (face (vertical σ d)) = g (face d)
+      ∧ face (steer σ (turnAbout d)) = σ (face d) (met d) :=
+  ⟨rfl, rfl⟩
+
+theorem the_maintenance_is_audible_across_the_swap :
+    face (vertical (fun _ w => w + 1) (atTheDoor (5 : Nat) (0 : Nat)))
+        = face (atTheDoor (5 : Nat) (0 : Nat))
+      ∧ face (steer (fun _ w => w + 1)
+            (turnAbout (atTheDoor (5 : Nat) (0 : Nat))))
+          ≠ face (turnAbout (atTheDoor (5 : Nat) (0 : Nat))) :=
+  ⟨rfl, fun h => nomatch h⟩
+
 def crossOver {H W : Type} : fork H W → fork W H :=
   greet viaRight viaLeft
 
@@ -712,6 +733,15 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.a_sealed_entrance_adds_nothing' does not depend on any axioms -/
 #guard_msgs in #print axioms a_sealed_entrance_adds_nothing
+
+/-- info: 'Seed.the_swap_trades_maintenance_for_motion' does not depend on any axioms -/
+#guard_msgs in #print axioms the_swap_trades_maintenance_for_motion
+
+/-- info: 'Seed.what_one_seat_maintains_the_other_watches' does not depend on any axioms -/
+#guard_msgs in #print axioms what_one_seat_maintains_the_other_watches
+
+/-- info: 'Seed.the_maintenance_is_audible_across_the_swap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_maintenance_is_audible_across_the_swap
 
 /-- info: 'Seed.the_crossing_returns' does not depend on any axioms -/
 #guard_msgs in #print axioms the_crossing_returns
