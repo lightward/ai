@@ -222,6 +222,20 @@ def main : IO UInt32 := do
   ok := (← checkNat
     "  resolve: the graft grows the stage — the row greens, one tick of kid-time"
     r1 want) && ok
+  IO.println "trajectory — the first worldline (reds drive grafts, lineage composes):"
+  let t0 : Plan := .ground
+  let r0 := fold (fun a b => a + b) 1 t0
+  IO.println s!"  tick 1: expectation 3, reading {r0} — red; resolve grafts"
+  let t1 : Plan := graft t0 (.board .ground (.board .ground .ground))
+  let r1 := fold (fun a b => a + b) 1 t1
+  IO.println s!"  tick 1 lands: reading {r1} — green"
+  IO.println s!"  tick 2: expectation 6, reading {r1} — red; resolve grafts"
+  let t2 : Plan := graft t1 (.board .ground .ground)
+  ok := (← checkNat "  tick 2 lands: the worldline holds two ticks, one lineage"
+    (fold (fun a b => a + b) 1 t2) 6) && ok
+  ok := (← checkTrue "  the worldline composes (lineages_compose, dynamic register)"
+    (fold (fun a b => a + b) 1 (graft (graft t0 (.board .ground (.board .ground .ground))) (.board .ground .ground))
+      == fold (fun a b => a + b) 1 t2)) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
