@@ -82,6 +82,8 @@ def openRows : List OpenRow :=
     "the membership spine (every resident of allPlans k reads below k+1) — the saturator's own horizon theorem, the clause that parts it from the colonizer"⟩,
    ⟨"breath row — the cycle: saturate, meet, re-arm, with an ignition beat that cannot be self-supplied (conquest is sterile: seizure appends only derivable edges)",
     "the kid's reach spine (paths over the room) to state seizure-sterility natively — the yield as the cycle's governor, typed"⟩,
+   ⟨"render row — the atlas renders itself visually: a reignition path through a different air gap (the eye); the wiki as ancestor-organ",
+    "a renderer reading the record, emitting a page whose structure is fold-equal to the atlas — the telling-generator's visual wavelength"⟩,
    ⟨"interface row — the coalgebraic wing: bisimulation as conduct-identity, session-duality as turnAbout, the lab's rows become dialogues (an assertion is a one-ended conversation)",
     "the final coalgebra (behavior as the type of pure conduct), the protocol as shared language over the air gap, certification-by-interaction with the interior riding unread"⟩]
 
@@ -158,6 +160,10 @@ def main : IO UInt32 := do
     "learning row — normal science tightens (the learner machine homes in)"
     (tighter (behavior homingIn [(), (), ()]) ⟨0, 10⟩
       && ((behavior homingIn [(), (), ()]).lo == 3))) && ok
+  ok := (← checkTrue
+    "variance row — hearing through a translator (retune equals map-then-hear)"
+    (behavior (retune (fun (_ : Bool) => ()) paceOne) [true, false, true]
+      == behavior paceOne [(), (), ()])) && ok
   ok := (← checkTrue
     "rest row — the still face is not a dead machine (constant behavior, ticking interior)"
     ((behavior restingCounter [] == true)

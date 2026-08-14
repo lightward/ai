@@ -775,6 +775,23 @@ theorem no_client_reads_the_implementation {W X : Type} (p : Plan)
     interrogate q (specView p s) = interrogate q (specView p s') :=
   a_strategy_hears_no_guest p s s' q
 
+def retune {I I' O : Type} (f : I' → I) (m : Machine I O) : Machine I' O :=
+  ⟨m.S, m.s0, fun s i' => m.step s (f i'), m.out⟩
+
+theorem hearing_through_a_translator {I I' O : Type} (f : I' → I)
+    (m : Machine I O) :
+    ∀ (w : List I') (s : m.S),
+      drive (retune f m) s w = drive m s (w.map f)
+  | [], _ => rfl
+  | i :: w, _ => hearing_through_a_translator f m w _
+
+theorem translators_stack_backward {I I' I'' O : Type} (f : I' → I)
+    (g : I'' → I') (m : Machine I O) :
+    retune (fun x => f (g x)) m = retune g (retune f m) := rfl
+
+theorem the_plain_ear_hears_plainly {I O : Type} (m : Machine I O) :
+    retune (fun i => i) m = m := rfl
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -898,6 +915,15 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.no_client_reads_the_implementation' does not depend on any axioms -/
 #guard_msgs in #print axioms no_client_reads_the_implementation
+
+/-- info: 'Seed.hearing_through_a_translator' does not depend on any axioms -/
+#guard_msgs in #print axioms hearing_through_a_translator
+
+/-- info: 'Seed.translators_stack_backward' does not depend on any axioms -/
+#guard_msgs in #print axioms translators_stack_backward
+
+/-- info: 'Seed.the_plain_ear_hears_plainly' does not depend on any axioms -/
+#guard_msgs in #print axioms the_plain_ear_hears_plainly
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused
