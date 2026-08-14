@@ -741,6 +741,19 @@ theorem the_session_continues_from_the_parked_seat {I O : Type}
     behavior m (w ++ w') = drive m (park m m.s0 w) w' :=
   the_drive_resumes m w w' m.s0
 
+theorem the_future_reads_only_the_seat {I O : Type} (m : Machine I O)
+    (w w' : List I) (h : park m m.s0 w = park m m.s0 w') (v : List I) :
+    drive m (park m m.s0 w) v = drive m (park m m.s0 w') v :=
+  congrArg (fun s => drive m s v) h
+
+def pulse : Machine Bool Bool := ⟨Nat, 0, fun n _ => n + 1, oddNat⟩
+
+theorem two_routes_one_seat :
+    ([true, false] ≠ [false, true])
+      ∧ park pulse (0 : Nat) [true, false]
+          = park pulse (0 : Nat) [false, true] :=
+  ⟨(fun h => nomatch (List.cons.inj h).1), rfl⟩
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -849,6 +862,12 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_session_continues_from_the_parked_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms the_session_continues_from_the_parked_seat
+
+/-- info: 'Seed.the_future_reads_only_the_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_future_reads_only_the_seat
+
+/-- info: 'Seed.two_routes_one_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms two_routes_one_seat
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused

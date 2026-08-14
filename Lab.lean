@@ -146,6 +146,11 @@ def main : IO UInt32 := do
     "register row — the run agrees with the fold (a machine reads the lineage, counts the census)"
     (behavior (tally Measured) (pour lineagePlan electronLineage)) 2) && ok
   ok := (← checkTrue
+    "markov row — two routes, one seat, one future"
+    ((drive pulse (park pulse (0 : Nat) [true, false]) [true]
+        == drive pulse (park pulse (0 : Nat) [false, true]) [true])
+      && ([true, false] != [false, true]))) && ok
+  ok := (← checkTrue
     "resume row — the session continues from the parked seat (rehydration, dynamic register)"
     (behavior paceOne [(), (), ()]
       == drive paceOne (park paceOne (0 : Nat) [(), ()]) [()])) && ok
