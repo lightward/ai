@@ -809,6 +809,14 @@ theorem the_ear_and_the_voice_commute {I I' O O' : Type} (f : I' → I)
     (g : O → O') (m : Machine I O) :
     revoice g (retune f m) = retune f (revoice g m) := rfl
 
+theorem an_upgrade_ships_unheard {W : Type} (p : Plan)
+    (σ : Plan → build W p → build W p) (s : build W p) :
+    vertical σ (specView p s) = specView p (σ p s) := rfl
+
+theorem the_mirror_doubles_the_manifest {W : Type} (p : Plan)
+    (s : build W p) :
+    pour (.board p p) (mirror W p s) = pour p s ++ pour p s := rfl
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -950,6 +958,12 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_ear_and_the_voice_commute' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ear_and_the_voice_commute
+
+/-- info: 'Seed.an_upgrade_ships_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms an_upgrade_ships_unheard
+
+/-- info: 'Seed.the_mirror_doubles_the_manifest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mirror_doubles_the_manifest
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused
