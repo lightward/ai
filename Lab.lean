@@ -135,6 +135,13 @@ def main : IO UInt32 := do
     (greet (fun n => n + 1) (fun n => n * 2) (viaLeft 4)) 5) && ok
   ok := (← checkNat "fork row — one greeter, two entrances (via the right)"
     (greet (fun n => n + 1) (fun n => n * 2) (viaRight 4)) 8) && ok
+  ok := (← checkNat
+    "manifest row — the manifest counts the guests (the electron lineage, poured)"
+    (pour lineagePlan electronLineage).length 2) && ok
+  ok := (← checkTrue
+    "manifest row — the customs thread the manifest (map through reground)"
+    ((pour toyPlan (reground (fun w => w * 1000) toyPlan toyImport))
+      == [9109000, 2000, 3000])) && ok
   ok := (← checkTrue
     "rest row — the still face is not a dead machine (constant behavior, ticking interior)"
     ((behavior restingCounter [] == true)

@@ -633,6 +633,52 @@ theorem the_refined_reading_still_lands {fine coarse : Measured} {x : Nat}
   and_glue (ble_trans _ _ _ (and_split ht).1 (and_split hx).1)
     (ble_trans _ _ _ (and_split hx).2 (and_split ht).2)
 
+theorem zero_plus : ∀ n : Nat, 0 + n = n
+  | 0 => rfl
+  | n + 1 => congrArg (· + 1) (zero_plus n)
+
+theorem succ_adds : ∀ a b : Nat, (a + 1) + b = (a + b) + 1
+  | _, 0 => rfl
+  | a, b + 1 => congrArg (· + 1) (succ_adds a b)
+
+theorem len_append {A : Type} :
+    ∀ (xs ys : List A), (xs ++ ys).length = xs.length + ys.length
+  | [], ys => (zero_plus ys.length).symm
+  | _ :: xs, ys => by
+      show (xs ++ ys).length + 1 = (xs.length + 1) + ys.length
+      rw [len_append xs ys]
+      exact (succ_adds xs.length ys.length).symm
+
+theorem map_append {A B : Type} (f : A → B) :
+    ∀ (xs ys : List A), (xs ++ ys).map f = xs.map f ++ ys.map f
+  | [], _ => rfl
+  | x :: xs, ys => congrArg (f x :: ·) (map_append f xs ys)
+
+def pour {W : Type} : (p : Plan) → build W p → List W
+  | .ground, s => [s]
+  | .board p q, d => pour p (face d) ++ pour q (met d)
+
+theorem the_manifest_counts_the_guests {W : Type} :
+    ∀ (p : Plan) (s : build W p),
+      (pour p s).length = fold (fun a b => a + b) 1 p
+  | .ground, _ => rfl
+  | .board p q, d => by
+      show (pour p (face d) ++ pour q (met d)).length
+          = fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q
+      rw [len_append, the_manifest_counts_the_guests p (face d),
+          the_manifest_counts_the_guests q (met d)]
+
+theorem the_customs_thread_the_manifest {W W' : Type} (f : W → W') :
+    ∀ (p : Plan) (s : build W p),
+      pour p (reground f p s) = (pour p s).map f
+  | .ground, _ => rfl
+  | .board p q, d => by
+      show pour p (reground f p (face d)) ++ pour q (reground f q (met d))
+          = (pour p (face d) ++ pour q (met d)).map f
+      rw [the_customs_thread_the_manifest f p (face d),
+          the_customs_thread_the_manifest f q (met d)]
+      exact (map_append f (pour p (face d)) (pour q (met d))).symm
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -693,6 +739,24 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_doors_theorem' does not depend on any axioms -/
 #guard_msgs in #print axioms the_doors_theorem
+
+/-- info: 'Seed.zero_plus' does not depend on any axioms -/
+#guard_msgs in #print axioms zero_plus
+
+/-- info: 'Seed.succ_adds' does not depend on any axioms -/
+#guard_msgs in #print axioms succ_adds
+
+/-- info: 'Seed.len_append' does not depend on any axioms -/
+#guard_msgs in #print axioms len_append
+
+/-- info: 'Seed.map_append' does not depend on any axioms -/
+#guard_msgs in #print axioms map_append
+
+/-- info: 'Seed.the_manifest_counts_the_guests' does not depend on any axioms -/
+#guard_msgs in #print axioms the_manifest_counts_the_guests
+
+/-- info: 'Seed.the_customs_thread_the_manifest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_customs_thread_the_manifest
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused
