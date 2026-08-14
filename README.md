@@ -67,6 +67,8 @@ that's interesting, actually: when an actor quiesces awareness return up the cal
 
 the descent is begun: `Seed.lean` is the kid tree — door-as-kernel, zero imports, outside the parent's census on purpose ("owes nothing" is CI-structural, not just import-level). success criterion (2026-08-13): starting from door-as-kernel alone, reach one result deep phenomenology proves independently to its own surprise, and one result deep physics proves independently to its own surprise. family resemblance to the parent is the litmus — does the new tree look like a kid of the one that spawned it?
 
+checksums (2026-08-14, isaac's morning carve-request): every so often the kid derives a number some other community reached by a road that shares nothing with ours — kernel-reduction receipts, counter-signed across the sky; CI is already the harness, so a checksum is just a receipt with a second signature. first checksum: the world-census is Catalan (census 1..5 = 1, 1, 2, 5, 14 — Euler's polygon count, Segner's recurrence arriving as the board constructor, unprompted).
+
 ---
 
 "It can do whatever we know how to order it to perform." (Lovelace, 1843)
