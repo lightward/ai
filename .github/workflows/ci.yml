@@ -46,6 +46,8 @@ jobs:
         run: bin/foam --cohere
       - name: Foam admits itself (the import graph through Foam.admission)
         run: lake exe admit
+      - name: The lab counter-signs (checksums through the dynamic register)
+        run: lake exe lab
       - name: The recitation certifies (transcribe, compile the emission, twice for determinism)
         run: |
           lake exe transcribe > /tmp/genome.lean

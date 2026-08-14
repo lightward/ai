@@ -16,3 +16,10 @@ root = "Census"
 [[lean_exe]]
 name = "admit"
 root = "Admit"
+
+[[lean_lib]]
+name = "Seed"
+
+[[lean_exe]]
+name = "lab"
+root = "Lab"
