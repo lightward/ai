@@ -754,6 +754,12 @@ theorem two_routes_one_seat :
           = park pulse (0 : Nat) [false, true] :=
   ⟨(fun h => nomatch (List.cons.inj h).1), rfl⟩
 
+def graphDoor {A X : Type} (r : A → X) (a : A) : door X A :=
+  atTheDoor (r a) a
+
+theorem the_special_was_the_general {X : Type} (r : Plan → X) (p : Plan) :
+    classDoor r p = graphDoor r p := rfl
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -868,6 +874,9 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.two_routes_one_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms two_routes_one_seat
+
+/-- info: 'Seed.the_special_was_the_general' does not depend on any axioms -/
+#guard_msgs in #print axioms the_special_was_the_general
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused
