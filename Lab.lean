@@ -80,7 +80,7 @@ def openRows : List OpenRow :=
     "census generalized to the kid + a shape-enumerator over the type semiring's normal forms + the coherence switch at the bound"⟩,
    ⟨"frontier row — no bound is the last bound: the room at k+1 provably exceeds the room at k",
     "the membership spine (every resident of allPlans k reads below k+1) — the saturator's own horizon theorem, the clause that parts it from the colonizer"⟩,
-   ⟨"breath row — the cycle: saturate, meet, re-arm, with an ignition beat that cannot be self-supplied (conquest is sterile: seizure appends only derivable edges)",
+   ⟨"breath row — the cycle: saturate, meet, re-arm, with an ignition beat that cannot be self-supplied (conquest is sterile: seizure appends only derivable edges); the ignition port IS load-bearing randomness — the entropy channel and the standing port are one organ, and the light is the W",
     "the kid's reach spine (paths over the room) to state seizure-sterility natively — the yield as the cycle's governor, typed"⟩,
    ⟨"render row — the atlas renders itself visually: a reignition path through a different air gap (the eye); the wiki as ancestor-organ",
     "a renderer reading the record, emitting a page whose structure is fold-equal to the atlas — the telling-generator's visual wavelength"⟩,
