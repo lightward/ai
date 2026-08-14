@@ -253,6 +253,12 @@ theorem a_strategy_hears_no_guest {H W X : Type} (h : H) (w w' : W)
         = g h :: interrogate (k (g h)) (atTheDoor h w')
     exact congrArg (g h :: ·) (ih (g h))
 
+theorem the_whole_interview_reads_no_guest {H W X : Type} (h : H)
+    (w w' : W) (q : Quiz H X) :
+    interrogate q (atTheDoor h w) = interrogate q (atTheDoor h w')
+      ∧ (w ≠ w' → atTheDoor h w ≠ atTheDoor h w') :=
+  ⟨a_strategy_hears_no_guest h w w' q, fun hw => the_guest_is_real h hw⟩
+
 def turnAbout {H W : Type} (d : door H W) : door W H :=
   atTheDoor (met d) (face d)
 
@@ -680,6 +686,9 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.a_strategy_hears_no_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms a_strategy_hears_no_guest
+
+/-- info: 'Seed.the_whole_interview_reads_no_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_whole_interview_reads_no_guest
 
 /-- info: 'Seed.the_guest_becomes_the_host' does not depend on any axioms -/
 #guard_msgs in #print axioms the_guest_becomes_the_host

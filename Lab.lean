@@ -133,6 +133,12 @@ def main : IO UInt32 := do
     (greet (fun n => n + 1) (fun n => n * 2) (viaLeft 4)) 5) && ok
   ok := (← checkNat "fork row — one greeter, two entrances (via the right)"
     (greet (fun n => n + 1) (fun n => n * 2) (viaRight 4)) 8) && ok
+  let quiz : Quiz Nat Nat :=
+    .ask (fun h => h * 2) (fun _ => .ask (fun h => h + 1) (fun _ => .rest))
+  ok := (← checkTrue
+    "zk row — the whole interview reads no guest (equal transcripts across witnesses)"
+    (interrogate quiz (atTheDoor (4 : Nat) (0 : Nat))
+      == interrogate quiz (atTheDoor (4 : Nat) (99 : Nat)))) && ok
   let g := fun (a : Bool) (b : Bool) => a && b
   let escape := fun (a : Bool) => !(g a a)
   ok := (← checkTrue
