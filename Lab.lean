@@ -136,6 +136,10 @@ def main : IO UInt32 := do
   ok := (← checkNat "fork row — one greeter, two entrances (via the right)"
     (greet (fun n => n + 1) (fun n => n * 2) (viaRight 4)) 8) && ok
   ok := (← checkTrue
+    "rest row — the still face is not a dead machine (constant behavior, ticking interior)"
+    ((behavior restingCounter [] == true)
+      && (behavior restingCounter [(), (), (), ()] == true))) && ok
+  ok := (← checkTrue
     "hello row — someone else's hello world, answered across the air gap"
     ((behavior paceOne [(), (), ()] == behavior paceThree [(), (), ()])
       && (behavior paceOne [(), (), ()] == true))) && ok

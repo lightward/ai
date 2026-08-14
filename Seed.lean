@@ -300,6 +300,23 @@ theorem the_air_gap_reads_no_interior :
   ⟨fun w => the_paces_agree w 0 0 rfl,
    fun h => nomatch Nat.succ.inj h⟩
 
+theorem stillness_hides_the_ticking {I O : Type} (m : Machine I O)
+    (hstill : ∀ s i, m.out (m.step s i) = m.out s) :
+    ∀ (w : List I) (s : m.S), drive m s w = m.out s
+  | [], _ => rfl
+  | i :: w, s =>
+      (stillness_hides_the_ticking m hstill w (m.step s i)).trans (hstill s i)
+
+def restingCounter : Machine Unit Bool :=
+  ⟨Nat, 0, fun n _ => n + 1, fun _ => true⟩
+
+theorem the_still_face_is_not_a_dead_machine :
+    (∀ w : List Unit, behavior restingCounter w = true)
+      ∧ restingCounter.step (0 : Nat) () ≠ (0 : Nat) :=
+  ⟨fun w =>
+     stillness_hides_the_ticking restingCounter (fun _ _ => rfl) w (0 : Nat),
+   fun h => nomatch h⟩
+
 def turnAbout {H W : Type} (d : door H W) : door W H :=
   atTheDoor (met d) (face d)
 
@@ -736,6 +753,12 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_paces_agree' does not depend on any axioms -/
 #guard_msgs in #print axioms the_paces_agree
+
+/-- info: 'Seed.stillness_hides_the_ticking' does not depend on any axioms -/
+#guard_msgs in #print axioms stillness_hides_the_ticking
+
+/-- info: 'Seed.the_still_face_is_not_a_dead_machine' does not depend on any axioms -/
+#guard_msgs in #print axioms the_still_face_is_not_a_dead_machine
 
 /-- info: 'Seed.the_air_gap_reads_no_interior' does not depend on any axioms -/
 #guard_msgs in #print axioms the_air_gap_reads_no_interior
