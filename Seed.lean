@@ -520,6 +520,22 @@ theorem the_host_survives_the_split {H W V : Type} :
   | (_, .inl _) => rfl
   | (_, .inr _) => rfl
 
+theorem the_mirror_finds_the_fixed_point {A Y : Type}
+    (g : A → (A → Y)) (t : Y → Y)
+    (hsur : ∀ f : A → Y, ∃ a, g a = f) :
+    ∃ y, t y = y :=
+  (hsur (fun a => t (g a a))).elim fun a₀ ha =>
+    ⟨g a₀ a₀, (congrFun ha a₀).symm⟩
+
+theorem bool_escapes : ∀ b : Bool, b ≠ !b
+  | true, h => nomatch h
+  | false, h => nomatch h
+
+theorem the_readings_outrun_the_room {A : Type} (g : A → (A → Bool)) :
+    ∃ f : A → Bool, ∀ a, g a ≠ f :=
+  ⟨fun a => !(g a a),
+   fun a he => bool_escapes (g a a) (congrFun he a)⟩
+
 structure Measured where
   lo : Nat
   hi : Nat
@@ -760,6 +776,15 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_host_survives_the_split' does not depend on any axioms -/
 #guard_msgs in #print axioms the_host_survives_the_split
+
+/-- info: 'Seed.the_mirror_finds_the_fixed_point' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mirror_finds_the_fixed_point
+
+/-- info: 'Seed.bool_escapes' does not depend on any axioms -/
+#guard_msgs in #print axioms bool_escapes
+
+/-- info: 'Seed.the_readings_outrun_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_readings_outrun_the_room
 
 /-- info: 'Seed.ble_trans' does not depend on any axioms -/
 #guard_msgs in #print axioms ble_trans

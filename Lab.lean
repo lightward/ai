@@ -133,6 +133,11 @@ def main : IO UInt32 := do
     (greet (fun n => n + 1) (fun n => n * 2) (viaLeft 4)) 5) && ok
   ok := (← checkNat "fork row — one greeter, two entrances (via the right)"
     (greet (fun n => n + 1) (fun n => n * 2) (viaRight 4)) 8) && ok
+  let g := fun (a : Bool) (b : Bool) => a && b
+  let escape := fun (a : Bool) => !(g a a)
+  ok := (← checkTrue
+    "refusal row — the diagonal escapes every row (the readings outrun the room)"
+    ((escape true != g true true) && (escape false != g false false))) && ok
   ok := (← checkNat
     "seat row — what one seat maintains, the other watches (audible across the swap)"
     (face (steer (fun _ w => w + 1)
