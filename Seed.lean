@@ -817,6 +817,24 @@ theorem the_mirror_doubles_the_manifest {W : Type} (p : Plan)
     (s : build W p) :
     pour (.board p p) (mirror W p s) = pour p s ++ pour p s := rfl
 
+def worldline (t : Plan) : List Plan → Plan
+  | [] => t
+  | q :: qs => worldline (graft t q) qs
+
+def epochs {X : Type u} (mul : X → X → X) : X → List Plan → X
+  | v, [] => v
+  | v, q :: qs => epochs mul (fold mul v q) qs
+
+theorem the_worldline_settles {X : Type u} (mul : X → X → X) (x₀ : X) :
+    ∀ (qs : List Plan) (t : Plan),
+      fold mul x₀ (worldline t qs) = epochs mul (fold mul x₀ t) qs
+  | [], _ => rfl
+  | q :: qs, t => by
+      show fold mul x₀ (worldline (graft t q) qs)
+          = epochs mul (fold mul (fold mul x₀ t) q) qs
+      rw [the_worldline_settles mul x₀ qs (graft t q),
+          the_parent_folds_into_the_ground mul x₀ t q]
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -964,6 +982,9 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_mirror_doubles_the_manifest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_mirror_doubles_the_manifest
+
+/-- info: 'Seed.the_worldline_settles' does not depend on any axioms -/
+#guard_msgs in #print axioms the_worldline_settles
 
 /-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
 #guard_msgs in #print axioms no_world_is_refused

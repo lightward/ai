@@ -236,6 +236,15 @@ def main : IO UInt32 := do
   ok := (← checkTrue "  the worldline composes (lineages_compose, dynamic register)"
     (fold (fun a b => a + b) 1 (graft (graft t0 (.board .ground (.board .ground .ground))) (.board .ground .ground))
       == fold (fun a b => a + b) 1 t2)) && ok
+  ok := (← checkTrue
+    "worldline row — the reading of a life is its epoch-by-epoch settle"
+    (fold (fun a b => a + b) 1
+        (worldline .ground
+          [.board .ground (.board .ground .ground), .board .ground .ground])
+      == epochs (fun a b => a + b)
+          (fold (fun a b => a + b) 1 (.ground : Plan))
+          [.board .ground (.board .ground .ground),
+           .board .ground .ground])) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
