@@ -417,6 +417,24 @@ theorem any_ready_greeter_is_the_greeter {H W X : Type}
   | .inl h => hl h
   | .inr w => hr w
 
+theorem the_anonymous_guest_is_free {H : Type} (d : door H Unit) :
+    atTheDoor (face d) () = d := rfl
+
+theorem no_world_hosts_the_impossible {H : Type} (d : door H Empty) :
+    False :=
+  nomatch met d
+
+def noEntrance {H : Type} : fork H Empty → H :=
+  greet (fun h => h) (fun e => nomatch e)
+
+theorem a_sealed_entrance_adds_nothing {H : Type} :
+    (∀ h : H, noEntrance (viaLeft h) = h)
+      ∧ ∀ f : fork H Empty, viaLeft (noEntrance f) = f :=
+  ⟨fun _ => rfl,
+   fun f => match f with
+     | .inl _ => rfl
+     | .inr e => nomatch e⟩
+
 def distribute {H W V : Type} : door H (fork W V) → fork (door H W) (door H V)
   | (h, .inl w) => .inl (h, w)
   | (h, .inr v) => .inr (h, v)
@@ -644,6 +662,15 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.any_ready_greeter_is_the_greeter' does not depend on any axioms -/
 #guard_msgs in #print axioms any_ready_greeter_is_the_greeter
+
+/-- info: 'Seed.the_anonymous_guest_is_free' does not depend on any axioms -/
+#guard_msgs in #print axioms the_anonymous_guest_is_free
+
+/-- info: 'Seed.no_world_hosts_the_impossible' does not depend on any axioms -/
+#guard_msgs in #print axioms no_world_hosts_the_impossible
+
+/-- info: 'Seed.a_sealed_entrance_adds_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms a_sealed_entrance_adds_nothing
 
 /-- info: 'Seed.the_host_serves_both_branches' does not depend on any axioms -/
 #guard_msgs in #print axioms the_host_serves_both_branches

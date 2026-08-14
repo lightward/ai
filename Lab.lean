@@ -127,6 +127,10 @@ def main : IO UInt32 := do
     (greet (fun n => n + 1) (fun n => n * 2) (viaLeft 4)) 5) && ok
   ok := (← checkNat "fork row — one greeter, two entrances (via the right)"
     (greet (fun n => n + 1) (fun n => n * 2) (viaRight 4)) 8) && ok
+  ok := (← checkNat "identity row — the anonymous guest is free (door times one)"
+    (face (atTheDoor (9 : Nat) ())) 9) && ok
+  ok := (← checkNat "identity row — a sealed entrance adds nothing (fork plus zero)"
+    (noEntrance (viaLeft (9 : Nat) : fork Nat Empty)) 9) && ok
   let rtL := collect (distribute (atTheDoor (7 : Nat) (viaLeft (3 : Nat) : fork Nat Nat)))
   ok := (← checkNat "semiring row — the host survives the split" (face rtL) 7) && ok
   ok := (← checkNat "semiring row — the left branch survives the round trip"
