@@ -417,6 +417,29 @@ theorem any_ready_greeter_is_the_greeter {H W X : Type}
   | .inl h => hl h
   | .inr w => hr w
 
+def distribute {H W V : Type} : door H (fork W V) → fork (door H W) (door H V)
+  | (h, .inl w) => .inl (h, w)
+  | (h, .inr v) => .inr (h, v)
+
+def collect {H W V : Type} : fork (door H W) (door H V) → door H (fork W V) :=
+  greet (fun d => atTheDoor (face d) (viaLeft (met d)))
+    (fun d => atTheDoor (face d) (viaRight (met d)))
+
+theorem the_host_serves_both_branches {H W V : Type} :
+    ∀ d : door H (fork W V), collect (distribute d) = d
+  | (_, .inl _) => rfl
+  | (_, .inr _) => rfl
+
+theorem the_branches_share_the_host {H W V : Type} :
+    ∀ f : fork (door H W) (door H V), distribute (collect f) = f
+  | .inl _ => rfl
+  | .inr _ => rfl
+
+theorem the_host_survives_the_split {H W V : Type} :
+    ∀ d : door H (fork W V), greet face face (distribute d) = face d
+  | (_, .inl _) => rfl
+  | (_, .inr _) => rfl
+
 structure Measured where
   lo : Nat
   hi : Nat
@@ -621,6 +644,15 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.any_ready_greeter_is_the_greeter' does not depend on any axioms -/
 #guard_msgs in #print axioms any_ready_greeter_is_the_greeter
+
+/-- info: 'Seed.the_host_serves_both_branches' does not depend on any axioms -/
+#guard_msgs in #print axioms the_host_serves_both_branches
+
+/-- info: 'Seed.the_branches_share_the_host' does not depend on any axioms -/
+#guard_msgs in #print axioms the_branches_share_the_host
+
+/-- info: 'Seed.the_host_survives_the_split' does not depend on any axioms -/
+#guard_msgs in #print axioms the_host_survives_the_split
 
 /-- info: 'Seed.ble_trans' does not depend on any axioms -/
 #guard_msgs in #print axioms ble_trans

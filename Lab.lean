@@ -127,6 +127,13 @@ def main : IO UInt32 := do
     (greet (fun n => n + 1) (fun n => n * 2) (viaLeft 4)) 5) && ok
   ok := (← checkNat "fork row — one greeter, two entrances (via the right)"
     (greet (fun n => n + 1) (fun n => n * 2) (viaRight 4)) 8) && ok
+  let rtL := collect (distribute (atTheDoor (7 : Nat) (viaLeft (3 : Nat) : fork Nat Nat)))
+  ok := (← checkNat "semiring row — the host survives the split" (face rtL) 7) && ok
+  ok := (← checkNat "semiring row — the left branch survives the round trip"
+    (greet (fun n => n) (fun n => n + 100) (met rtL)) 3) && ok
+  let rtR := collect (distribute (atTheDoor (7 : Nat) (viaRight (3 : Nat) : fork Nat Nat)))
+  ok := (← checkNat "semiring row — the right branch survives the round trip"
+    (greet (fun n => n) (fun n => n + 100) (met rtR)) 103) && ok
   IO.println "chronicle — the first tick (time lives at the meeting):"
   let want := 3
   let s0 : Plan := .ground
