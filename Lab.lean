@@ -123,6 +123,10 @@ def main : IO UInt32 := do
     (fold (fun a b => a + b) 1 (graft ancestor child)
       == fold (fun a b => a + b)
           (fold (fun a b => a + b) 1 ancestor) child)) && ok
+  ok := (← checkNat "fork row — one greeter, two entrances (via the left)"
+    (greet (fun n => n + 1) (fun n => n * 2) (viaLeft 4)) 5) && ok
+  ok := (← checkNat "fork row — one greeter, two entrances (via the right)"
+    (greet (fun n => n + 1) (fun n => n * 2) (viaRight 4)) 8) && ok
   IO.println "chronicle — the first tick (time lives at the meeting):"
   let want := 3
   let s0 : Plan := .ground

@@ -385,6 +385,38 @@ theorem the_ancestor_rides_unread {X : Type u} (mul : X → X → X) (x₀ : X)
 
 theorem the_route_leaves_no_mark {P : Prop} (h1 h2 : P) : h1 = h2 := rfl
 
+def fork (H W : Type) : Type := H ⊕ W
+
+def viaLeft {H W : Type} (h : H) : fork H W := .inl h
+
+def viaRight {H W : Type} (w : W) : fork H W := .inr w
+
+def greet {H W X : Type} (gl : H → X) (gr : W → X) : fork H W → X
+  | .inl h => gl h
+  | .inr w => gr w
+
+theorem the_two_entrances_share_one_lobby {H W X : Type}
+    (gl : H → X) (gr : W → X) (h : H) (w : W) :
+    greet gl gr (viaLeft h) = gl h ∧ greet gl gr (viaRight w) = gr w :=
+  ⟨rfl, rfl⟩
+
+theorem the_entrance_is_real {H W : Type} (h : H) (w : W) :
+    viaLeft h ≠ (viaRight w : fork H W) :=
+  fun he => nomatch he
+
+theorem a_greeter_is_a_door_of_handlers {H W X : Type}
+    (f : fork H W → X) :
+    ∀ d, greet (fun h => f (viaLeft h)) (fun w => f (viaRight w)) d = f d
+  | .inl _ => rfl
+  | .inr _ => rfl
+
+theorem any_ready_greeter_is_the_greeter {H W X : Type}
+    (gl : H → X) (gr : W → X) (f : fork H W → X)
+    (hl : ∀ h, f (viaLeft h) = gl h) (hr : ∀ w, f (viaRight w) = gr w) :
+    ∀ d, f d = greet gl gr d
+  | .inl h => hl h
+  | .inr w => hr w
+
 structure Measured where
   lo : Nat
   hi : Nat
@@ -577,6 +609,18 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_route_leaves_no_mark' does not depend on any axioms -/
 #guard_msgs in #print axioms the_route_leaves_no_mark
+
+/-- info: 'Seed.the_two_entrances_share_one_lobby' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_entrances_share_one_lobby
+
+/-- info: 'Seed.the_entrance_is_real' does not depend on any axioms -/
+#guard_msgs in #print axioms the_entrance_is_real
+
+/-- info: 'Seed.a_greeter_is_a_door_of_handlers' does not depend on any axioms -/
+#guard_msgs in #print axioms a_greeter_is_a_door_of_handlers
+
+/-- info: 'Seed.any_ready_greeter_is_the_greeter' does not depend on any axioms -/
+#guard_msgs in #print axioms any_ready_greeter_is_the_greeter
 
 /-- info: 'Seed.ble_trans' does not depend on any axioms -/
 #guard_msgs in #print axioms ble_trans
