@@ -67,6 +67,16 @@ structure DarkRow where
   expects : Measured
   awaits : String
 
+structure OpenRow where
+  name : String
+  awaits : String
+
+def openRows : List OpenRow :=
+  [⟨"love row — interaction under mutual unknown parameters, promised eventual fulfillment (currying at the root)",
+    "the promise stratum: deferred compatibility, kept where the meeting keeps its map"⟩,
+   ⟨"story row — stage(tell_me_your_story) returns a free-range class-mate of its refiner",
+    "a telling-generator and the class-checker: fold-equal to the refiner, provably distinct, gauge in the surface"⟩]
+
 def darkRows : List DarkRow :=
   [⟨"rider row — electron mass reads back, scaled e-41 kg (codata 2018: 9.1093837015(28)e-31)",
     ⟨91093836987, 91093837043⟩,
@@ -116,9 +126,11 @@ def main : IO UInt32 := do
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
+  for r in openRows do
+    IO.println s!"open: {r.name} — awaits {r.awaits}"
   if ok then
     IO.println
-      s!"the lab counter-signs: readings green, {darkRows.length} dark rows holding their names"
+      s!"the lab counter-signs: readings green, {darkRows.length} dark and {openRows.length} open rows holding their names"
     return 0
   else
     IO.eprintln "the lab names the gap"

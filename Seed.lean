@@ -383,6 +383,8 @@ theorem the_ancestor_rides_unread {X : Type u} (mul : X → X → X) (x₀ : X)
     ((congrArg (fun v => fold mul v q) h).trans
       (the_parent_folds_into_the_ground mul x₀ base' q).symm)
 
+theorem the_route_leaves_no_mark {P : Prop} (h1 h2 : P) : h1 = h2 := rfl
+
 structure Measured where
   lo : Nat
   hi : Nat
@@ -572,6 +574,9 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_ancestor_rides_unread' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ancestor_rides_unread
+
+/-- info: 'Seed.the_route_leaves_no_mark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_route_leaves_no_mark
 
 /-- info: 'Seed.ble_trans' does not depend on any axioms -/
 #guard_msgs in #print axioms ble_trans
