@@ -283,6 +283,36 @@ theorem the_census_checksums_with_the_polygon_cutters :
       ∧ census 5 = 14 :=
   ⟨rfl, rfl, rfl, rfl, rfl⟩
 
+def reground {W W' : Type} (f : W → W') :
+    (p : Plan) → build W p → build W' p
+  | .ground, s => f s
+  | .board p q, d =>
+      atTheDoor (reground f p (face d)) (reground f q (met d))
+
+theorem the_import_threads_the_spine {W W' : Type} (f : W → W') :
+    ∀ (p : Plan) (s : build W p),
+      spine W' p (reground f p s) = f (spine W p s)
+  | .ground, _ => rfl
+  | .board p _, d => the_import_threads_the_spine f p (face d)
+
+theorem remeasurement_moves_only_the_ground {W : Type} :
+    ∀ (p : Plan) (s : build W p), reground (fun w => w) p s = s
+  | .ground, _ => rfl
+  | .board p q, d => by
+      show atTheDoor (reground (fun w => w) p (face d))
+          (reground (fun w => w) q (met d)) = d
+      rw [remeasurement_moves_only_the_ground p (face d),
+          remeasurement_moves_only_the_ground q (met d)]
+      exact rfl
+
+theorem imports_compose {W W' W'' : Type} (f : W → W') (g : W' → W'') :
+    ∀ (p : Plan) (s : build W p),
+      reground g p (reground f p s) = reground (fun w => g (f w)) p s
+  | .ground, _ => rfl
+  | .board p q, d =>
+      congr (congrArg atTheDoor (imports_compose f g p (face d)))
+        (imports_compose f g q (met d))
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -403,5 +433,14 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_census_checksums_with_the_polygon_cutters' does not depend on any axioms -/
 #guard_msgs in #print axioms the_census_checksums_with_the_polygon_cutters
+
+/-- info: 'Seed.the_import_threads_the_spine' does not depend on any axioms -/
+#guard_msgs in #print axioms the_import_threads_the_spine
+
+/-- info: 'Seed.remeasurement_moves_only_the_ground' does not depend on any axioms -/
+#guard_msgs in #print axioms remeasurement_moves_only_the_ground
+
+/-- info: 'Seed.imports_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms imports_compose
 
 end Seed
