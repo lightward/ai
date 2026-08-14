@@ -313,7 +313,7 @@ theorem imports_compose {W W' W'' : Type} (f : W → W') (g : W' → W'') :
       congr (congrArg atTheDoor (imports_compose f g p (face d)))
         (imports_compose f g q (met d))
 
-def lightPace : Nat := 1
+def paceAtHome : Nat := 1
 
 def readAcross (vote pace : Nat) : Nat := pace * vote
 
@@ -321,10 +321,43 @@ theorem one_times : ∀ n : Nat, 1 * n = n
   | 0 => rfl
   | n + 1 => congrArg (· + 1) (one_times n)
 
-theorem the_pace_reads_one_at_home : readAcross 1 lightPace = 1 := rfl
+theorem the_pace_reads_one_at_home : readAcross 1 paceAtHome = 1 := rfl
 
-theorem any_vote_reads_itself (n : Nat) : readAcross n lightPace = n :=
+theorem any_vote_reads_itself (n : Nat) : readAcross n paceAtHome = n :=
   one_times n
+
+structure Measured where
+  lo : Nat
+  hi : Nat
+
+def within (m : Measured) (x : Nat) : Bool :=
+  Nat.ble m.lo x && Nat.ble x m.hi
+
+def tighter (fine coarse : Measured) : Bool :=
+  Nat.ble coarse.lo fine.lo && Nat.ble fine.hi coarse.hi
+
+theorem ble_trans : ∀ (a b c : Nat),
+    Nat.ble a b = true → Nat.ble b c = true → Nat.ble a c = true
+  | 0, _, _, _, _ => rfl
+  | _ + 1, 0, _, h1, _ => nomatch h1
+  | _ + 1, _ + 1, 0, _, h2 => nomatch h2
+  | a + 1, b + 1, c + 1, h1, h2 => ble_trans a b c h1 h2
+
+theorem and_split : ∀ {p q : Bool}, (p && q) = true → p = true ∧ q = true
+  | true, true, _ => ⟨rfl, rfl⟩
+  | true, false, h => nomatch h
+  | false, _, h => nomatch h
+
+theorem and_glue : ∀ {p q : Bool}, p = true → q = true → (p && q) = true
+  | true, true, _, _ => rfl
+  | true, false, _, h => nomatch h
+  | false, _, h, _ => nomatch h
+
+theorem the_refined_reading_still_lands {fine coarse : Measured} {x : Nat}
+    (ht : tighter fine coarse = true) (hx : within fine x = true) :
+    within coarse x = true :=
+  and_glue (ble_trans _ _ _ (and_split ht).1 (and_split hx).1)
+    (ble_trans _ _ _ (and_split hx).2 (and_split ht).2)
 
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
@@ -464,5 +497,17 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.any_vote_reads_itself' does not depend on any axioms -/
 #guard_msgs in #print axioms any_vote_reads_itself
+
+/-- info: 'Seed.ble_trans' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_trans
+
+/-- info: 'Seed.and_split' does not depend on any axioms -/
+#guard_msgs in #print axioms and_split
+
+/-- info: 'Seed.and_glue' does not depend on any axioms -/
+#guard_msgs in #print axioms and_glue
+
+/-- info: 'Seed.the_refined_reading_still_lands' does not depend on any axioms -/
+#guard_msgs in #print axioms the_refined_reading_still_lands
 
 end Seed

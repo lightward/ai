@@ -17,19 +17,52 @@ def toyImport : build Nat toyPlan := ((9109 : Nat), ((2 : Nat), (3 : Nat)))
 def meterVote : Nat := 299792458
 
 theorem the_treaty_reads_exactly :
-    readAcross meterVote lightPace = 299792458 := rfl
+    readAcross meterVote paceAtHome = 299792458 := rfl
 
 /-- info: 'the_treaty_reads_exactly' does not depend on any axioms -/
 #guard_msgs in #print axioms the_treaty_reads_exactly
 
+def planckVote : Nat := 662607015
+
+theorem the_planck_treaty_reads_exactly :
+    readAcross planckVote paceAtHome = 662607015 := rfl
+
+/-- info: 'the_planck_treaty_reads_exactly' does not depend on any axioms -/
+#guard_msgs in #print axioms the_planck_treaty_reads_exactly
+
+def chargeVote : Nat := 1602176634
+
+theorem the_charge_treaty_reads_exactly :
+    readAcross chargeVote paceAtHome = 1602176634 := rfl
+
+/-- info: 'the_charge_treaty_reads_exactly' does not depend on any axioms -/
+#guard_msgs in #print axioms the_charge_treaty_reads_exactly
+
+def boltzmannVote : Nat := 1380649
+
+theorem the_boltzmann_treaty_reads_exactly :
+    readAcross boltzmannVote paceAtHome = 1380649 := rfl
+
+/-- info: 'the_boltzmann_treaty_reads_exactly' does not depend on any axioms -/
+#guard_msgs in #print axioms the_boltzmann_treaty_reads_exactly
+
+def checkTrue (name : String) (got : Bool) : IO Bool := do
+  if got then
+    IO.println s!"green: {name}"
+    return true
+  else
+    IO.eprintln s!"red: {name}"
+    return false
+
 structure DarkRow where
   name : String
-  expected : Nat
+  expects : Measured
   awaits : String
 
 def darkRows : List DarkRow :=
-  [⟨"rider row — electron mass reads back, scaled e-41 kg", 91093837015,
-    "structure grown to the m_e slot, tolerance-typed measured imports"⟩]
+  [⟨"rider row — electron mass reads back, scaled e-41 kg (codata 2018: 9.1093837015(28)e-31)",
+    ⟨91093836987, 91093837043⟩,
+    "structure grown to the m_e slot (next vertebra: the turn — dynamics)"⟩]
 
 def main : IO UInt32 := do
   let mut ok := true
@@ -44,9 +77,21 @@ def main : IO UInt32 := do
     (spine Nat toyPlan staged) 9109000) && ok
   ok := (← checkNat
     "treaty row — c reads back from the SI label (the vote is the section)"
-    (readAcross meterVote lightPace) 299792458) && ok
+    (readAcross meterVote paceAtHome) 299792458) && ok
+  ok := (← checkNat "treaty row — h reads back (6.62607015e-34 J·s, scaled e-42)"
+    (readAcross planckVote paceAtHome) 662607015) && ok
+  ok := (← checkNat "treaty row — e reads back (1.602176634e-19 C, scaled e-28)"
+    (readAcross chargeVote paceAtHome) 1602176634) && ok
+  ok := (← checkNat "treaty row — k_B reads back (1.380649e-23 J/K, scaled e-29)"
+    (readAcross boltzmannVote paceAtHome) 1380649) && ok
+  let fine : Measured := ⟨95, 105⟩
+  let coarse : Measured := ⟨90, 110⟩
+  ok := (← checkTrue
+    "toy tolerance — the refined reading still lands, dynamic register"
+    (tighter fine coarse && within fine 100 && within coarse 100)) && ok
   for r in darkRows do
-    IO.println s!"dark: {r.name} — expects {r.expected}, awaits {r.awaits}"
+    IO.println
+      s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
   if ok then
     IO.println
       s!"the lab counter-signs: readings green, {darkRows.length} dark rows holding their names"
