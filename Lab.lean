@@ -275,6 +275,19 @@ def main : IO UInt32 := do
       == ((pour (graft lineagePlan (graft revision revision))
           (ride electronLineage (graft revision revision))).map
             (fun m => m.lo)))) && ok
+  ok := (← checkTrue
+    "  passenger row — two routes, one rider (the two-tick face equals the one-tick face)"
+    ((spine Measured (graft (graft lineagePlan revision) revision)
+        (ride (ride electronLineage revision) revision)).lo
+      == (spine Measured (graft lineagePlan (graft revision revision))
+        (ride electronLineage (graft revision revision))).lo)) && ok
+  ok := (← checkTrue
+    "  passenger row — the customs ride along (reground of the ride is the ride of the reground)"
+    (pour (graft toyPlan revision)
+        (reground (fun w => w * 1000) (graft toyPlan revision)
+          (ride toyImport revision))
+      == pour (graft toyPlan revision)
+        (ride (reground (fun w => w * 1000) toyPlan toyImport) revision))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

@@ -928,6 +928,53 @@ theorem the_rides_compose_at_the_manifest {W : Type} {t : Plan}
       (the_parent_folds_into_the_ground (fun a b => a ++ b)
         (pour t s) δ₁ δ₂)).symm
 
+theorem the_door_carries_the_heq {H H' V V' : Type}
+    (hH : H = H') (hV : V = V') {a : H} {a' : H'} {b : V} {b' : V'}
+    (ha : HEq a a') (hb : HEq b b') :
+    HEq (atTheDoor a b) (atTheDoor a' b') := by
+  cases hH; cases hV; cases ha; cases hb; rfl
+
+theorem the_rides_compose {W : Type} {t : Plan} (s : build W t) :
+    ∀ (δ₂ δ₁ : Plan), HEq (ride (ride s δ₁) δ₂) (ride s (graft δ₁ δ₂))
+  | .ground, δ₁ => HEq.refl (ride s δ₁)
+  | .board p q, δ₁ =>
+      the_door_carries_the_heq
+        (congrArg (build W) (lineages_compose t δ₁ p).symm)
+        (congrArg (build W) (lineages_compose t δ₁ q).symm)
+        (the_rides_compose s p δ₁) (the_rides_compose s q δ₁)
+
+theorem the_lineage_law_settles_the_carrier {W : Type} {t : Plan}
+    (s : build W t) (δ₁ δ₂ : Plan) :
+    cast (congrArg (build W) (lineages_compose t δ₁ δ₂).symm)
+      (ride (ride s δ₁) δ₂)
+      = ride s (graft δ₁ δ₂) :=
+  eq_of_heq ((cast_heq _ _).trans (the_rides_compose s δ₂ δ₁))
+
+theorem two_routes_one_rider {W : Type} {t : Plan} (s : build W t)
+    (δ₁ δ₂ : Plan) :
+    cast (congrArg (build W) (lineages_compose t δ₁ δ₂).symm)
+        (ride (ride s δ₁) δ₂) = ride s (graft δ₁ δ₂)
+      ∧ spine W (graft (graft t δ₁) δ₂) (ride (ride s δ₁) δ₂)
+          = spine W (graft t (graft δ₁ δ₂)) (ride s (graft δ₁ δ₂))
+      ∧ pour (graft (graft t δ₁) δ₂) (ride (ride s δ₁) δ₂)
+          = pour (graft t (graft δ₁ δ₂)) (ride s (graft δ₁ δ₂)) :=
+  ⟨the_lineage_law_settles_the_carrier s δ₁ δ₂,
+   ((the_passenger_keeps_the_face (ride s δ₁) δ₂).trans
+      (the_passenger_keeps_the_face s δ₁)).trans
+     (the_passenger_keeps_the_face s (graft δ₁ δ₂)).symm,
+   the_rides_compose_at_the_manifest s δ₁ δ₂⟩
+
+theorem the_customs_ride_along {W W' : Type} (f : W → W') {t : Plan}
+    (s : build W t) :
+    ∀ δ : Plan,
+      reground f (graft t δ) (ride s δ) = ride (reground f t s) δ
+  | .ground => rfl
+  | .board p q => by
+      show atTheDoor (reground f (graft t p) (ride s p))
+            (reground f (graft t q) (ride s q))
+          = atTheDoor (ride (reground f t s) p) (ride (reground f t s) q)
+      rw [the_customs_ride_along f s p, the_customs_ride_along f s q]
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -1090,6 +1137,21 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_rides_compose_at_the_manifest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_rides_compose_at_the_manifest
+
+/-- info: 'Seed.the_door_carries_the_heq' does not depend on any axioms -/
+#guard_msgs in #print axioms the_door_carries_the_heq
+
+/-- info: 'Seed.the_rides_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms the_rides_compose
+
+/-- info: 'Seed.the_lineage_law_settles_the_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lineage_law_settles_the_carrier
+
+/-- info: 'Seed.two_routes_one_rider' does not depend on any axioms -/
+#guard_msgs in #print axioms two_routes_one_rider
+
+/-- info: 'Seed.the_customs_ride_along' does not depend on any axioms -/
+#guard_msgs in #print axioms the_customs_ride_along
 
 /-- info: 'Seed.a_reading_in_step_carries_the_walk' does not depend on any axioms -/
 #guard_msgs in #print axioms a_reading_in_step_carries_the_walk
