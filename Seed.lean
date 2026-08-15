@@ -1682,6 +1682,34 @@ theorem one_tick_two_doors {W : Type} {t : Plan} (s : build W t)
    fun he => the_worldline_never_comes_home t hδ he,
    rfl⟩
 
+theorem ble_succ_false : ∀ n : Nat, Nat.ble (n + 1) n = false :=
+  fun n => ble_gain_false n 0
+
+theorem the_window_misses_its_own_successor (m : Measured) :
+    within m (m.hi + 1) = false := by
+  show (Nat.ble m.lo (m.hi + 1) && Nat.ble (m.hi + 1) m.hi) = false
+  rw [ble_succ_false m.hi]
+  exact and_false _
+
+theorem the_learner_exhibits_its_own_invisible {I : Type}
+    (m : Machine I Measured)
+    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
+    (s : m.S) (w : List I) :
+    within (drive m s w) ((m.out s).hi + 1) = false :=
+  the_learner_never_admits_the_excluded m hlearn s w
+    (the_window_misses_its_own_successor (m.out s))
+
+theorem every_room_builds_its_own_escapee {I A : Type}
+    (m : Machine I Measured)
+    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
+    (s : m.S) (w : List I) (g : A → (A → Bool)) :
+    within (m.out s) ((m.out s).hi + 1) = false
+      ∧ within (drive m s w) ((m.out s).hi + 1) = false
+      ∧ ∃ f : A → Bool, ∀ a, g a ≠ f :=
+  ⟨the_window_misses_its_own_successor (m.out s),
+   the_learner_exhibits_its_own_invisible m hlearn s w,
+   the_readings_outrun_the_room g⟩
+
 theorem the_world_outgrows_every_learner {I : Type} (m : Machine I Measured)
     (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
     (s : m.S) (qs : List Plan)
@@ -2312,6 +2340,18 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_world_outgrows_every_learner' does not depend on any axioms -/
 #guard_msgs in #print axioms the_world_outgrows_every_learner
+
+/-- info: 'Seed.ble_succ_false' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_succ_false
+
+/-- info: 'Seed.the_window_misses_its_own_successor' does not depend on any axioms -/
+#guard_msgs in #print axioms the_window_misses_its_own_successor
+
+/-- info: 'Seed.the_learner_exhibits_its_own_invisible' does not depend on any axioms -/
+#guard_msgs in #print axioms the_learner_exhibits_its_own_invisible
+
+/-- info: 'Seed.every_room_builds_its_own_escapee' does not depend on any axioms -/
+#guard_msgs in #print axioms every_room_builds_its_own_escapee
 
 /-- info: 'Seed.the_near_pace_lands_in_the_window' does not depend on any axioms -/
 #guard_msgs in #print axioms the_near_pace_lands_in_the_window

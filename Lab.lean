@@ -108,6 +108,15 @@ theorem the_grown_world_is_invisible_to_the_homing :
 /-- info: 'the_grown_world_is_invisible_to_the_homing' does not depend on any axioms -/
 #guard_msgs in #print axioms the_grown_world_is_invisible_to_the_homing
 
+theorem the_homing_names_its_own_invisible :
+    ∀ w : List Unit, within (drive homingIn (0 : Nat) w) 11 = false :=
+  fun w =>
+    the_learner_exhibits_its_own_invisible homingIn
+      (fun s _ => and_glue (ble_le_succ s) (ble_refl 10)) (0 : Nat) w
+
+/-- info: 'the_homing_names_its_own_invisible' does not depend on any axioms -/
+#guard_msgs in #print axioms the_homing_names_its_own_invisible
+
 def revise : Machine Unit Measured :=
   ⟨Nat, 0, fun n _ => n + 1,
    fun n => cond (Nat.ble n 2) ⟨91093834500 + n, 91093836700⟩ m2018⟩
@@ -489,6 +498,13 @@ def main : IO UInt32 := do
                .board .ground .ground, .board .ground .ground]) == 16))) && ok
   IO.println
     s!"  outrun row — the general law stands receipted: any worldline longer than a learner's first ceiling is invisible to every run of that learner (the_world_outgrows_every_learner) — reality departs the paradigm on a computable schedule; staleness is a date, not a mood"
+  IO.println "the escapee — every room builds the value it cannot hold:"
+  ok := (← checkTrue
+    "  escapee row — the homing learner computes its own permanent invisible from its own seat: ceiling ten names eleven, unadmitted at lap one and forever (the_homing_names_its_own_invisible)"
+    ((!(within (homingIn.out (0 : Nat)) 11))
+      && (!(within (behavior homingIn [(), (), ()]) 11)))) && ok
+  IO.println
+    s!"  escapee row — the incompleteness silhouette, kid voice: the room's own description builds the item the room can never admit — the successor as the window's diagonal (every_room_builds_its_own_escapee; kin standing at reading-width: the_readings_outrun_the_room) — expressible from inside, admissible never"
   IO.println "the multiplexer — the blind spot carries many unknowns at no cost:"
   ok := (← checkTrue
     "  multiplex row — two guests ride one face for free (joint boarding reads the ground; the met recovers both severally)"
