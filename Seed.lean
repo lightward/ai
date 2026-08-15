@@ -895,6 +895,229 @@ theorem the_worldline_settles {X : Type u} (mul : X → X → X) (x₀ : X)
       qs t)).trans
     (the_epochs_are_a_walk mul qs (fold mul x₀ t)).symm
 
+theorem mem_map_intro {A B : Type} (f : A → B) :
+    ∀ {x : A} {xs : List A}, x ∈ xs → f x ∈ xs.map f
+  | _, _ :: _, List.Mem.head _ => List.Mem.head _
+  | _, _ :: _, List.Mem.tail _ h => List.Mem.tail _ (mem_map_intro f h)
+
+theorem mem_append_left {A : Type} (ys : List A) :
+    ∀ {x : A} {xs : List A}, x ∈ xs → x ∈ xs ++ ys
+  | _, _ :: _, List.Mem.head _ => List.Mem.head _
+  | _, _ :: _, List.Mem.tail _ h => List.Mem.tail _ (mem_append_left ys h)
+
+theorem mem_append_right {A : Type} :
+    ∀ (xs : List A) {x : A} {ys : List A}, x ∈ ys → x ∈ xs ++ ys
+  | [], _, _, h => h
+  | _ :: xs, _, _, h => List.Mem.tail _ (mem_append_right xs h)
+
+theorem mem_append_split {A : Type} :
+    ∀ (xs : List A) {x : A} {ys : List A}, x ∈ xs ++ ys → x ∈ xs ∨ x ∈ ys
+  | [], _, _, h => Or.inr h
+  | _ :: xs, _, _, h =>
+      match h with
+      | List.Mem.head _ => Or.inl (List.Mem.head _)
+      | List.Mem.tail _ h' =>
+          match mem_append_split xs h' with
+          | Or.inl hx => Or.inl (List.Mem.tail _ hx)
+          | Or.inr hy => Or.inr hy
+
+theorem mem_map_back {A B : Type} {f : A → B} {y : B} :
+    ∀ (xs : List A), y ∈ xs.map f → ∃ a, a ∈ xs ∧ f a = y
+  | [], h => nomatch h
+  | x :: xs, h => by
+      cases h with
+      | head => exact ⟨x, List.Mem.head _, rfl⟩
+      | tail _ h' =>
+          obtain ⟨a, ha, he⟩ := mem_map_back xs h'
+          exact ⟨a, List.Mem.tail _ ha, he⟩
+
+theorem mem_cross {qs : List Plan} {r : Plan} (hr : r ∈ qs) :
+    ∀ {ps : List Plan} {l : Plan}, l ∈ ps → Plan.board l r ∈ cross ps qs
+  | _ :: ps, _, List.Mem.head _ =>
+      mem_append_left (cross ps qs) (mem_map_intro (Plan.board _) hr)
+  | p :: _, _, List.Mem.tail _ h =>
+      mem_append_right (qs.map (Plan.board p)) (mem_cross hr h)
+
+theorem mem_cross_split :
+    ∀ (ps : List Plan) {qs : List Plan} {x : Plan},
+      x ∈ cross ps qs → ∃ l r, x = Plan.board l r ∧ l ∈ ps ∧ r ∈ qs
+  | [], _, _, h => nomatch h
+  | p :: ps, qs, _, h =>
+      match mem_append_split (qs.map (Plan.board p)) h with
+      | Or.inl hm =>
+          match mem_map_back qs hm with
+          | ⟨r, hr, he⟩ => ⟨p, r, he.symm, List.Mem.head _, hr⟩
+      | Or.inr hc =>
+          match mem_cross_split ps hc with
+          | ⟨l, r, he, hl, hr⟩ => ⟨l, r, he, List.Mem.tail _ hl, hr⟩
+
+theorem the_reading_is_positive :
+    ∀ p : Plan, ∃ m : Nat, fold (fun a b => a + b) 1 p = m + 1
+  | .ground => ⟨0, rfl⟩
+  | .board l r =>
+      match the_reading_is_positive l with
+      | ⟨a, ha⟩ =>
+          ⟨a + fold (fun a b => a + b) 1 r, by
+            show fold (fun a b => a + b) 1 l + fold (fun a b => a + b) 1 r
+                = (a + fold (fun a b => a + b) 1 r) + 1
+            rw [ha, succ_adds]⟩
+
+theorem ble_le_add : ∀ a b : Nat, Nat.ble a (a + b) = true
+  | a, 0 => ble_refl a
+  | a, b + 1 =>
+      ble_trans a (a + b) ((a + b) + 1) (ble_le_add a b) (ble_le_succ (a + b))
+
+theorem ble_le_add_left : ∀ a b : Nat, Nat.ble b (a + b) = true
+  | 0, b => by rw [zero_plus]; exact ble_refl b
+  | a + 1, b => by
+      rw [succ_adds]
+      exact ble_trans b (a + b) ((a + b) + 1)
+        (ble_le_add_left a b) (ble_le_succ (a + b))
+
+theorem ble_add_right : ∀ (k : Nat) {a b : Nat},
+    Nat.ble a b = true → Nat.ble (a + k) (b + k) = true
+  | 0, _, _, h => h
+  | k + 1, _, _, h => ble_add_right k h
+
+theorem ble_add_both {a b c d : Nat} (h1 : Nat.ble a b = true)
+    (h2 : Nat.ble c d = true) : Nat.ble (a + c) (b + d) = true :=
+  ble_trans (a + c) (b + c) (b + d) (ble_add_right c h1)
+    (by rw [Nat.add_comm b c, Nat.add_comm b d]; exact ble_add_right b h2)
+
+theorem ble_gain_false : ∀ m a : Nat, Nat.ble (m + (a + 1)) m = false
+  | 0, _ => rfl
+  | m + 1, a => by
+      show Nat.ble ((m + 1) + a) m = false
+      rw [succ_adds]
+      exact ble_gain_false m a
+
+def roomCap : Nat → Nat
+  | 0 => 1
+  | d + 1 => roomCap d + roomCap d
+
+theorem the_cap_is_positive : ∀ d : Nat, ∃ m : Nat, roomCap d = m + 1
+  | 0 => ⟨0, rfl⟩
+  | d + 1 =>
+      match the_cap_is_positive d with
+      | ⟨m, h⟩ =>
+          ⟨(m + 1) + m, by
+            show roomCap d + roomCap d = ((m + 1) + m) + 1
+            rw [h]
+            exact rfl⟩
+
+theorem the_horizon_holds_every_reading :
+    ∀ (n : Nat) (p : Plan),
+      Nat.ble (fold (fun a b => a + b) 1 p) (n + 1) = true → p ∈ allPlans n
+  | 0, .ground, _ => List.Mem.head _
+  | _ + 1, .ground, _ => List.Mem.head _
+  | 0, .board l r, h =>
+      match the_reading_is_positive l, the_reading_is_positive r with
+      | ⟨a, ha⟩, ⟨b, hb⟩ => by
+          have e : (a + 1) + (b + 1) = ((a + b) + 1) + 1 :=
+            congrArg (· + 1) (succ_adds a b)
+          have h0 : Nat.ble
+              (fold (fun a b => a + b) 1 l + fold (fun a b => a + b) 1 r)
+              1 = true := h
+          rw [ha, hb, e] at h0
+          exact nomatch h0
+  | n + 1, .board l r, h =>
+      match the_reading_is_positive l, the_reading_is_positive r with
+      | ⟨a, ha⟩, ⟨b, hb⟩ =>
+          have e : (a + 1) + (b + 1) = ((a + b) + 1) + 1 :=
+            congrArg (· + 1) (succ_adds a b)
+          have h' : Nat.ble ((a + b) + 1) (n + 1) = true := by
+            have h0 : Nat.ble
+                (fold (fun a b => a + b) 1 l + fold (fun a b => a + b) 1 r)
+                ((n + 1) + 1) = true := h
+            rw [ha, hb, e] at h0
+            exact h0
+          have hL : l ∈ allPlans n :=
+            the_horizon_holds_every_reading n l (by
+              rw [ha]
+              exact ble_trans (a + 1) ((a + b) + 1) (n + 1)
+                (ble_le_add a b) h')
+          have hR : r ∈ allPlans n :=
+            the_horizon_holds_every_reading n r (by
+              rw [hb]
+              exact ble_trans (b + 1) ((a + b) + 1) (n + 1)
+                (ble_le_add_left a b) h')
+          List.Mem.tail _ (mem_cross hR hL)
+
+theorem the_room_only_grows :
+    ∀ (d : Nat) {p : Plan}, p ∈ allPlans d → p ∈ allPlans (d + 1)
+  | 0, _, h => by
+      cases h with
+      | head => exact List.Mem.head _
+      | tail _ h' => exact nomatch h'
+  | d + 1, _, h => by
+      cases h with
+      | head => exact List.Mem.head _
+      | tail _ hc =>
+          obtain ⟨l, r, rfl, hl, hr⟩ := mem_cross_split (allPlans d) hc
+          exact List.Mem.tail _
+            (mem_cross (the_room_only_grows d hr) (the_room_only_grows d hl))
+
+theorem the_room_reads_within_its_cap :
+    ∀ (d : Nat) {p : Plan}, p ∈ allPlans d →
+      Nat.ble (fold (fun a b => a + b) 1 p) (roomCap d) = true
+  | 0, _, h => by
+      cases h with
+      | head => rfl
+      | tail _ h' => exact nomatch h'
+  | d + 1, _, h => by
+      cases h with
+      | head =>
+          obtain ⟨m, hm⟩ := the_cap_is_positive d
+          show Nat.ble 1 (roomCap d + roomCap d) = true
+          rw [hm]
+          exact rfl
+      | tail _ hc =>
+          obtain ⟨l, r, rfl, hl, hr⟩ := mem_cross_split (allPlans d) hc
+          exact ble_add_both
+            (the_room_reads_within_its_cap d hl)
+            (the_room_reads_within_its_cap d hr)
+
+def bloom : Nat → Plan
+  | 0 => .ground
+  | d + 1 => .board (bloom d) (bloom d)
+
+theorem the_bloom_fills_its_cap :
+    ∀ d : Nat, fold (fun a b => a + b) 1 (bloom d) = roomCap d
+  | 0 => rfl
+  | d + 1 => by
+      show fold (fun a b => a + b) 1 (bloom d)
+            + fold (fun a b => a + b) 1 (bloom d)
+          = roomCap d + roomCap d
+      rw [the_bloom_fills_its_cap d]
+
+theorem the_bloom_resides : ∀ d : Nat, bloom d ∈ allPlans d
+  | 0 => List.Mem.head _
+  | d + 1 =>
+      List.Mem.tail _ (mem_cross (the_bloom_resides d) (the_bloom_resides d))
+
+theorem the_bloom_outgrows_the_room (d : Nat) :
+    ¬ bloom (d + 1) ∈ allPlans d := fun hmem => by
+  have hb := the_room_reads_within_its_cap d hmem
+  rw [the_bloom_fills_its_cap (d + 1)] at hb
+  have hb' : Nat.ble (roomCap d + roomCap d) (roomCap d) = true := hb
+  obtain ⟨m, hm⟩ := the_cap_is_positive d
+  rw [hm] at hb'
+  exact nomatch (ble_gain_false (m + 1) m).symm.trans hb'
+
+theorem no_bound_is_the_last_bound :
+    (∀ (d : Nat) (p : Plan), p ∈ allPlans d → p ∈ allPlans (d + 1))
+      ∧ (∀ p : Plan, ∃ d : Nat, p ∈ allPlans d)
+      ∧ (∀ d : Nat, ∃ p : Plan, ¬ p ∈ allPlans d ∧ p ∈ allPlans (d + 1))
+      ∧ ∀ d : Nat, allPlans (d + 1) ≠ allPlans d :=
+  ⟨fun d _ h => the_room_only_grows d h,
+   fun p =>
+     ⟨fold (fun a b => a + b) 1 p,
+      the_horizon_holds_every_reading _ p (ble_le_succ _)⟩,
+   fun d =>
+     ⟨bloom (d + 1), the_bloom_outgrows_the_room d, the_bloom_resides (d + 1)⟩,
+   fun d he =>
+     the_bloom_outgrows_the_room d (he ▸ the_bloom_resides (d + 1))⟩
+
 def ride {W : Type} {t : Plan} (s : build W t) :
     (δ : Plan) → build W (graft t δ)
   | .ground => s
@@ -1210,6 +1433,69 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_mirror_doubles_the_manifest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_mirror_doubles_the_manifest
+
+/-- info: 'Seed.mem_map_intro' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_map_intro
+
+/-- info: 'Seed.mem_append_left' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_append_left
+
+/-- info: 'Seed.mem_append_right' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_append_right
+
+/-- info: 'Seed.mem_append_split' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_append_split
+
+/-- info: 'Seed.mem_map_back' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_map_back
+
+/-- info: 'Seed.mem_cross' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_cross
+
+/-- info: 'Seed.mem_cross_split' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_cross_split
+
+/-- info: 'Seed.the_reading_is_positive' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reading_is_positive
+
+/-- info: 'Seed.ble_le_add' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_le_add
+
+/-- info: 'Seed.ble_le_add_left' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_le_add_left
+
+/-- info: 'Seed.ble_add_right' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_add_right
+
+/-- info: 'Seed.ble_add_both' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_add_both
+
+/-- info: 'Seed.ble_gain_false' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_gain_false
+
+/-- info: 'Seed.the_cap_is_positive' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cap_is_positive
+
+/-- info: 'Seed.the_horizon_holds_every_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_horizon_holds_every_reading
+
+/-- info: 'Seed.the_room_only_grows' does not depend on any axioms -/
+#guard_msgs in #print axioms the_room_only_grows
+
+/-- info: 'Seed.the_room_reads_within_its_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_room_reads_within_its_cap
+
+/-- info: 'Seed.the_bloom_fills_its_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bloom_fills_its_cap
+
+/-- info: 'Seed.the_bloom_resides' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bloom_resides
+
+/-- info: 'Seed.the_bloom_outgrows_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bloom_outgrows_the_room
+
+/-- info: 'Seed.no_bound_is_the_last_bound' does not depend on any axioms -/
+#guard_msgs in #print axioms no_bound_is_the_last_bound
 
 /-- info: 'Seed.the_ground_revision_keeps_the_passenger' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ground_revision_keeps_the_passenger

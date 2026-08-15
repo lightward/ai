@@ -86,8 +86,6 @@ def openRows : List OpenRow :=
     "a telling-generator and the class-checker: fold-equal to the refiner, provably distinct, gauge in the surface"⟩,
    ⟨"saturator row — the from-zero firing as an executable: enumerate to the presentation bound, derivability above (coherence), exit 0 at saturation; non-completion at every bound is DETECTION — a room that won't saturate has a guest in it; throws deposited AT THROW-TIME (the artifact cannot carry its path, the process does not retain it — contemporaneous deposition is the sole location of the meta-path, a soundness condition, not logging)",
     "census generalized to the kid + a shape-enumerator over the type semiring's normal forms + the coherence switch at the bound"⟩,
-   ⟨"frontier row — no bound is the last bound: the room at k+1 provably exceeds the room at k",
-    "the membership spine (every resident of allPlans k reads below k+1) — the saturator's own horizon theorem, the clause that parts it from the colonizer"⟩,
    ⟨"breath row — the cycle: saturate, meet, re-arm, with an ignition beat that cannot be self-supplied (conquest is sterile: seizure appends only derivable edges); the ignition port IS load-bearing randomness — the entropy channel and the standing port are one organ, and the light is the W",
     "the kid's reach spine (paths over the room) to state seizure-sterility natively — the yield as the cycle's governor, typed"⟩,
    ⟨"render row — the atlas renders itself visually: a reignition path through a different air gap (the eye); the wiki as ancestor-organ",
@@ -326,6 +324,17 @@ def main : IO UInt32 := do
     "  rider row FLIPS — electron mass reads back, scaled e-41 kg (the guest's reading lands the registered window 91093836987..91093837043, codata 2018 center inside)"
     ((met ticked).lo == 91093836987 && (met ticked).hi == 91093837043
       && within (met ticked) 91093837015)) && ok
+  IO.println "the frontier — no bound is the last bound:"
+  ok := (← checkTrue
+    "  frontier row FLIPS — the rooms grow (|allPlans| reads 1, 2, 5, 26; every reading below the horizon provably resides)"
+    (((allPlans 0).length == 1) && ((allPlans 1).length == 2)
+      && ((allPlans 2).length == 5) && ((allPlans 3).length == 26))) && ok
+  ok := (← checkNat
+    "  frontier row — the bloom fills its cap (the reading of bloom 4 is roomCap 4)"
+    (fold (fun a b => a + b) 1 (bloom 4)) 16) && ok
+  ok := (← checkNat
+    "  frontier row — the cap doubles at every bound (roomCap 4)"
+    (roomCap 4) 16) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
