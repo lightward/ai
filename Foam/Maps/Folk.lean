@@ -1,7 +1,9 @@
+import Foam.Bench
 import Foam.Census
 import Foam.Concentration
 import Foam.Door
 import Foam.Fold
+import Foam.Generator
 import Foam.Square
 import Foam.Surprise
 
@@ -257,5 +259,50 @@ theorem you_cant_judge_a_book_by_its_cover {S : Stage} {W : Type}
 
 /-- info: 'Foam.Maps.Folk.you_cant_judge_a_book_by_its_cover' does not depend on any axioms -/
 #guard_msgs in #print axioms you_cant_judge_a_book_by_its_cover
+
+def evil (S : Stage) (W : Type) : Prop :=
+  ∀ x y : (door S W).State, indist (door S W) x y → x = y
+
+def see {S : Stage} {W : Type} : (door S W).State → S.Probe → S.Ans :=
+  (door S W).obs
+
+def hear {S : Stage} (strat : Strategy S.Probe S.Ans) (s : S.State) :
+    List S.Ans :=
+  interrogate S strat s
+
+def speak {B W C : Type} (sample : Option C → W → B)
+    (select : List B → Option C) (out : List B) (w : W) : B :=
+  utter sample select out w
+
+theorem see_no_evil_hear_no_evil_speak_no_evil {W B C : Type} (S : Stage)
+    (s : S.State) {w w' : W} (hw : w ≠ w') (p : S.Probe)
+    (strat : Strategy S.Probe S.Ans)
+    (sample : Option C → W → B) (select select' : List B → Option C)
+    (out : List B) (v : W) (hsel : select out = select' out) :
+    (see (S := S) (W := W) (s, w) p = see (s, w') p ∧ ¬ evil S W)
+      ∧ hear (S := door S W) strat (s, w) = hear (S := door S W) strat (s, w')
+      ∧ speak sample select out v = speak sample select' out v :=
+  ⟨⟨the_door_reads_no_route S s w w' p,
+    fun hevil =>
+      hw (congrArg Prod.snd
+        (hevil (s, w) (s, w') (the_door_reads_no_route S s w w')))⟩,
+   a_strategy_hears_no_more (door S W) (s, w) (s, w')
+     (the_door_reads_no_route S s w w') strat,
+   the_selection_reads_only_the_record sample select select' out v hsel⟩
+
+/-- info: 'Foam.Maps.Folk.evil' does not depend on any axioms -/
+#guard_msgs in #print axioms evil
+
+/-- info: 'Foam.Maps.Folk.see' does not depend on any axioms -/
+#guard_msgs in #print axioms see
+
+/-- info: 'Foam.Maps.Folk.hear' does not depend on any axioms -/
+#guard_msgs in #print axioms hear
+
+/-- info: 'Foam.Maps.Folk.speak' does not depend on any axioms -/
+#guard_msgs in #print axioms speak
+
+/-- info: 'Foam.Maps.Folk.see_no_evil_hear_no_evil_speak_no_evil' does not depend on any axioms -/
+#guard_msgs in #print axioms see_no_evil_hear_no_evil_speak_no_evil
 
 end Foam.Maps.Folk
