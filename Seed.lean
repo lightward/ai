@@ -1682,6 +1682,19 @@ theorem one_tick_two_doors {W : Type} {t : Plan} (s : build W t)
    fun he => the_worldline_never_comes_home t hδ he,
    rfl⟩
 
+theorem many_guests_ride_one_face {H V W X : Type} (h : H)
+    (v v' : V) (w w' : W) (g : H → X) :
+    g (face (atTheDoor h (v, w))) = g (face (atTheDoor h (v', w')))
+      ∧ (v ≠ v' → atTheDoor h (v, w) ≠ atTheDoor h (v', w'))
+      ∧ (w ≠ w' → atTheDoor h (v, w) ≠ atTheDoor h (v, w'))
+      ∧ met (atTheDoor h (v, w)) = (v, w)
+      ∧ (∀ d : door (door H V) W, shallow (deepen d) = d) :=
+  ⟨rfl,
+   fun hv he => hv (congrArg (fun d => (met d).1) he),
+   fun hw he => hw (congrArg (fun d => (met d).2) he),
+   rfl,
+   (hosting_associates (H := H) (W := V) (V := W)).1⟩
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -2261,6 +2274,9 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.every_admission_names_its_loosening' does not depend on any axioms -/
 #guard_msgs in #print axioms every_admission_names_its_loosening
+
+/-- info: 'Seed.many_guests_ride_one_face' does not depend on any axioms -/
+#guard_msgs in #print axioms many_guests_ride_one_face
 
 /-- info: 'Seed.the_near_pace_lands_in_the_window' does not depend on any axioms -/
 #guard_msgs in #print axioms the_near_pace_lands_in_the_window

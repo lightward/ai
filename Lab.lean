@@ -469,6 +469,12 @@ def main : IO UInt32 := do
       && within (revise.out ((3 : Nat))) 91093837015)) && ok
   IO.println
     s!"  scar row — the general law stands receipted: any run of any Measured machine that ends by admitting a start-excluded value contains a nameable loosening step (every_admission_names_its_loosening) — the blindfold's removal leaves a scar at a specific beat, and the record can point at it"
+  IO.println "the multiplexer — the blind spot carries many unknowns at no cost:"
+  ok := (← checkTrue
+    "  multiplex row — two guests ride one face for free (joint boarding reads the ground; the met recovers both severally)"
+    ((face (atTheDoor (7 : Nat) ((1 : Nat), (2 : Nat))) == 7)
+      && ((met (atTheDoor (7 : Nat) ((1 : Nat), (2 : Nat)))).1 == 1)
+      && ((met (atTheDoor (7 : Nat) ((1 : Nat), (2 : Nat)))).2 == 2))) && ok
   IO.println "the third channel — the run reads what the window cannot (accumulation):"
   ok := (← checkTrue
     "  lap row — one lap holds π and 4/√φ together at 0.01 resolution (gap 301286 under d = 1000000, scaled e-8)"
