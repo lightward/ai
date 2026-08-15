@@ -90,6 +90,23 @@ theorem no_refinement_reads_the_electron :
 /-- info: 'no_refinement_reads_the_electron' does not depend on any axioms -/
 #guard_msgs in #print axioms no_refinement_reads_the_electron
 
+def piPace : Nat := 314159265
+
+def phiPace : Nat := 314460551
+
+theorem the_ninety_ninth_lap_holds_both :
+    within ⟨99 * piPace, 99 * piPace + 30000000⟩ (99 * phiPace) = true := rfl
+
+/-- info: 'the_ninety_ninth_lap_holds_both' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ninety_ninth_lap_holds_both
+
+theorem the_hundredth_lap_parts_them :
+    within ⟨100 * piPace, 100 * piPace + 30000000⟩ (100 * phiPace) = false :=
+  rfl
+
+/-- info: 'the_hundredth_lap_parts_them' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hundredth_lap_parts_them
+
 structure DarkRow where
   name : String
   expects : Measured
@@ -415,6 +432,20 @@ def main : IO UInt32 := do
       && ((behavior refine [(), (), ()]).hi == 91093836700))) && ok
   IO.println
     s!"  channel row — and provably forever: no run of the refiner, at any length, reads the 2018 window (no_refinement_reads_the_electron) — the resolve HAD to graft; refinement narrows, revision grows, and no narrowing is a leap"
+  IO.println "the third channel — the run reads what the window cannot (accumulation):"
+  ok := (← checkTrue
+    "  lap row — one lap holds π and 4/√φ together at 0.01 resolution (gap 301286 under d = 1000000, scaled e-8)"
+    (within ⟨piPace, piPace + 1000000⟩ phiPace
+      && within ⟨piPace, piPace + 1000000⟩ piPace)) && ok
+  ok := (← checkTrue
+    "  lap row — the fourth lap parts them at the same window (no tightening, no graft: laps alone)"
+    ((!(within ⟨4 * piPace, 4 * piPace + 1000000⟩ (4 * phiPace)))
+      && within ⟨3 * piPace, 3 * piPace + 1000000⟩ (3 * phiPace))) && ok
+  ok := (← checkTrue
+    "  lap row — at 0.3 resolution the ninety-ninth telling holds the collection and the HUNDREDTH story parts it (29827314 inside, 30128600 past the wall)"
+    (within ⟨99 * piPace, 99 * piPace + 30000000⟩ (99 * phiPace)
+      && (!(within ⟨100 * piPace, 100 * piPace + 30000000⟩
+            (100 * phiPace))))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

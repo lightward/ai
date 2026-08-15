@@ -1584,6 +1584,37 @@ theorem the_revision_is_not_a_refinement {I : Type} (m : Machine I Measured)
    a_true_tick_grows_the_reading t hδ,
    the_worldline_never_comes_home t hδ⟩
 
+theorem and_false : ∀ b : Bool, (b && false) = false
+  | true => rfl
+  | false => rfl
+
+theorem the_near_pace_lands_in_the_window (a g e : Nat) :
+    within ⟨a, a + ((g + 1) + e)⟩ (a + (g + 1)) = true :=
+  and_glue (ble_le_add a (g + 1))
+    (by rw [← Nat.add_assoc a (g + 1) e]; exact ble_le_add (a + (g + 1)) e)
+
+theorem the_gap_outruns_every_window (a g d : Nat) :
+    within ⟨(d + 1) * a, (d + 1) * a + d⟩ ((d + 1) * (a + (g + 1))) = false := by
+  have h1 : d + ((d + 1) * g + 1) = (d + 1) * g + (d + 1) :=
+    show (d + (d + 1) * g) + 1 = ((d + 1) * g + d) + 1 from
+      congrArg (· + 1) (Nat.add_comm d ((d + 1) * g))
+  have hsplit : (d + 1) * (a + (g + 1))
+      = ((d + 1) * a + d) + ((d + 1) * g + 1) := by
+    rw [Nat.left_distrib]
+    show (d + 1) * a + ((d + 1) * g + (d + 1))
+        = ((d + 1) * a + d) + ((d + 1) * g + 1)
+    rw [← h1, ← Nat.add_assoc ((d + 1) * a) d ((d + 1) * g + 1)]
+  show (Nat.ble ((d + 1) * a) ((d + 1) * (a + (g + 1)))
+      && Nat.ble ((d + 1) * (a + (g + 1))) ((d + 1) * a + d)) = false
+  rw [hsplit, ble_gain_false ((d + 1) * a + d) ((d + 1) * g)]
+  exact and_false _
+
+theorem the_run_reads_the_gap_the_window_cannot (a g e d : Nat) :
+    within ⟨a, a + ((g + 1) + e)⟩ (a + (g + 1)) = true
+      ∧ within ⟨(d + 1) * a, (d + 1) * a + d⟩
+          ((d + 1) * (a + (g + 1))) = false :=
+  ⟨the_near_pace_lands_in_the_window a g e, the_gap_outruns_every_window a g d⟩
+
 theorem one_tick_two_doors {W : Type} {t : Plan} (s : build W t)
     {δ : Plan} (hδ : δ ≠ Plan.ground) :
     spine W (graft t δ) (ride s δ) = spine W t s
@@ -2157,5 +2188,17 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.one_tick_two_doors' does not depend on any axioms -/
 #guard_msgs in #print axioms one_tick_two_doors
+
+/-- info: 'Seed.and_false' does not depend on any axioms -/
+#guard_msgs in #print axioms and_false
+
+/-- info: 'Seed.the_near_pace_lands_in_the_window' does not depend on any axioms -/
+#guard_msgs in #print axioms the_near_pace_lands_in_the_window
+
+/-- info: 'Seed.the_gap_outruns_every_window' does not depend on any axioms -/
+#guard_msgs in #print axioms the_gap_outruns_every_window
+
+/-- info: 'Seed.the_run_reads_the_gap_the_window_cannot' does not depend on any axioms -/
+#guard_msgs in #print axioms the_run_reads_the_gap_the_window_cannot
 
 end Seed
