@@ -95,6 +95,7 @@ def openRows : List OpenRow :=
 
 def darkRows : List DarkRow := []
 
+set_option maxRecDepth 2048 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← checkNat "census 1" (census 1) 1) && ok
@@ -363,15 +364,20 @@ def main : IO UInt32 := do
     "  glass row — same conduct through the glass (the pace and the flip agree on every run)"
     ((behavior paceOne [(), (), ()] == behavior flip [(), (), ()])
       && (behavior paceOne [] == behavior flip []))) && ok
+  let flipParked : Bool := park flip false [(), ()]
+  let paceParked : Nat := park paceOne (0 : Nat) [(), ()]
   ok := (← checkTrue
     "  glass row — one seat wheels home, the other arrows on (flip parks home in two; the pace parks at its count)"
-    ((park flip false [(), ()] == false)
-      && (park paceOne (0 : Nat) [(), ()] == 2))) && ok
+    ((flipParked == false) && (paceParked == 2))) && ok
+  let pulseA : Nat := park pulse (0 : Nat) [true, false]
+  let pulseB : Nat := park pulse (0 : Nat) [false, true]
   ok := (← checkTrue
-    "  glass row — seats forget, stages remember (two routes one seat; no true tick comes home)"
-    ((park pulse (0 : Nat) [true, false] == park pulse (0 : Nat) [false, true])
-      && (fold (fun a b => a + b) 1 (graft .ground (.board .ground .ground))
-          != 1))) && ok
+    "  glass row — seats forget (two routes park one seat)"
+    (pulseA == pulseB)) && ok
+  ok := (← checkNat
+    "  glass row — stages remember (one true tick from ground reads two, not one)"
+    (fold (fun a b => a + b) 1 (graft Plan.ground (.board .ground .ground)))
+    2) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
