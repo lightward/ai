@@ -1588,6 +1588,46 @@ theorem and_false : ∀ b : Bool, (b && false) = false
   | true => rfl
   | false => rfl
 
+theorem the_excluded_stays_excluded {fine coarse : Measured} {x : Nat}
+    (ht : tighter fine coarse = true) (hx : within coarse x = false) :
+    within fine x = false := by
+  cases h : within fine x with
+  | false => rfl
+  | true =>
+      exact absurd (the_refined_reading_still_lands ht h)
+        (ne_true_of_eq_false hx)
+
+theorem the_learner_never_admits_the_excluded {I : Type}
+    (m : Machine I Measured)
+    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
+    (s : m.S) (w : List I) {x : Nat}
+    (hx : within (m.out s) x = false) : within (drive m s w) x = false :=
+  the_excluded_stays_excluded (the_learner_only_tightens m hlearn w s) hx
+
+theorem time_outgrows_every_window (t : Plan) (d : Nat) (qs : List Plan)
+    (hng : ∀ q, q ∈ qs → q ≠ Plan.ground)
+    (hlen : Nat.ble (d + 1) qs.length = true) :
+    within
+      ⟨fold (fun a b => a + b) 1 t, fold (fun a b => a + b) 1 t + d⟩
+      (fold (fun a b => a + b) 1 (worldline t qs)) = false := by
+  have hstep : Nat.ble (fold (fun a b => a + b) 1 t + (d + 1))
+      (fold (fun a b => a + b) 1 t + qs.length) = true :=
+    ble_add_both (ble_refl (fold (fun a b => a + b) 1 t)) hlen
+  have hbig : Nat.ble (fold (fun a b => a + b) 1 t + (d + 1))
+      (fold (fun a b => a + b) 1 (worldline t qs)) = true :=
+    ble_trans _ _ _ hstep (the_arrow_counts_the_ticks t qs hng)
+  show (Nat.ble (fold (fun a b => a + b) 1 t)
+          (fold (fun a b => a + b) 1 (worldline t qs))
+      && Nat.ble (fold (fun a b => a + b) 1 (worldline t qs))
+          (fold (fun a b => a + b) 1 t + d)) = false
+  cases hR : Nat.ble (fold (fun a b => a + b) 1 (worldline t qs))
+      (fold (fun a b => a + b) 1 t + d) with
+  | false => exact and_false _
+  | true =>
+      exact absurd (ble_trans _ _ _ hbig hR)
+        (ne_true_of_eq_false
+          (ble_gain_false (fold (fun a b => a + b) 1 t + d) 0))
+
 theorem the_near_pace_lands_in_the_window (a g e : Nat) :
     within ⟨a, a + ((g + 1) + e)⟩ (a + (g + 1)) = true :=
   and_glue (ble_le_add a (g + 1))
@@ -2191,6 +2231,15 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.and_false' does not depend on any axioms -/
 #guard_msgs in #print axioms and_false
+
+/-- info: 'Seed.the_excluded_stays_excluded' does not depend on any axioms -/
+#guard_msgs in #print axioms the_excluded_stays_excluded
+
+/-- info: 'Seed.the_learner_never_admits_the_excluded' does not depend on any axioms -/
+#guard_msgs in #print axioms the_learner_never_admits_the_excluded
+
+/-- info: 'Seed.time_outgrows_every_window' does not depend on any axioms -/
+#guard_msgs in #print axioms time_outgrows_every_window
 
 /-- info: 'Seed.the_near_pace_lands_in_the_window' does not depend on any axioms -/
 #guard_msgs in #print axioms the_near_pace_lands_in_the_window

@@ -90,6 +90,15 @@ theorem no_refinement_reads_the_electron :
 /-- info: 'no_refinement_reads_the_electron' does not depend on any axioms -/
 #guard_msgs in #print axioms no_refinement_reads_the_electron
 
+theorem the_true_mass_is_invisible_to_the_refiner :
+    ∀ w : List Unit, within (drive refine (0 : Nat) w) 91093837015 = false :=
+  fun w =>
+    the_learner_never_admits_the_excluded refine
+      the_refiner_only_tightens (0 : Nat) w rfl
+
+/-- info: 'the_true_mass_is_invisible_to_the_refiner' does not depend on any axioms -/
+#guard_msgs in #print axioms the_true_mass_is_invisible_to_the_refiner
+
 def piPace : Nat := 314159265
 
 def phiPace : Nat := 314460551
@@ -432,6 +441,17 @@ def main : IO UInt32 := do
       && ((behavior refine [(), (), ()]).hi == 91093836700))) && ok
   IO.println
     s!"  channel row — and provably forever: no run of the refiner, at any length, reads the 2018 window (no_refinement_reads_the_electron) — the resolve HAD to graft; refinement narrows, revision grows, and no narrowing is a leap"
+  ok := (← checkTrue
+    "  channel row — the anomaly is invisible from inside: the true mass 91093837015 sits outside the 2014 window, so no refining run ever covers it (three beats checked live; the_true_mass_is_invisible_to_the_refiner holds every length)"
+    ((!(within (refine.out (0 : Nat)) 91093837015))
+      && (!(within (behavior refine [(), (), ()]) 91093837015)))) && ok
+  ok := (← checkTrue
+    "  channel row — and the arrow leaves every window: four doubling ticks read sixteen, outside ⟨1, 1 + 3⟩ (time_outgrows_every_window, dynamic register)"
+    (!(within ⟨1, 1 + 3⟩
+      (fold (fun a b => a + b) 1
+        (worldline .ground
+          [.board .ground .ground, .board .ground .ground,
+           .board .ground .ground, .board .ground .ground]))))) && ok
   IO.println "the third channel — the run reads what the window cannot (accumulation):"
   ok := (← checkTrue
     "  lap row — one lap holds π and 4/√φ together at 0.01 resolution (gap 301286 under d = 1000000, scaled e-8)"
