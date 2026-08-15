@@ -975,6 +975,71 @@ theorem the_customs_ride_along {W W' : Type} (f : W → W') {t : Plan}
           = atTheDoor (ride (reground f t s) p) (ride (reground f t s) q)
       rw [the_customs_ride_along f s p, the_customs_ride_along f s q]
 
+def journey {W : Type} {t : Plan} (s : build W t) :
+    (qs : List Plan) → build W (worldline t qs)
+  | [] => s
+  | q :: qs => journey (ride s q) qs
+
+theorem the_worldline_resumes : ∀ (qs qs' : List Plan) (t : Plan),
+    worldline t (qs ++ qs') = worldline (worldline t qs) qs'
+  | [], _, _ => rfl
+  | q :: qs, qs', t => the_worldline_resumes qs qs' (graft t q)
+
+theorem the_face_survives_the_journey {W : Type} :
+    ∀ (qs : List Plan) {t : Plan} (s : build W t),
+      spine W (worldline t qs) (journey s qs) = spine W t s
+  | [], _, _ => rfl
+  | q :: qs, _, s =>
+      (the_face_survives_the_journey qs (ride s q)).trans
+        (the_passenger_keeps_the_face s q)
+
+theorem the_journey_manifest_settles {W : Type} :
+    ∀ (qs : List Plan) {t : Plan} (s : build W t),
+      pour (worldline t qs) (journey s qs)
+        = epochs (fun a b => a ++ b) (pour t s) qs
+  | [], _, _ => rfl
+  | q :: qs, _, s =>
+      (the_journey_manifest_settles qs (ride s q)).trans
+        (congrArg (fun l => epochs (fun a b => a ++ b) l qs)
+          (the_passenger_multiplies_the_manifest s q))
+
+theorem the_journeys_compose {W : Type} :
+    ∀ (qs qs' : List Plan) {t : Plan} (s : build W t),
+      HEq (journey s (qs ++ qs')) (journey (journey s qs) qs')
+  | [], _, _, s => HEq.refl (journey s _)
+  | q :: qs, qs', _, s => the_journeys_compose qs qs' (ride s q)
+
+theorem the_life_resumes_from_the_parked_rider {W : Type}
+    (qs qs' : List Plan) {t : Plan} (s : build W t) :
+    cast (congrArg (build W) (the_worldline_resumes qs qs' t))
+      (journey s (qs ++ qs'))
+      = journey (journey s qs) qs' :=
+  eq_of_heq ((cast_heq _ _).trans (the_journeys_compose qs qs' s))
+
+theorem the_customs_survive_the_journey {W W' : Type} (f : W → W') :
+    ∀ (qs : List Plan) {t : Plan} (s : build W t),
+      reground f (worldline t qs) (journey s qs)
+        = journey (reground f t s) qs
+  | [], _, _ => rfl
+  | q :: qs, _, s =>
+      (the_customs_survive_the_journey f qs (ride s q)).trans
+        (congrArg (fun x => journey x qs) (the_customs_ride_along f s q))
+
+theorem the_worldline_carries_its_rider {W W' : Type} (f : W → W')
+    (qs qs' : List Plan) {t : Plan} (s : build W t) :
+    spine W (worldline t qs) (journey s qs) = spine W t s
+      ∧ pour (worldline t qs) (journey s qs)
+          = epochs (fun a b => a ++ b) (pour t s) qs
+      ∧ cast (congrArg (build W) (the_worldline_resumes qs qs' t))
+          (journey s (qs ++ qs'))
+          = journey (journey s qs) qs'
+      ∧ reground f (worldline t qs) (journey s qs)
+          = journey (reground f t s) qs :=
+  ⟨the_face_survives_the_journey qs s,
+   the_journey_manifest_settles qs s,
+   the_life_resumes_from_the_parked_rider qs qs' s,
+   the_customs_survive_the_journey f qs s⟩
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -1137,6 +1202,27 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_rides_compose_at_the_manifest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_rides_compose_at_the_manifest
+
+/-- info: 'Seed.the_worldline_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_worldline_resumes
+
+/-- info: 'Seed.the_face_survives_the_journey' does not depend on any axioms -/
+#guard_msgs in #print axioms the_face_survives_the_journey
+
+/-- info: 'Seed.the_journey_manifest_settles' does not depend on any axioms -/
+#guard_msgs in #print axioms the_journey_manifest_settles
+
+/-- info: 'Seed.the_journeys_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms the_journeys_compose
+
+/-- info: 'Seed.the_life_resumes_from_the_parked_rider' does not depend on any axioms -/
+#guard_msgs in #print axioms the_life_resumes_from_the_parked_rider
+
+/-- info: 'Seed.the_customs_survive_the_journey' does not depend on any axioms -/
+#guard_msgs in #print axioms the_customs_survive_the_journey
+
+/-- info: 'Seed.the_worldline_carries_its_rider' does not depend on any axioms -/
+#guard_msgs in #print axioms the_worldline_carries_its_rider
 
 /-- info: 'Seed.the_door_carries_the_heq' does not depend on any axioms -/
 #guard_msgs in #print axioms the_door_carries_the_heq

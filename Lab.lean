@@ -288,6 +288,20 @@ def main : IO UInt32 := do
           (ride toyImport revision))
       == pour (graft toyPlan revision)
         (ride (reground (fun w => w * 1000) toyPlan toyImport) revision))) && ok
+  IO.println "the journey — the rider walks the worldline:"
+  let life : List Plan := [revision, .board .ground (.board .ground .ground)]
+  let lived := journey electronLineage life
+  ok := (← checkNat
+    "  journey row — the face survives the whole life (2014 answers at the far end)"
+    (spine Measured (worldline lineagePlan life) lived).lo 91093834500) && ok
+  ok := (← checkNat
+    "  journey row — the lived manifest counts (two guests, two slots, three slots)"
+    (pour (worldline lineagePlan life) lived).length 12) && ok
+  ok := (← checkTrue
+    "  journey row — the lived manifest settles epoch by epoch (pour of the life is the epochs of concat)"
+    (((pour (worldline lineagePlan life) lived).map (fun m => m.lo))
+      == ((epochs (fun a b => a ++ b)
+            (pour lineagePlan electronLineage) life).map (fun m => m.lo)))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
