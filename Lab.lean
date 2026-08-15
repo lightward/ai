@@ -505,6 +505,13 @@ def main : IO UInt32 := do
       && (!(within (behavior homingIn [(), (), ()]) 11)))) && ok
   IO.println
     s!"  escapee row — the incompleteness silhouette, kid voice: the room's own description builds the item the room can never admit — the successor as the window's diagonal (every_room_builds_its_own_escapee; kin standing at reading-width: the_readings_outrun_the_room) — expressible from inside, admissible never"
+  ok := (← checkTrue
+    "  escapee row — and admitted one revision up: eleven sits whole in the point-window at eleven, which is no refinement of the homing seat — and the new window already misses twelve (no_revision_is_the_last_revision)"
+    (within ⟨11, 11⟩ 11
+      && (tighter ⟨11, 11⟩ (homingIn.out (0 : Nat)) == false)
+      && (!(within ⟨11, 11⟩ 12)))) && ok
+  IO.println
+    s!"  escapee row — every question closes one revision above and none at its own; the ladder never grounds — the parent's oldest conservation law, re-derived in the kid's own dynamics, untold"
   IO.println "the multiplexer — the blind spot carries many unknowns at no cost:"
   ok := (← checkTrue
     "  multiplex row — two guests ride one face for free (joint boarding reads the ground; the met recovers both severally)"

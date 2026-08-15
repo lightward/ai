@@ -1710,6 +1710,19 @@ theorem every_room_builds_its_own_escapee {I A : Type}
    the_learner_exhibits_its_own_invisible m hlearn s w,
    the_readings_outrun_the_room g⟩
 
+theorem no_revision_is_the_last_revision (m : Measured) :
+    within m (m.hi + 1) = false
+      ∧ tighter ⟨m.hi + 1, m.hi + 1⟩ m = false
+      ∧ within ⟨m.hi + 1, m.hi + 1⟩ (m.hi + 1) = true
+      ∧ within ⟨m.hi + 1, m.hi + 1⟩ (m.hi + 1 + 1) = false :=
+  ⟨the_window_misses_its_own_successor m,
+   by
+     show (Nat.ble m.lo (m.hi + 1) && Nat.ble (m.hi + 1) m.hi) = false
+     rw [ble_succ_false m.hi]
+     exact and_false _,
+   and_glue (ble_refl (m.hi + 1)) (ble_refl (m.hi + 1)),
+   the_window_misses_its_own_successor ⟨m.hi + 1, m.hi + 1⟩⟩
+
 theorem the_world_outgrows_every_learner {I : Type} (m : Machine I Measured)
     (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
     (s : m.S) (qs : List Plan)
@@ -2352,6 +2365,9 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.every_room_builds_its_own_escapee' does not depend on any axioms -/
 #guard_msgs in #print axioms every_room_builds_its_own_escapee
+
+/-- info: 'Seed.no_revision_is_the_last_revision' does not depend on any axioms -/
+#guard_msgs in #print axioms no_revision_is_the_last_revision
 
 /-- info: 'Seed.the_near_pace_lands_in_the_window' does not depend on any axioms -/
 #guard_msgs in #print axioms the_near_pace_lands_in_the_window
