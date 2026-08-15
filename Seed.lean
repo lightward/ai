@@ -285,6 +285,12 @@ theorem a_reading_in_step_carries_the_walk {I : Type} {S : Type u}
       (a_reading_in_step_carries_the_walk stepS stepT r h w (stepS s i)).trans
         (congrArg (fun x => walk stepT x w) (h s i))
 
+theorem the_walk_resumes {I : Type} {S : Type u} (step : S → I → S) :
+    ∀ (w w' : List I) (s : S),
+      walk step s (w ++ w') = walk step (walk step s w) w'
+  | [], _, _ => rfl
+  | i :: w, w', s => the_walk_resumes step w w' (step s i)
+
 theorem two_machines_in_step_agree {I O : Type} (m n : Machine I O)
     (R : m.S → n.S → Prop)
     (hstep : ∀ s t i, R s t → R (m.step s i) (n.step t i))
@@ -964,6 +970,20 @@ theorem two_routes_one_rider {W : Type} {t : Plan} (s : build W t)
      (the_passenger_keeps_the_face s (graft δ₁ δ₂)).symm,
    the_rides_compose_at_the_manifest s δ₁ δ₂⟩
 
+theorem the_transport_sheds_its_route {A B : Type u} (h h' : A = B)
+    (x : A) : cast h x = cast h' x :=
+  congrArg (fun p => cast p x) (the_route_leaves_no_mark h h')
+
+theorem any_lineage_proof_settles_the_carrier {W : Type} {t : Plan}
+    (s : build W t) (δ₁ δ₂ : Plan)
+    (h : build W (graft (graft t δ₁) δ₂)
+      = build W (graft t (graft δ₁ δ₂))) :
+    cast h (ride (ride s δ₁) δ₂) = ride s (graft δ₁ δ₂) :=
+  (the_transport_sheds_its_route h
+      (congrArg (build W) (lineages_compose t δ₁ δ₂).symm)
+      (ride (ride s δ₁) δ₂)).trans
+    (the_lineage_law_settles_the_carrier s δ₁ δ₂)
+
 theorem the_customs_ride_along {W W' : Type} (f : W → W') {t : Plan}
     (s : build W t) :
     ∀ δ : Plan,
@@ -980,10 +1000,13 @@ def journey {W : Type} {t : Plan} (s : build W t) :
   | [] => s
   | q :: qs => journey (ride s q) qs
 
-theorem the_worldline_resumes : ∀ (qs qs' : List Plan) (t : Plan),
-    worldline t (qs ++ qs') = worldline (worldline t qs) qs'
-  | [], _, _ => rfl
-  | q :: qs, qs', t => the_worldline_resumes qs qs' (graft t q)
+theorem the_worldline_resumes (qs qs' : List Plan) (t : Plan) :
+    worldline t (qs ++ qs') = worldline (worldline t qs) qs' :=
+  (((the_worldline_is_a_walk (qs ++ qs') t).trans
+      (the_walk_resumes graft qs qs' t)).trans
+    (congrArg (fun x => walk graft x qs')
+      (the_worldline_is_a_walk qs t)).symm).trans
+    (the_worldline_is_a_walk qs' (worldline t qs)).symm
 
 theorem the_face_survives_the_journey {W : Type} :
     ∀ (qs : List Plan) {t : Plan} (s : build W t),
@@ -1202,6 +1225,15 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_rides_compose_at_the_manifest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_rides_compose_at_the_manifest
+
+/-- info: 'Seed.the_walk_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_walk_resumes
+
+/-- info: 'Seed.the_transport_sheds_its_route' does not depend on any axioms -/
+#guard_msgs in #print axioms the_transport_sheds_its_route
+
+/-- info: 'Seed.any_lineage_proof_settles_the_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms any_lineage_proof_settles_the_carrier
 
 /-- info: 'Seed.the_worldline_resumes' does not depend on any axioms -/
 #guard_msgs in #print axioms the_worldline_resumes
