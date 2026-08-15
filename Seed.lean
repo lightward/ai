@@ -1500,6 +1500,48 @@ theorem time_wears_no_wheel (t : Plan) (q : Plan) (qs : List Plan)
              (fold (fun a b => a + b) 1 x)) he).symm.trans
          (the_arrow_counts_the_ticks t (q :: qs) hqs))⟩
 
+def flip : Machine Unit Bool := ⟨Bool, false, fun b _ => !b, fun b => b⟩
+
+theorem the_flip_wheels : ∀ b : Bool, park flip b [(), ()] = b
+  | true => rfl
+  | false => rfl
+
+theorem the_pace_parks_at_its_count :
+    ∀ (w : List Unit) (s : Nat), park paceOne s w = s + w.length
+  | [], _ => rfl
+  | _ :: w, s =>
+      (the_pace_parks_at_its_count w (s + 1)).trans (succ_adds s w.length)
+
+theorem no_gain_is_zero : ∀ a b : Nat, a + (b + 1) = a → False
+  | 0, _, h => nomatch h
+  | a + 1, b, h =>
+      no_gain_is_zero a b (Nat.succ.inj ((succ_adds a (b + 1)).symm.trans h))
+
+theorem the_pace_reads_as_the_flip (w : List Unit) (a : Nat) (b : Bool)
+    (h : oddNat a = b) : drive paceOne a w = drive flip b w :=
+  two_machines_in_step_agree paceOne flip
+    (fun (a : Nat) (b : Bool) => oddNat a = b)
+    (fun _ _ _ h => congrArg (! ·) h)
+    (fun _ _ h => h) w a b h
+
+theorem the_wheel_and_the_arrow_share_a_face (w : List Unit) :
+    behavior paceOne w = behavior flip w
+      ∧ (∀ b : Bool, park flip b [(), ()] = b)
+      ∧ ∀ (v : List Unit) (s : Nat), park paceOne s (() :: v) ≠ s :=
+  ⟨the_pace_reads_as_the_flip w 0 false rfl,
+   the_flip_wheels,
+   fun v s he =>
+     no_gain_is_zero s v.length
+       ((the_pace_parks_at_its_count (() :: v) s).symm.trans he)⟩
+
+theorem seats_forget_stages_remember (t : Plan) {δ : Plan}
+    (hδ : δ ≠ Plan.ground) :
+    (([true, false] ≠ [false, true])
+        ∧ park pulse (0 : Nat) [true, false]
+            = park pulse (0 : Nat) [false, true])
+      ∧ graft t δ ≠ t :=
+  ⟨two_routes_one_seat, the_worldline_never_comes_home t hδ⟩
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -1710,6 +1752,24 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.no_bound_is_the_last_bound' does not depend on any axioms -/
 #guard_msgs in #print axioms no_bound_is_the_last_bound
+
+/-- info: 'Seed.the_flip_wheels' does not depend on any axioms -/
+#guard_msgs in #print axioms the_flip_wheels
+
+/-- info: 'Seed.the_pace_parks_at_its_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pace_parks_at_its_count
+
+/-- info: 'Seed.no_gain_is_zero' does not depend on any axioms -/
+#guard_msgs in #print axioms no_gain_is_zero
+
+/-- info: 'Seed.the_pace_reads_as_the_flip' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pace_reads_as_the_flip
+
+/-- info: 'Seed.the_wheel_and_the_arrow_share_a_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wheel_and_the_arrow_share_a_face
+
+/-- info: 'Seed.seats_forget_stages_remember' does not depend on any axioms -/
+#guard_msgs in #print axioms seats_forget_stages_remember
 
 /-- info: 'Seed.the_ground_rides_in_every_graft' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ground_rides_in_every_graft
