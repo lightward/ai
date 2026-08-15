@@ -1542,6 +1542,22 @@ theorem seats_forget_stages_remember (t : Plan) {δ : Plan}
       ∧ graft t δ ≠ t :=
   ⟨two_routes_one_seat, the_worldline_never_comes_home t hδ⟩
 
+theorem time_outgrows_every_room (d : Nat) (qs : List Plan)
+    (hng : ∀ q, q ∈ qs → q ≠ Plan.ground)
+    (hlen : Nat.ble (roomCap d) qs.length = true) :
+    ¬ worldline Plan.ground qs ∈ allPlans d := by
+  intro hmem
+  have hcap := the_room_reads_within_its_cap d hmem
+  have harrow : Nat.ble (qs.length + 1)
+      (fold (fun a b => a + b) 1 (worldline Plan.ground qs)) = true := by
+    rw [Nat.add_comm qs.length 1]
+    exact the_arrow_counts_the_ticks Plan.ground qs hng
+  have hcontra : false = true :=
+    (ble_gain_false (roomCap d) 0).symm.trans
+      (ble_trans _ _ _
+        (ble_trans _ _ _ (ble_add_right 1 hlen) harrow) hcap)
+  exact nomatch hcontra
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -1752,6 +1768,9 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.no_bound_is_the_last_bound' does not depend on any axioms -/
 #guard_msgs in #print axioms no_bound_is_the_last_bound
+
+/-- info: 'Seed.time_outgrows_every_room' does not depend on any axioms -/
+#guard_msgs in #print axioms time_outgrows_every_room
 
 /-- info: 'Seed.the_flip_wheels' does not depend on any axioms -/
 #guard_msgs in #print axioms the_flip_wheels

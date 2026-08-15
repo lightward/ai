@@ -378,6 +378,13 @@ def main : IO UInt32 := do
     "  glass row — stages remember (one true tick from ground reads two, not one)"
     (fold (fun a b => a + b) 1 (graft Plan.ground (.board .ground .ground)))
     2) && ok
+  ok := (← checkTrue
+    "  arrow row — time outgrows every room (four ticks read sixteen, past room 2's cap of four)"
+    (Nat.ble (roomCap 2 + 1)
+      (fold (fun a b => a + b) 1
+        (worldline .ground
+          [.board .ground .ground, .board .ground .ground,
+           .board .ground .ground, .board .ground .ground])))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
