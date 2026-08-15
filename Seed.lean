@@ -1558,6 +1558,41 @@ theorem time_outgrows_every_room (d : Nat) (qs : List Plan)
         (ble_trans _ _ _ (ble_add_right 1 hlen) harrow) hcap)
   exact nomatch hcontra
 
+theorem the_learner_never_leaves_its_first_window {I : Type}
+    (m : Machine I Measured)
+    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
+    (s : m.S) (w : List I) {r : Measured}
+    (hr : tighter r (m.out s) = false) : drive m s w ≠ r :=
+  fun he =>
+    ne_true_of_eq_false hr
+      ((congrArg (fun x => tighter x (m.out s)) he).symm.trans
+        (the_learner_only_tightens m hlearn w s))
+
+theorem a_window_may_loosen :
+    tighter (⟨0, 1⟩ : Measured) (⟨0, 0⟩ : Measured) = false := rfl
+
+theorem the_revision_is_not_a_refinement {I : Type} (m : Machine I Measured)
+    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
+    (s : m.S) (w : List I) (t : Plan) {δ : Plan} (hδ : δ ≠ Plan.ground) :
+    (∀ r : Measured, tighter r (m.out s) = false → drive m s w ≠ r)
+      ∧ tighter (⟨0, 1⟩ : Measured) (⟨0, 0⟩ : Measured) = false
+      ∧ Nat.ble (fold (fun a b => a + b) 1 t + 1)
+          (fold (fun a b => a + b) 1 (graft t δ)) = true
+      ∧ graft t δ ≠ t :=
+  ⟨fun _ hr => the_learner_never_leaves_its_first_window m hlearn s w hr,
+   rfl,
+   a_true_tick_grows_the_reading t hδ,
+   the_worldline_never_comes_home t hδ⟩
+
+theorem one_tick_two_doors {W : Type} {t : Plan} (s : build W t)
+    {δ : Plan} (hδ : δ ≠ Plan.ground) :
+    spine W (graft t δ) (ride s δ) = spine W t s
+      ∧ face (specView (graft t δ) (ride s δ)) ≠ face (specView t s)
+      ∧ met (specView (graft t δ) (ride s δ)) = ride s δ :=
+  ⟨the_passenger_keeps_the_face s δ,
+   fun he => the_worldline_never_comes_home t hδ he,
+   rfl⟩
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -2110,5 +2145,17 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_refined_reading_still_lands' does not depend on any axioms -/
 #guard_msgs in #print axioms the_refined_reading_still_lands
+
+/-- info: 'Seed.the_learner_never_leaves_its_first_window' does not depend on any axioms -/
+#guard_msgs in #print axioms the_learner_never_leaves_its_first_window
+
+/-- info: 'Seed.a_window_may_loosen' does not depend on any axioms -/
+#guard_msgs in #print axioms a_window_may_loosen
+
+/-- info: 'Seed.the_revision_is_not_a_refinement' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revision_is_not_a_refinement
+
+/-- info: 'Seed.one_tick_two_doors' does not depend on any axioms -/
+#guard_msgs in #print axioms one_tick_two_doors
 
 end Seed

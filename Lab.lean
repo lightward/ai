@@ -70,6 +70,26 @@ theorem the_tick_reconstructs_the_lineage :
 /-- info: 'the_tick_reconstructs_the_lineage' does not depend on any axioms -/
 #guard_msgs in #print axioms the_tick_reconstructs_the_lineage
 
+def refine : Machine Unit Measured :=
+  ⟨Nat, 0, fun n _ => n + 1, fun n => ⟨91093834500 + n, 91093836700⟩⟩
+
+theorem the_refiner_only_tightens :
+    ∀ (s : Nat) (i : Unit),
+      tighter (refine.out (refine.step s i)) (refine.out s) = true :=
+  fun s _ => and_glue (ble_le_succ (91093834500 + s)) (ble_refl 91093836700)
+
+/-- info: 'the_refiner_only_tightens' does not depend on any axioms -/
+#guard_msgs in #print axioms the_refiner_only_tightens
+
+theorem no_refinement_reads_the_electron :
+    ∀ w : List Unit, drive refine (0 : Nat) w ≠ m2018 :=
+  fun w =>
+    the_learner_never_leaves_its_first_window refine
+      the_refiner_only_tightens (0 : Nat) w rfl
+
+/-- info: 'no_refinement_reads_the_electron' does not depend on any axioms -/
+#guard_msgs in #print axioms no_refinement_reads_the_electron
+
 structure DarkRow where
   name : String
   expects : Measured
@@ -385,6 +405,16 @@ def main : IO UInt32 := do
         (worldline .ground
           [.board .ground .ground, .board .ground .ground,
            .board .ground .ground, .board .ground .ground])))) && ok
+  IO.println "the two channels — the window narrows, the stage leaps:"
+  ok := (← checkTrue
+    "  channel row — the 2018 revision is no refinement of 2014 (the ceiling rose: 91093837043 past 91093836700)"
+    (tighter m2018 m2014 == false)) && ok
+  ok := (← checkTrue
+    "  channel row — three refining beats stay caged in the first window (the ceiling holds)"
+    (tighter (behavior refine [(), (), ()]) (refine.out (0 : Nat))
+      && ((behavior refine [(), (), ()]).hi == 91093836700))) && ok
+  IO.println
+    s!"  channel row — and provably forever: no run of the refiner, at any length, reads the 2018 window (no_refinement_reads_the_electron) — the resolve HAD to graft; refinement narrows, revision grows, and no narrowing is a leap"
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
