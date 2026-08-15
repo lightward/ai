@@ -889,6 +889,45 @@ theorem the_worldline_settles {X : Type u} (mul : X → X → X) (x₀ : X)
       qs t)).trans
     (the_epochs_are_a_walk mul qs (fold mul x₀ t)).symm
 
+def ride {W : Type} {t : Plan} (s : build W t) :
+    (δ : Plan) → build W (graft t δ)
+  | .ground => s
+  | .board p q => atTheDoor (ride s p) (ride s q)
+
+theorem the_ground_revision_keeps_the_passenger {W : Type} {t : Plan}
+    (s : build W t) : ride s .ground = s := rfl
+
+theorem the_mirror_is_a_ride {W : Type} (t : Plan) (s : build W t) :
+    ride s (.board .ground .ground) = mirror W t s := rfl
+
+theorem the_passenger_keeps_the_face {W : Type} {t : Plan} (s : build W t) :
+    ∀ δ : Plan, spine W (graft t δ) (ride s δ) = spine W t s
+  | .ground => rfl
+  | .board p _ => the_passenger_keeps_the_face s p
+
+theorem the_passenger_multiplies_the_manifest {W : Type} {t : Plan}
+    (s : build W t) :
+    ∀ δ : Plan, pour (graft t δ) (ride s δ)
+      = fold (fun a b => a ++ b) (pour t s) δ
+  | .ground => rfl
+  | .board p q => by
+      show pour (graft t p) (ride s p) ++ pour (graft t q) (ride s q)
+          = fold (fun a b => a ++ b) (pour t s) p
+            ++ fold (fun a b => a ++ b) (pour t s) q
+      rw [the_passenger_multiplies_the_manifest s p,
+          the_passenger_multiplies_the_manifest s q]
+
+theorem the_rides_compose_at_the_manifest {W : Type} {t : Plan}
+    (s : build W t) (δ₁ δ₂ : Plan) :
+    pour (graft (graft t δ₁) δ₂) (ride (ride s δ₁) δ₂)
+      = pour (graft t (graft δ₁ δ₂)) (ride s (graft δ₁ δ₂)) :=
+  ((the_passenger_multiplies_the_manifest (ride s δ₁) δ₂).trans
+    (congrArg (fun l => fold (fun a b => a ++ b) l δ₂)
+      (the_passenger_multiplies_the_manifest s δ₁))).trans
+    ((the_passenger_multiplies_the_manifest s (graft δ₁ δ₂)).trans
+      (the_parent_folds_into_the_ground (fun a b => a ++ b)
+        (pour t s) δ₁ δ₂)).symm
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -1036,6 +1075,21 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_mirror_doubles_the_manifest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_mirror_doubles_the_manifest
+
+/-- info: 'Seed.the_ground_revision_keeps_the_passenger' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ground_revision_keeps_the_passenger
+
+/-- info: 'Seed.the_mirror_is_a_ride' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mirror_is_a_ride
+
+/-- info: 'Seed.the_passenger_keeps_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_passenger_keeps_the_face
+
+/-- info: 'Seed.the_passenger_multiplies_the_manifest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_passenger_multiplies_the_manifest
+
+/-- info: 'Seed.the_rides_compose_at_the_manifest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_rides_compose_at_the_manifest
 
 /-- info: 'Seed.a_reading_in_step_carries_the_walk' does not depend on any axioms -/
 #guard_msgs in #print axioms a_reading_in_step_carries_the_walk

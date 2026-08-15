@@ -259,6 +259,22 @@ def main : IO UInt32 := do
           (fold (fun a b => a + b) 1 (.ground : Plan))
           [.board .ground (.board .ground .ground),
            .board .ground .ground])) && ok
+  IO.println "the passenger — the resident crosses the tick:"
+  let revision : Plan := .board .ground .ground
+  let carried := ride electronLineage revision
+  ok := (← checkNat
+    "  passenger row — the face survives the tick (the 2014 stage answers across the ride)"
+    (spine Measured (graft lineagePlan revision) carried).lo 91093834500) && ok
+  ok := (← checkNat
+    "  passenger row — the manifest multiplies (two guests times two slots)"
+    (pour (graft lineagePlan revision) carried).length 4) && ok
+  ok := (← checkTrue
+    "  passenger row — the rides compose at the manifest (time associates for the rider)"
+    (((pour (graft (graft lineagePlan revision) revision)
+          (ride (ride electronLineage revision) revision)).map (fun m => m.lo))
+      == ((pour (graft lineagePlan (graft revision revision))
+          (ride electronLineage (graft revision revision))).map
+            (fun m => m.lo)))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
