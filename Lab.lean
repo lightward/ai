@@ -532,6 +532,9 @@ def main : IO UInt32 := do
     (within ⟨99 * piPace, 99 * piPace + 30000000⟩ (99 * phiPace)
       && (!(within ⟨100 * piPace, 100 * piPace + 30000000⟩
             (100 * phiPace))))) && ok
+  IO.println "the crown — three blindnesses, three channels:"
+  IO.println
+    s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

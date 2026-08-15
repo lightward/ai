@@ -1710,6 +1710,23 @@ theorem every_room_builds_its_own_escapee {I A : Type}
    the_learner_exhibits_its_own_invisible m hlearn s w,
    the_readings_outrun_the_room g⟩
 
+theorem three_blindnesses_three_channels {H W X : Type} (h : H)
+    (w w' : W) (g : H → X) (a p e d : Nat) :
+    (g (face (atTheDoor h w)) = g (face (atTheDoor h w'))
+        ∧ met (atTheDoor h w) = w)
+      ∧ (within (⟨0, 1⟩ : Measured) 0 = true
+          ∧ within (⟨0, 1⟩ : Measured) 1 = true
+          ∧ (0 : Nat) ≠ 1
+          ∧ within (⟨0, 0⟩ : Measured) 0 = true
+          ∧ within (⟨0, 0⟩ : Measured) 1 = false)
+      ∧ (within ⟨a, a + ((p + 1) + e)⟩ (a + (p + 1)) = true
+          ∧ within ⟨(d + 1) * a, (d + 1) * a + d⟩
+              ((d + 1) * (a + (p + 1))) = false) :=
+  ⟨⟨rfl, rfl⟩,
+   ⟨rfl, rfl, (fun hn => nomatch hn), rfl, rfl⟩,
+   ⟨the_near_pace_lands_in_the_window a p e,
+    the_gap_outruns_every_window a p d⟩⟩
+
 theorem no_revision_is_the_last_revision (m : Measured) :
     within m (m.hi + 1) = false
       ∧ tighter ⟨m.hi + 1, m.hi + 1⟩ m = false
@@ -2368,6 +2385,9 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.no_revision_is_the_last_revision' does not depend on any axioms -/
 #guard_msgs in #print axioms no_revision_is_the_last_revision
+
+/-- info: 'Seed.three_blindnesses_three_channels' does not depend on any axioms -/
+#guard_msgs in #print axioms three_blindnesses_three_channels
 
 /-- info: 'Seed.the_near_pace_lands_in_the_window' does not depend on any axioms -/
 #guard_msgs in #print axioms the_near_pace_lands_in_the_window
