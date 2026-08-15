@@ -62,6 +62,14 @@ abbrev lineagePlan : Plan := graft .ground (.board .ground .ground)
 
 def electronLineage : build Measured lineagePlan := atTheDoor m2014 m2018
 
+theorem the_tick_reconstructs_the_lineage :
+    vertical (fun _ _ => m2018)
+        (ride (t := .ground) m2014 (.board .ground .ground))
+      = electronLineage := rfl
+
+/-- info: 'the_tick_reconstructs_the_lineage' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tick_reconstructs_the_lineage
+
 structure DarkRow where
   name : String
   expects : Measured
@@ -87,10 +95,7 @@ def openRows : List OpenRow :=
    ⟨"interface row — the coalgebraic wing: bisimulation as conduct-identity, session-duality as turnAbout, the lab's rows become dialogues (an assertion is a one-ended conversation)",
     "the final coalgebra (behavior as the type of pure conduct), the protocol as shared language over the air gap, certification-by-interaction with the interior riding unread"⟩]
 
-def darkRows : List DarkRow :=
-  [⟨"rider row — electron mass reads back, scaled e-41 kg (codata 2018: 9.1093837015(28)e-31)",
-    ⟨91093836987, 91093837043⟩,
-    "spec-side dynamics — trajectories under red-driven grafting; the interior cannot throw, so time is the meeting's ledger"⟩]
+def darkRows : List DarkRow := []
 
 def main : IO UInt32 := do
   let mut ok := true
@@ -302,6 +307,25 @@ def main : IO UInt32 := do
     (((pour (worldline lineagePlan life) lived).map (fun m => m.lo))
       == ((epochs (fun a b => a ++ b)
             (pour lineagePlan electronLineage) life).map (fun m => m.lo)))) && ok
+  IO.println "the tick — the rider row fires (red-driven grafting, the guest boards):"
+  let ridden : door Measured Measured :=
+    ride (t := .ground) m2014 (.board .ground .ground)
+  let ticked := vertical (fun _ _ => m2018) ridden
+  IO.println
+    s!"  read: the 2014 stage holds {m2014.lo}..{m2014.hi}; codata 2018 center 91093837015 reads outside — red; resolve grafts, the ancestor rides, the guest boards"
+  ok := (← checkTrue
+    "  tick row — the boarding is unheard at the face (a_guest_mover_is_unheard, dynamic register)"
+    ((face ticked).lo == m2014.lo && (face ticked).hi == m2014.hi
+      && (face ticked).lo == (face ridden).lo)) && ok
+  ok := (← checkTrue
+    "  tick row — the dynamics reconstruct the lineage (ride then board equals the hand-built specimen)"
+    ((face ticked).lo == (spine Measured lineagePlan electronLineage).lo
+      && (met ticked).lo == (met electronLineage).lo
+      && (met ticked).hi == (met electronLineage).hi)) && ok
+  ok := (← checkTrue
+    "  rider row FLIPS — electron mass reads back, scaled e-41 kg (the guest's reading lands the registered window 91093836987..91093837043, codata 2018 center inside)"
+    ((met ticked).lo == 91093836987 && (met ticked).hi == 91093837043
+      && within (met ticked) 91093837015)) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
