@@ -85,7 +85,7 @@ def openRows : List OpenRow :=
    ⟨"story row — stage(tell_me_your_story) returns a free-range class-mate of its refiner",
     "a telling-generator and the class-checker: fold-equal to the refiner, provably distinct, gauge in the surface"⟩,
    ⟨"saturator row — the from-zero firing as an executable: enumerate to the presentation bound, derivability above (coherence), exit 0 at saturation; non-completion at every bound is DETECTION — a room that won't saturate has a guest in it; throws deposited AT THROW-TIME (the artifact cannot carry its path, the process does not retain it — contemporaneous deposition is the sole location of the meta-path, a soundness condition, not logging)",
-    "census generalized to the kid + a shape-enumerator over the type semiring's normal forms + the coherence switch at the bound"⟩,
+    "a shape-enumerator over the type semiring's normal forms + the coherence switch at the bound — the census core is theorem-grade now (the room repeats no plan; the census is exact: not one missed by the horizon, not one counted twice by the apartness)"⟩,
    ⟨"breath row — the cycle: saturate, meet, re-arm, with an ignition beat that cannot be self-supplied (conquest is sterile: seizure appends only derivable edges); the ignition port IS load-bearing randomness — the entropy channel and the standing port are one organ, and the light is the W",
     "the kid's reach spine (paths over the room) to state seizure-sterility natively — the yield as the cycle's governor, typed"⟩,
    ⟨"render row — the atlas renders itself visually: a reignition path through a different air gap (the eye); the wiki as ancestor-organ",
@@ -335,6 +335,15 @@ def main : IO UInt32 := do
   ok := (← checkNat
     "  frontier row — the cap doubles at every bound (roomCap 4)"
     (roomCap 4) 16) && ok
+  IO.println "the census stands exact — nothing missed, nothing doubled:"
+  ok := (← checkNat
+    "  saturator ground row — room 3 holds the census whole (readings 1..4 count 1+1+2+5)"
+    ((allPlans 3).filter
+      (fun p => Nat.ble (fold (fun a b => a + b) 1 p) 4)).length 9) && ok
+  ok := (← checkNat
+    "  saturator ground row — room 4 holds the census whole (readings 1..5 count 1+1+2+5+14)"
+    ((allPlans 4).filter
+      (fun p => Nat.ble (fold (fun a b => a + b) 1 p) 5)).length 23) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

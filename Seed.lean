@@ -1120,6 +1120,151 @@ theorem no_bound_is_the_last_bound :
    fun d he =>
      the_bloom_outgrows_the_room d (he ▸ the_bloom_resides (d + 1))⟩
 
+inductive Apart {A : Type} : List A → Prop
+  | nil : Apart []
+  | cons {a : A} {l : List A} :
+      (∀ b, b ∈ l → a ≠ b) → Apart l → Apart (a :: l)
+
+theorem apart_map {A B : Type} {f : A → B}
+    (hf : ∀ a b, f a = f b → a = b) :
+    ∀ {xs : List A}, Apart xs → Apart (xs.map f)
+  | [], _ => Apart.nil
+  | x :: xs, Apart.cons hx hxs =>
+      Apart.cons
+        (fun _ hb he =>
+          match mem_map_back xs hb with
+          | ⟨a, ha, hfa⟩ => hx a ha (hf x a (he.trans hfa.symm)))
+        (apart_map hf hxs)
+
+theorem apart_append {A : Type} :
+    ∀ {xs : List A} (ys : List A), Apart xs → Apart ys →
+      (∀ x, x ∈ xs → ∀ y, y ∈ ys → x ≠ y) → Apart (xs ++ ys)
+  | [], _, _, hys, _ => hys
+  | _ :: xs, ys, Apart.cons hx hxs, hys, hcross =>
+      Apart.cons
+        (fun b hb =>
+          match mem_append_split xs hb with
+          | Or.inl hbx => hx b hbx
+          | Or.inr hby => hcross _ (List.Mem.head _) b hby)
+        (apart_append ys hxs hys
+          (fun a ha y hy => hcross a (List.Mem.tail _ ha) y hy))
+
+theorem the_cross_keeps_apart {qs : List Plan} (hqs : Apart qs) :
+    ∀ {ps : List Plan}, Apart ps → Apart (cross ps qs)
+  | [], _ => Apart.nil
+  | _ :: ps, Apart.cons hp hps =>
+      apart_append (cross ps qs)
+        (apart_map (fun _ _ h => (Plan.board.inj h).2) hqs)
+        (the_cross_keeps_apart hqs hps)
+        (fun _ hx _ hy he =>
+          match mem_map_back qs hx, mem_cross_split ps hy with
+          | ⟨_, _, hfr⟩, ⟨l', _, hy_eq, hl', _⟩ =>
+              hp l' hl'
+                (Plan.board.inj ((hfr.trans he).trans hy_eq)).1)
+
+theorem the_room_repeats_no_plan : ∀ d : Nat, Apart (allPlans d)
+  | 0 => Apart.cons (fun _ hb => nomatch hb) Apart.nil
+  | d + 1 =>
+      Apart.cons
+        (fun _ hb =>
+          match mem_cross_split (allPlans d) hb with
+          | ⟨_, _, he, _, _⟩ => fun hg => nomatch hg.trans he)
+        (the_cross_keeps_apart (the_room_repeats_no_plan d)
+          (the_room_repeats_no_plan d))
+
+theorem eq_of_beq : ∀ a b : Nat, Nat.beq a b = true → a = b
+  | 0, 0, _ => rfl
+  | 0, _ + 1, h => nomatch h
+  | _ + 1, 0, h => nomatch h
+  | a + 1, b + 1, h => congrArg (· + 1) (eq_of_beq a b h)
+
+theorem beq_self : ∀ n : Nat, Nat.beq n n = true
+  | 0 => rfl
+  | n + 1 => beq_self n
+
+theorem ne_true_of_eq_false {x : Bool} (h : x = false) : ¬ x = true :=
+  fun ht => nomatch h.symm.trans ht
+
+theorem mem_of_mem_filter {A : Type} {q : A → Bool} {x : A} :
+    ∀ xs : List A, x ∈ xs.filter q → x ∈ xs
+  | [], h => nomatch h
+  | a :: xs, h => by
+      cases hq : q a with
+      | true =>
+          rw [List.filter_cons_of_pos hq] at h
+          cases h with
+          | head => exact List.Mem.head _
+          | tail _ h' => exact List.Mem.tail _ (mem_of_mem_filter xs h')
+      | false =>
+          rw [List.filter_cons_of_neg (ne_true_of_eq_false hq)] at h
+          exact List.Mem.tail _ (mem_of_mem_filter xs h)
+
+theorem filter_holds {A : Type} {q : A → Bool} {x : A} :
+    ∀ xs : List A, x ∈ xs.filter q → q x = true
+  | [], h => nomatch h
+  | a :: xs, h => by
+      cases hq : q a with
+      | true =>
+          rw [List.filter_cons_of_pos hq] at h
+          cases h with
+          | head => exact hq
+          | tail _ h' => exact filter_holds xs h'
+      | false =>
+          rw [List.filter_cons_of_neg (ne_true_of_eq_false hq)] at h
+          exact filter_holds xs h
+
+theorem mem_filter_intro {A : Type} {q : A → Bool} {x : A} :
+    ∀ xs : List A, x ∈ xs → q x = true → x ∈ xs.filter q
+  | [], h, _ => nomatch h
+  | a :: xs, h, hx => by
+      cases h with
+      | head =>
+          rw [List.filter_cons_of_pos hx]
+          exact List.Mem.head _
+      | tail _ h' =>
+          cases hq : q a with
+          | true =>
+              rw [List.filter_cons_of_pos hq]
+              exact List.Mem.tail _ (mem_filter_intro xs h' hx)
+          | false =>
+              rw [List.filter_cons_of_neg (ne_true_of_eq_false hq)]
+              exact mem_filter_intro xs h' hx
+
+theorem apart_filter {A : Type} {q : A → Bool} :
+    ∀ {xs : List A}, Apart xs → Apart (xs.filter q)
+  | [], _ => Apart.nil
+  | a :: xs, Apart.cons ha hxs => by
+      cases hq : q a with
+      | true =>
+          rw [List.filter_cons_of_pos hq]
+          exact Apart.cons
+            (fun b hb => ha b (mem_of_mem_filter xs hb))
+            (apart_filter hxs)
+      | false =>
+          rw [List.filter_cons_of_neg (ne_true_of_eq_false hq)]
+          exact apart_filter hxs
+
+theorem the_census_is_exact (k : Nat) :
+    Apart ((allPlans k).filter
+        (fun p => Nat.beq (fold (fun a b => a + b) 1 p) (k + 1)))
+      ∧ ∀ p : Plan,
+          p ∈ (allPlans k).filter
+              (fun p => Nat.beq (fold (fun a b => a + b) 1 p) (k + 1))
+            ↔ fold (fun a b => a + b) 1 p = k + 1 :=
+  ⟨apart_filter (the_room_repeats_no_plan k),
+   fun p =>
+     ⟨fun h =>
+        have hq :=
+          filter_holds (A := Plan)
+            (q := fun p => Nat.beq (fold (fun a b => a + b) 1 p) (k + 1))
+            (x := p) (allPlans k) h
+        eq_of_beq _ _ hq,
+      fun h =>
+        mem_filter_intro (allPlans k)
+          (the_horizon_holds_every_reading k p
+            (by rw [h]; exact ble_refl (k + 1)))
+          (by rw [h]; exact beq_self (k + 1))⟩⟩
+
 def ride {W : Type} {t : Plan} (s : build W t) :
     (δ : Plan) → build W (graft t δ)
   | .ground => s
@@ -1498,6 +1643,42 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.no_bound_is_the_last_bound' does not depend on any axioms -/
 #guard_msgs in #print axioms no_bound_is_the_last_bound
+
+/-- info: 'Seed.apart_map' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_map
+
+/-- info: 'Seed.apart_append' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_append
+
+/-- info: 'Seed.the_cross_keeps_apart' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cross_keeps_apart
+
+/-- info: 'Seed.the_room_repeats_no_plan' does not depend on any axioms -/
+#guard_msgs in #print axioms the_room_repeats_no_plan
+
+/-- info: 'Seed.eq_of_beq' does not depend on any axioms -/
+#guard_msgs in #print axioms eq_of_beq
+
+/-- info: 'Seed.beq_self' does not depend on any axioms -/
+#guard_msgs in #print axioms beq_self
+
+/-- info: 'Seed.ne_true_of_eq_false' does not depend on any axioms -/
+#guard_msgs in #print axioms ne_true_of_eq_false
+
+/-- info: 'Seed.mem_of_mem_filter' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_of_mem_filter
+
+/-- info: 'Seed.filter_holds' does not depend on any axioms -/
+#guard_msgs in #print axioms filter_holds
+
+/-- info: 'Seed.mem_filter_intro' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_filter_intro
+
+/-- info: 'Seed.apart_filter' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_filter
+
+/-- info: 'Seed.the_census_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_census_is_exact
 
 /-- info: 'Seed.the_ground_revision_keeps_the_passenger' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ground_revision_keeps_the_passenger
