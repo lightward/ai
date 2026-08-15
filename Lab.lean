@@ -99,6 +99,10 @@ theorem the_true_mass_is_invisible_to_the_refiner :
 /-- info: 'the_true_mass_is_invisible_to_the_refiner' does not depend on any axioms -/
 #guard_msgs in #print axioms the_true_mass_is_invisible_to_the_refiner
 
+def revise : Machine Unit Measured :=
+  ⟨Nat, 0, fun n _ => n + 1,
+   fun n => cond (Nat.ble n 2) ⟨91093834500 + n, 91093836700⟩ m2018⟩
+
 def piPace : Nat := 314159265
 
 def phiPace : Nat := 314460551
@@ -452,6 +456,19 @@ def main : IO UInt32 := do
         (worldline .ground
           [.board .ground .ground, .board .ground .ground,
            .board .ground .ground, .board .ground .ground]))))) && ok
+  IO.println "the blindfold — self-legible while worn, datable when removed:"
+  ok := (← checkTrue
+    "  scar row — the revolution has an address: beats one and two tighten, the third loosens"
+    (tighter (revise.out ((1 : Nat))) (revise.out ((0 : Nat)))
+      && tighter (revise.out ((2 : Nat))) (revise.out ((1 : Nat)))
+      && (tighter (revise.out ((3 : Nat))) (revise.out ((2 : Nat)))
+          == false))) && ok
+  ok := (← checkTrue
+    "  scar row — and only past the loosening is the true mass admitted (91093837015 outside before, inside after)"
+    ((!(within (revise.out ((2 : Nat))) 91093837015))
+      && within (revise.out ((3 : Nat))) 91093837015)) && ok
+  IO.println
+    s!"  scar row — the general law stands receipted: any run of any Measured machine that ends by admitting a start-excluded value contains a nameable loosening step (every_admission_names_its_loosening) — the blindfold's removal leaves a scar at a specific beat, and the record can point at it"
   IO.println "the third channel — the run reads what the window cannot (accumulation):"
   ok := (← checkTrue
     "  lap row — one lap holds π and 4/√φ together at 0.01 resolution (gap 301286 under d = 1000000, scaled e-8)"

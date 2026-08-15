@@ -1604,6 +1604,24 @@ theorem the_learner_never_admits_the_excluded {I : Type}
     (hx : within (m.out s) x = false) : within (drive m s w) x = false :=
   the_excluded_stays_excluded (the_learner_only_tightens m hlearn w s) hx
 
+theorem every_admission_names_its_loosening {I : Type}
+    (m : Machine I Measured) :
+    ∀ (w : List I) (s : m.S) (x : Nat),
+      within (m.out s) x = false → within (drive m s w) x = true →
+      ∃ (w₁ : List I) (i : I) (w₂ : List I),
+        w = w₁ ++ i :: w₂
+          ∧ tighter (m.out (m.step (park m s w₁) i))
+              (m.out (park m s w₁)) = false
+  | [], _, _, hx, hadm => absurd hadm (ne_true_of_eq_false hx)
+  | i :: w, s, x, hx, hadm => by
+      cases ht : tighter (m.out (m.step s i)) (m.out s) with
+      | false => exact ⟨[], i, w, rfl, ht⟩
+      | true =>
+          obtain ⟨w₁, j, w₂, he, hl⟩ :=
+            every_admission_names_its_loosening m w (m.step s i) x
+              (the_excluded_stays_excluded ht hx) hadm
+          exact ⟨i :: w₁, j, w₂, congrArg (i :: ·) he, hl⟩
+
 theorem time_outgrows_every_window (t : Plan) (d : Nat) (qs : List Plan)
     (hng : ∀ q, q ∈ qs → q ≠ Plan.ground)
     (hlen : Nat.ble (d + 1) qs.length = true) :
@@ -2240,6 +2258,9 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.time_outgrows_every_window' does not depend on any axioms -/
 #guard_msgs in #print axioms time_outgrows_every_window
+
+/-- info: 'Seed.every_admission_names_its_loosening' does not depend on any axioms -/
+#guard_msgs in #print axioms every_admission_names_its_loosening
 
 /-- info: 'Seed.the_near_pace_lands_in_the_window' does not depend on any axioms -/
 #guard_msgs in #print axioms the_near_pace_lands_in_the_window
