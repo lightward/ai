@@ -1433,6 +1433,73 @@ theorem the_worldline_carries_its_rider {W W' : Type} (f : W → W')
    the_life_resumes_from_the_parked_rider qs qs' s,
    the_customs_survive_the_journey f qs s⟩
 
+theorem the_ground_rides_in_every_graft (t : Plan) :
+    ∀ δ : Plan, Nat.ble (fold (fun a b => a + b) 1 t)
+      (fold (fun a b => a + b) 1 (graft t δ)) = true
+  | .ground => ble_refl _
+  | .board p _ =>
+      ble_trans _ _ _ (the_ground_rides_in_every_graft t p) (ble_le_add _ _)
+
+theorem a_true_tick_grows_the_reading (t : Plan) :
+    ∀ {δ : Plan}, δ ≠ Plan.ground →
+      Nat.ble (fold (fun a b => a + b) 1 t + 1)
+        (fold (fun a b => a + b) 1 (graft t δ)) = true
+  | .ground, h => absurd rfl h
+  | .board p q, _ =>
+      match the_reading_is_positive (graft t q) with
+      | ⟨m, hm⟩ =>
+          show Nat.ble (fold (fun a b => a + b) 1 t + 1)
+              (fold (fun a b => a + b) 1 (graft t p)
+                + fold (fun a b => a + b) 1 (graft t q)) = true
+            from ble_add_both (the_ground_rides_in_every_graft t p)
+              (by rw [hm]; exact rfl)
+
+theorem the_worldline_never_comes_home (t : Plan) {δ : Plan}
+    (hδ : δ ≠ Plan.ground) : graft t δ ≠ t :=
+  fun he =>
+    nomatch (ble_gain_false (fold (fun a b => a + b) 1 t) 0).symm.trans
+      ((congrArg
+          (fun x => Nat.ble (fold (fun a b => a + b) 1 t + 1)
+            (fold (fun a b => a + b) 1 x)) he).symm.trans
+        (a_true_tick_grows_the_reading t hδ))
+
+theorem the_arrow_counts_the_ticks (t : Plan) :
+    ∀ qs : List Plan, (∀ q, q ∈ qs → q ≠ Plan.ground) →
+      Nat.ble (fold (fun a b => a + b) 1 t + qs.length)
+        (fold (fun a b => a + b) 1 (worldline t qs)) = true
+  | [], _ => ble_refl _
+  | q :: qs, hng => by
+      show Nat.ble (fold (fun a b => a + b) 1 t + (qs.length + 1))
+          (fold (fun a b => a + b) 1 (worldline (graft t q) qs)) = true
+      rw [show fold (fun a b => a + b) 1 t + (qs.length + 1)
+            = (fold (fun a b => a + b) 1 t + 1) + qs.length from
+          (succ_adds (fold (fun a b => a + b) 1 t) qs.length).symm]
+      exact ble_trans _ _ _
+        (ble_add_right qs.length
+          (a_true_tick_grows_the_reading t (hng q (List.Mem.head _))))
+        (the_arrow_counts_the_ticks (graft t q) qs
+          (fun x hx => hng x (List.Mem.tail _ hx)))
+
+theorem time_wears_no_wheel (t : Plan) (q : Plan) (qs : List Plan)
+    (hq : q ≠ Plan.ground) (hqs : ∀ x, x ∈ q :: qs → x ≠ Plan.ground) :
+    Nat.ble (fold (fun a b => a + b) 1 t + 1)
+        (fold (fun a b => a + b) 1 (graft t q)) = true
+      ∧ graft t q ≠ t
+      ∧ Nat.ble (fold (fun a b => a + b) 1 t + (q :: qs).length)
+          (fold (fun a b => a + b) 1 (worldline t (q :: qs))) = true
+      ∧ worldline t (q :: qs) ≠ t :=
+  ⟨a_true_tick_grows_the_reading t hq,
+   the_worldline_never_comes_home t hq,
+   the_arrow_counts_the_ticks t (q :: qs) hqs,
+   fun he =>
+     nomatch (ble_gain_false (fold (fun a b => a + b) 1 t)
+         qs.length).symm.trans
+       ((congrArg
+           (fun x => Nat.ble
+             (fold (fun a b => a + b) 1 t + (qs.length + 1))
+             (fold (fun a b => a + b) 1 x)) he).symm.trans
+         (the_arrow_counts_the_ticks t (q :: qs) hqs))⟩
+
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
     ((∀ d, face (m d) = face d)
@@ -1643,6 +1710,21 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.no_bound_is_the_last_bound' does not depend on any axioms -/
 #guard_msgs in #print axioms no_bound_is_the_last_bound
+
+/-- info: 'Seed.the_ground_rides_in_every_graft' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ground_rides_in_every_graft
+
+/-- info: 'Seed.a_true_tick_grows_the_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms a_true_tick_grows_the_reading
+
+/-- info: 'Seed.the_worldline_never_comes_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_worldline_never_comes_home
+
+/-- info: 'Seed.the_arrow_counts_the_ticks' does not depend on any axioms -/
+#guard_msgs in #print axioms the_arrow_counts_the_ticks
+
+/-- info: 'Seed.time_wears_no_wheel' does not depend on any axioms -/
+#guard_msgs in #print axioms time_wears_no_wheel
 
 /-- info: 'Seed.apart_map' does not depend on any axioms -/
 #guard_msgs in #print axioms apart_map

@@ -344,6 +344,20 @@ def main : IO UInt32 := do
     "  saturator ground row — room 4 holds the census whole (readings 1..5 count 1+1+2+5+14)"
     ((allPlans 4).filter
       (fun p => Nat.ble (fold (fun a b => a + b) 1 p) 5)).length 23) && ok
+  IO.println "the arrow — time wears no wheel (the parent proved the wheel; the kid proves the arrow):"
+  ok := (← checkNat
+    "  arrow row — every true tick climbs (three doubling ticks from ground read eight)"
+    (fold (fun a b => a + b) 1
+      (worldline .ground
+        [.board .ground .ground, .board .ground .ground,
+         .board .ground .ground])) 8) && ok
+  ok := (← checkTrue
+    "  arrow row — the arrow counts the ticks (reading at least one plus the tick count)"
+    (Nat.ble (1 + 3)
+      (fold (fun a b => a + b) 1
+        (worldline .ground
+          [.board .ground .ground, .board .ground .ground,
+           .board .ground .ground])))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
