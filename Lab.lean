@@ -99,6 +99,15 @@ theorem the_true_mass_is_invisible_to_the_refiner :
 /-- info: 'the_true_mass_is_invisible_to_the_refiner' does not depend on any axioms -/
 #guard_msgs in #print axioms the_true_mass_is_invisible_to_the_refiner
 
+theorem the_grown_world_is_invisible_to_the_homing :
+    ∀ w : List Unit, within (drive homingIn (0 : Nat) w) 16 = false :=
+  fun w =>
+    the_learner_never_admits_the_excluded homingIn
+      (fun s _ => and_glue (ble_le_succ s) (ble_refl 10)) (0 : Nat) w rfl
+
+/-- info: 'the_grown_world_is_invisible_to_the_homing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_grown_world_is_invisible_to_the_homing
+
 def revise : Machine Unit Measured :=
   ⟨Nat, 0, fun n _ => n + 1,
    fun n => cond (Nat.ble n 2) ⟨91093834500 + n, 91093836700⟩ m2018⟩
@@ -469,6 +478,17 @@ def main : IO UInt32 := do
       && within (revise.out ((3 : Nat))) 91093837015)) && ok
   IO.println
     s!"  scar row — the general law stands receipted: any run of any Measured machine that ends by admitting a start-excluded value contains a nameable loosening step (every_admission_names_its_loosening) — the blindfold's removal leaves a scar at a specific beat, and the record can point at it"
+  IO.println "the closing pane — the world outgrows every learner:"
+  ok := (← checkTrue
+    "  outrun row — four doubling ticks read sixteen, past the homing learner's ceiling of ten, at lap one and forever (the_grown_world_is_invisible_to_the_homing, every run length)"
+    ((!(within (behavior homingIn [(), (), ()]) 16))
+      && (!(within (homingIn.out (0 : Nat)) 16))
+      && (fold (fun a b => a + b) 1
+            (worldline .ground
+              [.board .ground .ground, .board .ground .ground,
+               .board .ground .ground, .board .ground .ground]) == 16))) && ok
+  IO.println
+    s!"  outrun row — the general law stands receipted: any worldline longer than a learner's first ceiling is invisible to every run of that learner (the_world_outgrows_every_learner) — reality departs the paradigm on a computable schedule; staleness is a date, not a mood"
   IO.println "the multiplexer — the blind spot carries many unknowns at no cost:"
   ok := (← checkTrue
     "  multiplex row — two guests ride one face for free (joint boarding reads the ground; the met recovers both severally)"

@@ -1682,6 +1682,38 @@ theorem one_tick_two_doors {W : Type} {t : Plan} (s : build W t)
    fun he => the_worldline_never_comes_home t hδ he,
    rfl⟩
 
+theorem the_world_outgrows_every_learner {I : Type} (m : Machine I Measured)
+    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
+    (s : m.S) (qs : List Plan)
+    (hng : ∀ q, q ∈ qs → q ≠ Plan.ground)
+    (hlen : Nat.ble ((m.out s).hi + 1) qs.length = true) :
+    ∀ w : List I,
+      within (drive m s w)
+        (fold (fun a b => a + b) 1 (worldline Plan.ground qs)) = false := by
+  intro w
+  apply the_learner_never_admits_the_excluded m hlearn s w
+  have harrow : Nat.ble (1 + qs.length)
+      (fold (fun a b => a + b) 1 (worldline Plan.ground qs)) = true :=
+    the_arrow_counts_the_ticks Plan.ground qs hng
+  have hbig : Nat.ble (1 + ((m.out s).hi + 1))
+      (fold (fun a b => a + b) 1 (worldline Plan.ground qs)) = true :=
+    ble_trans _ _ _ (ble_add_both (ble_refl 1) hlen) harrow
+  show (Nat.ble (m.out s).lo
+          (fold (fun a b => a + b) 1 (worldline Plan.ground qs))
+      && Nat.ble (fold (fun a b => a + b) 1 (worldline Plan.ground qs))
+          (m.out s).hi) = false
+  cases hR : Nat.ble (fold (fun a b => a + b) 1 (worldline Plan.ground qs))
+      (m.out s).hi with
+  | false => exact and_false _
+  | true =>
+      have hconv : (1 : Nat) + ((m.out s).hi + 1)
+          = (m.out s).hi + (1 + 1) :=
+        congrArg (· + 1) (Nat.add_comm 1 (m.out s).hi)
+      have hbad := ble_trans _ _ _ hbig hR
+      rw [hconv] at hbad
+      exact absurd hbad
+        (ne_true_of_eq_false (ble_gain_false (m.out s).hi 1))
+
 theorem many_guests_ride_one_face {H V W X : Type} (h : H)
     (v v' : V) (w w' : W) (g : H → X) :
     g (face (atTheDoor h (v, w))) = g (face (atTheDoor h (v', w')))
@@ -2277,6 +2309,9 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.many_guests_ride_one_face' does not depend on any axioms -/
 #guard_msgs in #print axioms many_guests_ride_one_face
+
+/-- info: 'Seed.the_world_outgrows_every_learner' does not depend on any axioms -/
+#guard_msgs in #print axioms the_world_outgrows_every_learner
 
 /-- info: 'Seed.the_near_pace_lands_in_the_window' does not depend on any axioms -/
 #guard_msgs in #print axioms the_near_pace_lands_in_the_window
