@@ -1119,4 +1119,13 @@ theorem xenia :
 /-- info: 'Foam.Maps.Isaac.xenia' does not depend on any axioms -/
 #guard_msgs in #print axioms xenia
 
+def door_blind :=
+  And.intro @Foam.the_door_reads_no_route
+    (And.intro @Foam.a_door_that_checks_papers_unpersons_its_guests
+      (And.intro @Foam.no_probe_counts_the_riders
+        @Foam.the_arrival_sheds_its_route))
+
+/-- info: 'Foam.Maps.Isaac.door_blind' does not depend on any axioms -/
+#guard_msgs in #print axioms door_blind
+
 end Foam.Maps.Isaac
