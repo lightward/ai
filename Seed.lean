@@ -105,7 +105,7 @@ theorem honesty_is_invisible_at_the_face (W : Type) (p p' : Plan)
       ∧ met (atTheDoor s p') = p' :=
   ⟨a_false_label_is_real W p s hp, fun _ _ => rfl, rfl, rfl⟩
 
-universe u
+universe u v
 
 def fold {X : Type u} (mul : X → X → X) (x₀ : X) : Plan → X
   | .ground => x₀
@@ -272,6 +272,29 @@ def drive {I O : Type} (m : Machine I O) : m.S → List I → O
 def behavior {I O : Type} (m : Machine I O) (w : List I) : O :=
   drive m m.s0 w
 
+def walk {I : Type} {S : Type u} (step : S → I → S) : S → List I → S
+  | s, [] => s
+  | s, i :: w => walk step (step s i) w
+
+theorem a_reading_in_step_carries_the_walk {I : Type} {S : Type u}
+    {T : Type v} (stepS : S → I → S) (stepT : T → I → T) (r : S → T)
+    (h : ∀ s i, r (stepS s i) = stepT (r s) i) :
+    ∀ (w : List I) (s : S), r (walk stepS s w) = walk stepT (r s) w
+  | [], _ => rfl
+  | i :: w, s =>
+      (a_reading_in_step_carries_the_walk stepS stepT r h w (stepS s i)).trans
+        (congrArg (fun x => walk stepT x w) (h s i))
+
+theorem two_machines_in_step_agree {I O : Type} (m n : Machine I O)
+    (R : m.S → n.S → Prop)
+    (hstep : ∀ s t i, R s t → R (m.step s i) (n.step t i))
+    (hout : ∀ s t, R s t → m.out s = n.out t) :
+    ∀ (w : List I) (s : m.S) (t : n.S), R s t → drive m s w = drive n t w
+  | [], s, t, h => hout s t h
+  | i :: w, s, t, h =>
+      two_machines_in_step_agree m n R hstep hout w
+        (m.step s i) (n.step t i) (hstep s t i h)
+
 def oddNat : Nat → Bool
   | 0 => false
   | n + 1 => !(oddNat n)
@@ -284,15 +307,16 @@ def paceOne : Machine Unit Bool := ⟨Nat, 0, fun n _ => n + 1, oddNat⟩
 
 def paceThree : Machine Unit Bool := ⟨Nat, 0, fun n _ => n + 3, oddNat⟩
 
-theorem the_paces_agree : ∀ (w : List Unit) (a b : Nat),
-    oddNat a = oddNat b → drive paceOne a w = drive paceThree b w
-  | [], _, _, h => h
-  | _ :: w, a, b, h =>
-      the_paces_agree w (a + 1) (b + 3) (by
-        show (!(oddNat a)) = oddNat (b + 3)
-        rw [h]
-        show (!(oddNat b)) = (!(!(!(oddNat b))))
-        rw [not_not])
+theorem the_paces_agree (w : List Unit) (a b : Nat)
+    (h : oddNat a = oddNat b) : drive paceOne a w = drive paceThree b w :=
+  two_machines_in_step_agree paceOne paceThree
+    (fun (a b : Nat) => oddNat a = oddNat b)
+    (fun (a b : Nat) _ h => by
+      show (!(oddNat a)) = oddNat (b + 3)
+      rw [h]
+      show (!(oddNat b)) = (!(!(!(oddNat b))))
+      rw [not_not])
+    (fun _ _ h => h) w a b h
 
 theorem the_air_gap_reads_no_interior :
     (∀ w : List Unit, behavior paceOne w = behavior paceThree w)
@@ -730,6 +754,16 @@ def park {I O : Type} (m : Machine I O) : m.S → List I → m.S
   | s, [] => s
   | s, i :: w => park m (m.step s i) w
 
+theorem the_park_is_a_walk {I O : Type} (m : Machine I O) :
+    ∀ (w : List I) (s : m.S), park m s w = walk m.step s w
+  | [], _ => rfl
+  | i :: w, s => the_park_is_a_walk m w (m.step s i)
+
+theorem the_drive_reads_the_walk {I O : Type} (m : Machine I O) :
+    ∀ (w : List I) (s : m.S), drive m s w = m.out (walk m.step s w)
+  | [], _ => rfl
+  | i :: w, s => the_drive_reads_the_walk m w (m.step s i)
+
 theorem the_drive_resumes {I O : Type} (m : Machine I O) :
     ∀ (w w' : List I) (s : m.S),
       drive m s (w ++ w') = drive m (park m s w) w'
@@ -825,15 +859,35 @@ def epochs {X : Type u} (mul : X → X → X) : X → List Plan → X
   | v, [] => v
   | v, q :: qs => epochs mul (fold mul v q) qs
 
-theorem the_worldline_settles {X : Type u} (mul : X → X → X) (x₀ : X) :
-    ∀ (qs : List Plan) (t : Plan),
-      fold mul x₀ (worldline t qs) = epochs mul (fold mul x₀ t) qs
+theorem the_worldline_is_a_walk : ∀ (qs : List Plan) (t : Plan),
+    worldline t qs = walk graft t qs
   | [], _ => rfl
-  | q :: qs, t => by
-      show fold mul x₀ (worldline (graft t q) qs)
-          = epochs mul (fold mul (fold mul x₀ t) q) qs
-      rw [the_worldline_settles mul x₀ qs (graft t q),
-          the_parent_folds_into_the_ground mul x₀ t q]
+  | q :: qs, t => the_worldline_is_a_walk qs (graft t q)
+
+theorem the_epochs_are_a_walk {X : Type u} (mul : X → X → X) :
+    ∀ (qs : List Plan) (v : X),
+      epochs mul v qs = walk (fun x q => fold mul x q) v qs
+  | [], _ => rfl
+  | q :: qs, v => the_epochs_are_a_walk mul qs (fold mul v q)
+
+theorem the_three_roads_are_one_walk {I O : Type} (m : Machine I O)
+    {X : Type u} (mul : X → X → X) (v : X) (t : Plan)
+    (w : List I) (s : m.S) (qs : List Plan) :
+    park m s w = walk m.step s w
+      ∧ drive m s w = m.out (walk m.step s w)
+      ∧ worldline t qs = walk graft t qs
+      ∧ epochs mul v qs = walk (fun x q => fold mul x q) v qs :=
+  ⟨the_park_is_a_walk m w s, the_drive_reads_the_walk m w s,
+   the_worldline_is_a_walk qs t, the_epochs_are_a_walk mul qs v⟩
+
+theorem the_worldline_settles {X : Type u} (mul : X → X → X) (x₀ : X)
+    (qs : List Plan) (t : Plan) :
+    fold mul x₀ (worldline t qs) = epochs mul (fold mul x₀ t) qs :=
+  ((congrArg (fold mul x₀) (the_worldline_is_a_walk qs t)).trans
+    (a_reading_in_step_carries_the_walk graft (fun v q => fold mul v q)
+      (fold mul x₀) (fun s q => the_parent_folds_into_the_ground mul x₀ s q)
+      qs t)).trans
+    (the_epochs_are_a_walk mul qs (fold mul x₀ t)).symm
 
 theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
     (m : door H W → door H W) :
@@ -982,6 +1036,27 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_mirror_doubles_the_manifest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_mirror_doubles_the_manifest
+
+/-- info: 'Seed.a_reading_in_step_carries_the_walk' does not depend on any axioms -/
+#guard_msgs in #print axioms a_reading_in_step_carries_the_walk
+
+/-- info: 'Seed.two_machines_in_step_agree' does not depend on any axioms -/
+#guard_msgs in #print axioms two_machines_in_step_agree
+
+/-- info: 'Seed.the_park_is_a_walk' does not depend on any axioms -/
+#guard_msgs in #print axioms the_park_is_a_walk
+
+/-- info: 'Seed.the_drive_reads_the_walk' does not depend on any axioms -/
+#guard_msgs in #print axioms the_drive_reads_the_walk
+
+/-- info: 'Seed.the_worldline_is_a_walk' does not depend on any axioms -/
+#guard_msgs in #print axioms the_worldline_is_a_walk
+
+/-- info: 'Seed.the_epochs_are_a_walk' does not depend on any axioms -/
+#guard_msgs in #print axioms the_epochs_are_a_walk
+
+/-- info: 'Seed.the_three_roads_are_one_walk' does not depend on any axioms -/
+#guard_msgs in #print axioms the_three_roads_are_one_walk
 
 /-- info: 'Seed.the_worldline_settles' does not depend on any axioms -/
 #guard_msgs in #print axioms the_worldline_settles

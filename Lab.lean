@@ -237,6 +237,20 @@ def main : IO UInt32 := do
     (fold (fun a b => a + b) 1 (graft (graft t0 (.board .ground (.board .ground .ground))) (.board .ground .ground))
       == fold (fun a b => a + b) 1 t2)) && ok
   ok := (← checkTrue
+    "walk row — park, drive, worldline, epochs: one spine (the recognition, dynamic register)"
+    ((fold (fun a b => a + b) 1
+        (walk graft (.ground : Plan)
+          [.board .ground (.board .ground .ground), .board .ground .ground])
+      == fold (fun a b => a + b) 1
+        (worldline .ground
+          [.board .ground (.board .ground .ground), .board .ground .ground]))
+      && (epochs (fun a b => a + b) (1 : Nat)
+            [.board .ground .ground, .board .ground (.board .ground .ground)]
+          == walk (fun v q => fold (fun a b => a + b) v q) (1 : Nat)
+            [.board .ground .ground, .board .ground (.board .ground .ground)])
+      && (behavior paceOne [(), (), ()]
+          == paceOne.out (walk paceOne.step (0 : Nat) [(), (), ()])))) && ok
+  ok := (← checkTrue
     "worldline row — the reading of a life is its epoch-by-epoch settle"
     (fold (fun a b => a + b) 1
         (worldline .ground
