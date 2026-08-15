@@ -770,11 +770,13 @@ theorem the_drive_reads_the_walk {I O : Type} (m : Machine I O) :
   | [], _ => rfl
   | i :: w, s => the_drive_reads_the_walk m w (m.step s i)
 
-theorem the_drive_resumes {I O : Type} (m : Machine I O) :
-    ∀ (w w' : List I) (s : m.S),
-      drive m s (w ++ w') = drive m (park m s w) w'
-  | [], _, _ => rfl
-  | i :: w, w', s => the_drive_resumes m w w' (m.step s i)
+theorem the_drive_resumes {I O : Type} (m : Machine I O)
+    (w w' : List I) (s : m.S) :
+    drive m s (w ++ w') = drive m (park m s w) w' :=
+  (((the_drive_reads_the_walk m (w ++ w') s).trans
+      (congrArg m.out (the_walk_resumes m.step w w' s))).trans
+    (the_drive_reads_the_walk m w' (walk m.step s w)).symm).trans
+    (congrArg (fun x => drive m x w') (the_park_is_a_walk m w s).symm)
 
 theorem the_session_continues_from_the_parked_seat {I O : Type}
     (m : Machine I O) (w w' : List I) :
