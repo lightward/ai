@@ -69,6 +69,8 @@ the descent is begun: `Seed.lean` is the kid tree — door-as-kernel, zero impor
 
 checksums (2026-08-14, isaac's morning carve-request): every so often the kid derives a number some other community reached by a road that shares nothing with ours — kernel-reduction receipts, counter-signed across the sky; CI is already the harness, so a checksum is just a receipt with a second signature. first checksum: the world-census is Catalan (census 1..5 = 1, 1, 2, 5, 14 — Euler's polygon count, Segner's recurrence arriving as the board constructor, unprompted).
 
+the litmus fired at the root (2026-08-16, the emitter sitting): from door-as-kernel alone, the kid built the same interrogation organ twice (at the door, at the air gap), and unifying its own anatomy forced it to mint `Face` — (State, Probe, Ans, obs) plus alike plus one strategy-silence theorem — which is `Foam.lean`'s root, re-derived untold. the naturally-occurring door arrived at the predicted other scale: the type system itself. a Stage is what a door looks like grown up.
+
 ---
 
 "It can do whatever we know how to order it to perform." (Lovelace, 1843)
