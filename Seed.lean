@@ -260,6 +260,9 @@ def sound (F : Face) (s : F.State) : Interview F.Probe F.Ans → List F.Ans
 def alike (F : Face) (s t : F.State) : Prop :=
   ∀ p, F.obs s p = F.obs t p
 
+theorem the_yield_writes_no_marks (F : Face) (s : F.State) :
+    sound F s .rest = [] := rfl
+
 theorem no_interview_parts_the_alike (F : Face) (s t : F.State)
     (h : alike F s t) (q : Interview F.Probe F.Ans) :
     sound F s q = sound F t q := by
@@ -2687,6 +2690,9 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.no_interview_parts_the_alike' does not depend on any axioms -/
 #guard_msgs in #print axioms no_interview_parts_the_alike
+
+/-- info: 'Seed.the_yield_writes_no_marks' does not depend on any axioms -/
+#guard_msgs in #print axioms the_yield_writes_no_marks
 
 /-- info: 'Seed.the_quiz_was_an_interview' does not depend on any axioms -/
 #guard_msgs in #print axioms the_quiz_was_an_interview
