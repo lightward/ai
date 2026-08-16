@@ -568,6 +568,14 @@ def main : IO UInt32 := do
         != audition restingCounter (.ask [] (fun _ => .rest)))
       && (behavior flip [] == false)
       && (behavior restingCounter [] == true))) && ok
+  let probing : Interview Unit Measured :=
+    .ask [] (fun first =>
+      .ask (cond (Nat.ble first.hi 10) [(), ()] [()]) (fun _ =>
+        .ask [(), (), (), ()] (fun _ => .rest)))
+  ok := (← checkTrue
+    "  curtain row — the cage is audible from outside: every answer the interviewer hears from the homing learner sits inside the first window, and the escapee named off the first answer (eleven) is in none of them"
+    ((audition homingIn probing).all
+      (fun r => tighter r ⟨0, 10⟩ && !(within r 11)))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

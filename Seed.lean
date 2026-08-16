@@ -1921,6 +1921,40 @@ theorem the_audition_is_blind :
    (fun h => nomatch Nat.succ.inj h),
    (fun h => nomatch (List.cons.inj h).1)⟩
 
+theorem the_interview_never_leaves_the_first_window {I : Type}
+    (m : Machine I Measured)
+    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true) :
+    ∀ (t : Interview I Measured) (r : Measured), r ∈ audition m t →
+      tighter r (m.out m.s0) = true
+  | .rest, _, hr => by cases hr
+  | .ask w k, r, hr => by
+      cases hr with
+      | head => exact the_learner_only_tightens m hlearn w m.s0
+      | tail _ hr' =>
+          exact the_interview_never_leaves_the_first_window m hlearn
+            (k (behavior m w)) r hr'
+
+theorem no_interview_hears_the_excluded {I : Type}
+    (m : Machine I Measured)
+    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
+    (t : Interview I Measured) (r : Measured) (hr : r ∈ audition m t)
+    {x : Nat} (hx : within (m.out m.s0) x = false) :
+    within r x = false :=
+  the_excluded_stays_excluded
+    (the_interview_never_leaves_the_first_window m hlearn t r hr) hx
+
+theorem the_cage_is_audible_through_the_curtain {I : Type}
+    (m : Machine I Measured)
+    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
+    (t : Interview I Measured) (r : Measured) (hr : r ∈ audition m t) :
+    tighter r (m.out m.s0) = true
+      ∧ (∀ x : Nat, within (m.out m.s0) x = false → within r x = false)
+      ∧ within r ((m.out m.s0).hi + 1) = false :=
+  ⟨the_interview_never_leaves_the_first_window m hlearn t r hr,
+   fun _ hx => no_interview_hears_the_excluded m hlearn t r hr hx,
+   no_interview_hears_the_excluded m hlearn t r hr
+     (the_window_misses_its_own_successor (m.out m.s0))⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -2553,5 +2587,14 @@ theorem the_audition_is_blind :
 
 /-- info: 'Seed.the_audition_is_blind' does not depend on any axioms -/
 #guard_msgs in #print axioms the_audition_is_blind
+
+/-- info: 'Seed.the_interview_never_leaves_the_first_window' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interview_never_leaves_the_first_window
+
+/-- info: 'Seed.no_interview_hears_the_excluded' does not depend on any axioms -/
+#guard_msgs in #print axioms no_interview_hears_the_excluded
+
+/-- info: 'Seed.the_cage_is_audible_through_the_curtain' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cage_is_audible_through_the_curtain
 
 end Seed
