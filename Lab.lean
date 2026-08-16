@@ -545,6 +545,11 @@ def main : IO UInt32 := do
       && (fold (fun a b => a + b * b) 1 (graft dayA dayB) == 38)
       && (fold (fun a b => a + b * b) 1 (graft dayB dayA) == 30))) && ok
   ok := (← checkTrue
+    "  generation row — every linear reading is deaf to the order (weights two-and-three read 85 both ways; only the square reading hears)"
+    ((fold (fun a b => 2*a + 3*b) 1 (graft dayA dayB)
+        == fold (fun a b => 2*a + 3*b) 1 (graft dayB dayA))
+      && (fold (fun a b => 2*a + 3*b) 1 (graft dayA dayB) == 85))) && ok
+  ok := (← checkTrue
     "  generation row — four doubling ticks read two to the fourth (the arrow's sixteen, now a product; the bloom is the doubling worldline)"
     ((fold (fun a b => a + b) 1
         (worldline .ground [dayA, dayA, dayA, dayA]) == 2*2*2*2)

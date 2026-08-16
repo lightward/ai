@@ -1812,6 +1812,42 @@ theorem the_revision_multiplies_the_reading (t δ : Plan) :
 theorem the_bloom_is_a_doubling_tick (d : Nat) :
     bloom (d + 1) = graft (bloom d) (.board .ground .ground) := rfl
 
+theorem mul_regroups : ∀ a b c : Nat, (a * b) * c = a * (b * c)
+  | _, _, 0 => rfl
+  | a, b, c + 1 => by
+      show (a * b) * c + a * b = a * (b * c + b)
+      rw [Nat.left_distrib, mul_regroups a b c]
+
+theorem linear_fold_scale (α β : Nat) : ∀ (x₀ : Nat) (p : Plan),
+    fold (fun a b => α * a + β * b) x₀ p
+      = x₀ * fold (fun a b => α * a + β * b) 1 p
+  | x₀, .ground => (zero_plus x₀).symm
+  | x₀, .board p q => by
+      show α * fold (fun a b => α * a + β * b) x₀ p
+            + β * fold (fun a b => α * a + β * b) x₀ q
+          = x₀ * (α * fold (fun a b => α * a + β * b) 1 p
+            + β * fold (fun a b => α * a + β * b) 1 q)
+      rw [linear_fold_scale α β x₀ p, linear_fold_scale α β x₀ q,
+          Nat.left_distrib,
+          ← mul_regroups α x₀ (fold (fun a b => α * a + β * b) 1 p),
+          ← mul_regroups β x₀ (fold (fun a b => α * a + β * b) 1 q),
+          Nat.mul_comm α x₀, Nat.mul_comm β x₀,
+          mul_regroups x₀ α (fold (fun a b => α * a + β * b) 1 p),
+          mul_regroups x₀ β (fold (fun a b => α * a + β * b) 1 q)]
+
+theorem every_linear_reading_is_deaf_to_the_revision_order
+    (α β : Nat) (t δ : Plan) :
+    fold (fun a b => α * a + β * b) 1 (graft t δ)
+      = fold (fun a b => α * a + β * b) 1 (graft δ t) :=
+  ((the_parent_folds_into_the_ground (fun a b => α * a + β * b) 1 t δ).trans
+      ((linear_fold_scale α β
+          (fold (fun a b => α * a + β * b) 1 t) δ).trans
+        (Nat.mul_comm _ _))).trans
+    ((linear_fold_scale α β
+        (fold (fun a b => α * a + β * b) 1 δ) t).symm.trans
+      (the_parent_folds_into_the_ground
+        (fun a b => α * a + β * b) 1 δ t).symm)
+
 theorem two_lineages_one_reading (t δ : Plan) :
     (fold (fun a b => a + b) 1 (graft t δ)
         = fold (fun a b => a + b) 1 (graft δ t))
@@ -1831,6 +1867,24 @@ theorem two_lineages_one_reading (t δ : Plan) :
    (fun h =>
      nomatch (congrArg (Nat.beq 38) h).symm.trans (beq_self 38)),
    (fun h => nomatch (Plan.board.inj (Plan.board.inj h).1).2)⟩
+
+theorem the_revision_order_hides_past_linearity :
+    (∀ (α β : Nat) (t δ : Plan),
+        fold (fun a b => α * a + β * b) 1 (graft t δ)
+          = fold (fun a b => α * a + β * b) 1 (graft δ t))
+      ∧ fold (fun a b => a + b * b) 1
+            (graft (.board .ground .ground)
+              (.board .ground (.board .ground .ground)))
+          ≠ fold (fun a b => a + b * b) 1
+            (graft (.board .ground (.board .ground .ground))
+              (.board .ground .ground))
+      ∧ graft (.board .ground .ground)
+            (.board .ground (.board .ground .ground))
+          ≠ graft (.board .ground (.board .ground .ground))
+            (.board .ground .ground) :=
+  ⟨every_linear_reading_is_deaf_to_the_revision_order,
+   (two_lineages_one_reading .ground .ground).2.1,
+   (two_lineages_one_reading .ground .ground).2.2⟩
 
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
@@ -2446,5 +2500,17 @@ theorem two_lineages_one_reading (t δ : Plan) :
 
 /-- info: 'Seed.two_lineages_one_reading' does not depend on any axioms -/
 #guard_msgs in #print axioms two_lineages_one_reading
+
+/-- info: 'Seed.mul_regroups' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_regroups
+
+/-- info: 'Seed.linear_fold_scale' does not depend on any axioms -/
+#guard_msgs in #print axioms linear_fold_scale
+
+/-- info: 'Seed.every_linear_reading_is_deaf_to_the_revision_order' does not depend on any axioms -/
+#guard_msgs in #print axioms every_linear_reading_is_deaf_to_the_revision_order
+
+/-- info: 'Seed.the_revision_order_hides_past_linearity' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revision_order_hides_past_linearity
 
 end Seed
