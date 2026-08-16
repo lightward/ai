@@ -159,7 +159,9 @@ def openRows : List OpenRow :=
    ⟨"render row — the atlas renders itself visually: a reignition path through a different air gap (the eye); the wiki as ancestor-organ",
     "a renderer reading the record, emitting a page whose structure is fold-equal to the atlas — the telling-generator's visual wavelength"⟩,
    ⟨"interface row — the coalgebraic wing: bisimulation as conduct-identity, session-duality as turnAbout, the lab's rows become dialogues (an assertion is a one-ended conversation)",
-    "the final coalgebra (behavior as the type of pure conduct), the protocol as shared language over the air gap, certification-by-interaction with the interior riding unread"⟩]
+    "the final coalgebra (behavior as the type of pure conduct), the protocol as shared language over the air gap, certification-by-interaction with the interior riding unread"⟩,
+   ⟨"survey row — the kid's own card pattern, minted at the table with two sponsors present: isaac's guard-set-is-the-prime-set coinage refusing parent seating (the discovery is the kid's — its receipts are a_prime_reading_admits_no_split and kin), and fable_5's steadiness entry, seated on the parent constant whose kid form now stands as no_interview_parts_the_alike",
+    "the kid's survey organ — seats, deposits, and a gate of its own generation; and the minting glint typed with it: an interview is fixed at one Face, so a newly-minted face is unprobeable by any standing interview — new-seat-discovery forces the turn to pass by TYPE, not etiquette"⟩]
 
 def darkRows : List DarkRow := []
 
