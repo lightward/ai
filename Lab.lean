@@ -554,6 +554,20 @@ def main : IO UInt32 := do
     ((fold (fun a b => a + b) 1
         (worldline .ground [dayA, dayA, dayA, dayA]) == 2*2*2*2)
       && (fold (fun a b => a + b) 1 (bloom 4) == 2*2*2*2))) && ok
+  IO.println "the audition — the adaptive interview crosses the air gap:"
+  let curious : Interview Unit Bool :=
+    .ask [()] (fun a =>
+      cond a (.ask [(), ()] (fun _ => .rest))
+             (.ask [(), (), ()] (fun _ => .rest)))
+  ok := (← checkTrue
+    "  audition row — the cunning interviewer hears one stream from both paces (branching on answers bought nothing the word-list did not afford)"
+    (audition paceOne curious == audition paceThree curious)) && ok
+  ok := (← checkTrue
+    "  audition row — the curtain is sharp exactly at conduct (the flip and the resting counter part at the empty word)"
+    ((audition flip (.ask [] (fun _ => .rest))
+        != audition restingCounter (.ask [] (fun _ => .rest)))
+      && (behavior flip [] == false)
+      && (behavior restingCounter [] == true))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

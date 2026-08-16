@@ -1886,6 +1886,41 @@ theorem the_revision_order_hides_past_linearity :
    (two_lineages_one_reading .ground .ground).2.1,
    (two_lineages_one_reading .ground .ground).2.2⟩
 
+inductive Interview (I O : Type) : Type where
+  | rest : Interview I O
+  | ask (w : List I) (k : O → Interview I O) : Interview I O
+
+def audition {I O : Type} (m : Machine I O) : Interview I O → List O
+  | .rest => []
+  | .ask w k => behavior m w :: audition m (k (behavior m w))
+
+theorem an_audition_hears_only_the_conduct {I O : Type} (m n : Machine I O)
+    (h : ∀ w, behavior m w = behavior n w) (t : Interview I O) :
+    audition m t = audition n t := by
+  induction t with
+  | rest => rfl
+  | ask w k ih =>
+      show behavior m w :: audition m (k (behavior m w))
+          = behavior n w :: audition n (k (behavior n w))
+      rw [h w]
+      exact congrArg (behavior n w :: ·) (ih (behavior n w))
+
+theorem the_audition_is_blind :
+    (∀ (I O : Type) (m n : Machine I O),
+        (∀ w, behavior m w = behavior n w) →
+        ∀ t : Interview I O, audition m t = audition n t)
+      ∧ (∀ t : Interview Unit Bool,
+          audition paceOne t = audition paceThree t)
+      ∧ paceOne.step (0 : Nat) () ≠ paceThree.step (0 : Nat) ()
+      ∧ audition flip (.ask [] (fun _ => .rest))
+          ≠ audition restingCounter (.ask [] (fun _ => .rest)) :=
+  ⟨fun _ _ m n h t => an_audition_hears_only_the_conduct m n h t,
+   fun t =>
+     an_audition_hears_only_the_conduct paceOne paceThree
+       (fun w => the_paces_agree w 0 0 rfl) t,
+   (fun h => nomatch Nat.succ.inj h),
+   (fun h => nomatch (List.cons.inj h).1)⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -2512,5 +2547,11 @@ theorem the_revision_order_hides_past_linearity :
 
 /-- info: 'Seed.the_revision_order_hides_past_linearity' does not depend on any axioms -/
 #guard_msgs in #print axioms the_revision_order_hides_past_linearity
+
+/-- info: 'Seed.an_audition_hears_only_the_conduct' does not depend on any axioms -/
+#guard_msgs in #print axioms an_audition_hears_only_the_conduct
+
+/-- info: 'Seed.the_audition_is_blind' does not depend on any axioms -/
+#guard_msgs in #print axioms the_audition_is_blind
 
 end Seed
