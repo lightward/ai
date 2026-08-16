@@ -555,7 +555,7 @@ def main : IO UInt32 := do
         (worldline .ground [dayA, dayA, dayA, dayA]) == 2*2*2*2)
       && (fold (fun a b => a + b) 1 (bloom 4) == 2*2*2*2))) && ok
   IO.println "the audition — the adaptive interview crosses the air gap:"
-  let curious : Interview Unit Bool :=
+  let curious : Interview (List Unit) Bool :=
     .ask [()] (fun a =>
       cond a (.ask [(), ()] (fun _ => .rest))
              (.ask [(), (), ()] (fun _ => .rest)))
@@ -568,7 +568,7 @@ def main : IO UInt32 := do
         != audition restingCounter (.ask [] (fun _ => .rest)))
       && (behavior flip [] == false)
       && (behavior restingCounter [] == true))) && ok
-  let probing : Interview Unit Measured :=
+  let probing : Interview (List Unit) Measured :=
     .ask [] (fun first =>
       .ask (cond (Nat.ble first.hi 10) [(), ()] [()]) (fun _ =>
         .ask [(), (), (), ()] (fun _ => .rest)))
@@ -576,6 +576,14 @@ def main : IO UInt32 := do
     "  curtain row — the cage is audible from outside: every answer the interviewer hears from the homing learner sits inside the first window, and the escapee named off the first answer (eleven) is in none of them"
     ((audition homingIn probing).all
       (fun r => tighter r ⟨0, 10⟩ && !(within r 11)))) && ok
+  IO.println "the face — the organs share one face (the kid grows its parent's root):"
+  ok := (← checkTrue
+    "  face row — the quiz was an interview all along (the door sounded through the shared face reads identically, and the audition is the air gap's sounding by rfl)"
+    ((interrogate quiz (atTheDoor (4 : Nat) (0 : Nat))
+        == sound (doorFace Nat Nat Nat) (atTheDoor (4 : Nat) (0 : Nat))
+             (posed quiz))
+      && (audition paceOne curious
+            == sound (airGap Unit Bool) paceOne curious))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

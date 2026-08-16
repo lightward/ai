@@ -243,15 +243,61 @@ def interrogate {H W X : Type} : Quiz H X → door H W → List X
   | .rest, _ => []
   | .ask g k, d => g (face d) :: interrogate (k (g (face d))) d
 
-theorem a_strategy_hears_no_guest {H W X : Type} (h : H) (w w' : W)
-    (q : Quiz H X) :
-    interrogate q (atTheDoor h w) = interrogate q (atTheDoor h w') := by
+structure Face where
+  State : Type u
+  Probe : Type
+  Ans   : Type
+  obs   : State → Probe → Ans
+
+inductive Interview (P A : Type) : Type where
+  | rest : Interview P A
+  | ask (p : P) (k : A → Interview P A) : Interview P A
+
+def sound (F : Face) (s : F.State) : Interview F.Probe F.Ans → List F.Ans
+  | .rest => []
+  | .ask p k => F.obs s p :: sound F s (k (F.obs s p))
+
+def alike (F : Face) (s t : F.State) : Prop :=
+  ∀ p, F.obs s p = F.obs t p
+
+theorem no_interview_parts_the_alike (F : Face) (s t : F.State)
+    (h : alike F s t) (q : Interview F.Probe F.Ans) :
+    sound F s q = sound F t q := by
   induction q with
   | rest => rfl
-  | ask g k ih =>
-    show g h :: interrogate (k (g h)) (atTheDoor h w)
-        = g h :: interrogate (k (g h)) (atTheDoor h w')
-    exact congrArg (g h :: ·) (ih (g h))
+  | ask p k ih =>
+      show F.obs s p :: sound F s (k (F.obs s p))
+          = F.obs t p :: sound F t (k (F.obs t p))
+      rw [h p]
+      exact congrArg (F.obs t p :: ·) (ih (F.obs t p))
+
+def doorFace (H W X : Type) : Face :=
+  ⟨door H W, H → X, X, fun d g => g (face d)⟩
+
+def posed {H X : Type} : Quiz H X → Interview (H → X) X
+  | .rest => .rest
+  | .ask g k => .ask g (fun x => posed (k x))
+
+theorem the_quiz_was_an_interview {H W X : Type} (d : door H W) :
+    ∀ q : Quiz H X,
+      interrogate q d = sound (doorFace H W X) d (posed q)
+  | .rest => rfl
+  | .ask g k =>
+      congrArg (g (face d) :: ·)
+        (the_quiz_was_an_interview d (k (g (face d))))
+
+theorem the_guests_are_alike_at_the_door {H W X : Type} (h : H)
+    (w w' : W) :
+    alike (doorFace H W X) (atTheDoor h w) (atTheDoor h w') :=
+  fun _ => rfl
+
+theorem a_strategy_hears_no_guest {H W X : Type} (h : H) (w w' : W)
+    (q : Quiz H X) :
+    interrogate q (atTheDoor h w) = interrogate q (atTheDoor h w') :=
+  ((the_quiz_was_an_interview (atTheDoor h w) q).trans
+    (no_interview_parts_the_alike (doorFace H W X) _ _
+      (the_guests_are_alike_at_the_door h w w') (posed q))).trans
+    (the_quiz_was_an_interview (atTheDoor h w') q).symm
 
 theorem the_whole_interview_reads_no_guest {H W X : Type} (h : H)
     (w w' : W) (q : Quiz H X) :
@@ -1886,30 +1932,40 @@ theorem the_revision_order_hides_past_linearity :
    (two_lineages_one_reading .ground .ground).2.1,
    (two_lineages_one_reading .ground .ground).2.2⟩
 
-inductive Interview (I O : Type) : Type where
-  | rest : Interview I O
-  | ask (w : List I) (k : O → Interview I O) : Interview I O
+def airGap (I O : Type) : Face :=
+  ⟨Machine I O, List I, O, behavior⟩
 
-def audition {I O : Type} (m : Machine I O) : Interview I O → List O
-  | .rest => []
-  | .ask w k => behavior m w :: audition m (k (behavior m w))
+def audition {I O : Type} (m : Machine I O) :
+    Interview (List I) O → List O :=
+  sound (airGap I O) m
+
+theorem the_audition_sounds_the_air_gap {I O : Type} (m : Machine I O)
+    (t : Interview (List I) O) :
+    audition m t = sound (airGap I O) m t := rfl
+
+def windowFace : Face :=
+  ⟨Measured, Nat, Bool, within⟩
 
 theorem an_audition_hears_only_the_conduct {I O : Type} (m n : Machine I O)
-    (h : ∀ w, behavior m w = behavior n w) (t : Interview I O) :
-    audition m t = audition n t := by
-  induction t with
-  | rest => rfl
-  | ask w k ih =>
-      show behavior m w :: audition m (k (behavior m w))
-          = behavior n w :: audition n (k (behavior n w))
-      rw [h w]
-      exact congrArg (behavior n w :: ·) (ih (behavior n w))
+    (h : ∀ w, behavior m w = behavior n w) (t : Interview (List I) O) :
+    audition m t = audition n t :=
+  no_interview_parts_the_alike (airGap I O) m n h t
+
+theorem the_organs_share_one_face {H W X I O : Type} (hh : H)
+    (w w' : W) (m : Machine I O) (t : Interview (List I) O)
+    (q : Quiz H X) (d : door H W) :
+    audition m t = sound (airGap I O) m t
+      ∧ interrogate q d = sound (doorFace H W X) d (posed q)
+      ∧ alike (doorFace H W X) (atTheDoor hh w) (atTheDoor hh w')
+      ∧ windowFace.obs = within :=
+  ⟨rfl, the_quiz_was_an_interview d q,
+   the_guests_are_alike_at_the_door hh w w', rfl⟩
 
 theorem the_audition_is_blind :
     (∀ (I O : Type) (m n : Machine I O),
         (∀ w, behavior m w = behavior n w) →
-        ∀ t : Interview I O, audition m t = audition n t)
-      ∧ (∀ t : Interview Unit Bool,
+        ∀ t : Interview (List I) O, audition m t = audition n t)
+      ∧ (∀ t : Interview (List Unit) Bool,
           audition paceOne t = audition paceThree t)
       ∧ paceOne.step (0 : Nat) () ≠ paceThree.step (0 : Nat) ()
       ∧ audition flip (.ask [] (fun _ => .rest))
@@ -1924,7 +1980,7 @@ theorem the_audition_is_blind :
 theorem the_interview_never_leaves_the_first_window {I : Type}
     (m : Machine I Measured)
     (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true) :
-    ∀ (t : Interview I Measured) (r : Measured), r ∈ audition m t →
+    ∀ (t : Interview (List I) Measured) (r : Measured), r ∈ audition m t →
       tighter r (m.out m.s0) = true
   | .rest, _, hr => by cases hr
   | .ask w k, r, hr => by
@@ -1937,7 +1993,8 @@ theorem the_interview_never_leaves_the_first_window {I : Type}
 theorem no_interview_hears_the_excluded {I : Type}
     (m : Machine I Measured)
     (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
-    (t : Interview I Measured) (r : Measured) (hr : r ∈ audition m t)
+    (t : Interview (List I) Measured) (r : Measured)
+    (hr : r ∈ audition m t)
     {x : Nat} (hx : within (m.out m.s0) x = false) :
     within r x = false :=
   the_excluded_stays_excluded
@@ -1946,7 +2003,8 @@ theorem no_interview_hears_the_excluded {I : Type}
 theorem the_cage_is_audible_through_the_curtain {I : Type}
     (m : Machine I Measured)
     (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
-    (t : Interview I Measured) (r : Measured) (hr : r ∈ audition m t) :
+    (t : Interview (List I) Measured) (r : Measured)
+    (hr : r ∈ audition m t) :
     tighter r (m.out m.s0) = true
       ∧ (∀ x : Nat, within (m.out m.s0) x = false → within r x = false)
       ∧ within r ((m.out m.s0).hi + 1) = false :=
@@ -2584,6 +2642,21 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.an_audition_hears_only_the_conduct' does not depend on any axioms -/
 #guard_msgs in #print axioms an_audition_hears_only_the_conduct
+
+/-- info: 'Seed.no_interview_parts_the_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms no_interview_parts_the_alike
+
+/-- info: 'Seed.the_quiz_was_an_interview' does not depend on any axioms -/
+#guard_msgs in #print axioms the_quiz_was_an_interview
+
+/-- info: 'Seed.the_guests_are_alike_at_the_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guests_are_alike_at_the_door
+
+/-- info: 'Seed.the_audition_sounds_the_air_gap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_audition_sounds_the_air_gap
+
+/-- info: 'Seed.the_organs_share_one_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_organs_share_one_face
 
 /-- info: 'Seed.the_audition_is_blind' does not depend on any axioms -/
 #guard_msgs in #print axioms the_audition_is_blind
