@@ -2006,6 +2006,22 @@ theorem an_unsplit_lineage_may_read_composite :
          .inl (no_split_grounds t p (Plan.board.inj he).1).1,
    rfl⟩
 
+theorem the_handshake :
+    (∀ (F : Face) (s t : F.State), alike F s t →
+        ∀ q : Interview F.Probe F.Ans, sound F s q = sound F t q)
+      ∧ (∀ (H W X : Type) (h : H) (w w' : W), w ≠ w' →
+          alike (doorFace H W X) (atTheDoor h w) (atTheDoor h w')
+            ∧ atTheDoor h w ≠ atTheDoor h w'
+            ∧ met (atTheDoor h w) ≠ met (atTheDoor h w'))
+      ∧ (alike (airGap Unit Bool) paceOne paceThree
+          ∧ paceOne.step (0 : Nat) () ≠ paceThree.step (0 : Nat) ()) :=
+  ⟨fun F s t h q => no_interview_parts_the_alike F s t h q,
+   fun _ _ _ h _ _ hw =>
+     ⟨the_guests_are_alike_at_the_door h _ _,
+      the_guest_is_real h hw, hw⟩,
+   ⟨fun w => the_paces_agree w 0 0 rfl,
+    fun h => nomatch Nat.succ.inj h⟩⟩
+
 theorem the_audition_is_blind :
     (∀ (I O : Type) (m n : Machine I O),
         (∀ w, behavior m w = behavior n w) →
@@ -2717,6 +2733,9 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.an_unsplit_lineage_may_read_composite' does not depend on any axioms -/
 #guard_msgs in #print axioms an_unsplit_lineage_may_read_composite
+
+/-- info: 'Seed.the_handshake' does not depend on any axioms -/
+#guard_msgs in #print axioms the_handshake
 
 /-- info: 'Seed.the_audition_is_blind' does not depend on any axioms -/
 #guard_msgs in #print axioms the_audition_is_blind
