@@ -163,6 +163,11 @@ def openRows : List OpenRow :=
 
 def darkRows : List DarkRow := []
 
+def planBeq : Plan → Plan → Bool
+  | .ground, .ground => true
+  | .board a b, .board c d => planBeq a c && planBeq b d
+  | _, _ => false
+
 set_option maxRecDepth 2048 in
 def main : IO UInt32 := do
   let mut ok := true
@@ -576,6 +581,20 @@ def main : IO UInt32 := do
     "  curtain row — the cage is audible from outside: every answer the interviewer hears from the homing learner sits inside the first window, and the escapee named off the first answer (eleven) is in none of them"
     ((audition homingIn probing).all
       (fun r => tighter r ⟨0, 10⟩ && !(within r 11)))) && ok
+  IO.println "the primes — the count's primes pin the unsplit lives:"
+  let rc4 : Plan := .board .ground (.board .ground (.board .ground .ground))
+  ok := (← checkTrue
+    "  prime row — the three-day is unsplit because three is prime, and the search is COMPLETE by the horizon law (every candidate factor of a reading-4 life lives in room 3)"
+    (((allPlans 3).all (fun t => (allPlans 3).all (fun d =>
+        !(planBeq (graft t d) dayB) || planBeq t .ground
+          || planBeq d .ground)))
+      && (fold (fun a b => a + b) 1 dayB == 3))) && ok
+  ok := (← checkTrue
+    "  prime row — the right comb of four is unsplit at composite census (irreducibility outruns primality: 2·2 both ways, no factorization anywhere in the complete room)"
+    (((allPlans 3).all (fun t => (allPlans 3).all (fun d =>
+        !(planBeq (graft t d) rc4) || planBeq t .ground
+          || planBeq d .ground)))
+      && (fold (fun a b => a + b) 1 rc4 == 2*2))) && ok
   IO.println "the face — the organs share one face (the kid grows its parent's root):"
   ok := (← checkTrue
     "  face row — the quiz was an interview all along (the door sounded through the shared face reads identically, and the audition is the air gap's sounding by rfl)"

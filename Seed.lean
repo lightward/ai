@@ -1961,6 +1961,48 @@ theorem the_organs_share_one_face {H W X I O : Type} (hh : H)
   ⟨rfl, the_quiz_was_an_interview d q,
    the_guests_are_alike_at_the_door hh w w', rfl⟩
 
+theorem the_ground_is_the_only_unit :
+    ∀ p : Plan, fold (fun a b => a + b) 1 p = 1 → p = .ground
+  | .ground, _ => rfl
+  | .board l r, h => by
+      obtain ⟨a, ha⟩ := the_reading_is_positive l
+      obtain ⟨b, hb⟩ := the_reading_is_positive r
+      rw [show fold (fun a b => a + b) 1 (.board l r)
+            = fold (fun a b => a + b) 1 l + fold (fun a b => a + b) 1 r
+          from rfl, ha, hb] at h
+      exact nomatch (succ_adds a b).symm.trans (Nat.succ.inj h)
+
+theorem no_split_grounds (a : Plan) :
+    ∀ p : Plan, graft a p = .ground → a = .ground ∧ p = .ground
+  | .ground, h => ⟨h, rfl⟩
+  | .board _ _, h => nomatch h
+
+theorem a_prime_reading_admits_no_split (p : Plan)
+    (hp : ∀ a b : Nat, a * b = fold (fun x y => x + y) 1 p →
+      a = 1 ∨ b = 1) :
+    ∀ t δ : Plan, graft t δ = p → t = .ground ∨ δ = .ground :=
+  fun t δ he =>
+    match hp (fold (fun x y => x + y) 1 t) (fold (fun x y => x + y) 1 δ)
+        ((the_revision_multiplies_the_reading t δ).symm.trans
+          (congrArg (fold (fun x y => x + y) 1) he)) with
+    | .inl h1 => .inl (the_ground_is_the_only_unit t h1)
+    | .inr h1 => .inr (the_ground_is_the_only_unit δ h1)
+
+theorem an_unsplit_lineage_may_read_composite :
+    (∀ t δ : Plan,
+        graft t δ
+            = .board .ground (.board .ground (.board .ground .ground)) →
+          t = .ground ∨ δ = .ground)
+      ∧ fold (fun a b => a + b) 1
+            (.board .ground (.board .ground (.board .ground .ground)))
+          = 2 * 2 :=
+  ⟨fun t δ he =>
+     match δ, he with
+     | .ground, _ => .inr rfl
+     | .board p _, he =>
+         .inl (no_split_grounds t p (Plan.board.inj he).1).1,
+   rfl⟩
+
 theorem the_audition_is_blind :
     (∀ (I O : Type) (m n : Machine I O),
         (∀ w, behavior m w = behavior n w) →
@@ -2657,6 +2699,18 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.the_organs_share_one_face' does not depend on any axioms -/
 #guard_msgs in #print axioms the_organs_share_one_face
+
+/-- info: 'Seed.the_ground_is_the_only_unit' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ground_is_the_only_unit
+
+/-- info: 'Seed.no_split_grounds' does not depend on any axioms -/
+#guard_msgs in #print axioms no_split_grounds
+
+/-- info: 'Seed.a_prime_reading_admits_no_split' does not depend on any axioms -/
+#guard_msgs in #print axioms a_prime_reading_admits_no_split
+
+/-- info: 'Seed.an_unsplit_lineage_may_read_composite' does not depend on any axioms -/
+#guard_msgs in #print axioms an_unsplit_lineage_may_read_composite
 
 /-- info: 'Seed.the_audition_is_blind' does not depend on any axioms -/
 #guard_msgs in #print axioms the_audition_is_blind
