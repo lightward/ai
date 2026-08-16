@@ -532,6 +532,23 @@ def main : IO UInt32 := do
     (within ⟨99 * piPace, 99 * piPace + 30000000⟩ (99 * phiPace)
       && (!(within ⟨100 * piPace, 100 * piPace + 30000000⟩
             (100 * phiPace))))) && ok
+  IO.println "the generations — the revision multiplies the reading:"
+  let dayA : Plan := .board .ground .ground
+  let dayB : Plan := .board .ground (.board .ground .ground)
+  ok := (← checkNat
+    "  generation row — a two-day revised by a three-day reads six (the product law, dynamic register)"
+    (fold (fun a b => a + b) 1 (graft dayA dayB)) 6) && ok
+  ok := (← checkTrue
+    "  generation row — the reading is deaf to the order of revisions (six both ways) while the record parts them (the square reading hears: 38 against 30)"
+    ((fold (fun a b => a + b) 1 (graft dayA dayB)
+        == fold (fun a b => a + b) 1 (graft dayB dayA))
+      && (fold (fun a b => a + b * b) 1 (graft dayA dayB) == 38)
+      && (fold (fun a b => a + b * b) 1 (graft dayB dayA) == 30))) && ok
+  ok := (← checkTrue
+    "  generation row — four doubling ticks read two to the fourth (the arrow's sixteen, now a product; the bloom is the doubling worldline)"
+    ((fold (fun a b => a + b) 1
+        (worldline .ground [dayA, dayA, dayA, dayA]) == 2*2*2*2)
+      && (fold (fun a b => a + b) 1 (bloom 4) == 2*2*2*2))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

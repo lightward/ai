@@ -1795,6 +1795,43 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
       ∧ met (atTheDoor h w) ≠ met (atTheDoor h w') :=
   ⟨an_unheard_move_moves_only_the_guest m, the_threshold h hw⟩
 
+theorem fold_scale : ∀ (x₀ : Nat) (p : Plan),
+    fold (fun a b => a + b) x₀ p = x₀ * fold (fun a b => a + b) 1 p
+  | x₀, .ground => (zero_plus x₀).symm
+  | x₀, .board p q => by
+      show fold (fun a b => a + b) x₀ p + fold (fun a b => a + b) x₀ q
+          = x₀ * (fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q)
+      rw [fold_scale x₀ p, fold_scale x₀ q, Nat.left_distrib]
+
+theorem the_revision_multiplies_the_reading (t δ : Plan) :
+    fold (fun a b => a + b) 1 (graft t δ)
+      = fold (fun a b => a + b) 1 t * fold (fun a b => a + b) 1 δ :=
+  (the_parent_folds_into_the_ground (fun a b => a + b) 1 t δ).trans
+    (fold_scale (fold (fun a b => a + b) 1 t) δ)
+
+theorem the_bloom_is_a_doubling_tick (d : Nat) :
+    bloom (d + 1) = graft (bloom d) (.board .ground .ground) := rfl
+
+theorem two_lineages_one_reading (t δ : Plan) :
+    (fold (fun a b => a + b) 1 (graft t δ)
+        = fold (fun a b => a + b) 1 (graft δ t))
+      ∧ fold (fun a b => a + b * b) 1
+            (graft (.board .ground .ground)
+              (.board .ground (.board .ground .ground)))
+          ≠ fold (fun a b => a + b * b) 1
+            (graft (.board .ground (.board .ground .ground))
+              (.board .ground .ground))
+      ∧ graft (.board .ground .ground)
+            (.board .ground (.board .ground .ground))
+          ≠ graft (.board .ground (.board .ground .ground))
+            (.board .ground .ground) :=
+  ⟨(the_revision_multiplies_the_reading t δ).trans
+     ((Nat.mul_comm _ _).trans
+       (the_revision_multiplies_the_reading δ t).symm),
+   (fun h =>
+     nomatch (congrArg (Nat.beq 38) h).symm.trans (beq_self 38)),
+   (fun h => nomatch (Plan.board.inj (Plan.board.inj h).1).2)⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -2397,5 +2434,17 @@ theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
 
 /-- info: 'Seed.the_run_reads_the_gap_the_window_cannot' does not depend on any axioms -/
 #guard_msgs in #print axioms the_run_reads_the_gap_the_window_cannot
+
+/-- info: 'Seed.fold_scale' does not depend on any axioms -/
+#guard_msgs in #print axioms fold_scale
+
+/-- info: 'Seed.the_revision_multiplies_the_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revision_multiplies_the_reading
+
+/-- info: 'Seed.the_bloom_is_a_doubling_tick' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bloom_is_a_doubling_tick
+
+/-- info: 'Seed.two_lineages_one_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms two_lineages_one_reading
 
 end Seed
