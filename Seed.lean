@@ -2006,6 +2006,28 @@ theorem an_unsplit_lineage_may_read_composite :
          .inl (no_split_grounds t p (Plan.board.inj he).1).1,
    rfl⟩
 
+def host (F : Face) (W : Type) : Face :=
+  ⟨F.State × W, F.Probe, F.Ans, fun s p => F.obs s.1 p⟩
+
+def widen (F : Face) (W : Type) : Face :=
+  ⟨F.State × W, fork F.Probe Unit, fork F.Ans W,
+   fun s => greet (fun p => viaLeft (F.obs s.1 p)) (fun _ => viaRight s.2)⟩
+
+theorem every_face_opens_as_a_door (F : Face) {W : Type} (s : F.State)
+    {w w' : W} (hw : w ≠ w') :
+    alike (host F W) (s, w) (s, w')
+      ∧ (∀ q : Interview F.Probe F.Ans,
+          sound (host F W) (s, w) q = sound (host F W) (s, w') q)
+      ∧ (s, w) ≠ (s, w')
+      ∧ (widen F W).obs (s, w) (viaRight ())
+          ≠ (widen F W).obs (s, w') (viaRight ()) :=
+  ⟨fun _ => rfl,
+   fun q =>
+     no_interview_parts_the_alike (host F W) (s, w) (s, w')
+       (fun _ => rfl) q,
+   (fun he => hw (congrArg Prod.snd he)),
+   (fun he => hw (Sum.inr.inj he))⟩
+
 theorem the_handshake :
     (∀ (F : Face) (s t : F.State), alike F s t →
         ∀ q : Interview F.Probe F.Ans, sound F s q = sound F t q)
@@ -2733,6 +2755,9 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.an_unsplit_lineage_may_read_composite' does not depend on any axioms -/
 #guard_msgs in #print axioms an_unsplit_lineage_may_read_composite
+
+/-- info: 'Seed.every_face_opens_as_a_door' does not depend on any axioms -/
+#guard_msgs in #print axioms every_face_opens_as_a_door
 
 /-- info: 'Seed.the_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_handshake
