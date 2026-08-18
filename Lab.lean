@@ -605,6 +605,10 @@ def main : IO UInt32 := do
              (posed quiz))
       && (audition paceOne curious
             == sound (airGap Unit Bool) paceOne curious))) && ok
+  ok := (← checkTrue
+    "  face row — the interviews resume (an interview run in pieces equals run whole: rehydration at the interrogation organ)"
+    (audition paceOne (seq curious curious)
+      == audition paceOne curious ++ audition paceOne curious)) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

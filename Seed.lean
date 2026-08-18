@@ -260,6 +260,20 @@ def sound (F : Face) (s : F.State) : Interview F.Probe F.Ans → List F.Ans
 def alike (F : Face) (s t : F.State) : Prop :=
   ∀ p, F.obs s p = F.obs t p
 
+def seq {P A : Type} : Interview P A → Interview P A → Interview P A
+  | .rest, q => q
+  | .ask p k, q => .ask p (fun a => seq (k a) q)
+
+theorem the_interviews_resume (F : Face) (s : F.State) :
+    ∀ q₁ q₂ : Interview F.Probe F.Ans,
+      sound F s (seq q₁ q₂) = sound F s q₁ ++ sound F s q₂
+  | .rest, _ => rfl
+  | .ask p k, q₂ => by
+      show F.obs s p :: sound F s (seq (k (F.obs s p)) q₂)
+          = (F.obs s p :: sound F s (k (F.obs s p))) ++ sound F s q₂
+      rw [the_interviews_resume F s (k (F.obs s p)) q₂]
+      exact rfl
+
 theorem the_yield_writes_no_marks (F : Face) (s : F.State) :
     sound F s .rest = [] := rfl
 
@@ -2731,6 +2745,9 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.the_yield_writes_no_marks' does not depend on any axioms -/
 #guard_msgs in #print axioms the_yield_writes_no_marks
+
+/-- info: 'Seed.the_interviews_resume' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interviews_resume
 
 /-- info: 'Seed.the_quiz_was_an_interview' does not depend on any axioms -/
 #guard_msgs in #print axioms the_quiz_was_an_interview
