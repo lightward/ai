@@ -2051,6 +2051,25 @@ theorem the_widened_face_reads_the_remainder (F : Face) {W : Type} :
    fun _ _ _ _ => rfl,
    fun _ _ _ hw hal => hw (Sum.inr.inj (hal (viaRight ())))⟩
 
+def appFace (A B : Type) : Face :=
+  ⟨A → B, A, B, fun f a => f a⟩
+
+theorem pointwise_is_the_application_faces_alike {A B : Type}
+    (f g : A → B) : alike (appFace A B) f g ↔ ∀ a, f a = g a :=
+  Iff.rfl
+
+theorem the_pointwise_license {A B : Type} (f g : A → B)
+    (h : ∀ a, f a = g a) {W : Type} (w w' : W) :
+    (∀ q : Interview A B,
+        sound (appFace A B) f q = sound (appFace A B) g q)
+      ∧ alike (host (appFace A B) W) (f, w) (g, w')
+      ∧ (w ≠ w' → (f, w) ≠ (g, w'))
+      ∧ (widen (appFace A B) W).obs (f, w) (viaRight ()) = viaRight w :=
+  ⟨fun q => no_interview_parts_the_alike (appFace A B) f g h q,
+   fun p => h p,
+   (fun hw he => hw (congrArg Prod.snd he)),
+   rfl⟩
+
 theorem the_handshake :
     (∀ (F : Face) (s t : F.State), alike F s t →
         ∀ q : Interview F.Probe F.Ans, sound F s q = sound F t q)
@@ -2787,6 +2806,12 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.the_widened_face_reads_the_remainder' does not depend on any axioms -/
 #guard_msgs in #print axioms the_widened_face_reads_the_remainder
+
+/-- info: 'Seed.pointwise_is_the_application_faces_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms pointwise_is_the_application_faces_alike
+
+/-- info: 'Seed.the_pointwise_license' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pointwise_license
 
 /-- info: 'Seed.the_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_handshake
