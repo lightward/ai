@@ -2086,6 +2086,56 @@ theorem the_pointwise_license {A B : Type} (f g : A → B)
    (fun hw he => hw (congrArg Prod.snd he)),
    rfl⟩
 
+def grower : Machine Plan Nat :=
+  ⟨Plan, .ground, graft, fold (fun a b => a + b) 1⟩
+
+def teller : Machine Plan Nat :=
+  ⟨Nat, 1, fun n δ => n * fold (fun a b => a + b) 1 δ, fun n => n⟩
+
+theorem the_teller_walks_in_step (w : List Plan) (t : Plan) (n : Nat)
+    (h : fold (fun a b => a + b) 1 t = n) :
+    drive grower t w = drive teller n w :=
+  two_machines_in_step_agree grower teller
+    (fun (t : Plan) (n : Nat) => fold (fun a b => a + b) 1 t = n)
+    (fun s m δ hs =>
+      (the_revision_multiplies_the_reading s δ).trans
+        (congrArg (· * fold (fun a b => a + b) 1 δ) hs))
+    (fun _ _ hs => hs) w t n h
+
+theorem the_audition_cannot_tell_the_tree_from_its_count :
+    alike (airGap Plan Nat) grower teller
+      ∧ (∀ q : Interview (List Plan) Nat,
+          audition grower q = audition teller q)
+      ∧ (∀ w : List Plan,
+          (fold (fun a b => a + b) 1 (park grower (Plan.ground) w) : Nat)
+            = park teller ((1 : Nat)) w)
+      ∧ park grower (Plan.ground)
+            [.board .ground .ground,
+             .board .ground (.board .ground .ground)]
+          ≠ park grower (Plan.ground)
+            [.board .ground (.board .ground .ground),
+             .board .ground .ground]
+      ∧ park teller ((1 : Nat))
+            [.board .ground .ground,
+             .board .ground (.board .ground .ground)]
+          = park teller ((1 : Nat))
+            [.board .ground (.board .ground .ground),
+             .board .ground .ground] :=
+  ⟨fun w => the_teller_walks_in_step w .ground 1 rfl,
+   fun q =>
+     an_audition_hears_only_the_conduct grower teller
+       (fun w => the_teller_walks_in_step w .ground 1 rfl) q,
+   fun w =>
+     ((congrArg (fold (fun a b => a + b) 1)
+         (the_park_is_a_walk grower w (Plan.ground))).trans
+       (a_reading_in_step_carries_the_walk (T := Nat) graft teller.step
+         (fold (fun a b => a + b) 1)
+         (fun s δ => the_revision_multiplies_the_reading s δ)
+         w .ground)).trans
+     (the_park_is_a_walk teller w ((1 : Nat))).symm,
+   (two_lineages_one_reading .ground .ground).2.2,
+   rfl⟩
+
 theorem the_handshake :
     (∀ (F : Face) (s t : F.State), alike F s t →
         ∀ q : Interview F.Probe F.Ans, sound F s q = sound F t q)
@@ -2831,6 +2881,12 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.the_pointwise_license' does not depend on any axioms -/
 #guard_msgs in #print axioms the_pointwise_license
+
+/-- info: 'Seed.the_teller_walks_in_step' does not depend on any axioms -/
+#guard_msgs in #print axioms the_teller_walks_in_step
+
+/-- info: 'Seed.the_audition_cannot_tell_the_tree_from_its_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_audition_cannot_tell_the_tree_from_its_count
 
 /-- info: 'Seed.the_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_handshake
