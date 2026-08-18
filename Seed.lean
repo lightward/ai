@@ -2051,6 +2051,22 @@ theorem the_widened_face_reads_the_remainder (F : Face) {W : Type} :
    fun _ _ _ _ => rfl,
    fun _ _ _ hw hal => hw (Sum.inr.inj (hal (viaRight ())))⟩
 
+def sharpen (F : Face) {X : Type} (r : F.State → X) : Face :=
+  ⟨F.State, fork F.Probe Unit, fork F.Ans X,
+   fun s => greet (fun p => viaLeft (F.obs s p)) (fun _ => viaRight (r s))⟩
+
+theorem every_reading_sharpens_the_face (F : Face) {X : Type}
+    (r : F.State → X) (s t : F.State) :
+    (alike (sharpen F r) s t → alike F s t)
+      ∧ (sharpen F r).obs s (viaRight ()) = viaRight (r s)
+      ∧ (r s ≠ r t → ¬ alike (sharpen F r) s t)
+      ∧ ∀ (G : Face) (W : Type),
+          widen G W = sharpen (host G W) (fun x => x.2) :=
+  ⟨fun hal p => Sum.inl.inj (hal (viaLeft p)),
+   rfl,
+   (fun hr hal => hr (Sum.inr.inj (hal (viaRight ())))),
+   fun _ _ => rfl⟩
+
 def appFace (A B : Type) : Face :=
   ⟨A → B, A, B, fun f a => f a⟩
 
@@ -2806,6 +2822,9 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.the_widened_face_reads_the_remainder' does not depend on any axioms -/
 #guard_msgs in #print axioms the_widened_face_reads_the_remainder
+
+/-- info: 'Seed.every_reading_sharpens_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms every_reading_sharpens_the_face
 
 /-- info: 'Seed.pointwise_is_the_application_faces_alike' does not depend on any axioms -/
 #guard_msgs in #print axioms pointwise_is_the_application_faces_alike
