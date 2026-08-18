@@ -2042,6 +2042,15 @@ theorem every_face_opens_as_a_door (F : Face) {W : Type} (s : F.State)
    (fun he => hw (congrArg Prod.snd he)),
    (fun he => hw (Sum.inr.inj he))⟩
 
+theorem the_widened_face_reads_the_remainder (F : Face) {W : Type} :
+    (∀ s t : F.State × W, alike (widen F W) s t → alike (host F W) s t)
+      ∧ (∀ (s : F.State) (w w' : W), alike (host F W) (s, w) (s, w'))
+      ∧ ∀ (s : F.State) (w w' : W), w ≠ w' →
+          ¬ alike (widen F W) (s, w) (s, w') :=
+  ⟨fun _ _ hal p => Sum.inl.inj (hal (viaLeft p)),
+   fun _ _ _ _ => rfl,
+   fun _ _ _ hw hal => hw (Sum.inr.inj (hal (viaRight ())))⟩
+
 theorem the_handshake :
     (∀ (F : Face) (s t : F.State), alike F s t →
         ∀ q : Interview F.Probe F.Ans, sound F s q = sound F t q)
@@ -2775,6 +2784,9 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.every_face_opens_as_a_door' does not depend on any axioms -/
 #guard_msgs in #print axioms every_face_opens_as_a_door
+
+/-- info: 'Seed.the_widened_face_reads_the_remainder' does not depend on any axioms -/
+#guard_msgs in #print axioms the_widened_face_reads_the_remainder
 
 /-- info: 'Seed.the_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_handshake
