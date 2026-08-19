@@ -2428,6 +2428,58 @@ theorem the_calculus_rides_the_hands {W W' : Type} (f : W → W')
    the_journey_is_a_conjugated_epoch w0 qs s,
    the_mirror_is_a_conjugated_doubling w0 p s⟩
 
+def comb : Nat → Plan
+  | 0 => .ground
+  | n + 1 => .board .ground (comb n)
+
+theorem the_comb_reads_its_length :
+    ∀ n : Nat, fold (fun a b => a + b) 1 (comb n) = n + 1
+  | 0 => rfl
+  | n + 1 => by
+      show 1 + fold (fun a b => a + b) 1 (comb n) = (n + 1) + 1
+      rw [the_comb_reads_its_length n]
+      exact Nat.add_comm 1 (n + 1)
+
+theorem the_comb_is_a_corridor_of_doors (W : Type) (n : Nat) :
+    build W (comb (n + 1)) = door W (build W (comb n)) := rfl
+
+theorem the_cons_was_a_door {W : Type} (w : W) (n : Nat)
+    (s : build W (comb n)) :
+    pour (comb (n + 1)) (atTheDoor w s) = w :: pour (comb n) s := rfl
+
+def replan {W : Type} (w0 : W) (p q : Plan) (s : build W p) : build W q :=
+  reboard w0 q (pour p s)
+
+theorem the_replanning_moves_no_guest {W : Type} (w0 : W) {p q : Plan}
+    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
+    (s : build W p) :
+    pour q (replan w0 p q s) = pour p s :=
+  the_carrier_rebuilds_the_manifest w0 q (pour p s)
+    ((the_manifest_counts_the_guests p s).trans h.symm)
+
+theorem the_replanning_returns {W : Type} (w0 : W) {p q : Plan}
+    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
+    (s : build W p) :
+    replan w0 q p (replan w0 p q s) = s :=
+  (congrArg (reboard w0 p) (the_replanning_moves_no_guest w0 h s)).trans
+    (the_manifest_rebuilds_the_carrier w0 p s)
+
+theorem the_word_is_a_corridor_of_doors {W : Type} (w0 w1 : W) (n : Nat)
+    {p : Plan} (hp : fold (fun a b => a + b) 1 p = n + 1)
+    (s : build W p) (t : build W (comb n)) :
+    fold (fun a b => a + b) 1 (comb n) = n + 1
+      ∧ build W (comb (n + 1)) = door W (build W (comb n))
+      ∧ pour (comb (n + 1)) (atTheDoor w1 t) = w1 :: pour (comb n) t
+      ∧ pour (comb n) (replan w0 p (comb n) s) = pour p s
+      ∧ replan w0 (comb n) p (replan w0 p (comb n) s) = s :=
+  ⟨the_comb_reads_its_length n,
+   the_comb_is_a_corridor_of_doors W n,
+   the_cons_was_a_door w1 n t,
+   the_replanning_moves_no_guest w0
+     ((the_comb_reads_its_length n).trans hp.symm) s,
+   the_replanning_returns w0
+     ((the_comb_reads_its_length n).trans hp.symm) s⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3195,5 +3247,23 @@ theorem the_calculus_rides_the_hands {W W' : Type} (f : W → W')
 
 /-- info: 'Seed.the_calculus_rides_the_hands' does not depend on any axioms -/
 #guard_msgs in #print axioms the_calculus_rides_the_hands
+
+/-- info: 'Seed.the_comb_reads_its_length' does not depend on any axioms -/
+#guard_msgs in #print axioms the_comb_reads_its_length
+
+/-- info: 'Seed.the_comb_is_a_corridor_of_doors' does not depend on any axioms -/
+#guard_msgs in #print axioms the_comb_is_a_corridor_of_doors
+
+/-- info: 'Seed.the_cons_was_a_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cons_was_a_door
+
+/-- info: 'Seed.the_replanning_moves_no_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_replanning_moves_no_guest
+
+/-- info: 'Seed.the_replanning_returns' does not depend on any axioms -/
+#guard_msgs in #print axioms the_replanning_returns
+
+/-- info: 'Seed.the_word_is_a_corridor_of_doors' does not depend on any axioms -/
+#guard_msgs in #print axioms the_word_is_a_corridor_of_doors
 
 end Seed

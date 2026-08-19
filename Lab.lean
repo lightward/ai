@@ -639,6 +639,16 @@ def main : IO UInt32 := do
       == pour (worldline toyPlan life)
           (reboard (0 : Nat) (worldline toyPlan life)
             (epochs (fun a b => a ++ b) (pour toyPlan toyImport) life)))) && ok
+  ok := (← checkTrue
+    "  corridor row — the shape is gauge for the cargo (three guests replan to the comb, manifest whole)"
+    (pour (comb 2) (replan (0 : Nat) toyPlan (comb 2) toyImport)
+      == pour toyPlan toyImport)) && ok
+  ok := (← checkTrue
+    "  corridor row — the replanning returns (comb and back, the carrier home whole)"
+    (pour toyPlan
+        (replan (0 : Nat) (comb 2) toyPlan
+          (replan (0 : Nat) toyPlan (comb 2) toyImport))
+      == pour toyPlan toyImport)) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
