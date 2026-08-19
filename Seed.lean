@@ -2388,6 +2388,46 @@ theorem the_hands_conjugate_the_customs {W W' : Type} (f : W → W')
    the_customs_thread_the_manifest f p s,
    the_customs_are_a_conjugated_map f w0 p s⟩
 
+theorem the_manifest_settles_the_carrier {W : Type} (w0 : W)
+    {p : Plan} {s : build W p} {l : List W} (h : pour p s = l) :
+    s = reboard w0 p l :=
+  (the_manifest_rebuilds_the_carrier w0 p s).symm.trans
+    (congrArg (reboard w0 p) h)
+
+theorem the_ride_is_a_conjugated_fold {W : Type} (w0 : W) {t : Plan}
+    (s : build W t) (δ : Plan) :
+    ride s δ = reboard w0 (graft t δ)
+        (fold (fun a b => a ++ b) (pour t s) δ) :=
+  the_manifest_settles_the_carrier w0
+    (the_passenger_multiplies_the_manifest s δ)
+
+theorem the_journey_is_a_conjugated_epoch {W : Type} (w0 : W)
+    (qs : List Plan) {t : Plan} (s : build W t) :
+    journey s qs = reboard w0 (worldline t qs)
+        (epochs (fun a b => a ++ b) (pour t s) qs) :=
+  the_manifest_settles_the_carrier w0 (the_journey_manifest_settles qs s)
+
+theorem the_mirror_is_a_conjugated_doubling {W : Type} (w0 : W) (p : Plan)
+    (s : build W p) :
+    mirror W p s = reboard w0 (.board p p) (pour p s ++ pour p s) :=
+  the_manifest_settles_the_carrier w0 (the_mirror_doubles_the_manifest p s)
+
+theorem the_calculus_rides_the_hands {W W' : Type} (f : W → W')
+    (w0 : W) (w0' : W') {p : Plan} (s : build W p) (δ : Plan)
+    (qs : List Plan) {l : List W} (h : pour p s = l) :
+    s = reboard w0 p l
+      ∧ reground f p s = reboard w0' p ((pour p s).map f)
+      ∧ ride s δ = reboard w0 (graft p δ)
+          (fold (fun a b => a ++ b) (pour p s) δ)
+      ∧ journey s qs = reboard w0 (worldline p qs)
+          (epochs (fun a b => a ++ b) (pour p s) qs)
+      ∧ mirror W p s = reboard w0 (.board p p) (pour p s ++ pour p s) :=
+  ⟨the_manifest_settles_the_carrier w0 h,
+   the_customs_are_a_conjugated_map f w0' p s,
+   the_ride_is_a_conjugated_fold w0 s δ,
+   the_journey_is_a_conjugated_epoch w0 qs s,
+   the_mirror_is_a_conjugated_doubling w0 p s⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3140,5 +3180,20 @@ theorem the_hands_conjugate_the_customs {W W' : Type} (f : W → W')
 
 /-- info: 'Seed.the_hands_conjugate_the_customs' does not depend on any axioms -/
 #guard_msgs in #print axioms the_hands_conjugate_the_customs
+
+/-- info: 'Seed.the_manifest_settles_the_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_manifest_settles_the_carrier
+
+/-- info: 'Seed.the_ride_is_a_conjugated_fold' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ride_is_a_conjugated_fold
+
+/-- info: 'Seed.the_journey_is_a_conjugated_epoch' does not depend on any axioms -/
+#guard_msgs in #print axioms the_journey_is_a_conjugated_epoch
+
+/-- info: 'Seed.the_mirror_is_a_conjugated_doubling' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mirror_is_a_conjugated_doubling
+
+/-- info: 'Seed.the_calculus_rides_the_hands' does not depend on any axioms -/
+#guard_msgs in #print axioms the_calculus_rides_the_hands
 
 end Seed

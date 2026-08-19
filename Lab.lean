@@ -627,6 +627,18 @@ def main : IO UInt32 := do
     (pour toyPlan (reground (fun w => w * 1000) toyPlan toyImport)
       == pour toyPlan (reboard (0 : Nat) toyPlan
           ((pour toyPlan toyImport).map (fun w => w * 1000))))) && ok
+  ok := (← checkTrue
+    "  hand row — the ride is a conjugated fold (the tick crossed as a list-move through the hands)"
+    (pour (graft toyPlan revision) (ride toyImport revision)
+      == pour (graft toyPlan revision)
+          (reboard (0 : Nat) (graft toyPlan revision)
+            (fold (fun a b => a ++ b) (pour toyPlan toyImport) revision)))) && ok
+  ok := (← checkTrue
+    "  hand row — the journey is a conjugated epoch (the whole life crossed as its epoch-concat)"
+    (pour (worldline toyPlan life) (journey toyImport life)
+      == pour (worldline toyPlan life)
+          (reboard (0 : Nat) (worldline toyPlan life)
+            (epochs (fun a b => a ++ b) (pour toyPlan toyImport) life)))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
