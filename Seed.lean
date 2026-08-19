@@ -2480,6 +2480,34 @@ theorem the_word_is_a_corridor_of_doors {W : Type} (w0 w1 : W) (n : Nat)
    the_replanning_returns w0
      ((the_comb_reads_its_length n).trans hp.symm) s⟩
 
+theorem the_shape_is_the_remainder_of_the_cargo {W : Type} (w0 : W)
+    {p q : Plan}
+    (hr : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
+    (hpq : p ≠ q) (s : build W p) :
+    pour q (replan w0 p q s) = pour p s
+      ∧ face (specView p s) ≠ face (specView q (replan w0 p q s))
+      ∧ met (specView q (replan w0 p q s)) = replan w0 p q s :=
+  ⟨the_replanning_moves_no_guest w0 hr s,
+   fun he => hpq he,
+   rfl⟩
+
+theorem the_replanning_runs_the_handshake {W : Type} (w0 : W)
+    (s : build W (.board (.board .ground .ground) .ground)) :
+    (Plan.board (.board .ground .ground) .ground ≠ comb 2)
+      ∧ fold (fun a b => a + b) 1 (.board (.board .ground .ground) .ground)
+          = fold (fun a b => a + b) 1 (comb 2)
+      ∧ pour (comb 2)
+            (replan w0 (.board (.board .ground .ground) .ground) (comb 2) s)
+          = pour (.board (.board .ground .ground) .ground) s
+      ∧ face (specView (.board (.board .ground .ground) .ground) s)
+          ≠ face (specView (comb 2)
+              (replan w0 (.board (.board .ground .ground) .ground)
+                (comb 2) s)) :=
+  ⟨(fun h => nomatch (Plan.board.inj h).1),
+   rfl,
+   the_replanning_moves_no_guest w0 rfl s,
+   (fun h => nomatch (Plan.board.inj h).1)⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3265,5 +3293,11 @@ theorem the_word_is_a_corridor_of_doors {W : Type} (w0 w1 : W) (n : Nat)
 
 /-- info: 'Seed.the_word_is_a_corridor_of_doors' does not depend on any axioms -/
 #guard_msgs in #print axioms the_word_is_a_corridor_of_doors
+
+/-- info: 'Seed.the_shape_is_the_remainder_of_the_cargo' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shape_is_the_remainder_of_the_cargo
+
+/-- info: 'Seed.the_replanning_runs_the_handshake' does not depend on any axioms -/
+#guard_msgs in #print axioms the_replanning_runs_the_handshake
 
 end Seed
