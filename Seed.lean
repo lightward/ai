@@ -2097,7 +2097,7 @@ theorem the_teller_walks_in_step (w : List Plan) (t : Plan) (n : Nat)
     drive grower t w = drive teller n w :=
   two_machines_in_step_agree grower teller
     (fun (t : Plan) (n : Nat) => fold (fun a b => a + b) 1 t = n)
-    (fun s m δ hs =>
+    (fun s _ δ hs =>
       (the_revision_multiplies_the_reading s δ).trans
         (congrArg (· * fold (fun a b => a + b) 1 δ) hs))
     (fun _ _ hs => hs) w t n h
@@ -2203,6 +2203,106 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
    fun _ hx => no_interview_hears_the_excluded m hlearn t r hr hx,
    no_interview_hears_the_excluded m hlearn t r hr
      (the_window_misses_its_own_successor (m.out m.s0))⟩
+
+theorem take_append {A : Type} :
+    ∀ (xs ys : List A), (xs ++ ys).take xs.length = xs
+  | [], _ => rfl
+  | x :: xs, ys => congrArg (x :: ·) (take_append xs ys)
+
+theorem drop_append {A : Type} :
+    ∀ (xs ys : List A), (xs ++ ys).drop xs.length = ys
+  | [], _ => rfl
+  | _ :: xs, ys => drop_append xs ys
+
+theorem take_drop {A : Type} :
+    ∀ (n : Nat) (l : List A), l.take n ++ l.drop n = l
+  | 0, _ => rfl
+  | _ + 1, [] => rfl
+  | n + 1, a :: l => congrArg (a :: ·) (take_drop n l)
+
+theorem take_length {A : Type} :
+    ∀ (n : Nat) (l : List A) {m : Nat},
+      l.length = n + m → (l.take n).length = n
+  | 0, _, _, _ => rfl
+  | n + 1, [], _, h => by
+      rw [succ_adds] at h
+      exact nomatch h
+  | n + 1, _ :: l, _, h => by
+      rw [succ_adds] at h
+      exact congrArg (· + 1) (take_length n l (Nat.succ.inj h))
+
+theorem drop_length {A : Type} :
+    ∀ (n : Nat) (l : List A) {m : Nat},
+      l.length = n + m → (l.drop n).length = m
+  | 0, _, m, h => h.trans (zero_plus m)
+  | n + 1, [], _, h => by
+      rw [succ_adds] at h
+      exact nomatch h
+  | n + 1, _ :: l, _, h => by
+      rw [succ_adds] at h
+      exact drop_length n l (Nat.succ.inj h)
+
+def reboard {W : Type} (w0 : W) : (p : Plan) → List W → build W p
+  | .ground, [] => w0
+  | .ground, x :: _ => x
+  | .board p q, l =>
+      atTheDoor (reboard w0 p (l.take (fold (fun a b => a + b) 1 p)))
+        (reboard w0 q (l.drop (fold (fun a b => a + b) 1 p)))
+
+theorem the_manifest_rebuilds_the_carrier {W : Type} (w0 : W) :
+    ∀ (p : Plan) (s : build W p), reboard w0 p (pour p s) = s
+  | .ground, _ => rfl
+  | .board p q, d => by
+      show atTheDoor
+          (reboard w0 p ((pour p (face d) ++ pour q (met d)).take
+            (fold (fun a b => a + b) 1 p)))
+          (reboard w0 q ((pour p (face d) ++ pour q (met d)).drop
+            (fold (fun a b => a + b) 1 p)))
+        = d
+      rw [← the_manifest_counts_the_guests p (face d),
+          take_append, drop_append,
+          the_manifest_rebuilds_the_carrier w0 p (face d),
+          the_manifest_rebuilds_the_carrier w0 q (met d)]
+      exact rfl
+
+theorem one_manifest_one_carrier {W : Type} {p : Plan} {s t : build W p}
+    (h : pour p s = pour p t) : s = t :=
+  (the_manifest_rebuilds_the_carrier (spine W p s) p s).symm.trans
+    ((congrArg (reboard (spine W p s) p) h).trans
+      (the_manifest_rebuilds_the_carrier (spine W p s) p t))
+
+theorem the_carrier_rebuilds_the_manifest {W : Type} (w0 : W) :
+    ∀ (p : Plan) (l : List W),
+      l.length = fold (fun a b => a + b) 1 p →
+        pour p (reboard w0 p l) = l
+  | .ground, [], h => nomatch h
+  | .ground, _ :: [], _ => rfl
+  | .ground, _ :: _ :: _, h => nomatch (Nat.succ.inj h)
+  | .board p q, l, h => by
+      show pour p (reboard w0 p (l.take (fold (fun a b => a + b) 1 p)))
+            ++ pour q (reboard w0 q (l.drop (fold (fun a b => a + b) 1 p)))
+          = l
+      rw [the_carrier_rebuilds_the_manifest w0 p
+            (l.take (fold (fun a b => a + b) 1 p))
+            (take_length (fold (fun a b => a + b) 1 p) l
+              (m := fold (fun a b => a + b) 1 q) h),
+          the_carrier_rebuilds_the_manifest w0 q
+            (l.drop (fold (fun a b => a + b) 1 p))
+            (drop_length (fold (fun a b => a + b) 1 p) l
+              (m := fold (fun a b => a + b) 1 q) h),
+          take_drop]
+
+theorem the_carrier_is_its_manifest {W : Type} (w0 : W) (p : Plan)
+    (s t : build W p) (l : List W)
+    (hl : l.length = fold (fun a b => a + b) 1 p) :
+    (pour p s).length = fold (fun a b => a + b) 1 p
+      ∧ reboard w0 p (pour p s) = s
+      ∧ (pour p s = pour p t → s = t)
+      ∧ pour p (reboard w0 p l) = l :=
+  ⟨the_manifest_counts_the_guests p s,
+   the_manifest_rebuilds_the_carrier w0 p s,
+   fun h => one_manifest_one_carrier h,
+   the_carrier_rebuilds_the_manifest w0 p l hl⟩
 
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
@@ -2902,5 +3002,32 @@ theorem the_cage_is_audible_through_the_curtain {I : Type}
 
 /-- info: 'Seed.the_cage_is_audible_through_the_curtain' does not depend on any axioms -/
 #guard_msgs in #print axioms the_cage_is_audible_through_the_curtain
+
+/-- info: 'Seed.take_append' does not depend on any axioms -/
+#guard_msgs in #print axioms take_append
+
+/-- info: 'Seed.drop_append' does not depend on any axioms -/
+#guard_msgs in #print axioms drop_append
+
+/-- info: 'Seed.take_drop' does not depend on any axioms -/
+#guard_msgs in #print axioms take_drop
+
+/-- info: 'Seed.take_length' does not depend on any axioms -/
+#guard_msgs in #print axioms take_length
+
+/-- info: 'Seed.drop_length' does not depend on any axioms -/
+#guard_msgs in #print axioms drop_length
+
+/-- info: 'Seed.the_manifest_rebuilds_the_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_manifest_rebuilds_the_carrier
+
+/-- info: 'Seed.one_manifest_one_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms one_manifest_one_carrier
+
+/-- info: 'Seed.the_carrier_rebuilds_the_manifest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carrier_rebuilds_the_manifest
+
+/-- info: 'Seed.the_carrier_is_its_manifest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carrier_is_its_manifest
 
 end Seed
