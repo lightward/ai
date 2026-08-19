@@ -657,6 +657,14 @@ def main : IO UInt32 := do
         (replan (0 : Nat) (.board (.board .ground .ground) .ground)
           (comb 2) lcGuest)
       == [7, 8, 9])) && ok
+  ok := (← checkTrue
+    "  simulation row — the audition cannot tell the carrier from its word (two ticks of customs, one conduct on flat words)"
+    (behavior (onPlan toyPlan toyImport
+        (fun s _ => reground (fun w => w + 1) toyPlan s)
+        (spine Nat toyPlan)) [(), ()]
+      == behavior (onWords (0 : Nat) toyPlan
+          (fun s _ => reground (fun w => w + 1) toyPlan s)
+          (spine Nat toyPlan) toyImport) [(), ()])) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

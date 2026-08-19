@@ -2508,6 +2508,60 @@ theorem the_replanning_runs_the_handshake {W : Type} (w0 : W)
    the_replanning_moves_no_guest w0 rfl s,
    (fun h => nomatch (Plan.board.inj h).1)⟩
 
+def onPlan {W I O : Type} (p : Plan) (s0 : build W p)
+    (step : build W p → I → build W p) (out : build W p → O) :
+    Machine I O :=
+  ⟨build W p, s0, step, out⟩
+
+def onWords {W I O : Type} (w0 : W) (p : Plan)
+    (step : build W p → I → build W p) (out : build W p → O)
+    (s0 : build W p) : Machine I O :=
+  ⟨List W, pour p s0,
+   fun l i => pour p (step (reboard w0 p l) i),
+   fun l => out (reboard w0 p l)⟩
+
+theorem the_words_walk_in_step {W I O : Type} (w0 : W) (p : Plan)
+    (s0 : build W p) (step : build W p → I → build W p)
+    (out : build W p → O) (w : List I) :
+    behavior (onPlan p s0 step out)
+      w = behavior (onWords w0 p step out s0) w :=
+  two_machines_in_step_agree (onPlan p s0 step out)
+    (onWords w0 p step out s0)
+    (fun (s : build W p) (l : List W) => l = pour p s)
+    (fun s l i hl => by
+      show pour p (step (reboard w0 p l) i) = pour p (step s i)
+      rw [hl, the_manifest_rebuilds_the_carrier])
+    (fun s l hl => by
+      show out s = out (reboard w0 p l)
+      rw [hl, the_manifest_rebuilds_the_carrier])
+    w s0 (pour p s0) rfl
+
+theorem the_pour_is_never_empty {W : Type} (p : Plan) (s : build W p) :
+    pour p s ≠ [] :=
+  fun h =>
+    match the_reading_is_positive p with
+    | ⟨_, hm⟩ =>
+        nomatch ((congrArg List.length h).symm.trans
+          ((the_manifest_counts_the_guests p s).trans hm))
+
+theorem the_audition_cannot_tell_the_carrier_from_its_word
+    {W I O : Type} (w0 : W) (p : Plan) (s0 : build W p)
+    (step : build W p → I → build W p) (out : build W p → O)
+    (s : build W p) :
+    (∀ w : List I,
+        behavior (onPlan p s0 step out) w
+          = behavior (onWords w0 p step out s0) w)
+      ∧ (∀ t : Interview (List I) O,
+          audition (onPlan p s0 step out) t
+            = audition (onWords w0 p step out s0) t)
+      ∧ pour p s ≠ ([] : List W) :=
+  ⟨fun w => the_words_walk_in_step w0 p s0 step out w,
+   fun t =>
+     an_audition_hears_only_the_conduct (onPlan p s0 step out)
+       (onWords w0 p step out s0)
+       (fun w => the_words_walk_in_step w0 p s0 step out w) t,
+   the_pour_is_never_empty p s⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3299,5 +3353,14 @@ theorem the_replanning_runs_the_handshake {W : Type} (w0 : W)
 
 /-- info: 'Seed.the_replanning_runs_the_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_replanning_runs_the_handshake
+
+/-- info: 'Seed.the_words_walk_in_step' does not depend on any axioms -/
+#guard_msgs in #print axioms the_words_walk_in_step
+
+/-- info: 'Seed.the_pour_is_never_empty' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pour_is_never_empty
+
+/-- info: 'Seed.the_audition_cannot_tell_the_carrier_from_its_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_audition_cannot_tell_the_carrier_from_its_word
 
 end Seed
