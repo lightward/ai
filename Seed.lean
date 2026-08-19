@@ -2342,6 +2342,52 @@ theorem transport_is_gauge_at_the_manifest {W : Type} {p p' : Plan}
        (ride (ride s0 δ₁) δ₂) (ride s0 (graft δ₁ δ₂))).mpr
      (the_rides_compose_at_the_manifest s0 δ₁ δ₂)⟩
 
+theorem len_map {A B : Type} (f : A → B) :
+    ∀ l : List A, (l.map f).length = l.length
+  | [] => rfl
+  | _ :: l => congrArg (· + 1) (len_map f l)
+
+theorem the_default_goes_unused {W : Type} (w0 w1 : W) (p : Plan)
+    (l : List W) (h : l.length = fold (fun a b => a + b) 1 p) :
+    reboard w0 p l = reboard w1 p l :=
+  one_manifest_one_carrier
+    ((the_carrier_rebuilds_the_manifest w0 p l h).trans
+      (the_carrier_rebuilds_the_manifest w1 p l h).symm)
+
+theorem the_spine_boards_first {W : Type} :
+    ∀ (p : Plan) (s : build W p),
+      ∃ rest : List W, pour p s = spine W p s :: rest
+  | .ground, _ => ⟨[], rfl⟩
+  | .board p q, d =>
+      match the_spine_boards_first p (face d) with
+      | ⟨rest, hr⟩ =>
+          ⟨rest ++ pour q (met d), by
+            show pour p (face d) ++ pour q (met d)
+                = spine W p (face d) :: (rest ++ pour q (met d))
+            rw [hr]
+            exact rfl⟩
+
+theorem the_customs_are_a_conjugated_map {W W' : Type} (f : W → W')
+    (w0 : W') (p : Plan) (s : build W p) :
+    reground f p s = reboard w0 p ((pour p s).map f) :=
+  one_manifest_one_carrier
+    ((the_customs_thread_the_manifest f p s).trans
+      (the_carrier_rebuilds_the_manifest w0 p ((pour p s).map f)
+        ((len_map f (pour p s)).trans
+          (the_manifest_counts_the_guests p s))).symm)
+
+theorem the_hands_conjugate_the_customs {W W' : Type} (f : W → W')
+    (w0 : W') (v0 v1 : W) (p : Plan) (s : build W p) (l : List W)
+    (hl : l.length = fold (fun a b => a + b) 1 p) :
+    (∃ rest : List W, pour p s = spine W p s :: rest)
+      ∧ reboard v0 p l = reboard v1 p l
+      ∧ pour p (reground f p s) = (pour p s).map f
+      ∧ reground f p s = reboard w0 p ((pour p s).map f) :=
+  ⟨the_spine_boards_first p s,
+   the_default_goes_unused v0 v1 p l hl,
+   the_customs_thread_the_manifest f p s,
+   the_customs_are_a_conjugated_map f w0 p s⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3079,5 +3125,20 @@ theorem transport_is_gauge_at_the_manifest {W : Type} {p p' : Plan}
 
 /-- info: 'Seed.transport_is_gauge_at_the_manifest' does not depend on any axioms -/
 #guard_msgs in #print axioms transport_is_gauge_at_the_manifest
+
+/-- info: 'Seed.len_map' does not depend on any axioms -/
+#guard_msgs in #print axioms len_map
+
+/-- info: 'Seed.the_default_goes_unused' does not depend on any axioms -/
+#guard_msgs in #print axioms the_default_goes_unused
+
+/-- info: 'Seed.the_spine_boards_first' does not depend on any axioms -/
+#guard_msgs in #print axioms the_spine_boards_first
+
+/-- info: 'Seed.the_customs_are_a_conjugated_map' does not depend on any axioms -/
+#guard_msgs in #print axioms the_customs_are_a_conjugated_map
+
+/-- info: 'Seed.the_hands_conjugate_the_customs' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hands_conjugate_the_customs
 
 end Seed

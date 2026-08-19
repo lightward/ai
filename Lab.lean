@@ -618,6 +618,15 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  hand row — the carrier rebuilds the manifest (three guests board, three guests pour back, same order)"
     (pour toyPlan (reboard (0 : Nat) toyPlan [9109, 2, 3]) == [9109, 2, 3])) && ok
+  ok := (← checkTrue
+    "  hand row — the default goes unused (two safety-guests, one rebuild, the manifest whole)"
+    (pour toyPlan (reboard (0 : Nat) toyPlan [9109, 2, 3])
+      == pour toyPlan (reboard (777 : Nat) toyPlan [9109, 2, 3]))) && ok
+  ok := (← checkTrue
+    "  hand row — the customs are a conjugated map (reground equals pour, then map, then reboard)"
+    (pour toyPlan (reground (fun w => w * 1000) toyPlan toyImport)
+      == pour toyPlan (reboard (0 : Nat) toyPlan
+          ((pour toyPlan toyImport).map (fun w => w * 1000))))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
