@@ -665,6 +665,11 @@ def main : IO UInt32 := do
       == behavior (onWords (0 : Nat) toyPlan
           (fun s _ => reground (fun w => w + 1) toyPlan s)
           (spine Nat toyPlan) toyImport) [(), ()])) && ok
+  ok := (← checkTrue
+    "  simulation row — the vestibule drains in one click (the empty word, one tick, on-spec forever)"
+    (((onWords (0 : Nat) toyPlan
+        (fun s _ => reground (fun w => w + 1) toyPlan s)
+        (spine Nat toyPlan) toyImport).step [] ()).length == 3)) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

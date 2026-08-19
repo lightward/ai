@@ -2562,6 +2562,20 @@ theorem the_audition_cannot_tell_the_carrier_from_its_word
        (fun w => the_words_walk_in_step w0 p s0 step out w) t,
    the_pour_is_never_empty p s⟩
 
+theorem the_vestibule_drains_in_one_click {W I O : Type} (w0 : W)
+    (p : Plan) (s0 : build W p) (step : build W p → I → build W p)
+    (out : build W p → O) (l : List W) (i : I) (s : build W p) :
+    (onWords w0 p step out s0).step l i
+        = pour p (step (reboard w0 p l) i)
+      ∧ ((onWords w0 p step out s0).step l i).length
+          = fold (fun a b => a + b) 1 p
+      ∧ (onWords w0 p step out s0).step (pour p s) i
+          = pour p (step s i) :=
+  ⟨rfl,
+   the_manifest_counts_the_guests p (step (reboard w0 p l) i),
+   congrArg (fun x => pour p (step x i))
+     (the_manifest_rebuilds_the_carrier w0 p s)⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3362,5 +3376,8 @@ theorem the_audition_cannot_tell_the_carrier_from_its_word
 
 /-- info: 'Seed.the_audition_cannot_tell_the_carrier_from_its_word' does not depend on any axioms -/
 #guard_msgs in #print axioms the_audition_cannot_tell_the_carrier_from_its_word
+
+/-- info: 'Seed.the_vestibule_drains_in_one_click' does not depend on any axioms -/
+#guard_msgs in #print axioms the_vestibule_drains_in_one_click
 
 end Seed
