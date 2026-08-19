@@ -2304,6 +2304,44 @@ theorem the_carrier_is_its_manifest {W : Type} (w0 : W) (p : Plan)
    fun h => one_manifest_one_carrier h,
    the_carrier_rebuilds_the_manifest w0 p l hl⟩
 
+theorem the_transport_moves_no_guest {W : Type} {p p' : Plan} (h : p = p')
+    (s : build W p) :
+    pour p' (cast (congrArg (build W) h) s) = pour p s := by
+  cases h
+  rfl
+
+theorem any_transport_moves_no_guest {W : Type} {p p' : Plan} (h : p = p')
+    (e : build W p = build W p') (s : build W p) :
+    pour p' (cast e s) = pour p s :=
+  (congrArg (pour p')
+      (the_transport_sheds_its_route e (congrArg (build W) h) s)).trans
+    (the_transport_moves_no_guest h s)
+
+theorem the_border_reads_only_the_manifest {W : Type} {p p' : Plan}
+    (h : p = p') (s : build W p) (t : build W p') :
+    cast (congrArg (build W) h) s = t ↔ pour p s = pour p' t :=
+  ⟨fun he =>
+     (the_transport_moves_no_guest h s).symm.trans (congrArg (pour p') he),
+   fun hm =>
+     one_manifest_one_carrier
+       ((the_transport_moves_no_guest h s).trans hm)⟩
+
+theorem transport_is_gauge_at_the_manifest {W : Type} {p p' : Plan}
+    (h : p = p') (e : build W p = build W p') (s : build W p)
+    (t : build W p') {t0 : Plan} (s0 : build W t0) (δ₁ δ₂ : Plan) :
+    pour p' (cast (congrArg (build W) h) s) = pour p s
+      ∧ pour p' (cast e s) = pour p s
+      ∧ (cast (congrArg (build W) h) s = t ↔ pour p s = pour p' t)
+      ∧ cast (congrArg (build W) (lineages_compose t0 δ₁ δ₂).symm)
+            (ride (ride s0 δ₁) δ₂)
+          = ride s0 (graft δ₁ δ₂) :=
+  ⟨the_transport_moves_no_guest h s,
+   any_transport_moves_no_guest h e s,
+   the_border_reads_only_the_manifest h s t,
+   (the_border_reads_only_the_manifest (lineages_compose t0 δ₁ δ₂).symm
+       (ride (ride s0 δ₁) δ₂) (ride s0 (graft δ₁ δ₂))).mpr
+     (the_rides_compose_at_the_manifest s0 δ₁ δ₂)⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3029,5 +3067,17 @@ theorem the_carrier_is_its_manifest {W : Type} (w0 : W) (p : Plan)
 
 /-- info: 'Seed.the_carrier_is_its_manifest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_carrier_is_its_manifest
+
+/-- info: 'Seed.the_transport_moves_no_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_transport_moves_no_guest
+
+/-- info: 'Seed.any_transport_moves_no_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms any_transport_moves_no_guest
+
+/-- info: 'Seed.the_border_reads_only_the_manifest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_border_reads_only_the_manifest
+
+/-- info: 'Seed.transport_is_gauge_at_the_manifest' does not depend on any axioms -/
+#guard_msgs in #print axioms transport_is_gauge_at_the_manifest
 
 end Seed
