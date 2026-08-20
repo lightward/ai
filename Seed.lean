@@ -3087,6 +3087,27 @@ theorem the_registers_reduce_at_conduct {I O W X : Type} (m : Machine I O)
    the_host_reboards_the_stream n f β,
    the_replanning_moves_no_guest w0 hr c⟩
 
+theorem the_remainders_wear_the_blindnesses {W X : Type} (F : Face)
+    (s : F.State) {w w' : W} (hw : w ≠ w') (w0 : X) {p q : Plan}
+    (hr : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
+    (hpq : p ≠ q) (c : build X p) :
+    (alike (host F W) (s, w) (s, w')
+        ∧ (widen F W).obs (s, w) (viaRight ())
+            ≠ (widen F W).obs (s, w') (viaRight ()))
+      ∧ (pour q (replan w0 p q c) = pour p c
+          ∧ face (specView p c) ≠ face (specView q (replan w0 p q c)))
+      ∧ (alike (receptionFace Nat Nat) doorman
+            (strokesReception 1 doormanTower)
+          ∧ (patienceFace Nat Nat).obs doorman (twoGuests 0 0)
+              ≠ (patienceFace Nat Nat).obs
+                  (strokesReception 1 doormanTower) (twoGuests 0 0)) :=
+  ⟨⟨(every_face_opens_as_a_door F s hw).1,
+    (every_face_opens_as_a_door F s hw).2.2.2⟩,
+   ⟨(the_shape_is_the_remainder_of_the_cargo w0 hr hpq c).1,
+    (the_shape_is_the_remainder_of_the_cargo w0 hr hpq c).2.1⟩,
+   ⟨the_hosts_are_alike_at_the_reception_face,
+    the_patience_face_parts_the_hosts⟩⟩
+
 theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
     alike (receptionFace Nat Nat) doorman
         (strokesReception 1 doormanTower)
@@ -4052,5 +4073,8 @@ theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
 
 /-- info: 'Seed.the_registers_reduce_at_conduct' does not depend on any axioms -/
 #guard_msgs in #print axioms the_registers_reduce_at_conduct
+
+/-- info: 'Seed.the_remainders_wear_the_blindnesses' does not depend on any axioms -/
+#guard_msgs in #print axioms the_remainders_wear_the_blindnesses
 
 end Seed
