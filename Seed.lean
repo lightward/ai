@@ -2922,6 +2922,38 @@ theorem the_carrier_checks_in_one_guest_at_a_time {W X Y : Type}
      (the_comb_reads_its_length n).symm,
    the_handoff_is_the_board_at_the_ledger n m g h α⟩
 
+def strokesFace (W X : Type) (n : Nat) : Face :=
+  ⟨strokes W X n, build W (comb n), X, fun g s => allAtOnce n g s⟩
+
+theorem the_tower_alike_reads_at_the_face {W X : Type} :
+    ∀ (n : Nat) (g g' : strokes W X n),
+      strokesAlike n g g' ↔ alike (strokesFace W X n) g g'
+  | 0, _, _ => Iff.rfl
+  | n + 1, g, g' =>
+      ⟨fun h s =>
+         ((the_tower_alike_reads_at_the_face n (g (face s))
+             (g' (face s))).mp (h (face s))) (met s),
+       fun h w =>
+         (the_tower_alike_reads_at_the_face n (g w) (g' w)).mpr
+           (fun s' => h (atTheDoor w s'))⟩
+
+theorem the_crossed_readings_turn_about {H W X : Type}
+    (f : fork W H → X) :
+    handlers (fun k : fork H W => f (crossOver k))
+      = turnAbout (handlers f) := rfl
+
+theorem the_pointwise_license_is_a_face_license {W X H Y : Type}
+    (n : Nat) (g g' : strokes W X n) (h : strokesAlike n g g')
+    (q : Interview (build W (comb n)) X) (f : fork Y H → X) :
+    alike (strokesFace W X n) g g'
+      ∧ sound (strokesFace W X n) g q = sound (strokesFace W X n) g' q
+      ∧ handlers (fun k : fork H Y => f (crossOver k))
+          = turnAbout (handlers f) :=
+  ⟨(the_tower_alike_reads_at_the_face n g g').mp h,
+   no_interview_parts_the_alike (strokesFace W X n) g g'
+     ((the_tower_alike_reads_at_the_face n g g').mp h) q,
+   rfl⟩
+
 theorem the_lock_survives_every_lap (a d n : Nat) :
     within ⟨n * a, n * a + d⟩ (n * a) = true :=
   and_glue (ble_refl (n * a)) (ble_le_add (n * a) d)
@@ -3978,5 +4010,14 @@ theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
 
 /-- info: 'Seed.the_wheels_signature_is_gap_zero' does not depend on any axioms -/
 #guard_msgs in #print axioms the_wheels_signature_is_gap_zero
+
+/-- info: 'Seed.the_tower_alike_reads_at_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tower_alike_reads_at_the_face
+
+/-- info: 'Seed.the_crossed_readings_turn_about' does not depend on any axioms -/
+#guard_msgs in #print axioms the_crossed_readings_turn_about
+
+/-- info: 'Seed.the_pointwise_license_is_a_face_license' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pointwise_license_is_a_face_license
 
 end Seed

@@ -813,6 +813,14 @@ def main : IO UInt32 := do
       && (fold (fun a b => a + b) 1
             (graft (.board .ground .ground)
               (.board .ground (.board .ground .ground))) == 6))) && ok
+  let towerProbe : Nat × Nat := (4, 9)
+  let towerReading : Nat := (strokesFace Nat Nat 1).obs doormanTower towerProbe
+  ok := (← checkTrue
+    "  face row — the tower's sameness is a face-alike, and the crossed readings turn about (the swap family is one house)"
+    ((towerReading == 9)
+      && ((face (turnAbout
+            (handlers (greet (fun (n : Nat) => n + 1)
+              (fun (n : Nat) => n * 2)))) (5 : Nat) : Nat) == 10))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
