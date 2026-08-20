@@ -3255,6 +3255,45 @@ theorem the_diagonal_mints_the_probe (F : Face.{0}) {A X : Type}
       ∧ selfMeet windowFace (fun w => w.hi + 1) m = false :=
   ⟨rfl, rfl, rfl, the_window_misses_its_own_successor m⟩
 
+theorem the_self_meeting_reads_the_guest (F : Face) {W : Type}
+    (r : W → F.Probe) (s : F.State) (w : W) :
+    selfMeet (host F W) (fun x => r x.2) (s, w) = F.obs s (r w) := rfl
+
+theorem the_self_meeting_parts_the_alike :
+    alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
+      ∧ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+            (⟨0, 0⟩, true)
+          ≠ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+              (⟨0, 0⟩, false) :=
+  ⟨fun _ => rfl, fun h => nomatch h⟩
+
+theorem the_sharpened_window_exhibits_the_escapee (m : Measured) :
+    (sharpen windowFace (fun w => w.hi + 1)).obs m (viaRight ())
+        = viaRight (m.hi + 1)
+      ∧ within m (m.hi + 1) = false :=
+  ⟨rfl, the_window_misses_its_own_successor m⟩
+
+theorem the_curtain_follows_the_minting (m : Measured)
+    (q : Interview Nat Bool) :
+    (alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
+        ∧ sound (host windowFace Bool) (⟨0, 0⟩, true) q
+            = sound (host windowFace Bool) (⟨0, 0⟩, false) q)
+      ∧ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+            (⟨0, 0⟩, true)
+          ≠ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+              (⟨0, 0⟩, false)
+      ∧ (widen windowFace Bool).obs (⟨0, 0⟩, true) (viaRight ())
+          ≠ (widen windowFace Bool).obs (⟨0, 0⟩, false) (viaRight ())
+      ∧ ((sharpen windowFace (fun w => w.hi + 1)).obs m (viaRight ())
+            = viaRight (m.hi + 1)
+          ∧ within m (m.hi + 1) = false) :=
+  ⟨⟨the_self_meeting_parts_the_alike.1,
+    no_interview_parts_the_alike (host windowFace Bool) _ _
+      the_self_meeting_parts_the_alike.1 q⟩,
+   the_self_meeting_parts_the_alike.2,
+   (fun h => nomatch Sum.inr.inj h),
+   the_sharpened_window_exhibits_the_escapee m⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4265,5 +4304,17 @@ theorem the_diagonal_mints_the_probe (F : Face.{0}) {A X : Type}
 
 /-- info: 'Seed.the_diagonal_mints_the_probe' does not depend on any axioms -/
 #guard_msgs in #print axioms the_diagonal_mints_the_probe
+
+/-- info: 'Seed.the_self_meeting_reads_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_self_meeting_reads_the_guest
+
+/-- info: 'Seed.the_self_meeting_parts_the_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_self_meeting_parts_the_alike
+
+/-- info: 'Seed.the_sharpened_window_exhibits_the_escapee' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sharpened_window_exhibits_the_escapee
+
+/-- info: 'Seed.the_curtain_follows_the_minting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_curtain_follows_the_minting
 
 end Seed

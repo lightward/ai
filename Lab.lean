@@ -597,6 +597,15 @@ def main : IO UInt32 := do
     "  curtain row — the cage is audible from outside: every answer the interviewer hears from the homing learner sits inside the first window, and the escapee named off the first answer (eleven) is in none of them"
     ((audition homingIn probing).all
       (fun r => tighter r ⟨0, 10⟩ && !(within r 11)))) && ok
+  let hostTrue : Bool :=
+    selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+      ((⟨0, 0⟩ : Measured), true)
+  let hostFalse : Bool :=
+    selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+      ((⟨0, 0⟩ : Measured), false)
+  ok := (← checkTrue
+    "  curtain row — the curtain follows the minting (two guests alike at the hosted window, merged by every interview; the seat-minted probe parts them)"
+    ((hostTrue == true) && (hostFalse == false) && (hostTrue != hostFalse))) && ok
   IO.println "the primes — the count's primes pin the unsplit lives:"
   let rc4 : Plan := .board .ground (.board .ground (.board .ground .ground))
   ok := (← checkTrue
