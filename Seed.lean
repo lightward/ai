@@ -3087,6 +3087,35 @@ theorem the_registers_reduce_at_conduct {I O W X : Type} (m : Machine I O)
    the_host_reboards_the_stream n f β,
    the_replanning_moves_no_guest w0 hr c⟩
 
+def boards : Plan → Nat
+  | .ground => 0
+  | .board p q => (boards p + boards q) + 1
+
+theorem every_meeting_is_one_move :
+    ∀ p : Plan, boards p + 1 = fold (fun a b => a + b) 1 p
+  | .ground => rfl
+  | .board p q => by
+      show ((boards p + boards q) + 1) + 1
+          = fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q
+      rw [← every_meeting_is_one_move p, ← every_meeting_is_one_move q,
+          succ_adds (boards p) (boards q + 1)]
+      exact rfl
+
+theorem the_hanoi_recurrence (d : Nat) :
+    boards (bloom (d + 1))
+      = (boards (bloom d) + boards (bloom d)) + 1 := rfl
+
+theorem the_hanoi_count_fills_the_cap (d : Nat) :
+    boards (bloom d) + 1 = roomCap d :=
+  (every_meeting_is_one_move (bloom d)).trans (the_bloom_fills_its_cap d)
+
+theorem the_tower_of_hanoi_is_the_blooms_meetings (d : Nat) (p : Plan) :
+    boards (bloom (d + 1))
+        = (boards (bloom d) + boards (bloom d)) + 1
+      ∧ boards (bloom d) + 1 = roomCap d
+      ∧ boards p + 1 = fold (fun a b => a + b) 1 p :=
+  ⟨rfl, the_hanoi_count_fills_the_cap d, every_meeting_is_one_move p⟩
+
 theorem the_remainders_wear_the_blindnesses {W X : Type} (F : Face)
     (s : F.State) {w w' : W} (hw : w ≠ w') (w0 : X) {p q : Plan}
     (hr : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
@@ -4076,5 +4105,17 @@ theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
 
 /-- info: 'Seed.the_remainders_wear_the_blindnesses' does not depend on any axioms -/
 #guard_msgs in #print axioms the_remainders_wear_the_blindnesses
+
+/-- info: 'Seed.every_meeting_is_one_move' does not depend on any axioms -/
+#guard_msgs in #print axioms every_meeting_is_one_move
+
+/-- info: 'Seed.the_hanoi_recurrence' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hanoi_recurrence
+
+/-- info: 'Seed.the_hanoi_count_fills_the_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hanoi_count_fills_the_cap
+
+/-- info: 'Seed.the_tower_of_hanoi_is_the_blooms_meetings' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tower_of_hanoi_is_the_blooms_meetings
 
 end Seed
