@@ -2699,6 +2699,36 @@ theorem the_face_is_the_doors_transpose {S P A : Type}
       ∧ walkIn (faceOf g).obs = g :=
   ⟨rfl, rfl, rfl, rfl, rfl⟩
 
+theorem the_hosted_meeting_deepens_past_the_guest (F : Face.{0}) (W : Type)
+    (d : door (door F.State W) F.Probe) :
+    walkIn (host F W).obs d
+      = walkIn F.obs
+          (atTheDoor (face (deepen d)) (met (met (deepen d)))) := rfl
+
+theorem the_sharpened_meeting_splits_at_the_fork {X : Type} (F : Face.{0})
+    (r : F.State → X) :
+    ∀ e : door F.State (fork F.Probe Unit),
+      walkIn (sharpen F r).obs e
+        = greet (fun x => viaLeft (walkIn F.obs x))
+            (fun x => viaRight (r (face x))) (distribute e)
+  | (_, .inl _) => rfl
+  | (_, .inr _) => rfl
+
+theorem the_operator_calculus_rides_the_meetings {X : Type} (F : Face.{0})
+    (W : Type) (r : F.State → X)
+    (d : door (door F.State W) F.Probe)
+    (e : door F.State (fork F.Probe Unit)) :
+    walkIn (host F W).obs d
+        = walkIn F.obs
+            (atTheDoor (face (deepen d)) (met (met (deepen d))))
+      ∧ walkIn (sharpen F r).obs e
+          = greet (fun x => viaLeft (walkIn F.obs x))
+              (fun x => viaRight (r (face x))) (distribute e)
+      ∧ widen F W = sharpen (host F W) (fun x => x.2) :=
+  ⟨the_hosted_meeting_deepens_past_the_guest F W d,
+   the_sharpened_meeting_splits_at_the_fork F r e,
+   rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3547,5 +3577,14 @@ theorem the_face_is_the_doors_transpose {S P A : Type}
 
 /-- info: 'Seed.the_face_is_the_doors_transpose' does not depend on any axioms -/
 #guard_msgs in #print axioms the_face_is_the_doors_transpose
+
+/-- info: 'Seed.the_hosted_meeting_deepens_past_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hosted_meeting_deepens_past_the_guest
+
+/-- info: 'Seed.the_sharpened_meeting_splits_at_the_fork' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sharpened_meeting_splits_at_the_fork
+
+/-- info: 'Seed.the_operator_calculus_rides_the_meetings' does not depend on any axioms -/
+#guard_msgs in #print axioms the_operator_calculus_rides_the_meetings
 
 end Seed

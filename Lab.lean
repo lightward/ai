@@ -721,6 +721,19 @@ def main : IO UInt32 := do
     "  meeting row — every door-reading is a face (the transpose round trip reads the meeting whole)"
     ((faceOf (fun (d : door Nat Nat) => (face d : Nat) * (met d : Nat))).obs
       (6 : Nat) (9 : Nat)) 54) && ok
+  ok := (← checkTrue
+    "  operator row — the hosted meeting deepens past the guest (the window meets the mass with a rider aboard, reading unchanged)"
+    ((walkIn (host windowFace Nat).obs
+        (atTheDoor (atTheDoor m2018 (5 : Nat)) (91093837015 : Nat)) : Bool)
+      == within m2018 91093837015)) && ok
+  ok := (← checkNat
+    "  operator row — the sharpened meeting splits at the fork (the minted reading enters by the second entrance)"
+    (greet (fun (a : Nat) => a) (fun (x : Nat) => x)
+      (walkIn
+        (sharpen
+          (faceOf (fun (d : door Nat Nat) => (face d : Nat) + (met d : Nat)))
+          (fun (s : Nat) => s * 10)).obs
+        (atTheDoor (3 : Nat) (viaRight () : fork Nat Unit)))) 30) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
