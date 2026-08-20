@@ -2667,6 +2667,38 @@ theorem the_door_receives_the_world_one_guest_at_a_time {H W X : Type}
    the_tower_holds_nothing_back n g,
    the_turned_door_flips_the_promise f' h w⟩
 
+def faceOf {S P A : Type} (g : door S P → A) : Face :=
+  ⟨S, P, A, holdOpen g⟩
+
+theorem the_measurement_is_a_meeting (F : Face.{0}) (s : F.State)
+    (p : F.Probe) : F.obs s p = walkIn F.obs (atTheDoor s p) := rfl
+
+theorem the_face_was_a_held_door (F : Face.{0}) :
+    F.obs = holdOpen (walkIn F.obs) ∧ faceOf (walkIn F.obs) = F :=
+  ⟨rfl, rfl⟩
+
+theorem every_door_reading_is_a_face {S P A : Type} (g : door S P → A)
+    (d : door S P) :
+    (faceOf g).obs (face d) (met d) = g d ∧ walkIn (faceOf g).obs = g :=
+  ⟨rfl, rfl⟩
+
+theorem the_agreeing_held_doors_sound_alike {S P A : Type}
+    (g : door S P → A) (s t : S)
+    (h : ∀ p, g (atTheDoor s p) = g (atTheDoor t p))
+    (q : Interview P A) :
+    sound (faceOf g) s q = sound (faceOf g) t q :=
+  no_interview_parts_the_alike (faceOf g) s t h q
+
+theorem the_face_is_the_doors_transpose {S P A : Type}
+    (g : door S P → A) (F : Face.{0}) (s : F.State) (p : F.Probe)
+    (d : door S P) :
+    F.obs s p = walkIn F.obs (atTheDoor s p)
+      ∧ F.obs = holdOpen (walkIn F.obs)
+      ∧ faceOf (walkIn F.obs) = F
+      ∧ (faceOf g).obs (face d) (met d) = g d
+      ∧ walkIn (faceOf g).obs = g :=
+  ⟨rfl, rfl, rfl, rfl, rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3500,5 +3532,20 @@ theorem the_door_receives_the_world_one_guest_at_a_time {H W X : Type}
 
 /-- info: 'Seed.the_door_receives_the_world_one_guest_at_a_time' does not depend on any axioms -/
 #guard_msgs in #print axioms the_door_receives_the_world_one_guest_at_a_time
+
+/-- info: 'Seed.the_measurement_is_a_meeting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_measurement_is_a_meeting
+
+/-- info: 'Seed.the_face_was_a_held_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_face_was_a_held_door
+
+/-- info: 'Seed.every_door_reading_is_a_face' does not depend on any axioms -/
+#guard_msgs in #print axioms every_door_reading_is_a_face
+
+/-- info: 'Seed.the_agreeing_held_doors_sound_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_agreeing_held_doors_sound_alike
+
+/-- info: 'Seed.the_face_is_the_doors_transpose' does not depend on any axioms -/
+#guard_msgs in #print axioms the_face_is_the_doors_transpose
 
 end Seed

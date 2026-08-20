@@ -711,6 +711,16 @@ def main : IO UInt32 := do
               (fun (e : door Nat Nat) => face e - met e) (turnAbout d))
             (3 : Nat) (10 : Nat)
           == 7))) && ok
+  IO.println "the meeting — a measurement is a meeting at a door:"
+  ok := (← checkTrue
+    "  meeting row — the window measures by meeting (within IS the door-reading, walked in: the 2018 window and the true mass meet, and the meeting reads true)"
+    (((walkIn windowFace.obs (atTheDoor m2018 (91093837015 : Nat)) : Bool)
+        == within m2018 91093837015)
+      && within m2018 91093837015)) && ok
+  ok := (← checkNat
+    "  meeting row — every door-reading is a face (the transpose round trip reads the meeting whole)"
+    ((faceOf (fun (d : door Nat Nat) => (face d : Nat) * (met d : Nat))).obs
+      (6 : Nat) (9 : Nat)) 54) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
