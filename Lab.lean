@@ -687,6 +687,30 @@ def main : IO UInt32 := do
         (4 : Nat) == 5)
       && (met (handlers (greet (fun (n : Nat) => n + 1) (fun (n : Nat) => n * 2)))
           (4 : Nat) == 8))) && ok
+  IO.println "the corridor curries — the door receives the world one guest at a time:"
+  ok := (← checkNat
+    "  strokes row — three guests enter one at a time (the tower reads the corridor whole)"
+    (oneAtATime 2
+      (fun (s : build Nat (comb 2)) =>
+        (face s : Nat) + (face (met s) : Nat) + (met (met s) : Nat))
+      (9 : Nat) (100 : Nat) (2 : Nat)) 111) && ok
+  ok := (← checkTrue
+    "  strokes row — the round trip is whole (allAtOnce of oneAtATime reads the carrier back)"
+    (allAtOnce 2
+        (oneAtATime 2
+          (fun (s : build Nat (comb 2)) =>
+            (face s : Nat) * (met (met s) : Nat)))
+        (((3 : Nat), ((7 : Nat), (2 : Nat))) : build Nat (comb 2))
+      == 6)) && ok
+  ok := (← checkTrue
+    "  strokes row — the turned door flips the promise (the seating swap, free at the reading layer)"
+    ((holdOpen (fun (d : door Nat Nat) => face d - met d) (10 : Nat) (3 : Nat)
+        == 7)
+      && (holdOpen
+            (fun (d : door Nat Nat) =>
+              (fun (e : door Nat Nat) => face e - met e) (turnAbout d))
+            (3 : Nat) (10 : Nat)
+          == 7))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

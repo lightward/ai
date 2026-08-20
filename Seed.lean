@@ -2619,6 +2619,54 @@ theorem the_door_is_known_by_its_readings {H W X : Type}
           = handlers fk :=
   ⟨rfl, rfl, rfl, rfl, rfl⟩
 
+theorem the_turned_door_flips_the_promise {H W X : Type}
+    (f : door H W → X) (h : H) (w : W) :
+    holdOpen (fun d => f (turnAbout d)) w h = holdOpen f h w := rfl
+
+def strokes (W X : Type) : Nat → Type
+  | 0 => W → X
+  | n + 1 => W → strokes W X n
+
+def strokesAlike {W X : Type} :
+    (n : Nat) → strokes W X n → strokes W X n → Prop
+  | 0, g, g' => ∀ w, g w = g' w
+  | n + 1, g, g' => ∀ w, strokesAlike n (g w) (g' w)
+
+def oneAtATime {W X : Type} :
+    (n : Nat) → (build W (comb n) → X) → strokes W X n
+  | 0, f => f
+  | n + 1, f => fun w => oneAtATime n (holdOpen f w)
+
+def allAtOnce {W X : Type} :
+    (n : Nat) → strokes W X n → build W (comb n) → X
+  | 0, g => g
+  | n + 1, g => walkIn (fun w => allAtOnce n (g w))
+
+theorem the_guests_enter_one_at_a_time {W X : Type} :
+    ∀ (n : Nat) (f : build W (comb n) → X) (s : build W (comb n)),
+      allAtOnce n (oneAtATime n f) s = f s
+  | 0, _, _ => rfl
+  | n + 1, f, s =>
+      the_guests_enter_one_at_a_time n (holdOpen f (face s)) (met s)
+
+theorem the_tower_holds_nothing_back {W X : Type} :
+    ∀ (n : Nat) (g : strokes W X n),
+      strokesAlike n (oneAtATime n (allAtOnce n g)) g
+  | 0, _ => fun _ => rfl
+  | n + 1, g => fun w => the_tower_holds_nothing_back n (g w)
+
+theorem the_door_receives_the_world_one_guest_at_a_time {H W X : Type}
+    (n : Nat) (f : build W (comb n) → X) (s : build W (comb n))
+    (g : strokes W X n) (f' : door H W → X) (h : H) (w : W) :
+    build W (comb (n + 1)) = door W (build W (comb n))
+      ∧ allAtOnce n (oneAtATime n f) s = f s
+      ∧ strokesAlike n (oneAtATime n (allAtOnce n g)) g
+      ∧ holdOpen (fun d => f' (turnAbout d)) w h = holdOpen f' h w :=
+  ⟨the_comb_is_a_corridor_of_doors W n,
+   the_guests_enter_one_at_a_time n f s,
+   the_tower_holds_nothing_back n g,
+   the_turned_door_flips_the_promise f' h w⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3440,5 +3488,17 @@ theorem the_door_is_known_by_its_readings {H W X : Type}
 
 /-- info: 'Seed.the_door_is_known_by_its_readings' does not depend on any axioms -/
 #guard_msgs in #print axioms the_door_is_known_by_its_readings
+
+/-- info: 'Seed.the_turned_door_flips_the_promise' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turned_door_flips_the_promise
+
+/-- info: 'Seed.the_guests_enter_one_at_a_time' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guests_enter_one_at_a_time
+
+/-- info: 'Seed.the_tower_holds_nothing_back' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tower_holds_nothing_back
+
+/-- info: 'Seed.the_door_receives_the_world_one_guest_at_a_time' does not depend on any axioms -/
+#guard_msgs in #print axioms the_door_receives_the_world_one_guest_at_a_time
 
 end Seed
