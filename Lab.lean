@@ -273,6 +273,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "refusal row — the diagonal escapes every row (the readings outrun the room)"
     ((escape true != g true true) && (escape false != g false false))) && ok
+  ok := (← checkTrue
+    "mirror row — the diagonal was a mirror (the tower reads the two-faced carrier as g a a; the host opens two doors for the one guest)"
+    ((allAtOnce 1 g (mirror Bool .ground true) == g true true)
+      && (doorsOpened (strokesReception 1 g) (fun _ => true) == 2))) && ok
   ok := (← checkNat
     "seat row — what one seat maintains, the other watches (audible across the swap)"
     (face (steer (fun _ w => w + 1)

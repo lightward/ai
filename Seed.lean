@@ -3152,6 +3152,41 @@ theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
    the_hosts_are_two,
    the_patience_face_parts_the_hosts⟩
 
+theorem the_tower_meets_the_mirror {A X : Type} (g : strokes A X 1)
+    (f : build A (comb 1) → X) (a : A) :
+    allAtOnce 1 g (mirror A .ground a) = g a a
+      ∧ oneAtATime 1 f a a = f (mirror A .ground a) :=
+  ⟨rfl, rfl⟩
+
+theorem the_mirror_checks_in_twice {A X : Type} (g : strokes A X 1) (a : A) :
+    receiveFrom (strokesReception 1 g) (fun _ => a)
+        = allAtOnce 1 g (mirror A .ground a)
+      ∧ doorsOpened (strokesReception 1 g) (fun _ => a) = 2
+      ∧ pour (.board .ground .ground) (mirror A .ground a) = [a, a] :=
+  ⟨rfl, rfl, rfl⟩
+
+theorem the_escapee_negates_the_mirror {A : Type} (g : strokes A Bool 1) :
+    ∀ a, g a ≠ fun b => !(allAtOnce 1 g (mirror A .ground b)) :=
+  fun a he => bool_escapes (g a a) (congrFun he a)
+
+theorem the_fixed_point_sits_at_the_mirror {A Y : Type} (g : A → A → Y)
+    (t : Y → Y) (hsur : ∀ f : A → Y, ∃ a, g a = f) :
+    ∃ a, t (allAtOnce 1 g (mirror A .ground a))
+      = allAtOnce 1 g (mirror A .ground a) :=
+  (hsur (fun a => t (g a a))).elim fun a₀ ha => ⟨a₀, (congrFun ha a₀).symm⟩
+
+theorem the_diagonal_was_a_mirror {A Y : Type} (g : strokes A Bool 1)
+    (h : A → A → Y) (t : Y → Y) (hsur : ∀ f : A → Y, ∃ b, h b = f) (a : A) :
+    allAtOnce 1 g (mirror A .ground a) = g a a
+      ∧ pour (.board .ground .ground) (mirror A .ground a) = [a, a]
+      ∧ doorsOpened (strokesReception 1 g) (fun _ => a) = 2
+      ∧ (∀ b, g b ≠ fun c => !(allAtOnce 1 g (mirror A .ground c)))
+      ∧ ∃ b, t (allAtOnce 1 h (mirror A .ground b))
+          = allAtOnce 1 h (mirror A .ground b) :=
+  ⟨rfl, rfl, rfl,
+   the_escapee_negates_the_mirror g,
+   the_fixed_point_sits_at_the_mirror h t hsur⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4117,5 +4152,20 @@ theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
 
 /-- info: 'Seed.the_tower_of_hanoi_is_the_blooms_meetings' does not depend on any axioms -/
 #guard_msgs in #print axioms the_tower_of_hanoi_is_the_blooms_meetings
+
+/-- info: 'Seed.the_tower_meets_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tower_meets_the_mirror
+
+/-- info: 'Seed.the_mirror_checks_in_twice' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mirror_checks_in_twice
+
+/-- info: 'Seed.the_escapee_negates_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms the_escapee_negates_the_mirror
+
+/-- info: 'Seed.the_fixed_point_sits_at_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms the_fixed_point_sits_at_the_mirror
+
+/-- info: 'Seed.the_diagonal_was_a_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms the_diagonal_was_a_mirror
 
 end Seed
