@@ -606,6 +606,13 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  curtain row — the curtain follows the minting (two guests alike at the hosted window, merged by every interview; the seat-minted probe parts them)"
     ((hostTrue == true) && (hostFalse == false) && (hostTrue != hostFalse))) && ok
+  let obsW : Bool :=
+    (host windowFace Bool).obs ((⟨0, 0⟩ : Measured), true) (0 : Nat)
+  let obsW' : Bool :=
+    (host windowFace Bool).obs ((⟨0, 0⟩ : Measured), false) (0 : Nat)
+  ok := (← checkTrue
+    "  curtain row — one reading, two entrances (written into the guest it is silent at every probe; read out through the probe it parts — one coordinate, two audibilities)"
+    ((obsW == obsW') && (hostTrue != hostFalse))) && ok
   IO.println "the primes — the count's primes pin the unsplit lives:"
   let rc4 : Plan := .board .ground (.board .ground (.board .ground .ground))
   ok := (← checkTrue

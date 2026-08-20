@@ -3294,6 +3294,39 @@ theorem the_curtain_follows_the_minting (m : Measured)
    (fun h => nomatch Sum.inr.inj h),
    the_sharpened_window_exhibits_the_escapee m⟩
 
+theorem the_guest_written_from_the_whole_door {H W : Type}
+    (g : door H W → W) (d : door H W) :
+    vertical (holdOpen g) d = atTheDoor (face d) (g d) := rfl
+
+theorem the_reading_writes_unheard (F : Face) {W : Type}
+    (g : F.State × W → W) (s : F.State) (w : W) :
+    alike (host F W) (s, w) (s, g (s, w)) :=
+  fun _ => rfl
+
+theorem no_interview_hears_the_written_guest (F : Face) {W : Type}
+    (g : F.State × W → W) (s : F.State) (w : W)
+    (q : Interview F.Probe F.Ans) :
+    sound (host F W) (s, w) q = sound (host F W) (s, g (s, w)) q :=
+  no_interview_parts_the_alike (host F W) _ _
+    (the_reading_writes_unheard F g s w) q
+
+theorem one_reading_two_entrances (F : Face) {W : Type}
+    (g : F.State × W → W) (s : F.State) (w : W)
+    (q : Interview F.Probe F.Ans) (q' : Interview Nat Bool) :
+    alike (host F W) (s, w) (s, g (s, w))
+      ∧ sound (host F W) (s, w) q = sound (host F W) (s, g (s, w)) q
+      ∧ sound (host windowFace Bool) (⟨0, 0⟩, true) q'
+          = sound (host windowFace Bool) (⟨0, 0⟩, false) q'
+      ∧ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+            (⟨0, 0⟩, true)
+          ≠ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+              (⟨0, 0⟩, false) :=
+  ⟨the_reading_writes_unheard F g s w,
+   no_interview_hears_the_written_guest F g s w q,
+   no_interview_parts_the_alike (host windowFace Bool) _ _
+     the_self_meeting_parts_the_alike.1 q',
+   the_self_meeting_parts_the_alike.2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4316,5 +4349,17 @@ theorem the_curtain_follows_the_minting (m : Measured)
 
 /-- info: 'Seed.the_curtain_follows_the_minting' does not depend on any axioms -/
 #guard_msgs in #print axioms the_curtain_follows_the_minting
+
+/-- info: 'Seed.the_guest_written_from_the_whole_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_written_from_the_whole_door
+
+/-- info: 'Seed.the_reading_writes_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reading_writes_unheard
+
+/-- info: 'Seed.no_interview_hears_the_written_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms no_interview_hears_the_written_guest
+
+/-- info: 'Seed.one_reading_two_entrances' does not depend on any axioms -/
+#guard_msgs in #print axioms one_reading_two_entrances
 
 end Seed
