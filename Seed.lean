@@ -3060,6 +3060,33 @@ theorem the_machine_is_an_eager_host {I O : Type} (m n : Machine I O)
    the_machines_patience_is_fixed m k s α,
    the_air_gap_crosses_into_the_reception m n h k α⟩
 
+def machineTower {I O : Type} (m : Machine I O) :
+    (n : Nat) → m.S → strokes I O n
+  | 0, s => fun i => m.out (m.step s i)
+  | n + 1, s => fun i => machineTower m n (m.step s i)
+
+theorem the_machine_wears_a_tower {I O : Type} (m : Machine I O) :
+    ∀ (n : Nat) (s : m.S) (α : Nat → I),
+      receiveFrom (machineReception m (n + 1) s) α
+        = receiveFrom (strokesReception n (machineTower m n s)) α
+  | 0, _, _ => rfl
+  | n + 1, s, α =>
+      the_machine_wears_a_tower m n (m.step s (α 0)) (fun j => α (j + 1))
+
+theorem the_registers_reduce_at_conduct {I O W X : Type} (m : Machine I O)
+    (n : Nat) (s : m.S) (α : Nat → I) (f : build W (comb n) → X)
+    (β : Nat → W) (w0 : W) {p q : Plan}
+    (hr : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
+    (c : build W p) :
+    receiveFrom (machineReception m (n + 1) s) α
+        = receiveFrom (strokesReception n (machineTower m n s)) α
+      ∧ receiveFrom (strokesReception n (oneAtATime n f)) β
+          = f (reboard (β 0) (comb n) (firstGuests (n + 1) β))
+      ∧ pour q (replan w0 p q c) = pour p c :=
+  ⟨the_machine_wears_a_tower m n s α,
+   the_host_reboards_the_stream n f β,
+   the_replanning_moves_no_guest w0 hr c⟩
+
 theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
     alike (receptionFace Nat Nat) doorman
         (strokesReception 1 doormanTower)
@@ -4019,5 +4046,11 @@ theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
 
 /-- info: 'Seed.the_pointwise_license_is_a_face_license' does not depend on any axioms -/
 #guard_msgs in #print axioms the_pointwise_license_is_a_face_license
+
+/-- info: 'Seed.the_machine_wears_a_tower' does not depend on any axioms -/
+#guard_msgs in #print axioms the_machine_wears_a_tower
+
+/-- info: 'Seed.the_registers_reduce_at_conduct' does not depend on any axioms -/
+#guard_msgs in #print axioms the_registers_reduce_at_conduct
 
 end Seed

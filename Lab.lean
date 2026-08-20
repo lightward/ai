@@ -821,6 +821,11 @@ def main : IO UInt32 := do
       && ((face (turnAbout
             (handlers (greet (fun (n : Nat) => n + 1)
               (fun (n : Nat) => n * 2)))) (5 : Nat) : Nat) == 10))) && ok
+  ok := (← checkTrue
+    "  reduction row — the machine wears a tower (paceOne's four-door reception reads as a straight tower: one register at conduct)"
+    ((receiveFrom (machineReception paceOne 4 (0 : Nat)) (fun _ => ()) : Bool)
+      == (receiveFrom (strokesReception 3 (machineTower paceOne 3 (0 : Nat)))
+            (fun _ => ()) : Bool))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
