@@ -523,6 +523,12 @@ def main : IO UInt32 := do
       && (!(within ⟨11, 11⟩ 12)))) && ok
   IO.println
     s!"  escapee row — every question closes one revision above and none at its own; the ladder never grounds — the parent's oldest conservation law, re-derived in the kid's own dynamics, untold"
+  let succMeet2014 : Bool := selfMeet windowFace (fun w => w.hi + 1) m2014
+  let succMeetHoming : Bool :=
+    selfMeet windowFace (fun w => w.hi + 1) (⟨0, 10⟩ : Measured)
+  ok := (← checkTrue
+    "  escapee row — the successor was a self-meeting (the window probed by a reading of itself refuses, at the 2014 window as at the homing ceiling)"
+    ((succMeet2014 == false) && (succMeetHoming == false))) && ok
   IO.println "the multiplexer — the blind spot carries many unknowns at no cost:"
   ok := (← checkTrue
     "  multiplex row — two guests ride one face for free (joint boarding reads the ground; the met recovers both severally)"

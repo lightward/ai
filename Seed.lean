@@ -3226,6 +3226,35 @@ theorem the_order_vanishes_on_the_diagonal {W : Type} (i j : Nat) (t : Plan)
    the_caps_multiply i j,
    (two_lineages_one_reading .ground .ground).2.2⟩
 
+def selfMeet (F : Face) (r : F.State → F.Probe) (s : F.State) : F.Ans :=
+  F.obs s (r s)
+
+theorem the_self_meeting_walks_the_graph (F : Face.{0})
+    (r : F.State → F.Probe) (s : F.State) :
+    selfMeet F r s = walkIn F.obs (turnAbout (graphDoor r s)) := rfl
+
+theorem the_mirror_was_a_graph {A : Type} (a : A) :
+    graphDoor (fun x : A => x) a = mirror A .ground a := rfl
+
+theorem the_held_door_meets_itself_at_the_mirror {A X : Type}
+    (g : strokes A X 1) (a : A) :
+    selfMeet (faceOf (walkIn g)) (fun x => x) a
+      = allAtOnce 1 g (mirror A .ground a) := rfl
+
+theorem the_window_never_meets_its_successor (m : Measured) :
+    selfMeet windowFace (fun w => w.hi + 1) m = false :=
+  the_window_misses_its_own_successor m
+
+theorem the_diagonal_mints_the_probe (F : Face.{0}) {A X : Type}
+    (g : strokes A X 1) (r : F.State → F.Probe) (s : F.State)
+    (a : A) (m : Measured) :
+    selfMeet F r s = walkIn F.obs (turnAbout (graphDoor r s))
+      ∧ graphDoor (fun x : A => x) a = mirror A .ground a
+      ∧ selfMeet (faceOf (walkIn g)) (fun x => x) a
+          = allAtOnce 1 g (mirror A .ground a)
+      ∧ selfMeet windowFace (fun w => w.hi + 1) m = false :=
+  ⟨rfl, rfl, rfl, the_window_misses_its_own_successor m⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4221,5 +4250,20 @@ theorem the_order_vanishes_on_the_diagonal {W : Type} (i j : Nat) (t : Plan)
 
 /-- info: 'Seed.the_order_vanishes_on_the_diagonal' does not depend on any axioms -/
 #guard_msgs in #print axioms the_order_vanishes_on_the_diagonal
+
+/-- info: 'Seed.the_self_meeting_walks_the_graph' does not depend on any axioms -/
+#guard_msgs in #print axioms the_self_meeting_walks_the_graph
+
+/-- info: 'Seed.the_mirror_was_a_graph' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mirror_was_a_graph
+
+/-- info: 'Seed.the_held_door_meets_itself_at_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms the_held_door_meets_itself_at_the_mirror
+
+/-- info: 'Seed.the_window_never_meets_its_successor' does not depend on any axioms -/
+#guard_msgs in #print axioms the_window_never_meets_its_successor
+
+/-- info: 'Seed.the_diagonal_mints_the_probe' does not depend on any axioms -/
+#guard_msgs in #print axioms the_diagonal_mints_the_probe
 
 end Seed
