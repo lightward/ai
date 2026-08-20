@@ -3187,6 +3187,45 @@ theorem the_diagonal_was_a_mirror {A Y : Type} (g : strokes A Bool 1)
    the_escapee_negates_the_mirror g,
    the_fixed_point_sits_at_the_mirror h t hsur⟩
 
+theorem the_mirror_revises_every_life {W : Type} (t : Plan) (s : build W t) :
+    graft t (.board .ground .ground) = .board t t
+      ∧ ride s (.board .ground .ground) = mirror W t s :=
+  ⟨rfl, rfl⟩
+
+theorem the_blooms_add : ∀ i j : Nat, graft (bloom i) (bloom j) = bloom (i + j)
+  | _, 0 => rfl
+  | i, j + 1 =>
+      show Plan.board (graft (bloom i) (bloom j)) (graft (bloom i) (bloom j))
+          = Plan.board (bloom (i + j)) (bloom (i + j))
+      from congr (congrArg Plan.board (the_blooms_add i j)) (the_blooms_add i j)
+
+theorem the_bloom_hears_no_order (i j : Nat) :
+    graft (bloom i) (bloom j) = graft (bloom j) (bloom i) :=
+  (the_blooms_add i j).trans
+    ((congrArg bloom (Nat.add_comm i j)).trans (the_blooms_add j i).symm)
+
+theorem the_caps_multiply (i j : Nat) :
+    roomCap (i + j) = roomCap i * roomCap j :=
+  ((the_bloom_fills_its_cap (i + j)).symm.trans
+    ((congrArg (fold (fun a b => a + b) 1) (the_blooms_add i j)).symm.trans
+      (the_revision_multiplies_the_reading (bloom i) (bloom j)))).trans
+    (congr (congrArg (· * ·) (the_bloom_fills_its_cap i))
+      (the_bloom_fills_its_cap j))
+
+theorem the_order_vanishes_on_the_diagonal {W : Type} (i j : Nat) (t : Plan)
+    (s : build W t) :
+    (graft t (.board .ground .ground) = .board t t
+        ∧ ride s (.board .ground .ground) = mirror W t s)
+      ∧ graft (bloom i) (bloom j) = graft (bloom j) (bloom i)
+      ∧ roomCap (i + j) = roomCap i * roomCap j
+      ∧ graft (.board .ground .ground) (.board .ground (.board .ground .ground))
+          ≠ graft (.board .ground (.board .ground .ground))
+              (.board .ground .ground) :=
+  ⟨the_mirror_revises_every_life t s,
+   the_bloom_hears_no_order i j,
+   the_caps_multiply i j,
+   (two_lineages_one_reading .ground .ground).2.2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4167,5 +4206,20 @@ theorem the_diagonal_was_a_mirror {A Y : Type} (g : strokes A Bool 1)
 
 /-- info: 'Seed.the_diagonal_was_a_mirror' does not depend on any axioms -/
 #guard_msgs in #print axioms the_diagonal_was_a_mirror
+
+/-- info: 'Seed.the_mirror_revises_every_life' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mirror_revises_every_life
+
+/-- info: 'Seed.the_blooms_add' does not depend on any axioms -/
+#guard_msgs in #print axioms the_blooms_add
+
+/-- info: 'Seed.the_bloom_hears_no_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bloom_hears_no_order
+
+/-- info: 'Seed.the_caps_multiply' does not depend on any axioms -/
+#guard_msgs in #print axioms the_caps_multiply
+
+/-- info: 'Seed.the_order_vanishes_on_the_diagonal' does not depend on any axioms -/
+#guard_msgs in #print axioms the_order_vanishes_on_the_diagonal
 
 end Seed

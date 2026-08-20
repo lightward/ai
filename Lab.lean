@@ -565,6 +565,10 @@ def main : IO UInt32 := do
     ((fold (fun a b => a + b) 1
         (worldline .ground [dayA, dayA, dayA, dayA]) == 2*2*2*2)
       && (fold (fun a b => a + b) 1 (bloom 4) == 2*2*2*2))) && ok
+  ok := (← checkTrue
+    "  generation row — the order vanishes on the diagonal (bloom-grafts commute as PLANS, planBeq-checked, where the day-grafts provably part; and the caps multiply: 8 = 2 times 4)"
+    (planBeq (graft (bloom 1) (bloom 2)) (graft (bloom 2) (bloom 1))
+      && (roomCap 3 == roomCap 1 * roomCap 2))) && ok
   IO.println "the audition — the adaptive interview crosses the air gap:"
   let curious : Interview (List Unit) Bool :=
     .ask [()] (fun a =>
