@@ -2967,6 +2967,48 @@ theorem the_patience_face_parts_the_hosts :
           (twoGuests 0 0) :=
   fun h => nomatch Nat.succ.inj (congrArg Prod.snd h)
 
+def machineReception {I O : Type} (m : Machine I O) :
+    Nat → m.S → Reception I O
+  | 0, s => .close (m.out s)
+  | n + 1, s => .receive (fun i => machineReception m n (m.step s i))
+
+theorem the_machine_receives_its_word {I O : Type} (m : Machine I O) :
+    ∀ (n : Nat) (s : m.S) (α : Nat → I),
+      receiveFrom (machineReception m n s) α = drive m s (firstGuests n α)
+  | 0, _, _ => rfl
+  | n + 1, s, α =>
+      the_machine_receives_its_word m n (m.step s (α 0))
+        (fun j => α (j + 1))
+
+theorem the_machines_patience_is_fixed {I O : Type} (m : Machine I O) :
+    ∀ (n : Nat) (s : m.S) (α : Nat → I),
+      doorsOpened (machineReception m n s) α = n
+  | 0, _, _ => rfl
+  | n + 1, s, α =>
+      congrArg (· + 1)
+        (the_machines_patience_is_fixed m n (m.step s (α 0))
+          (fun j => α (j + 1)))
+
+theorem the_air_gap_crosses_into_the_reception {I O : Type}
+    (m n : Machine I O) (h : ∀ w, behavior m w = behavior n w)
+    (k : Nat) (α : Nat → I) :
+    receiveFrom (machineReception m k m.s0) α
+      = receiveFrom (machineReception n k n.s0) α :=
+  (the_machine_receives_its_word m k m.s0 α).trans
+    ((h (firstGuests k α)).trans
+      (the_machine_receives_its_word n k n.s0 α).symm)
+
+theorem the_machine_is_an_eager_host {I O : Type} (m n : Machine I O)
+    (h : ∀ w, behavior m w = behavior n w) (k : Nat) (s : m.S)
+    (α : Nat → I) :
+    receiveFrom (machineReception m k s) α = drive m s (firstGuests k α)
+      ∧ doorsOpened (machineReception m k s) α = k
+      ∧ receiveFrom (machineReception m k m.s0) α
+          = receiveFrom (machineReception n k n.s0) α :=
+  ⟨the_machine_receives_its_word m k s α,
+   the_machines_patience_is_fixed m k s α,
+   the_air_gap_crosses_into_the_reception m n h k α⟩
+
 theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
     alike (receptionFace Nat Nat) doorman
         (strokesReception 1 doormanTower)
@@ -3896,5 +3938,17 @@ theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
 
 /-- info: 'Seed.the_hosts_run_the_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_hosts_run_the_handshake
+
+/-- info: 'Seed.the_machine_receives_its_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_machine_receives_its_word
+
+/-- info: 'Seed.the_machines_patience_is_fixed' does not depend on any axioms -/
+#guard_msgs in #print axioms the_machines_patience_is_fixed
+
+/-- info: 'Seed.the_air_gap_crosses_into_the_reception' does not depend on any axioms -/
+#guard_msgs in #print axioms the_air_gap_crosses_into_the_reception
+
+/-- info: 'Seed.the_machine_is_an_eager_host' does not depend on any axioms -/
+#guard_msgs in #print axioms the_machine_is_an_eager_host
 
 end Seed

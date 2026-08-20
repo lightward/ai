@@ -792,6 +792,13 @@ def main : IO UInt32 := do
           != (((patienceFace Nat Nat).obs
                 (strokesReception 1 doormanTower) (twoGuests 0 0)
               : Nat × Nat)).2))) && ok
+  ok := (← checkTrue
+    "  eager row — the machine is an eager host (paceOne and paceThree receive alike at every door-count; patience fixed at three)"
+    (((receiveFrom (machineReception paceOne 3 (0 : Nat)) (fun _ => ()) : Bool)
+        == (receiveFrom (machineReception paceThree 3 (0 : Nat))
+              (fun _ => ()) : Bool))
+      && (doorsOpened (machineReception paceOne 3 (0 : Nat)) (fun _ => ())
+          == 3))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
