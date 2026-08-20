@@ -752,6 +752,22 @@ def main : IO UInt32 := do
       (strokesReception 2
         (oneAtATime 2 (fun (s : build Nat (comb 2)) => (face s : Nat))))
       (fun n => n)) 3) && ok
+  ok := (← checkTrue
+    "  handoff row — the reception resumes from the parked stream (doorman hands the reading to the next plan; the ledger sums two and one)"
+    ((receiveFrom
+        (handOff doorman
+          (fun x => Reception.receive (fun v => Reception.close (x + v))))
+        (fun n => n + 1) == 5)
+      && (doorsOpened
+            (handOff doorman
+              (fun x => Reception.receive (fun v => Reception.close (x + v))))
+            (fun n => n + 1) == 3))) && ok
+  ok := (← checkNat
+    "  handoff row — fulfillment hands off whole (the closed reception is the unit)"
+    (receiveFrom
+      (handOff (Reception.close (40 : Nat))
+        (fun x => Reception.receive (fun v => Reception.close (x + v))))
+      (fun _ => (2 : Nat))) 42) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

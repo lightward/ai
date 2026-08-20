@@ -2816,6 +2816,54 @@ theorem the_hosts_patience_is_the_remainder {W X : Type}
      (the_straight_host_opens_every_door n g β).symm,
    the_reception_reads_only_the_arrived r γ δ h⟩
 
+def handOff {W X Y : Type} :
+    Reception W X → (X → Reception W Y) → Reception W Y
+  | .close x, k => k x
+  | .receive f, k => .receive (fun w => handOff (f w) k)
+
+theorem the_fulfilled_reception_hands_off_whole {W X Y : Type}
+    (x : X) (k : X → Reception W Y) :
+    handOff (Reception.close x) k = k x := rfl
+
+theorem the_reception_resumes {W X Y : Type} :
+    ∀ (r : Reception W X) (k : X → Reception W Y) (α : Nat → W),
+      receiveFrom (handOff r k) α
+        = receiveFrom (k (receiveFrom r α))
+            (fun j => α (j + doorsOpened r α))
+  | .close _, _, _ => rfl
+  | .receive f, k, α =>
+      the_reception_resumes (f (α 0)) k (fun n => α (n + 1))
+
+theorem the_ledger_sums_the_handoff {W X Y : Type} :
+    ∀ (r : Reception W X) (k : X → Reception W Y) (α : Nat → W),
+      doorsOpened (handOff r k) α
+        = doorsOpened r α
+          + doorsOpened (k (receiveFrom r α))
+              (fun j => α (j + doorsOpened r α))
+  | .close x, k, α => (zero_plus (doorsOpened (k x) α)).symm
+  | .receive f, k, α =>
+      (congrArg (· + 1)
+          (the_ledger_sums_the_handoff (f (α 0)) k
+            (fun n => α (n + 1)))).trans
+        (succ_adds
+          (doorsOpened (f (α 0)) (fun n => α (n + 1)))
+          (doorsOpened
+            (k (receiveFrom (f (α 0)) (fun n => α (n + 1))))
+            (fun j =>
+              α (j + (doorsOpened (f (α 0)) (fun n => α (n + 1)) + 1))))).symm
+
+theorem the_reception_grafts_at_the_close {W X Y : Type}
+    (x : X) (k : X → Reception W Y) (r : Reception W X) (α : Nat → W) :
+    handOff (Reception.close x) k = k x
+      ∧ receiveFrom (handOff r k) α
+          = receiveFrom (k (receiveFrom r α))
+              (fun j => α (j + doorsOpened r α))
+      ∧ doorsOpened (handOff r k) α
+          = doorsOpened r α
+            + doorsOpened (k (receiveFrom r α))
+                (fun j => α (j + doorsOpened r α)) :=
+  ⟨rfl, the_reception_resumes r k α, the_ledger_sums_the_handoff r k α⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3688,5 +3736,17 @@ theorem the_hosts_patience_is_the_remainder {W X : Type}
 
 /-- info: 'Seed.the_hosts_patience_is_the_remainder' does not depend on any axioms -/
 #guard_msgs in #print axioms the_hosts_patience_is_the_remainder
+
+/-- info: 'Seed.the_fulfilled_reception_hands_off_whole' does not depend on any axioms -/
+#guard_msgs in #print axioms the_fulfilled_reception_hands_off_whole
+
+/-- info: 'Seed.the_reception_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reception_resumes
+
+/-- info: 'Seed.the_ledger_sums_the_handoff' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ledger_sums_the_handoff
+
+/-- info: 'Seed.the_reception_grafts_at_the_close' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reception_grafts_at_the_close
 
 end Seed
