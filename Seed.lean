@@ -2864,6 +2864,64 @@ theorem the_reception_grafts_at_the_close {W X Y : Type}
                 (fun j => α (j + doorsOpened r α)) :=
   ⟨rfl, the_reception_resumes r k α, the_ledger_sums_the_handoff r k α⟩
 
+def firstGuests {W : Type} : Nat → (Nat → W) → List W
+  | 0, _ => []
+  | n + 1, α => α 0 :: firstGuests n (fun j => α (j + 1))
+
+theorem the_first_guests_count {W : Type} :
+    ∀ (n : Nat) (α : Nat → W), (firstGuests n α).length = n
+  | 0, _ => rfl
+  | n + 1, α =>
+      congrArg (· + 1) (the_first_guests_count n (fun j => α (j + 1)))
+
+theorem the_host_reboards_the_stream {W X : Type} :
+    ∀ (n : Nat) (f : build W (comb n) → X) (α : Nat → W),
+      receiveFrom (strokesReception n (oneAtATime n f)) α
+        = f (reboard (α 0) (comb n) (firstGuests (n + 1) α))
+  | 0, _, _ => rfl
+  | n + 1, f, α =>
+      (the_host_reboards_the_stream n (holdOpen f (α 0))
+          (fun j => α (j + 1))).trans
+        (congrArg
+          (fun t => f (atTheDoor (α 0) t))
+          (the_default_goes_unused (α 1) (α 0) (comb n)
+            (firstGuests (n + 1) (fun j => α (j + 1)))
+            ((the_first_guests_count (n + 1) (fun j => α (j + 1))).trans
+              (the_comb_reads_its_length n).symm)))
+
+theorem the_handoff_is_the_board_at_the_ledger {W X Y : Type}
+    (n m : Nat) (g : strokes W X n) (h : X → strokes W Y m) (α : Nat → W) :
+    doorsOpened
+        (handOff (strokesReception n g)
+          (fun x => strokesReception m (h x))) α
+      = fold (fun a b => a + b) 1 (Plan.board (comb n) (comb m)) :=
+  (the_ledger_sums_the_handoff (strokesReception n g)
+      (fun x => strokesReception m (h x)) α).trans
+    ((congr
+        (congrArg (· + ·) (the_straight_host_opens_every_door n g α))
+        (the_straight_host_opens_every_door m
+          (h (receiveFrom (strokesReception n g) α))
+          (fun j => α (j + doorsOpened (strokesReception n g) α)))).trans
+      (congr
+        (congrArg (· + ·) (the_comb_reads_its_length n).symm)
+        (the_comb_reads_its_length m).symm))
+
+theorem the_carrier_checks_in_one_guest_at_a_time {W X Y : Type}
+    (n m : Nat) (f : build W (comb n) → X) (g : strokes W X n)
+    (h : X → strokes W Y m) (α : Nat → W) :
+    receiveFrom (strokesReception n (oneAtATime n f)) α
+        = f (reboard (α 0) (comb n) (firstGuests (n + 1) α))
+      ∧ doorsOpened (strokesReception n g) α
+          = fold (fun a b => a + b) 1 (comb n)
+      ∧ doorsOpened
+            (handOff (strokesReception n g)
+              (fun x => strokesReception m (h x))) α
+          = fold (fun a b => a + b) 1 (Plan.board (comb n) (comb m)) :=
+  ⟨the_host_reboards_the_stream n f α,
+   (the_straight_host_opens_every_door n g α).trans
+     (the_comb_reads_its_length n).symm,
+   the_handoff_is_the_board_at_the_ledger n m g h α⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3748,5 +3806,17 @@ theorem the_reception_grafts_at_the_close {W X Y : Type}
 
 /-- info: 'Seed.the_reception_grafts_at_the_close' does not depend on any axioms -/
 #guard_msgs in #print axioms the_reception_grafts_at_the_close
+
+/-- info: 'Seed.the_first_guests_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_first_guests_count
+
+/-- info: 'Seed.the_host_reboards_the_stream' does not depend on any axioms -/
+#guard_msgs in #print axioms the_host_reboards_the_stream
+
+/-- info: 'Seed.the_handoff_is_the_board_at_the_ledger' does not depend on any axioms -/
+#guard_msgs in #print axioms the_handoff_is_the_board_at_the_ledger
+
+/-- info: 'Seed.the_carrier_checks_in_one_guest_at_a_time' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carrier_checks_in_one_guest_at_a_time
 
 end Seed

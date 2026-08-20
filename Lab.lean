@@ -768,6 +768,21 @@ def main : IO UInt32 := do
       (handOff (Reception.close (40 : Nat))
         (fun x => Reception.receive (fun v => Reception.close (x + v))))
       (fun _ => (2 : Nat))) 42) && ok
+  ok := (← checkNat
+    "  checkin row — the host reboards the stream (three guests check in one at a time; the carrier reads whole)"
+    (receiveFrom
+      (strokesReception 2
+        (oneAtATime 2
+          (fun (s : build Nat (comb 2)) =>
+            (face s : Nat) + (face (met s) : Nat) + (met (met s) : Nat))))
+      (fun n => n + 1)) 6) && ok
+  ok := (← checkTrue
+    "  checkin row — succession is board-shaped (the handoff's ledger reads the board's census: two and one make three)"
+    ((doorsOpened
+        (handOff (strokesReception 1 doormanTower)
+          (fun x => strokesReception 0 (fun v => x + v)))
+        (fun n => n) == 3)
+      && (fold (fun a b => a + b) 1 (.board (comb 1) (comb 0)) == 3))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
