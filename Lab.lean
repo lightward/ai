@@ -783,6 +783,15 @@ def main : IO UInt32 := do
           (fun x => strokesReception 0 (fun v => x + v)))
         (fun n => n) == 3)
       && (fold (fun a b => a + b) 1 (.board (comb 1) (comb 0)) == 3))) && ok
+  ok := (← checkTrue
+    "  host row — the handshake runs whole at the reception face (no stream parts the hosts; the patience face does)"
+    ((receiveFrom doorman (fun n => n * 2)
+        == receiveFrom (strokesReception 1 doormanTower) (fun n => n * 2))
+      && ((((patienceFace Nat Nat).obs doorman (twoGuests 0 0)
+              : Nat × Nat)).2
+          != (((patienceFace Nat Nat).obs
+                (strokesReception 1 doormanTower) (twoGuests 0 0)
+              : Nat × Nat)).2))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

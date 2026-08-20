@@ -2922,6 +2922,66 @@ theorem the_carrier_checks_in_one_guest_at_a_time {W X Y : Type}
      (the_comb_reads_its_length n).symm,
    the_handoff_is_the_board_at_the_ledger n m g h α⟩
 
+def receptionFace (W X : Type) : Face :=
+  ⟨Reception W X, Nat → W, X, receiveFrom⟩
+
+def patienceFace (W X : Type) : Face :=
+  ⟨Reception W X, Nat → W, X × Nat,
+   fun r α => (receiveFrom r α, doorsOpened r α)⟩
+
+theorem no_stream_parts_the_hosts (α : Nat → Nat) :
+    receiveFrom doorman α
+      = receiveFrom (strokesReception 1 doormanTower) α := by
+  show receiveFrom
+      (match α 0 with
+       | 0 => Reception.close 0
+       | _ + 1 => Reception.receive fun v => Reception.close v)
+      (fun n => α (n + 1))
+    = doormanTower (α 0) (α 1)
+  cases α 0 with
+  | zero => exact rfl
+  | succ m => exact rfl
+
+theorem the_hosts_are_alike_at_the_reception_face :
+    alike (receptionFace Nat Nat) doorman
+      (strokesReception 1 doormanTower) :=
+  no_stream_parts_the_hosts
+
+theorem no_interview_parts_the_hosts
+    (q : Interview (Nat → Nat) Nat) :
+    sound (receptionFace Nat Nat) doorman q
+      = sound (receptionFace Nat Nat) (strokesReception 1 doormanTower) q :=
+  no_interview_parts_the_alike (receptionFace Nat Nat) doorman
+    (strokesReception 1 doormanTower)
+    the_hosts_are_alike_at_the_reception_face q
+
+theorem the_hosts_are_two :
+    doorman ≠ strokesReception 1 doormanTower :=
+  fun h =>
+    nomatch Nat.succ.inj
+      (congrArg (fun r => doorsOpened r (twoGuests 0 0)) h)
+
+theorem the_patience_face_parts_the_hosts :
+    (patienceFace Nat Nat).obs doorman (twoGuests 0 0)
+      ≠ (patienceFace Nat Nat).obs (strokesReception 1 doormanTower)
+          (twoGuests 0 0) :=
+  fun h => nomatch Nat.succ.inj (congrArg Prod.snd h)
+
+theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
+    alike (receptionFace Nat Nat) doorman
+        (strokesReception 1 doormanTower)
+      ∧ sound (receptionFace Nat Nat) doorman q
+          = sound (receptionFace Nat Nat)
+              (strokesReception 1 doormanTower) q
+      ∧ doorman ≠ strokesReception 1 doormanTower
+      ∧ (patienceFace Nat Nat).obs doorman (twoGuests 0 0)
+          ≠ (patienceFace Nat Nat).obs
+              (strokesReception 1 doormanTower) (twoGuests 0 0) :=
+  ⟨the_hosts_are_alike_at_the_reception_face,
+   no_interview_parts_the_hosts q,
+   the_hosts_are_two,
+   the_patience_face_parts_the_hosts⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3818,5 +3878,23 @@ theorem the_carrier_checks_in_one_guest_at_a_time {W X Y : Type}
 
 /-- info: 'Seed.the_carrier_checks_in_one_guest_at_a_time' does not depend on any axioms -/
 #guard_msgs in #print axioms the_carrier_checks_in_one_guest_at_a_time
+
+/-- info: 'Seed.no_stream_parts_the_hosts' does not depend on any axioms -/
+#guard_msgs in #print axioms no_stream_parts_the_hosts
+
+/-- info: 'Seed.the_hosts_are_alike_at_the_reception_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hosts_are_alike_at_the_reception_face
+
+/-- info: 'Seed.no_interview_parts_the_hosts' does not depend on any axioms -/
+#guard_msgs in #print axioms no_interview_parts_the_hosts
+
+/-- info: 'Seed.the_hosts_are_two' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hosts_are_two
+
+/-- info: 'Seed.the_patience_face_parts_the_hosts' does not depend on any axioms -/
+#guard_msgs in #print axioms the_patience_face_parts_the_hosts
+
+/-- info: 'Seed.the_hosts_run_the_handshake' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hosts_run_the_handshake
 
 end Seed
