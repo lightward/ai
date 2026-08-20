@@ -670,6 +670,23 @@ def main : IO UInt32 := do
     (((onWords (0 : Nat) toyPlan
         (fun s _ => reground (fun w => w + 1) toyPlan s)
         (spine Nat toyPlan) toyImport).step [] ()).length == 3)) && ok
+  IO.println "the promise — every reading of the door wears the two-stroke form:"
+  ok := (← checkNat
+    "  promise row — the held door answers the arriving guest (6 held, 7 arrives, the reading redeems)"
+    (holdOpen (fun (d : door Nat Nat) => face d * met d) (6 : Nat) (7 : Nat))
+    42) && ok
+  ok := (← checkTrue
+    "  promise row — the deferral is free both ways (two strokes read the meeting; the meeting reads two strokes)"
+    ((walkIn (holdOpen (fun (d : door Nat Nat) => face d + met d))
+        (atTheDoor (40 : Nat) (2 : Nat)) == 42)
+      && (holdOpen (walkIn (fun (a b : Nat) => a + b)) (1 : Nat) (1 : Nat)
+          == 2))) && ok
+  ok := (← checkTrue
+    "  promise row — the fork's readings assemble as a door of handlers (both entrances, one register)"
+    ((face (handlers (greet (fun (n : Nat) => n + 1) (fun (n : Nat) => n * 2)))
+        (4 : Nat) == 5)
+      && (met (handlers (greet (fun (n : Nat) => n + 1) (fun (n : Nat) => n * 2)))
+          (4 : Nat) == 8))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

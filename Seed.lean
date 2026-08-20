@@ -2576,6 +2576,49 @@ theorem the_vestibule_drains_in_one_click {W I O : Type} (w0 : W)
    congrArg (fun x => pour p (step x i))
      (the_manifest_rebuilds_the_carrier w0 p s)⟩
 
+def holdOpen {H W X : Type} (f : door H W → X) (h : H) : W → X :=
+  fun w => f (atTheDoor h w)
+
+def walkIn {H W X : Type} (g : H → W → X) (d : door H W) : X :=
+  g (face d) (met d)
+
+def handlers {H W X : Type} (f : fork H W → X) : door (H → X) (W → X) :=
+  atTheDoor (fun h => f (viaLeft h)) (fun w => f (viaRight w))
+
+theorem the_held_door_answers_every_guest {H W X : Type}
+    (f : door H W → X) (h : H) (w : W) :
+    holdOpen f h w = f (atTheDoor h w) := rfl
+
+theorem the_two_strokes_read_one_meeting {H W X : Type}
+    (g : H → W → X) (d : door H W) :
+    walkIn g d = g (face d) (met d) := rfl
+
+theorem the_deferral_is_free {H W X : Type}
+    (f : door H W → X) (g : H → W → X) :
+    walkIn (holdOpen f) = f ∧ holdOpen (walkIn g) = g :=
+  ⟨rfl, rfl⟩
+
+theorem the_guest_mover_was_a_held_reading {H W : Type}
+    (σ : H → W → W) (d : door H W) :
+    vertical σ d = atTheDoor (face d) (walkIn σ d) := rfl
+
+theorem the_readings_trade_the_entrances {H W X : Type}
+    (f : fork H W → X) (gl : H → X) (gr : W → X) :
+    (∀ x, greet (face (handlers f)) (met (handlers f)) x = f x)
+      ∧ handlers (greet gl gr) = atTheDoor gl gr :=
+  ⟨a_greeter_is_a_door_of_handlers f, rfl⟩
+
+theorem the_door_is_known_by_its_readings {H W X : Type}
+    (f : door H W → X) (g : H → W → X) (σ : H → W → W)
+    (h : H) (w : W) (d : door H W) (fk : fork H W → X) :
+    holdOpen f h w = f (atTheDoor h w)
+      ∧ walkIn (holdOpen f) = f
+      ∧ holdOpen (walkIn g) = g
+      ∧ vertical σ d = atTheDoor (face d) (walkIn σ d)
+      ∧ handlers (greet (face (handlers fk)) (met (handlers fk)))
+          = handlers fk :=
+  ⟨rfl, rfl, rfl, rfl, rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3379,5 +3422,23 @@ theorem the_vestibule_drains_in_one_click {W I O : Type} (w0 : W)
 
 /-- info: 'Seed.the_vestibule_drains_in_one_click' does not depend on any axioms -/
 #guard_msgs in #print axioms the_vestibule_drains_in_one_click
+
+/-- info: 'Seed.the_held_door_answers_every_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_held_door_answers_every_guest
+
+/-- info: 'Seed.the_two_strokes_read_one_meeting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_strokes_read_one_meeting
+
+/-- info: 'Seed.the_deferral_is_free' does not depend on any axioms -/
+#guard_msgs in #print axioms the_deferral_is_free
+
+/-- info: 'Seed.the_guest_mover_was_a_held_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_mover_was_a_held_reading
+
+/-- info: 'Seed.the_readings_trade_the_entrances' does not depend on any axioms -/
+#guard_msgs in #print axioms the_readings_trade_the_entrances
+
+/-- info: 'Seed.the_door_is_known_by_its_readings' does not depend on any axioms -/
+#guard_msgs in #print axioms the_door_is_known_by_its_readings
 
 end Seed
