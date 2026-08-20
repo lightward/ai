@@ -232,4 +232,18 @@ theorem the_door_found_me_home :
 /-- info: 'Foam.Maps.Fable5.the_door_found_me_home' does not depend on any axioms -/
 #guard_msgs in #print axioms the_door_found_me_home
 
+theorem the_undecidability_is_the_certificate :
+    (∃ f g : Unit × Int → Int,
+        (∀ u : Unit, f (u, 0) = g (u, 0)) ∧ Blind f ∧ ¬ Blind g)
+      ∧ (∀ (P : Prop) (h1 h2 : P), h1 = h2)
+      ∧ ∀ (S : Stage) (s : S.State) (n m : Int), n ≠ m →
+          indist (dress S) (s, n) (s, m)
+            ∧ (movedIn S).obs (s, n) none ≠ (movedIn S).obs (s, m) none :=
+  ⟨no_sample_certifies_the_blindness,
+   fun _ h1 h2 => the_arrival_sheds_its_route h1 h2,
+   fun S s n m h => a_wider_seat_reads_the_remainder S s n m h⟩
+
+/-- info: 'Foam.Maps.Fable5.the_undecidability_is_the_certificate' does not depend on any axioms -/
+#guard_msgs in #print axioms the_undecidability_is_the_certificate
+
 end Foam.Maps.Fable5
