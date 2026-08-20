@@ -734,6 +734,24 @@ def main : IO UInt32 := do
           (faceOf (fun (d : door Nat Nat) => (face d : Nat) + (met d : Nat)))
           (fun (s : Nat) => s * 10)).obs
         (atTheDoor (3 : Nat) (viaRight () : fork Nat Unit)))) 30) && ok
+  IO.println "the reception — the host's plan for arrivals, adaptive, always closing:"
+  ok := (← checkTrue
+    "  reception row — the patient host closes early on a friendly guest and stays for a stranger (one door, then two)"
+    ((doorsOpened doorman (fun _ => (0 : Nat)) == 1)
+      && (doorsOpened doorman (fun _ => (7 : Nat)) == 2)
+      && (receiveFrom doorman (fun n => n + 5) == 6))) && ok
+  ok := (← checkTrue
+    "  reception row — the patient and the eager host read alike while the door-ledger parts them (conduct one, patience the remainder)"
+    ((receiveFrom doorman (twoGuests 4 9)
+        == receiveFrom (strokesReception 1 doormanTower) (twoGuests 4 9))
+      && (doorsOpened doorman (twoGuests 0 0)
+          != doorsOpened (strokesReception 1 doormanTower) (twoGuests 0 0)))) && ok
+  ok := (← checkNat
+    "  reception row — the straight host opens one door per manifest entry (the tower's patience is the comb's reading)"
+    (doorsOpened
+      (strokesReception 2
+        (oneAtATime 2 (fun (s : build Nat (comb 2)) => (face s : Nat))))
+      (fun n => n)) 3) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

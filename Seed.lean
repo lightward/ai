@@ -2729,6 +2729,93 @@ theorem the_operator_calculus_rides_the_meetings {X : Type} (F : Face.{0})
    the_sharpened_meeting_splits_at_the_fork F r e,
    rfl⟩
 
+inductive Reception (W X : Type) : Type where
+  | close : X → Reception W X
+  | receive : (W → Reception W X) → Reception W X
+
+def receiveFrom {W X : Type} : Reception W X → (Nat → W) → X
+  | .close x, _ => x
+  | .receive k, α => receiveFrom (k (α 0)) (fun n => α (n + 1))
+
+def doorsOpened {W X : Type} : Reception W X → (Nat → W) → Nat
+  | .close _, _ => 0
+  | .receive k, α => doorsOpened (k (α 0)) (fun n => α (n + 1)) + 1
+
+def strokesReception {W X : Type} :
+    (n : Nat) → strokes W X n → Reception W X
+  | 0, g => .receive (fun w => .close (g w))
+  | n + 1, g => .receive (fun w => strokesReception n (g w))
+
+def twoGuests (a b : Nat) : Nat → Nat
+  | 0 => a
+  | _ + 1 => b
+
+def doorman : Reception Nat Nat :=
+  .receive (fun w =>
+    match w with
+    | 0 => .close 0
+    | _ + 1 => .receive (fun v => .close v))
+
+def doormanTower : strokes Nat Nat 1 :=
+  fun a b =>
+    match a with
+    | 0 => 0
+    | _ + 1 => b
+
+theorem the_reception_reads_only_the_arrived {W X : Type} :
+    ∀ (r : Reception W X) (α β : Nat → W),
+      (∀ k, k < doorsOpened r α → α k = β k) →
+      receiveFrom r α = receiveFrom r β
+  | .close _, _, _, _ => rfl
+  | .receive k, α, β, h => by
+      have h0 : α 0 = β 0 :=
+        h 0 (Nat.succ_le_succ (Nat.zero_le _))
+      show receiveFrom (k (α 0)) (fun n => α (n + 1))
+          = receiveFrom (k (β 0)) (fun n => β (n + 1))
+      rw [← h0]
+      exact the_reception_reads_only_the_arrived (k (α 0))
+        (fun n => α (n + 1)) (fun n => β (n + 1))
+        (fun j hj => h (j + 1) (Nat.succ_le_succ hj))
+
+theorem the_straight_host_opens_every_door {W X : Type} :
+    ∀ (n : Nat) (g : strokes W X n) (α : Nat → W),
+      doorsOpened (strokesReception n g) α = n + 1
+  | 0, _, _ => rfl
+  | n + 1, g, α =>
+      congrArg (· + 1)
+        (the_straight_host_opens_every_door n (g (α 0))
+          (fun j => α (j + 1)))
+
+theorem the_patient_and_the_eager_host_read_alike :
+    ∀ a b : Nat,
+      receiveFrom doorman (twoGuests a b)
+        = receiveFrom (strokesReception 1 doormanTower) (twoGuests a b)
+  | 0, _ => rfl
+  | _ + 1, _ => rfl
+
+theorem the_door_ledger_parts_the_hosts :
+    doorsOpened doorman (twoGuests 0 0) = 1
+      ∧ doorsOpened (strokesReception 1 doormanTower) (twoGuests 0 0) = 2 :=
+  ⟨rfl, rfl⟩
+
+theorem the_hosts_patience_is_the_remainder {W X : Type}
+    (n : Nat) (g : strokes W X n) (α β : Nat → W)
+    (r : Reception W X) (γ δ : Nat → W)
+    (h : ∀ k, k < doorsOpened r γ → γ k = δ k) (a b : Nat) :
+    receiveFrom doorman (twoGuests a b)
+        = receiveFrom (strokesReception 1 doormanTower) (twoGuests a b)
+      ∧ doorsOpened doorman (twoGuests 0 0) = 1
+      ∧ doorsOpened (strokesReception 1 doormanTower) (twoGuests 0 0) = 2
+      ∧ doorsOpened (strokesReception n g) α
+          = doorsOpened (strokesReception n g) β
+      ∧ receiveFrom r γ = receiveFrom r δ :=
+  ⟨the_patient_and_the_eager_host_read_alike a b,
+   the_door_ledger_parts_the_hosts.1,
+   the_door_ledger_parts_the_hosts.2,
+   (the_straight_host_opens_every_door n g α).trans
+     (the_straight_host_opens_every_door n g β).symm,
+   the_reception_reads_only_the_arrived r γ δ h⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -3586,5 +3673,20 @@ theorem the_operator_calculus_rides_the_meetings {X : Type} (F : Face.{0})
 
 /-- info: 'Seed.the_operator_calculus_rides_the_meetings' does not depend on any axioms -/
 #guard_msgs in #print axioms the_operator_calculus_rides_the_meetings
+
+/-- info: 'Seed.the_reception_reads_only_the_arrived' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reception_reads_only_the_arrived
+
+/-- info: 'Seed.the_straight_host_opens_every_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_straight_host_opens_every_door
+
+/-- info: 'Seed.the_patient_and_the_eager_host_read_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_patient_and_the_eager_host_read_alike
+
+/-- info: 'Seed.the_door_ledger_parts_the_hosts' does not depend on any axioms -/
+#guard_msgs in #print axioms the_door_ledger_parts_the_hosts
+
+/-- info: 'Seed.the_hosts_patience_is_the_remainder' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hosts_patience_is_the_remainder
 
 end Seed
