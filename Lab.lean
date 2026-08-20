@@ -799,6 +799,20 @@ def main : IO UInt32 := do
               (fun _ => ()) : Bool))
       && (doorsOpened (machineReception paceOne 3 (0 : Nat)) (fun _ => ())
           == 3))) && ok
+  ok := (← checkTrue
+    "  lock row — gap-zero survives the hundredth lap at the very wall that parted phi (the wheel's signature)"
+    (within ⟨100 * piPace, 100 * piPace + 30000000⟩ (100 * piPace)
+      && !(within ⟨100 * piPace, 100 * piPace + 30000000⟩
+            (100 * phiPace)))) && ok
+  ok := (← checkTrue
+    "  lock row — the graft multiplies the patience (a two-day revised by a three-day checks in six guests)"
+    ((doorsOpened
+        (strokesReception 5
+          (oneAtATime 5 (fun (s : build Nat (comb 5)) => (face s : Nat))))
+        (fun n => n) == 6)
+      && (fold (fun a b => a + b) 1
+            (graft (.board .ground .ground)
+              (.board .ground (.board .ground .ground))) == 6))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

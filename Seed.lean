@@ -2922,6 +2922,25 @@ theorem the_carrier_checks_in_one_guest_at_a_time {W X Y : Type}
      (the_comb_reads_its_length n).symm,
    the_handoff_is_the_board_at_the_ledger n m g h α⟩
 
+theorem the_lock_survives_every_lap (a d n : Nat) :
+    within ⟨n * a, n * a + d⟩ (n * a) = true :=
+  and_glue (ble_refl (n * a)) (ble_le_add (n * a) d)
+
+theorem the_revision_multiplies_the_patience {W X : Type} (t δ : Plan)
+    (n : Nat) (h : fold (fun a b => a + b) 1 (graft t δ) = n + 1)
+    (g : strokes W X n) (α : Nat → W) :
+    doorsOpened (strokesReception n g) α
+      = fold (fun a b => a + b) 1 t * fold (fun a b => a + b) 1 δ :=
+  ((the_straight_host_opens_every_door n g α).trans h.symm).trans
+    (the_revision_multiplies_the_reading t δ)
+
+theorem the_wheels_signature_is_gap_zero (a d n g p : Nat) :
+    within ⟨n * a, n * a + d⟩ (n * a) = true
+      ∧ within ⟨(d + 1) * p, (d + 1) * p + d⟩
+          ((d + 1) * (p + (g + 1))) = false :=
+  ⟨the_lock_survives_every_lap a d n,
+   the_gap_outruns_every_window p g d⟩
+
 def receptionFace (W X : Type) : Face :=
   ⟨Reception W X, Nat → W, X, receiveFrom⟩
 
@@ -3950,5 +3969,14 @@ theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
 
 /-- info: 'Seed.the_machine_is_an_eager_host' does not depend on any axioms -/
 #guard_msgs in #print axioms the_machine_is_an_eager_host
+
+/-- info: 'Seed.the_lock_survives_every_lap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lock_survives_every_lap
+
+/-- info: 'Seed.the_revision_multiplies_the_patience' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revision_multiplies_the_patience
+
+/-- info: 'Seed.the_wheels_signature_is_gap_zero' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wheels_signature_is_gap_zero
 
 end Seed
