@@ -643,6 +643,11 @@ def main : IO UInt32 := do
     ((within empty1 0 == within empty2 0)
       && (within empty1 5 == within empty2 5)
       && ((!(within empty1 3)) == (!(within empty2 3))))) && ok
+  ok := (← checkTrue
+    "  serving row — three is the width of contact (the hallway is too small: and, or, xor each collide somewhere on three seats — no one-Bool reading holds a meeting of three)"
+    (((true && false) == (false && true))
+      && ((true || false) == (true || true))
+      && ((Bool.xor true false) == (Bool.xor false true)))) && ok
   IO.println "the primes — the count's primes pin the unsplit lives:"
   let rc4 : Plan := .board .ground (.board .ground (.board .ground .ground))
   ok := (← checkTrue

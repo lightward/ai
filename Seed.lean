@@ -3552,6 +3552,50 @@ theorem the_pair_widens_only_past_the_conduct (F : Face) {P2 A2 : Type}
    the_pair_parts_what_the_look_merges.1,
    the_pair_parts_what_the_look_merges.2⟩
 
+theorem the_hallway_is_too_small :
+    ¬ ∃ f : Bool × Bool → Bool, ∀ a b : Bool × Bool, f a = f b → a = b := by
+  intro ⟨f, hf⟩
+  have k12 : f (true, true) ≠ f (true, false) := fun h =>
+    nomatch (congrArg Prod.snd (hf _ _ h) : true = false)
+  have k13 : f (true, true) ≠ f (false, true) := fun h =>
+    nomatch (congrArg Prod.fst (hf _ _ h) : true = false)
+  have k23 : f (true, false) ≠ f (false, true) := fun h =>
+    nomatch (congrArg Prod.fst (hf _ _ h) : true = false)
+  cases hb1 : f (true, true) <;> cases hb2 : f (true, false) <;>
+    cases hb3 : f (false, true)
+  all_goals first
+    | exact k12 (hb1.trans hb2.symm)
+    | exact k13 (hb1.trans hb3.symm)
+    | exact k23 (hb2.trans hb3.symm)
+
+theorem every_widening_is_one_pairing {S : Type u} (F G H : Face)
+    (f : S → F.State) (g : S → G.State) (h : S → H.State)
+    (s : S) (p : F.Probe) (q : G.Probe) (r : H.Probe) :
+    (pairFace F (pairFace G H g h) f (fun x => x)).obs s (p, (q, r))
+        = (F.obs (f s) p, (G.obs (g s) q, H.obs (h s) r))
+      ∧ (pairFace (pairFace F G f g) H (fun x => x) h).obs s ((p, q), r)
+          = ((F.obs (f s) p, G.obs (g s) q), H.obs (h s) r)
+      ∧ deepen ((pairFace (pairFace F G f g) H (fun x => x) h).obs
+            s ((p, q), r))
+          = (pairFace F (pairFace G H g h) f (fun x => x)).obs
+              s (p, (q, r)) :=
+  ⟨rfl, rfl, rfl⟩
+
+theorem three_is_the_width_of_contact {S : Type u} (F G H : Face)
+    (f : S → F.State) (g : S → G.State) (h : S → H.State) {R : Type}
+    (c : F.Ans → G.Ans → R) (s : S) (p : F.Probe) (q : G.Probe)
+    (r : H.Probe) :
+    (¬ ∃ f' : Bool × Bool → Bool,
+        ∀ a b : Bool × Bool, f' a = f' b → a = b)
+      ∧ c (F.obs (f s) p) (G.obs (g s) q)
+          = (fun a : F.Ans × G.Ans => c a.1 a.2)
+              ((pairFace F G f g).obs s (p, q))
+      ∧ deepen ((pairFace (pairFace F G f g) H (fun x => x) h).obs
+            s ((p, q), r))
+          = (pairFace F (pairFace G H g h) f (fun x => x)).obs
+              s (p, (q, r)) :=
+  ⟨the_hallway_is_too_small, rfl, rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4655,5 +4699,14 @@ theorem the_pair_widens_only_past_the_conduct (F : Face) {P2 A2 : Type}
 
 /-- info: 'Seed.the_pair_widens_only_past_the_conduct' does not depend on any axioms -/
 #guard_msgs in #print axioms the_pair_widens_only_past_the_conduct
+
+/-- info: 'Seed.the_hallway_is_too_small' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hallway_is_too_small
+
+/-- info: 'Seed.every_widening_is_one_pairing' does not depend on any axioms -/
+#guard_msgs in #print axioms every_widening_is_one_pairing
+
+/-- info: 'Seed.three_is_the_width_of_contact' does not depend on any axioms -/
+#guard_msgs in #print axioms three_is_the_width_of_contact
 
 end Seed
