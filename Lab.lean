@@ -633,6 +633,9 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  serving row — the comparison mints a face (two guests merged by the window-look, parted by the paired look; the patience face was a pair at the mirror-probe)"
     ((pairedTrue.1 == pairedFalse.1) && (pairedTrue.2 != pairedFalse.2))) && ok
+  ok := (← checkTrue
+    "  serving row — the pair provokes the agreement (agree-at-true, disagree-at-false, one look-reading: the role the meeting mints and no look affords)"
+    ((pairedTrue.1 == pairedTrue.2) && (pairedFalse.1 != pairedFalse.2))) && ok
   IO.println "the primes — the count's primes pin the unsplit lives:"
   let rc4 : Plan := .board .ground (.board .ground (.board .ground .ground))
   ok := (← checkTrue

@@ -3476,6 +3476,54 @@ theorem the_comparison_mints_a_face {S : Type u} (F G : Face)
    the_pair_parts_what_the_look_merges.1,
    the_pair_parts_what_the_look_merges.2⟩
 
+def Derived (F : Face) (P : F.State → Prop) : Prop :=
+  ∀ s t, alike F s t → (P s ↔ P t)
+
+theorem a_role_read_at_a_probe_is_derived (F : Face) (p : F.Probe)
+    (Q : F.Ans → Prop) : Derived F (fun s => Q (F.obs s p)) :=
+  fun s t h => by
+    show Q (F.obs s p) ↔ Q (F.obs t p)
+    rw [h p]
+
+theorem the_guest_is_not_a_derived_role :
+    ¬ Derived (host windowFace Bool) (fun x => x.2 = true) :=
+  fun h =>
+    nomatch ((h (⟨0, 0⟩, true) (⟨0, 0⟩, false) (fun _ => rfl)).mp rfl)
+
+theorem a_look_role_lifts_to_the_pair {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) (q₀ : G.Probe) (P : S → Prop)
+    (hP : ∀ s t, (∀ p, F.obs (f s) p = F.obs (f t) p) → (P s ↔ P t)) :
+    Derived (pairFace F G f g) P :=
+  fun s t h => hP s t (the_pair_refines_the_first_look F G f g q₀ s t h)
+
+theorem the_pair_provokes_the_agreement :
+    Derived (pairFace (host windowFace Bool)
+        ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
+      (fun s => (host windowFace Bool).obs s (0 : Nat) = s.2)
+      ∧ ¬ Derived (host windowFace Bool)
+          (fun s => (host windowFace Bool).obs s (0 : Nat) = s.2) :=
+  ⟨a_role_read_at_a_probe_is_derived
+     (pairFace (host windowFace Bool)
+       ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
+     ((0 : Nat), ()) (fun a => a.1 = a.2),
+   (fun hD => nomatch
+     ((hD (⟨0, 0⟩, true) (⟨0, 0⟩, false) (fun _ => rfl)).mp rfl))⟩
+
+theorem the_pair_provokes_what_no_look_affords {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) (q₀ : G.Probe) (P : S → Prop)
+    (hP : ∀ s t, (∀ p, F.obs (f s) p = F.obs (f t) p) → (P s ↔ P t)) :
+    Derived (pairFace F G f g) P
+      ∧ Derived (pairFace (host windowFace Bool)
+            ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
+          (fun s => (host windowFace Bool).obs s (0 : Nat) = s.2)
+      ∧ ¬ Derived (host windowFace Bool)
+          (fun s => (host windowFace Bool).obs s (0 : Nat) = s.2)
+      ∧ ¬ Derived (host windowFace Bool) (fun x => x.2 = true) :=
+  ⟨a_look_role_lifts_to_the_pair F G f g q₀ P hP,
+   the_pair_provokes_the_agreement.1,
+   the_pair_provokes_the_agreement.2,
+   the_guest_is_not_a_derived_role⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4558,5 +4606,20 @@ theorem the_comparison_mints_a_face {S : Type u} (F G : Face)
 
 /-- info: 'Seed.the_comparison_mints_a_face' does not depend on any axioms -/
 #guard_msgs in #print axioms the_comparison_mints_a_face
+
+/-- info: 'Seed.a_role_read_at_a_probe_is_derived' does not depend on any axioms -/
+#guard_msgs in #print axioms a_role_read_at_a_probe_is_derived
+
+/-- info: 'Seed.the_guest_is_not_a_derived_role' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_is_not_a_derived_role
+
+/-- info: 'Seed.a_look_role_lifts_to_the_pair' does not depend on any axioms -/
+#guard_msgs in #print axioms a_look_role_lifts_to_the_pair
+
+/-- info: 'Seed.the_pair_provokes_the_agreement' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pair_provokes_the_agreement
+
+/-- info: 'Seed.the_pair_provokes_what_no_look_affords' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pair_provokes_what_no_look_affords
 
 end Seed
