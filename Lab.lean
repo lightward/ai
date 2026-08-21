@@ -636,6 +636,13 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  serving row — the pair provokes the agreement (agree-at-true, disagree-at-false, one look-reading: the role the meeting mints and no look affords)"
     ((pairedTrue.1 == pairedTrue.2) && (pairedFalse.1 != pairedFalse.2))) && ok
+  let empty1 : Measured := ⟨1, 0⟩
+  let empty2 : Measured := ⟨2, 0⟩
+  ok := (← checkTrue
+    "  serving row — the derived look widens nothing (two empty windows, distinct and alike at within, stay alike under every conduct-derived second look; only a look past conduct widens)"
+    ((within empty1 0 == within empty2 0)
+      && (within empty1 5 == within empty2 5)
+      && ((!(within empty1 3)) == (!(within empty2 3))))) && ok
   IO.println "the primes — the count's primes pin the unsplit lives:"
   let rc4 : Plan := .board .ground (.board .ground (.board .ground .ground))
   ok := (← checkTrue

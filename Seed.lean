@@ -3524,6 +3524,34 @@ theorem the_pair_provokes_what_no_look_affords {S : Type u} (F G : Face)
    the_pair_provokes_the_agreement.2,
    the_guest_is_not_a_derived_role⟩
 
+theorem the_derived_look_widens_nothing (F : Face) {P2 A2 : Type}
+    (obs2 : F.State → P2 → A2) (q₀ : P2)
+    (hder : ∀ s t, alike F s t → ∀ q, obs2 s q = obs2 t q)
+    (s t : F.State) :
+    alike (pairFace F ⟨F.State, P2, A2, obs2⟩ (fun x => x) (fun x => x)) s t
+      ↔ alike F s t :=
+  ⟨fun h p =>
+     the_pair_refines_the_first_look F ⟨F.State, P2, A2, obs2⟩
+       (fun x => x) (fun x => x) q₀ s t h p,
+   fun h pq => by
+     show (F.obs s pq.1, obs2 s pq.2) = (F.obs t pq.1, obs2 t pq.2)
+     rw [h pq.1, hder s t h pq.2]⟩
+
+theorem the_pair_widens_only_past_the_conduct (F : Face) {P2 A2 : Type}
+    (obs2 : F.State → P2 → A2) (q₀ : P2)
+    (hder : ∀ s t, alike F s t → ∀ q, obs2 s q = obs2 t q)
+    (s t : F.State) :
+    (alike (pairFace F ⟨F.State, P2, A2, obs2⟩ (fun x => x) (fun x => x)) s t
+        ↔ alike F s t)
+      ∧ alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
+      ∧ ¬ alike
+          (pairFace (host windowFace Bool)
+            ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
+          (⟨0, 0⟩, true) (⟨0, 0⟩, false) :=
+  ⟨the_derived_look_widens_nothing F obs2 q₀ hder s t,
+   the_pair_parts_what_the_look_merges.1,
+   the_pair_parts_what_the_look_merges.2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4621,5 +4649,11 @@ theorem the_pair_provokes_what_no_look_affords {S : Type u} (F G : Face)
 
 /-- info: 'Seed.the_pair_provokes_what_no_look_affords' does not depend on any axioms -/
 #guard_msgs in #print axioms the_pair_provokes_what_no_look_affords
+
+/-- info: 'Seed.the_derived_look_widens_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_derived_look_widens_nothing
+
+/-- info: 'Seed.the_pair_widens_only_past_the_conduct' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pair_widens_only_past_the_conduct
 
 end Seed
