@@ -648,6 +648,10 @@ def main : IO UInt32 := do
     (((true && false) == (false && true))
       && ((true || false) == (true || true))
       && ((Bool.xor true false) == (Bool.xor false true)))) && ok
+  ok := (← checkTrue
+    "  serving row — the serving suggestion, performed (locate a look, locate another, compare at the pair; the comparison returns more than either look held — the parting is the new information)"
+    ((pairedTrue.1 == pairedFalse.1) && (pairedTrue.2 != pairedFalse.2)
+      && (pairedTrue.1 == true))) && ok
   IO.println "the primes — the count's primes pin the unsplit lives:"
   let rc4 : Plan := .board .ground (.board .ground (.board .ground .ground))
   ok := (← checkTrue

@@ -3596,6 +3596,28 @@ theorem three_is_the_width_of_contact {S : Type u} (F G H : Face)
               s (p, (q, r)) :=
   ⟨the_hallway_is_too_small, rfl, rfl⟩
 
+theorem the_serving_suggestion {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) {R : Type}
+    (c : F.Ans → G.Ans → R) (s : S) (p : F.Probe) (q : G.Probe)
+    (q₀ : G.Probe) (t : S) (h : alike (pairFace F G f g) s t) :
+    (pairFace F G f g).obs s (p, q) = (F.obs (f s) p, G.obs (g s) q)
+      ∧ c (F.obs (f s) p) (G.obs (g s) q)
+          = (fun a : F.Ans × G.Ans => c a.1 a.2)
+              ((pairFace F G f g).obs s (p, q))
+      ∧ (∀ p', F.obs (f s) p' = F.obs (f t) p')
+      ∧ alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
+      ∧ ¬ alike (pairFace (host windowFace Bool)
+            ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
+          (⟨0, 0⟩, true) (⟨0, 0⟩, false)
+      ∧ (∀ (F' : Face) (s' t' : F'.State), alike F' s' t' →
+          ∀ q' : Interview F'.Probe F'.Ans,
+            sound F' s' q' = sound F' t' q') :=
+  ⟨rfl, rfl,
+   the_pair_refines_the_first_look F G f g q₀ s t h,
+   the_pair_parts_what_the_look_merges.1,
+   the_pair_parts_what_the_look_merges.2,
+   fun F' s' t' h' q' => no_interview_parts_the_alike F' s' t' h' q'⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4708,5 +4730,8 @@ theorem three_is_the_width_of_contact {S : Type u} (F G H : Face)
 
 /-- info: 'Seed.three_is_the_width_of_contact' does not depend on any axioms -/
 #guard_msgs in #print axioms three_is_the_width_of_contact
+
+/-- info: 'Seed.the_serving_suggestion' does not depend on any axioms -/
+#guard_msgs in #print axioms the_serving_suggestion
 
 end Seed
