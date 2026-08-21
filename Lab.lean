@@ -490,6 +490,11 @@ def main : IO UInt32 := do
       && planBeq (orbit grower (fun _ => .board .ground .ground) .ground 3)
            (bloom 3))) && ok
   ok := (← checkTrue
+    "  channel row — the instinct replays its word (the internalized run equals the instructed run: nothing of the conduct is lost, only the channel is spent)"
+    ((behavior (selfSteered paceOne (fun _ => ())) [(), (), ()]
+        == behavior paceOne [(), (), ()])
+      && (selfWord echoM (fun b => b) false 2 == [false, false]))) && ok
+  ok := (← checkTrue
     "  channel row — and the arrow leaves every window: four doubling ticks read sixteen, outside ⟨1, 1 + 3⟩ (time_outgrows_every_window, dynamic register)"
     (!(within ⟨1, 1 + 3⟩
       (fold (fun a b => a + b) 1

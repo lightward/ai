@@ -3752,6 +3752,30 @@ theorem the_stage_is_a_kept_clock (n : Nat) (w : List Unit) :
   ⟨the_bloom_is_the_clocks_orbit n, the_mirror_clock_reads_the_caps w,
    the_mirror_clock_never_comes_home n⟩
 
+def selfWord {I O : Type} (m : Machine I O) (r : m.S → I) :
+    m.S → Nat → List I
+  | _, 0 => []
+  | s, n + 1 => r s :: selfWord m r (m.step s (r s)) n
+
+theorem the_instinct_replays_its_word {I O : Type} (m : Machine I O)
+    (r : m.S → I) :
+    ∀ (w : List Unit) (s : m.S),
+      drive (selfSteered m r) s w = drive m s (selfWord m r s w.length)
+  | [], _ => rfl
+  | _ :: w, s => the_instinct_replays_its_word m r w (m.step s (r s))
+
+theorem internalization_is_self_steering {I O : Type} (m : Machine I O)
+    (r : m.S → I) (w w' : List Unit) (h : w.length = w'.length)
+    (n : Nat) :
+    (∀ (v : List Unit) (s : m.S),
+        drive (selfSteered m r) s v = drive m s (selfWord m r s v.length))
+      ∧ behavior (selfSteered m r) w = behavior (selfSteered m r) w'
+      ∧ orbit grower (fun _ => .board .ground .ground) .ground n
+          = bloom n :=
+  ⟨the_instinct_replays_its_word m r,
+   (the_clock_and_the_channel m r w w' h).1,
+   the_bloom_is_the_clocks_orbit n⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4906,5 +4930,11 @@ theorem the_stage_is_a_kept_clock (n : Nat) (w : List Unit) :
 
 /-- info: 'Seed.the_stage_is_a_kept_clock' does not depend on any axioms -/
 #guard_msgs in #print axioms the_stage_is_a_kept_clock
+
+/-- info: 'Seed.the_instinct_replays_its_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_instinct_replays_its_word
+
+/-- info: 'Seed.internalization_is_self_steering' does not depend on any axioms -/
+#guard_msgs in #print axioms internalization_is_self_steering
 
 end Seed
