@@ -764,6 +764,15 @@ def main : IO UInt32 := do
           (faceOf (fun (d : door Nat Nat) => (face d : Nat) + (met d : Nat)))
           (fun (s : Nat) => s * 10)).obs
         (atTheDoor (3 : Nat) (viaRight () : fork Nat Unit)))) 30) && ok
+  let selfRun : Bool :=
+    selfMeet (host (airGap Unit Bool) (List Unit)) (fun x => x.2)
+      (paceOne, [(), (), ()])
+  let carriedEscapee : Bool :=
+    selfMeet (host windowFace Nat) (fun x => x.2) (m2014, m2014.hi + 1)
+  ok := (← checkTrue
+    "  meeting row — every reading is a self-meeting (paceOne carrying its word meets itself at the hosted air gap; the window carrying its escapee as cargo still refuses it)"
+    ((selfRun == behavior paceOne [(), (), ()])
+      && (carriedEscapee == false))) && ok
   IO.println "the reception — the host's plan for arrivals, adaptive, always closing:"
   ok := (← checkTrue
     "  reception row — the patient host closes early on a friendly guest and stays for a stranger (one door, then two)"

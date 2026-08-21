@@ -3327,6 +3327,35 @@ theorem one_reading_two_entrances (F : Face) {W : Type}
      the_self_meeting_parts_the_alike.1 q',
    the_self_meeting_parts_the_alike.2⟩
 
+theorem the_probe_boards_as_the_guest (F : Face) (s : F.State)
+    (p : F.Probe) :
+    selfMeet (host F F.Probe) (fun x => x.2) (s, p) = F.obs s p := rfl
+
+theorem the_meeting_was_a_self_meeting {S P A : Type} (g : door S P → A)
+    (d : door S P) :
+    g d = selfMeet (host (faceOf g) P) (fun x => x.2) d := rfl
+
+theorem the_written_question_is_the_asked_question (F : Face.{0})
+    (s : F.State) (p q₀ : F.Probe) :
+    selfMeet (host F F.Probe) (fun x => x.2)
+        (vertical (fun _ _ => q₀) (atTheDoor s p))
+      = F.obs s q₀ := rfl
+
+theorem the_escapee_rides_refused (m : Measured) :
+    selfMeet (host windowFace Nat) (fun x => x.2) (m, m.hi + 1) = false :=
+  the_window_misses_its_own_successor m
+
+theorem every_reading_is_a_self_meeting {S P A : Type} (g : door S P → A)
+    (d : door S P) (F : Face) (s : F.State) (p : F.Probe)
+    {I O : Type} (mach : Machine I O) (w : List I) (m : Measured) :
+    g d = selfMeet (host (faceOf g) P) (fun x => x.2) d
+      ∧ selfMeet (host F F.Probe) (fun x => x.2) (s, p) = F.obs s p
+      ∧ selfMeet (host (airGap I O) (List I)) (fun x => x.2) (mach, w)
+          = behavior mach w
+      ∧ selfMeet (host windowFace Nat) (fun x => x.2) (m, m.hi + 1)
+          = false :=
+  ⟨rfl, rfl, rfl, the_window_misses_its_own_successor m⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4361,5 +4390,20 @@ theorem one_reading_two_entrances (F : Face) {W : Type}
 
 /-- info: 'Seed.one_reading_two_entrances' does not depend on any axioms -/
 #guard_msgs in #print axioms one_reading_two_entrances
+
+/-- info: 'Seed.the_probe_boards_as_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_probe_boards_as_the_guest
+
+/-- info: 'Seed.the_meeting_was_a_self_meeting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_meeting_was_a_self_meeting
+
+/-- info: 'Seed.the_written_question_is_the_asked_question' does not depend on any axioms -/
+#guard_msgs in #print axioms the_written_question_is_the_asked_question
+
+/-- info: 'Seed.the_escapee_rides_refused' does not depend on any axioms -/
+#guard_msgs in #print axioms the_escapee_rides_refused
+
+/-- info: 'Seed.every_reading_is_a_self_meeting' does not depend on any axioms -/
+#guard_msgs in #print axioms every_reading_is_a_self_meeting
 
 end Seed
