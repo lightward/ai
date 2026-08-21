@@ -3356,6 +3356,53 @@ theorem every_reading_is_a_self_meeting {S P A : Type} (g : door S P → A)
           = false :=
   ⟨rfl, rfl, rfl, the_window_misses_its_own_successor m⟩
 
+theorem no_tick_is_smaller_than_the_mirror {δ : Plan}
+    (hδ : δ ≠ .ground) :
+    Nat.ble 2 (fold (fun a b => a + b) 1 δ) = true := by
+  have h := a_true_tick_grows_the_reading (t := .ground) hδ
+  rw [the_trivial_revision_changes_nothing δ] at h
+  exact h
+
+theorem the_least_tick_is_the_mirror :
+    ∀ δ : Plan, fold (fun a b => a + b) 1 δ = 2 →
+      δ = .board .ground .ground
+  | .ground, h => nomatch Nat.succ.inj h
+  | .board l r, h => by
+      obtain ⟨a, ha⟩ := the_reading_is_positive l
+      obtain ⟨b, hb⟩ := the_reading_is_positive r
+      have h2 : (a + 1) + (b + 1) = 2 := by
+        have hlr : fold (fun a b => a + b) 1 l
+            + fold (fun a b => a + b) 1 r = 2 := h
+        rw [ha, hb] at hlr
+        exact hlr
+      have hab : a + b = 0 := by
+        rw [succ_adds a (b + 1)] at h2
+        exact Nat.succ.inj (Nat.succ.inj h2)
+      have hb0 : b = 0 := by
+        cases b with
+        | zero => rfl
+        | succ b' => exact nomatch hab
+      have ha0 : a = 0 := by
+        rw [hb0] at hab
+        exact hab
+      have hl : l = .ground :=
+        the_ground_is_the_only_unit l
+          ((ha.trans (congrArg (· + 1) ha0)).trans (zero_plus 1))
+      have hr : r = .ground :=
+        the_ground_is_the_only_unit r
+          ((hb.trans (congrArg (· + 1) hb0)).trans (zero_plus 1))
+      rw [hl, hr]
+
+theorem the_tick_was_a_mirror (d : Nat) {δ : Plan} (hδ : δ ≠ .ground) :
+    fold (fun a b => a + b) 1 (.board .ground .ground) = 2
+      ∧ Nat.ble 2 (fold (fun a b => a + b) 1 δ) = true
+      ∧ (∀ γ : Plan, fold (fun a b => a + b) 1 γ = 2 →
+          γ = .board .ground .ground)
+      ∧ bloom (d + 1) = graft (bloom d) (.board .ground .ground)
+      ∧ ¬ bloom (d + 1) ∈ allPlans d :=
+  ⟨rfl, no_tick_is_smaller_than_the_mirror hδ,
+   the_least_tick_is_the_mirror, rfl, the_bloom_outgrows_the_room d⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4405,5 +4452,14 @@ theorem every_reading_is_a_self_meeting {S P A : Type} (g : door S P → A)
 
 /-- info: 'Seed.every_reading_is_a_self_meeting' does not depend on any axioms -/
 #guard_msgs in #print axioms every_reading_is_a_self_meeting
+
+/-- info: 'Seed.no_tick_is_smaller_than_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms no_tick_is_smaller_than_the_mirror
+
+/-- info: 'Seed.the_least_tick_is_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms the_least_tick_is_the_mirror
+
+/-- info: 'Seed.the_tick_was_a_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tick_was_a_mirror
 
 end Seed

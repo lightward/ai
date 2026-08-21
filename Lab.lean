@@ -575,6 +575,11 @@ def main : IO UInt32 := do
     "  generation row — the order vanishes on the diagonal (bloom-grafts commute as PLANS, planBeq-checked, where the day-grafts provably part; and the caps multiply: 8 = 2 times 4)"
     (planBeq (graft (bloom 1) (bloom 2)) (graft (bloom 2) (bloom 1))
       && (roomCap 3 == roomCap 1 * roomCap 2))) && ok
+  ok := (← checkTrue
+    "  generation row — the tick was a mirror (the smallest true revision reads two and is the mirror; the least tick iterated is the bloom, the room's own escapee)"
+    ((fold (fun a b => a + b) 1 (.board .ground .ground : Plan) == 2)
+      && planBeq (graft (bloom 3) (.board .ground .ground)) (bloom 4)
+      && Nat.ble 2 (fold (fun a b => a + b) 1 dayB))) && ok
   IO.println "the audition — the adaptive interview crosses the air gap:"
   let curious : Interview (List Unit) Bool :=
     .ask [()] (fun a =>
