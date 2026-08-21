@@ -671,6 +671,11 @@ def main : IO UInt32 := do
     ((fold (fun a b => a + b) 1 (bloom 2) == fold (fun a b => a + b) 1 rc4)
       && planBeq (graft (.board .ground .ground) (.board .ground .ground))
            (bloom 2))) && ok
+  ok := (← checkTrue
+    "  prime row — every factor lives below the horizon (the room exhausts the split-search: bloom 2's mirror-factors found in room 3; the completeness is kernel-general now)"
+    ((allPlans 3).any (fun t => (allPlans 3).any (fun d =>
+        planBeq (graft t d) (bloom 2)
+          && !(planBeq t .ground) && !(planBeq d .ground))))) && ok
   IO.println "the face — the organs share one face (the kid grows its parent's root):"
   ok := (← checkTrue
     "  face row — the quiz was an interview all along (the door sounded through the shared face reads identically, and the audition is the air gap's sounding by rfl)"

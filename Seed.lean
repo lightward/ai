@@ -3652,6 +3652,31 @@ theorem the_census_reads_the_split_only_at_the_primes (Q : Nat → Prop) :
    a_role_read_at_a_probe_is_derived censusFace () Q,
    the_split_is_not_a_derived_role⟩
 
+theorem the_revision_also_rides (t δ : Plan) :
+    Nat.ble (fold (fun a b => a + b) 1 δ)
+      (fold (fun a b => a + b) 1 (graft t δ)) = true := by
+  rw [the_revision_multiplies_the_reading]
+  obtain ⟨a, ha⟩ := the_reading_is_positive t
+  rw [ha, Nat.succ_mul]
+  exact ble_le_add_left _ _
+
+theorem every_factor_lives_below_the_horizon {m : Nat} (t δ p : Plan)
+    (he : graft t δ = p) (hm : fold (fun a b => a + b) 1 p = m + 1) :
+    t ∈ allPlans m ∧ δ ∈ allPlans m :=
+  ⟨the_horizon_holds_every_reading m t (by
+      rw [← hm, ← he]; exact the_ground_rides_in_every_graft t δ),
+   the_horizon_holds_every_reading m δ (by
+      rw [← hm, ← he]; exact the_revision_also_rides t δ)⟩
+
+theorem the_split_is_searchable_in_the_room {m : Nat} (t δ p : Plan)
+    (he : graft t δ = p) (hm : fold (fun a b => a + b) 1 p = m + 1) :
+    (t ∈ allPlans m ∧ δ ∈ allPlans m)
+      ∧ ¬ Derived censusFace
+          (fun q => ∃ t' δ' : Plan, t' ≠ Plan.ground ∧ δ' ≠ Plan.ground
+            ∧ graft t' δ' = q) :=
+  ⟨every_factor_lives_below_the_horizon t δ p he hm,
+   the_split_is_not_a_derived_role⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4773,5 +4798,14 @@ theorem the_census_reads_the_split_only_at_the_primes (Q : Nat → Prop) :
 
 /-- info: 'Seed.the_census_reads_the_split_only_at_the_primes' does not depend on any axioms -/
 #guard_msgs in #print axioms the_census_reads_the_split_only_at_the_primes
+
+/-- info: 'Seed.the_revision_also_rides' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revision_also_rides
+
+/-- info: 'Seed.every_factor_lives_below_the_horizon' does not depend on any axioms -/
+#guard_msgs in #print axioms every_factor_lives_below_the_horizon
+
+/-- info: 'Seed.the_split_is_searchable_in_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_split_is_searchable_in_the_room
 
 end Seed
