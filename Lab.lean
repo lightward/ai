@@ -624,6 +624,15 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  curtain row — one reading, two entrances (written into the guest it is silent at every probe; read out through the probe it parts — one coordinate, two audibilities)"
     ((obsW == obsW') && (hostTrue != hostFalse))) && ok
+  let pairedTrue : Bool × Bool :=
+    (pairFace (host windowFace Bool) ⟨Bool, Unit, Bool, fun b _ => b⟩
+      (fun x => x) Prod.snd).obs ((⟨0, 0⟩ : Measured), true) ((0 : Nat), ())
+  let pairedFalse : Bool × Bool :=
+    (pairFace (host windowFace Bool) ⟨Bool, Unit, Bool, fun b _ => b⟩
+      (fun x => x) Prod.snd).obs ((⟨0, 0⟩ : Measured), false) ((0 : Nat), ())
+  ok := (← checkTrue
+    "  serving row — the comparison mints a face (two guests merged by the window-look, parted by the paired look; the patience face was a pair at the mirror-probe)"
+    ((pairedTrue.1 == pairedFalse.1) && (pairedTrue.2 != pairedFalse.2))) && ok
   IO.println "the primes — the count's primes pin the unsplit lives:"
   let rc4 : Plan := .board .ground (.board .ground (.board .ground .ground))
   ok := (← checkTrue

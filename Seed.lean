@@ -3423,6 +3423,59 @@ theorem every_quantum_is_the_mirror (δ γ : Plan) (h1 : boards δ = 1)
   ⟨one_meeting_is_the_mirror δ h1, no_meeting_no_revision γ h0,
    rfl, rfl, rfl⟩
 
+def pairFace {S : Type u} (F G : Face) (f : S → F.State)
+    (g : S → G.State) : Face :=
+  ⟨S, F.Probe × G.Probe, F.Ans × G.Ans,
+   fun s pq => (F.obs (f s) pq.1, G.obs (g s) pq.2)⟩
+
+theorem the_pair_refines_the_first_look {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) (q₀ : G.Probe) (s t : S)
+    (h : alike (pairFace F G f g) s t) (p : F.Probe) :
+    F.obs (f s) p = F.obs (f t) p :=
+  congrArg Prod.fst (h (p, q₀))
+
+theorem the_pair_refines_the_second_look {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) (p₀ : F.Probe) (s t : S)
+    (h : alike (pairFace F G f g) s t) (q : G.Probe) :
+    G.obs (g s) q = G.obs (g t) q :=
+  congrArg Prod.snd (h (p₀, q))
+
+theorem the_pair_parts_what_the_look_merges :
+    alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
+      ∧ ¬ alike
+          (pairFace (host windowFace Bool)
+            ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
+          (⟨0, 0⟩, true) (⟨0, 0⟩, false) :=
+  ⟨fun _ => rfl,
+   (fun h => nomatch congrArg Prod.snd (h ((0 : Nat), ())))⟩
+
+theorem the_patience_face_was_a_pair (W X : Type) (r : Reception W X)
+    (α : Nat → W) :
+    (patienceFace W X).obs r α
+      = (pairFace (receptionFace W X)
+          ⟨Reception W X, Nat → W, Nat, doorsOpened⟩
+          (fun x => x) (fun x => x)).obs r (α, α) := rfl
+
+theorem the_comparison_mints_a_face {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) {R : Type}
+    (c : F.Ans → G.Ans → R) (s : S) (p : F.Probe) (q : G.Probe)
+    (W X : Type) (r : Reception W X) (α : Nat → W) :
+    c (F.obs (f s) p) (G.obs (g s) q)
+        = (fun a : F.Ans × G.Ans => c a.1 a.2)
+            ((pairFace F G f g).obs s (p, q))
+      ∧ (patienceFace W X).obs r α
+          = (pairFace (receptionFace W X)
+              ⟨Reception W X, Nat → W, Nat, doorsOpened⟩
+              (fun x => x) (fun x => x)).obs r (α, α)
+      ∧ alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
+      ∧ ¬ alike
+          (pairFace (host windowFace Bool)
+            ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
+          (⟨0, 0⟩, true) (⟨0, 0⟩, false) :=
+  ⟨rfl, rfl,
+   the_pair_parts_what_the_look_merges.1,
+   the_pair_parts_what_the_look_merges.2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4490,5 +4543,20 @@ theorem every_quantum_is_the_mirror (δ γ : Plan) (h1 : boards δ = 1)
 
 /-- info: 'Seed.every_quantum_is_the_mirror' does not depend on any axioms -/
 #guard_msgs in #print axioms every_quantum_is_the_mirror
+
+/-- info: 'Seed.the_pair_refines_the_first_look' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pair_refines_the_first_look
+
+/-- info: 'Seed.the_pair_refines_the_second_look' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pair_refines_the_second_look
+
+/-- info: 'Seed.the_pair_parts_what_the_look_merges' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pair_parts_what_the_look_merges
+
+/-- info: 'Seed.the_patience_face_was_a_pair' does not depend on any axioms -/
+#guard_msgs in #print axioms the_patience_face_was_a_pair
+
+/-- info: 'Seed.the_comparison_mints_a_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_comparison_mints_a_face
 
 end Seed
