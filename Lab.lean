@@ -580,6 +580,12 @@ def main : IO UInt32 := do
     ((fold (fun a b => a + b) 1 (.board .ground .ground : Plan) == 2)
       && planBeq (graft (bloom 3) (.board .ground .ground)) (bloom 4)
       && Nat.ble 2 (fold (fun a b => a + b) 1 dayB))) && ok
+  ok := (← checkTrue
+    "  generation row — every quantum is the mirror (one meeting, reading two, one hanoi move, one doubling tick: one shape at every counter)"
+    ((boards (.board .ground .ground : Plan) == 1)
+      && (boards dayB == 2)
+      && planBeq (graft dayA (.board .ground .ground))
+           (.board dayA dayA))) && ok
   IO.println "the audition — the adaptive interview crosses the air gap:"
   let curious : Interview (List Unit) Bool :=
     .ask [()] (fun a =>

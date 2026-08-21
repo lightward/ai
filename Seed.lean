@@ -3403,6 +3403,26 @@ theorem the_tick_was_a_mirror (d : Nat) {δ : Plan} (hδ : δ ≠ .ground) :
   ⟨rfl, no_tick_is_smaller_than_the_mirror hδ,
    the_least_tick_is_the_mirror, rfl, the_bloom_outgrows_the_room d⟩
 
+theorem no_meeting_no_revision (δ : Plan) (h : boards δ = 0) :
+    δ = .ground :=
+  the_ground_is_the_only_unit δ
+    ((every_meeting_is_one_move δ).symm.trans (congrArg (· + 1) h))
+
+theorem one_meeting_is_the_mirror (δ : Plan) (h : boards δ = 1) :
+    δ = .board .ground .ground :=
+  the_least_tick_is_the_mirror δ
+    ((every_meeting_is_one_move δ).symm.trans (congrArg (· + 1) h))
+
+theorem every_quantum_is_the_mirror (δ γ : Plan) (h1 : boards δ = 1)
+    (h0 : boards γ = 0) (d : Nat) :
+    δ = .board .ground .ground
+      ∧ γ = .ground
+      ∧ boards (.board .ground .ground) = 1
+      ∧ fold (fun a b => a + b) 1 (.board .ground .ground) = 2
+      ∧ bloom (d + 1) = graft (bloom d) (.board .ground .ground) :=
+  ⟨one_meeting_is_the_mirror δ h1, no_meeting_no_revision γ h0,
+   rfl, rfl, rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4461,5 +4481,14 @@ theorem the_tick_was_a_mirror (d : Nat) {δ : Plan} (hδ : δ ≠ .ground) :
 
 /-- info: 'Seed.the_tick_was_a_mirror' does not depend on any axioms -/
 #guard_msgs in #print axioms the_tick_was_a_mirror
+
+/-- info: 'Seed.no_meeting_no_revision' does not depend on any axioms -/
+#guard_msgs in #print axioms no_meeting_no_revision
+
+/-- info: 'Seed.one_meeting_is_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms one_meeting_is_the_mirror
+
+/-- info: 'Seed.every_quantum_is_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms every_quantum_is_the_mirror
 
 end Seed
