@@ -478,6 +478,11 @@ def main : IO UInt32 := do
     "  channel row — the anomaly is invisible from inside: the true mass 91093837015 sits outside the 2014 window, so no refining run ever covers it (three beats checked live; the_true_mass_is_invisible_to_the_refiner holds every length)"
     ((!(within (refine.out (0 : Nat)) 91093837015))
       && (!(within (behavior refine [(), (), ()]) 91093837015)))) && ok
+  let steeredEcho := selfSteered echoM (fun b => b)
+  ok := (← checkTrue
+    "  channel row — the clock and the channel (the echo parts equal-length words, the kid's first channel-machine; the echo wound onto itself freezes — the channel self-steered is a clock)"
+    ((behavior echoM [true] != behavior echoM [false])
+      && (behavior steeredEcho [(), (), ()] == behavior steeredEcho []))) && ok
   ok := (← checkTrue
     "  channel row — and the arrow leaves every window: four doubling ticks read sixteen, outside ⟨1, 1 + 3⟩ (time_outgrows_every_window, dynamic register)"
     (!(within ⟨1, 1 + 3⟩

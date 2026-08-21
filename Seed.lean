@@ -3677,6 +3677,38 @@ theorem the_split_is_searchable_in_the_room {m : Nat} (t δ p : Plan)
   ⟨every_factor_lives_below_the_horizon t δ p he hm,
    the_split_is_not_a_derived_role⟩
 
+def selfSteered {I O : Type} (m : Machine I O) (r : m.S → I) :
+    Machine Unit O :=
+  ⟨m.S, m.s0, fun s _ => m.step s (r s), m.out⟩
+
+def orbit {I O : Type} (m : Machine I O) (r : m.S → I) : m.S → Nat → m.S
+  | s, 0 => s
+  | s, n + 1 => orbit m r (m.step s (r s)) n
+
+theorem the_self_steered_machine_is_a_clock {I O : Type} (m : Machine I O)
+    (r : m.S → I) :
+    ∀ (w : List Unit) (s : m.S),
+      drive (selfSteered m r) s w = m.out (orbit m r s w.length)
+  | [], _ => rfl
+  | _ :: w, s => the_self_steered_machine_is_a_clock m r w (m.step s (r s))
+
+def echoM : Machine Bool Bool := ⟨Bool, false, fun _ i => i, fun b => b⟩
+
+theorem the_channel_hears_the_guest :
+    behavior echoM [true] ≠ behavior echoM [false]
+      ∧ ([true] : List Bool).length = ([false] : List Bool).length :=
+  ⟨(fun h => nomatch h), rfl⟩
+
+theorem the_clock_and_the_channel {I O : Type} (m : Machine I O)
+    (r : m.S → I) (w w' : List Unit) (h : w.length = w'.length) :
+    behavior (selfSteered m r) w = behavior (selfSteered m r) w'
+      ∧ behavior echoM [true] ≠ behavior echoM [false]
+      ∧ ([true] : List Bool).length = ([false] : List Bool).length :=
+  ⟨(the_self_steered_machine_is_a_clock m r w m.s0).trans
+     ((congrArg (fun n => m.out (orbit m r m.s0 n)) h).trans
+       (the_self_steered_machine_is_a_clock m r w' m.s0).symm),
+   (fun hh => nomatch hh), rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4807,5 +4839,14 @@ theorem the_split_is_searchable_in_the_room {m : Nat} (t δ p : Plan)
 
 /-- info: 'Seed.the_split_is_searchable_in_the_room' does not depend on any axioms -/
 #guard_msgs in #print axioms the_split_is_searchable_in_the_room
+
+/-- info: 'Seed.the_self_steered_machine_is_a_clock' does not depend on any axioms -/
+#guard_msgs in #print axioms the_self_steered_machine_is_a_clock
+
+/-- info: 'Seed.the_channel_hears_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_channel_hears_the_guest
+
+/-- info: 'Seed.the_clock_and_the_channel' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_and_the_channel
 
 end Seed
