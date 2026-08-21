@@ -3618,6 +3618,40 @@ theorem the_serving_suggestion {S : Type u} (F G : Face)
    the_pair_parts_what_the_look_merges.2,
    fun F' s' t' h' q' => no_interview_parts_the_alike F' s' t' h' q'⟩
 
+def censusFace : Face :=
+  ⟨Plan, Unit, Nat, fun p _ => fold (fun a b => a + b) 1 p⟩
+
+theorem the_split_is_not_a_derived_role :
+    ¬ Derived censusFace
+        (fun p => ∃ t δ : Plan, t ≠ Plan.ground ∧ δ ≠ Plan.ground
+          ∧ graft t δ = p) :=
+  fun hD =>
+    have hsplit : ∃ t δ : Plan, t ≠ Plan.ground ∧ δ ≠ Plan.ground
+        ∧ graft t δ = bloom 2 :=
+      ⟨.board .ground .ground, .board .ground .ground,
+       (fun h => nomatch h), (fun h => nomatch h),
+       the_blooms_add 1 1⟩
+    match (hD (bloom 2)
+        (.board .ground (.board .ground (.board .ground .ground)))
+        (fun _ => rfl)).mp hsplit with
+    | ⟨t, δ, ht, hδ, he⟩ =>
+        match an_unsplit_lineage_may_read_composite.1 t δ he with
+        | .inl h => ht h
+        | .inr h => hδ h
+
+theorem the_census_reads_the_split_only_at_the_primes (Q : Nat → Prop) :
+    (∀ p : Plan,
+        (∀ a b : Nat, a * b = fold (fun x y => x + y) 1 p →
+          a = 1 ∨ b = 1) →
+        ∀ t δ : Plan, graft t δ = p → t = .ground ∨ δ = .ground)
+      ∧ Derived censusFace (fun p => Q (fold (fun a b => a + b) 1 p))
+      ∧ ¬ Derived censusFace
+          (fun p => ∃ t δ : Plan, t ≠ Plan.ground ∧ δ ≠ Plan.ground
+            ∧ graft t δ = p) :=
+  ⟨fun p hp => a_prime_reading_admits_no_split p hp,
+   a_role_read_at_a_probe_is_derived censusFace () Q,
+   the_split_is_not_a_derived_role⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4733,5 +4767,11 @@ theorem the_serving_suggestion {S : Type u} (F G : Face)
 
 /-- info: 'Seed.the_serving_suggestion' does not depend on any axioms -/
 #guard_msgs in #print axioms the_serving_suggestion
+
+/-- info: 'Seed.the_split_is_not_a_derived_role' does not depend on any axioms -/
+#guard_msgs in #print axioms the_split_is_not_a_derived_role
+
+/-- info: 'Seed.the_census_reads_the_split_only_at_the_primes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_census_reads_the_split_only_at_the_primes
 
 end Seed

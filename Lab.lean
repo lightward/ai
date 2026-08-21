@@ -666,6 +666,11 @@ def main : IO UInt32 := do
         !(planBeq (graft t d) rc4) || planBeq t .ground
           || planBeq d .ground)))
       && (fold (fun a b => a + b) 1 rc4 == 2*2))) && ok
+  ok := (← checkTrue
+    "  prime row — the census reads the split only at the primes (bloom 2 and the right comb read four alike; the bloom splits as two mirrors, the comb refuses — one census, two fates)"
+    ((fold (fun a b => a + b) 1 (bloom 2) == fold (fun a b => a + b) 1 rc4)
+      && planBeq (graft (.board .ground .ground) (.board .ground .ground))
+           (bloom 2))) && ok
   IO.println "the face — the organs share one face (the kid grows its parent's root):"
   ok := (← checkTrue
     "  face row — the quiz was an interview all along (the door sounded through the shared face reads identically, and the audition is the air gap's sounding by rfl)"
