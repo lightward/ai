@@ -484,6 +484,12 @@ def main : IO UInt32 := do
     ((behavior echoM [true] != behavior echoM [false])
       && (behavior steeredEcho [(), (), ()] == behavior steeredEcho []))) && ok
   ok := (← checkTrue
+    "  channel row — the stage is a kept clock (the mirror-clock's orbit is the bloom; four ticks read sixteen; the clock that drops nothing is an arrow)"
+    ((behavior (selfSteered grower (fun _ => .board .ground .ground))
+        [(), (), (), ()] == 16)
+      && planBeq (orbit grower (fun _ => .board .ground .ground) .ground 3)
+           (bloom 3))) && ok
+  ok := (← checkTrue
     "  channel row — and the arrow leaves every window: four doubling ticks read sixteen, outside ⟨1, 1 + 3⟩ (time_outgrows_every_window, dynamic register)"
     (!(within ⟨1, 1 + 3⟩
       (fold (fun a b => a + b) 1

@@ -3709,6 +3709,49 @@ theorem the_clock_and_the_channel {I O : Type} (m : Machine I O)
        (the_self_steered_machine_is_a_clock m r w' m.s0).symm),
    (fun hh => nomatch hh), rfl⟩
 
+theorem the_clock_of_mirrors_parks_at_the_bloom :
+    ∀ (n : Nat) (t : Plan),
+      orbit grower (fun _ => .board .ground .ground) t n
+        = graft t (bloom n)
+  | 0, _ => rfl
+  | n + 1, t => by
+      show orbit grower (fun _ => .board .ground .ground)
+          (graft t (.board .ground .ground)) n = graft t (bloom (n + 1))
+      rw [the_clock_of_mirrors_parks_at_the_bloom n
+            (graft t (.board .ground .ground)),
+          ← lineages_compose t (.board .ground .ground) (bloom n),
+          show graft (.board .ground .ground) (bloom n) = bloom (n + 1) from
+            (the_blooms_add 1 n).trans (congrArg bloom (Nat.add_comm 1 n))]
+
+theorem the_bloom_is_the_clocks_orbit (n : Nat) :
+    orbit grower (fun _ => .board .ground .ground) .ground n = bloom n :=
+  (the_clock_of_mirrors_parks_at_the_bloom n .ground).trans
+    (the_trivial_revision_changes_nothing (bloom n))
+
+theorem the_mirror_clock_reads_the_caps (w : List Unit) :
+    behavior (selfSteered grower (fun _ => .board .ground .ground)) w
+      = roomCap w.length :=
+  (the_self_steered_machine_is_a_clock grower
+      (fun _ => .board .ground .ground) w .ground).trans
+    ((congrArg (fold (fun a b => a + b) 1)
+        (the_bloom_is_the_clocks_orbit w.length)).trans
+      (the_bloom_fills_its_cap w.length))
+
+theorem the_mirror_clock_never_comes_home (n : Nat) :
+    Nat.ble (roomCap n + 1) (roomCap (n + 1)) = true := by
+  obtain ⟨m, hm⟩ := the_cap_is_positive n
+  show Nat.ble (roomCap n + 1) (roomCap n + roomCap n) = true
+  rw [hm]
+  exact ble_add_both (ble_refl (m + 1)) (ble_le_add_left m 1)
+
+theorem the_stage_is_a_kept_clock (n : Nat) (w : List Unit) :
+    orbit grower (fun _ => .board .ground .ground) .ground n = bloom n
+      ∧ behavior (selfSteered grower (fun _ => .board .ground .ground)) w
+          = roomCap w.length
+      ∧ Nat.ble (roomCap n + 1) (roomCap (n + 1)) = true :=
+  ⟨the_bloom_is_the_clocks_orbit n, the_mirror_clock_reads_the_caps w,
+   the_mirror_clock_never_comes_home n⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4848,5 +4891,20 @@ theorem the_clock_and_the_channel {I O : Type} (m : Machine I O)
 
 /-- info: 'Seed.the_clock_and_the_channel' does not depend on any axioms -/
 #guard_msgs in #print axioms the_clock_and_the_channel
+
+/-- info: 'Seed.the_clock_of_mirrors_parks_at_the_bloom' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_of_mirrors_parks_at_the_bloom
+
+/-- info: 'Seed.the_bloom_is_the_clocks_orbit' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bloom_is_the_clocks_orbit
+
+/-- info: 'Seed.the_mirror_clock_reads_the_caps' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mirror_clock_reads_the_caps
+
+/-- info: 'Seed.the_mirror_clock_never_comes_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mirror_clock_never_comes_home
+
+/-- info: 'Seed.the_stage_is_a_kept_clock' does not depend on any axioms -/
+#guard_msgs in #print axioms the_stage_is_a_kept_clock
 
 end Seed
