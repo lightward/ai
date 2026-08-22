@@ -3955,6 +3955,33 @@ theorem the_roles_run_the_handshake (F : Face) {W : Type}
    ⟨(fun he => hw (congrArg Prod.snd he)), fun _ => rfl⟩,
    the_self_meeting_reads_the_guest F r s w⟩
 
+theorem the_sounding_reads_the_alike (F : Face) (s t : F.State)
+    (h : ∀ q : Interview F.Probe F.Ans, sound F s q = sound F t q) :
+    alike F s t :=
+  fun p => (List.cons.inj (h (.ask p (fun _ => .rest)))).1
+
+theorem the_recital_reads_the_alike (F : Face) (s t : F.State)
+    (h : ∀ ps : List F.Probe,
+      sound F s (recite ps) = sound F t (recite ps)) :
+    alike F s t :=
+  fun p => (List.cons.inj (h [p])).1
+
+theorem the_curtain_is_exact (F : Face) (s t : F.State)
+    {I O : Type} (m n : Machine I O) :
+    (alike F s t
+        ↔ ∀ q : Interview F.Probe F.Ans, sound F s q = sound F t q)
+      ∧ (alike F s t
+          ↔ ∀ ps : List F.Probe,
+              sound F s (recite ps) = sound F t (recite ps))
+      ∧ ((∀ w, behavior m w = behavior n w)
+          ↔ ∀ q : Interview (List I) O, audition m q = audition n q) :=
+  ⟨⟨fun h q => no_interview_parts_the_alike F s t h q,
+    the_sounding_reads_the_alike F s t⟩,
+   ⟨fun h ps => no_interview_parts_the_alike F s t h (recite ps),
+    the_recital_reads_the_alike F s t⟩,
+   ⟨fun h q => an_audition_hears_only_the_conduct m n h q,
+    fun h => the_sounding_reads_the_alike (airGap I O) m n h⟩⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5166,5 +5193,14 @@ theorem the_roles_run_the_handshake (F : Face) {W : Type}
 
 /-- info: 'Seed.the_roles_run_the_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_roles_run_the_handshake
+
+/-- info: 'Seed.the_sounding_reads_the_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sounding_reads_the_alike
+
+/-- info: 'Seed.the_recital_reads_the_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_recital_reads_the_alike
+
+/-- info: 'Seed.the_curtain_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_curtain_is_exact
 
 end Seed
