@@ -4011,6 +4011,44 @@ theorem the_homecoming_is_conduct :
        ((the_pace_parks_at_its_count (() :: v) s).symm.trans he),
    the_flip_wheels⟩
 
+def exchange {W : Type} (σ : W → W → W) (d : door W W) : door W W :=
+  turnAbout (vertical σ d)
+
+def still {W : Type} : W → W → W := fun _ w => w
+
+def dialogue {W : Type} (d : door W W) (σs : List (W → W → W)) :
+    door W W :=
+  walk (fun e σ => exchange σ e) d σs
+
+theorem the_spoken_arrives_at_the_face {W : Type} (σ : W → W → W)
+    (d : door W W) :
+    face (exchange σ d) = σ (face d) (met d)
+      ∧ met (exchange σ d) = face d :=
+  ⟨rfl, rfl⟩
+
+theorem the_listening_turn_is_the_yield {W : Type} (d : door W W) :
+    exchange still d = turnAbout d := rfl
+
+theorem the_two_listeners_restore_the_table {W : Type} (d : door W W) :
+    exchange still (exchange still d) = d := rfl
+
+theorem the_dialogue_resumes {W : Type} (d : door W W)
+    (σs τs : List (W → W → W)) :
+    dialogue d (σs ++ τs) = dialogue (dialogue d σs) τs :=
+  the_walk_resumes (fun e σ => exchange σ e) σs τs d
+
+theorem the_conversation_is_a_walk {W X : Type} (σ : W → W → W)
+    (d : door W W) (σs τs : List (W → W → W)) (g : W → X) :
+    (face (exchange σ d) = σ (face d) (met d)
+        ∧ met (exchange σ d) = face d)
+      ∧ exchange still (exchange still d) = d
+      ∧ dialogue d (σs ++ τs) = dialogue (dialogue d σs) τs
+      ∧ g (face (vertical σ d)) = g (face d) :=
+  ⟨the_spoken_arrives_at_the_face σ d,
+   the_two_listeners_restore_the_table d,
+   the_dialogue_resumes d σs τs,
+   a_guest_mover_is_unheard σ g d⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5237,5 +5275,20 @@ theorem the_homecoming_is_conduct :
 
 /-- info: 'Seed.the_homecoming_is_conduct' does not depend on any axioms -/
 #guard_msgs in #print axioms the_homecoming_is_conduct
+
+/-- info: 'Seed.the_spoken_arrives_at_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_spoken_arrives_at_the_face
+
+/-- info: 'Seed.the_listening_turn_is_the_yield' does not depend on any axioms -/
+#guard_msgs in #print axioms the_listening_turn_is_the_yield
+
+/-- info: 'Seed.the_two_listeners_restore_the_table' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_listeners_restore_the_table
+
+/-- info: 'Seed.the_dialogue_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_dialogue_resumes
+
+/-- info: 'Seed.the_conversation_is_a_walk' does not depend on any axioms -/
+#guard_msgs in #print axioms the_conversation_is_a_walk
 
 end Seed

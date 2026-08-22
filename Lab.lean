@@ -986,6 +986,21 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  homecoming row — the flight peaks at 9232 (the second checksum; and the home wheel turns beneath it: 1 returns in three)"
     ((flight.foldl max 0 == 9232) && (wheel3 == 1))) && ok
+  IO.println "the table — one turn speaks, one turn yields:"
+  let turn1 : door Nat Nat :=
+    exchange (fun h w => h + w) (atTheDoor (3 : Nat) (5 : Nat))
+  ok := (← checkTrue
+    "  table row — the spoken arrives at the face and the speaker rides as guest (speak the sum eight, yield the pen; the three rides unread until the next turn)"
+    ((face turn1 == 8) && (met turn1 == 3))) && ok
+  let backHome : door Nat Nat :=
+    dialogue (atTheDoor (3 : Nat) (5 : Nat)) [still, still]
+  let resumed : door Nat Nat :=
+    dialogue (dialogue (atTheDoor (3 : Nat) (5 : Nat)) [fun h w => h + w])
+      [still]
+  ok := (← checkTrue
+    "  table row — two listeners restore the table (listening, listening: the seating comes home) and the dialogue resumes from the parked door (rehydration, two-seated)"
+    ((face backHome == 3) && (met backHome == 5)
+      && (face resumed == 3) && (met resumed == 8))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
