@@ -1001,6 +1001,14 @@ def main : IO UInt32 := do
     "  table row — two listeners restore the table (listening, listening: the seating comes home) and the dialogue resumes from the parked door (rehydration, two-seated)"
     ((face backHome == 3) && (met backHome == 5)
       && (face resumed == 3) && (met resumed == 8))) && ok
+  let deafA : door Nat Nat :=
+    exchange (fun x _ => x + 100) (atTheDoor (3 : Nat) (5 : Nat))
+  let deafB : door Nat Nat :=
+    exchange (fun x _ => x + 100) (atTheDoor (3 : Nat) (99 : Nat))
+  ok := (← checkTrue
+    "  table row — the turn keeps only what it hears (the deaf turn lands five and ninety-nine on one door: erasure, provably no counter; the listening turn surfaces the guest whole and undoes itself)"
+    ((face deafA == face deafB) && (met deafA == met deafB)
+      && (face (exchange still (atTheDoor (3 : Nat) (5 : Nat))) == 5))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

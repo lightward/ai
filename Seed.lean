@@ -4049,6 +4049,35 @@ theorem the_conversation_is_a_walk {W X : Type} (σ : W → W → W)
    the_dialogue_resumes d σs τs,
    a_guest_mover_is_unheard σ g d⟩
 
+theorem the_deaf_turn_merges {W : Type} (f : W → W) (h : W) (w w' : W) :
+    exchange (fun x _ => f x) (atTheDoor h w)
+      = exchange (fun x _ => f x) (atTheDoor h w') := rfl
+
+theorem no_move_unsays_the_deaf_turn {W : Type} (f : W → W) (h : W)
+    {w w' : W} (hw : w ≠ w') :
+    ¬ ∃ g : door W W → door W W,
+      ∀ d, g (exchange (fun x _ => f x) d) = d :=
+  fun he =>
+    he.elim fun g hg =>
+      hw (congrArg met
+        ((hg (atTheDoor h w)).symm.trans
+          ((congrArg g (the_deaf_turn_merges f h w w')).trans
+            (hg (atTheDoor h w')))))
+
+theorem the_turn_keeps_only_what_it_hears {W : Type} (f : W → W)
+    (d : door W W) (h : W) {w w' : W} (hw : w ≠ w') :
+    exchange still (exchange still d) = d
+      ∧ face (exchange still d) = met d
+      ∧ (exchange (fun x _ => f x) (atTheDoor h w)
+            = exchange (fun x _ => f x) (atTheDoor h w')
+          ∧ atTheDoor h w ≠ atTheDoor h w')
+      ∧ ¬ ∃ g : door W W → door W W,
+          ∀ e, g (exchange (fun x _ => f x) e) = e :=
+  ⟨the_two_listeners_restore_the_table d,
+   rfl,
+   ⟨the_deaf_turn_merges f h w w', the_guest_is_real h hw⟩,
+   no_move_unsays_the_deaf_turn f h hw⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5290,5 +5319,14 @@ theorem the_conversation_is_a_walk {W X : Type} (σ : W → W → W)
 
 /-- info: 'Seed.the_conversation_is_a_walk' does not depend on any axioms -/
 #guard_msgs in #print axioms the_conversation_is_a_walk
+
+/-- info: 'Seed.the_deaf_turn_merges' does not depend on any axioms -/
+#guard_msgs in #print axioms the_deaf_turn_merges
+
+/-- info: 'Seed.no_move_unsays_the_deaf_turn' does not depend on any axioms -/
+#guard_msgs in #print axioms no_move_unsays_the_deaf_turn
+
+/-- info: 'Seed.the_turn_keeps_only_what_it_hears' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turn_keeps_only_what_it_hears
 
 end Seed
