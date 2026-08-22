@@ -1015,6 +1015,13 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  table row — the worn word spends no object (four identical asks, one answer four times: the marks multiply, the content does not, and the object answers whole at every rep)"
     (satiated == List.replicate 4 true)) && ok
+  let asks : List Bool :=
+    audition paceOne (recite (List.replicate 3 ([(), ()] : List Unit)))
+  let fed : Nat :=
+    park paceOne (0 : Nat) (([(), ()] : List Unit) ++ [(), ()])
+  ok := (← checkTrue
+    "  rote row — the rep lands where it is fed (three asks of the two-step word: one answer three times, the seat unmoved; the same word fed twice moves the seat to four — drill on the feed channel, relief on the ask channel)"
+    ((asks == List.replicate 3 false) && (fed == 4))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

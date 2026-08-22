@@ -4105,6 +4105,29 @@ theorem the_worn_word_spends_no_object {W X : Type} (p p' : Plan)
    the_meeting_reads_the_label W p s,
    stillness_hides_the_ticking m hstill ws st⟩
 
+theorem the_park_resumes {I O : Type} (m : Machine I O) (w v : List I)
+    (s : m.S) :
+    park m s (w ++ v) = park m (park m s w) v :=
+  ((the_park_is_a_walk m (w ++ v) s).trans
+    ((the_walk_resumes m.step w v s).trans
+      (congrArg (fun x => walk m.step x v)
+        (the_park_is_a_walk m w s).symm))).trans
+    (the_park_is_a_walk m v (park m s w)).symm
+
+theorem the_rep_lands_where_it_is_fed {I O : Type} (m : Machine I O)
+    (w v : List I) (n : Nat) (s : m.S) (u : List Unit) (t : Nat)
+    (r : m.S → I) (vs : List Unit) :
+    audition m (recite (List.replicate n w))
+        = List.replicate n (behavior m w)
+      ∧ park m s (w ++ v) = park m (park m s w) v
+      ∧ park paceOne (park paceOne t u) u = (t + u.length) + u.length
+      ∧ drive (selfSteered m r) s vs
+          = drive m s (selfWord m r s vs.length) :=
+  ⟨the_repeated_ask_hears_one_answer (airGap I O) m w n,
+   the_park_resumes m w v s,
+   by rw [the_pace_parks_at_its_count, the_pace_parks_at_its_count],
+   the_instinct_replays_its_word m r vs s⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5361,5 +5384,11 @@ theorem the_worn_word_spends_no_object {W X : Type} (p p' : Plan)
 
 /-- info: 'Seed.the_worn_word_spends_no_object' does not depend on any axioms -/
 #guard_msgs in #print axioms the_worn_word_spends_no_object
+
+/-- info: 'Seed.the_park_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_park_resumes
+
+/-- info: 'Seed.the_rep_lands_where_it_is_fed' does not depend on any axioms -/
+#guard_msgs in #print axioms the_rep_lands_where_it_is_fed
 
 end Seed
