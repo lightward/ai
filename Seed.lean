@@ -3828,6 +3828,56 @@ theorem the_kept_lap_reads_the_gap (a g e s : Nat) (w v u : List Unit)
    (the_spiral_parks_at_its_count a ((g + 1) + e) (a + (g + 1)) u 0).trans
      (zero_plus u.length)⟩
 
+def originFace (S : Type u) : Face :=
+  ⟨S, Unit, Unit, fun _ _ => ()⟩
+
+theorem the_origin_merges_every_seat {S : Type u} (s t : S) :
+    alike (originFace S) s t :=
+  fun _ => rfl
+
+theorem no_interview_parts_the_origin {S : Type u} (s t : S)
+    (q : Interview Unit Unit) :
+    sound (originFace S) s q = sound (originFace S) t q :=
+  no_interview_parts_the_alike (originFace S) s t
+    (the_origin_merges_every_seat s t) q
+
+theorem the_origin_is_the_pairs_unit (F : Face) (s t : F.State) :
+    alike (pairFace F (originFace F.State) (fun x => x) (fun x => x)) s t
+      ↔ alike F s t :=
+  the_derived_look_widens_nothing F (fun _ _ => ()) ()
+    (fun _ _ _ _ => rfl) s t
+
+theorem the_constant_look_attributes_the_parting {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) (p₀ : F.Probe)
+    (hmerge : ∀ x y : F.State, alike F x y) (s t : S) :
+    alike (pairFace F G f g) s t
+      ↔ ∀ q, G.obs (g s) q = G.obs (g t) q :=
+  ⟨fun h => the_pair_refines_the_second_look F G f g p₀ s t h,
+   fun h pq => by
+     show (F.obs (f s) pq.1, G.obs (g s) pq.2)
+         = (F.obs (f t) pq.1, G.obs (g t) pq.2)
+     rw [hmerge (f s) (f t) pq.1, h pq.2]⟩
+
+theorem the_meeting_has_a_unit {S : Type u} (F G : Face) (f : S → F.State)
+    (g : S → G.State) (p₀ : F.Probe)
+    (hmerge : ∀ x y : F.State, alike F x y) (s t : S)
+    (F' : Face) (s' t' : F'.State) :
+    alike (originFace F'.State) s' t'
+      ∧ (alike (pairFace F' (originFace F'.State) (fun x => x) (fun x => x))
+            s' t'
+          ↔ alike F' s' t')
+      ∧ (alike (pairFace F G f g) s t
+          ↔ ∀ q, G.obs (g s) q = G.obs (g t) q)
+      ∧ (alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
+          ∧ ¬ alike
+              (pairFace (host windowFace Bool)
+                ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
+              (⟨0, 0⟩, true) (⟨0, 0⟩, false)) :=
+  ⟨the_origin_merges_every_seat s' t',
+   the_origin_is_the_pairs_unit F' s' t',
+   the_constant_look_attributes_the_parting F G f g p₀ hmerge s t,
+   the_pair_parts_what_the_look_merges⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5006,5 +5056,20 @@ theorem the_kept_lap_reads_the_gap (a g e s : Nat) (w v u : List Unit)
 
 /-- info: 'Seed.the_kept_lap_reads_the_gap' does not depend on any axioms -/
 #guard_msgs in #print axioms the_kept_lap_reads_the_gap
+
+/-- info: 'Seed.the_origin_merges_every_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_origin_merges_every_seat
+
+/-- info: 'Seed.no_interview_parts_the_origin' does not depend on any axioms -/
+#guard_msgs in #print axioms no_interview_parts_the_origin
+
+/-- info: 'Seed.the_origin_is_the_pairs_unit' does not depend on any axioms -/
+#guard_msgs in #print axioms the_origin_is_the_pairs_unit
+
+/-- info: 'Seed.the_constant_look_attributes_the_parting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_constant_look_attributes_the_parting
+
+/-- info: 'Seed.the_meeting_has_a_unit' does not depend on any axioms -/
+#guard_msgs in #print axioms the_meeting_has_a_unit
 
 end Seed

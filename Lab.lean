@@ -944,6 +944,24 @@ def main : IO UInt32 := do
     "  spiral row — the wheel reads itself unworn (gap-zero spiral true at the hundredth calling and forever; even wear is the wheel's own reading)"
     (behavior (spiral piPace 30000000 piPace) (List.replicate 100 ())
       == true)) && ok
+  IO.println "the origin — the meeting's unit takes its seat:"
+  let unitRead : Bool × Unit :=
+    (pairFace windowFace (originFace Measured)
+      (fun x => x) (fun x => x)).obs (⟨0, 5⟩ : Measured) ((3 : Nat), ())
+  ok := (← checkTrue
+    "  origin row — the meeting has a unit (pairing with the reads-nothing face changes no reading: the paired window reads exactly as the window read alone)"
+    ((unitRead.1 == within ⟨0, 5⟩ 3) && (unitRead.1 == true))) && ok
+  let canaryA : Unit × Bool :=
+    (pairFace (originFace (Measured × Bool))
+      ⟨Measured × Bool, Unit, Bool, fun x _ => x.2⟩
+      (fun x => x) (fun x => x)).obs ((⟨0, 0⟩ : Measured), true) ((), ())
+  let canaryB : Unit × Bool :=
+    (pairFace (originFace (Measured × Bool))
+      ⟨Measured × Bool, Unit, Bool, fun x _ => x.2⟩
+      (fun x => x) (fun x => x)).obs ((⟨0, 0⟩ : Measured), false) ((), ())
+  ok := (← checkTrue
+    "  origin row — the still look signs no parting (the origin-paired guests part, and the parting lives wholly in the live look — its origin coordinate is Unit-typed and cannot differ: the canary instrument, attribution by force)"
+    ((canaryA.2 == true) && (canaryB.2 == false))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
