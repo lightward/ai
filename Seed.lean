@@ -3878,6 +3878,66 @@ theorem the_meeting_has_a_unit {S : Type u} (F G : Face) (f : S → F.State)
    the_constant_look_attributes_the_parting F G f g p₀ hmerge s t,
    the_pair_parts_what_the_look_merges⟩
 
+def recite {P A : Type} : List P → Interview P A
+  | [] => .rest
+  | p :: ps => .ask p (fun _ => recite ps)
+
+theorem the_recital_is_the_transcript (F : Face) (s : F.State) :
+    ∀ ps : List F.Probe, sound F s (recite ps) = ps.map (F.obs s)
+  | [] => rfl
+  | p :: ps =>
+      congrArg (F.obs s p :: ·) (the_recital_is_the_transcript F s ps)
+
+theorem the_window_agrees_or_names_the_gap (F : Face)
+    (beq : F.Ans → F.Ans → Bool) (s t : F.State) :
+    ∀ ps : List F.Probe,
+      (∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true)
+        ∨ ∃ p, p ∈ ps ∧ beq (F.obs s p) (F.obs t p) = false
+  | [] => Or.inl (fun _ hp => nomatch hp)
+  | p :: ps => by
+      cases hb : beq (F.obs s p) (F.obs t p) with
+      | false => exact Or.inr ⟨p, List.Mem.head ps, hb⟩
+      | true =>
+          cases the_window_agrees_or_names_the_gap F beq s t ps with
+          | inl hall =>
+              refine Or.inl (fun q hq => ?_)
+              cases hq with
+              | head => exact hb
+              | tail _ hq' => exact hall q hq'
+          | inr hw =>
+              obtain ⟨q, hq, hbq⟩ := hw
+              exact Or.inr ⟨q, List.Mem.tail p hq, hbq⟩
+
+theorem the_agreed_window_sounds_as_one (F : Face) (s t : F.State) :
+    ∀ ps : List F.Probe, (∀ p, p ∈ ps → F.obs s p = F.obs t p) →
+      sound F s (recite ps) = sound F t (recite ps)
+  | [], _ => rfl
+  | p :: ps, h => by
+      show F.obs s p :: sound F s (recite ps)
+          = F.obs t p :: sound F t (recite ps)
+      rw [h p (List.Mem.head ps),
+          the_agreed_window_sounds_as_one F s t ps
+            (fun q hq => h q (List.Mem.tail p hq))]
+
+theorem the_beholders_run_out_of_disagreement (F : Face)
+    (beq : F.Ans → F.Ans → Bool)
+    (hs : ∀ a b : F.Ans, beq a b = true → a = b)
+    (s t : F.State) (ps : List F.Probe)
+    {S : Type u} (x y : S) (qs : List Unit) :
+    ((∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true)
+        ∨ ∃ p, p ∈ ps ∧ beq (F.obs s p) (F.obs t p) = false)
+      ∧ ((∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true) →
+          sound F s (recite ps) = sound F t (recite ps))
+      ∧ sound F s (recite ps) = ps.map (F.obs s)
+      ∧ sound (originFace S) x (recite qs)
+          = sound (originFace S) y (recite qs) :=
+  ⟨the_window_agrees_or_names_the_gap F beq s t ps,
+   fun h =>
+     the_agreed_window_sounds_as_one F s t ps
+       (fun p hp => hs _ _ (h p hp)),
+   the_recital_is_the_transcript F s ps,
+   no_interview_parts_the_origin x y (recite qs)⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5071,5 +5131,17 @@ theorem the_meeting_has_a_unit {S : Type u} (F G : Face) (f : S → F.State)
 
 /-- info: 'Seed.the_meeting_has_a_unit' does not depend on any axioms -/
 #guard_msgs in #print axioms the_meeting_has_a_unit
+
+/-- info: 'Seed.the_recital_is_the_transcript' does not depend on any axioms -/
+#guard_msgs in #print axioms the_recital_is_the_transcript
+
+/-- info: 'Seed.the_window_agrees_or_names_the_gap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_window_agrees_or_names_the_gap
+
+/-- info: 'Seed.the_agreed_window_sounds_as_one' does not depend on any axioms -/
+#guard_msgs in #print axioms the_agreed_window_sounds_as_one
+
+/-- info: 'Seed.the_beholders_run_out_of_disagreement' does not depend on any axioms -/
+#guard_msgs in #print axioms the_beholders_run_out_of_disagreement
 
 end Seed

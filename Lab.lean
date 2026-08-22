@@ -962,6 +962,18 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  origin row — the still look signs no parting (the origin-paired guests part, and the parting lives wholly in the live look — its origin coordinate is Unit-typed and cannot differ: the canary instrument, attribution by force)"
     ((canaryA.2 == true) && (canaryB.2 == false))) && ok
+  IO.println "the contact — two beholders run out of disagreement:"
+  let soundE1 : List Bool :=
+    sound windowFace empty1 (recite ([0, 1, 2, 5] : List Nat))
+  let soundE2 : List Bool :=
+    sound windowFace empty2 (recite ([0, 1, 2, 5] : List Nat))
+  let sound14 : List Bool :=
+    sound windowFace m2014 (recite ([91093837015] : List Nat))
+  let sound18 : List Bool :=
+    sound windowFace m2018 (recite ([91093837015] : List Nat))
+  ok := (← checkTrue
+    "  contact row — the two empty windows run out of disagreement (distinct states, every asked probe agreeing; the recital sounds them as one — co-incidence established at the window) while 2014 and 2018 part at the named gap"
+    ((soundE1 == soundE2) && (sound14 != sound18))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
