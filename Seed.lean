@@ -4078,6 +4078,33 @@ theorem the_turn_keeps_only_what_it_hears {W : Type} (f : W → W)
    ⟨the_deaf_turn_merges f h w w', the_guest_is_real h hw⟩,
    no_move_unsays_the_deaf_turn f h hw⟩
 
+theorem the_repeated_ask_hears_one_answer (F : Face) (s : F.State)
+    (p : F.Probe) :
+    ∀ n : Nat,
+      sound F s (recite (List.replicate n p))
+        = List.replicate n (F.obs s p)
+  | 0 => rfl
+  | n + 1 =>
+      congrArg (F.obs s p :: ·)
+        (the_repeated_ask_hears_one_answer F s p n)
+
+theorem the_worn_word_spends_no_object {W X : Type} (p p' : Plan)
+    (s : build W p) (g : build W p → X) (a d : Nat) (w : List Unit)
+    (n k : Nat) {I O : Type} (m : Machine I O)
+    (hstill : ∀ st i, m.out (m.step st i) = m.out st) (ws : List I)
+    (st : m.S) (F : Face) (t : F.State) (q : F.Probe) :
+    sound F t (recite (List.replicate k q))
+        = List.replicate k (F.obs t q)
+      ∧ drive (spiral a d a) n w = true
+      ∧ g (face (label W p s)) = g (face (atTheDoor s p'))
+      ∧ met (label W p s) = p
+      ∧ drive m st ws = m.out st :=
+  ⟨the_repeated_ask_hears_one_answer F t q k,
+   the_wheel_reads_itself_unworn a d w n,
+   the_label_rides_unread p p' s g,
+   the_meeting_reads_the_label W p s,
+   stillness_hides_the_ticking m hstill ws st⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5328,5 +5355,11 @@ theorem the_turn_keeps_only_what_it_hears {W : Type} (f : W → W)
 
 /-- info: 'Seed.the_turn_keeps_only_what_it_hears' does not depend on any axioms -/
 #guard_msgs in #print axioms the_turn_keeps_only_what_it_hears
+
+/-- info: 'Seed.the_repeated_ask_hears_one_answer' does not depend on any axioms -/
+#guard_msgs in #print axioms the_repeated_ask_hears_one_answer
+
+/-- info: 'Seed.the_worn_word_spends_no_object' does not depend on any axioms -/
+#guard_msgs in #print axioms the_worn_word_spends_no_object
 
 end Seed
