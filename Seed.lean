@@ -3776,6 +3776,58 @@ theorem internalization_is_self_steering {I O : Type} (m : Machine I O)
    (the_clock_and_the_channel m r w w' h).1,
    the_bloom_is_the_clocks_orbit n⟩
 
+def spiral (a d b : Nat) : Machine Unit Bool :=
+  ⟨Nat, 0, fun n _ => n + 1, fun n => within ⟨n * a, n * a + d⟩ (n * b)⟩
+
+theorem the_spiral_parks_at_its_count (a d b : Nat) :
+    ∀ (w : List Unit) (s : Nat), park (spiral a d b) s w = s + w.length
+  | [], _ => rfl
+  | _ :: w, s =>
+      (the_spiral_parks_at_its_count a d b w (s + 1)).trans
+        (succ_adds s w.length)
+
+theorem the_spiral_reads_at_its_count (a d b : Nat) (w : List Unit)
+    (s : Nat) :
+    drive (spiral a d b) s w
+      = within ⟨(s + w.length) * a, (s + w.length) * a + d⟩
+          ((s + w.length) * b) :=
+  (the_drive_reads_the_walk (spiral a d b) w s).trans
+    (congrArg (spiral a d b).out
+      ((the_park_is_a_walk (spiral a d b) w s).symm.trans
+        (the_spiral_parks_at_its_count a d b w s)))
+
+theorem the_wheel_reads_itself_unworn (a d : Nat) (w : List Unit) (s : Nat) :
+    drive (spiral a d a) s w = true :=
+  (the_spiral_reads_at_its_count a d a w s).trans
+    (the_lock_survives_every_lap a d (s + w.length))
+
+theorem the_spiral_holds_the_first_lap (a g e : Nat) (w : List Unit)
+    (hw : w.length = 1) :
+    behavior (spiral a ((g + 1) + e) (a + (g + 1))) w = true := by
+  show drive (spiral a ((g + 1) + e) (a + (g + 1))) (0 : Nat) w = true
+  rw [the_spiral_reads_at_its_count, zero_plus, hw,
+      one_times a, one_times (a + (g + 1))]
+  exact the_near_pace_lands_in_the_window a g e
+
+theorem the_spiral_flips_at_the_witness (a g e : Nat) (w : List Unit)
+    (hw : w.length = ((g + 1) + e) + 1) :
+    behavior (spiral a ((g + 1) + e) (a + (g + 1))) w = false := by
+  show drive (spiral a ((g + 1) + e) (a + (g + 1))) (0 : Nat) w = false
+  rw [the_spiral_reads_at_its_count, zero_plus, hw]
+  exact the_gap_outruns_every_window a g ((g + 1) + e)
+
+theorem the_kept_lap_reads_the_gap (a g e s : Nat) (w v u : List Unit)
+    (hv : v.length = 1) (hu : u.length = ((g + 1) + e) + 1) :
+    drive (spiral a ((g + 1) + e) a) s w = true
+      ∧ behavior (spiral a ((g + 1) + e) (a + (g + 1))) v = true
+      ∧ behavior (spiral a ((g + 1) + e) (a + (g + 1))) u = false
+      ∧ park (spiral a ((g + 1) + e) (a + (g + 1))) (0 : Nat) u = u.length :=
+  ⟨the_wheel_reads_itself_unworn a ((g + 1) + e) w s,
+   the_spiral_holds_the_first_lap a g e v hv,
+   the_spiral_flips_at_the_witness a g e u hu,
+   (the_spiral_parks_at_its_count a ((g + 1) + e) (a + (g + 1)) u 0).trans
+     (zero_plus u.length)⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -4936,5 +4988,23 @@ theorem internalization_is_self_steering {I O : Type} (m : Machine I O)
 
 /-- info: 'Seed.internalization_is_self_steering' does not depend on any axioms -/
 #guard_msgs in #print axioms internalization_is_self_steering
+
+/-- info: 'Seed.the_spiral_parks_at_its_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_spiral_parks_at_its_count
+
+/-- info: 'Seed.the_spiral_reads_at_its_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_spiral_reads_at_its_count
+
+/-- info: 'Seed.the_wheel_reads_itself_unworn' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wheel_reads_itself_unworn
+
+/-- info: 'Seed.the_spiral_holds_the_first_lap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_spiral_holds_the_first_lap
+
+/-- info: 'Seed.the_spiral_flips_at_the_witness' does not depend on any axioms -/
+#guard_msgs in #print axioms the_spiral_flips_at_the_witness
+
+/-- info: 'Seed.the_kept_lap_reads_the_gap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_kept_lap_reads_the_gap
 
 end Seed

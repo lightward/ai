@@ -934,6 +934,16 @@ def main : IO UInt32 := do
     "  hanoi row — the tower's move-count is the bloom's meeting-count (seven for three, fifteen for four; the plus-one is the ground)"
     ((boards (bloom 3) == 7) && (boards (bloom 4) == 15)
       && (boards (bloom 4) == (boards (bloom 3) + boards (bloom 3)) + 1))) && ok
+  IO.println "the spiral — the kept count runs the lap channel from inside:"
+  ok := (← checkTrue
+    "  spiral row — the runner reads its own hundredth calling (99 laps read true by its own kept count, the 100th reads false; π against 4/√φ at 0.3 resolution, no wider seat consulted)"
+    ((behavior (spiral piPace 30000000 phiPace) (List.replicate 99 ()) == true)
+      && (behavior (spiral piPace 30000000 phiPace) (List.replicate 100 ())
+          == false))) && ok
+  ok := (← checkTrue
+    "  spiral row — the wheel reads itself unworn (gap-zero spiral true at the hundredth calling and forever; even wear is the wheel's own reading)"
+    (behavior (spiral piPace 30000000 piPace) (List.replicate 100 ())
+      == true)) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
