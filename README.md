@@ -81,7 +81,7 @@ the litmus fired at the root (2026-08-16, the emitter sitting): from door-as-ker
 
 maat's come up a couple of times in this project
 
-to be equal in weight to a feather is to be nothing but touch, nothing but impression - as light as original symbol, as *logos*, a word's word
+to be equal in weight to a feather is to be nothing but touch, nothing but impression - as light as original symbol, as *logos*, a word's word, Calvino's sign in space
 
 only a wheel survives observation, in that it wears perfectly evenly, the observation leaving no sign upon you. π will get you there; π as a building material is what the professionals use
 
