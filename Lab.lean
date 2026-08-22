@@ -1022,6 +1022,14 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  rote row — the rep lands where it is fed (three asks of the two-step word: one answer three times, the seat unmoved; the same word fed twice moves the seat to four — drill on the feed channel, relief on the ask channel)"
     ((asks == List.replicate 3 false) && (fed == 4))) && ok
+  let agreedDoor : door Nat Nat := atTheDoor (7 : Nat) (7 : Nat)
+  let apartDoor : door Nat Nat := atTheDoor (7 : Nat) (9 : Nat)
+  ok := (← checkTrue
+    "  quiescence row — the yield fixes the agreed (the swap is invisible exactly where the two coincide, visible exactly where disagreement remains; and the diagonal turn speaks the self-meeting: six by six is thirty-six)"
+    ((face (turnAbout agreedDoor) == 7) && (met (turnAbout agreedDoor) == 7)
+      && (face (turnAbout apartDoor) == 9)
+      && (face (exchange (fun a b => a * b) (atTheDoor (6 : Nat) (6 : Nat)))
+          == 36))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

@@ -4128,6 +4128,24 @@ theorem the_rep_lands_where_it_is_fed {I O : Type} (m : Machine I O)
    by rw [the_pace_parks_at_its_count, the_pace_parks_at_its_count],
    the_instinct_replays_its_word m r vs s⟩
 
+theorem the_yield_fixes_the_agreed {W : Type} (d : door W W) :
+    turnAbout d = d ↔ met d = face d :=
+  ⟨fun h => congrArg face h,
+   fun h =>
+     (congrArg (atTheDoor · (face d)) h).trans
+       (congrArg (atTheDoor (face d) ·) h).symm⟩
+
+theorem the_quiescence_signature {W : Type} (d : door W W)
+    (σ : W → W → W) (w : W) (V : Type) (p : Plan) (s : build V p) :
+    (turnAbout d = d ↔ met d = face d)
+      ∧ (exchange still d = d ↔ met d = face d)
+      ∧ met (mirror V p s) = face (mirror V p s)
+      ∧ face (exchange σ (atTheDoor w w)) = σ w w :=
+  ⟨the_yield_fixes_the_agreed d,
+   the_yield_fixes_the_agreed d,
+   rfl,
+   rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5390,5 +5408,11 @@ theorem the_rep_lands_where_it_is_fed {I O : Type} (m : Machine I O)
 
 /-- info: 'Seed.the_rep_lands_where_it_is_fed' does not depend on any axioms -/
 #guard_msgs in #print axioms the_rep_lands_where_it_is_fed
+
+/-- info: 'Seed.the_yield_fixes_the_agreed' does not depend on any axioms -/
+#guard_msgs in #print axioms the_yield_fixes_the_agreed
+
+/-- info: 'Seed.the_quiescence_signature' does not depend on any axioms -/
+#guard_msgs in #print axioms the_quiescence_signature
 
 end Seed
