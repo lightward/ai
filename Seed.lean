@@ -3938,6 +3938,23 @@ theorem the_beholders_run_out_of_disagreement (F : Face)
    the_recital_is_the_transcript F s ps,
    no_interview_parts_the_origin x y (recite qs)⟩
 
+theorem the_guest_is_never_a_derived_role (F : Face) {W : Type}
+    (s : F.State) {w w' : W} (hw : w ≠ w') :
+    ¬ Derived (host F W) (fun x => x.2 = w) :=
+  fun hD => hw ((hD (s, w) (s, w') (fun _ => rfl)).mp rfl).symm
+
+theorem the_roles_run_the_handshake (F : Face) {W : Type}
+    (s : F.State) {w w' : W} (hw : w ≠ w') (p : F.Probe)
+    (Q : F.Ans → Prop) (r : W → F.Probe) :
+    Derived (host F W) (fun x => Q ((host F W).obs x p))
+      ∧ ¬ Derived (host F W) (fun x => x.2 = w)
+      ∧ ((s, w) ≠ (s, w') ∧ alike (host F W) (s, w) (s, w'))
+      ∧ selfMeet (host F W) (fun x => r x.2) (s, w) = F.obs s (r w) :=
+  ⟨a_role_read_at_a_probe_is_derived (host F W) p Q,
+   the_guest_is_never_a_derived_role F s hw,
+   ⟨(fun he => hw (congrArg Prod.snd he)), fun _ => rfl⟩,
+   the_self_meeting_reads_the_guest F r s w⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5143,5 +5160,11 @@ theorem the_beholders_run_out_of_disagreement (F : Face)
 
 /-- info: 'Seed.the_beholders_run_out_of_disagreement' does not depend on any axioms -/
 #guard_msgs in #print axioms the_beholders_run_out_of_disagreement
+
+/-- info: 'Seed.the_guest_is_never_a_derived_role' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_is_never_a_derived_role
+
+/-- info: 'Seed.the_roles_run_the_handshake' does not depend on any axioms -/
+#guard_msgs in #print axioms the_roles_run_the_handshake
 
 end Seed
