@@ -3982,6 +3982,35 @@ theorem the_curtain_is_exact (F : Face) (s t : F.State)
    ⟨fun h q => an_audition_hears_only_the_conduct m n h q,
     fun h => the_sounding_reads_the_alike (airGap I O) m n h⟩⟩
 
+def halve : Nat → Nat
+  | 0 => 0
+  | 1 => 0
+  | n + 2 => halve n + 1
+
+def collatzStep (n : Nat) : Nat :=
+  cond (oddNat n) (3 * n + 1) (halve n)
+
+def collatz : Machine Unit Nat :=
+  ⟨Nat, 1, fun n _ => collatzStep n, fun n => n⟩
+
+theorem the_home_wheel_turns :
+    park collatz (1 : Nat) [(), (), ()] = (1 : Nat)
+      ∧ park collatz (4 : Nat) [(), (), ()] = (4 : Nat)
+      ∧ park collatz (2 : Nat) [(), (), ()] = (2 : Nat) :=
+  ⟨rfl, rfl, rfl⟩
+
+theorem the_homecoming_is_conduct :
+    (park collatz (1 : Nat) [(), (), ()] = (1 : Nat)
+        ∧ park collatz (4 : Nat) [(), (), ()] = (4 : Nat)
+        ∧ park collatz (2 : Nat) [(), (), ()] = (2 : Nat))
+      ∧ (∀ (v : List Unit) (s : Nat), park paceOne s (() :: v) ≠ s)
+      ∧ ∀ b : Bool, park flip b [(), ()] = b :=
+  ⟨the_home_wheel_turns,
+   fun v s he =>
+     no_gain_is_zero s v.length
+       ((the_pace_parks_at_its_count (() :: v) s).symm.trans he),
+   the_flip_wheels⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5202,5 +5231,11 @@ theorem the_curtain_is_exact (F : Face) (s t : F.State)
 
 /-- info: 'Seed.the_curtain_is_exact' does not depend on any axioms -/
 #guard_msgs in #print axioms the_curtain_is_exact
+
+/-- info: 'Seed.the_home_wheel_turns' does not depend on any axioms -/
+#guard_msgs in #print axioms the_home_wheel_turns
+
+/-- info: 'Seed.the_homecoming_is_conduct' does not depend on any axioms -/
+#guard_msgs in #print axioms the_homecoming_is_conduct
 
 end Seed

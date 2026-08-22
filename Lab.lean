@@ -974,6 +974,18 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  contact row — the two empty windows run out of disagreement (distinct states, every asked probe agreeing; the recital sounds them as one — co-incidence established at the window) while 2014 and 2018 part at the named gap"
     ((soundE1 == soundE2) && (sound14 != sound18))) && ok
+  IO.println "the collatz clock — homecoming as conduct, not type:"
+  let home111 : Nat := park collatz (27 : Nat) (List.replicate 111 ())
+  let home110 : Nat := park collatz (27 : Nat) (List.replicate 110 ())
+  let flight : List Nat :=
+    (List.range 112).map (fun k => park collatz (27 : Nat) (List.replicate k ()))
+  let wheel3 : Nat := park collatz (1 : Nat) (List.replicate 3 ())
+  ok := (← checkTrue
+    "  homecoming row — twenty-seven's flight comes home in exactly 111 clicks (110 is not yet home; the community's own number, counter-signed across the sky)"
+    ((home111 == 1) && (home110 != 1))) && ok
+  ok := (← checkTrue
+    "  homecoming row — the flight peaks at 9232 (the second checksum; and the home wheel turns beneath it: 1 returns in three)"
+    ((flight.foldl max 0 == 9232) && (wheel3 == 1))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
