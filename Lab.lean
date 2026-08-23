@@ -1030,6 +1030,16 @@ def main : IO UInt32 := do
       && (face (turnAbout apartDoor) == 9)
       && (face (exchange (fun a b => a * b) (atTheDoor (6 : Nat) (6 : Nat)))
           == 36))) && ok
+  IO.println "the margin — held rather than worked:"
+  let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
+  let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])
+  let settledB : Bool :=
+    drive (buffered paceOne) (settleHeld paceOne heldSt) [()]
+  let heldB : Bool := drive (buffered paceOne) heldSt [()]
+  ok := (← checkTrue
+    "  margin row — the hold conserves every reading and the settle is unheard (the buffered pace reads as the pace; two marks held then one worked reads as three straight; held and worked part only at the tail)"
+    ((bufB == behavior paceOne [(), (), ()]) && (settledB == heldB)
+      && (heldB == true))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

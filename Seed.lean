@@ -4146,6 +4146,62 @@ theorem the_quiescence_signature {W : Type} (d : door W W)
    rfl,
    rfl⟩
 
+def buffered {I O : Type} (m : Machine I O) : Machine I O :=
+  ⟨m.S × List I, (m.s0, []), fun st i => (st.1, st.2 ++ [i]),
+   fun st => drive m st.1 st.2⟩
+
+def settleHeld {I O : Type} (m : Machine I O) (st : m.S × List I) :
+    m.S × List I :=
+  (park m st.1 st.2, [])
+
+theorem the_hold_walks_beside_the_work {I O : Type} (m : Machine I O)
+    (w : List I) (s : m.S) (held : List I) :
+    drive (buffered m) (s, held) w = drive m (park m s held) w :=
+  two_machines_in_step_agree (buffered m) m
+    (fun st t => park m st.1 st.2 = t)
+    (fun st _t i ht =>
+      (the_park_resumes m st.2 [i] st.1).trans
+        (congrArg (fun x => park m x [i]) ht))
+    (fun st _t ht =>
+      (the_drive_reads_the_walk m st.2 st.1).trans
+        (congrArg m.out ((the_park_is_a_walk m st.2 st.1).symm.trans ht)))
+    w (s, held) (park m s held) rfl
+
+theorem the_buffer_is_invisible {I O : Type} (m : Machine I O)
+    (w : List I) :
+    behavior (buffered m) w = behavior m w :=
+  the_hold_walks_beside_the_work m w m.s0 []
+
+theorem the_settle_is_unheard {I O : Type} (m : Machine I O)
+    (st : m.S × List I) (w : List I) :
+    drive (buffered m) (settleHeld m st) w = drive (buffered m) st w :=
+  (the_hold_walks_beside_the_work m w (park m st.1 st.2) []).trans
+    (the_hold_walks_beside_the_work m w st.1 st.2).symm
+
+theorem the_held_and_the_worked_read_alike {I O : Type} (m : Machine I O)
+    (s : m.S) (i : I) (held w : List I) :
+    drive (buffered m) (settleHeld m (s, i :: held)) w
+        = drive (buffered m) (s, i :: held) w
+      ∧ (settleHeld m (s, i :: held)).2
+          ≠ ((s, i :: held) : m.S × List I).2 :=
+  ⟨the_settle_is_unheard m (s, i :: held) w,
+   fun h => nomatch h⟩
+
+theorem the_decomposition_is_the_remainder {I O : Type} (m : Machine I O)
+    (w v : List I) (s : m.S) (held : List I) (i : I) :
+    drive (buffered m) (s, held) w = drive m (park m s held) w
+      ∧ behavior (buffered m) v = behavior m v
+      ∧ drive (buffered m) (settleHeld m (s, held)) w
+          = drive (buffered m) (s, held) w
+      ∧ (drive (buffered m) (settleHeld m (s, i :: held)) w
+            = drive (buffered m) (s, i :: held) w
+          ∧ (settleHeld m (s, i :: held)).2
+              ≠ ((s, i :: held) : m.S × List I).2) :=
+  ⟨the_hold_walks_beside_the_work m w s held,
+   the_buffer_is_invisible m v,
+   the_settle_is_unheard m (s, held) w,
+   the_held_and_the_worked_read_alike m s i held w⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5414,5 +5470,20 @@ theorem the_quiescence_signature {W : Type} (d : door W W)
 
 /-- info: 'Seed.the_quiescence_signature' does not depend on any axioms -/
 #guard_msgs in #print axioms the_quiescence_signature
+
+/-- info: 'Seed.the_hold_walks_beside_the_work' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hold_walks_beside_the_work
+
+/-- info: 'Seed.the_buffer_is_invisible' does not depend on any axioms -/
+#guard_msgs in #print axioms the_buffer_is_invisible
+
+/-- info: 'Seed.the_settle_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms the_settle_is_unheard
+
+/-- info: 'Seed.the_held_and_the_worked_read_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_held_and_the_worked_read_alike
+
+/-- info: 'Seed.the_decomposition_is_the_remainder' does not depend on any axioms -/
+#guard_msgs in #print axioms the_decomposition_is_the_remainder
 
 end Seed
