@@ -1044,6 +1044,37 @@ def main : IO UInt32 := do
     (walkIn (fun (a b : Nat) => a * b)
       (exchange still (exchange (fun (x : Nat) (_ : Nat) => x + 1)
         (atTheDoor (5 : Nat) (99 : Nat))))) 30) && ok
+  IO.println "the ear and the voice — the face's own coupling algebra:"
+  let evenEar : Face := rehear windowFace (fun n : Nat => 2 * n)
+  let w02 : Measured := ⟨0, 2⟩
+  let w03 : Measured := ⟨0, 3⟩
+  let earA0 : Bool := evenEar.obs w02 (0 : Nat)
+  let earB0 : Bool := evenEar.obs w03 (0 : Nat)
+  let earA1 : Bool := evenEar.obs w02 (1 : Nat)
+  let earB1 : Bool := evenEar.obs w03 (1 : Nat)
+  let earA2 : Bool := evenEar.obs w02 (2 : Nat)
+  let earB2 : Bool := evenEar.obs w03 (2 : Nat)
+  let bare3A : Bool := windowFace.obs w02 (3 : Nat)
+  let bare3B : Bool := windowFace.obs w03 (3 : Nat)
+  ok := (← checkTrue
+    "  ear row — the coarse ear merges what the plain face parts (two windows agreeing at every doubled probe, parted at three by the bare face)"
+    ((earA0 == earB0) && (earA1 == earB1) && (earA2 == earB2)
+      && (bare3A != bare3B))) && ok
+  let pulseRead : Bool := (airGap Bool Bool).obs pulse [true, false, true]
+  let earRead : Bool :=
+    (rehear (airGap Unit Bool)
+      (fun u : List Bool => u.map (fun _ => ()))).obs paceOne
+      [true, false, true]
+  ok := (← checkTrue
+    "  ear row — the machine's ear is the face's ear (the pulse across the air gap equals the pace heard through the translated probe)"
+    (pulseRead == earRead)) && ok
+  let mufA : Bool := (retell windowFace (fun _ => true)).obs w02 (3 : Nat)
+  let mufB : Bool := (retell windowFace (fun _ => true)).obs w03 (3 : Nat)
+  let faithA : Bool := (retell windowFace (fun b => !b)).obs w02 (3 : Nat)
+  let faithB : Bool := (retell windowFace (fun b => !b)).obs w03 (3 : Nat)
+  ok := (← checkTrue
+    "  voice row — the muffled telling merges every window while the faithful voice keeps the curtain (retell through the muffler merges; retell through not stays exact)"
+    ((mufA == mufB) && (faithA != faithB))) && ok
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])

@@ -4515,6 +4515,104 @@ theorem the_monologue_is_its_own_audience {W X : Type} (f : W → W)
           = g (face d) (f (face d)) :=
   ⟨rfl, rfl, rfl, the_monologue_walks_the_face fs d, rfl⟩
 
+def rehear (F : Face) {P' : Type} (f : P' → F.Probe) : Face :=
+  ⟨F.State, P', F.Ans, fun s p => F.obs s (f p)⟩
+
+def retell (F : Face) {A' : Type} (g : F.Ans → A') : Face :=
+  ⟨F.State, F.Probe, A', fun s p => g (F.obs s p)⟩
+
+theorem the_translated_ear_hears_no_more (F : Face) {P' : Type}
+    (f : P' → F.Probe) (s t : F.State) (h : alike F s t) :
+    alike (rehear F f) s t :=
+  fun p => h (f p)
+
+theorem the_sectioned_ear_loses_nothing (F : Face) {P' : Type}
+    (f : P' → F.Probe) (h : F.Probe → P') (hs : ∀ p, f (h p) = p)
+    (s t : F.State) (hal : alike (rehear F f) s t) :
+    alike F s t :=
+  fun p =>
+    (congrArg (F.obs s) (hs p)).symm.trans
+      ((hal (h p)).trans (congrArg (F.obs t) (hs p)))
+
+theorem the_faithful_voice_keeps_the_curtain (F : Face) {A' : Type}
+    (g : F.Ans → A') (s t : F.State) :
+    (alike F s t → alike (retell F g) s t)
+      ∧ ∀ r : A' → F.Ans, (∀ a, r (g a) = a) →
+          alike (retell F g) s t → alike F s t :=
+  ⟨fun h p => congrArg g (h p),
+   fun r hr hal p =>
+     (hr (F.obs s p)).symm.trans
+       ((congrArg r (hal p)).trans (hr (F.obs t p)))⟩
+
+def recast {P P' A : Type} (f : P' → P) : Interview P' A → Interview P A
+  | .rest => .rest
+  | .ask p k => .ask (f p) (fun a => recast f (k a))
+
+def pullback {P A A' : Type} (g : A → A') : Interview P A' → Interview P A
+  | .rest => .rest
+  | .ask p k => .ask p (fun a => pullback g (k (g a)))
+
+theorem the_interview_crosses_the_ear (F : Face) {P' : Type}
+    (f : P' → F.Probe) (s : F.State) :
+    ∀ q : Interview P' F.Ans,
+      sound (rehear F f) s q = sound F s (recast f q)
+  | .rest => rfl
+  | .ask p k =>
+      congrArg (F.obs s (f p) :: ·)
+        (the_interview_crosses_the_ear F f s (k (F.obs s (f p))))
+
+theorem the_interview_crosses_the_voice (F : Face) {A' : Type}
+    (g : F.Ans → A') (s : F.State) :
+    ∀ q : Interview F.Probe A',
+      sound (retell F g) s q = (sound F s (pullback g q)).map g
+  | .rest => rfl
+  | .ask p k =>
+      congrArg (g (F.obs s p) :: ·)
+        (the_interview_crosses_the_voice F g s (k (g (F.obs s p))))
+
+theorem the_ears_stack_backward (F : Face) {P' P'' : Type}
+    (f : P' → F.Probe) (f' : P'' → P') :
+    rehear (rehear F f) f' = rehear F (fun p => f (f' p)) := rfl
+
+theorem the_voices_stack_forward (F : Face) {A' A'' : Type}
+    (g : F.Ans → A') (g' : A' → A'') :
+    retell (retell F g) g' = retell F (fun a => g' (g a)) := rfl
+
+theorem the_machines_ear_is_the_faces_ear {I I' O : Type} (f : I' → I)
+    (m : Machine I O) (w : List I') :
+    (airGap I' O).obs (retune f m) w
+      = (rehear (airGap I O) (fun u : List I' => u.map f)).obs m w :=
+  hearing_through_a_translator f m w m.s0
+
+theorem the_machines_voice_is_the_faces_voice {I O O' : Type} (g : O → O')
+    (m : Machine I O) (v : List I) :
+    (airGap I O').obs (revoice g m) v
+      = (retell (airGap I O) g).obs m v :=
+  speaking_through_a_translator g m v m.s0
+
+theorem every_face_wears_an_ear_and_a_voice (F : Face) {P' A' : Type}
+    (f : P' → F.Probe) (g : F.Ans → A') (s t : F.State)
+    (h : alike F s t) (q : Interview P' F.Ans)
+    (q' : Interview F.Probe A')
+    {I I' O O' : Type} (f0 : I' → I) (g0 : O → O')
+    (m : Machine I O) (w : List I') (v : List I) :
+    alike (rehear F f) s t
+      ∧ alike (retell F g) s t
+      ∧ sound (rehear F f) s q = sound F s (recast f q)
+      ∧ sound (retell F g) s q' = (sound F s (pullback g q')).map g
+      ∧ (airGap I' O).obs (retune f0 m) w
+          = (rehear (airGap I O) (fun u : List I' => u.map f0)).obs m w
+      ∧ (airGap I O').obs (revoice g0 m) v
+          = (retell (airGap I O) g0).obs m v
+      ∧ retell (rehear F f) g = rehear (retell F g) f :=
+  ⟨the_translated_ear_hears_no_more F f s t h,
+   (the_faithful_voice_keeps_the_curtain F g s t).1 h,
+   the_interview_crosses_the_ear F f s q,
+   the_interview_crosses_the_voice F g s q',
+   the_machines_ear_is_the_faces_ear f0 m w,
+   the_machines_voice_is_the_faces_voice g0 m v,
+   rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5900,5 +5998,35 @@ theorem the_monologue_is_its_own_audience {W X : Type} (f : W → W)
 
 /-- info: 'Seed.the_monologue_is_its_own_audience' does not depend on any axioms -/
 #guard_msgs in #print axioms the_monologue_is_its_own_audience
+
+/-- info: 'Seed.the_translated_ear_hears_no_more' does not depend on any axioms -/
+#guard_msgs in #print axioms the_translated_ear_hears_no_more
+
+/-- info: 'Seed.the_sectioned_ear_loses_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sectioned_ear_loses_nothing
+
+/-- info: 'Seed.the_faithful_voice_keeps_the_curtain' does not depend on any axioms -/
+#guard_msgs in #print axioms the_faithful_voice_keeps_the_curtain
+
+/-- info: 'Seed.the_interview_crosses_the_ear' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interview_crosses_the_ear
+
+/-- info: 'Seed.the_interview_crosses_the_voice' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interview_crosses_the_voice
+
+/-- info: 'Seed.the_ears_stack_backward' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ears_stack_backward
+
+/-- info: 'Seed.the_voices_stack_forward' does not depend on any axioms -/
+#guard_msgs in #print axioms the_voices_stack_forward
+
+/-- info: 'Seed.the_machines_ear_is_the_faces_ear' does not depend on any axioms -/
+#guard_msgs in #print axioms the_machines_ear_is_the_faces_ear
+
+/-- info: 'Seed.the_machines_voice_is_the_faces_voice' does not depend on any axioms -/
+#guard_msgs in #print axioms the_machines_voice_is_the_faces_voice
+
+/-- info: 'Seed.every_face_wears_an_ear_and_a_voice' does not depend on any axioms -/
+#guard_msgs in #print axioms every_face_wears_an_ear_and_a_voice
 
 end Seed
