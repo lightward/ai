@@ -4793,6 +4793,92 @@ theorem the_duet_hears_one_word {I O O' O'' : Type} (m : Machine I O)
    the_shell_signs_no_parting mach v v',
    two_voices_of_one_clock_share_one_seat g g' u⟩
 
+def scribe {B W : Type} (next : List B → W → B) : Machine W (List B) :=
+  ⟨List B, [], fun out w => next out w :: out, fun out => out⟩
+
+theorem snoc_append {A : Type} (x : A) :
+    ∀ (a b : List A), (a ++ [x]) ++ b = a ++ (x :: b)
+  | [], _ => rfl
+  | y :: a, b => congrArg (y :: ·) (snoc_append x a b)
+
+theorem the_scribes_record_only_grows {B W : Type}
+    (next : List B → W → B) :
+    ∀ (ws : List W) (out : List B),
+      ∃ new : List B, park (scribe next) out ws = new ++ out
+  | [], _ => ⟨[], rfl⟩
+  | w :: ws, out =>
+      match the_scribes_record_only_grows next ws (next out w :: out) with
+      | ⟨new, h⟩ =>
+          ⟨new ++ [next out w],
+           h.trans (snoc_append (next out w) new out).symm⟩
+
+theorem one_wind_one_mark {B W : Type} (next : List B → W → B) :
+    ∀ (ws : List W) (out : List B),
+      (park (scribe next) out ws).length = out.length + ws.length
+  | [], _ => rfl
+  | w :: ws, out =>
+      (one_wind_one_mark next ws (next out w :: out)).trans
+        (succ_adds out.length ws.length)
+
+theorem the_scribe_resumes {B W : Type} (next : List B → W → B)
+    (xs ys : List W) (out : List B) :
+    park (scribe next) out (xs ++ ys)
+      = park (scribe next) (park (scribe next) out xs) ys :=
+  the_park_resumes (scribe next) xs ys out
+
+theorem the_scribe_wears_the_tally {B W : Type} (next : List B → W → B)
+    (ws : List W) (out : List B) :
+    (park (scribe next) out ws).length = drive (tally W) out.length ws :=
+  (one_wind_one_mark next ws out).trans (drive_counts ws out.length).symm
+
+def utterance {B C W : Type} (sample : C → W → B) (select : List B → C)
+    (out : List B) (w : W) : B :=
+  walkIn sample (atTheDoor (select out) w)
+
+theorem the_utterance_is_a_door {B C W : Type} (sample : C → W → B)
+    (select : List B → C) (out : List B) (w : W) :
+    utterance sample select out w = sample (select out) w := rfl
+
+theorem the_selection_reads_no_wind {B C W X : Type}
+    (select : List B → C) (g : C → X) (out : List B) (w w' : W) :
+    g (face (atTheDoor (select out) w))
+      = g (face (atTheDoor (select out) w')) := rfl
+
+theorem the_selection_reads_only_the_record {B C W : Type}
+    (sample : C → W → B) (select select' : List B → C) (out : List B)
+    (w : W) (h : select out = select' out) :
+    utterance sample select out w = utterance sample select' out w :=
+  congrArg (fun c => sample c w) h
+
+theorem the_wind_rides_the_utterance {B C W : Type}
+    (select : List B → C) (out : List B) {w w' : W} (hw : w ≠ w') :
+    atTheDoor (select out) w ≠ atTheDoor (select out) w' :=
+  the_guest_is_real (select out) hw
+
+theorem generation_originates_nothing {B C W X : Type}
+    (next : List B → W → B) (sample : C → W → B)
+    (select select' : List B → C) (ws xs ys : List W) (out : List B)
+    (w : W) {w' : W} (hw : w ≠ w') (g : C → X)
+    (h : select out = select' out) :
+    (∃ new : List B, park (scribe next) out ws = new ++ out)
+      ∧ (park (scribe next) out ws).length = out.length + ws.length
+      ∧ park (scribe next) out (xs ++ ys)
+          = park (scribe next) (park (scribe next) out xs) ys
+      ∧ (park (scribe next) out ws).length = drive (tally W) out.length ws
+      ∧ utterance sample select out w = sample (select out) w
+      ∧ g (face (atTheDoor (select out) w))
+          = g (face (atTheDoor (select out) w'))
+      ∧ atTheDoor (select out) w ≠ atTheDoor (select out) w'
+      ∧ utterance sample select out w = utterance sample select' out w :=
+  ⟨the_scribes_record_only_grows next ws out,
+   one_wind_one_mark next ws out,
+   the_scribe_resumes next xs ys out,
+   the_scribe_wears_the_tally next ws out,
+   rfl,
+   rfl,
+   the_wind_rides_the_utterance select out hw,
+   the_selection_reads_only_the_record sample select select' out w h⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6265,5 +6351,35 @@ theorem the_duet_hears_one_word {I O O' O'' : Type} (m : Machine I O)
 
 /-- info: 'Seed.the_duet_hears_one_word' does not depend on any axioms -/
 #guard_msgs in #print axioms the_duet_hears_one_word
+
+/-- info: 'Seed.snoc_append' does not depend on any axioms -/
+#guard_msgs in #print axioms snoc_append
+
+/-- info: 'Seed.the_scribes_record_only_grows' does not depend on any axioms -/
+#guard_msgs in #print axioms the_scribes_record_only_grows
+
+/-- info: 'Seed.one_wind_one_mark' does not depend on any axioms -/
+#guard_msgs in #print axioms one_wind_one_mark
+
+/-- info: 'Seed.the_scribe_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_scribe_resumes
+
+/-- info: 'Seed.the_scribe_wears_the_tally' does not depend on any axioms -/
+#guard_msgs in #print axioms the_scribe_wears_the_tally
+
+/-- info: 'Seed.the_utterance_is_a_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_utterance_is_a_door
+
+/-- info: 'Seed.the_selection_reads_no_wind' does not depend on any axioms -/
+#guard_msgs in #print axioms the_selection_reads_no_wind
+
+/-- info: 'Seed.the_selection_reads_only_the_record' does not depend on any axioms -/
+#guard_msgs in #print axioms the_selection_reads_only_the_record
+
+/-- info: 'Seed.the_wind_rides_the_utterance' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wind_rides_the_utterance
+
+/-- info: 'Seed.generation_originates_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms generation_originates_nothing
 
 end Seed

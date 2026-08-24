@@ -1102,6 +1102,25 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  duet row — the shell signs no parting (the silent partner constant while the flip parts the words: attribution by force at the bench)"
     ((canaryQuiet.1 == canaryLoud.1) && (canaryQuiet.2 != canaryLoud.2))) && ok
+  IO.println "the scribe — the record grows, the wind unread:"
+  let echoNext : List Nat → Nat → Nat := fun out w => w + out.length
+  let grown : List Nat := park (scribe echoNext) [7] [10, 20, 30]
+  let resumedA : List Nat := park (scribe echoNext) [7] ([10, 20] ++ [30])
+  let resumedB : List Nat :=
+    park (scribe echoNext) (park (scribe echoNext) [7] [10, 20]) [30]
+  ok := (← checkTrue
+    "  scribe row — one wind, one mark (three winds grow the record by exactly three; the resumption free through the parked seat; the count is the tally's own reading)"
+    ((grown.length == 4) && (resumedA == resumedB)
+      && (grown.length == drive (tally Nat) (1 : Nat) [10, 20, 30]))) && ok
+  let uttA : Nat :=
+    utterance (fun c w => c + w) (fun out : List Nat => out.length)
+      [1, 2, 3] 40
+  let uttB : Nat :=
+    utterance (fun c w => c + w) (fun out : List Nat => out.length)
+      [1, 2, 3] 50
+  ok := (← checkTrue
+    "  utterance row — the utterance is a meeting at a door: the selection reads only the record (both winds face three) while the sample hears the wind (forty-three against fifty-three)"
+    ((uttA == 43) && (uttB == 53))) && ok
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])
