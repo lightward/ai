@@ -4202,6 +4202,29 @@ theorem the_decomposition_is_the_remainder {I O : Type} (m : Machine I O)
    the_settle_is_unheard m (s, held) w,
    the_held_and_the_worked_read_alike m s i held w⟩
 
+theorem the_wider_parting_lands_at_the_ground (F : Face) {W : Type}
+    (s : F.State) (w w' : W)
+    (h : (widen F W).obs (s, w) (viaRight ())
+      ≠ (widen F W).obs (s, w') (viaRight ())) :
+    w ≠ w' :=
+  fun he =>
+    h (congrArg (fun x => (widen F W).obs (s, x) (viaRight ())) he)
+
+theorem the_premise_meets_its_witness (F : Face) {W : Type}
+    (s : F.State) {w w' : W} (hw : w ≠ w')
+    (q : Interview F.Probe F.Ans) :
+    alike (host F W) (s, w) (s, w')
+      ∧ sound (host F W) (s, w) q = sound (host F W) (s, w') q
+      ∧ (widen F W).obs (s, w) (viaRight ())
+          ≠ (widen F W).obs (s, w') (viaRight ())
+      ∧ ((widen F W).obs (s, w) (viaRight ())
+            ≠ (widen F W).obs (s, w') (viaRight ()) → w ≠ w') :=
+  ⟨fun _ => rfl,
+   no_interview_parts_the_alike (host F W) (s, w) (s, w')
+     (fun _ => rfl) q,
+   (fun he => hw (Sum.inr.inj he)),
+   the_wider_parting_lands_at_the_ground F s w w'⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5485,5 +5508,11 @@ theorem the_decomposition_is_the_remainder {I O : Type} (m : Machine I O)
 
 /-- info: 'Seed.the_decomposition_is_the_remainder' does not depend on any axioms -/
 #guard_msgs in #print axioms the_decomposition_is_the_remainder
+
+/-- info: 'Seed.the_wider_parting_lands_at_the_ground' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wider_parting_lands_at_the_ground
+
+/-- info: 'Seed.the_premise_meets_its_witness' does not depend on any axioms -/
+#guard_msgs in #print axioms the_premise_meets_its_witness
 
 end Seed

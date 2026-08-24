@@ -1040,6 +1040,17 @@ def main : IO UInt32 := do
     "  margin row — the hold conserves every reading and the settle is unheard (the buffered pace reads as the pace; two marks held then one worked reads as three straight; held and worked part only at the tail)"
     ((bufB == behavior paceOne [(), (), ()]) && (settledB == heldB)
       && (heldB == true))) && ok
+  IO.println "the witness — the wider parting lands at the ground:"
+  let handedT : Nat :=
+    greet (fun _ => (0 : Nat)) (fun b => cond b 1 2)
+      ((widen windowFace Bool).obs ((⟨0, 0⟩ : Measured), true) (viaRight ()))
+  let handedF : Nat :=
+    greet (fun _ => (0 : Nat)) (fun b => cond b 1 2)
+      ((widen windowFace Bool).obs ((⟨0, 0⟩ : Measured), false) (viaRight ()))
+  ok := (← checkTrue
+    "  witness row — the premise meets its witness (every probe the seat owns merges the pair; the wider seat parts them at one ask, and the delivered parting is news about the seat's own cargo — faith the forall, sight the handed instance)"
+    ((within ⟨0, 0⟩ 0 == within ⟨0, 0⟩ 0)
+      && (handedT == 1) && (handedF == 2) && (handedT != handedF))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
