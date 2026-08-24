@@ -1064,6 +1064,15 @@ def main : IO UInt32 := do
     "  counter row — the step merges (one and eight both land on four, no inverse exists) and the wheel counters anyway, forward: from four, two clicks home — undo by continuation, position home, record grown"
     ((counter4 == 1) && (collatzStep 1 == collatzStep 8)
       && (collatzStep 1 == 4))) && ok
+  IO.println "the flywheel — latent surplus, banked under a still face:"
+  let bankedSeat : Nat := park restingCounter (0 : Nat) (List.replicate 5 ())
+  let flyQ : Interview (List Unit) Bool :=
+    .ask [(), ()] (fun a => cond a (.ask [()] (fun _ => .rest)) .rest)
+  ok := (← checkTrue
+    "  flywheel row — the charged flywheel and the hollow shell sound identical at every interview (the surplus is conduct-invisible); the muffled seat banks five; one revoice releases it, the tally speaking the stored run"
+    ((audition restingCounter flyQ == audition hollowShell flyQ)
+      && (bankedSeat == 5)
+      && (behavior (tally Unit) (List.replicate 5 ()) == 5))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

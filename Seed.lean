@@ -4363,6 +4363,55 @@ theorem the_wheel_is_its_own_countermove :
    rfl,
    the_flip_wheels⟩
 
+def hollowShell : Machine Unit Bool :=
+  ⟨Unit, (), fun _ _ => (), fun _ => true⟩
+
+theorem the_muffled_tally_is_the_resting_counter :
+    revoice (fun _ => true) (tally Unit) = restingCounter := rfl
+
+theorem the_revoice_moves_no_seat {I O O' : Type} (g : O → O')
+    (m : Machine I O) :
+    ∀ (w : List I) (s : m.S), park (revoice g m) s w = park m s w
+  | [], _ => rfl
+  | i :: w, s => the_revoice_moves_no_seat g m w (m.step s i)
+
+theorem the_shell_sounds_still (w : List Unit) :
+    behavior hollowShell w = true :=
+  stillness_hides_the_ticking hollowShell (fun _ _ => rfl) w ()
+
+theorem the_flywheel_and_the_shell_sound_alike
+    (q : Interview (List Unit) Bool) :
+    audition restingCounter q = audition hollowShell q :=
+  an_audition_hears_only_the_conduct restingCounter hollowShell
+    (fun w =>
+      (the_still_face_is_not_a_dead_machine.1 w).trans
+        (the_shell_sounds_still w).symm)
+    q
+
+theorem the_muffler_banks_the_run :
+    ∀ (w : List Unit) (s : Nat), park restingCounter s w = s + w.length
+  | [], _ => rfl
+  | _ :: w, s =>
+      (the_muffler_banks_the_run w (s + 1)).trans (succ_adds s w.length)
+
+theorem the_wider_voice_releases_the_bank (w : List Unit) :
+    behavior (tally Unit) w = w.length :=
+  (drive_counts w 0).trans (zero_plus w.length)
+
+theorem the_still_face_banks_the_run {I O O' : Type} (g : O → O')
+    (m : Machine I O) (v : List I) (t : m.S)
+    (w : List Unit) (s : Nat) (q : Interview (List Unit) Bool) :
+    revoice (fun _ => true) (tally Unit) = restingCounter
+      ∧ audition restingCounter q = audition hollowShell q
+      ∧ park restingCounter s w = s + w.length
+      ∧ behavior (tally Unit) w = w.length
+      ∧ park (revoice g m) t v = park m t v :=
+  ⟨rfl,
+   the_flywheel_and_the_shell_sound_alike q,
+   the_muffler_banks_the_run w s,
+   the_wider_voice_releases_the_bank w,
+   the_revoice_moves_no_seat g m v t⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5688,5 +5737,26 @@ theorem the_wheel_is_its_own_countermove :
 
 /-- info: 'Seed.the_wheel_is_its_own_countermove' does not depend on any axioms -/
 #guard_msgs in #print axioms the_wheel_is_its_own_countermove
+
+/-- info: 'Seed.the_muffled_tally_is_the_resting_counter' does not depend on any axioms -/
+#guard_msgs in #print axioms the_muffled_tally_is_the_resting_counter
+
+/-- info: 'Seed.the_revoice_moves_no_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revoice_moves_no_seat
+
+/-- info: 'Seed.the_shell_sounds_still' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shell_sounds_still
+
+/-- info: 'Seed.the_flywheel_and_the_shell_sound_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_flywheel_and_the_shell_sound_alike
+
+/-- info: 'Seed.the_muffler_banks_the_run' does not depend on any axioms -/
+#guard_msgs in #print axioms the_muffler_banks_the_run
+
+/-- info: 'Seed.the_wider_voice_releases_the_bank' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wider_voice_releases_the_bank
+
+/-- info: 'Seed.the_still_face_banks_the_run' does not depend on any axioms -/
+#guard_msgs in #print axioms the_still_face_banks_the_run
 
 end Seed
