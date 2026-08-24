@@ -4412,6 +4412,25 @@ theorem the_still_face_banks_the_run {I O O' : Type} (g : O → O')
    the_wider_voice_releases_the_bank w,
    the_revoice_moves_no_seat g m v t⟩
 
+theorem one_clock_many_voices (a d b : Nat) (w : List Unit) (s : Nat) :
+    revoice oddNat (tally Unit) = paceOne
+      ∧ revoice (fun n => (⟨n, 10⟩ : Measured)) (tally Unit) = homingIn
+      ∧ revoice (fun n => within ⟨n * a, n * a + d⟩ (n * b)) (tally Unit)
+          = spiral a d b
+      ∧ park paceOne s w = park (tally Unit) s w
+      ∧ park homingIn s w = park (tally Unit) s w
+      ∧ park (spiral a d b) s w = park (tally Unit) s w
+      ∧ tighter (behavior homingIn w) ⟨0, 10⟩ = true
+      ∧ park paceOne s w = s + w.length :=
+  ⟨rfl, rfl, rfl,
+   the_revoice_moves_no_seat oddNat (tally Unit) w s,
+   the_revoice_moves_no_seat (fun n => (⟨n, 10⟩ : Measured))
+     (tally Unit) w s,
+   the_revoice_moves_no_seat
+     (fun n => within ⟨n * a, n * a + d⟩ (n * b)) (tally Unit) w s,
+   the_homing_reading_tightens w,
+   the_pace_parks_at_its_count w s⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5758,5 +5777,8 @@ theorem the_still_face_banks_the_run {I O O' : Type} (g : O → O')
 
 /-- info: 'Seed.the_still_face_banks_the_run' does not depend on any axioms -/
 #guard_msgs in #print axioms the_still_face_banks_the_run
+
+/-- info: 'Seed.one_clock_many_voices' does not depend on any axioms -/
+#guard_msgs in #print axioms one_clock_many_voices
 
 end Seed

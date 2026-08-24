@@ -1073,6 +1073,15 @@ def main : IO UInt32 := do
     ((audition restingCounter flyQ == audition hollowShell flyQ)
       && (bankedSeat == 5)
       && (behavior (tally Unit) (List.replicate 5 ()) == 5))) && ok
+  IO.println "the well — one clock, many voices:"
+  let paceSeat : Nat := park paceOne (0 : Nat) (List.replicate 7 ())
+  let homeSeat : Nat := park homingIn (0 : Nat) (List.replicate 7 ())
+  let spiralSeat : Nat :=
+    park (spiral piPace 30000000 phiPace) (0 : Nat) (List.replicate 7 ())
+  ok := (← checkTrue
+    "  well row — the pace, the learner, and the spiral are one seat wearing three voices (all three park at seven; the learner's cage lives in the voice — the seat beneath was never caged)"
+    ((paceSeat == 7) && (homeSeat == 7) && (spiralSeat == 7)
+      && ((behavior homingIn (List.replicate 7 ())).lo == 7))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
