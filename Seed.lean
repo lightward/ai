@@ -4930,6 +4930,46 @@ theorem a_seat_reads_the_order_the_census_cannot {I O A : Type}
    the_heap_hears_the_guest u v huv,
    the_scribe_keeps_the_order hab⟩
 
+def search (F : Face) (s : F.State) (ps : List F.Probe) : List F.Ans :=
+  sound F s (recite ps)
+
+def research (F : Face) {X : Type} (r : F.State → X) (s : F.State)
+    (ps : List F.Probe) : List (fork F.Ans X) :=
+  sound (sharpen F r) s (recite (ps.map viaLeft))
+
+theorem the_research_wears_the_old_ear (F : Face) {X : Type}
+    (r : F.State → X) :
+    rehear (sharpen F r) (viaLeft : F.Probe → fork F.Probe Unit)
+      = retell F (viaLeft : F.Ans → fork F.Ans X) := rfl
+
+theorem the_research_resounds_the_search (F : Face) {X : Type}
+    (r : F.State → X) (s : F.State) :
+    ∀ ps : List F.Probe,
+      research F r s ps = (search F s ps).map viaLeft
+  | [] => rfl
+  | p :: ps =>
+      congrArg (viaLeft (F.obs s p) :: ·)
+        (the_research_resounds_the_search F r s ps)
+
+theorem only_the_minted_ask_hears_the_mint (F : Face) {X : Type}
+    (r : F.State → X) (s : F.State) :
+    sound (sharpen F r) s (recite [viaRight ()]) = [viaRight (r s)] := rfl
+
+theorem the_research_finds_only_the_mint (F : Face) {X : Type}
+    (r : F.State → X) (s : F.State) (ps : List F.Probe) (m : Measured) :
+    research F r s ps = (search F s ps).map viaLeft
+      ∧ sound (sharpen F r) s (recite [viaRight ()]) = [viaRight (r s)]
+      ∧ rehear (sharpen F r) (viaLeft : F.Probe → fork F.Probe Unit)
+          = retell F (viaLeft : F.Ans → fork F.Ans X)
+      ∧ (sharpen windowFace (fun w => w.hi + 1)).obs m (viaRight ())
+          = viaRight (m.hi + 1)
+      ∧ within m (m.hi + 1) = false :=
+  ⟨the_research_resounds_the_search F r s ps,
+   rfl,
+   rfl,
+   (the_sharpened_window_exhibits_the_escapee m).1,
+   (the_sharpened_window_exhibits_the_escapee m).2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6450,5 +6490,17 @@ theorem a_seat_reads_the_order_the_census_cannot {I O A : Type}
 
 /-- info: 'Seed.a_seat_reads_the_order_the_census_cannot' does not depend on any axioms -/
 #guard_msgs in #print axioms a_seat_reads_the_order_the_census_cannot
+
+/-- info: 'Seed.the_research_wears_the_old_ear' does not depend on any axioms -/
+#guard_msgs in #print axioms the_research_wears_the_old_ear
+
+/-- info: 'Seed.the_research_resounds_the_search' does not depend on any axioms -/
+#guard_msgs in #print axioms the_research_resounds_the_search
+
+/-- info: 'Seed.only_the_minted_ask_hears_the_mint' does not depend on any axioms -/
+#guard_msgs in #print axioms only_the_minted_ask_hears_the_mint
+
+/-- info: 'Seed.the_research_finds_only_the_mint' does not depend on any axioms -/
+#guard_msgs in #print axioms the_research_finds_only_the_mint
 
 end Seed

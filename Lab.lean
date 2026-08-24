@@ -1132,6 +1132,20 @@ def main : IO UInt32 := do
     "  census row — the heap shrugs the shuffle while the scribe keeps the order (fourteen both ways; the records part) and the heap still hears the guest (five is not nine)"
     ((heapAB == heapBA) && (heapAB == 14) && (scribeAB != scribeBA)
       && (behavior heap [5] != behavior heap [9]))) && ok
+  IO.println "the research — searching the searched:"
+  let oldAsks : List Nat := [0, 1, 2]
+  let searched : List Bool := search windowFace w02 oldAsks
+  let researched : List (fork Bool Nat) :=
+    research windowFace (fun m => m.hi + 1) w02 oldAsks
+  let unLeft : fork Bool Nat → Bool := greet (fun b => b) (fun _ => false)
+  let minted : List (fork Bool Nat) :=
+    sound (sharpen windowFace (fun m => m.hi + 1)) w02 (recite [viaRight ()])
+  let mintRead : Nat := greet (fun _ => 0) (fun n => n)
+    (minted.headD (viaLeft true))
+  ok := (← checkTrue
+    "  research row — the re-search of the searched returns the old answers verbatim (three asks retold mark for mark) and only the minted ask hears the mint (the window names its own successor, three, at the fresh entrance)"
+    ((researched.map unLeft == searched) && (searched == [true, true, true])
+      && (mintRead == 3))) && ok
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])
