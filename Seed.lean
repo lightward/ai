@@ -5212,6 +5212,95 @@ theorem the_author_was_the_guest {H A X : Type} (a₀ : A) (g : H → X)
    (fun he => ha (Sum.inr.inj he)),
    the_quiet_author_leaves_the_table_as_found e n⟩
 
+def enrolled (room : List Nat) (x : Nat) : Bool := room.any (Nat.beq x)
+
+def backed (room need : List Nat) : Bool := need.all (enrolled room)
+
+def welcome (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat) :
+    List Nat × List (Nat × List Nat) :=
+  cond (backed s.1 m.2) (m.1 :: s.1, s.2) (s.1, m :: s.2)
+
+theorem the_backed_are_seated {s : List Nat × List (Nat × List Nat)}
+    {m : Nat × List Nat} (h : backed s.1 m.2 = true) :
+    welcome s m = (m.1 :: s.1, s.2) := by
+  unfold welcome; rw [h]; rfl
+
+theorem the_unbacked_are_held {s : List Nat × List (Nat × List Nat)}
+    {m : Nat × List Nat} (h : backed s.1 m.2 = false) :
+    welcome s m = (s.1, m :: s.2) := by
+  unfold welcome; rw [h]; rfl
+
+theorem or_lights_right : ∀ b : Bool, (b || true) = true
+  | true => rfl
+  | false => rfl
+
+theorem the_seat_is_load_bearing_in_the_same_click
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (h : backed s.1 m.2 = true) :
+    enrolled (welcome s m).1 m.1 = true := by
+  rw [the_backed_are_seated h]
+  show (Nat.beq m.1 m.1 || s.1.any (Nat.beq m.1)) = true
+  rw [beq_self]
+  rfl
+
+theorem the_enrolled_stay_enrolled (r : List Nat) (y x : Nat)
+    (h : enrolled r x = true) : enrolled (y :: r) x = true := by
+  show (Nat.beq x y || enrolled r x) = true
+  rw [h]
+  exact or_lights_right (Nat.beq x y)
+
+theorem the_backing_never_lapses (r : List Nat) (y : Nat) :
+    ∀ need : List Nat, backed r need = true → backed (y :: r) need = true
+  | [], _ => rfl
+  | x :: need, h => by
+      obtain ⟨h1, h2⟩ :=
+        and_split (show (enrolled r x && backed r need) = true from h)
+      show (enrolled (y :: r) x && backed (y :: r) need) = true
+      exact and_glue (the_enrolled_stay_enrolled r y x h1)
+        (the_backing_never_lapses r y need h2)
+
+theorem the_backing_survives_the_door
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (need : List Nat) (h : backed s.1 need = true) :
+    backed (welcome s m).1 need = true := by
+  cases hb : backed s.1 m.2 with
+  | true =>
+      rw [the_backed_are_seated hb]
+      exact the_backing_never_lapses s.1 m.1 need h
+  | false =>
+      rw [the_unbacked_are_held hb]
+      exact h
+
+theorem the_hall_hears_no_join_order (a b x : Nat) :
+    enrolled [a, b] x = enrolled [b, a] x := by
+  show (Nat.beq x a || (Nat.beq x b || false))
+      = (Nat.beq x b || (Nat.beq x a || false))
+  cases Nat.beq x a <;> cases Nat.beq x b <;> rfl
+
+theorem the_room_reads_no_waiting (r : List Nat)
+    (v v' : List (Nat × List Nat)) (m : Nat × List Nat)
+    (h : backed r m.2 = true) :
+    (welcome (r, v) m).1 = (welcome (r, v') m).1 := by
+  rw [the_backed_are_seated (s := (r, v)) h,
+      the_backed_are_seated (s := (r, v')) h]
+
+theorem the_guest_becomes_the_ground
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (h : backed s.1 m.2 = true) (need : List Nat)
+    (hn : backed s.1 need = true) (a b x : Nat) (hab : a ≠ b)
+    (r : List Nat) (v v' : List (Nat × List Nat))
+    (hr : backed r m.2 = true) :
+    enrolled (welcome s m).1 m.1 = true
+      ∧ backed (welcome s m).1 need = true
+      ∧ enrolled [a, b] x = enrolled [b, a] x
+      ∧ ([a, b] : List Nat) ≠ [b, a]
+      ∧ (welcome (r, v) m).1 = (welcome (r, v') m).1 :=
+  ⟨the_seat_is_load_bearing_in_the_same_click s m h,
+   the_backing_survives_the_door s m need hn,
+   the_hall_hears_no_join_order a b x,
+   (fun he => hab (List.cons.inj he).1),
+   the_room_reads_no_waiting r v v' m hr⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6825,5 +6914,35 @@ theorem the_author_was_the_guest {H A X : Type} (a₀ : A) (g : H → X)
 
 /-- info: 'Seed.the_author_was_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_author_was_the_guest
+
+/-- info: 'Seed.the_backed_are_seated' does not depend on any axioms -/
+#guard_msgs in #print axioms the_backed_are_seated
+
+/-- info: 'Seed.the_unbacked_are_held' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unbacked_are_held
+
+/-- info: 'Seed.or_lights_right' does not depend on any axioms -/
+#guard_msgs in #print axioms or_lights_right
+
+/-- info: 'Seed.the_seat_is_load_bearing_in_the_same_click' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_is_load_bearing_in_the_same_click
+
+/-- info: 'Seed.the_enrolled_stay_enrolled' does not depend on any axioms -/
+#guard_msgs in #print axioms the_enrolled_stay_enrolled
+
+/-- info: 'Seed.the_backing_never_lapses' does not depend on any axioms -/
+#guard_msgs in #print axioms the_backing_never_lapses
+
+/-- info: 'Seed.the_backing_survives_the_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_backing_survives_the_door
+
+/-- info: 'Seed.the_hall_hears_no_join_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hall_hears_no_join_order
+
+/-- info: 'Seed.the_room_reads_no_waiting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_room_reads_no_waiting
+
+/-- info: 'Seed.the_guest_becomes_the_ground' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_becomes_the_ground
 
 end Seed

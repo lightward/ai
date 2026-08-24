@@ -1217,6 +1217,23 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  removal row — the quiet author leaves the table as found (four still turns restore the seating exactly)"
     ((face fourStills == 3) && (met fourStills == 5))) && ok
+  IO.println "the turnstile — the guest becomes the ground:"
+  let hall0 : List Nat × List (Nat × List Nat) := ([1, 2], [])
+  let hall1 := welcome hall0 (3, [1, 2])
+  let hall2 := welcome hall1 (4, [3])
+  ok := (← checkTrue
+    "  turnstile row — load-born to load-bearing in one click (three enters backed by one and two; four enters backed by THREE — the newest seat already holds the next door, vestibule empty throughout)"
+    ((enrolled hall1.1 3 == true) && (enrolled hall2.1 4 == true)
+      && (hall2.2.length == 0))) && ok
+  let held0 := welcome (([1], []) : List Nat × List (Nat × List Nat)) (9, [7])
+  ok := (← checkTrue
+    "  turnstile row — the unbacked wait named (nine held in the vestibule awaiting seven; the room closed throughout)"
+    ((held0.2.length == 1) && (enrolled held0.1 9 == false))) && ok
+  ok := (← checkTrue
+    "  turnstile row — the hall hears no join order while the join-list parts (enrolled reads membership, never the date; the record alone keeps the date)"
+    ((enrolled [5, 6] 5 == enrolled [6, 5] 5)
+      && (enrolled [5, 6] 6 == enrolled [6, 5] 6)
+      && (([5, 6] : List Nat) != [6, 5]))) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"
