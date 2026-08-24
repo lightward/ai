@@ -1171,6 +1171,16 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  tower row — two floors up, the window still answers at the cellar (the true mass reads true through the storeys); the floor merges its guests while the next floor's widen reads nine — the ladder never grounds"
     ((towered == true) && (floorA == floorB) && (wideRead == 9))) && ok
+  IO.println "the again — one iterator, three orbits:"
+  let againTower : Bool :=
+    (again (fun G => host G Nat) 2 windowFace).obs
+      ((m2018, (5 : Nat)), (9 : Nat)) (91093837015 : Nat)
+  let againBloomOk : Bool :=
+    planBeq (again (fun p => Plan.board p p) 3 .ground) (bloom 3)
+  let againOrbit : Nat := again (fun t => paceOne.step t ()) 4 (0 : Nat)
+  ok := (← checkTrue
+    "  again row — one iterator, three orbits (the twice-hosted window reads the true mass through the storeys; the thrice-doubled ground is bloom three; four agains of the pace step count four)"
+    ((againTower == true) && againBloomOk && (againOrbit == 4))) && ok
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])

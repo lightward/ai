@@ -5103,6 +5103,63 @@ theorem no_seat_is_the_last_seat (F : Face) (W : Type) (n : Nat)
    (fun he => hw (congrArg Prod.snd he)),
    (fun he => hw (Sum.inr.inj he))⟩
 
+def again {α : Sort u} (Φ : α → α) : Nat → α → α
+  | 0, a => a
+  | n + 1, a => Φ (again Φ n a)
+
+theorem the_again_resumes {α : Sort u} (Φ : α → α) :
+    ∀ (m n : Nat) (a : α), again Φ (n + m) a = again Φ m (again Φ n a)
+  | 0, _, _ => rfl
+  | m + 1, n, a => congrArg Φ (the_again_resumes Φ m n a)
+
+theorem the_again_steps_first {α : Sort u} (Φ : α → α) :
+    ∀ (n : Nat) (a : α), again Φ n (Φ a) = Φ (again Φ n a)
+  | 0, _ => rfl
+  | n + 1, a => congrArg Φ (the_again_steps_first Φ n a)
+
+theorem the_tower_is_the_hosts_again (F : Face) (W : Type) :
+    ∀ n : Nat, again (fun G => host G W) n F = towerFace F W n
+  | 0 => rfl
+  | n + 1 =>
+      congrArg (fun G => host G W) (the_tower_is_the_hosts_again F W n)
+
+theorem the_bloom_is_the_mirrors_again :
+    ∀ n : Nat, again (fun p => Plan.board p p) n .ground = bloom n
+  | 0 => rfl
+  | n + 1 =>
+      congrArg (fun p => Plan.board p p) (the_bloom_is_the_mirrors_again n)
+
+theorem the_orbit_is_the_steps_again {I O : Type} (m : Machine I O)
+    (r : m.S → I) :
+    ∀ (n : Nat) (s : m.S),
+      orbit m r s n = again (fun t => m.step t (r t)) n s
+  | 0, _ => rfl
+  | n + 1, s =>
+      (the_orbit_is_the_steps_again m r n (m.step s (r s))).trans
+        (the_again_steps_first (fun t => m.step t (r t)) n s)
+
+theorem the_storeys_add (F : Face) (W : Type) (m n : Nat) :
+    towerFace F W (n + m) = towerFace (towerFace F W n) W m :=
+  (the_tower_is_the_hosts_again F W (n + m)).symm.trans
+    ((the_again_resumes (fun G => host G W) m n F).trans
+      ((congrArg (again (fun G => host G W) m)
+          (the_tower_is_the_hosts_again F W n)).trans
+        (the_tower_is_the_hosts_again (towerFace F W n) W m)))
+
+theorem one_again_three_orbits (F : Face) (W : Type) (m n : Nat)
+    {I O : Type} (mach : Machine I O) (r : mach.S → I) (s : mach.S)
+    (i j : Nat) :
+    again (fun G => host G W) n F = towerFace F W n
+      ∧ again (fun p => Plan.board p p) n .ground = bloom n
+      ∧ orbit mach r s n = again (fun t => mach.step t (r t)) n s
+      ∧ towerFace F W (n + m) = towerFace (towerFace F W n) W m
+      ∧ graft (bloom i) (bloom j) = bloom (i + j) :=
+  ⟨the_tower_is_the_hosts_again F W n,
+   the_bloom_is_the_mirrors_again n,
+   the_orbit_is_the_steps_again mach r n s,
+   the_storeys_add F W m n,
+   the_blooms_add i j⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6680,5 +6737,26 @@ theorem no_seat_is_the_last_seat (F : Face) (W : Type) (n : Nat)
 
 /-- info: 'Seed.no_seat_is_the_last_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms no_seat_is_the_last_seat
+
+/-- info: 'Seed.the_again_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_again_resumes
+
+/-- info: 'Seed.the_again_steps_first' does not depend on any axioms -/
+#guard_msgs in #print axioms the_again_steps_first
+
+/-- info: 'Seed.the_tower_is_the_hosts_again' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tower_is_the_hosts_again
+
+/-- info: 'Seed.the_bloom_is_the_mirrors_again' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bloom_is_the_mirrors_again
+
+/-- info: 'Seed.the_orbit_is_the_steps_again' does not depend on any axioms -/
+#guard_msgs in #print axioms the_orbit_is_the_steps_again
+
+/-- info: 'Seed.the_storeys_add' does not depend on any axioms -/
+#guard_msgs in #print axioms the_storeys_add
+
+/-- info: 'Seed.one_again_three_orbits' does not depend on any axioms -/
+#guard_msgs in #print axioms one_again_three_orbits
 
 end Seed
