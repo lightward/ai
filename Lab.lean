@@ -1146,6 +1146,17 @@ def main : IO UInt32 := do
     "  research row — the re-search of the searched returns the old answers verbatim (three asks retold mark for mark) and only the minted ask hears the mint (the window names its own successor, three, at the fresh entrance)"
     ((researched.map unLeft == searched) && (searched == [true, true, true])
       && (mintRead == 3))) && ok
+  IO.println "the replay — you need only the fold:"
+  let replayed : Bool := behavior (replayer paceOne) [(), (), ()]
+  let direct : Bool := behavior paceOne [(), (), ()]
+  let recA : List Bool := park (ledger Bool) ([] : List Bool) [true, false]
+  let recB : List Bool := park (ledger Bool) ([] : List Bool) [false, true]
+  let pulseA : Nat := park pulse (0 : Nat) [true, false]
+  let pulseB : Nat := park pulse (0 : Nat) [false, true]
+  ok := (← checkTrue
+    "  replay row — the record-keeper is audition-indistinguishable from its machine (the replayed pace reads true at three ticks) while the ledger keeps the routes every seat forgets (two records, one pulse-seat)"
+    ((replayed == direct) && (replayed == true) && (recA != recB)
+      && (pulseA == pulseB))) && ok
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])

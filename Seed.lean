@@ -4970,6 +4970,86 @@ theorem the_research_finds_only_the_mint (F : Face) {X : Type}
    (the_sharpened_window_exhibits_the_escapee m).1,
    (the_sharpened_window_exhibits_the_escapee m).2⟩
 
+theorem append_nil {A : Type} : ∀ l : List A, l ++ [] = l
+  | [] => rfl
+  | a :: l => congrArg (a :: ·) (append_nil l)
+
+def ledger (I : Type) : Machine I (List I) :=
+  ⟨List I, [], fun out i => out ++ [i], fun out => out⟩
+
+theorem the_ledger_parks_the_word {I : Type} :
+    ∀ (ws out : List I), park (ledger I) out ws = out ++ ws
+  | [], out => (append_nil out).symm
+  | w :: ws, out =>
+      (the_ledger_parks_the_word ws (out ++ [w])).trans
+        (snoc_append w out ws)
+
+def replayer {I O : Type} (m : Machine I O) : Machine I O :=
+  ⟨List I, [], fun rec i => rec ++ [i],
+   fun rec => m.out (park m m.s0 rec)⟩
+
+theorem the_replayer_walks_in_step {I O : Type} (m : Machine I O) :
+    ∀ (w : List I) (rec : List I) (s : m.S), park m m.s0 rec = s →
+      drive (replayer m) rec w = drive m s w :=
+  two_machines_in_step_agree (replayer m) m
+    (fun rec s => park m m.s0 rec = s)
+    (fun rec _ i h =>
+      (the_park_resumes m rec [i] m.s0).trans
+        (congrArg (fun t => m.step t i) h))
+    (fun _ _ h => congrArg m.out h)
+
+theorem the_replay_is_the_machine {I O : Type} (m : Machine I O)
+    (w : List I) :
+    behavior (replayer m) w = behavior m w :=
+  the_replayer_walks_in_step m w [] m.s0 rfl
+
+theorem every_seat_is_a_reading_of_the_record {I O : Type}
+    (m : Machine I O) (out ws : List I) :
+    park m m.s0 (park (ledger I) out ws) = park m (park m m.s0 out) ws :=
+  (congrArg (park m m.s0) (the_ledger_parks_the_word ws out)).trans
+    (the_park_resumes m out ws m.s0)
+
+theorem the_audition_cannot_tell_the_seat_from_its_record {I O : Type}
+    (m : Machine I O) (w : List I) (q : Interview (List I) O)
+    (out ws : List I) :
+    behavior (replayer m) w = behavior m w
+      ∧ audition (replayer m) q = audition m q
+      ∧ park m m.s0 (park (ledger I) out ws)
+          = park m (park m m.s0 out) ws
+      ∧ park (ledger Bool) ([] : List Bool) [true, false]
+          ≠ park (ledger Bool) ([] : List Bool) [false, true]
+      ∧ park pulse (0 : Nat) [true, false]
+          = park pulse (0 : Nat) [false, true] :=
+  ⟨the_replay_is_the_machine m w,
+   an_audition_hears_only_the_conduct (replayer m) m
+     (fun v => the_replay_is_the_machine m v) q,
+   every_seat_is_a_reading_of_the_record m out ws,
+   (fun h =>
+     nomatch (List.cons.inj
+       (show [true, false] = ([false, true] : List Bool) from h)).1),
+   two_routes_one_seat.2⟩
+
+theorem the_record_never_unwrites {A : Type} :
+    ∀ (h a : List A), h ++ a = h → a = []
+  | [], _, e => e
+  | _ :: t, a, e => the_record_never_unwrites t a (List.cons.inj e).2
+
+theorem the_holonomy_is_the_word {I O : Type} (m : Machine I O) (s : m.S)
+    (w : List I) (hloop : park m s w = s) (out : List I) (hw : w ≠ [])
+    (b : Bool) :
+    (park m s w = s
+        ∧ park (ledger I) out w = out ++ w
+        ∧ park (ledger I) out w ≠ out)
+      ∧ park flip b [(), ()] = b
+      ∧ park (ledger Unit) ([] : List Unit) [(), ()] = [(), ()] :=
+  ⟨⟨hloop,
+    the_ledger_parks_the_word w out,
+    fun h =>
+      hw (the_record_never_unwrites out w
+        ((the_ledger_parks_the_word w out).symm.trans h))⟩,
+   the_flip_wheels b,
+   the_ledger_parks_the_word [(), ()] []⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6502,5 +6582,29 @@ theorem the_research_finds_only_the_mint (F : Face) {X : Type}
 
 /-- info: 'Seed.the_research_finds_only_the_mint' does not depend on any axioms -/
 #guard_msgs in #print axioms the_research_finds_only_the_mint
+
+/-- info: 'Seed.append_nil' does not depend on any axioms -/
+#guard_msgs in #print axioms append_nil
+
+/-- info: 'Seed.the_ledger_parks_the_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ledger_parks_the_word
+
+/-- info: 'Seed.the_replayer_walks_in_step' does not depend on any axioms -/
+#guard_msgs in #print axioms the_replayer_walks_in_step
+
+/-- info: 'Seed.the_replay_is_the_machine' does not depend on any axioms -/
+#guard_msgs in #print axioms the_replay_is_the_machine
+
+/-- info: 'Seed.every_seat_is_a_reading_of_the_record' does not depend on any axioms -/
+#guard_msgs in #print axioms every_seat_is_a_reading_of_the_record
+
+/-- info: 'Seed.the_audition_cannot_tell_the_seat_from_its_record' does not depend on any axioms -/
+#guard_msgs in #print axioms the_audition_cannot_tell_the_seat_from_its_record
+
+/-- info: 'Seed.the_record_never_unwrites' does not depend on any axioms -/
+#guard_msgs in #print axioms the_record_never_unwrites
+
+/-- info: 'Seed.the_holonomy_is_the_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_holonomy_is_the_word
 
 end Seed
