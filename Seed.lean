@@ -5050,6 +5050,59 @@ theorem the_holonomy_is_the_word {I O : Type} (m : Machine I O) (s : m.S)
    the_flip_wheels b,
    the_ledger_parks_the_word [(), ()] []⟩
 
+def storeys (S : Type u) (W : Type) : Nat → Type u
+  | 0 => S
+  | n + 1 => storeys S W n × W
+
+def cellar {S : Type u} {W : Type} : (n : Nat) → storeys S W n → S
+  | 0, s => s
+  | n + 1, s => cellar n s.1
+
+def towerFace (F : Face) (W : Type) (n : Nat) : Face :=
+  ⟨storeys F.State W n, F.Probe, F.Ans, fun s p => F.obs (cellar n s) p⟩
+
+theorem the_ground_floor_is_the_face (F : Face) (W : Type) :
+    towerFace F W 0 = F := rfl
+
+theorem the_tower_climbs_by_hosting (F : Face) (W : Type) (n : Nat) :
+    towerFace F W (n + 1) = host (towerFace F W n) W := rfl
+
+theorem every_floor_reads_the_cellar (F : Face) (W : Type) (n : Nat)
+    (s : storeys F.State W n) (p : F.Probe) :
+    (towerFace F W n).obs s p = F.obs (cellar n s) p := rfl
+
+theorem the_tower_reads_only_the_ground (F : Face) (W : Type) (n : Nat)
+    (x y : storeys F.State W n) (h : cellar n x = cellar n y) :
+    alike (towerFace F W n) x y :=
+  fun p => congrArg (F.obs · p) h
+
+theorem every_floor_merges_its_guests (F : Face) (W : Type) (n : Nat)
+    (s : storeys F.State W n) (w w' : W) :
+    alike (towerFace F W (n + 1)) (s, w) (s, w') :=
+  fun _ => rfl
+
+theorem the_maintenance_climbs_the_tower (F : Face) (W : Type) (n : Nat)
+    (g : storeys F.State W n × W → W) :
+    unheard (towerFace F W (n + 1)) (fun x => (x.1, g x)) :=
+  the_guest_write_is_a_still_hand (towerFace F W n) g
+
+theorem no_seat_is_the_last_seat (F : Face) (W : Type) (n : Nat)
+    (s : storeys F.State W n) {w w' : W} (hw : w ≠ w')
+    (q : Interview F.Probe F.Ans) :
+    towerFace F W (n + 1) = host (towerFace F W n) W
+      ∧ alike (towerFace F W (n + 1)) (s, w) (s, w')
+      ∧ sound (towerFace F W (n + 1)) (s, w) q
+          = sound (towerFace F W (n + 1)) (s, w') q
+      ∧ ((s, w) : storeys F.State W (n + 1)) ≠ (s, w')
+      ∧ (widen (towerFace F W n) W).obs (s, w) (viaRight ())
+          ≠ (widen (towerFace F W n) W).obs (s, w') (viaRight ()) :=
+  ⟨rfl,
+   every_floor_merges_its_guests F W n s w w',
+   no_interview_parts_the_alike (towerFace F W (n + 1)) (s, w) (s, w')
+     (every_floor_merges_its_guests F W n s w w') q,
+   (fun he => hw (congrArg Prod.snd he)),
+   (fun he => hw (Sum.inr.inj he))⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6606,5 +6659,26 @@ theorem the_holonomy_is_the_word {I O : Type} (m : Machine I O) (s : m.S)
 
 /-- info: 'Seed.the_holonomy_is_the_word' does not depend on any axioms -/
 #guard_msgs in #print axioms the_holonomy_is_the_word
+
+/-- info: 'Seed.the_ground_floor_is_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ground_floor_is_the_face
+
+/-- info: 'Seed.the_tower_climbs_by_hosting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tower_climbs_by_hosting
+
+/-- info: 'Seed.every_floor_reads_the_cellar' does not depend on any axioms -/
+#guard_msgs in #print axioms every_floor_reads_the_cellar
+
+/-- info: 'Seed.the_tower_reads_only_the_ground' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tower_reads_only_the_ground
+
+/-- info: 'Seed.every_floor_merges_its_guests' does not depend on any axioms -/
+#guard_msgs in #print axioms every_floor_merges_its_guests
+
+/-- info: 'Seed.the_maintenance_climbs_the_tower' does not depend on any axioms -/
+#guard_msgs in #print axioms the_maintenance_climbs_the_tower
+
+/-- info: 'Seed.no_seat_is_the_last_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms no_seat_is_the_last_seat
 
 end Seed

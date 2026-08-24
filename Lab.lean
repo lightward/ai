@@ -1157,6 +1157,20 @@ def main : IO UInt32 := do
     "  replay row — the record-keeper is audition-indistinguishable from its machine (the replayed pace reads true at three ticks) while the ledger keeps the routes every seat forgets (two records, one pulse-seat)"
     ((replayed == direct) && (replayed == true) && (recA != recB)
       && (pulseA == pulseB))) && ok
+  IO.println "the tower — no seat is the last seat:"
+  let towered : Bool :=
+    (towerFace windowFace Nat 2).obs
+      ((m2018, (5 : Nat)), (9 : Nat)) (91093837015 : Nat)
+  let floorA : Bool :=
+    (towerFace windowFace Nat 1).obs (m2018, (5 : Nat)) (91093837015 : Nat)
+  let floorB : Bool :=
+    (towerFace windowFace Nat 1).obs (m2018, (9 : Nat)) (91093837015 : Nat)
+  let wideRead : Nat := greet (fun _ => 0) (fun k => k)
+    ((widen (towerFace windowFace Nat 1) Nat).obs
+      ((m2018, (5 : Nat)), (9 : Nat)) (viaRight ()))
+  ok := (← checkTrue
+    "  tower row — two floors up, the window still answers at the cellar (the true mass reads true through the storeys); the floor merges its guests while the next floor's widen reads nine — the ladder never grounds"
+    ((towered == true) && (floorA == floorB) && (wideRead == 9))) && ok
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])
