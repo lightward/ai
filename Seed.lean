@@ -4282,6 +4282,61 @@ theorem the_trio_interlocks :
    the_interlock_refuses_the_ladder,
    the_hallway_is_too_small⟩
 
+theorem ble_antisymm : ∀ a b : Nat,
+    Nat.ble a b = true → Nat.ble b a = true → a = b
+  | 0, 0, _, _ => rfl
+  | 0, _ + 1, _, h2 => nomatch h2
+  | _ + 1, 0, h1, _ => nomatch h1
+  | a + 1, b + 1, h1, h2 => congrArg (· + 1) (ble_antisymm a b h1 h2)
+
+theorem no_rank_descends_the_flip :
+    ¬ ∃ rank : Bool → Nat,
+      ∀ b : Bool, Nat.ble (rank (!b) + 1) (rank b) = true :=
+  fun he =>
+    he.elim fun rank h =>
+      have c : Nat.ble (rank true + 1) (rank true) = true :=
+        ble_trans _ _ _ (h false)
+          (ble_trans _ _ _ (ble_le_succ (rank false)) (h true))
+      nomatch (ble_succ_false (rank true)).symm.trans c
+
+theorem no_rank_descends_the_home_wheel :
+    ¬ ∃ rank : Nat → Nat,
+      ∀ n : Nat, Nat.ble (rank (collatzStep n) + 1) (rank n) = true :=
+  fun he =>
+    he.elim fun rank h =>
+      have c1 : Nat.ble (rank 1 + 1) (rank 4) = true :=
+        ble_trans _ _ _ (h 2)
+          (ble_trans _ _ _ (ble_le_succ (rank 2)) (h 4))
+      have c2 : Nat.ble (rank 1 + 1) (rank 1) = true :=
+        ble_trans _ _ _ c1
+          (ble_trans _ _ _ (ble_le_succ (rank 4)) (h 1))
+      nomatch (ble_succ_false (rank 1)).symm.trans c2
+
+theorem the_wheel_flattens_the_monotone (rank : Nat → Nat)
+    (h : ∀ n : Nat, Nat.ble (rank (collatzStep n)) (rank n) = true) :
+    rank 4 = rank 1 ∧ rank 2 = rank 4 ∧ rank 1 = rank 2 :=
+  ⟨ble_antisymm _ _ (h 1) (ble_trans _ _ _ (h 2) (h 4)),
+   ble_antisymm _ _ (h 4) (ble_trans _ _ _ (h 1) (h 2)),
+   ble_antisymm _ _ (h 2) (ble_trans _ _ _ (h 4) (h 1))⟩
+
+theorem the_wheel_refuses_the_ladder :
+    (¬ ∃ rank : Hand → Nat,
+        ∀ x y : Hand, beats x y = true →
+          Nat.ble (rank y + 1) (rank x) = true)
+      ∧ (¬ ∃ rank : Bool → Nat,
+          ∀ b : Bool, Nat.ble (rank (!b) + 1) (rank b) = true)
+      ∧ (¬ ∃ rank : Nat → Nat,
+          ∀ n : Nat, Nat.ble (rank (collatzStep n) + 1) (rank n) = true)
+      ∧ (∀ rank : Nat → Nat,
+          (∀ n : Nat, Nat.ble (rank (collatzStep n)) (rank n) = true) →
+            rank 4 = rank 1 ∧ rank 2 = rank 4 ∧ rank 1 = rank 2)
+      ∧ park collatz (1 : Nat) [(), (), ()] = (1 : Nat) :=
+  ⟨the_interlock_refuses_the_ladder,
+   no_rank_descends_the_flip,
+   no_rank_descends_the_home_wheel,
+   the_wheel_flattens_the_monotone,
+   the_home_wheel_turns.1⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5583,5 +5638,20 @@ theorem the_trio_interlocks :
 
 /-- info: 'Seed.the_trio_interlocks' does not depend on any axioms -/
 #guard_msgs in #print axioms the_trio_interlocks
+
+/-- info: 'Seed.ble_antisymm' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_antisymm
+
+/-- info: 'Seed.no_rank_descends_the_flip' does not depend on any axioms -/
+#guard_msgs in #print axioms no_rank_descends_the_flip
+
+/-- info: 'Seed.no_rank_descends_the_home_wheel' does not depend on any axioms -/
+#guard_msgs in #print axioms no_rank_descends_the_home_wheel
+
+/-- info: 'Seed.the_wheel_flattens_the_monotone' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wheel_flattens_the_monotone
+
+/-- info: 'Seed.the_wheel_refuses_the_ladder' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wheel_refuses_the_ladder
 
 end Seed
