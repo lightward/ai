@@ -4412,6 +4412,37 @@ theorem the_still_face_banks_the_run {I O O' : Type} (g : O → O')
    the_wider_voice_releases_the_bank w,
    the_revoice_moves_no_seat g m v t⟩
 
+theorem the_retuned_seat_walks_the_translated_word {I I' O : Type}
+    (f : I' → I) (m : Machine I O) :
+    ∀ (w : List I') (s : m.S), park (retune f m) s w = park m s (w.map f)
+  | [], _ => rfl
+  | i :: w, s => the_retuned_seat_walks_the_translated_word f m w
+      (m.step s (f i))
+
+theorem the_pulse_wears_a_deaf_ear :
+    retune (fun _ : Bool => ()) paceOne = pulse := rfl
+
+theorem the_deaf_ear_reads_only_the_count (w : List Bool) (s : Nat) :
+    park pulse s w = s + w.length :=
+  ((the_retuned_seat_walks_the_translated_word (fun _ : Bool => ())
+      paceOne w s).trans
+    (the_pace_parks_at_its_count (w.map (fun _ => ())) s)).trans
+    (congrArg (s + ·) (len_map (fun _ : Bool => ()) w))
+
+theorem the_ear_the_seat_and_the_voice {I I' O O' : Type} (f : I' → I)
+    (g : O → O') (m : Machine I O) (w : List I') (v : List I)
+    (s : m.S) (t : Nat) (u : List Bool) :
+    park (retune f m) s w = park m s (w.map f)
+      ∧ park (revoice g m) s v = park m s v
+      ∧ revoice g (retune f m) = retune f (revoice g m)
+      ∧ retune (fun _ : Bool => ()) paceOne = pulse
+      ∧ park pulse t u = t + u.length :=
+  ⟨the_retuned_seat_walks_the_translated_word f m w s,
+   the_revoice_moves_no_seat g m v s,
+   the_ear_and_the_voice_commute f g m,
+   rfl,
+   the_deaf_ear_reads_only_the_count u t⟩
+
 theorem one_clock_many_voices (a d b : Nat) (w : List Unit) (s : Nat) :
     revoice oddNat (tally Unit) = paceOne
       ∧ revoice (fun n => (⟨n, 10⟩ : Measured)) (tally Unit) = homingIn
@@ -5780,5 +5811,17 @@ theorem one_clock_many_voices (a d b : Nat) (w : List Unit) (s : Nat) :
 
 /-- info: 'Seed.one_clock_many_voices' does not depend on any axioms -/
 #guard_msgs in #print axioms one_clock_many_voices
+
+/-- info: 'Seed.the_retuned_seat_walks_the_translated_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_retuned_seat_walks_the_translated_word
+
+/-- info: 'Seed.the_pulse_wears_a_deaf_ear' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pulse_wears_a_deaf_ear
+
+/-- info: 'Seed.the_deaf_ear_reads_only_the_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_deaf_ear_reads_only_the_count
+
+/-- info: 'Seed.the_ear_the_seat_and_the_voice' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ear_the_seat_and_the_voice
 
 end Seed
