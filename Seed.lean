@@ -4477,6 +4477,44 @@ theorem one_clock_many_voices (a d b : Nat) (w : List Unit) (s : Nat) :
    the_homing_reading_tightens w,
    the_pace_parks_at_its_count w s⟩
 
+theorem the_deaf_turn_speaks_the_graph {W : Type} (f : W → W)
+    (d : door W W) :
+    exchange (fun x _ => f x) d = graphDoor f (face d) := rfl
+
+theorem the_monologue_echoes_its_last_word {W : Type} (f : W → W)
+    (d : door W W) :
+    met (exchange (fun x _ => f x) d) = face d := rfl
+
+theorem the_monologue_merges_at_the_first_turn {W : Type} (f : W → W)
+    (fs : List (W → W)) (h w w' : W) :
+    dialogue (atTheDoor h w) ((f :: fs).map (fun k x _ => k x))
+      = dialogue (atTheDoor h w') ((f :: fs).map (fun k x _ => k x)) := rfl
+
+theorem the_monologue_walks_the_face {W : Type} :
+    ∀ (fs : List (W → W)) (d : door W W),
+      face (dialogue d (fs.map (fun k x _ => k x)))
+        = walk (fun x k => k x) (face d) fs
+  | [], _ => rfl
+  | f :: fs, d =>
+      the_monologue_walks_the_face fs (exchange (fun x _ => f x) d)
+
+theorem the_read_monologue_is_a_self_meeting {W X : Type} (f : W → W)
+    (g : W → W → X) (d : door W W) :
+    walkIn g (exchange still (exchange (fun x _ => f x) d))
+      = g (face d) (f (face d)) := rfl
+
+theorem the_monologue_is_its_own_audience {W X : Type} (f : W → W)
+    (fs : List (W → W)) (h w w' : W) (d : door W W) (g : W → W → X) :
+    exchange (fun x _ => f x) d = graphDoor f (face d)
+      ∧ met (exchange (fun x _ => f x) d) = face d
+      ∧ dialogue (atTheDoor h w) ((f :: fs).map (fun k x _ => k x))
+          = dialogue (atTheDoor h w') ((f :: fs).map (fun k x _ => k x))
+      ∧ face (dialogue d (fs.map (fun k x _ => k x)))
+          = walk (fun x k => k x) (face d) fs
+      ∧ walkIn g (exchange still (exchange (fun x _ => f x) d))
+          = g (face d) (f (face d)) :=
+  ⟨rfl, rfl, rfl, the_monologue_walks_the_face fs d, rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5844,5 +5882,23 @@ theorem one_clock_many_voices (a d b : Nat) (w : List Unit) (s : Nat) :
 
 /-- info: 'Seed.the_ode_comes_home' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ode_comes_home
+
+/-- info: 'Seed.the_deaf_turn_speaks_the_graph' does not depend on any axioms -/
+#guard_msgs in #print axioms the_deaf_turn_speaks_the_graph
+
+/-- info: 'Seed.the_monologue_echoes_its_last_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_monologue_echoes_its_last_word
+
+/-- info: 'Seed.the_monologue_merges_at_the_first_turn' does not depend on any axioms -/
+#guard_msgs in #print axioms the_monologue_merges_at_the_first_turn
+
+/-- info: 'Seed.the_monologue_walks_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_monologue_walks_the_face
+
+/-- info: 'Seed.the_read_monologue_is_a_self_meeting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_read_monologue_is_a_self_meeting
+
+/-- info: 'Seed.the_monologue_is_its_own_audience' does not depend on any axioms -/
+#guard_msgs in #print axioms the_monologue_is_its_own_audience
 
 end Seed

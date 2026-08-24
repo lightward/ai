@@ -1030,6 +1030,20 @@ def main : IO UInt32 := do
       && (face (turnAbout apartDoor) == 9)
       && (face (exchange (fun a b => a * b) (atTheDoor (6 : Nat) (6 : Nat)))
           == 36))) && ok
+  IO.println "the monologue — the conversation that never listens:"
+  let deafTurns : List (Nat → Nat → Nat) :=
+    [fun x _ => x + 1, fun x _ => x * 2, fun x _ => x + 3]
+  let monoA : door Nat Nat := dialogue (atTheDoor (5 : Nat) (99 : Nat)) deafTurns
+  let monoB : door Nat Nat := dialogue (atTheDoor (5 : Nat) (0 : Nat)) deafTurns
+  ok := (← checkTrue
+    "  monologue row — the deaf turns merge every audience (two guests, one door) while the face walks the words (five steps to fifteen) and the guest is the speaker's own last word (twelve, the echo)"
+    ((face monoA == face monoB) && (met monoA == met monoB)
+      && (face monoA == 15) && (met monoA == 12))) && ok
+  ok := (← checkNat
+    "  monologue row — the yielded word meets its speaker (the deaf turn read through the yield: five beside six reads thirty — the self-meeting at the table)"
+    (walkIn (fun (a b : Nat) => a * b)
+      (exchange still (exchange (fun (x : Nat) (_ : Nat) => x + 1)
+        (atTheDoor (5 : Nat) (99 : Nat))))) 30) && ok
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])
