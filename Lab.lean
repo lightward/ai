@@ -1121,6 +1121,17 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  utterance row — the utterance is a meeting at a door: the selection reads only the record (both winds face three) while the sample hears the wind (forty-three against fifty-three)"
     ((uttA == 43) && (uttB == 53))) && ok
+  IO.println "the census and the order — what a seat can forget:"
+  let heapAB : Nat := park heap (0 : Nat) [5, 9]
+  let heapBA : Nat := park heap (0 : Nat) [9, 5]
+  let scribeAB : List Nat :=
+    park (scribe (fun _ w => w)) ([] : List Nat) [5, 9]
+  let scribeBA : List Nat :=
+    park (scribe (fun _ w => w)) ([] : List Nat) [9, 5]
+  ok := (← checkTrue
+    "  census row — the heap shrugs the shuffle while the scribe keeps the order (fourteen both ways; the records part) and the heap still hears the guest (five is not nine)"
+    ((heapAB == heapBA) && (heapAB == 14) && (scribeAB != scribeBA)
+      && (behavior heap [5] != behavior heap [9]))) && ok
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])

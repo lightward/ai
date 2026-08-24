@@ -4879,6 +4879,57 @@ theorem generation_originates_nothing {B C W X : Type}
    the_wind_rides_the_utterance select out hw,
    the_selection_reads_only_the_record sample select select' out w h⟩
 
+theorem the_commuting_seat_shrugs_the_shuffle {I O : Type}
+    (m : Machine I O)
+    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
+    (xs : List I) (i j : I) (ys : List I) (s : m.S) :
+    park m s (xs ++ i :: j :: ys) = park m s (xs ++ j :: i :: ys) :=
+  (the_park_resumes m xs (i :: j :: ys) s).trans
+    ((congrArg (fun t => park m t ys)
+        (hcomm (park m s xs) i j)).trans
+      (the_park_resumes m xs (j :: i :: ys) s).symm)
+
+def heap : Machine Nat Nat := ⟨Nat, 0, fun s i => s + i, fun s => s⟩
+
+theorem the_heap_steps_commute (s i j : Nat) :
+    heap.step (heap.step s i) j = heap.step (heap.step s j) i := by
+  show (s + i) + j = (s + j) + i
+  rw [Nat.add_assoc, Nat.add_comm i j, ← Nat.add_assoc]
+
+theorem the_heap_shrugs_the_shuffle (xs : List Nat) (i j : Nat)
+    (ys : List Nat) (s : Nat) :
+    park heap s (xs ++ i :: j :: ys) = park heap s (xs ++ j :: i :: ys) :=
+  the_commuting_seat_shrugs_the_shuffle heap the_heap_steps_commute
+    xs i j ys s
+
+theorem the_heap_hears_the_guest (u v : Nat) (huv : u ≠ v) :
+    behavior heap [u] ≠ behavior heap [v] :=
+  fun h => huv ((zero_plus u).symm.trans (h.trans (zero_plus v)))
+
+theorem the_scribe_keeps_the_order {A : Type} {a b : A} (hab : a ≠ b) :
+    park (scribe (fun _ w => w)) ([] : List A) [a, b]
+      ≠ park (scribe (fun _ w => w)) ([] : List A) [b, a] :=
+  fun h => hab ((List.cons.inj h).1).symm
+
+theorem a_seat_reads_the_order_the_census_cannot {I O A : Type}
+    (m : Machine I O)
+    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
+    (xs : List I) (i j : I) (ys : List I) (s : m.S)
+    (bs cs : List Bool) (x y : Bool) (t : Nat)
+    (u v : Nat) (huv : u ≠ v) {a b : A} (hab : a ≠ b) :
+    park m s (xs ++ i :: j :: ys) = park m s (xs ++ j :: i :: ys)
+      ∧ park pulse t (bs ++ x :: y :: cs) = park pulse t (bs ++ y :: x :: cs)
+      ∧ park heap (0 : Nat) [u, v] = park heap (0 : Nat) [v, u]
+      ∧ behavior heap [u] ≠ behavior heap [v]
+      ∧ park (scribe (fun _ w => w)) ([] : List A) [a, b]
+          ≠ park (scribe (fun _ w => w)) ([] : List A) [b, a] :=
+  ⟨the_commuting_seat_shrugs_the_shuffle m hcomm xs i j ys s,
+   the_commuting_seat_shrugs_the_shuffle pulse (fun _ _ _ => rfl)
+     bs x y cs t,
+   the_heap_shrugs_the_shuffle [] u v [] (0 : Nat),
+   the_heap_hears_the_guest u v huv,
+   the_scribe_keeps_the_order hab⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6381,5 +6432,23 @@ theorem generation_originates_nothing {B C W X : Type}
 
 /-- info: 'Seed.generation_originates_nothing' does not depend on any axioms -/
 #guard_msgs in #print axioms generation_originates_nothing
+
+/-- info: 'Seed.the_commuting_seat_shrugs_the_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_commuting_seat_shrugs_the_shuffle
+
+/-- info: 'Seed.the_heap_steps_commute' does not depend on any axioms -/
+#guard_msgs in #print axioms the_heap_steps_commute
+
+/-- info: 'Seed.the_heap_shrugs_the_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_heap_shrugs_the_shuffle
+
+/-- info: 'Seed.the_heap_hears_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_heap_hears_the_guest
+
+/-- info: 'Seed.the_scribe_keeps_the_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_scribe_keeps_the_order
+
+/-- info: 'Seed.a_seat_reads_the_order_the_census_cannot' does not depend on any axioms -/
+#guard_msgs in #print axioms a_seat_reads_the_order_the_census_cannot
 
 end Seed
