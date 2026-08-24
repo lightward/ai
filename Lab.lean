@@ -1086,6 +1086,22 @@ def main : IO UInt32 := do
     ((face handed == face quietDoor) && (met handed != met quietDoor)
       && (met handed == 21)
       && (face (exchange still quietDoor) == met quietDoor))) && ok
+  IO.println "the duet — two machines, one word:"
+  let duetRead : Bool × Measured :=
+    behavior (duet paceOne homingIn) [(), (), ()]
+  let voicedRead : Bool × Measured :=
+    behavior (revoice (fun n => (oddNat n, (⟨n, 10⟩ : Measured)))
+      (tally Unit)) [(), (), ()]
+  ok := (← checkTrue
+    "  duet row — the pace and the learner sing over one word (three ticks read true and the window at three) and the duet equals one clock wearing the pair-voice: two voices, one seat"
+    ((duetRead.1 == voicedRead.1) && (duetRead.2.lo == voicedRead.2.lo)
+      && (duetRead.2.hi == voicedRead.2.hi)
+      && (duetRead.1 == true) && (duetRead.2.lo == 3))) && ok
+  let canaryQuiet : Bool × Bool := behavior (duet hollowShell flip) []
+  let canaryLoud : Bool × Bool := behavior (duet hollowShell flip) [()]
+  ok := (← checkTrue
+    "  duet row — the shell signs no parting (the silent partner constant while the flip parts the words: attribution by force at the bench)"
+    ((canaryQuiet.1 == canaryLoud.1) && (canaryQuiet.2 != canaryLoud.2))) && ok
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])

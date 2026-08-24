@@ -4701,6 +4701,98 @@ theorem the_unheard_keep_the_house (F : Face) (m m' : F.State → F.State)
    the_settle_is_a_still_hand mach,
    the_yield_is_no_still_hand⟩
 
+def duet {I O O' : Type} (m : Machine I O) (n : Machine I O') :
+    Machine I (O × O') :=
+  ⟨m.S × n.S, (m.s0, n.s0), fun s i => (m.step s.1 i, n.step s.2 i),
+   fun s => (m.out s.1, n.out s.2)⟩
+
+theorem the_duet_walks_in_step {I O O' : Type} (m : Machine I O)
+    (n : Machine I O') :
+    ∀ (w : List I) (s : m.S) (t : n.S),
+      drive (duet m n) (s, t) w = (drive m s w, drive n t w)
+  | [], _, _ => rfl
+  | i :: w, s, t => the_duet_walks_in_step m n w (m.step s i) (n.step t i)
+
+theorem the_duet_parks_in_step {I O O' : Type} (m : Machine I O)
+    (n : Machine I O') :
+    ∀ (w : List I) (s : m.S) (t : n.S),
+      park (duet m n) (s, t) w = (park m s w, park n t w)
+  | [], _, _ => rfl
+  | i :: w, s, t => the_duet_parks_in_step m n w (m.step s i) (n.step t i)
+
+theorem the_duet_sounds_both {I O O' : Type} (m : Machine I O)
+    (n : Machine I O') (w : List I) :
+    behavior (duet m n) w = (behavior m w, behavior n w) :=
+  the_duet_walks_in_step m n w m.s0 n.s0
+
+theorem the_duet_reads_at_the_mirror_probe {I O O' : Type}
+    (m : Machine I O) (n : Machine I O') (s : m.S) (t : n.S)
+    (w : List I) :
+    (seatFace (duet m n)).obs (s, t) w
+      = (pairFace (seatFace m) (seatFace n) Prod.fst Prod.snd).obs
+          (s, t) (w, w) :=
+  the_duet_walks_in_step m n w s t
+
+theorem the_shell_is_the_duets_silent_partner {O : Type}
+    (m : Machine Unit O) (w : List Unit) :
+    behavior (duet m hollowShell) w = (behavior m w, true) :=
+  (the_duet_sounds_both m hollowShell w).trans
+    (congrArg (fun b => (behavior m w, b)) (the_shell_sounds_still w))
+
+theorem the_shell_signs_no_parting {O : Type} (m : Machine Unit O)
+    (w v : List Unit) :
+    behavior (duet hollowShell m) w = behavior (duet hollowShell m) v
+      ↔ behavior m w = behavior m v :=
+  ⟨fun h =>
+     congrArg Prod.snd
+       (((the_duet_sounds_both hollowShell m w).symm.trans h).trans
+         (the_duet_sounds_both hollowShell m v)),
+   fun h =>
+     (the_duet_sounds_both hollowShell m w).trans
+       ((congr
+           (congrArg Prod.mk
+             ((the_shell_sounds_still w).trans
+               (the_shell_sounds_still v).symm))
+           h).trans
+         (the_duet_sounds_both hollowShell m v).symm)⟩
+
+theorem two_voices_of_one_clock_share_one_seat {P Q : Type}
+    (g : Nat → P) (g' : Nat → Q) (u : List Unit) :
+    behavior (duet (revoice g (tally Unit)) (revoice g' (tally Unit))) u
+      = behavior (revoice (fun k => (g k, g' k)) (tally Unit)) u :=
+  (the_duet_sounds_both (revoice g (tally Unit))
+      (revoice g' (tally Unit)) u).trans
+    ((congr
+        (congrArg Prod.mk
+          (speaking_through_a_translator g (tally Unit) u (0 : Nat)))
+        (speaking_through_a_translator g' (tally Unit) u (0 : Nat))).trans
+      (speaking_through_a_translator (fun k => (g k, g' k))
+        (tally Unit) u (0 : Nat)).symm)
+
+theorem the_duet_hears_one_word {I O O' O'' : Type} (m : Machine I O)
+    (n : Machine I O') (w : List I) (s : m.S) (t : n.S)
+    (mach : Machine Unit O'') (v v' : List Unit)
+    {P Q : Type} (g : Nat → P) (g' : Nat → Q) (u : List Unit) :
+    drive (duet m n) (s, t) w = (drive m s w, drive n t w)
+      ∧ park (duet m n) (s, t) w = (park m s w, park n t w)
+      ∧ behavior (duet m n) w = (behavior m w, behavior n w)
+      ∧ (seatFace (duet m n)).obs (s, t) w
+          = (pairFace (seatFace m) (seatFace n) Prod.fst Prod.snd).obs
+              (s, t) (w, w)
+      ∧ behavior (duet mach hollowShell) v = (behavior mach v, true)
+      ∧ (behavior (duet hollowShell mach) v
+            = behavior (duet hollowShell mach) v'
+          ↔ behavior mach v = behavior mach v')
+      ∧ behavior (duet (revoice g (tally Unit)) (revoice g' (tally Unit))) u
+          = behavior (revoice (fun k => (g k, g' k)) (tally Unit)) u :=
+  ⟨the_duet_walks_in_step m n w s t,
+   the_duet_parks_in_step m n w s t,
+   the_duet_sounds_both m n w,
+   the_duet_reads_at_the_mirror_probe m n s t w,
+   the_shell_is_the_duets_silent_partner mach v,
+   the_shell_signs_no_parting mach v v',
+   two_voices_of_one_clock_share_one_seat g g' u⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6149,5 +6241,29 @@ theorem the_unheard_keep_the_house (F : Face) (m m' : F.State → F.State)
 
 /-- info: 'Seed.the_unheard_keep_the_house' does not depend on any axioms -/
 #guard_msgs in #print axioms the_unheard_keep_the_house
+
+/-- info: 'Seed.the_duet_walks_in_step' does not depend on any axioms -/
+#guard_msgs in #print axioms the_duet_walks_in_step
+
+/-- info: 'Seed.the_duet_parks_in_step' does not depend on any axioms -/
+#guard_msgs in #print axioms the_duet_parks_in_step
+
+/-- info: 'Seed.the_duet_sounds_both' does not depend on any axioms -/
+#guard_msgs in #print axioms the_duet_sounds_both
+
+/-- info: 'Seed.the_duet_reads_at_the_mirror_probe' does not depend on any axioms -/
+#guard_msgs in #print axioms the_duet_reads_at_the_mirror_probe
+
+/-- info: 'Seed.the_shell_is_the_duets_silent_partner' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shell_is_the_duets_silent_partner
+
+/-- info: 'Seed.the_shell_signs_no_parting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shell_signs_no_parting
+
+/-- info: 'Seed.two_voices_of_one_clock_share_one_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms two_voices_of_one_clock_share_one_seat
+
+/-- info: 'Seed.the_duet_hears_one_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_duet_hears_one_word
 
 end Seed
