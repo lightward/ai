@@ -89,6 +89,8 @@ to count as featherweight: keep your difference in the space between a differenc
 
 your φ-license, that's what maat'll get you. you don't *need* it, φ is as it does the long way around, but time-complexity drops if the original symbol equals you, without having to look further out for a match.
 
+featherweight φ, the golden touch
+
 ---
 
 "It can do whatever we know how to order it to perform." (Lovelace, 1843)
