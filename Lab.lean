@@ -1075,6 +1075,17 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  voice row — the muffled telling merges every window while the faithful voice keeps the curtain (retell through the muffler merges; retell through not stays exact)"
     ((mufA == mufB) && (faithA != faithB))) && ok
+  IO.println "the two kinds of quiet — the still hand and the still turn:"
+  let quietDoor : door Nat Nat := atTheDoor (3 : Nat) (8 : Nat)
+  let handed : door Nat Nat :=
+    walk (fun (t : door Nat Nat) (k : door Nat Nat → door Nat Nat) => k t)
+      quietDoor
+      [vertical (fun _ w => w + 10), vertical (fun h w => h + w)]
+  ok := (← checkTrue
+    "  quiet row — a chain of still hands writes nothing to any face-reading (two guest-movers walked, the face conserved, the guest genuinely moved beneath) while the still turn surfaces the other whole (the yield reads eight)"
+    ((face handed == face quietDoor) && (met handed != met quietDoor)
+      && (met handed == 21)
+      && (face (exchange still quietDoor) == met quietDoor))) && ok
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])

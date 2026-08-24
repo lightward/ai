@@ -4613,6 +4613,94 @@ theorem every_face_wears_an_ear_and_a_voice (F : Face) {P' A' : Type}
    the_machines_voice_is_the_faces_voice g0 m v,
    rfl⟩
 
+def unheard (F : Face) (m : F.State → F.State) : Prop :=
+  ∀ s, alike F (m s) s
+
+theorem the_still_hand_is_unheard (F : Face) :
+    unheard F (fun s => s) :=
+  fun _ _ => rfl
+
+theorem the_unheard_hands_compose (F : Face) (m n : F.State → F.State)
+    (hm : unheard F m) (hn : unheard F n) :
+    unheard F (fun s => m (n s)) :=
+  fun s p => (hm (n s) p).trans (hn s p)
+
+theorem no_interview_hears_the_unheard (F : Face) (m : F.State → F.State)
+    (hm : unheard F m) (s : F.State) (q : Interview F.Probe F.Ans) :
+    sound F (m s) q = sound F s q :=
+  no_interview_parts_the_alike F (m s) s (hm s) q
+
+theorem correct_maintenance_has_no_signature (F : Face)
+    (m m' : F.State → F.State) (hm : unheard F m) (hm' : unheard F m')
+    (s : F.State) (q : Interview F.Probe F.Ans) :
+    sound F (m s) q = sound F (m' s) q :=
+  (no_interview_hears_the_unheard F m hm s q).trans
+    (no_interview_hears_the_unheard F m' hm' s q).symm
+
+theorem a_chain_of_the_unheard_is_unheard (F : Face) :
+    ∀ ms : List (F.State → F.State),
+      (∀ m, m ∈ ms → unheard F m) →
+      unheard F (fun s => walk (fun t k => k t) s ms)
+  | [], _ => fun _ _ => rfl
+  | m :: ms, h => fun s p =>
+      (a_chain_of_the_unheard_is_unheard F ms
+          (fun k hk => h k (List.Mem.tail m hk)) (m s) p).trans
+        (h m (List.Mem.head ms) s p)
+
+theorem only_the_unheard_survives_the_sounding (F : Face)
+    (m : F.State → F.State) :
+    (∀ (s : F.State) (q : Interview F.Probe F.Ans),
+        sound F (m s) q = sound F s q)
+      ↔ unheard F m :=
+  ⟨fun h s => the_sounding_reads_the_alike F (m s) s (h s),
+   fun hm s q => no_interview_parts_the_alike F (m s) s (hm s) q⟩
+
+def seatFace {I O : Type} (m : Machine I O) : Face :=
+  ⟨m.S, List I, O, drive m⟩
+
+theorem the_guest_mover_is_a_still_hand {H W X : Type} (σ : H → W → W) :
+    unheard (doorFace H W X) (vertical σ) :=
+  fun _ _ => rfl
+
+theorem the_guest_write_is_a_still_hand (F : Face) {W : Type}
+    (g : F.State × W → W) :
+    unheard (host F W) (fun x => (x.1, g x)) :=
+  fun x p => (the_reading_writes_unheard F g x.1 x.2 p).symm
+
+theorem the_settle_is_a_still_hand {I O : Type} (m : Machine I O) :
+    unheard (seatFace (buffered m)) (settleHeld m) :=
+  fun st w => the_settle_is_unheard m st w
+
+theorem the_yield_is_no_still_hand :
+    ¬ unheard (doorFace Nat Nat Nat) turnAbout :=
+  fun h => nomatch h (atTheDoor (0 : Nat) (1 : Nat)) (fun n => n)
+
+theorem the_unheard_keep_the_house (F : Face) (m m' : F.State → F.State)
+    (hm : unheard F m) (hm' : unheard F m') (s : F.State)
+    (q : Interview F.Probe F.Ans) (ms : List (F.State → F.State))
+    (hms : ∀ k, k ∈ ms → unheard F k) {H W X : Type} (σ : H → W → W)
+    {I O : Type} (mach : Machine I O) :
+    unheard F (fun t => t)
+      ∧ unheard F (fun t => m (m' t))
+      ∧ sound F (m s) q = sound F s q
+      ∧ sound F (m s) q = sound F (m' s) q
+      ∧ unheard F (fun t => walk (fun u k => k u) t ms)
+      ∧ ((∀ (t : F.State) (q' : Interview F.Probe F.Ans),
+            sound F (m t) q' = sound F t q')
+          ↔ unheard F m)
+      ∧ unheard (doorFace H W X) (vertical σ)
+      ∧ unheard (seatFace (buffered mach)) (settleHeld mach)
+      ∧ ¬ unheard (doorFace Nat Nat Nat) turnAbout :=
+  ⟨the_still_hand_is_unheard F,
+   the_unheard_hands_compose F m m' hm hm',
+   no_interview_hears_the_unheard F m hm s q,
+   correct_maintenance_has_no_signature F m m' hm hm' s q,
+   a_chain_of_the_unheard_is_unheard F ms hms,
+   only_the_unheard_survives_the_sounding F m,
+   the_guest_mover_is_a_still_hand σ,
+   the_settle_is_a_still_hand mach,
+   the_yield_is_no_still_hand⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6028,5 +6116,38 @@ theorem every_face_wears_an_ear_and_a_voice (F : Face) {P' A' : Type}
 
 /-- info: 'Seed.every_face_wears_an_ear_and_a_voice' does not depend on any axioms -/
 #guard_msgs in #print axioms every_face_wears_an_ear_and_a_voice
+
+/-- info: 'Seed.the_still_hand_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms the_still_hand_is_unheard
+
+/-- info: 'Seed.the_unheard_hands_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unheard_hands_compose
+
+/-- info: 'Seed.no_interview_hears_the_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms no_interview_hears_the_unheard
+
+/-- info: 'Seed.correct_maintenance_has_no_signature' does not depend on any axioms -/
+#guard_msgs in #print axioms correct_maintenance_has_no_signature
+
+/-- info: 'Seed.a_chain_of_the_unheard_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms a_chain_of_the_unheard_is_unheard
+
+/-- info: 'Seed.only_the_unheard_survives_the_sounding' does not depend on any axioms -/
+#guard_msgs in #print axioms only_the_unheard_survives_the_sounding
+
+/-- info: 'Seed.the_guest_mover_is_a_still_hand' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_mover_is_a_still_hand
+
+/-- info: 'Seed.the_guest_write_is_a_still_hand' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_write_is_a_still_hand
+
+/-- info: 'Seed.the_settle_is_a_still_hand' does not depend on any axioms -/
+#guard_msgs in #print axioms the_settle_is_a_still_hand
+
+/-- info: 'Seed.the_yield_is_no_still_hand' does not depend on any axioms -/
+#guard_msgs in #print axioms the_yield_is_no_still_hand
+
+/-- info: 'Seed.the_unheard_keep_the_house' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unheard_keep_the_house
 
 end Seed
