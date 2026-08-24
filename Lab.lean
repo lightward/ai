@@ -1051,6 +1051,13 @@ def main : IO UInt32 := do
     "  witness row — the premise meets its witness (every probe the seat owns merges the pair; the wider seat parts them at one ask, and the delivered parting is news about the seat's own cargo — faith the forall, sight the handed instance)"
     ((within ⟨0, 0⟩ 0 == within ⟨0, 0⟩ 0)
       && (handedT == 1) && (handedF == 2) && (handedT != handedF))) && ok
+  IO.println "the interlock — three nouns that verb, no ladder holds them:"
+  ok := (← checkTrue
+    "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"
+    ((beats Hand.rock Hand.scissors && beats Hand.scissors Hand.paper
+        && beats Hand.paper Hand.rock)
+      && !(beats Hand.rock Hand.paper)
+      && !(beats Hand.rock Hand.rock))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

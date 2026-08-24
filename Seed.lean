@@ -4225,6 +4225,63 @@ theorem the_premise_meets_its_witness (F : Face) {W : Type}
    (fun he => hw (Sum.inr.inj he)),
    the_wider_parting_lands_at_the_ground F s w w'⟩
 
+inductive Hand where
+  | rock : Hand
+  | paper : Hand
+  | scissors : Hand
+
+def beats : Hand → Hand → Bool
+  | .rock, .rock => false
+  | .rock, .paper => false
+  | .rock, .scissors => true
+  | .paper, .rock => true
+  | .paper, .paper => false
+  | .paper, .scissors => false
+  | .scissors, .rock => false
+  | .scissors, .paper => true
+  | .scissors, .scissors => false
+
+theorem no_hand_beats_itself : ∀ x : Hand, beats x x = false
+  | .rock => rfl
+  | .paper => rfl
+  | .scissors => rfl
+
+theorem every_hand_meets_its_match :
+    ∀ x : Hand, ∃ y z : Hand, beats y x = true ∧ beats x z = true
+  | .rock => ⟨.paper, .scissors, rfl, rfl⟩
+  | .paper => ⟨.scissors, .rock, rfl, rfl⟩
+  | .scissors => ⟨.rock, .paper, rfl, rfl⟩
+
+theorem the_interlock_refuses_the_ladder :
+    ¬ ∃ rank : Hand → Nat,
+      ∀ x y : Hand, beats x y = true →
+        Nat.ble (rank y + 1) (rank x) = true :=
+  fun he =>
+    he.elim fun rank h =>
+      have h1 := h .rock .scissors rfl
+      have h2 := h .scissors .paper rfl
+      have h3 := h .paper .rock rfl
+      have c1 : Nat.ble (rank .rock + 1) (rank .scissors) = true :=
+        ble_trans _ _ _ h3
+          (ble_trans _ _ _ (ble_le_succ (rank .paper)) h2)
+      have c2 : Nat.ble (rank .rock + 1) (rank .rock) = true :=
+        ble_trans _ _ _ c1
+          (ble_trans _ _ _ (ble_le_succ (rank .scissors)) h1)
+      nomatch (ble_succ_false (rank .rock)).symm.trans c2
+
+theorem the_trio_interlocks :
+    (∀ x : Hand, beats x x = false)
+      ∧ (∀ x : Hand, ∃ y z : Hand, beats y x = true ∧ beats x z = true)
+      ∧ (¬ ∃ rank : Hand → Nat,
+          ∀ x y : Hand, beats x y = true →
+            Nat.ble (rank y + 1) (rank x) = true)
+      ∧ ¬ ∃ f : Bool × Bool → Bool,
+          ∀ a b : Bool × Bool, f a = f b → a = b :=
+  ⟨no_hand_beats_itself,
+   every_hand_meets_its_match,
+   the_interlock_refuses_the_ladder,
+   the_hallway_is_too_small⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5514,5 +5571,17 @@ theorem the_premise_meets_its_witness (F : Face) {W : Type}
 
 /-- info: 'Seed.the_premise_meets_its_witness' does not depend on any axioms -/
 #guard_msgs in #print axioms the_premise_meets_its_witness
+
+/-- info: 'Seed.no_hand_beats_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms no_hand_beats_itself
+
+/-- info: 'Seed.every_hand_meets_its_match' does not depend on any axioms -/
+#guard_msgs in #print axioms every_hand_meets_its_match
+
+/-- info: 'Seed.the_interlock_refuses_the_ladder' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interlock_refuses_the_ladder
+
+/-- info: 'Seed.the_trio_interlocks' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trio_interlocks
 
 end Seed
