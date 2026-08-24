@@ -1202,6 +1202,21 @@ def main : IO UInt32 := do
     "  witness row — the premise meets its witness (every probe the seat owns merges the pair; the wider seat parts them at one ask, and the delivered parting is news about the seat's own cargo — faith the forall, sight the handed instance)"
     ((within ⟨0, 0⟩ 0 == within ⟨0, 0⟩ 0)
       && (handedT == 1) && (handedF == 2) && (handedT != handedF))) && ok
+  IO.println "the removal — the work reads the same with the author deleted:"
+  let signedA : door Measured Nat := atTheDoor m2018 (5 : Nat)
+  let signedB : door Measured Nat := atTheDoor m2018 (9 : Nat)
+  ok := (← checkTrue
+    "  removal row — two authors, one work, one reading (the face answers the true mass identically under either author; the authors part at the met; the unsigned works coincide)"
+    ((within (face signedA) 91093837015 == within (face signedB) 91093837015)
+      && within (face signedA) 91093837015
+      && (met signedA != met signedB)
+      && ((face (unsign signedA)).lo == (face (unsign signedB)).lo))) && ok
+  let quietTable : door Nat Nat := atTheDoor (3 : Nat) (5 : Nat)
+  let fourStills : door Nat Nat :=
+    dialogue quietTable (List.replicate 4 (still : Nat → Nat → Nat))
+  ok := (← checkTrue
+    "  removal row — the quiet author leaves the table as found (four still turns restore the seating exactly)"
+    ((face fourStills == 3) && (met fourStills == 5))) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"

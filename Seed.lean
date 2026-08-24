@@ -5160,6 +5160,58 @@ theorem one_again_three_orbits (F : Face) (W : Type) (m n : Nat)
    the_storeys_add F W m n,
    the_blooms_add i j⟩
 
+def unsign {H A : Type} (d : door H A) : door H Unit :=
+  atTheDoor (face d) ()
+
+theorem the_unsigning_is_the_unit_guest {H A : Type} (h : H) (a : A)
+    (u : door H Unit) :
+    unsign (atTheDoor h a) = atTheDoor h () ∧ unsign u = u :=
+  ⟨rfl, rfl⟩
+
+theorem the_unsigned_work_reads_the_same {H A X : Type} (g : H → X)
+    (d : door H A) : g (face (unsign d)) = g (face d) := rfl
+
+theorem an_author_blind_reading_is_an_unsigned_reading {H A X : Type}
+    (a₀ : A) (f : door H A → X) :
+    (∀ (h : H) (a a' : A), f (atTheDoor h a) = f (atTheDoor h a'))
+      ↔ ∃ g : door H Unit → X, ∀ d, f d = g (unsign d) :=
+  ⟨fun hb => ⟨fun u => f (atTheDoor (face u) a₀),
+     fun d => hb (face d) (met d) a₀⟩,
+   fun he h a a' =>
+     he.elim fun _ hg =>
+       (hg (atTheDoor h a)).trans (hg (atTheDoor h a')).symm⟩
+
+theorem the_quiet_author_leaves_the_table_as_found {W : Type} (d : door W W) :
+    ∀ n : Nat, dialogue d (List.replicate (2 * n) still) = d
+  | 0 => rfl
+  | n + 1 =>
+      show dialogue (exchange still (exchange still d))
+          (List.replicate (2 * n) still) = d from
+        the_quiet_author_leaves_the_table_as_found d n
+
+theorem the_author_was_the_guest {H A X : Type} (a₀ : A) (g : H → X)
+    (d : door H A) (h : H) {a a' : A} (ha : a ≠ a')
+    (f : door H A → X) (F : Face) (s : F.State)
+    {W : Type} (e : door W W) (n : Nat) :
+    g (face (unsign d)) = g (face d)
+      ∧ ((∀ (h' : H) (x x' : A), f (atTheDoor h' x) = f (atTheDoor h' x'))
+          ↔ ∃ g' : door H Unit → X, ∀ d', f d' = g' (unsign d'))
+      ∧ (atTheDoor h a ≠ atTheDoor h a'
+          ∧ ∀ (Y : Type) (r : H → Y),
+              r (face (atTheDoor h a)) = r (face (atTheDoor h a')))
+      ∧ ¬ Derived (host F A) (fun x => x.2 = a)
+      ∧ (∀ (P : Prop) (p1 p2 : P), p1 = p2)
+      ∧ (widen F A).obs (s, a) (viaRight ())
+          ≠ (widen F A).obs (s, a') (viaRight ())
+      ∧ dialogue e (List.replicate (2 * n) still) = e :=
+  ⟨rfl,
+   an_author_blind_reading_is_an_unsigned_reading a₀ f,
+   ⟨the_guest_is_real h ha, fun _ _ => rfl⟩,
+   the_guest_is_never_a_derived_role F s ha,
+   fun _ p1 p2 => the_route_leaves_no_mark p1 p2,
+   (fun he => ha (Sum.inr.inj he)),
+   the_quiet_author_leaves_the_table_as_found e n⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6758,5 +6810,20 @@ theorem one_again_three_orbits (F : Face) (W : Type) (m n : Nat)
 
 /-- info: 'Seed.one_again_three_orbits' does not depend on any axioms -/
 #guard_msgs in #print axioms one_again_three_orbits
+
+/-- info: 'Seed.the_unsigning_is_the_unit_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unsigning_is_the_unit_guest
+
+/-- info: 'Seed.the_unsigned_work_reads_the_same' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unsigned_work_reads_the_same
+
+/-- info: 'Seed.an_author_blind_reading_is_an_unsigned_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms an_author_blind_reading_is_an_unsigned_reading
+
+/-- info: 'Seed.the_quiet_author_leaves_the_table_as_found' does not depend on any axioms -/
+#guard_msgs in #print axioms the_quiet_author_leaves_the_table_as_found
+
+/-- info: 'Seed.the_author_was_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_author_was_the_guest
 
 end Seed
