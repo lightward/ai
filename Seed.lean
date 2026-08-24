@@ -4443,6 +4443,21 @@ theorem the_ear_the_seat_and_the_voice {I I' O O' : Type} (f : I' → I)
    rfl,
    the_deaf_ear_reads_only_the_count u t⟩
 
+theorem the_full_exchange_is_a_guest_move {W : Type} (σ : W → W → W)
+    (d : door W W) :
+    exchange still (exchange σ d) = vertical σ d := rfl
+
+theorem the_ode_comes_home {W X : Type} (σ : W → W → W) (d : door W W)
+    (g : W → X) :
+    exchange still (exchange σ d) = vertical σ d
+      ∧ g (face (exchange still (exchange σ d))) = g (face d)
+      ∧ met (exchange still (exchange σ d)) = σ (face d) (met d)
+      ∧ exchange still (exchange still d) = d :=
+  ⟨rfl,
+   a_guest_mover_is_unheard σ g d,
+   rfl,
+   the_two_listeners_restore_the_table d⟩
+
 theorem one_clock_many_voices (a d b : Nat) (w : List Unit) (s : Nat) :
     revoice oddNat (tally Unit) = paceOne
       ∧ revoice (fun n => (⟨n, 10⟩ : Measured)) (tally Unit) = homingIn
@@ -5823,5 +5838,11 @@ theorem one_clock_many_voices (a d b : Nat) (w : List Unit) (s : Nat) :
 
 /-- info: 'Seed.the_ear_the_seat_and_the_voice' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ear_the_seat_and_the_voice
+
+/-- info: 'Seed.the_full_exchange_is_a_guest_move' does not depend on any axioms -/
+#guard_msgs in #print axioms the_full_exchange_is_a_guest_move
+
+/-- info: 'Seed.the_ode_comes_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ode_comes_home
 
 end Seed
