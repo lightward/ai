@@ -1058,6 +1058,12 @@ def main : IO UInt32 := do
         && beats Hand.paper Hand.rock)
       && !(beats Hand.rock Hand.paper)
       && !(beats Hand.rock Hand.rock))) && ok
+  IO.println "the countermove — the wheel counters what it cannot reverse:"
+  let counter4 : Nat := park collatz (4 : Nat) [(), ()]
+  ok := (← checkTrue
+    "  counter row — the step merges (one and eight both land on four, no inverse exists) and the wheel counters anyway, forward: from four, two clicks home — undo by continuation, position home, record grown"
+    ((counter4 == 1) && (collatzStep 1 == collatzStep 8)
+      && (collatzStep 1 == 4))) && ok
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"

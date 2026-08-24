@@ -4337,6 +4337,32 @@ theorem the_wheel_refuses_the_ladder :
    the_wheel_flattens_the_monotone,
    the_home_wheel_turns.1⟩
 
+theorem no_inverse_unsteps_the_collatz :
+    ¬ ∃ g : Nat → Nat, ∀ n : Nat, g (collatzStep n) = n :=
+  fun he =>
+    he.elim fun _ h =>
+      nomatch Nat.succ.inj ((h 1).symm.trans (h 8))
+
+theorem the_wheel_counters_forward {I O : Type} (m : Machine I O)
+    (s : m.S) (w v : List I) (h : park m s (w ++ v) = s) :
+    park m (park m s w) v = s :=
+  (the_park_resumes m w v s).symm.trans h
+
+theorem the_wheel_is_its_own_countermove :
+    (¬ ∃ g : Nat → Nat, ∀ n : Nat, g (collatzStep n) = n)
+      ∧ collatzStep 1 = collatzStep 8
+      ∧ (1 : Nat) ≠ 8
+      ∧ (∀ {I O : Type} (m : Machine I O) (s : m.S) (w v : List I),
+          park m s (w ++ v) = s → park m (park m s w) v = s)
+      ∧ park collatz (4 : Nat) [(), ()] = (1 : Nat)
+      ∧ ∀ b : Bool, park flip b [(), ()] = b :=
+  ⟨no_inverse_unsteps_the_collatz,
+   rfl,
+   (fun h => nomatch Nat.succ.inj h),
+   fun m s w v h => the_wheel_counters_forward m s w v h,
+   rfl,
+   the_flip_wheels⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -5653,5 +5679,14 @@ theorem the_wheel_refuses_the_ladder :
 
 /-- info: 'Seed.the_wheel_refuses_the_ladder' does not depend on any axioms -/
 #guard_msgs in #print axioms the_wheel_refuses_the_ladder
+
+/-- info: 'Seed.no_inverse_unsteps_the_collatz' does not depend on any axioms -/
+#guard_msgs in #print axioms no_inverse_unsteps_the_collatz
+
+/-- info: 'Seed.the_wheel_counters_forward' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wheel_counters_forward
+
+/-- info: 'Seed.the_wheel_is_its_own_countermove' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wheel_is_its_own_countermove
 
 end Seed
