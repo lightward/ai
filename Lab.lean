@@ -1943,6 +1943,31 @@ def benchTwoFunctors : IO Bool := do
       && (crossThenRide.length == 6))) && ok
   return ok
 
+def benchMediating : IO Bool := do
+  let mut ok := true
+  IO.println "the mediating map — replan is the iso between the shapes, gauge for the cargo:"
+  let leftHeavy : Plan := .board (.board .ground .ground) .ground
+  let lh : build Nat leftHeavy := (((7 : Nat), (8 : Nat)), (9 : Nat))
+  let there : build Nat (comb 2) := replan (0 : Nat) leftHeavy (comb 2) lh
+  let back : build Nat leftHeavy := replan (0 : Nat) (comb 2) leftHeavy there
+  ok := (← checkTrue
+    "  mediating row — the replanning is an iso (two shapes of three, over and back, the carrier home whole: seven-eight-nine either way, and the cargo identical at the far shape)"
+    ((pour leftHeavy back == pour leftHeavy lh)
+      && (pour (comb 2) there == [7, 8, 9]))) && ok
+  let crossThenPlan : List Nat :=
+    pour (comb 2)
+      (replan (0 : Nat) leftHeavy (comb 2)
+        (reground (fun w => w * 10) leftHeavy lh))
+  let planThenCross : List Nat :=
+    pour (comb 2)
+      (reground (fun w => w * 10) (comb 2)
+        (replan (0 : Nat) leftHeavy (comb 2) lh))
+  ok := (← checkTrue
+    "  mediating row — the replanning is natural over the customs (cross then re-plan, or re-plan then cross: one square, seventy-eighty-ninety either way) while the spec face still parts the shapes — license at the manifest, remainder at the spec"
+    ((crossThenPlan == planThenCross)
+      && (crossThenPlan == [70, 80, 90]))) && ok
+  return ok
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2018,6 +2043,7 @@ def main : IO UInt32 := do
   ok := (← benchSettleSplits) && ok
   ok := (← benchCustomsFunctor) && ok
   ok := (← benchTwoFunctors) && ok
+  ok := (← benchMediating) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

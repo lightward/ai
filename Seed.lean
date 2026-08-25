@@ -6916,6 +6916,49 @@ theorem both_channels_are_functors {W W' : Type} (f : W → W')
    the_manifest_is_natural f p c,
    the_revision_multiplies_the_reading t δ⟩
 
+theorem the_replanning_is_an_iso {W : Type} (w0 : W) {p q : Plan}
+    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
+    (h' : fold (fun a b => a + b) 1 p = fold (fun a b => a + b) 1 q)
+    (s : build W p) (t : build W q) :
+    replan w0 q p (replan w0 p q s) = s
+      ∧ replan w0 p q (replan w0 q p t) = t :=
+  ⟨the_replanning_returns w0 h s, the_replanning_returns w0 h' t⟩
+
+theorem the_replanning_is_natural {W W' : Type} (f : W → W') (w0 : W)
+    (w0' : W') {p q : Plan}
+    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
+    (s : build W p) :
+    pour q (replan w0' p q (reground f p s))
+      = pour q (reground f q (replan w0 p q s)) :=
+  ((the_replanning_moves_no_guest w0' h (reground f p s)).trans
+    (the_customs_thread_the_manifest f p s)).trans
+    ((the_customs_thread_the_manifest f q (replan w0 p q s)).trans
+      (congrArg (fun l => l.map f)
+        (the_replanning_moves_no_guest w0 h s))).symm
+
+theorem the_shape_is_the_obstruction {W : Type} (w0 : W) {p q : Plan}
+    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
+    (hpq : p ≠ q) (s : build W p) :
+    pour q (replan w0 p q s) = pour p s
+      ∧ face (specView p s) ≠ face (specView q (replan w0 p q s)) :=
+  ⟨the_replanning_moves_no_guest w0 h s, fun he => hpq he⟩
+
+theorem the_mediating_map_is_gauge {W W' : Type} (f : W → W') (w0 : W)
+    (w0' : W') {p q : Plan}
+    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
+    (h' : fold (fun a b => a + b) 1 p = fold (fun a b => a + b) 1 q)
+    (hpq : p ≠ q) (s : build W p) (t : build W q) :
+    (replan w0 q p (replan w0 p q s) = s
+        ∧ replan w0 p q (replan w0 q p t) = t)
+      ∧ pour q (replan w0' p q (reground f p s))
+          = pour q (reground f q (replan w0 p q s))
+      ∧ pour q (replan w0 p q s) = pour p s
+      ∧ face (specView p s) ≠ face (specView q (replan w0 p q s)) :=
+  ⟨the_replanning_is_an_iso w0 h h' s t,
+   the_replanning_is_natural f w0 w0' h s,
+   (the_shape_is_the_obstruction w0 h hpq s).1,
+   (the_shape_is_the_obstruction w0 h hpq s).2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9000,5 +9043,17 @@ theorem both_channels_are_functors {W W' : Type} (f : W → W')
 
 /-- info: 'Seed.both_channels_are_functors' does not depend on any axioms -/
 #guard_msgs in #print axioms both_channels_are_functors
+
+/-- info: 'Seed.the_replanning_is_an_iso' does not depend on any axioms -/
+#guard_msgs in #print axioms the_replanning_is_an_iso
+
+/-- info: 'Seed.the_replanning_is_natural' does not depend on any axioms -/
+#guard_msgs in #print axioms the_replanning_is_natural
+
+/-- info: 'Seed.the_shape_is_the_obstruction' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shape_is_the_obstruction
+
+/-- info: 'Seed.the_mediating_map_is_gauge' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mediating_map_is_gauge
 
 end Seed
