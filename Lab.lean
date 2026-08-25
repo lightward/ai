@@ -1846,6 +1846,28 @@ def benchCrossings : IO Bool := do
       && (seated == true))) && ok
   return ok
 
+def benchRetract : IO Bool := do
+  let mut ok := true
+  IO.println "the retract — the simulator retracts onto the carrier, the drain splits the idempotent:"
+  let junk : List Nat := [7, 7, 7, 7, 7]
+  let stepFn : build Nat toyPlan → Unit → build Nat toyPlan :=
+    fun s _ => reground (fun w => w + 1) toyPlan s
+  let drained : List Nat := pour toyPlan (reboard (0 : Nat) toyPlan junk)
+  let twice : List Nat := pour toyPlan (reboard (0 : Nat) toyPlan drained)
+  ok := (← checkTrue
+    "  retract row — the junk drains to spec in one pass and the drain is idempotent (five marks in, three out, the second pass moving nothing)"
+    ((drained.length == 3) && (twice == drained))) && ok
+  let viaWords : Nat :=
+    drive (onWords (0 : Nat) toyPlan stepFn (spine Nat toyPlan) toyImport)
+      junk [()]
+  let viaCarrier : Nat :=
+    drive (onPlan toyPlan toyImport stepFn (spine Nat toyPlan))
+      (reboard (0 : Nat) toyPlan junk) [()]
+  ok := (← checkTrue
+    "  retract row — the reboard carries the words home (the simulator driven from junk reads as the carrier driven from the junk's reboard: the backward carrier live, the section-retraction pair closed)"
+    (viaWords == viaCarrier)) && ok
+  return ok
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -1917,6 +1939,7 @@ def main : IO UInt32 := do
   ok := (← benchSimulations) && ok
   ok := (← benchLicense) && ok
   ok := (← benchCrossings) && ok
+  ok := (← benchRetract) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

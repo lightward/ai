@@ -6747,6 +6747,44 @@ theorem every_crossing_is_a_seating {P P' A A' W : Type} {S : Type u}
    the_host_crosses_the_carrier hc,
    the_seat_map_carries_home G f₀⟩
 
+theorem the_reboard_carries_the_words {W I O : Type} (w0 : W) (p : Plan)
+    (s0 : build W p) (step : build W p → I → build W p)
+    (out : build W p → O) :
+    carries (drive (onWords w0 p step out s0))
+      (drive (onPlan p s0 step out)) (reboard w0 p) :=
+  fun l w =>
+    match w with
+    | [] => rfl
+    | i :: w' =>
+        (the_manifest_carries_the_simulation w0 p s0 step out
+          (step (reboard w0 p l) i) w').symm
+
+theorem the_two_carriers_round_trip {W : Type} (w0 : W) (p : Plan)
+    (s : build W p) (l : List W) :
+    reboard w0 p (pour p s) = s
+      ∧ pour p (reboard w0 p (pour p (reboard w0 p l)))
+          = pour p (reboard w0 p l) :=
+  ⟨the_manifest_rebuilds_the_carrier w0 p s,
+   congrArg (pour p)
+     (the_manifest_rebuilds_the_carrier w0 p (reboard w0 p l))⟩
+
+theorem the_simulation_is_a_retract {W I O : Type} (w0 : W) (p : Plan)
+    (s0 : build W p) (step : build W p → I → build W p)
+    (out : build W p → O) (s : build W p) (l : List W) :
+    carries (drive (onPlan p s0 step out))
+        (drive (onWords w0 p step out s0)) (pour p)
+      ∧ carries (drive (onWords w0 p step out s0))
+          (drive (onPlan p s0 step out)) (reboard w0 p)
+      ∧ reboard w0 p (pour p s) = s
+      ∧ pour p (reboard w0 p (pour p (reboard w0 p l)))
+          = pour p (reboard w0 p l)
+      ∧ (pour p (reboard w0 p l)).length = fold (fun a b => a + b) 1 p :=
+  ⟨the_manifest_carries_the_simulation w0 p s0 step out,
+   the_reboard_carries_the_words w0 p s0 step out,
+   (the_two_carriers_round_trip w0 p s l).1,
+   (the_two_carriers_round_trip w0 p s l).2,
+   the_manifest_counts_the_guests p (reboard w0 p l)⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8771,5 +8809,14 @@ theorem every_crossing_is_a_seating {P P' A A' W : Type} {S : Type u}
 
 /-- info: 'Seed.every_crossing_is_a_seating' does not depend on any axioms -/
 #guard_msgs in #print axioms every_crossing_is_a_seating
+
+/-- info: 'Seed.the_reboard_carries_the_words' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reboard_carries_the_words
+
+/-- info: 'Seed.the_two_carriers_round_trip' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_carriers_round_trip
+
+/-- info: 'Seed.the_simulation_is_a_retract' does not depend on any axioms -/
+#guard_msgs in #print axioms the_simulation_is_a_retract
 
 end Seed
