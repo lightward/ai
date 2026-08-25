@@ -5769,6 +5769,101 @@ theorem the_deadlock_is_a_wheel (r : List Nat)
    the_sweep_seats_the_ready s m hm v₁ v₂ hv,
    the_held_name_their_darkness r need hneed⟩
 
+theorem mem_splits {A : Type} {x : A} :
+    ∀ {l : List A}, x ∈ l → ∃ v₁ v₂ : List A, l = v₁ ++ x :: v₂
+  | _ :: t, List.Mem.head _ => ⟨[], t, rfl⟩
+  | a :: _, List.Mem.tail _ h =>
+      match mem_splits h with
+      | ⟨v₁, v₂, he⟩ => ⟨a :: v₁, v₂, congrArg (a :: ·) he⟩
+
+theorem the_load_never_climbs :
+    ∀ (w : List (Nat × List Nat)) (r : List Nat)
+      (acc : List (Nat × List Nat)),
+      Nat.ble (park doorM (r, acc) w).2.length (w.length + acc.length)
+        = true
+  | [], _, acc => by
+      show Nat.ble acc.length
+        (([] : List (Nat × List Nat)).length + acc.length) = true
+      rw [show ([] : List (Nat × List Nat)).length + acc.length
+            = acc.length from zero_plus acc.length]
+      exact ble_refl acc.length
+  | m :: w, r, acc => by
+      cases hb : backed r m.2 with
+      | true =>
+          show Nat.ble (park doorM (welcome (r, acc) m) w).2.length
+              ((w.length + 1) + acc.length) = true
+          rw [the_backed_are_seated hb, succ_adds]
+          exact ble_trans _ _ _ (the_load_never_climbs w (m.1 :: r) acc)
+            (ble_le_succ (w.length + acc.length))
+      | false =>
+          show Nat.ble (park doorM (welcome (r, acc) m) w).2.length
+              ((w.length + 1) + acc.length) = true
+          rw [the_unbacked_are_held hb, succ_adds]
+          exact the_load_never_climbs w r (m :: acc)
+
+theorem the_ready_drop_the_load (r : List Nat)
+    (m : Nat × List Nat) (h : backed r m.2 = true)
+    (v₁ v₂ acc : List (Nat × List Nat)) :
+    Nat.ble ((park doorM (r, acc) (v₁ ++ m :: v₂)).2.length + 1)
+      ((v₁ ++ m :: v₂).length + acc.length) = true := by
+  have e2 : v₂.length + (v₁.length + acc.length)
+      = (v₁.length + v₂.length) + acc.length := by
+    rw [← Nat.add_assoc v₂.length v₁.length acc.length,
+        Nat.add_comm v₂.length v₁.length]
+  have e : (v₁ ++ m :: v₂).length + acc.length
+      = (v₂.length + (v₁.length + acc.length)) + 1 := by
+    rw [len_append v₁ (m :: v₂)]
+    show ((v₁.length + v₂.length) + 1) + acc.length
+        = (v₂.length + (v₁.length + acc.length)) + 1
+    rw [succ_adds (v₁.length + v₂.length) acc.length]
+    exact congrArg (· + 1) e2.symm
+  rw [the_park_resumes doorM v₁ (m :: v₂) (r, acc)]
+  show Nat.ble
+      ((park doorM (welcome (park doorM (r, acc) v₁) m) v₂).2.length + 1)
+      ((v₁ ++ m :: v₂).length + acc.length) = true
+  rw [the_backed_are_seated
+      (the_backing_survives_the_run m.2 v₁ (r, acc) h), e]
+  exact ble_add_right 1
+    (ble_trans _ _ _
+      (the_load_never_climbs v₂
+        (m.1 :: (park doorM (r, acc) v₁).1)
+        (park doorM (r, acc) v₁).2)
+      (ble_add_both (ble_refl v₂.length)
+        (the_load_never_climbs v₁ r acc)))
+
+theorem the_gauge_is_exact (s : List Nat × List (Nat × List Nat)) :
+    (sweep s).2.length = s.2.length
+      ↔ ∀ m, m ∈ s.2 → backed s.1 m.2 = false := by
+  constructor
+  · intro h
+    cases the_round_seats_or_certifies s.1 s.2 with
+    | inr hall => exact hall
+    | inl hex =>
+        obtain ⟨m, hm, hb⟩ := hex
+        obtain ⟨v₁, v₂, hv⟩ := mem_splits hm
+        have hdrop := the_ready_drop_the_load s.1 m hb v₁ v₂ []
+        rw [← hv] at hdrop
+        have hdrop' : Nat.ble ((sweep s).2.length + 1) s.2.length = true :=
+          hdrop
+        rw [h] at hdrop'
+        exact absurd hdrop'
+          (ne_true_of_eq_false (ble_succ_false s.2.length))
+  · intro hall
+    exact (the_stuck_round_moves_nothing s.2 s.1 [] hall).2.1
+
+theorem the_detector_reads_one_number
+    (s : List Nat × List (Nat × List Nat)) (n : Nat)
+    (r : List Nat) (held : List (Nat × List Nat))
+    (hs : ∀ m, m ∈ held → backed r m.2 = false) :
+    ((sweep s).2.length = s.2.length
+        ↔ ∀ m, m ∈ s.2 → backed s.1 m.2 = false)
+      ∧ ((∃ k, k ∈ s.2 ∧ backed s.1 k.2 = true)
+          ∨ ∀ k, k ∈ s.2 → backed s.1 k.2 = false)
+      ∧ (again sweep n (r, held)).2.length = held.length :=
+  ⟨the_gauge_is_exact s,
+   the_round_seats_or_certifies s.1 s.2,
+   (the_deadlock_wheels r n held hs).2.1⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7508,5 +7603,20 @@ theorem the_deadlock_is_a_wheel (r : List Nat)
 
 /-- info: 'Seed.the_deadlock_is_a_wheel' does not depend on any axioms -/
 #guard_msgs in #print axioms the_deadlock_is_a_wheel
+
+/-- info: 'Seed.mem_splits' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_splits
+
+/-- info: 'Seed.the_load_never_climbs' does not depend on any axioms -/
+#guard_msgs in #print axioms the_load_never_climbs
+
+/-- info: 'Seed.the_ready_drop_the_load' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ready_drop_the_load
+
+/-- info: 'Seed.the_gauge_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_gauge_is_exact
+
+/-- info: 'Seed.the_detector_reads_one_number' does not depend on any axioms -/
+#guard_msgs in #print axioms the_detector_reads_one_number
 
 end Seed

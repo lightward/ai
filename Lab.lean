@@ -1317,6 +1317,10 @@ def main : IO UInt32 := do
     ((dead1.2.length == 2) && (dead2.2.length == 2)
       && (dead1.1 == ([1] : List Nat))
       && (dead2.2 == dead0.2))) && ok
+  ok := (← checkTrue
+    "  detector row — the gauge is exact (one number across one round: the live vestibule drops the load, the dead one conserves it — no false positive, no false negative, and the still verdict is permanent)"
+    (Nat.ble (round1.2.length + 1) intake.2.length
+      && (dead1.2.length == dead0.2.length))) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"
