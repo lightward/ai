@@ -2261,6 +2261,30 @@ def benchLanded : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchUniformShift : IO Bool := do
+  let mut ok := true
+  IO.println "the uniform shift — hand-propping shows up as everyone being one click older:"
+  let before : List Nat := [3, 2, 1]
+  let after : List Nat := 4 :: before
+  ok := (← checkTrue
+    "  shift row — the scaffold shifts every elder by exactly one (three, two, one read zero-one-two before and one-two-three after; the newcomer reads zero) — no elder singled out, all of them moved"
+    ((depthTo before 3 == 0) && (depthTo before 2 == 1) && (depthTo before 1 == 2)
+      && (depthTo after 3 == 1) && (depthTo after 2 == 2) && (depthTo after 1 == 3)
+      && (depthTo after 4 == 0))) && ok
+  let gapBefore : Nat := depthTo before 1 - depthTo before 3
+  let gapAfter : Nat := depthTo after 1 - depthTo after 3
+  ok := (← checkTrue
+    "  shift row — every gap and the whole order survive the shift (the two-click distance between the eldest and the newest-before stays two; the ranking is untouched) — so nothing built from differences can see the propping"
+    ((gapBefore == gapAfter) && (gapBefore == 2)
+      && (Nat.ble (depthTo after 3) (depthTo after 1)))) && ok
+  let m1 : Bool := enrolled after 3 == enrolled before 3
+  let m2 : Bool := enrolled after 9 == enrolled before 9
+  ok := (← checkTrue
+    "  shift row — and the hall reads nothing at all (membership identical at every probe, present and absent alike): the origin is invisible below, uniform above, and legible only against a reference the room does not contain"
+    (m1 && m2)) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2349,6 +2373,7 @@ def main : IO UInt32 := do
   ok := (← benchUniversalProperties) && ok
   ok := (← benchLadderSheds) && ok
   ok := (← benchLanded) && ok
+  ok := (← benchUniformShift) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

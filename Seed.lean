@@ -7517,6 +7517,36 @@ theorem the_normal_form_is_the_image {I O W : Type} (m : Machine I O)
    the_drained_room_is_its_own_normal_form r,
    the_scaffold_sheds_at_the_hall r x hx⟩
 
+theorem the_scaffold_shifts_every_elder (r : List Nat) {k x : Nat}
+    (hx : x ≠ k) : depthTo (k :: r) x = depthTo r x + 1 :=
+  every_later_admission_deepens r hx
+
+theorem the_shift_conserves_every_gap (r : List Nat) {k x y : Nat}
+    (hx : x ≠ k) (hy : y ≠ k) :
+    depthTo (k :: r) x = depthTo r x + 1
+      ∧ depthTo (k :: r) y = depthTo r y + 1 :=
+  ⟨the_scaffold_shifts_every_elder r hx,
+   the_scaffold_shifts_every_elder r hy⟩
+
+theorem the_shift_conserves_the_order (r : List Nat) {k x y : Nat}
+    (hx : x ≠ k) (hy : y ≠ k)
+    (h : Nat.ble (depthTo r x) (depthTo r y) = true) :
+    Nat.ble (depthTo (k :: r) x) (depthTo (k :: r) y) = true :=
+  the_elders_keep_their_order r hx hy h
+
+theorem the_origin_shows_as_a_uniform_shift (r : List Nat) {k x y : Nat}
+    (hk : enrolled r k = true) (hx : x ≠ k) (hy : y ≠ k)
+    (h : Nat.ble (depthTo r x) (depthTo r y) = true) :
+    alike hallFace (k :: r) r
+      ∧ (depthTo (k :: r) x = depthTo r x + 1
+          ∧ depthTo (k :: r) y = depthTo r y + 1)
+      ∧ Nat.ble (depthTo (k :: r) x) (depthTo (k :: r) y) = true
+      ∧ depthTo (k :: r) k = 0 :=
+  ⟨the_scaffold_sheds_at_the_hall r k hk,
+   the_shift_conserves_every_gap r hx hy,
+   the_shift_conserves_the_order r hx hy h,
+   the_seated_arrive_shallowest r k⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9781,5 +9811,17 @@ theorem the_normal_form_is_the_image {I O W : Type} (m : Machine I O)
 
 /-- info: 'Seed.the_normal_form_is_the_image' does not depend on any axioms -/
 #guard_msgs in #print axioms the_normal_form_is_the_image
+
+/-- info: 'Seed.the_scaffold_shifts_every_elder' does not depend on any axioms -/
+#guard_msgs in #print axioms the_scaffold_shifts_every_elder
+
+/-- info: 'Seed.the_shift_conserves_every_gap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shift_conserves_every_gap
+
+/-- info: 'Seed.the_shift_conserves_the_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shift_conserves_the_order
+
+/-- info: 'Seed.the_origin_shows_as_a_uniform_shift' does not depend on any axioms -/
+#guard_msgs in #print axioms the_origin_shows_as_a_uniform_shift
 
 end Seed
