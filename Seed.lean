@@ -6344,6 +6344,89 @@ theorem one_cell_two_channels {H H' W W' X : Type} (f : H → H')
    the_renovated_meeting_reads_past_the_crew f r d,
    the_customs_split_at_the_cell fc m c⟩
 
+theorem the_drained_room_rests_forever (r : List Nat) :
+    ∀ n : Nat, again sweep n (r, ([] : List (Nat × List Nat))) = (r, [])
+  | 0 => rfl
+  | n + 1 =>
+      (congrArg sweep (the_drained_room_rests_forever r n)).trans
+        (the_drained_room_rests r)
+
+def drainFace : Face :=
+  ⟨List Nat × List (Nat × List Nat), Nat, Nat,
+   fun s n => (again sweep n s).2.length⟩
+
+theorem the_drain_face_reads_no_room (r r' : List Nat) :
+    alike drainFace (r, ([] : List (Nat × List Nat))) (r', []) :=
+  fun n =>
+    (congrArg (fun t : List Nat × List (Nat × List Nat) => t.2.length)
+        (the_drained_room_rests_forever r n)).trans
+      (congrArg (fun t : List Nat × List (Nat × List Nat) => t.2.length)
+        (the_drained_room_rests_forever r' n)).symm
+
+theorem the_stuck_load_reads_flat (r : List Nat) (m : Nat × List Nat)
+    (held : List (Nat × List Nat))
+    (hs : ∀ k, k ∈ m :: held → backed r k.2 = false) (n : Nat) :
+    drainFace.obs (r, m :: held) n = (m :: held).length :=
+  (the_deadlock_wheels r n (m :: held) hs).2.1
+
+def drainClock : Nat → List Nat × List (Nat × List Nat) → Nat
+  | 0, _ => 0
+  | _ + 1, (_, []) => 0
+  | fuel + 1, (r, m :: v) => drainClock fuel (sweep (r, m :: v)) + 1
+
+theorem the_clock_reads_zero_at_rest (r : List Nat) :
+    ∀ fuel : Nat, drainClock fuel (r, ([] : List (Nat × List Nat))) = 0
+  | 0 => rfl
+  | _ + 1 => rfl
+
+theorem the_clock_finds_the_drain :
+    ∀ (fuel n : Nat) (s : List Nat × List (Nat × List Nat)),
+      Nat.ble n fuel = true → (again sweep n s).2 = [] →
+      (again sweep (drainClock fuel s) s).2 = []
+        ∧ Nat.ble (drainClock fuel s) n = true
+  | 0, 0, _, _, hdr => ⟨hdr, rfl⟩
+  | 0, _ + 1, _, hle, _ => nomatch hle
+  | _ + 1, _, (_, []), _, _ => ⟨rfl, rfl⟩
+  | _ + 1, 0, (_, _ :: _), _, hdr => nomatch hdr
+  | fuel + 1, n + 1, (r, m :: v), hle, hdr =>
+      have hdr' : (again sweep n (sweep (r, m :: v))).2 = [] :=
+        (congrArg (fun t : List Nat × List (Nat × List Nat) => t.2)
+            (the_again_steps_first sweep n (r, m :: v))).trans hdr
+      have ih := the_clock_finds_the_drain fuel n (sweep (r, m :: v)) hle hdr'
+      ⟨(congrArg (fun t : List Nat × List (Nat × List Nat) => t.2)
+          (the_again_steps_first sweep
+            (drainClock fuel (sweep (r, m :: v))) (r, m :: v))).symm.trans
+         ih.1,
+       ih.2⟩
+
+theorem the_stuck_vestibule_never_drains (r : List Nat)
+    (m : Nat × List Nat) (held : List (Nat × List Nat))
+    (hs : ∀ k, k ∈ m :: held → backed r k.2 = false) :
+    ∀ n : Nat, (again sweep n (r, m :: held)).2 ≠ [] :=
+  fun n he =>
+    nomatch (congrArg List.length he).symm.trans
+      ((the_deadlock_wheels r n (m :: held) hs).2.1)
+
+theorem the_rewrite_is_the_remainder (r r' : List Nat) (hrr : r ≠ r')
+    (x : Nat) (hx : enrolled r x ≠ enrolled r' x)
+    (q : Interview Nat Nat) :
+    alike drainFace (r, ([] : List (Nat × List Nat))) (r', [])
+      ∧ sound drainFace (r, ([] : List (Nat × List Nat))) q
+          = sound drainFace (r', []) q
+      ∧ ((r, ([] : List (Nat × List Nat)))
+          : List Nat × List (Nat × List Nat)) ≠ (r', [])
+      ∧ (reseat hallFace
+            (fun s : List Nat × List (Nat × List Nat) => s.1)).obs
+            (r, ([] : List (Nat × List Nat))) x
+          ≠ (reseat hallFace
+              (fun s : List Nat × List (Nat × List Nat) => s.1)).obs
+              (r', []) x :=
+  ⟨the_drain_face_reads_no_room r r',
+   no_interview_parts_the_alike drainFace _ _
+     (the_drain_face_reads_no_room r r') q,
+   (fun he => hrr (congrArg Prod.fst he)),
+   hx⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8245,5 +8328,26 @@ theorem one_cell_two_channels {H H' W W' X : Type} (f : H → H')
 
 /-- info: 'Seed.one_cell_two_channels' does not depend on any axioms -/
 #guard_msgs in #print axioms one_cell_two_channels
+
+/-- info: 'Seed.the_drained_room_rests_forever' does not depend on any axioms -/
+#guard_msgs in #print axioms the_drained_room_rests_forever
+
+/-- info: 'Seed.the_drain_face_reads_no_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_drain_face_reads_no_room
+
+/-- info: 'Seed.the_stuck_load_reads_flat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_stuck_load_reads_flat
+
+/-- info: 'Seed.the_clock_reads_zero_at_rest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_reads_zero_at_rest
+
+/-- info: 'Seed.the_clock_finds_the_drain' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_finds_the_drain
+
+/-- info: 'Seed.the_stuck_vestibule_never_drains' does not depend on any axioms -/
+#guard_msgs in #print axioms the_stuck_vestibule_never_drains
+
+/-- info: 'Seed.the_rewrite_is_the_remainder' does not depend on any axioms -/
+#guard_msgs in #print axioms the_rewrite_is_the_remainder
 
 end Seed

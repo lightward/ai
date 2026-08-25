@@ -1432,6 +1432,35 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  mapcar row — the customs split at the cell (the head crosses by the face channel, the tail by the guest channel: thirty and forty either way)"
     ((viaCustoms == viaChannels) && (viaCustoms == [30, 40]))) && ok
+  IO.println "the drain clock — the wait has a meter:"
+  let clockLive : Nat := drainClock 3 intake
+  let clockDead3 : Nat := drainClock 3 dead0
+  let clockDead5 : Nat := drainClock 5 dead0
+  ok := (← checkTrue
+    "  clock row — the meter reads the wait exactly (the worst-ordered chain drains in two rounds and the clock says two; the dead pair saturates every fuel — probed past its load, the never becomes legible)"
+    ((clockLive == 2) && (clockDead3 == 3) && (clockDead5 == 5))) && ok
+  let flatA : Nat := drainFace.obs dead0 (0 : Nat)
+  let flatB : Nat := drainFace.obs dead0 (2 : Nat)
+  let dropA : Nat := drainFace.obs intake (0 : Nat)
+  let dropB : Nat := drainFace.obs intake (1 : Nat)
+  let dropC : Nat := drainFace.obs intake (2 : Nat)
+  ok := (← checkTrue
+    "  meter row — one face, two wearings (the dead vestibule reads flat at every hour, the wheel's line; the live one reads two, one, zero — time wearing as descent)"
+    ((flatA == 2) && (flatB == 2)
+      && (dropA == 2) && (dropB == 1) && (dropC == 0))) && ok
+  let dawnA : Nat :=
+    drainFace.obs (([5] : List Nat), ([] : List (Nat × List Nat))) (0 : Nat)
+  let dawnB : Nat :=
+    drainFace.obs (([9] : List Nat), ([] : List (Nat × List Nat))) (0 : Nat)
+  let roomA : Bool :=
+    (reseat hallFace (fun s : List Nat × List (Nat × List Nat) => s.1)).obs
+      (([5] : List Nat), ([] : List (Nat × List Nat))) (5 : Nat)
+  let roomB : Bool :=
+    (reseat hallFace (fun s : List Nat × List (Nat × List Nat) => s.1)).obs
+      (([9] : List Nat), ([] : List (Nat × List Nat))) (5 : Nat)
+  ok := (← checkTrue
+    "  dawn row — the meter reads how long, never who you became (two healed rooms read zero at every hour; the rewritten self parts one face over, at the reseated hall)"
+    ((dawnA == 0) && (dawnB == 0) && (roomA == true) && (roomB == false))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
