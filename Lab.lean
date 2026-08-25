@@ -1357,6 +1357,12 @@ def main : IO UInt32 := do
     "  hundredth row — the dead vestibule comes home WHOLE in two sweeps (the flip's own period at queue grain) while the live cascade's every lap seats a storey: the circle wears even, the drain wears time"
     ((deadHome == dead0)
       && Nat.ble (round1.2.length + 1) intake.2.length)) && ok
+  IO.println "the grounding — every cascade grounds or wheels:"
+  ok := (← checkTrue
+    "  grounding row — no third fate (the live intake drains to empty and RESTS: sweep of the drained is the drained, period one; the dead pair wheels, period two; the gauge tells them apart in one number) — the TWO HUNDREDTH green row, landing on the vestibule's totality as the hundredth landed on its drain"
+    ((round2.2.length == 0)
+      && (sweep round2 == round2)
+      && (sweep (sweep dead0) == dead0))) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"

@@ -6162,6 +6162,57 @@ theorem one_sweep_two_wearings (r : List Nat)
    the_wheel_reads_itself_unworn a d u t,
    the_spiral_flips_at_the_witness a g e uw hu⟩
 
+theorem the_empty_load_is_the_empty_queue :
+    ∀ v : List (Nat × List Nat), Nat.ble v.length 0 = true → v = []
+  | [], _ => rfl
+  | _ :: _, h => nomatch h
+
+theorem the_drained_room_rests (r : List Nat) :
+    sweep (r, ([] : List (Nat × List Nat))) = (r, []) := rfl
+
+theorem the_cascade_grounds_or_wheels :
+    ∀ (L : Nat) (s : List Nat × List (Nat × List Nat)),
+      Nat.ble s.2.length L = true →
+      ∃ n : Nat, Nat.ble n L = true
+        ∧ ((again sweep n s).2 = []
+            ∨ ∀ m, m ∈ (again sweep n s).2 →
+                backed (again sweep n s).1 m.2 = false)
+  | 0, s, h =>
+      ⟨0, rfl, Or.inl (the_empty_load_is_the_empty_queue s.2 h)⟩
+  | L + 1, s, h => by
+      cases the_round_seats_or_certifies s.1 s.2 with
+      | inr hall =>
+          exact ⟨0, rfl, Or.inr hall⟩
+      | inl hex =>
+          obtain ⟨m, hm, hb⟩ := hex
+          obtain ⟨v₁, v₂, hv⟩ := mem_splits hm
+          have hdrop := the_ready_drop_the_load s.1 m hb v₁ v₂ []
+          rw [← hv] at hdrop
+          have hdrop' : Nat.ble ((sweep s).2.length + 1) s.2.length = true :=
+            hdrop
+          have hle : Nat.ble ((sweep s).2.length + 1) (L + 1) = true :=
+            ble_trans ((sweep s).2.length + 1) s.2.length (L + 1) hdrop' h
+          obtain ⟨n, hn, hprop⟩ :=
+            the_cascade_grounds_or_wheels L (sweep s) hle
+          refine ⟨n + 1, hn, ?_⟩
+          rw [show again sweep n (sweep s) = again sweep (n + 1) s from
+              the_again_steps_first sweep n s] at hprop
+          exact hprop
+
+theorem no_third_fate (L : Nat) (s : List Nat × List (Nat × List Nat))
+    (h : Nat.ble s.2.length L = true) (r : List Nat)
+    (r' : List Nat) (held : List (Nat × List Nat))
+    (hs : ∀ m, m ∈ held → backed r' m.2 = false) :
+    (∃ n : Nat, Nat.ble n L = true
+        ∧ ((again sweep n s).2 = []
+            ∨ ∀ m, m ∈ (again sweep n s).2 →
+                backed (again sweep n s).1 m.2 = false))
+      ∧ sweep (r, ([] : List (Nat × List Nat))) = (r, [])
+      ∧ sweep (sweep (r', held)) = (r', held) :=
+  ⟨the_cascade_grounds_or_wheels L s h,
+   the_drained_room_rests r,
+   the_deadlock_comes_home_in_two r' held hs⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7985,5 +8036,17 @@ theorem one_sweep_two_wearings (r : List Nat)
 
 /-- info: 'Seed.one_sweep_two_wearings' does not depend on any axioms -/
 #guard_msgs in #print axioms one_sweep_two_wearings
+
+/-- info: 'Seed.the_empty_load_is_the_empty_queue' does not depend on any axioms -/
+#guard_msgs in #print axioms the_empty_load_is_the_empty_queue
+
+/-- info: 'Seed.the_drained_room_rests' does not depend on any axioms -/
+#guard_msgs in #print axioms the_drained_room_rests
+
+/-- info: 'Seed.the_cascade_grounds_or_wheels' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cascade_grounds_or_wheels
+
+/-- info: 'Seed.no_third_fate' does not depend on any axioms -/
+#guard_msgs in #print axioms no_third_fate
 
 end Seed
