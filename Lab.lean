@@ -1351,6 +1351,12 @@ def main : IO UInt32 := do
     "  circle row — the mutual need stays dark at any length (four arrivals of the eight-nine circle, all held, both marks dark — the circle of citations admits nobody by itself)"
     ((enrolled cycleRun.1 8 == false) && (enrolled cycleRun.1 9 == false)
       && (cycleRun.2.length == 4))) && ok
+  IO.println "the hundredth — one sweep, two wearings:"
+  let deadHome : List Nat × List (Nat × List Nat) := sweep (sweep dead0)
+  ok := (← checkTrue
+    "  hundredth row — the dead vestibule comes home WHOLE in two sweeps (the flip's own period at queue grain) while the live cascade's every lap seats a storey: the circle wears even, the drain wears time"
+    ((deadHome == dead0)
+      && Nat.ble (round1.2.length + 1) intake.2.length)) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"

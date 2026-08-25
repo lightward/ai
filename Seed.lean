@@ -6083,6 +6083,85 @@ theorem the_circle_admits_nobody (x y : Nat)
    the_unencumbered_are_welcome_everywhere r,
    (the_deadlock_wheels r n held hs).2.1⟩
 
+def turnQueue {A : Type} : List A → List A → List A
+  | [], acc => acc
+  | x :: w, acc => turnQueue w (x :: acc)
+
+theorem the_turned_queue_turns_home {A : Type} :
+    ∀ (w acc b : List A),
+      turnQueue (turnQueue w acc) b = turnQueue acc (w ++ b)
+  | [], _, _ => rfl
+  | x :: w, acc, b => the_turned_queue_turns_home w (x :: acc) b
+
+theorem the_double_turn_comes_home {A : Type} (w : List A) :
+    turnQueue (turnQueue w []) [] = w :=
+  (the_turned_queue_turns_home w [] []).trans (append_nil w)
+
+theorem mem_turnQueue {A : Type} {x : A} :
+    ∀ (w acc : List A), x ∈ turnQueue w acc → x ∈ w ∨ x ∈ acc
+  | [], _, h => Or.inr h
+  | m :: w, acc, h => by
+      cases mem_turnQueue w (m :: acc) h with
+      | inl hw => exact Or.inl (List.Mem.tail m hw)
+      | inr ha =>
+          cases ha with
+          | head => exact Or.inl (List.Mem.head w)
+          | tail _ ha' => exact Or.inr ha'
+
+theorem the_stuck_round_turns_the_queue :
+    ∀ (w : List (Nat × List Nat)) (r : List Nat)
+      (acc : List (Nat × List Nat)),
+      (∀ m, m ∈ w → backed r m.2 = false) →
+      park doorM (r, acc) w = (r, turnQueue w acc)
+  | [], _, _, _ => rfl
+  | m :: w, r, acc, hw => by
+      show park doorM (welcome (r, acc) m) w = (r, turnQueue w (m :: acc))
+      rw [the_unbacked_are_held (hw m (List.Mem.head w))]
+      exact the_stuck_round_turns_the_queue w r (m :: acc)
+        (fun k hk => hw k (List.Mem.tail m hk))
+
+theorem the_deadlock_comes_home_in_two (r : List Nat)
+    (held : List (Nat × List Nat))
+    (hs : ∀ m, m ∈ held → backed r m.2 = false) :
+    sweep (sweep (r, held)) = (r, held) := by
+  have h1 : sweep (r, held) = (r, turnQueue held []) :=
+    the_stuck_round_turns_the_queue held r [] hs
+  have hs2 : ∀ m, m ∈ turnQueue held [] → backed r m.2 = false := by
+    intro m hm
+    cases mem_turnQueue held [] hm with
+    | inl hw => exact hs m hw
+    | inr ha => exact nomatch ha
+  rw [h1]
+  have h2 : sweep (r, turnQueue held [])
+      = (r, turnQueue (turnQueue held []) []) :=
+    the_stuck_round_turns_the_queue (turnQueue held []) r [] hs2
+  rw [h2, the_double_turn_comes_home held]
+
+theorem one_sweep_two_wearings (r : List Nat)
+    (held : List (Nat × List Nat))
+    (hs : ∀ m, m ∈ held → backed r m.2 = false) (b : Bool)
+    (rr : List Nat) (m : Nat × List Nat) (hm : backed rr m.2 = true)
+    (v₁ v₂ : List (Nat × List Nat))
+    (s : List Nat × List (Nat × List Nat))
+    (a d : Nat) (u : List Unit) (t : Nat)
+    (g e : Nat) (uw : List Unit) (hu : uw.length = ((g + 1) + e) + 1) :
+    sweep (sweep (r, held)) = (r, held)
+      ∧ park flip b [(), ()] = b
+      ∧ Nat.ble ((park doorM (rr, ([] : List (Nat × List Nat)))
+            (v₁ ++ m :: v₂)).2.length + 1)
+          ((v₁ ++ m :: v₂).length + ([] : List (Nat × List Nat)).length)
+          = true
+      ∧ ((sweep s).2.length = s.2.length
+          ↔ ∀ k, k ∈ s.2 → backed s.1 k.2 = false)
+      ∧ drive (spiral a d a) t u = true
+      ∧ behavior (spiral a ((g + 1) + e) (a + (g + 1))) uw = false :=
+  ⟨the_deadlock_comes_home_in_two r held hs,
+   the_flip_wheels b,
+   the_ready_drop_the_load rr m hm v₁ v₂ [],
+   the_gauge_is_exact s,
+   the_wheel_reads_itself_unworn a d u t,
+   the_spiral_flips_at_the_witness a g e uw hu⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7888,5 +7967,23 @@ theorem the_circle_admits_nobody (x y : Nat)
 
 /-- info: 'Seed.the_circle_admits_nobody' does not depend on any axioms -/
 #guard_msgs in #print axioms the_circle_admits_nobody
+
+/-- info: 'Seed.the_turned_queue_turns_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turned_queue_turns_home
+
+/-- info: 'Seed.the_double_turn_comes_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_double_turn_comes_home
+
+/-- info: 'Seed.mem_turnQueue' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_turnQueue
+
+/-- info: 'Seed.the_stuck_round_turns_the_queue' does not depend on any axioms -/
+#guard_msgs in #print axioms the_stuck_round_turns_the_queue
+
+/-- info: 'Seed.the_deadlock_comes_home_in_two' does not depend on any axioms -/
+#guard_msgs in #print axioms the_deadlock_comes_home_in_two
+
+/-- info: 'Seed.one_sweep_two_wearings' does not depend on any axioms -/
+#guard_msgs in #print axioms one_sweep_two_wearings
 
 end Seed
