@@ -6658,6 +6658,53 @@ theorem every_simulation_was_a_carrier {W I O I' O' : Type} (w0 : W)
    the_pace_is_carried_onto_the_flip,
    the_interview_crosses_every_carrier the_count_carries_the_life t q⟩
 
+theorem the_still_hands_are_the_endo_carriers (F : Face.{u})
+    (m : F.State → F.State) :
+    unheard F m ↔ carries F.obs F.obs m := Iff.rfl
+
+theorem the_maintenance_is_the_identitys_hom (F : Face.{u})
+    (m m' : F.State → F.State) (hm : unheard F m) (hm' : unheard F m') :
+    carries F.obs F.obs (fun s => s)
+      ∧ carries F.obs F.obs (fun s => m (m' s)) :=
+  ⟨the_still_map_carries F.obs,
+   the_carriers_compose hm' hm⟩
+
+theorem the_carrier_merges_only_the_alike {P A : Type} {S : Type u}
+    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
+    (hc : carries f g h) {s t : S} (he : h s = h t) :
+    alike ⟨S, P, A, f⟩ s t :=
+  fun p =>
+    (hc s p).symm.trans
+      ((congrArg (fun x => g x p) he).trans (hc t p))
+
+theorem the_two_routes_merge_at_the_carrier :
+    park pulse (0 : Nat) [true, false] = park pulse (0 : Nat) [false, true]
+      ∧ alike ⟨List Bool, List Bool, Bool, drive (replayer pulse)⟩
+          [true, false] [false, true]
+      ∧ ([true, false] : List Bool) ≠ [false, true] :=
+  ⟨two_routes_one_seat.2,
+   the_carrier_merges_only_the_alike (the_park_carries_the_record pulse)
+     two_routes_one_seat.2,
+   two_routes_one_seat.1⟩
+
+theorem the_carrier_runs_the_handshake (F : Face.{u})
+    (m m' : F.State → F.State) (hm : unheard F m) (hm' : unheard F m')
+    {P A : Type} {S : Type u} {S' : Type v}
+    {f : S → P → A} {g : S' → P → A} {h : S → S'}
+    (hc : carries f g h) {x y : S} (he : h x = h y) :
+    (unheard F m ↔ carries F.obs F.obs m)
+      ∧ carries F.obs F.obs (fun s => m (m' s))
+      ∧ alike ⟨S, P, A, f⟩ x y
+      ∧ (park pulse (0 : Nat) [true, false]
+            = park pulse (0 : Nat) [false, true]
+          ∧ alike ⟨List Bool, List Bool, Bool, drive (replayer pulse)⟩
+              [true, false] [false, true]
+          ∧ ([true, false] : List Bool) ≠ [false, true]) :=
+  ⟨Iff.rfl,
+   (the_maintenance_is_the_identitys_hom F m m' hm hm').2,
+   the_carrier_merges_only_the_alike hc he,
+   the_two_routes_merge_at_the_carrier⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8652,5 +8699,20 @@ theorem every_simulation_was_a_carrier {W I O I' O' : Type} (w0 : W)
 
 /-- info: 'Seed.every_simulation_was_a_carrier' does not depend on any axioms -/
 #guard_msgs in #print axioms every_simulation_was_a_carrier
+
+/-- info: 'Seed.the_still_hands_are_the_endo_carriers' does not depend on any axioms -/
+#guard_msgs in #print axioms the_still_hands_are_the_endo_carriers
+
+/-- info: 'Seed.the_maintenance_is_the_identitys_hom' does not depend on any axioms -/
+#guard_msgs in #print axioms the_maintenance_is_the_identitys_hom
+
+/-- info: 'Seed.the_carrier_merges_only_the_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carrier_merges_only_the_alike
+
+/-- info: 'Seed.the_two_routes_merge_at_the_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_routes_merge_at_the_carrier
+
+/-- info: 'Seed.the_carrier_runs_the_handshake' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carrier_runs_the_handshake
 
 end Seed

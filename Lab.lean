@@ -1523,6 +1523,25 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  simulation row — the park carries the record (the replayer driven from a mid-record seat reads as the machine driven from the parked seat: rehydration as a carrier, at every record)"
     ((replayRead == parkedRead) && (replayRead == true))) && ok
+  IO.println "the license — a carrier merges only the alike:"
+  let routeA : List Bool := [true, false]
+  let routeB : List Bool := [false, true]
+  let mergedA : Bool := drive (replayer pulse) routeA [true]
+  let mergedB : Bool := drive (replayer pulse) routeB [true]
+  let parkedA : Nat := park pulse (0 : Nat) routeA
+  let parkedB : Nat := park pulse (0 : Nat) routeB
+  ok := (← checkTrue
+    "  license row — the park-carrier merges the two routes and shows its books (one parked seat, the records provably distinct, and the record-face reads them alike at every probe — the handshake at carrier grain)"
+    ((parkedA == parkedB)
+      && (routeA != routeB) && (mergedA == mergedB))) && ok
+  let heldSt2 : Nat × List Unit := ((0 : Nat), [()])
+  let twiceSettled : Bool :=
+    drive (buffered paceOne)
+      (settleHeld paceOne (settleHeld paceOne heldSt2)) [(), ()]
+  let unsettled : Bool := drive (buffered paceOne) heldSt2 [(), ()]
+  ok := (← checkTrue
+    "  license row — the maintenance is the identity's hom (two settles composed through the carrier category still read as none: the still hands are the endo-carriers, composition free)"
+    (twiceSettled == unsettled)) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
