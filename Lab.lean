@@ -1912,6 +1912,37 @@ def benchCustomsFunctor : IO Bool := do
           == f (spine Nat toyPlan toyImport)))) && ok
   return ok
 
+def benchTwoFunctors : IO Bool := do
+  let mut ok := true
+  IO.println "the two channels — space and time are both functors, and they commute:"
+  let stillLife : Bool := planBeq (graft .ground dayB) dayB
+  let stacked : Bool :=
+    planBeq (graft dayA (graft dayB dayA)) (graft (graft dayA dayB) dayA)
+  ok := (← checkTrue
+    "  functor row — the revision keeps the still life and the revisions stack forward (grafting by ground moves nothing; two revisions fuse into one lineage, planBeq-checked)"
+    (stillLife && stacked)) && ok
+  let readAfter : Nat := fold (fun a b => a + b) 1 (graft dayA dayB)
+  let readThrough : Nat :=
+    fold (fun a b => a + b) (fold (fun a b => a + b) 1 dayA) dayB
+  ok := (← checkTrue
+    "  functor row — the reading is natural over time (fold after grafting equals fold from the folded ground: the resumption law read as a naturality square, six both ways) and the product law is the two axes meeting"
+    ((readAfter == readThrough) && (readAfter == 6)
+      && (readAfter
+          == fold (fun a b => a + b) 1 dayA
+              * fold (fun a b => a + b) 1 dayB))) && ok
+  let crossThenRide : List Nat :=
+    pour (graft toyPlan revision)
+      (reground (fun w => w * 10) (graft toyPlan revision)
+        (ride toyImport revision))
+  let rideThenCross : List Nat :=
+    pour (graft toyPlan revision)
+      (ride (reground (fun w => w * 10) toyPlan toyImport) revision)
+  ok := (← checkTrue
+    "  functor row — the two axes commute (cross the customs then take the tick, or take the tick then cross: one square, the world-channel and the time-channel independent)"
+    ((crossThenRide == rideThenCross)
+      && (crossThenRide.length == 6))) && ok
+  return ok
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -1986,6 +2017,7 @@ def main : IO UInt32 := do
   ok := (← benchRetract) && ok
   ok := (← benchSettleSplits) && ok
   ok := (← benchCustomsFunctor) && ok
+  ok := (← benchTwoFunctors) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

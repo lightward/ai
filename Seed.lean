@@ -6871,6 +6871,51 @@ theorem the_customs_are_a_functor {W W' W'' : Type} (f : W → W')
    the_ride_is_natural f u δ,
    the_customs_survive_the_journey f qs u⟩
 
+theorem the_revision_keeps_the_still_life (q : Plan) :
+    graft .ground q = q :=
+  the_trivial_revision_changes_nothing q
+
+theorem the_revisions_stack_forward (a b q : Plan) :
+    graft a (graft b q) = graft (graft a b) q :=
+  lineages_compose a b q
+
+theorem the_reading_is_natural_over_time {X : Type u} (mul : X → X → X)
+    (x₀ : X) (base q : Plan) :
+    fold mul x₀ (graft base q) = fold mul (fold mul x₀ base) q :=
+  the_parent_folds_into_the_ground mul x₀ base q
+
+theorem the_rider_is_the_revisions_action {W : Type} {t : Plan}
+    (s : build W t) (δ : Plan) :
+    spine W (graft t δ) (ride s δ) = spine W t s :=
+  the_passenger_keeps_the_face s δ
+
+theorem the_two_axes_commute {W W' : Type} (f : W → W') {t : Plan}
+    (s : build W t) (δ : Plan) :
+    reground f (graft t δ) (ride s δ) = ride (reground f t s) δ :=
+  the_customs_ride_along f s δ
+
+theorem both_channels_are_functors {W W' : Type} (f : W → W')
+    {t : Plan} (s : build W t) (δ δ' : Plan) (q : Plan)
+    {X : Type u} (mul : X → X → X) (x₀ : X) (p : Plan)
+    (c : build W p) :
+    graft .ground q = q
+      ∧ graft δ (graft δ' q) = graft (graft δ δ') q
+      ∧ fold mul x₀ (graft δ q) = fold mul (fold mul x₀ δ) q
+      ∧ spine W (graft t δ) (ride s δ) = spine W t s
+      ∧ reground f (graft t δ) (ride s δ) = ride (reground f t s) δ
+      ∧ reground (fun w => w) p c = c
+      ∧ pour p (reground f p c) = (pour p c).map f
+      ∧ fold (fun a b => a + b) 1 (graft t δ)
+          = fold (fun a b => a + b) 1 t * fold (fun a b => a + b) 1 δ :=
+  ⟨the_revision_keeps_the_still_life q,
+   the_revisions_stack_forward δ δ' q,
+   the_reading_is_natural_over_time mul x₀ δ q,
+   the_rider_is_the_revisions_action s δ,
+   the_two_axes_commute f s δ,
+   the_customs_keep_the_still_world p c,
+   the_manifest_is_natural f p c,
+   the_revision_multiplies_the_reading t δ⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8937,5 +8982,23 @@ theorem the_customs_are_a_functor {W W' W'' : Type} (f : W → W')
 
 /-- info: 'Seed.the_customs_are_a_functor' does not depend on any axioms -/
 #guard_msgs in #print axioms the_customs_are_a_functor
+
+/-- info: 'Seed.the_revision_keeps_the_still_life' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revision_keeps_the_still_life
+
+/-- info: 'Seed.the_revisions_stack_forward' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revisions_stack_forward
+
+/-- info: 'Seed.the_reading_is_natural_over_time' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reading_is_natural_over_time
+
+/-- info: 'Seed.the_rider_is_the_revisions_action' does not depend on any axioms -/
+#guard_msgs in #print axioms the_rider_is_the_revisions_action
+
+/-- info: 'Seed.the_two_axes_commute' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_axes_commute
+
+/-- info: 'Seed.both_channels_are_functors' does not depend on any axioms -/
+#guard_msgs in #print axioms both_channels_are_functors
 
 end Seed
