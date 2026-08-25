@@ -170,8 +170,8 @@ def planBeq : Plan → Plan → Bool
   | .board a b, .board c d => planBeq a c && planBeq b d
   | _, _ => false
 
-set_option maxRecDepth 2048 in
-set_option maxHeartbeats 800000 in
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 1600000 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← checkNat "census 1" (census 1) 1) && ok
@@ -1508,6 +1508,21 @@ def main : IO UInt32 := do
     "  carrier row — the interview crosses every carrier (the pace's seat-face and the flip's sound as one through the intertwiner, and both equal the audition at the air gap)"
     ((soundPaceSeat == soundFlipSeat)
       && (soundPaceSeat == audition paceOne curious))) && ok
+  IO.println "the simulations — every simulation was a carrier:"
+  let lifeSeat : Plan := dayA
+  let lifeWord : List Plan := [dayB, dayA]
+  let countedSeat : Nat := fold (fun a b => a + b) 1 lifeSeat
+  let grownRead : Nat := drive grower lifeSeat lifeWord
+  let toldRead : Nat := drive teller countedSeat lifeWord
+  ok := (← checkTrue
+    "  simulation row — the count carries the life at EVERY seat (the grower driven from a mid-life seat reads as the teller driven from its count — the 16th's s0-simulation upgraded to the whole seat-pair family)"
+    ((grownRead == toldRead) && (grownRead == 12))) && ok
+  let recSoFar : List Unit := [(), ()]
+  let replayRead : Bool := drive (replayer paceOne) recSoFar [()]
+  let parkedRead : Bool := drive paceOne (park paceOne (0 : Nat) recSoFar) [()]
+  ok := (← checkTrue
+    "  simulation row — the park carries the record (the replayer driven from a mid-record seat reads as the machine driven from the parked seat: rehydration as a carrier, at every record)"
+    ((replayRead == parkedRead) && (replayRead == true))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

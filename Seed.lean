@@ -6615,6 +6615,49 @@ theorem the_one_face_is_the_terminus (F : Face.{u})
    the_interview_crosses_every_carrier hc' s' q,
    the_pace_is_carried_onto_the_flip⟩
 
+theorem the_count_carries_the_life :
+    carries (drive grower) (drive teller) ((fold (fun a b : Nat => a + b) 1 : Plan → Nat)) :=
+  the_intertwiner_carries_the_seat_face grower teller
+    ((fold (fun a b : Nat => a + b) 1 : Plan → Nat))
+    (fun s δ => the_revision_multiplies_the_reading s δ)
+    (fun _ => rfl)
+
+theorem the_manifest_carries_the_simulation {W I O : Type} (w0 : W)
+    (p : Plan) (s0 : build W p) (step : build W p → I → build W p)
+    (out : build W p → O) :
+    carries (drive (onPlan p s0 step out))
+      (drive (onWords w0 p step out s0)) (pour p) :=
+  the_intertwiner_carries_the_seat_face (onPlan p s0 step out)
+    (onWords w0 p step out s0) (pour p)
+    (fun s i =>
+      (congrArg (fun x => pour p (step x i))
+        (the_manifest_rebuilds_the_carrier w0 p s)).symm)
+    (fun s => congrArg out (the_manifest_rebuilds_the_carrier w0 p s))
+
+theorem the_park_carries_the_record {I O : Type} (m : Machine I O) :
+    carries (drive (replayer m)) (drive m) (park m m.s0) :=
+  the_intertwiner_carries_the_seat_face (replayer m) m (park m m.s0)
+    (fun rec i => the_park_resumes m rec [i] m.s0)
+    (fun _ => rfl)
+
+theorem every_simulation_was_a_carrier {W I O I' O' : Type} (w0 : W)
+    (p : Plan) (s0 : build W p) (step : build W p → I → build W p)
+    (out : build W p → O) (m : Machine I' O') (t : Plan)
+    (q : Interview (List Plan) Nat) :
+    carries (drive grower) (drive teller) ((fold (fun a b : Nat => a + b) 1 : Plan → Nat))
+      ∧ carries (drive (onPlan p s0 step out))
+          (drive (onWords w0 p step out s0)) (pour p)
+      ∧ carries (drive (replayer m)) (drive m) (park m m.s0)
+      ∧ carries (drive paceOne) (drive flip) oddNat
+      ∧ sound ⟨Plan, List Plan, Nat, drive grower⟩ t q
+          = sound ⟨Nat, List Plan, Nat, drive teller⟩
+              ((fold (fun a b : Nat => a + b) 1 : Plan → Nat) t) q :=
+  ⟨the_count_carries_the_life,
+   the_manifest_carries_the_simulation w0 p s0 step out,
+   the_park_carries_the_record m,
+   the_pace_is_carried_onto_the_flip,
+   the_interview_crosses_every_carrier the_count_carries_the_life t q⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8597,5 +8640,17 @@ theorem the_one_face_is_the_terminus (F : Face.{u})
 
 /-- info: 'Seed.the_one_face_is_the_terminus' does not depend on any axioms -/
 #guard_msgs in #print axioms the_one_face_is_the_terminus
+
+/-- info: 'Seed.the_count_carries_the_life' does not depend on any axioms -/
+#guard_msgs in #print axioms the_count_carries_the_life
+
+/-- info: 'Seed.the_manifest_carries_the_simulation' does not depend on any axioms -/
+#guard_msgs in #print axioms the_manifest_carries_the_simulation
+
+/-- info: 'Seed.the_park_carries_the_record' does not depend on any axioms -/
+#guard_msgs in #print axioms the_park_carries_the_record
+
+/-- info: 'Seed.every_simulation_was_a_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms every_simulation_was_a_carrier
 
 end Seed
