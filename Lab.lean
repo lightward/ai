@@ -1476,6 +1476,21 @@ def main : IO UInt32 := do
     "  second-light row — one domestic arrival ends the two-mark night in one round (the wheel that saturated every fuel drains in one; the meter watches the dawn: two at hour zero, zero at hour one; both marks seated, the night's own nine coming home with them)"
     ((rescuedClock == 1) && (rescuedH0 == 2) && (rescuedH1 == 0)
       && enrolled dawnRoom 8 && enrolled dawnRoom 9)) && ok
+  IO.println "the one face — every face is the application face worn at a seat:"
+  let tm : Nat := 91093837015
+  let wornWindow : Bool := (reseat (appFace Nat Bool) within).obs m2018 tm
+  let bareWindow : Bool := windowFace.obs m2018 tm
+  ok := (← checkTrue
+    "  one-face row — the window worn at its seat reads as the window (the application face reseated at within agrees with windowFace at the true mass, and the reading is true)"
+    ((wornWindow == bareWindow) && wornWindow)) && ok
+  let soundedAtOne : List Bool :=
+    sound (appFace (List Unit) Bool) (behavior paceOne) curious
+  let soundedAtOne3 : List Bool :=
+    sound (appFace (List Unit) Bool) (behavior paceThree) curious
+  ok := (← checkTrue
+    "  one-face row — the interview meets the one face (auditioning the machine equals interviewing its seat-image; and the two paces' seat-images sound as one at the universal carrier — the curtain hangs on one face)"
+    ((soundedAtOne == audition paceOne curious)
+      && (soundedAtOne == soundedAtOne3))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

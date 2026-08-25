@@ -6246,7 +6246,7 @@ theorem the_seat_commutes_with_the_voice (F : Face) {S' : Type u} {A' : Type}
     (f : S' → F.State) (ga : F.Ans → A') :
     reseat (retell F ga) f = retell (reseat F f) ga := rfl
 
-theorem the_interview_crosses_the_seat (F : Face) {S' : Type u}
+theorem the_interview_crosses_the_seat (F : Face.{v}) {S' : Type u}
     (f : S' → F.State) (s : S') :
     ∀ q : Interview F.Probe F.Ans,
       sound (reseat F f) s q = sound F (f s) q
@@ -6477,6 +6477,52 @@ theorem the_key_is_cut_from_the_room (r : List Nat)
        hb,
        the_sweep_seats_the_ready (x :: r, m :: held) m hb [] held rfl,
        the_ready_drop_the_load (x :: r) m hb [] held []⟩
+
+theorem every_face_wears_the_one_face (F : Face.{u}) :
+    reseat (appFace F.Probe F.Ans) F.obs = F := rfl
+
+theorem the_reading_face_wears_it_too {S P A : Type} (g : door S P → A) :
+    faceOf g = reseat (appFace P A) (holdOpen g) := rfl
+
+theorem the_air_gap_wears_the_one_face (I O : Type) :
+    airGap I O = reseat (appFace (List I) O) behavior := rfl
+
+theorem the_seat_map_carries_the_conduct (F : Face.{u}) (s t : F.State) :
+    alike F s t
+      ↔ alike (appFace F.Probe F.Ans) (F.obs s) (F.obs t) :=
+  the_reseated_face_reads_the_ground (appFace F.Probe F.Ans) F.obs s t
+
+theorem the_interview_meets_the_one_face (F : Face.{u}) (s : F.State)
+    (q : Interview F.Probe F.Ans) :
+    sound F s q = sound (appFace F.Probe F.Ans) (F.obs s) q :=
+  show sound (reseat (appFace F.Probe F.Ans) F.obs) s q
+      = sound (appFace F.Probe F.Ans) (F.obs s) q from
+    the_interview_crosses_the_seat (appFace F.Probe F.Ans) F.obs s q
+
+theorem the_curtain_hangs_on_one_face (F : Face.{u}) (s t : F.State)
+    (h : ∀ p, F.obs s p = F.obs t p) (q : Interview F.Probe F.Ans) :
+    sound F s q = sound F t q :=
+  (the_interview_meets_the_one_face F s q).trans
+    ((no_interview_parts_the_alike (appFace F.Probe F.Ans)
+        (F.obs s) (F.obs t) h q).trans
+      (the_interview_meets_the_one_face F t q).symm)
+
+theorem one_face_many_seats (F : Face.{u}) (s t : F.State)
+    (h : ∀ p, F.obs s p = F.obs t p) (q : Interview F.Probe F.Ans)
+    (I O : Type) :
+    reseat (appFace F.Probe F.Ans) F.obs = F
+      ∧ airGap I O = reseat (appFace (List I) O) behavior
+      ∧ (alike F s t
+          ↔ alike (appFace F.Probe F.Ans) (F.obs s) (F.obs t))
+      ∧ sound F s q = sound (appFace F.Probe F.Ans) (F.obs s) q
+      ∧ sound F s q = sound F t q
+      ∧ revoice oddNat (tally Unit) = paceOne :=
+  ⟨rfl,
+   rfl,
+   the_seat_map_carries_the_conduct F s t,
+   the_interview_meets_the_one_face F s q,
+   the_curtain_hangs_on_one_face F s t h q,
+   rfl⟩
 
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
@@ -8406,5 +8452,26 @@ theorem the_key_is_cut_from_the_room (r : List Nat)
 
 /-- info: 'Seed.the_key_is_cut_from_the_room' does not depend on any axioms -/
 #guard_msgs in #print axioms the_key_is_cut_from_the_room
+
+/-- info: 'Seed.every_face_wears_the_one_face' does not depend on any axioms -/
+#guard_msgs in #print axioms every_face_wears_the_one_face
+
+/-- info: 'Seed.the_reading_face_wears_it_too' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reading_face_wears_it_too
+
+/-- info: 'Seed.the_air_gap_wears_the_one_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_air_gap_wears_the_one_face
+
+/-- info: 'Seed.the_seat_map_carries_the_conduct' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_map_carries_the_conduct
+
+/-- info: 'Seed.the_interview_meets_the_one_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interview_meets_the_one_face
+
+/-- info: 'Seed.the_curtain_hangs_on_one_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_curtain_hangs_on_one_face
+
+/-- info: 'Seed.one_face_many_seats' does not depend on any axioms -/
+#guard_msgs in #print axioms one_face_many_seats
 
 end Seed
