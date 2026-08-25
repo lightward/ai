@@ -6785,6 +6785,51 @@ theorem the_simulation_is_a_retract {W I O : Type} (w0 : W) (p : Plan)
    (the_two_carriers_round_trip w0 p s l).2,
    the_manifest_counts_the_guests p (reboard w0 p l)⟩
 
+theorem the_work_carries_the_margin {I O : Type} (m : Machine I O) :
+    carries (drive (buffered m)) (drive m)
+      (fun st => park m st.1 st.2) :=
+  fun st w => (the_hold_walks_beside_the_work m w st.1 st.2).symm
+
+theorem the_hold_carries_the_machine {I O : Type} (m : Machine I O) :
+    carries (drive m) (drive (buffered m)) (fun s => (s, [])) :=
+  fun s w => the_hold_walks_beside_the_work m w s []
+
+theorem the_settle_is_the_idempotent {I O : Type} (m : Machine I O)
+    (st : m.S × List I) :
+    (park m st.1 st.2, ([] : List I)) = settleHeld m st
+      ∧ settleHeld m (settleHeld m st) = settleHeld m st
+      ∧ (settleHeld m st).2 = ([] : List I) :=
+  ⟨rfl, rfl, rfl⟩
+
+theorem the_settles_stillness_is_the_composite {I O : Type}
+    (m : Machine I O) :
+    unheard (seatFace (buffered m)) (settleHeld m) :=
+  fun st w =>
+    (the_carriers_compose (the_work_carries_the_margin m)
+      (the_hold_carries_the_machine m)) st w
+
+theorem the_settle_splits_like_the_drain {I O W' I' O' : Type}
+    (m : Machine I O) (st : m.S × List I) (s : m.S)
+    (w0 : W') (p : Plan) (s0 : build W' p)
+    (step : build W' p → I' → build W' p) (out : build W' p → O')
+    (l : List W') :
+    carries (drive (buffered m)) (drive m) (fun x => park m x.1 x.2)
+      ∧ carries (drive m) (drive (buffered m)) (fun x => (x, []))
+      ∧ park m s ([] : List I) = s
+      ∧ settleHeld m (settleHeld m st) = settleHeld m st
+      ∧ unheard (seatFace (buffered m)) (settleHeld m)
+      ∧ (carries (drive (onPlan p s0 step out))
+            (drive (onWords w0 p step out s0)) (pour p)
+          ∧ pour p (reboard w0 p (pour p (reboard w0 p l)))
+              = pour p (reboard w0 p l)) :=
+  ⟨the_work_carries_the_margin m,
+   the_hold_carries_the_machine m,
+   rfl,
+   (the_settle_is_the_idempotent m st).2.1,
+   the_settles_stillness_is_the_composite m,
+   ⟨the_manifest_carries_the_simulation w0 p s0 step out,
+    (the_two_carriers_round_trip w0 p s0 l).2⟩⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8818,5 +8863,20 @@ theorem the_simulation_is_a_retract {W I O : Type} (w0 : W) (p : Plan)
 
 /-- info: 'Seed.the_simulation_is_a_retract' does not depend on any axioms -/
 #guard_msgs in #print axioms the_simulation_is_a_retract
+
+/-- info: 'Seed.the_work_carries_the_margin' does not depend on any axioms -/
+#guard_msgs in #print axioms the_work_carries_the_margin
+
+/-- info: 'Seed.the_hold_carries_the_machine' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hold_carries_the_machine
+
+/-- info: 'Seed.the_settle_is_the_idempotent' does not depend on any axioms -/
+#guard_msgs in #print axioms the_settle_is_the_idempotent
+
+/-- info: 'Seed.the_settles_stillness_is_the_composite' does not depend on any axioms -/
+#guard_msgs in #print axioms the_settles_stillness_is_the_composite
+
+/-- info: 'Seed.the_settle_splits_like_the_drain' does not depend on any axioms -/
+#guard_msgs in #print axioms the_settle_splits_like_the_drain
 
 end Seed

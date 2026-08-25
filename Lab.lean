@@ -1868,6 +1868,26 @@ def benchRetract : IO Bool := do
     (viaWords == viaCarrier)) && ok
   return ok
 
+def benchSettleSplits : IO Bool := do
+  let mut ok := true
+  IO.println "the settle splits — the margin is a retract, the settle its idempotent:"
+  let held3 : Nat × List Unit := ((1 : Nat), [(), (), ()])
+  let workedSeat : Nat := park paceOne held3.1 held3.2
+  let viaMargin : Bool := drive (buffered paceOne) held3 [()]
+  let viaGround : Bool := drive paceOne workedSeat [()]
+  let settledTwice : Nat × List Unit :=
+    settleHeld paceOne (settleHeld paceOne held3)
+  ok := (← checkTrue
+    "  settle row — the work-carrier reads the margin at the ground (the buffered machine driven from a held tail reads as the machine driven from the worked seat: four, and true) and the settle is idempotent at the carrier (twice settled is once settled)"
+    ((viaMargin == viaGround) && (workedSeat == 4)
+      && (settledTwice == settleHeld paceOne held3))) && ok
+  let liftBack : Bool := drive (buffered paceOne) ((3 : Nat), []) [()]
+  let plain : Bool := drive paceOne (3 : Nat) [()]
+  ok := (← checkTrue
+    "  settle row — the hold-carrier lifts the machine home (holding nothing is the section: the machine seats in the margin and reads identically) — one shape at two grains, the drain and the settle"
+    (liftBack == plain)) && ok
+  return ok
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -1940,6 +1960,7 @@ def main : IO UInt32 := do
   ok := (← benchLicense) && ok
   ok := (← benchCrossings) && ok
   ok := (← benchRetract) && ok
+  ok := (← benchSettleSplits) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
