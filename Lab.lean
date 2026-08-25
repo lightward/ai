@@ -1282,6 +1282,20 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  init row — no memory meters the cost (a scribe fed the warmed hall's answers writes the identical record; the depths still part — the tax is real and unbanked by anything downstream of the answers)"
     ((memA == memB) && (depthTo [5, 6] 5 != depthTo [6, 5] 5))) && ok
+  IO.println "the ignition — no mark lights itself:"
+  let selfLoop : List Nat × List (Nat × List Nat) :=
+    park doorM (([1] : List Nat), ([] : List (Nat × List Nat)))
+      [(7, [7]), (7, [7]), (7, [7])]
+  ok := (← checkTrue
+    "  ignition row — the self-citing mark starves at any length (three self-backed arrivals of seven, all held; the room never lights it — the ignition beat cannot be self-supplied)"
+    ((enrolled selfLoop.1 7 == false) && (selfLoop.2.length == 3))) && ok
+  let litFromOutside :=
+    welcome (([1], []) : List Nat × List (Nat × List Nat)) (7, [1])
+  let litFromNothing :=
+    welcome (([1], []) : List Nat × List (Nat × List Nat)) (7, [])
+  ok := (← checkTrue
+    "  ignition row — the first light comes from outside (seven backed by one seats in one click; seven backed by nothing seats in one click; only seven backed by itself never does)"
+    (enrolled litFromOutside.1 7 && enrolled litFromNothing.1 7)) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"

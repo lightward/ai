@@ -5555,6 +5555,56 @@ theorem no_memory_meters_the_cost {X : Type} (f : List Bool → X)
   ⟨congrArg f (no_ask_parts_the_warmed_hall a b q),
    the_cost_face_parts_the_warmed a b hab⟩
 
+theorem the_stranger_leaves_the_hall_dark (r : List Nat) (y x : Nat)
+    (hne : x ≠ y) (h : enrolled r x = false) :
+    enrolled (y :: r) x = false := by
+  show (Nat.beq x y || enrolled r x) = false
+  rw [beq_of_ne hne, h]
+  rfl
+
+theorem no_mark_lights_itself (x : Nat) :
+    ∀ (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat)),
+      (∀ m, m ∈ w → m.1 = x → x ∈ m.2) →
+      enrolled s.1 x = false →
+      enrolled (park doorM s w).1 x = false
+  | [], _, _, h => h
+  | m :: w, s, hw, h => by
+      have hstep : enrolled (welcome s m).1 x = false := by
+        cases hb : backed s.1 m.2 with
+        | false =>
+            rw [the_unbacked_are_held hb]
+            exact h
+        | true =>
+            rw [the_backed_are_seated hb]
+            refine the_stranger_leaves_the_hall_dark s.1 m.1 x
+              (fun hxm => ?_) h
+            exact absurd
+              (the_backing_reaches_each_need s.1 m.2 hb x
+                (hw m (List.Mem.head w) hxm.symm))
+              (ne_true_of_eq_false h)
+      show enrolled (park doorM (welcome s m) w).1 x = false
+      exact no_mark_lights_itself x w (welcome s m)
+        (fun m' hm' => hw m' (List.Mem.tail m hm')) hstep
+
+theorem the_first_light_comes_from_outside (x : Nat)
+    (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat))
+    (hw : ∀ m, m ∈ w → m.1 = x → x ∈ m.2)
+    (hx : enrolled s.1 x = false) (r : List Nat)
+    (m : Nat × List Nat) (hb : backed s.1 m.2 = true)
+    {I O : Type} (mach : Machine I O) (rd : mach.S → I)
+    (u : List Unit) (t : mach.S) (p : Plan) :
+    enrolled (park doorM s w).1 x = false
+      ∧ backed r [] = true
+      ∧ enrolled (welcome s m).1 m.1 = true
+      ∧ graft p (.board .ground .ground) = .board p p
+      ∧ drive (selfSteered mach rd) t u
+          = mach.out (orbit mach rd t u.length) :=
+  ⟨no_mark_lights_itself x w s hw hx,
+   the_unencumbered_are_welcome_everywhere r,
+   the_seat_is_load_bearing_in_the_same_click s m hb,
+   rfl,
+   the_self_steered_machine_is_a_clock mach rd u t⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7258,5 +7308,14 @@ theorem no_memory_meters_the_cost {X : Type} (f : List Bool → X)
 
 /-- info: 'Seed.no_memory_meters_the_cost' does not depend on any axioms -/
 #guard_msgs in #print axioms no_memory_meters_the_cost
+
+/-- info: 'Seed.the_stranger_leaves_the_hall_dark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_stranger_leaves_the_hall_dark
+
+/-- info: 'Seed.no_mark_lights_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms no_mark_lights_itself
+
+/-- info: 'Seed.the_first_light_comes_from_outside' does not depend on any axioms -/
+#guard_msgs in #print axioms the_first_light_comes_from_outside
 
 end Seed
