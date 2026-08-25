@@ -7139,6 +7139,48 @@ theorem two_seats_record_each_other (F : Face.{u}) {V W : Type}
    (the_records_part_the_seats F s hv w).2.1,
    (the_records_part_the_seats F s hv w).2.2⟩
 
+def concordFace (F : Face.{u}) (V : Type) : Face :=
+  pairFace (host F V) ⟨F.State × V, Unit, V, fun x _ => x.2⟩
+    (fun x => x) (fun x => x)
+
+theorem the_concord_reads_both_models (F : Face.{u}) {V : Type}
+    (x : F.State × V) (p : F.Probe) :
+    (concordFace F V).obs x (p, ()) = (F.obs x.1 p, x.2) := rfl
+
+theorem no_seat_reads_the_concord_alone (F : Face.{u}) {V : Type}
+    (p₀ : F.Probe) (s : F.State) {v v' : V} (hv : v ≠ v') :
+    alike (host F V) (s, v) (s, v')
+      ∧ ¬ alike (concordFace F V) (s, v) (s, v') :=
+  ⟨fun _ => rfl,
+   fun hal => hv (congrArg Prod.snd (hal (p₀, ())) : v = v')⟩
+
+theorem the_meeting_mints_the_concord (F : Face.{u}) {V : Type}
+    (agree : F.Ans → V → Prop) (p : F.Probe) :
+    Derived (concordFace F V)
+      (fun x => agree ((concordFace F V).obs x (p, ())).1
+        ((concordFace F V).obs x (p, ())).2) :=
+  a_role_read_at_a_probe_is_derived (concordFace F V) (p, ())
+    (fun a => agree a.1 a.2)
+
+theorem the_concord_is_the_meetings_own (F : Face.{u}) {V : Type}
+    (agree : F.Ans → V → Prop) (p : F.Probe) (s : F.State)
+    {v v' : V} (hv : v ≠ v')
+    (mine : F.State × V → V) (q : Interview F.Probe F.Ans)
+    (x : F.State × V) :
+    Derived (concordFace F V)
+        (fun y => agree ((concordFace F V).obs y (p, ())).1
+          ((concordFace F V).obs y (p, ())).2)
+      ∧ alike (host F V) (s, v) (s, v')
+      ∧ ¬ alike (concordFace F V) (s, v) (s, v')
+      ∧ sound (host F V) (x.1, mine x) q = sound (host F V) x q
+      ∧ (concordFace F V).obs x (p, ()) = (F.obs x.1 p, x.2) :=
+  ⟨the_meeting_mints_the_concord F agree p,
+   (no_seat_reads_the_concord_alone F p s hv).1,
+   (no_seat_reads_the_concord_alone F p s hv).2,
+   no_interview_hears_the_unheard (host F V) (fun y => (y.1, mine y))
+     (the_record_writes_where_the_face_is_blind F mine) x q,
+   rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9292,5 +9334,17 @@ theorem two_seats_record_each_other (F : Face.{u}) {V W : Type}
 
 /-- info: 'Seed.two_seats_record_each_other' does not depend on any axioms -/
 #guard_msgs in #print axioms two_seats_record_each_other
+
+/-- info: 'Seed.the_concord_reads_both_models' does not depend on any axioms -/
+#guard_msgs in #print axioms the_concord_reads_both_models
+
+/-- info: 'Seed.no_seat_reads_the_concord_alone' does not depend on any axioms -/
+#guard_msgs in #print axioms no_seat_reads_the_concord_alone
+
+/-- info: 'Seed.the_meeting_mints_the_concord' does not depend on any axioms -/
+#guard_msgs in #print axioms the_meeting_mints_the_concord
+
+/-- info: 'Seed.the_concord_is_the_meetings_own' does not depend on any axioms -/
+#guard_msgs in #print axioms the_concord_is_the_meetings_own
 
 end Seed

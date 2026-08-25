@@ -2062,6 +2062,27 @@ def benchMutualRecords : IO Bool := do
       && (widerA == 7) && (widerB == 9))) && ok
   return ok
 
+set_option maxRecDepth 4096 in
+def benchConcord : IO Bool := do
+  let mut ok := true
+  IO.println "the concord — what the meeting affords that neither model does:"
+  let tm : Nat := 91093837015
+  let agreeing : Measured × Bool := (m2018, true)
+  let disagreeing : Measured × Bool := (m2018, false)
+  let cA : Bool × Bool := (concordFace windowFace Bool).obs agreeing (tm, ())
+  let cB : Bool × Bool := (concordFace windowFace Bool).obs disagreeing (tm, ())
+  ok := (← checkTrue
+    "  concord row — the concord reads both models at once (the window's own reading beside the model of it: true-with-true against true-with-false — the agreement legible only where the two are read together)"
+    ((cA.1 == cB.1) && (cA.2 != cB.2)
+      && (cA.1 == cA.2) && (cB.1 != cB.2))) && ok
+  let seatOnly : Bool := (host windowFace Bool).obs agreeing tm
+  let seatOnly' : Bool := (host windowFace Bool).obs disagreeing tm
+  ok := (← checkTrue
+    "  concord row — no seat reads the concord alone (the shared face merges the two models at every probe; the agreement-role is derived at the meeting and underivable at either seat — composition provokes what neither brought)"
+    (seatOnly == seatOnly')) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2142,6 +2163,7 @@ def main : IO UInt32 := do
   ok := (← benchNonSections) && ok
   ok := (← benchModelingLoop) && ok
   ok := (← benchMutualRecords) && ok
+  ok := (← benchConcord) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
