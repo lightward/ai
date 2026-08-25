@@ -6015,6 +6015,74 @@ theorem every_braid_draws_one_count {u v w : List Plan} (hb : Braid u v w)
    the_braided_lives_part,
    (two_lineages_one_reading .ground .ground).2.1⟩
 
+theorem ne_of_beq_false {a b : Nat} (h : Nat.beq a b = false) : a ≠ b := by
+  intro he
+  rw [he] at h
+  exact nomatch (beq_self b).symm.trans h
+
+theorem the_mutual_need_stays_dark (x y : Nat) :
+    ∀ (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat)),
+      (∀ m, m ∈ w → m.1 = x → y ∈ m.2) →
+      (∀ m, m ∈ w → m.1 = y → x ∈ m.2) →
+      enrolled s.1 x = false → enrolled s.1 y = false →
+      enrolled (park doorM s w).1 x = false
+        ∧ enrolled (park doorM s w).1 y = false
+  | [], _, _, _, hx, hy => ⟨hx, hy⟩
+  | m :: w, s, hwx, hwy, hx, hy => by
+      have hnext : enrolled (welcome s m).1 x = false
+          ∧ enrolled (welcome s m).1 y = false := by
+        cases hb : backed s.1 m.2 with
+        | false =>
+            rw [the_unbacked_are_held hb]
+            exact ⟨hx, hy⟩
+        | true =>
+            rw [the_backed_are_seated hb]
+            cases hbx : Nat.beq m.1 x with
+            | true =>
+                exact absurd
+                  (the_backing_reaches_each_need s.1 m.2 hb y
+                    (hwx m (List.Mem.head w) (eq_of_beq m.1 x hbx)))
+                  (ne_true_of_eq_false hy)
+            | false =>
+                cases hby : Nat.beq m.1 y with
+                | true =>
+                    exact absurd
+                      (the_backing_reaches_each_need s.1 m.2 hb x
+                        (hwy m (List.Mem.head w) (eq_of_beq m.1 y hby)))
+                      (ne_true_of_eq_false hx)
+                | false =>
+                    exact ⟨the_stranger_leaves_the_hall_dark s.1 m.1 x
+                        (fun he => ne_of_beq_false hbx he.symm) hx,
+                      the_stranger_leaves_the_hall_dark s.1 m.1 y
+                        (fun he => ne_of_beq_false hby he.symm) hy⟩
+      show enrolled (park doorM (welcome s m) w).1 x = false
+          ∧ enrolled (park doorM (welcome s m) w).1 y = false
+      exact the_mutual_need_stays_dark x y w (welcome s m)
+        (fun k hk => hwx k (List.Mem.tail m hk))
+        (fun k hk => hwy k (List.Mem.tail m hk))
+        hnext.1 hnext.2
+
+theorem the_circle_admits_nobody (x y : Nat)
+    (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat))
+    (hwx : ∀ m, m ∈ w → m.1 = x → y ∈ m.2)
+    (hwy : ∀ m, m ∈ w → m.1 = y → x ∈ m.2)
+    (hx : enrolled s.1 x = false) (hy : enrolled s.1 y = false)
+    (z : Nat) (w' : List (Nat × List Nat))
+    (s' : List Nat × List (Nat × List Nat))
+    (hw' : ∀ m, m ∈ w' → m.1 = z → z ∈ m.2)
+    (hz : enrolled s'.1 z = false) (r : List Nat)
+    (n : Nat) (held : List (Nat × List Nat))
+    (hs : ∀ m, m ∈ held → backed r m.2 = false) :
+    (enrolled (park doorM s w).1 x = false
+        ∧ enrolled (park doorM s w).1 y = false)
+      ∧ enrolled (park doorM s' w').1 z = false
+      ∧ backed r [] = true
+      ∧ (again sweep n (r, held)).2.length = held.length :=
+  ⟨the_mutual_need_stays_dark x y w s hwx hwy hx hy,
+   no_mark_lights_itself z w' s' hw' hz,
+   the_unencumbered_are_welcome_everywhere r,
+   (the_deadlock_wheels r n held hs).2.1⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7811,5 +7879,14 @@ theorem every_braid_draws_one_count {u v w : List Plan} (hb : Braid u v w)
 
 /-- info: 'Seed.every_braid_draws_one_count' does not depend on any axioms -/
 #guard_msgs in #print axioms every_braid_draws_one_count
+
+/-- info: 'Seed.ne_of_beq_false' does not depend on any axioms -/
+#guard_msgs in #print axioms ne_of_beq_false
+
+/-- info: 'Seed.the_mutual_need_stays_dark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mutual_need_stays_dark
+
+/-- info: 'Seed.the_circle_admits_nobody' does not depend on any axioms -/
+#guard_msgs in #print axioms the_circle_admits_nobody
 
 end Seed

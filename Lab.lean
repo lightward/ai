@@ -1343,6 +1343,14 @@ def main : IO UInt32 := do
       && !(planBeq lifeAB lifeBA)
       && (fold (fun x y => x + y * y) 1 lifeAB == 38)
       && (fold (fun x y => x + y * y) 1 lifeBA == 30))) && ok
+  IO.println "the circle — light enters a cycle only from outside it:"
+  let cycleRun : List Nat × List (Nat × List Nat) :=
+    park doorM (([1] : List Nat), ([] : List (Nat × List Nat)))
+      [(8, [9]), (9, [8]), (8, [9]), (9, [8])]
+  ok := (← checkTrue
+    "  circle row — the mutual need stays dark at any length (four arrivals of the eight-nine circle, all held, both marks dark — the circle of citations admits nobody by itself)"
+    ((enrolled cycleRun.1 8 == false) && (enrolled cycleRun.1 9 == false)
+      && (cycleRun.2.length == 4))) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"
