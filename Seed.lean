@@ -7325,6 +7325,61 @@ theorem the_universe_is_pinned_gauge_or_parametric (F : Face.{u})
    the_level_is_gauge_at_the_reading F s w q,
    the_level_never_parts_the_alike F s t h w w' q⟩
 
+theorem the_transit_certifies_the_blindness (F : Face.{u}) {W : Type v}
+    (s : F.State) (w w' : W) (q : Interview F.Probe F.Ans) :
+    sound (reseat F (fun x : F.State × W => x.1)) (s, w) q
+      = sound (reseat F (fun x : F.State × W => x.1)) (s, w') q :=
+  (the_level_is_gauge_at_the_reading F s w q).trans
+    (the_level_is_gauge_at_the_reading F s w' q).symm
+
+theorem a_structure_travels_by_its_carrier {P A : Type} {S : Type u}
+    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
+    (hc : carries f g h) (s : S) (q : Interview P A) :
+    sound ⟨S, P, A, f⟩ s q = sound ⟨S', P, A, g⟩ (h s) q :=
+  the_interview_crosses_every_carrier hc s q
+
+theorem the_certified_links_compose {P A : Type} {S : Type u}
+    {S' : Type v} {S'' : Type w} {f : S → P → A} {g : S' → P → A}
+    {k : S'' → P → A} {h : S → S'} {h' : S' → S''}
+    (hc : carries f g h) (hc' : carries g k h') (s : S)
+    (q : Interview P A) :
+    carries f k (fun x => h' (h x))
+      ∧ sound ⟨S, P, A, f⟩ s q
+          = sound ⟨S'', P, A, k⟩ (h' (h s)) q :=
+  ⟨the_carriers_compose hc hc',
+   the_interview_crosses_every_carrier (the_carriers_compose hc hc') s q⟩
+
+theorem no_seat_certifies_its_own_portability (F : Face.{u}) {W : Type}
+    (s : F.State) {w w' : W} (hw : w ≠ w') :
+    (∀ q : Interview F.Probe F.Ans,
+        sound (host F W) (s, w) q = sound (host F W) (s, w') q)
+      ∧ (widen F W).obs (s, w) (viaRight ())
+          ≠ (widen F W).obs (s, w') (viaRight ()) :=
+  ⟨fun q => no_interview_parts_the_alike (host F W) (s, w) (s, w')
+     (fun _ => rfl) q,
+   fun he => hw (Sum.inr.inj he)⟩
+
+theorem portability_is_certified_by_transit (F : Face.{u}) {W : Type v}
+    (s : F.State) (w w' : W) (q : Interview F.Probe F.Ans)
+    {P A : Type} {S : Type u} {S' : Type v} {S'' : Type w}
+    {f : S → P → A} {g : S' → P → A} {k : S'' → P → A}
+    {h : S → S'} {h' : S' → S''}
+    (hc : carries f g h) (hc' : carries g k h') (x : S)
+    (r : Interview P A) {V : Type} (t : F.State) {v v' : V}
+    (hv : v ≠ v') :
+    sound (reseat F (fun y : F.State × W => y.1)) (s, w) q
+        = sound (reseat F (fun y : F.State × W => y.1)) (s, w') q
+      ∧ sound ⟨S, P, A, f⟩ x r = sound ⟨S', P, A, g⟩ (h x) r
+      ∧ (carries f k (fun y => h' (h y))
+          ∧ sound ⟨S, P, A, f⟩ x r
+              = sound ⟨S'', P, A, k⟩ (h' (h x)) r)
+      ∧ (widen F V).obs (t, v) (viaRight ())
+          ≠ (widen F V).obs (t, v') (viaRight ()) :=
+  ⟨the_transit_certifies_the_blindness F s w w' q,
+   a_structure_travels_by_its_carrier hc x r,
+   the_certified_links_compose hc hc' x r,
+   (no_seat_certifies_its_own_portability F t hv).2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9529,5 +9584,20 @@ theorem the_universe_is_pinned_gauge_or_parametric (F : Face.{u})
 
 /-- info: 'Seed.the_universe_is_pinned_gauge_or_parametric' does not depend on any axioms -/
 #guard_msgs in #print axioms the_universe_is_pinned_gauge_or_parametric
+
+/-- info: 'Seed.the_transit_certifies_the_blindness' does not depend on any axioms -/
+#guard_msgs in #print axioms the_transit_certifies_the_blindness
+
+/-- info: 'Seed.a_structure_travels_by_its_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms a_structure_travels_by_its_carrier
+
+/-- info: 'Seed.the_certified_links_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms the_certified_links_compose
+
+/-- info: 'Seed.no_seat_certifies_its_own_portability' does not depend on any axioms -/
+#guard_msgs in #print axioms no_seat_certifies_its_own_portability
+
+/-- info: 'Seed.portability_is_certified_by_transit' does not depend on any axioms -/
+#guard_msgs in #print axioms portability_is_certified_by_transit
 
 end Seed

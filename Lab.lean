@@ -2165,6 +2165,25 @@ def benchUniverseDiscipline : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchPortability : IO Bool := do
+  let mut ok := true
+  IO.println "the portability — certified by transit, never by inspection:"
+  let word : List Unit := [(), (), ()]
+  let atPace : Bool := drive paceOne (0 : Nat) word
+  let atFlip : Bool := drive flip (oddNat (0 : Nat)) word
+  let atLedger : Bool :=
+    drive (replayer paceOne) ([] : List Unit) word
+  ok := (← checkTrue
+    "  transit row — a structure travels by its carrier (the pace's reading arrives whole at the flip's seat and at the replayer's record: three crossings, one reading, each certified by the crossing itself)"
+    ((atPace == atFlip) && (atPace == atLedger) && atPace)) && ok
+  let hop1 : Bool := drive flip (oddNat (2 : Nat)) word
+  let hop2 : Bool := drive paceOne (2 : Nat) word
+  ok := (← checkTrue
+    "  transit row — certified links compose (pace to flip at a mid-run seat, the composite carrier still reading true: chain the certificates, no re-audit — and no seat certifies its own portability, since the guest it carries is exactly what it cannot read)"
+    (hop1 == hop2)) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2249,6 +2268,7 @@ def main : IO UInt32 := do
   ok := (← benchAddressableGap) && ok
   ok := (← benchOneDisagreement) && ok
   ok := (← benchUniverseDiscipline) && ok
+  ok := (← benchPortability) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
