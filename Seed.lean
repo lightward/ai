@@ -5605,6 +5605,55 @@ theorem the_first_light_comes_from_outside (x : Nat)
    rfl,
    the_self_steered_machine_is_a_clock mach rd u t⟩
 
+def sweep (s : List Nat × List (Nat × List Nat)) :
+    List Nat × List (Nat × List Nat) :=
+  park doorM (s.1, []) s.2
+
+theorem the_backing_survives_the_run (need : List Nat) :
+    ∀ (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat)),
+      backed s.1 need = true → backed (park doorM s w).1 need = true
+  | [], _, h => h
+  | m :: w, s, h =>
+      the_backing_survives_the_run need w (welcome s m)
+        (the_backing_survives_the_door s m need h)
+
+theorem the_ready_seat_in_one_sweep
+    (r : List Nat) (m : Nat × List Nat) (h : backed r m.2 = true)
+    (v₁ v₂ : List (Nat × List Nat)) :
+    enrolled (park doorM (r, ([] : List (Nat × List Nat)))
+      (v₁ ++ m :: v₂)).1 m.1 = true := by
+  rw [the_park_resumes doorM v₁ (m :: v₂) (r, [])]
+  show enrolled
+      (park doorM (welcome (park doorM (r, []) v₁) m) v₂).1 m.1 = true
+  exact the_enrolled_survive_the_run m.1 v₂
+    (welcome (park doorM (r, []) v₁) m)
+    (the_seat_is_load_bearing_in_the_same_click
+      (park doorM (r, []) v₁) m
+      (the_backing_survives_the_run m.2 v₁ (r, []) h))
+
+theorem the_sweep_seats_the_ready
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (h : backed s.1 m.2 = true) (v₁ v₂ : List (Nat × List Nat))
+    (hv : s.2 = v₁ ++ m :: v₂) :
+    enrolled (sweep s).1 m.1 = true := by
+  show enrolled (park doorM (s.1, []) s.2).1 m.1 = true
+  rw [hv]
+  exact the_ready_seat_in_one_sweep s.1 m h v₁ v₂
+
+theorem the_vestibule_drains_by_storeys
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (h : backed s.1 m.2 = true) (v₁ v₂ : List (Nat × List Nat))
+    (hv : s.2 = v₁ ++ m :: v₂) (need : List Nat)
+    (w : List (Nat × List Nat)) (hn : backed s.1 need = true)
+    (tw : List (Nat × List Nat)) (ht : ordered [] tw) :
+    enrolled (sweep s).1 m.1 = true
+      ∧ backed (park doorM s w).1 need = true
+      ∧ (park doorM (([] : List Nat), ([] : List (Nat × List Nat))) tw).2
+          = [] :=
+  ⟨the_sweep_seats_the_ready s m h v₁ v₂ hv,
+   the_backing_survives_the_run need w s hn,
+   the_ordered_arrivals_never_wait tw [] [] ht⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7317,5 +7366,17 @@ theorem the_first_light_comes_from_outside (x : Nat)
 
 /-- info: 'Seed.the_first_light_comes_from_outside' does not depend on any axioms -/
 #guard_msgs in #print axioms the_first_light_comes_from_outside
+
+/-- info: 'Seed.the_backing_survives_the_run' does not depend on any axioms -/
+#guard_msgs in #print axioms the_backing_survives_the_run
+
+/-- info: 'Seed.the_ready_seat_in_one_sweep' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ready_seat_in_one_sweep
+
+/-- info: 'Seed.the_sweep_seats_the_ready' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sweep_seats_the_ready
+
+/-- info: 'Seed.the_vestibule_drains_by_storeys' does not depend on any axioms -/
+#guard_msgs in #print axioms the_vestibule_drains_by_storeys
 
 end Seed

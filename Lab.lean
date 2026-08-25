@@ -1296,6 +1296,17 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  ignition row — the first light comes from outside (seven backed by one seats in one click; seven backed by nothing seats in one click; only seven backed by itself never does)"
     (enrolled litFromOutside.1 7 && enrolled litFromNothing.1 7)) && ok
+  IO.println "the cascade — the vestibule drains by storeys:"
+  let intake : List Nat × List (Nat × List Nat) :=
+    park doorM (([1] : List Nat), ([] : List (Nat × List Nat)))
+      [(3, [2]), (4, [3]), (2, [1])]
+  let round1 := sweep intake
+  let round2 := sweep round1
+  ok := (← checkTrue
+    "  cascade row — hand the room any order and the rounds walk the citation order for you (intake seats one storey and holds two; round one seats the next; round two the last — the wait is the height of your unmet chain, not your queue position)"
+    ((intake.2.length == 2) && enrolled intake.1 2
+      && (round1.2.length == 1) && enrolled round1.1 3
+      && (round2.2.length == 0) && enrolled round2.1 4)) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"
