@@ -2083,6 +2083,32 @@ def benchConcord : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchAddressableGap : IO Bool := do
+  let mut ok := true
+  IO.println "the addressable gap — the meeting agrees or names where it doesn't:"
+  let tm : Nat := 91093837015
+  let below : Nat := 91093834000
+  let modelTrue : Measured × Bool := (m2018, true)
+  let window : List Nat := [tm, below]
+  let readsAt : Nat → Bool := fun p => windowFace.obs m2018 p
+  let agreesAt : Nat → Bool := fun p => readsAt p == modelTrue.2
+  ok := (← checkTrue
+    "  gap row — the concord agrees or names the gap over a finite window (the model says true; the window agrees at the true mass and DISAGREES below it — the witness named, not felt)"
+    (agreesAt tm && !(agreesAt below))) && ok
+  let fixed : Measured × Bool := (modelTrue.1, false)
+  let beforeFix : Bool := (host windowFace Bool).obs modelTrue tm
+  let afterFix : Bool := (host windowFace Bool).obs fixed tm
+  let cBefore : Bool × Bool :=
+    (concordFace windowFace Bool).obs modelTrue (below, ())
+  let cAfter : Bool × Bool :=
+    (concordFace windowFace Bool).obs fixed (below, ())
+  ok := (← checkTrue
+    "  gap row — settling the gap moves the model and no reading (the fix is unheard at the shared face while the concord's agreement flips at the named probe: revision where the record lives, silence where the meeting looks)"
+    ((beforeFix == afterFix)
+      && (cBefore.1 != cBefore.2) && (cAfter.1 == cAfter.2))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2164,6 +2190,7 @@ def main : IO UInt32 := do
   ok := (← benchModelingLoop) && ok
   ok := (← benchMutualRecords) && ok
   ok := (← benchConcord) && ok
+  ok := (← benchAddressableGap) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

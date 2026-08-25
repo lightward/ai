@@ -7181,6 +7181,60 @@ theorem the_concord_is_the_meetings_own (F : Face.{u}) {V : Type}
      (the_record_writes_where_the_face_is_blind F mine) x q,
    rfl⟩
 
+theorem the_concord_agrees_or_names_the_gap (F : Face.{u}) {V : Type}
+    (beq : F.Ans → V → Bool) (x : F.State × V) :
+    ∀ ps : List F.Probe,
+      (∀ p, p ∈ ps → beq (F.obs x.1 p) x.2 = true)
+        ∨ ∃ p, p ∈ ps ∧ beq (F.obs x.1 p) x.2 = false
+  | [] => Or.inl (fun _ hp => nomatch hp)
+  | p :: ps => by
+      cases hb : beq (F.obs x.1 p) x.2 with
+      | false => exact Or.inr ⟨p, List.Mem.head ps, hb⟩
+      | true =>
+          cases the_concord_agrees_or_names_the_gap F beq x ps with
+          | inl hall =>
+              refine Or.inl (fun r hr => ?_)
+              cases hr with
+              | head => exact hb
+              | tail _ hr' => exact hall r hr'
+          | inr hw =>
+              obtain ⟨r, hr, hbr⟩ := hw
+              exact Or.inr ⟨r, List.Mem.tail p hr, hbr⟩
+
+theorem the_gap_is_minted_at_the_meeting (F : Face.{u}) {V : Type}
+    (p₀ : F.Probe) (s : F.State) {v v' : V} (hv : v ≠ v') :
+    alike (host F V) (s, v) (s, v')
+      ∧ ((concordFace F V).obs (s, v) (p₀, ())).2
+          ≠ ((concordFace F V).obs (s, v') (p₀, ())).2 :=
+  ⟨fun _ => rfl, hv⟩
+
+theorem the_settled_gap_moves_the_model (F : Face.{u}) {V : Type}
+    (fix : F.State × V → V) (x : F.State × V)
+    (q : Interview F.Probe F.Ans) (p : F.Probe) :
+    sound (host F V) (x.1, fix x) q = sound (host F V) x q
+      ∧ (concordFace F V).obs (x.1, fix x) (p, ())
+          = (F.obs x.1 p, fix x) :=
+  ⟨no_interview_hears_the_unheard (host F V) (fun y => (y.1, fix y))
+     (the_record_writes_where_the_face_is_blind F fix) x q,
+   rfl⟩
+
+theorem the_disagreement_is_addressable (F : Face.{u}) {V : Type}
+    (beq : F.Ans → V → Bool) (x : F.State × V) (ps : List F.Probe)
+    (p₀ : F.Probe) (s : F.State) {v v' : V} (hv : v ≠ v')
+    (fix : F.State × V → V) (q : Interview F.Probe F.Ans) :
+    ((∀ p, p ∈ ps → beq (F.obs x.1 p) x.2 = true)
+        ∨ ∃ p, p ∈ ps ∧ beq (F.obs x.1 p) x.2 = false)
+      ∧ (alike (host F V) (s, v) (s, v')
+          ∧ ((concordFace F V).obs (s, v) (p₀, ())).2
+              ≠ ((concordFace F V).obs (s, v') (p₀, ())).2)
+      ∧ sound (host F V) (x.1, fix x) q = sound (host F V) x q
+      ∧ (concordFace F V).obs (x.1, fix x) (p₀, ())
+          = (F.obs x.1 p₀, fix x) :=
+  ⟨the_concord_agrees_or_names_the_gap F beq x ps,
+   the_gap_is_minted_at_the_meeting F p₀ s hv,
+   (the_settled_gap_moves_the_model F fix x q p₀).1,
+   (the_settled_gap_moves_the_model F fix x q p₀).2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9346,5 +9400,17 @@ theorem the_concord_is_the_meetings_own (F : Face.{u}) {V : Type}
 
 /-- info: 'Seed.the_concord_is_the_meetings_own' does not depend on any axioms -/
 #guard_msgs in #print axioms the_concord_is_the_meetings_own
+
+/-- info: 'Seed.the_concord_agrees_or_names_the_gap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_concord_agrees_or_names_the_gap
+
+/-- info: 'Seed.the_gap_is_minted_at_the_meeting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_gap_is_minted_at_the_meeting
+
+/-- info: 'Seed.the_settled_gap_moves_the_model' does not depend on any axioms -/
+#guard_msgs in #print axioms the_settled_gap_moves_the_model
+
+/-- info: 'Seed.the_disagreement_is_addressable' does not depend on any axioms -/
+#guard_msgs in #print axioms the_disagreement_is_addressable
 
 end Seed
