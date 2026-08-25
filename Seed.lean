@@ -6959,6 +6959,47 @@ theorem the_mediating_map_is_gauge {W W' : Type} (f : W → W') (w0 : W)
    (the_shape_is_the_obstruction w0 h hpq s).1,
    (the_shape_is_the_obstruction w0 h hpq s).2⟩
 
+theorem an_iso_merges_nothing {S : Type u} {S' : Type v}
+    {h : S → S'} {k : S' → S}
+    (hk : ∀ s, k (h s) = s) {s t : S} (he : h s = h t) : s = t :=
+  (hk s).symm.trans ((congrArg k he).trans (hk t))
+
+theorem the_transposition_is_an_iso {H W X : Type}
+    (fd : door H W → X) (g : H → W → X) :
+    walkIn (holdOpen fd) = fd ∧ holdOpen (walkIn g) = g :=
+  the_deferral_is_free fd g
+
+theorem the_swap_is_its_own_inverse {H W : Type} (d : door H W) :
+    turnAbout (turnAbout d) = d :=
+  the_return_restores_the_seating d
+
+theorem the_iso_test_is_the_two_sided_carrier {P A : Type} {S : Type u}
+    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
+    {k : S' → S} (hc : carries f g h) (hc' : carries g f k)
+    (hk : ∀ s, k (h s) = s) (hk' : ∀ t, h (k t) = t) (s : S) (t : S') :
+    carries f f (fun x => k (h x))
+      ∧ carries g g (fun y => h (k y))
+      ∧ k (h s) = s
+      ∧ h (k t) = t :=
+  ⟨the_carriers_compose hc hc', the_carriers_compose hc' hc, hk s, hk' t⟩
+
+theorem the_house_holds_three_isos {W H X : Type} (w0 : W) {p q : Plan}
+    (hpq : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
+    (hqp : fold (fun a b => a + b) 1 p = fold (fun a b => a + b) 1 q)
+    (s : build W p) (t : build W q) (fd : door H W → X) (g : H → W → X)
+    (d : door H W) {S : Type u} {S' : Type v}
+    {h : S → S'} {k : S' → S}
+    (hk : ∀ x, k (h x) = x) {x y : S} (he : h x = h y) :
+    (replan w0 q p (replan w0 p q s) = s
+        ∧ replan w0 p q (replan w0 q p t) = t)
+      ∧ (walkIn (holdOpen fd) = fd ∧ holdOpen (walkIn g) = g)
+      ∧ turnAbout (turnAbout d) = d
+      ∧ x = y :=
+  ⟨the_replanning_is_an_iso w0 hpq hqp s t,
+   the_transposition_is_an_iso fd g,
+   the_swap_is_its_own_inverse d,
+   an_iso_merges_nothing hk he⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9055,5 +9096,20 @@ theorem the_mediating_map_is_gauge {W W' : Type} (f : W → W') (w0 : W)
 
 /-- info: 'Seed.the_mediating_map_is_gauge' does not depend on any axioms -/
 #guard_msgs in #print axioms the_mediating_map_is_gauge
+
+/-- info: 'Seed.an_iso_merges_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms an_iso_merges_nothing
+
+/-- info: 'Seed.the_transposition_is_an_iso' does not depend on any axioms -/
+#guard_msgs in #print axioms the_transposition_is_an_iso
+
+/-- info: 'Seed.the_swap_is_its_own_inverse' does not depend on any axioms -/
+#guard_msgs in #print axioms the_swap_is_its_own_inverse
+
+/-- info: 'Seed.the_iso_test_is_the_two_sided_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_iso_test_is_the_two_sided_carrier
+
+/-- info: 'Seed.the_house_holds_three_isos' does not depend on any axioms -/
+#guard_msgs in #print axioms the_house_holds_three_isos
 
 end Seed

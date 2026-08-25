@@ -1968,6 +1968,27 @@ def benchMediating : IO Bool := do
       && (crossThenPlan == [70, 80, 90]))) && ok
   return ok
 
+def benchIsoTest : IO Bool := do
+  let mut ok := true
+  IO.println "the iso test — a two-sided carrier merges nothing:"
+  let held : Nat → Nat → Nat := holdOpen (fun d : door Nat Nat => face d * met d)
+  let walked : door Nat Nat → Nat := walkIn (fun a b : Nat => a * b)
+  let swapped : door Nat Nat := turnAbout (turnAbout (atTheDoor (3 : Nat) (5 : Nat)))
+  ok := (← checkTrue
+    "  iso row — the transposition and the swap are isos (held-then-walked reads the meeting, walked-then-held reads the two strokes, and the double swap restores the seating: forty-two, forty-two, three-and-five)"
+    ((held 6 7 == 42) && (walked (atTheDoor (6 : Nat) (7 : Nat)) == 42)
+      && (face swapped == 3) && (met swapped == 5))) && ok
+  let leftHeavy2 : Plan := .board (.board .ground .ground) .ground
+  let a1 : build Nat leftHeavy2 := (((1 : Nat), (2 : Nat)), (3 : Nat))
+  let a2 : build Nat leftHeavy2 := (((1 : Nat), (2 : Nat)), (9 : Nat))
+  let i1 : build Nat (comb 2) := replan (0 : Nat) leftHeavy2 (comb 2) a1
+  let i2 : build Nat (comb 2) := replan (0 : Nat) leftHeavy2 (comb 2) a2
+  ok := (← checkTrue
+    "  iso row — an iso merges nothing (two carriers distinct at the source stay distinct across the shape-iso; the merging maps are exactly the non-isos — the boundary between a licensed identification and a real remainder)"
+    ((pour (comb 2) i1 != pour (comb 2) i2)
+      && (pour leftHeavy2 a1 != pour leftHeavy2 a2))) && ok
+  return ok
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2044,6 +2065,7 @@ def main : IO UInt32 := do
   ok := (← benchCustomsFunctor) && ok
   ok := (← benchTwoFunctors) && ok
   ok := (← benchMediating) && ok
+  ok := (← benchIsoTest) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
