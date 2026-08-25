@@ -1333,6 +1333,16 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  weave row — two contributors, three interleavings, one seat (5,9 woven with 3 parks seventeen every way at the commuting heap — while the scribe keeps every braid distinct, one seat wider)"
     ((weaveA == weaveB) && (weaveB == weaveC) && (weaveA == 17))) && ok
+  IO.println "the drawing — every braid draws one count:"
+  let lifeAB : Plan := park grower Plan.ground [dayA, dayB]
+  let lifeBA : Plan := park grower Plan.ground [dayB, dayA]
+  ok := (← checkTrue
+    "  drawing row — the count draws every braid alike while the lives part and the square hears (both orders read six; the plans provably differ; the square-fold reads 38 against 30 — the braid is drawable at the line and audible past it)"
+    ((fold (fun x y => x + y) 1 lifeAB == fold (fun x y => x + y) 1 lifeBA)
+      && (fold (fun x y => x + y) 1 lifeAB == 6)
+      && !(planBeq lifeAB lifeBA)
+      && (fold (fun x y => x + y * y) 1 lifeAB == 38)
+      && (fold (fun x y => x + y * y) 1 lifeBA == 30))) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"

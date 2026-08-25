@@ -5950,6 +5950,71 @@ theorem the_shared_fold_needs_no_scheduler {I O : Type} (m : Machine I O)
      the_heap_steps_commute x y t,
    the_scribe_keeps_the_order hab⟩
 
+theorem the_tellers_steps_commute (n : Nat) (a b : Plan) :
+    teller.step (teller.step n a) b = teller.step (teller.step n b) a :=
+  (mul_regroups n (fold (fun x y => x + y) 1 a)
+      (fold (fun x y => x + y) 1 b)).trans
+    ((congrArg (n * ·)
+        (Nat.mul_comm (fold (fun x y => x + y) 1 a)
+          (fold (fun x y => x + y) 1 b))).trans
+      (mul_regroups n (fold (fun x y => x + y) 1 b)
+        (fold (fun x y => x + y) 1 a)).symm)
+
+theorem the_braided_life_draws_one_count {u v w : List Plan}
+    (hb : Braid u v w) :
+    (fold (fun a b => a + b) 1 (park grower Plan.ground w) : Nat)
+      = park teller (park teller (1 : Nat) u) v :=
+  ((the_audition_cannot_tell_the_tree_from_its_count).2.2.1 w).trans
+    (the_weave_parks_one_seat teller the_tellers_steps_commute hb (1 : Nat))
+
+theorem the_braided_lives_part :
+    park grower Plan.ground
+        [Plan.board .ground .ground,
+         Plan.board .ground (.board .ground .ground)]
+      ≠ park grower Plan.ground
+        [Plan.board .ground (.board .ground .ground),
+         Plan.board .ground .ground] := by
+  intro h
+  have e1 : park grower Plan.ground
+      [Plan.board .ground .ground,
+       Plan.board .ground (.board .ground .ground)]
+      = graft (.board .ground .ground)
+          (.board .ground (.board .ground .ground)) :=
+    congrArg (fun t => graft t (.board .ground (.board .ground .ground)))
+      (the_trivial_revision_changes_nothing (.board .ground .ground))
+  have e2 : park grower Plan.ground
+      [Plan.board .ground (.board .ground .ground),
+       Plan.board .ground .ground]
+      = graft (.board .ground (.board .ground .ground))
+          (.board .ground .ground) :=
+    congrArg (fun t => graft t (.board .ground .ground))
+      (the_trivial_revision_changes_nothing
+        (.board .ground (.board .ground .ground)))
+  exact (two_lineages_one_reading .ground .ground).2.2
+    ((e1.symm.trans h).trans e2)
+
+theorem every_braid_draws_one_count {u v w : List Plan} (hb : Braid u v w)
+    (n : Nat) (a b : Plan) :
+    teller.step (teller.step n a) b = teller.step (teller.step n b) a
+      ∧ (fold (fun x y => x + y) 1 (park grower Plan.ground w) : Nat)
+          = park teller (park teller (1 : Nat) u) v
+      ∧ park grower Plan.ground
+            [Plan.board .ground .ground,
+             Plan.board .ground (.board .ground .ground)]
+          ≠ park grower Plan.ground
+            [Plan.board .ground (.board .ground .ground),
+             Plan.board .ground .ground]
+      ∧ fold (fun x y => x + y * y) 1
+            (graft (.board .ground .ground)
+              (.board .ground (.board .ground .ground)))
+          ≠ fold (fun x y => x + y * y) 1
+            (graft (.board .ground (.board .ground .ground))
+              (.board .ground .ground)) :=
+  ⟨the_tellers_steps_commute n a b,
+   the_braided_life_draws_one_count hb,
+   the_braided_lives_part,
+   (two_lineages_one_reading .ground .ground).2.1⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7734,5 +7799,17 @@ theorem the_shared_fold_needs_no_scheduler {I O : Type} (m : Machine I O)
 
 /-- info: 'Seed.the_shared_fold_needs_no_scheduler' does not depend on any axioms -/
 #guard_msgs in #print axioms the_shared_fold_needs_no_scheduler
+
+/-- info: 'Seed.the_tellers_steps_commute' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tellers_steps_commute
+
+/-- info: 'Seed.the_braided_life_draws_one_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_braided_life_draws_one_count
+
+/-- info: 'Seed.the_braided_lives_part' does not depend on any axioms -/
+#guard_msgs in #print axioms the_braided_lives_part
+
+/-- info: 'Seed.every_braid_draws_one_count' does not depend on any axioms -/
+#guard_msgs in #print axioms every_braid_draws_one_count
 
 end Seed
