@@ -6705,6 +6705,48 @@ theorem the_carrier_runs_the_handshake (F : Face.{u})
    the_carrier_merges_only_the_alike hc he,
    the_two_routes_merge_at_the_carrier⟩
 
+theorem the_carrier_was_a_seating {P A : Type} {S : Type u} {S' : Type v}
+    (f : S → P → A) (g : S' → P → A) (h : S → S') :
+    carries f g h
+      ↔ ∀ s p, (reseat ⟨S', P, A, g⟩ h).obs s p = f s p :=
+  Iff.rfl
+
+theorem the_ear_crosses_the_carrier {P P' A : Type} {S : Type u}
+    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
+    (hc : carries f g h) (fp : P' → P) :
+    carries (fun s p' => f s (fp p')) (fun t p' => g t (fp p')) h :=
+  fun s p' => hc s (fp p')
+
+theorem the_voice_crosses_the_carrier {P A A' : Type} {S : Type u}
+    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
+    (hc : carries f g h) (ga : A → A') :
+    carries (fun s p => ga (f s p)) (fun t p => ga (g t p)) h :=
+  fun s p => congrArg ga (hc s p)
+
+theorem the_host_crosses_the_carrier {P A W : Type} {S : Type u}
+    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
+    (hc : carries f g h) :
+    carries (host ⟨S, P, A, f⟩ W).obs (host ⟨S', P, A, g⟩ W).obs
+      (fun x => (h x.1, x.2)) :=
+  fun x p => hc x.1 p
+
+theorem every_crossing_is_a_seating {P P' A A' W : Type} {S : Type u}
+    {S' : Type v} (f : S → P → A) (g : S' → P → A) (h : S → S')
+    (hc : carries f g h) (fp : P' → P) (ga : A → A')
+    (G : Face.{v}) {S₀ : Type u} (f₀ : S₀ → G.State) :
+    (carries f g h
+        ↔ ∀ s p, (reseat ⟨S', P, A, g⟩ h).obs s p = f s p)
+      ∧ carries (fun s p' => f s (fp p')) (fun t p' => g t (fp p')) h
+      ∧ carries (fun s p => ga (f s p)) (fun t p => ga (g t p)) h
+      ∧ carries (host ⟨S, P, A, f⟩ W).obs (host ⟨S', P, A, g⟩ W).obs
+          (fun x => (h x.1, x.2))
+      ∧ carries (reseat G f₀).obs G.obs f₀ :=
+  ⟨Iff.rfl,
+   the_ear_crosses_the_carrier hc fp,
+   the_voice_crosses_the_carrier hc ga,
+   the_host_crosses_the_carrier hc,
+   the_seat_map_carries_home G f₀⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8714,5 +8756,20 @@ theorem the_carrier_runs_the_handshake (F : Face.{u})
 
 /-- info: 'Seed.the_carrier_runs_the_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_carrier_runs_the_handshake
+
+/-- info: 'Seed.the_carrier_was_a_seating' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carrier_was_a_seating
+
+/-- info: 'Seed.the_ear_crosses_the_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ear_crosses_the_carrier
+
+/-- info: 'Seed.the_voice_crosses_the_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_voice_crosses_the_carrier
+
+/-- info: 'Seed.the_host_crosses_the_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_host_crosses_the_carrier
+
+/-- info: 'Seed.every_crossing_is_a_seating' does not depend on any axioms -/
+#guard_msgs in #print axioms every_crossing_is_a_seating
 
 end Seed

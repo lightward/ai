@@ -1831,6 +1831,21 @@ def benchLicense : IO Bool := do
     (twiceSettled == unsettled)) && ok
   return ok
 
+def benchCrossings : IO Bool := do
+  let mut ok := true
+  IO.println "the crossings — every crossing is a seating:"
+  let s3 : Nat := 3
+  let earWord : List Bool := [true, false]
+  let earCarried : Bool := drive flip (oddNat s3) (earWord.map (fun _ => ()))
+  let earStraight : Bool := drive pulse s3 earWord
+  let seated : Bool := (reseat (seatFace flip) oddNat).obs s3 [(), ()]
+  let straight : Bool := drive paceOne s3 [(), ()]
+  ok := (← checkTrue
+    "  crossing row — the ear crosses the carrier (the pace-flip carrier heard through the deaf ear carries the pulse) and the carrier was a seating all along (the flip's seat-face reseated at oddNat wears the pace's own face)"
+    ((earCarried == earStraight) && (seated == straight)
+      && (seated == true))) && ok
+  return ok
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -1901,6 +1916,7 @@ def main : IO UInt32 := do
   ok := (← benchCarriers) && ok
   ok := (← benchSimulations) && ok
   ok := (← benchLicense) && ok
+  ok := (← benchCrossings) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
