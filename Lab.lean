@@ -1888,6 +1888,30 @@ def benchSettleSplits : IO Bool := do
     (liftBack == plain)) && ok
   return ok
 
+def benchCustomsFunctor : IO Bool := do
+  let mut ok := true
+  IO.println "the customs functor — the world-map crosses to a carrier-map, the manifest natural:"
+  let f : Nat → Nat := fun w => w * 10
+  let g : Nat → Nat := fun w => w + 7
+  let stacked : List Nat :=
+    pour toyPlan (reground g toyPlan (reground f toyPlan toyImport))
+  let fused : List Nat :=
+    pour toyPlan (reground (fun w => g (f w)) toyPlan toyImport)
+  let stillWorld : List Nat :=
+    pour toyPlan (reground (fun w => w) toyPlan toyImport)
+  ok := (← checkTrue
+    "  functor row — the customs keep the still world and stack forward (identity moves nothing; two customs passes fuse into one, ninety-one thousand ninety-seven at the spine)"
+    ((stacked == fused) && (stillWorld == pour toyPlan toyImport)
+      && (stacked.headD 0 == 91097))) && ok
+  let viaCustoms : List Nat := pour toyPlan (reground f toyPlan toyImport)
+  let viaMap : List Nat := (pour toyPlan toyImport).map f
+  ok := (← checkTrue
+    "  functor row — the manifest is natural (cross the customs then pour, or pour then map: one square, both ways round) and the spine is natural beneath it"
+    ((viaCustoms == viaMap)
+      && (spine Nat toyPlan (reground f toyPlan toyImport)
+          == f (spine Nat toyPlan toyImport)))) && ok
+  return ok
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -1961,6 +1985,7 @@ def main : IO UInt32 := do
   ok := (← benchCrossings) && ok
   ok := (← benchRetract) && ok
   ok := (← benchSettleSplits) && ok
+  ok := (← benchCustomsFunctor) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

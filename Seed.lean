@@ -6830,6 +6830,47 @@ theorem the_settle_splits_like_the_drain {I O W' I' O' : Type}
    ⟨the_manifest_carries_the_simulation w0 p s0 step out,
     (the_two_carriers_round_trip w0 p s0 l).2⟩⟩
 
+theorem the_customs_keep_the_still_world {W : Type} (p : Plan)
+    (s : build W p) : reground (fun w => w) p s = s :=
+  remeasurement_moves_only_the_ground p s
+
+theorem the_customs_stack_forward {W W' W'' : Type} (f : W → W')
+    (g : W' → W'') (p : Plan) (s : build W p) :
+    reground g p (reground f p s) = reground (fun w => g (f w)) p s :=
+  imports_compose f g p s
+
+theorem the_manifest_is_natural {W W' : Type} (f : W → W') (p : Plan)
+    (s : build W p) :
+    pour p (reground f p s) = (pour p s).map f :=
+  the_customs_thread_the_manifest f p s
+
+theorem the_spine_is_natural {W W' : Type} (f : W → W') (p : Plan)
+    (s : build W p) :
+    spine W' p (reground f p s) = f (spine W p s) :=
+  the_import_threads_the_spine f p s
+
+theorem the_ride_is_natural {W W' : Type} (f : W → W') {t : Plan}
+    (s : build W t) (δ : Plan) :
+    reground f (graft t δ) (ride s δ) = ride (reground f t s) δ :=
+  the_customs_ride_along f s δ
+
+theorem the_customs_are_a_functor {W W' W'' : Type} (f : W → W')
+    (g : W' → W'') (p : Plan) (s : build W p) {t : Plan}
+    (u : build W t) (δ : Plan) (qs : List Plan) :
+    reground (fun w => w) p s = s
+      ∧ reground g p (reground f p s) = reground (fun w => g (f w)) p s
+      ∧ pour p (reground f p s) = (pour p s).map f
+      ∧ spine W' p (reground f p s) = f (spine W p s)
+      ∧ reground f (graft t δ) (ride u δ) = ride (reground f t u) δ
+      ∧ reground f (worldline t qs) (journey u qs)
+          = journey (reground f t u) qs :=
+  ⟨the_customs_keep_the_still_world p s,
+   the_customs_stack_forward f g p s,
+   the_manifest_is_natural f p s,
+   the_spine_is_natural f p s,
+   the_ride_is_natural f u δ,
+   the_customs_survive_the_journey f qs u⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8878,5 +8919,23 @@ theorem the_settle_splits_like_the_drain {I O W' I' O' : Type}
 
 /-- info: 'Seed.the_settle_splits_like_the_drain' does not depend on any axioms -/
 #guard_msgs in #print axioms the_settle_splits_like_the_drain
+
+/-- info: 'Seed.the_customs_keep_the_still_world' does not depend on any axioms -/
+#guard_msgs in #print axioms the_customs_keep_the_still_world
+
+/-- info: 'Seed.the_customs_stack_forward' does not depend on any axioms -/
+#guard_msgs in #print axioms the_customs_stack_forward
+
+/-- info: 'Seed.the_manifest_is_natural' does not depend on any axioms -/
+#guard_msgs in #print axioms the_manifest_is_natural
+
+/-- info: 'Seed.the_spine_is_natural' does not depend on any axioms -/
+#guard_msgs in #print axioms the_spine_is_natural
+
+/-- info: 'Seed.the_ride_is_natural' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ride_is_natural
+
+/-- info: 'Seed.the_customs_are_a_functor' does not depend on any axioms -/
+#guard_msgs in #print axioms the_customs_are_a_functor
 
 end Seed
