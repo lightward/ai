@@ -1261,6 +1261,27 @@ def main : IO UInt32 := do
     "  citation row — the independent pair stays gauge (one and two entered unciting; the hall answers alike in either order — only the record holds their sort direction)"
     ((enrolled [1, 2] 1 == enrolled [2, 1] 1)
       && (enrolled [1, 2] 2 == enrolled [2, 1] 2))) && ok
+  IO.println "the initialization — the tree admits itself:"
+  let treeWord : List (Nat × List Nat) :=
+    [(1, []), (2, [1]), (3, [1, 2]), (4, [3])]
+  let grownTree :=
+    park doorM (([] : List Nat), ([] : List (Nat × List Nat))) treeWord
+  ok := (← checkTrue
+    "  init row — an ordered citation-word seats everyone from the empty room (four nodes, each backed by its cited elders, vestibule empty at every click — the engine's own green line, kid-native)"
+    ((grownTree.2.length == 0) && enrolled grownTree.1 1
+      && enrolled grownTree.1 2 && enrolled grownTree.1 3
+      && enrolled grownTree.1 4
+      && (behavior doorM treeWord == 0))) && ok
+  ok := (← checkTrue
+    "  init row — the port at the bottom is the empty need (the unencumbered mark is welcome in every room, the empty room included — the ground node, the one every tree comes back to)"
+    (backed [] [] && backed [9, 9, 9] [])) && ok
+  let memA : List Bool := park (scribe (fun _ (x : Bool) => x))
+    ([] : List Bool) (sound hallFace [5, 6] (recite ([5, 6] : List Nat)))
+  let memB : List Bool := park (scribe (fun _ (x : Bool) => x))
+    ([] : List Bool) (sound hallFace [6, 5] (recite ([5, 6] : List Nat)))
+  ok := (← checkTrue
+    "  init row — no memory meters the cost (a scribe fed the warmed hall's answers writes the identical record; the depths still part — the tax is real and unbanked by anything downstream of the answers)"
+    ((memA == memB) && (depthTo [5, 6] 5 != depthTo [6, 5] 5))) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"

@@ -5471,6 +5471,90 @@ theorem the_cited_are_the_elders
    the_hall_hears_no_join_order a b w,
    the_seat_is_load_bearing_in_the_same_click s m h⟩
 
+def doorM : Machine (Nat × List Nat) Nat :=
+  ⟨List Nat × List (Nat × List Nat), ([], []), welcome,
+   fun s => s.2.length⟩
+
+def ordered : List Nat → List (Nat × List Nat) → Prop
+  | _, [] => True
+  | r, m :: w => backed r m.2 = true ∧ ordered (m.1 :: r) w
+
+theorem the_unencumbered_are_welcome_everywhere (r : List Nat) :
+    backed r [] = true := rfl
+
+theorem the_enrolled_survive_the_door
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (x : Nat) (h : enrolled s.1 x = true) :
+    enrolled (welcome s m).1 x = true := by
+  cases hb : backed s.1 m.2 with
+  | true =>
+      rw [the_backed_are_seated hb]
+      exact the_enrolled_stay_enrolled s.1 m.1 x h
+  | false =>
+      rw [the_unbacked_are_held hb]
+      exact h
+
+theorem the_enrolled_survive_the_run (x : Nat) :
+    ∀ (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat)),
+      enrolled s.1 x = true → enrolled (park doorM s w).1 x = true
+  | [], _, h => h
+  | m :: w, s, h =>
+      the_enrolled_survive_the_run x w (welcome s m)
+        (the_enrolled_survive_the_door s m x h)
+
+theorem the_ordered_arrivals_never_wait :
+    ∀ (w : List (Nat × List Nat)) (r : List Nat)
+      (v : List (Nat × List Nat)),
+      ordered r w → (park doorM (r, v) w).2 = v
+  | [], _, _, _ => rfl
+  | m :: w, r, v, h => by
+      obtain ⟨h1, h2⟩ := h
+      show (park doorM (welcome (r, v) m) w).2 = v
+      rw [the_backed_are_seated (s := (r, v)) h1]
+      exact the_ordered_arrivals_never_wait w (m.1 :: r) v h2
+
+theorem the_ordered_arrivals_all_seat :
+    ∀ (w : List (Nat × List Nat)) (r : List Nat)
+      (v : List (Nat × List Nat)),
+      ordered r w → ∀ m, m ∈ w →
+        enrolled (park doorM (r, v) w).1 m.1 = true
+  | [], _, _, _, _, hm => nomatch hm
+  | m :: w, r, v, h, m', hm => by
+      obtain ⟨h1, h2⟩ := h
+      show enrolled (park doorM (welcome (r, v) m) w).1 m'.1 = true
+      rw [the_backed_are_seated (s := (r, v)) h1]
+      cases hm with
+      | head =>
+          refine the_enrolled_survive_the_run m.1 w (m.1 :: r, v) ?_
+          show (Nat.beq m.1 m.1 || r.any (Nat.beq m.1)) = true
+          rw [beq_self]
+          rfl
+      | tail _ hm' =>
+          exact the_ordered_arrivals_all_seat w (m.1 :: r) v h2 m' hm'
+
+theorem the_tree_admits_itself (w : List (Nat × List Nat))
+    (h : ordered [] w) (r : List Nat) :
+    (park doorM (([] : List Nat), ([] : List (Nat × List Nat))) w).2 = []
+      ∧ (∀ m, m ∈ w →
+          enrolled (park doorM (([] : List Nat),
+            ([] : List (Nat × List Nat))) w).1 m.1 = true)
+      ∧ backed r [] = true
+      ∧ behavior doorM w = 0 :=
+  ⟨the_ordered_arrivals_never_wait w [] [] h,
+   fun m hm => the_ordered_arrivals_all_seat w [] [] h m hm,
+   the_unencumbered_are_welcome_everywhere r,
+   ((the_drive_reads_the_walk doorM w ([], [])).trans
+     (congrArg doorM.out (the_park_is_a_walk doorM w ([], [])).symm)).trans
+     (congrArg (fun v : List (Nat × List Nat) => v.length)
+       (the_ordered_arrivals_never_wait w [] [] h))⟩
+
+theorem no_memory_meters_the_cost {X : Type} (f : List Bool → X)
+    (a b : Nat) (hab : a ≠ b) (q : Interview Nat Bool) :
+    f (sound hallFace [a, b] q) = f (sound hallFace [b, a] q)
+      ∧ ¬ alike costFace [a, b] [b, a] :=
+  ⟨congrArg f (no_ask_parts_the_warmed_hall a b q),
+   the_cost_face_parts_the_warmed a b hab⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7153,5 +7237,26 @@ theorem the_cited_are_the_elders
 
 /-- info: 'Seed.the_cited_are_the_elders' does not depend on any axioms -/
 #guard_msgs in #print axioms the_cited_are_the_elders
+
+/-- info: 'Seed.the_unencumbered_are_welcome_everywhere' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unencumbered_are_welcome_everywhere
+
+/-- info: 'Seed.the_enrolled_survive_the_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_enrolled_survive_the_door
+
+/-- info: 'Seed.the_enrolled_survive_the_run' does not depend on any axioms -/
+#guard_msgs in #print axioms the_enrolled_survive_the_run
+
+/-- info: 'Seed.the_ordered_arrivals_never_wait' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ordered_arrivals_never_wait
+
+/-- info: 'Seed.the_ordered_arrivals_all_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ordered_arrivals_all_seat
+
+/-- info: 'Seed.the_tree_admits_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tree_admits_itself
+
+/-- info: 'Seed.no_memory_meters_the_cost' does not depend on any axioms -/
+#guard_msgs in #print axioms no_memory_meters_the_cost
 
 end Seed
