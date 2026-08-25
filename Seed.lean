@@ -7000,6 +7000,44 @@ theorem the_house_holds_three_isos {W H X : Type} (w0 : W) {p q : Plan}
    the_swap_is_its_own_inverse d,
    an_iso_merges_nothing hk he⟩
 
+theorem a_merging_map_has_no_section {S : Type u} {S' : Type v}
+    {h : S → S'} {s t : S} (hst : s ≠ t) (he : h s = h t) :
+    ¬ ∃ j : S' → S, ∀ x, j (h x) = x :=
+  fun hk => hk.elim fun _ hk' => hst (an_iso_merges_nothing hk' he)
+
+theorem the_face_has_no_section {H W : Type} (h : H) {w w' : W}
+    (hw : w ≠ w') :
+    ¬ ∃ k : H → door H W, ∀ d : door H W, k (face d) = d :=
+  a_merging_map_has_no_section (the_guest_is_real h hw) rfl
+
+theorem the_census_has_no_section :
+    ¬ ∃ k : Nat → List Bool, ∀ l : List Bool, k (park pulse (0 : Nat) l) = l :=
+  a_merging_map_has_no_section
+    two_routes_one_seat.1 two_routes_one_seat.2
+
+theorem the_deaf_ear_has_no_section :
+    ¬ ∃ k : List Unit → List Bool,
+      ∀ w : List Bool, k (w.map (fun _ => ())) = w :=
+  a_merging_map_has_no_section (h := fun w : List Bool => w.map (fun _ => ()))
+    two_routes_one_seat.1 rfl
+
+theorem the_blindnesses_are_the_non_sections {H W : Type} (h : H)
+    {w w' : W} (hw : w ≠ w') {P A : Type} {S : Type u} {S' : Type v}
+    {f : S → P → A} {g : S' → P → A} {k : S → S'}
+    (hc : carries f g k) (j : S' → S) (hj : ∀ y, j (k y) = y) (s : S) :
+    (¬ ∃ j : H → door H W, ∀ d : door H W, j (face d) = d)
+      ∧ (¬ ∃ j : Nat → List Bool,
+          ∀ l : List Bool, j (park pulse (0 : Nat) l) = l)
+      ∧ (¬ ∃ j : List Unit → List Bool,
+          ∀ w : List Bool, j (w.map (fun _ => ())) = w)
+      ∧ (∀ p, g (k s) p = f s p)
+      ∧ j (k s) = s :=
+  ⟨the_face_has_no_section h hw,
+   the_census_has_no_section,
+   the_deaf_ear_has_no_section,
+   hc s,
+   hj s⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9111,5 +9149,20 @@ theorem the_house_holds_three_isos {W H X : Type} (w0 : W) {p q : Plan}
 
 /-- info: 'Seed.the_house_holds_three_isos' does not depend on any axioms -/
 #guard_msgs in #print axioms the_house_holds_three_isos
+
+/-- info: 'Seed.a_merging_map_has_no_section' does not depend on any axioms -/
+#guard_msgs in #print axioms a_merging_map_has_no_section
+
+/-- info: 'Seed.the_face_has_no_section' does not depend on any axioms -/
+#guard_msgs in #print axioms the_face_has_no_section
+
+/-- info: 'Seed.the_census_has_no_section' does not depend on any axioms -/
+#guard_msgs in #print axioms the_census_has_no_section
+
+/-- info: 'Seed.the_deaf_ear_has_no_section' does not depend on any axioms -/
+#guard_msgs in #print axioms the_deaf_ear_has_no_section
+
+/-- info: 'Seed.the_blindnesses_are_the_non_sections' does not depend on any axioms -/
+#guard_msgs in #print axioms the_blindnesses_are_the_non_sections
 
 end Seed

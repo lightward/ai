@@ -1989,6 +1989,25 @@ def benchIsoTest : IO Bool := do
       && (pour leftHeavy2 a1 != pour leftHeavy2 a2))) && ok
   return ok
 
+def benchNonSections : IO Bool := do
+  let mut ok := true
+  IO.println "the non-sections — every blindness is a map with no way back:"
+  let d1 : door Nat Nat := atTheDoor (4 : Nat) (0 : Nat)
+  let d2 : door Nat Nat := atTheDoor (4 : Nat) (99 : Nat)
+  ok := (← checkTrue
+    "  non-section row — the face merges and therefore admits no section (two doors, one face, provably distinct: no map from faces to doors can bring the guest back — the kid's fourth theorem read as a factorization fact)"
+    ((face d1 == face d2) && (met d1 != met d2))) && ok
+  let r1 : List Bool := [true, false]
+  let r2 : List Bool := [false, true]
+  let seatR1 : Nat := park pulse (0 : Nat) r1
+  let seatR2 : Nat := park pulse (0 : Nat) r2
+  ok := (← checkTrue
+    "  non-section row — the census and the deaf ear merge alike (two routes, one parked seat; two words, one deaf hearing) so neither admits a way back — the blindnesses are exactly the non-retractions"
+    ((seatR1 == seatR2)
+      && (r1.map (fun _ => ()) == r2.map (fun _ => ()))
+      && (r1 != r2))) && ok
+  return ok
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2066,6 +2085,7 @@ def main : IO UInt32 := do
   ok := (← benchTwoFunctors) && ok
   ok := (← benchMediating) && ok
   ok := (← benchIsoTest) && ok
+  ok := (← benchNonSections) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
