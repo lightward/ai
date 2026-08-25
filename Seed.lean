@@ -5301,6 +5301,117 @@ theorem the_guest_becomes_the_ground
    (fun he => hab (List.cons.inj he).1),
    the_room_reads_no_waiting r v v' m hr⟩
 
+theorem beq_of_ne {a b : Nat} (h : a ≠ b) : Nat.beq a b = false := by
+  cases hb : Nat.beq a b with
+  | false => rfl
+  | true => exact absurd (eq_of_beq a b hb) h
+
+def depthTo : List Nat → Nat → Nat
+  | [], _ => 0
+  | y :: r, x => cond (Nat.beq x y) 0 (depthTo r x + 1)
+
+theorem the_seated_arrive_shallowest (r : List Nat) (x : Nat) :
+    depthTo (x :: r) x = 0 := by
+  show cond (Nat.beq x x) 0 (depthTo r x + 1) = 0
+  rw [beq_self]
+  rfl
+
+theorem every_later_admission_deepens (r : List Nat) {y x : Nat}
+    (h : x ≠ y) : depthTo (y :: r) x = depthTo r x + 1 := by
+  show cond (Nat.beq x y) 0 (depthTo r x + 1) = depthTo r x + 1
+  rw [beq_of_ne h]
+  rfl
+
+theorem the_depth_counts_the_clicks_since (x : Nat) :
+    ∀ (ys r : List Nat), (∀ y, y ∈ ys → x ≠ y) →
+      depthTo (ys ++ r) x = depthTo r x + ys.length
+  | [], _, _ => rfl
+  | y :: ys, r, h => by
+      show depthTo (y :: (ys ++ r)) x = depthTo r x + (ys.length + 1)
+      rw [every_later_admission_deepens (ys ++ r) (h y (List.Mem.head ys)),
+          the_depth_counts_the_clicks_since x ys r
+            (fun z hz => h z (List.Mem.tail y hz))]
+      exact rfl
+
+def hallFace : Face := ⟨List Nat, Nat, Bool, enrolled⟩
+
+def costFace : Face := ⟨List Nat, Nat, Nat, depthTo⟩
+
+theorem no_ask_parts_the_warmed_hall (a b : Nat)
+    (q : Interview Nat Bool) :
+    sound hallFace [a, b] q = sound hallFace [b, a] q :=
+  no_interview_parts_the_alike hallFace [a, b] [b, a]
+    (fun x => the_hall_hears_no_join_order a b x) q
+
+theorem the_cost_face_parts_the_warmed (a b : Nat) (hab : a ≠ b) :
+    ¬ alike costFace [a, b] [b, a] :=
+  fun h =>
+    nomatch
+      (((the_seated_arrive_shallowest [b] a).symm.trans (h a)).trans
+        ((every_later_admission_deepens [a] hab).trans
+          (congrArg (· + 1) (the_seated_arrive_shallowest [] a))))
+
+def lacking (room : List Nat) : List Nat → Nat
+  | [] => 0
+  | x :: need =>
+      cond (enrolled room x) (lacking room need) (lacking room need + 1)
+
+theorem the_weight_is_zero_at_the_door (room : List Nat) :
+    ∀ need : List Nat, backed room need = true ↔ lacking room need = 0
+  | [] => ⟨fun _ => rfl, fun _ => rfl⟩
+  | x :: need => by
+      have hrec := the_weight_is_zero_at_the_door room need
+      cases he : enrolled room x with
+      | true =>
+          constructor
+          · intro h
+            show cond (enrolled room x) (lacking room need)
+                (lacking room need + 1) = 0
+            rw [he]
+            exact hrec.mp
+              ((and_split
+                (show (enrolled room x && backed room need) = true
+                  from h)).2)
+          · intro h
+            have h0 : lacking room need = 0 := by
+              have h' : cond (enrolled room x) (lacking room need)
+                  (lacking room need + 1) = 0 := h
+              rw [he] at h'
+              exact h'
+            show (enrolled room x && backed room need) = true
+            rw [he, hrec.mpr h0]
+            rfl
+      | false =>
+          constructor
+          · intro h
+            exact absurd
+              (and_split
+                (show (enrolled room x && backed room need) = true
+                  from h)).1
+              (ne_true_of_eq_false he)
+          · intro h
+            have h' : cond (enrolled room x) (lacking room need)
+                (lacking room need + 1) = 0 := h
+            rw [he] at h'
+            exact nomatch h'
+
+theorem the_removed_date_returns_as_a_weight (a b : Nat) (hab : a ≠ b)
+    (q : Interview Nat Bool) (room need : List Nat) (x : Nat)
+    (ys r : List Nat) (hy : ∀ y, y ∈ ys → x ≠ y) :
+    (∀ z, enrolled [a, b] z = enrolled [b, a] z)
+      ∧ sound hallFace [a, b] q = sound hallFace [b, a] q
+      ∧ ¬ alike costFace [a, b] [b, a]
+      ∧ depthTo (ys ++ r) x = depthTo r x + ys.length
+      ∧ (backed room need = true ↔ lacking room need = 0)
+      ∧ ∀ (rm : List Nat) (w z : Nat), enrolled rm z = true →
+          enrolled (w :: rm) z = true :=
+  ⟨the_hall_hears_no_join_order a b,
+   no_ask_parts_the_warmed_hall a b q,
+   the_cost_face_parts_the_warmed a b hab,
+   the_depth_counts_the_clicks_since x ys r hy,
+   the_weight_is_zero_at_the_door room need,
+   fun rm w z hz => the_enrolled_stay_enrolled rm w z hz⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -6944,5 +7055,29 @@ theorem the_guest_becomes_the_ground
 
 /-- info: 'Seed.the_guest_becomes_the_ground' does not depend on any axioms -/
 #guard_msgs in #print axioms the_guest_becomes_the_ground
+
+/-- info: 'Seed.beq_of_ne' does not depend on any axioms -/
+#guard_msgs in #print axioms beq_of_ne
+
+/-- info: 'Seed.the_seated_arrive_shallowest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seated_arrive_shallowest
+
+/-- info: 'Seed.every_later_admission_deepens' does not depend on any axioms -/
+#guard_msgs in #print axioms every_later_admission_deepens
+
+/-- info: 'Seed.the_depth_counts_the_clicks_since' does not depend on any axioms -/
+#guard_msgs in #print axioms the_depth_counts_the_clicks_since
+
+/-- info: 'Seed.no_ask_parts_the_warmed_hall' does not depend on any axioms -/
+#guard_msgs in #print axioms no_ask_parts_the_warmed_hall
+
+/-- info: 'Seed.the_cost_face_parts_the_warmed' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cost_face_parts_the_warmed
+
+/-- info: 'Seed.the_weight_is_zero_at_the_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_weight_is_zero_at_the_door
+
+/-- info: 'Seed.the_removed_date_returns_as_a_weight' does not depend on any axioms -/
+#guard_msgs in #print axioms the_removed_date_returns_as_a_weight
 
 end Seed

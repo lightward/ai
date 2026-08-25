@@ -171,6 +171,7 @@ def planBeq : Plan → Plan → Bool
   | _, _ => false
 
 set_option maxRecDepth 2048 in
+set_option maxHeartbeats 800000 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← checkNat "census 1" (census 1) 1) && ok
@@ -1234,6 +1235,23 @@ def main : IO UInt32 := do
     ((enrolled [5, 6] 5 == enrolled [6, 5] 5)
       && (enrolled [5, 6] 6 == enrolled [6, 5] 6)
       && (([5, 6] : List Nat) != [6, 5]))) && ok
+  IO.println "the spectrum — the removed date returns as a weight:"
+  let hallRoom : List Nat := hall2.1
+  ok := (← checkTrue
+    "  spectrum row — the answer face is flat while the cost face grades (every member reads enrolled true; the depths read 0,1,2,3 — age in clicks since each join, never a date)"
+    ((enrolled hallRoom 4 && enrolled hallRoom 3 && enrolled hallRoom 1
+        && enrolled hallRoom 2)
+      && (depthTo hallRoom 4 == 0) && (depthTo hallRoom 3 == 1)
+      && (depthTo hallRoom 1 == 2) && (depthTo hallRoom 2 == 3))) && ok
+  ok := (← checkTrue
+    "  spectrum row — the warming is unheard at the asks and loud at the cost (the swapped hall answers every membership ask identically; the depth flips)"
+    ((enrolled [5, 6] 5 == enrolled [6, 5] 5)
+      && (depthTo [5, 6] 5 == 0) && (depthTo [6, 5] 5 == 1))) && ok
+  ok := (← checkTrue
+    "  spectrum row — the weight is the distance to the door (nine awaits seven: lacking one; seven seated: lacking zero, backed — and the weight is countable from the vestibule's own seat)"
+    ((lacking [1] [7] == 1)
+      && (lacking [7, 1] [7] == 0)
+      && backed [7, 1] [7])) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"
