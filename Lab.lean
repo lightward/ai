@@ -2184,6 +2184,33 @@ def benchPortability : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchUniversalProperties : IO Bool := do
+  let mut ok := true
+  IO.println "the universal properties — the door is the product, the fork the coproduct:"
+  let f : Nat → Nat := fun x => x * 2
+  let g : Nat → Nat := fun x => x + 100
+  let paired : Nat → door Nat Nat := fun x => atTheDoor (f x) (g x)
+  let x0 : Nat := 5
+  ok := (← checkTrue
+    "  universal row — the pairing exists and is unique (two readings of one source pair into one door; the projections give each back exactly: ten and one-oh-five, and any map agreeing at both projections IS the pairing)"
+    ((face (paired x0) == f x0) && (met (paired x0) == g x0)
+      && (face (paired x0) == 10) && (met (paired x0) == 105))) && ok
+  let gl : Nat → Nat := fun h => h + 1
+  let gr : Nat → Nat := fun w => w * 3
+  let copaired : fork Nat Nat → Nat := greet gl gr
+  ok := (← checkTrue
+    "  universal row — the copairing exists and is unique (two handlers, one greeter; every ready greeter IS the greeter, standing since depth zero as the coproduct's own law: five by the left, twelve by the right)"
+    ((copaired (viaLeft (4 : Nat)) == 5)
+      && (copaired (viaRight (4 : Nat)) == 12))) && ok
+  let readA : Nat := face (atTheDoor (7 : Nat) (0 : Nat))
+  let readB : Nat := face (atTheDoor (7 : Nat) (99 : Nat))
+  ok := (← checkTrue
+    "  universal row — face-blindness IS the projection's forgetting (the first projection drops the second coordinate by construction, so the door cannot read its guest for the same reason a product cannot read past its own leg — the oldest theorem, restated as a categorical fact)"
+    ((readA == readB) && (readA == 7)
+      && (met (atTheDoor (7 : Nat) (99 : Nat)) == 99))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2269,6 +2296,7 @@ def main : IO UInt32 := do
   ok := (← benchOneDisagreement) && ok
   ok := (← benchUniverseDiscipline) && ok
   ok := (← benchPortability) && ok
+  ok := (← benchUniversalProperties) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

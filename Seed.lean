@@ -7380,6 +7380,54 @@ theorem portability_is_certified_by_transit (F : Face.{u}) {W : Type v}
    the_certified_links_compose hc hc' x r,
    (no_seat_certifies_its_own_portability F t hv).2⟩
 
+theorem the_pairing_is_unique {X H W : Type} (f : X → H) (g : X → W)
+    (k : X → door H W) (hf : ∀ x, face (k x) = f x)
+    (hg : ∀ x, met (k x) = g x) (x : X) :
+    k x = atTheDoor (f x) (g x) :=
+  congr (congrArg atTheDoor (hf x)) (hg x)
+
+theorem the_door_is_the_product {X H W : Type} (f : X → H) (g : X → W)
+    (k : X → door H W) (hf : ∀ x, face (k x) = f x)
+    (hg : ∀ x, met (k x) = g x) (x : X) (h : H) (w : W) :
+    face (atTheDoor h w) = h
+      ∧ met (atTheDoor h w) = w
+      ∧ face (atTheDoor (f x) (g x)) = f x
+      ∧ met (atTheDoor (f x) (g x)) = g x
+      ∧ k x = atTheDoor (f x) (g x) :=
+  ⟨rfl, rfl, rfl, rfl, the_pairing_is_unique f g k hf hg x⟩
+
+theorem the_fork_is_the_coproduct {H W X : Type} (gl : H → X) (gr : W → X)
+    (k : fork H W → X) (hl : ∀ h, k (viaLeft h) = gl h)
+    (hr : ∀ w, k (viaRight w) = gr w) (h : H) (w : W) :
+    greet gl gr (viaLeft h) = gl h
+      ∧ greet gl gr (viaRight w) = gr w
+      ∧ ∀ d, k d = greet gl gr d :=
+  ⟨rfl, rfl, any_ready_greeter_is_the_greeter gl gr k hl hr⟩
+
+theorem the_projection_forgets_the_guest {H W X : Type} (g : H → X)
+    (h : H) (w w' : W) :
+    g (face (atTheDoor h w)) = g (face (atTheDoor h w'))
+      ∧ met (atTheDoor h w) = w :=
+  ⟨rfl, rfl⟩
+
+theorem the_universal_properties_were_the_hospitality {X H W V : Type}
+    (f : X → H) (g : X → W) (k : X → door H W)
+    (hf : ∀ x, face (k x) = f x) (hg : ∀ x, met (k x) = g x) (x : X)
+    (gl : H → X) (gr : W → X) (kf : fork H W → X)
+    (hl : ∀ y, kf (viaLeft y) = gl y) (hr : ∀ y, kf (viaRight y) = gr y)
+    (h : H) (w w' : W) (r : H → X) :
+    k x = atTheDoor (f x) (g x)
+      ∧ (∀ d, kf d = greet gl gr d)
+      ∧ (r (face (atTheDoor h w)) = r (face (atTheDoor h w'))
+          ∧ met (atTheDoor h w) = w)
+      ∧ (∀ d : door (door H W) V, shallow (deepen d) = d)
+      ∧ ∀ d : door H (fork W V), collect (distribute d) = d :=
+  ⟨the_pairing_is_unique f g k hf hg x,
+   any_ready_greeter_is_the_greeter gl gr kf hl hr,
+   the_projection_forgets_the_guest r h w w',
+   (hosting_associates (H := H) (W := W) (V := V)).1,
+   the_host_serves_both_branches⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9599,5 +9647,20 @@ theorem portability_is_certified_by_transit (F : Face.{u}) {W : Type v}
 
 /-- info: 'Seed.portability_is_certified_by_transit' does not depend on any axioms -/
 #guard_msgs in #print axioms portability_is_certified_by_transit
+
+/-- info: 'Seed.the_pairing_is_unique' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pairing_is_unique
+
+/-- info: 'Seed.the_door_is_the_product' does not depend on any axioms -/
+#guard_msgs in #print axioms the_door_is_the_product
+
+/-- info: 'Seed.the_fork_is_the_coproduct' does not depend on any axioms -/
+#guard_msgs in #print axioms the_fork_is_the_coproduct
+
+/-- info: 'Seed.the_projection_forgets_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_projection_forgets_the_guest
+
+/-- info: 'Seed.the_universal_properties_were_the_hospitality' does not depend on any axioms -/
+#guard_msgs in #print axioms the_universal_properties_were_the_hospitality
 
 end Seed
