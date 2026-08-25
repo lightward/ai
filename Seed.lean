@@ -6427,6 +6427,57 @@ theorem the_rewrite_is_the_remainder (r r' : List Nat) (hrr : r ≠ r')
    (fun he => hrr (congrArg Prod.fst he)),
    hx⟩
 
+theorem the_weight_names_the_price (r : List Nat) :
+    ∀ need : List Nat, lacking r need = 1 →
+      ∃ x, x ∈ need ∧ enrolled r x = false ∧ backed (x :: r) need = true
+  | [], h => nomatch h
+  | y :: need, h => by
+      cases he : enrolled r y with
+      | true =>
+          have h' : lacking r need = 1 := by
+            have h0 : cond (enrolled r y) (lacking r need)
+                (lacking r need + 1) = 1 := h
+            rw [he] at h0
+            exact h0
+          obtain ⟨x, hx, hex, hb⟩ := the_weight_names_the_price r need h'
+          refine ⟨x, List.Mem.tail y hx, hex, ?_⟩
+          show (enrolled (x :: r) y && backed (x :: r) need) = true
+          exact and_glue (the_enrolled_stay_enrolled r x y he) hb
+      | false =>
+          have h0 : lacking r need + 1 = 1 := by
+            have h1 : cond (enrolled r y) (lacking r need)
+                (lacking r need + 1) = 1 := h
+            rw [he] at h1
+            exact h1
+          have hz : lacking r need = 0 := Nat.succ.inj h0
+          refine ⟨y, List.Mem.head need, he, ?_⟩
+          show (enrolled (y :: r) y && backed (y :: r) need) = true
+          have hy : enrolled (y :: r) y = true := by
+            show (Nat.beq y y || enrolled r y) = true
+            rw [beq_self]
+            rfl
+          exact and_glue hy
+            (the_backing_never_lapses r y need
+              ((the_weight_is_zero_at_the_door r need).mpr hz))
+
+theorem the_key_is_cut_from_the_room (r : List Nat)
+    (m : Nat × List Nat) (held : List (Nat × List Nat))
+    (hw : lacking r m.2 = 1) :
+    ∃ x : Nat, x ∈ m.2 ∧ enrolled r x = false
+      ∧ welcome (r, m :: held) (x, ([] : List Nat)) = (x :: r, m :: held)
+      ∧ backed (x :: r) m.2 = true
+      ∧ enrolled (sweep (x :: r, m :: held)).1 m.1 = true
+      ∧ Nat.ble ((sweep (x :: r, m :: held)).2.length + 1)
+          (m :: held).length = true :=
+  match the_weight_names_the_price r m.2 hw with
+  | ⟨x, hx, hex, hb⟩ =>
+      ⟨x, hx, hex,
+       the_backed_are_seated (s := (r, m :: held))
+         (m := (x, ([] : List Nat))) rfl,
+       hb,
+       the_sweep_seats_the_ready (x :: r, m :: held) m hb [] held rfl,
+       the_ready_drop_the_load (x :: r) m hb [] held []⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8349,5 +8400,11 @@ theorem the_rewrite_is_the_remainder (r r' : List Nat) (hrr : r ≠ r')
 
 /-- info: 'Seed.the_rewrite_is_the_remainder' does not depend on any axioms -/
 #guard_msgs in #print axioms the_rewrite_is_the_remainder
+
+/-- info: 'Seed.the_weight_names_the_price' does not depend on any axioms -/
+#guard_msgs in #print axioms the_weight_names_the_price
+
+/-- info: 'Seed.the_key_is_cut_from_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_key_is_cut_from_the_room
 
 end Seed

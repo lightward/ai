@@ -1461,6 +1461,21 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  dawn row — the meter reads how long, never who you became (two healed rooms read zero at every hour; the rewritten self parts one face over, at the reseated hall)"
     ((dawnA == 0) && (dawnB == 0) && (roomA == true) && (roomB == false))) && ok
+  IO.println "the key — cut from the room:"
+  let keyArrival : Nat × List Nat := (9, ([] : List Nat))
+  let rescued : List Nat × List (Nat × List Nat) := welcome dead0 keyArrival
+  let rescuedClock : Nat := drainClock 3 rescued
+  let rescuedH0 : Nat := drainFace.obs rescued (0 : Nat)
+  let rescuedH1 : Nat := drainFace.obs rescued (1 : Nat)
+  let dawnRoom : List Nat := (sweep rescued).1
+  ok := (← checkTrue
+    "  key row — the night names its own key and the key is domestic (the stuck pair's missing supports are on the record; weight one names the price one; the key carries no foreign content — an empty need-list, a fresh route)"
+    ((lacking [1] [9] == 1) && (lacking [1] [8] == 1)
+      && keyArrival.2.isEmpty)) && ok
+  ok := (← checkTrue
+    "  second-light row — one domestic arrival ends the two-mark night in one round (the wheel that saturated every fuel drains in one; the meter watches the dawn: two at hour zero, zero at hour one; both marks seated, the night's own nine coming home with them)"
+    ((rescuedClock == 1) && (rescuedH0 == 2) && (rescuedH1 == 0)
+      && enrolled dawnRoom 8 && enrolled dawnRoom 9)) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
