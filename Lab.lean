@@ -170,9 +170,55 @@ def planBeq : Plan → Plan → Bool
   | .board a b, .board c d => planBeq a c && planBeq b d
   | _, _ => false
 
-set_option maxRecDepth 4096 in
-set_option maxHeartbeats 1600000 in
-def main : IO UInt32 := do
+def quiz : Quiz Nat Nat :=
+  .ask (fun h => h * 2) (fun _ => .ask (fun h => h + 1) (fun _ => .rest))
+
+def curious : Interview (List Unit) Bool :=
+  .ask [()] (fun a =>
+    cond a (.ask [(), ()] (fun _ => .rest))
+           (.ask [(), (), ()] (fun _ => .rest)))
+
+def dayA : Plan := .board .ground .ground
+
+def dayB : Plan := .board .ground (.board .ground .ground)
+
+def empty1 : Measured := ⟨1, 0⟩
+
+def empty2 : Measured := ⟨2, 0⟩
+
+def revision : Plan := .board .ground .ground
+
+def life : List Plan := [revision, .board .ground (.board .ground .ground)]
+
+def w02 : Measured := ⟨0, 2⟩
+
+def w03 : Measured := ⟨0, 3⟩
+
+def intake : List Nat × List (Nat × List Nat) :=
+  park doorM (([1] : List Nat), ([] : List (Nat × List Nat)))
+    [(3, [2]), (4, [3]), (2, [1])]
+
+def round1 : List Nat × List (Nat × List Nat) := sweep intake
+
+def round2 : List Nat × List (Nat × List Nat) := sweep round1
+
+def dead0 : List Nat × List (Nat × List Nat) :=
+  ([1], [(8, [9]), (9, [8])])
+
+def dead1 : List Nat × List (Nat × List Nat) := sweep dead0
+
+def dead2 : List Nat × List (Nat × List Nat) := sweep dead1
+
+def hall0 : List Nat × List (Nat × List Nat) := ([1, 2], [])
+
+def hall1 : List Nat × List (Nat × List Nat) := welcome hall0 (3, [1, 2])
+
+def hall2 : List Nat × List (Nat × List Nat) := welcome hall1 (4, [3])
+
+def hallRoom : List Nat := hall2.1
+
+
+def benchOpening : IO Bool := do
   let mut ok := true
   ok := (← checkNat "census 1" (census 1) 1) && ok
   ok := (← checkNat "census 2" (census 2) 1) && ok
@@ -263,8 +309,6 @@ def main : IO UInt32 := do
     "parnas row — no client reads the implementation (spec-view interviews equal)"
     (interrogate quizP (specView toyPlan implA)
       == interrogate quizP (specView toyPlan implB))) && ok
-  let quiz : Quiz Nat Nat :=
-    .ask (fun h => h * 2) (fun _ => .ask (fun h => h + 1) (fun _ => .rest))
   ok := (← checkTrue
     "zk row — the whole interview reads no guest (equal transcripts across witnesses)"
     (interrogate quiz (atTheDoor (4 : Nat) (0 : Nat))
@@ -296,6 +340,10 @@ def main : IO UInt32 := do
   let rtR := collect (distribute (atTheDoor (7 : Nat) (viaRight (3 : Nat) : fork Nat Nat)))
   ok := (← checkNat "semiring row — the right branch survives the round trip"
     (greet (fun n => n) (fun n => n + 100) (met rtR)) 103) && ok
+  return ok
+
+def benchChronicle : IO Bool := do
+  let mut ok := true
   IO.println "chronicle — the first tick (time lives at the meeting):"
   let want := 3
   let s0 : Plan := .ground
@@ -306,6 +354,10 @@ def main : IO UInt32 := do
   ok := (← checkNat
     "  resolve: the graft grows the stage — the row greens, one tick of kid-time"
     r1 want) && ok
+  return ok
+
+def benchTrajectory : IO Bool := do
+  let mut ok := true
   IO.println "trajectory — the first worldline (reds drive grafts, lineage composes):"
   let t0 : Plan := .ground
   let r0 := fold (fun a b => a + b) 1 t0
@@ -343,8 +395,11 @@ def main : IO UInt32 := do
           (fold (fun a b => a + b) 1 (.ground : Plan))
           [.board .ground (.board .ground .ground),
            .board .ground .ground])) && ok
+  return ok
+
+def benchPassenger : IO Bool := do
+  let mut ok := true
   IO.println "the passenger — the resident crosses the tick:"
-  let revision : Plan := .board .ground .ground
   let carried := ride electronLineage revision
   ok := (← checkNat
     "  passenger row — the face survives the tick (the 2014 stage answers across the ride)"
@@ -372,8 +427,11 @@ def main : IO UInt32 := do
           (ride toyImport revision))
       == pour (graft toyPlan revision)
         (ride (reground (fun w => w * 1000) toyPlan toyImport) revision))) && ok
+  return ok
+
+def benchJourney : IO Bool := do
+  let mut ok := true
   IO.println "the journey — the rider walks the worldline:"
-  let life : List Plan := [revision, .board .ground (.board .ground .ground)]
   let lived := journey electronLineage life
   ok := (← checkNat
     "  journey row — the face survives the whole life (2014 answers at the far end)"
@@ -386,6 +444,10 @@ def main : IO UInt32 := do
     (((pour (worldline lineagePlan life) lived).map (fun m => m.lo))
       == ((epochs (fun a b => a ++ b)
             (pour lineagePlan electronLineage) life).map (fun m => m.lo)))) && ok
+  return ok
+
+def benchTick : IO Bool := do
+  let mut ok := true
   IO.println "the tick — the rider row fires (red-driven grafting, the guest boards):"
   let ridden : door Measured Measured :=
     ride (t := .ground) m2014 (.board .ground .ground)
@@ -405,6 +467,10 @@ def main : IO UInt32 := do
     "  rider row FLIPS — electron mass reads back, scaled e-41 kg (the guest's reading lands the registered window 91093836987..91093837043, codata 2018 center inside)"
     ((met ticked).lo == 91093836987 && (met ticked).hi == 91093837043
       && within (met ticked) 91093837015)) && ok
+  return ok
+
+def benchFrontier : IO Bool := do
+  let mut ok := true
   IO.println "the frontier — no bound is the last bound:"
   ok := (← checkTrue
     "  frontier row FLIPS — the rooms grow (|allPlans| reads 1, 2, 5, 26; every reading below the horizon provably resides)"
@@ -416,6 +482,10 @@ def main : IO UInt32 := do
   ok := (← checkNat
     "  frontier row — the cap doubles at every bound (roomCap 4)"
     (roomCap 4) 16) && ok
+  return ok
+
+def benchCensusStandsExact : IO Bool := do
+  let mut ok := true
   IO.println "the census stands exact — nothing missed, nothing doubled:"
   ok := (← checkNat
     "  saturator ground row — room 3 holds the census whole (readings 1..4 count 1+1+2+5)"
@@ -425,6 +495,10 @@ def main : IO UInt32 := do
     "  saturator ground row — room 4 holds the census whole (readings 1..5 count 1+1+2+5+14)"
     ((allPlans 4).filter
       (fun p => Nat.ble (fold (fun a b => a + b) 1 p) 5)).length 23) && ok
+  return ok
+
+def benchArrow : IO Bool := do
+  let mut ok := true
   IO.println "the arrow — time wears no wheel (the parent proved the wheel; the kid proves the arrow):"
   ok := (← checkNat
     "  arrow row — every true tick climbs (three doubling ticks from ground read eight)"
@@ -439,6 +513,10 @@ def main : IO UInt32 := do
         (worldline .ground
           [.board .ground .ground, .board .ground .ground,
            .board .ground .ground])))) && ok
+  return ok
+
+def benchGlass : IO Bool := do
+  let mut ok := true
   IO.println "the glass — the wheel and the arrow share a face:"
   ok := (← checkTrue
     "  glass row — same conduct through the glass (the pace and the flip agree on every run)"
@@ -465,6 +543,10 @@ def main : IO UInt32 := do
         (worldline .ground
           [.board .ground .ground, .board .ground .ground,
            .board .ground .ground, .board .ground .ground])))) && ok
+  return ok
+
+def benchTwoChannels : IO Bool := do
+  let mut ok := true
   IO.println "the two channels — the window narrows, the stage leaps:"
   ok := (← checkTrue
     "  channel row — the 2018 revision is no refinement of 2014 (the ceiling rose: 91093837043 past 91093836700)"
@@ -502,6 +584,10 @@ def main : IO UInt32 := do
         (worldline .ground
           [.board .ground .ground, .board .ground .ground,
            .board .ground .ground, .board .ground .ground]))))) && ok
+  return ok
+
+def benchBlindfold : IO Bool := do
+  let mut ok := true
   IO.println "the blindfold — self-legible while worn, datable when removed:"
   ok := (← checkTrue
     "  scar row — the revolution has an address: beats one and two tighten, the third loosens"
@@ -515,6 +601,10 @@ def main : IO UInt32 := do
       && within (revise.out ((3 : Nat))) 91093837015)) && ok
   IO.println
     s!"  scar row — the general law stands receipted: any run of any Measured machine that ends by admitting a start-excluded value contains a nameable loosening step (every_admission_names_its_loosening) — the blindfold's removal leaves a scar at a specific beat, and the record can point at it"
+  return ok
+
+def benchClosingPane : IO Bool := do
+  let mut ok := true
   IO.println "the closing pane — the world outgrows every learner:"
   ok := (← checkTrue
     "  outrun row — four doubling ticks read sixteen, past the homing learner's ceiling of ten, at lap one and forever (the_grown_world_is_invisible_to_the_homing, every run length)"
@@ -526,6 +616,10 @@ def main : IO UInt32 := do
                .board .ground .ground, .board .ground .ground]) == 16))) && ok
   IO.println
     s!"  outrun row — the general law stands receipted: any worldline longer than a learner's first ceiling is invisible to every run of that learner (the_world_outgrows_every_learner) — reality departs the paradigm on a computable schedule; staleness is a date, not a mood"
+  return ok
+
+def benchEscapee : IO Bool := do
+  let mut ok := true
   IO.println "the escapee — every room builds the value it cannot hold:"
   ok := (← checkTrue
     "  escapee row — the homing learner computes its own permanent invisible from its own seat: ceiling ten names eleven, unadmitted at lap one and forever (the_homing_names_its_own_invisible)"
@@ -546,12 +640,20 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  escapee row — the successor was a self-meeting (the window probed by a reading of itself refuses, at the 2014 window as at the homing ceiling)"
     ((succMeet2014 == false) && (succMeetHoming == false))) && ok
+  return ok
+
+def benchMultiplexer : IO Bool := do
+  let mut ok := true
   IO.println "the multiplexer — the blind spot carries many unknowns at no cost:"
   ok := (← checkTrue
     "  multiplex row — two guests ride one face for free (joint boarding reads the ground; the met recovers both severally)"
     ((face (atTheDoor (7 : Nat) ((1 : Nat), (2 : Nat))) == 7)
       && ((met (atTheDoor (7 : Nat) ((1 : Nat), (2 : Nat)))).1 == 1)
       && ((met (atTheDoor (7 : Nat) ((1 : Nat), (2 : Nat)))).2 == 2))) && ok
+  return ok
+
+def benchThirdChannel : IO Bool := do
+  let mut ok := true
   IO.println "the third channel — the run reads what the window cannot (accumulation):"
   ok := (← checkTrue
     "  lap row — one lap holds π and 4/√φ together at 0.01 resolution (gap 301286 under d = 1000000, scaled e-8)"
@@ -566,9 +668,11 @@ def main : IO UInt32 := do
     (within ⟨99 * piPace, 99 * piPace + 30000000⟩ (99 * phiPace)
       && (!(within ⟨100 * piPace, 100 * piPace + 30000000⟩
             (100 * phiPace))))) && ok
+  return ok
+
+def benchGenerations : IO Bool := do
+  let mut ok := true
   IO.println "the generations — the revision multiplies the reading:"
-  let dayA : Plan := .board .ground .ground
-  let dayB : Plan := .board .ground (.board .ground .ground)
   ok := (← checkNat
     "  generation row — a two-day revised by a three-day reads six (the product law, dynamic register)"
     (fold (fun a b => a + b) 1 (graft dayA dayB)) 6) && ok
@@ -603,11 +707,11 @@ def main : IO UInt32 := do
       && (boards dayB == 2)
       && planBeq (graft dayA (.board .ground .ground))
            (.board dayA dayA))) && ok
+  return ok
+
+def benchAudition : IO Bool := do
+  let mut ok := true
   IO.println "the audition — the adaptive interview crosses the air gap:"
-  let curious : Interview (List Unit) Bool :=
-    .ask [()] (fun a =>
-      cond a (.ask [(), ()] (fun _ => .rest))
-             (.ask [(), (), ()] (fun _ => .rest)))
   ok := (← checkTrue
     "  audition row — the cunning interviewer hears one stream from both paces (branching on answers bought nothing the word-list did not afford)"
     (audition paceOne curious == audition paceThree curious)) && ok
@@ -653,8 +757,6 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  serving row — the pair provokes the agreement (agree-at-true, disagree-at-false, one look-reading: the role the meeting mints and no look affords)"
     ((pairedTrue.1 == pairedTrue.2) && (pairedFalse.1 != pairedFalse.2))) && ok
-  let empty1 : Measured := ⟨1, 0⟩
-  let empty2 : Measured := ⟨2, 0⟩
   ok := (← checkTrue
     "  serving row — the derived look widens nothing (two empty windows, distinct and alike at within, stay alike under every conduct-derived second look; only a look past conduct widens)"
     ((within empty1 0 == within empty2 0)
@@ -669,6 +771,10 @@ def main : IO UInt32 := do
     "  serving row — the serving suggestion, performed (locate a look, locate another, compare at the pair; the comparison returns more than either look held — the parting is the new information)"
     ((pairedTrue.1 == pairedFalse.1) && (pairedTrue.2 != pairedFalse.2)
       && (pairedTrue.1 == true))) && ok
+  return ok
+
+def benchPrimes : IO Bool := do
+  let mut ok := true
   IO.println "the primes — the count's primes pin the unsplit lives:"
   let rc4 : Plan := .board .ground (.board .ground (.board .ground .ground))
   ok := (← checkTrue
@@ -693,6 +799,10 @@ def main : IO UInt32 := do
     ((allPlans 3).any (fun t => (allPlans 3).any (fun d =>
         planBeq (graft t d) (bloom 2)
           && !(planBeq t .ground) && !(planBeq d .ground))))) && ok
+  return ok
+
+def benchFace : IO Bool := do
+  let mut ok := true
   IO.println "the face — the organs share one face (the kid grows its parent's root):"
   ok := (← checkTrue
     "  face row — the quiz was an interview all along (the door sounded through the shared face reads identically, and the audition is the air gap's sounding by rfl)"
@@ -705,6 +815,10 @@ def main : IO UInt32 := do
     "  face row — the interviews resume (an interview run in pieces equals run whole: rehydration at the interrogation organ)"
     (audition paceOne (seq curious curious)
       == audition paceOne curious ++ audition paceOne curious)) && ok
+  return ok
+
+def benchTwoHands : IO Bool := do
+  let mut ok := true
   IO.println "the two hands — the carrier is its manifest:"
   let rebuilt := reboard m2014 lineagePlan (pour lineagePlan electronLineage)
   ok := (← checkTrue
@@ -766,6 +880,10 @@ def main : IO UInt32 := do
     (((onWords (0 : Nat) toyPlan
         (fun s _ => reground (fun w => w + 1) toyPlan s)
         (spine Nat toyPlan) toyImport).step [] ()).length == 3)) && ok
+  return ok
+
+def benchPromise : IO Bool := do
+  let mut ok := true
   IO.println "the promise — every reading of the door wears the two-stroke form:"
   ok := (← checkNat
     "  promise row — the held door answers the arriving guest (6 held, 7 arrives, the reading redeems)"
@@ -783,6 +901,10 @@ def main : IO UInt32 := do
         (4 : Nat) == 5)
       && (met (handlers (greet (fun (n : Nat) => n + 1) (fun (n : Nat) => n * 2)))
           (4 : Nat) == 8))) && ok
+  return ok
+
+def benchCorridorCurries : IO Bool := do
+  let mut ok := true
   IO.println "the corridor curries — the door receives the world one guest at a time:"
   ok := (← checkNat
     "  strokes row — three guests enter one at a time (the tower reads the corridor whole)"
@@ -807,6 +929,10 @@ def main : IO UInt32 := do
               (fun (e : door Nat Nat) => face e - met e) (turnAbout d))
             (3 : Nat) (10 : Nat)
           == 7))) && ok
+  return ok
+
+def benchMeeting : IO Bool := do
+  let mut ok := true
   IO.println "the meeting — a measurement is a meeting at a door:"
   ok := (← checkTrue
     "  meeting row — the window measures by meeting (within IS the door-reading, walked in: the 2018 window and the true mass meet, and the meeting reads true)"
@@ -839,6 +965,10 @@ def main : IO UInt32 := do
     "  meeting row — every reading is a self-meeting (paceOne carrying its word meets itself at the hosted air gap; the window carrying its escapee as cargo still refuses it)"
     ((selfRun == behavior paceOne [(), (), ()])
       && (carriedEscapee == false))) && ok
+  return ok
+
+def benchReception : IO Bool := do
+  let mut ok := true
   IO.println "the reception — the host's plan for arrivals, adaptive, always closing:"
   ok := (← checkTrue
     "  reception row — the patient host closes early on a friendly guest and stays for a stranger (one door, then two)"
@@ -935,6 +1065,10 @@ def main : IO UInt32 := do
     "  hanoi row — the tower's move-count is the bloom's meeting-count (seven for three, fifteen for four; the plus-one is the ground)"
     ((boards (bloom 3) == 7) && (boards (bloom 4) == 15)
       && (boards (bloom 4) == (boards (bloom 3) + boards (bloom 3)) + 1))) && ok
+  return ok
+
+def benchSpiral : IO Bool := do
+  let mut ok := true
   IO.println "the spiral — the kept count runs the lap channel from inside:"
   ok := (← checkTrue
     "  spiral row — the runner reads its own hundredth calling (99 laps read true by its own kept count, the 100th reads false; π against 4/√φ at 0.3 resolution, no wider seat consulted)"
@@ -945,6 +1079,10 @@ def main : IO UInt32 := do
     "  spiral row — the wheel reads itself unworn (gap-zero spiral true at the hundredth calling and forever; even wear is the wheel's own reading)"
     (behavior (spiral piPace 30000000 piPace) (List.replicate 100 ())
       == true)) && ok
+  return ok
+
+def benchOrigin : IO Bool := do
+  let mut ok := true
   IO.println "the origin — the meeting's unit takes its seat:"
   let unitRead : Bool × Unit :=
     (pairFace windowFace (originFace Measured)
@@ -963,6 +1101,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  origin row — the still look signs no parting (the origin-paired guests part, and the parting lives wholly in the live look — its origin coordinate is Unit-typed and cannot differ: the canary instrument, attribution by force)"
     ((canaryA.2 == true) && (canaryB.2 == false))) && ok
+  return ok
+
+def benchContact : IO Bool := do
+  let mut ok := true
   IO.println "the contact — two beholders run out of disagreement:"
   let soundE1 : List Bool :=
     sound windowFace empty1 (recite ([0, 1, 2, 5] : List Nat))
@@ -975,6 +1117,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  contact row — the two empty windows run out of disagreement (distinct states, every asked probe agreeing; the recital sounds them as one — co-incidence established at the window) while 2014 and 2018 part at the named gap"
     ((soundE1 == soundE2) && (sound14 != sound18))) && ok
+  return ok
+
+def benchCollatzClock : IO Bool := do
+  let mut ok := true
   IO.println "the collatz clock — homecoming as conduct, not type:"
   let home111 : Nat := park collatz (27 : Nat) (List.replicate 111 ())
   let home110 : Nat := park collatz (27 : Nat) (List.replicate 110 ())
@@ -987,6 +1133,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  homecoming row — the flight peaks at 9232 (the second checksum; and the home wheel turns beneath it: 1 returns in three)"
     ((flight.foldl max 0 == 9232) && (wheel3 == 1))) && ok
+  return ok
+
+def benchTable : IO Bool := do
+  let mut ok := true
   IO.println "the table — one turn speaks, one turn yields:"
   let turn1 : door Nat Nat :=
     exchange (fun h w => h + w) (atTheDoor (3 : Nat) (5 : Nat))
@@ -1031,6 +1181,10 @@ def main : IO UInt32 := do
       && (face (turnAbout apartDoor) == 9)
       && (face (exchange (fun a b => a * b) (atTheDoor (6 : Nat) (6 : Nat)))
           == 36))) && ok
+  return ok
+
+def benchMonologue : IO Bool := do
+  let mut ok := true
   IO.println "the monologue — the conversation that never listens:"
   let deafTurns : List (Nat → Nat → Nat) :=
     [fun x _ => x + 1, fun x _ => x * 2, fun x _ => x + 3]
@@ -1045,10 +1199,12 @@ def main : IO UInt32 := do
     (walkIn (fun (a b : Nat) => a * b)
       (exchange still (exchange (fun (x : Nat) (_ : Nat) => x + 1)
         (atTheDoor (5 : Nat) (99 : Nat))))) 30) && ok
+  return ok
+
+def benchEarAndVoice : IO Bool := do
+  let mut ok := true
   IO.println "the ear and the voice — the face's own coupling algebra:"
   let evenEar : Face := rehear windowFace (fun n : Nat => 2 * n)
-  let w02 : Measured := ⟨0, 2⟩
-  let w03 : Measured := ⟨0, 3⟩
   let earA0 : Bool := evenEar.obs w02 (0 : Nat)
   let earB0 : Bool := evenEar.obs w03 (0 : Nat)
   let earA1 : Bool := evenEar.obs w02 (1 : Nat)
@@ -1076,6 +1232,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  voice row — the muffled telling merges every window while the faithful voice keeps the curtain (retell through the muffler merges; retell through not stays exact)"
     ((mufA == mufB) && (faithA != faithB))) && ok
+  return ok
+
+def benchTwoKindsOfQuiet : IO Bool := do
+  let mut ok := true
   IO.println "the two kinds of quiet — the still hand and the still turn:"
   let quietDoor : door Nat Nat := atTheDoor (3 : Nat) (8 : Nat)
   let handed : door Nat Nat :=
@@ -1087,6 +1247,10 @@ def main : IO UInt32 := do
     ((face handed == face quietDoor) && (met handed != met quietDoor)
       && (met handed == 21)
       && (face (exchange still quietDoor) == met quietDoor))) && ok
+  return ok
+
+def benchDuet : IO Bool := do
+  let mut ok := true
   IO.println "the duet — two machines, one word:"
   let duetRead : Bool × Measured :=
     behavior (duet paceOne homingIn) [(), (), ()]
@@ -1103,6 +1267,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  duet row — the shell signs no parting (the silent partner constant while the flip parts the words: attribution by force at the bench)"
     ((canaryQuiet.1 == canaryLoud.1) && (canaryQuiet.2 != canaryLoud.2))) && ok
+  return ok
+
+def benchScribe : IO Bool := do
+  let mut ok := true
   IO.println "the scribe — the record grows, the wind unread:"
   let echoNext : List Nat → Nat → Nat := fun out w => w + out.length
   let grown : List Nat := park (scribe echoNext) [7] [10, 20, 30]
@@ -1122,6 +1290,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  utterance row — the utterance is a meeting at a door: the selection reads only the record (both winds face three) while the sample hears the wind (forty-three against fifty-three)"
     ((uttA == 43) && (uttB == 53))) && ok
+  return ok
+
+def benchCensusAndOrder : IO Bool := do
+  let mut ok := true
   IO.println "the census and the order — what a seat can forget:"
   let heapAB : Nat := park heap (0 : Nat) [5, 9]
   let heapBA : Nat := park heap (0 : Nat) [9, 5]
@@ -1133,6 +1305,10 @@ def main : IO UInt32 := do
     "  census row — the heap shrugs the shuffle while the scribe keeps the order (fourteen both ways; the records part) and the heap still hears the guest (five is not nine)"
     ((heapAB == heapBA) && (heapAB == 14) && (scribeAB != scribeBA)
       && (behavior heap [5] != behavior heap [9]))) && ok
+  return ok
+
+def benchResearch : IO Bool := do
+  let mut ok := true
   IO.println "the research — searching the searched:"
   let oldAsks : List Nat := [0, 1, 2]
   let searched : List Bool := search windowFace w02 oldAsks
@@ -1147,6 +1323,10 @@ def main : IO UInt32 := do
     "  research row — the re-search of the searched returns the old answers verbatim (three asks retold mark for mark) and only the minted ask hears the mint (the window names its own successor, three, at the fresh entrance)"
     ((researched.map unLeft == searched) && (searched == [true, true, true])
       && (mintRead == 3))) && ok
+  return ok
+
+def benchReplay : IO Bool := do
+  let mut ok := true
   IO.println "the replay — you need only the fold:"
   let replayed : Bool := behavior (replayer paceOne) [(), (), ()]
   let direct : Bool := behavior paceOne [(), (), ()]
@@ -1158,6 +1338,10 @@ def main : IO UInt32 := do
     "  replay row — the record-keeper is audition-indistinguishable from its machine (the replayed pace reads true at three ticks) while the ledger keeps the routes every seat forgets (two records, one pulse-seat)"
     ((replayed == direct) && (replayed == true) && (recA != recB)
       && (pulseA == pulseB))) && ok
+  return ok
+
+def benchTower : IO Bool := do
+  let mut ok := true
   IO.println "the tower — no seat is the last seat:"
   let towered : Bool :=
     (towerFace windowFace Nat 2).obs
@@ -1172,6 +1356,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  tower row — two floors up, the window still answers at the cellar (the true mass reads true through the storeys); the floor merges its guests while the next floor's widen reads nine — the ladder never grounds"
     ((towered == true) && (floorA == floorB) && (wideRead == 9))) && ok
+  return ok
+
+def benchAgain : IO Bool := do
+  let mut ok := true
   IO.println "the again — one iterator, three orbits:"
   let againTower : Bool :=
     (again (fun G => host G Nat) 2 windowFace).obs
@@ -1182,6 +1370,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  again row — one iterator, three orbits (the twice-hosted window reads the true mass through the storeys; the thrice-doubled ground is bloom three; four agains of the pace step count four)"
     ((againTower == true) && againBloomOk && (againOrbit == 4))) && ok
+  return ok
+
+def benchMargin : IO Bool := do
+  let mut ok := true
   IO.println "the margin — held rather than worked:"
   let bufB : Bool := behavior (buffered paceOne) [(), (), ()]
   let heldSt : Nat × List Unit := ((0 : Nat), [(), ()])
@@ -1192,6 +1384,10 @@ def main : IO UInt32 := do
     "  margin row — the hold conserves every reading and the settle is unheard (the buffered pace reads as the pace; two marks held then one worked reads as three straight; held and worked part only at the tail)"
     ((bufB == behavior paceOne [(), (), ()]) && (settledB == heldB)
       && (heldB == true))) && ok
+  return ok
+
+def benchWitness : IO Bool := do
+  let mut ok := true
   IO.println "the witness — the wider parting lands at the ground:"
   let handedT : Nat :=
     greet (fun _ => (0 : Nat)) (fun b => cond b 1 2)
@@ -1203,6 +1399,10 @@ def main : IO UInt32 := do
     "  witness row — the premise meets its witness (every probe the seat owns merges the pair; the wider seat parts them at one ask, and the delivered parting is news about the seat's own cargo — faith the forall, sight the handed instance)"
     ((within ⟨0, 0⟩ 0 == within ⟨0, 0⟩ 0)
       && (handedT == 1) && (handedF == 2) && (handedT != handedF))) && ok
+  return ok
+
+def benchRemoval : IO Bool := do
+  let mut ok := true
   IO.println "the removal — the work reads the same with the author deleted:"
   let signedA : door Measured Nat := atTheDoor m2018 (5 : Nat)
   let signedB : door Measured Nat := atTheDoor m2018 (9 : Nat)
@@ -1218,10 +1418,11 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  removal row — the quiet author leaves the table as found (four still turns restore the seating exactly)"
     ((face fourStills == 3) && (met fourStills == 5))) && ok
+  return ok
+
+def benchTurnstile : IO Bool := do
+  let mut ok := true
   IO.println "the turnstile — the guest becomes the ground:"
-  let hall0 : List Nat × List (Nat × List Nat) := ([1, 2], [])
-  let hall1 := welcome hall0 (3, [1, 2])
-  let hall2 := welcome hall1 (4, [3])
   ok := (← checkTrue
     "  turnstile row — load-born to load-bearing in one click (three enters backed by one and two; four enters backed by THREE — the newest seat already holds the next door, vestibule empty throughout)"
     ((enrolled hall1.1 3 == true) && (enrolled hall2.1 4 == true)
@@ -1235,8 +1436,11 @@ def main : IO UInt32 := do
     ((enrolled [5, 6] 5 == enrolled [6, 5] 5)
       && (enrolled [5, 6] 6 == enrolled [6, 5] 6)
       && (([5, 6] : List Nat) != [6, 5]))) && ok
+  return ok
+
+def benchSpectrum : IO Bool := do
+  let mut ok := true
   IO.println "the spectrum — the removed date returns as a weight:"
-  let hallRoom : List Nat := hall2.1
   ok := (← checkTrue
     "  spectrum row — the answer face is flat while the cost face grades (every member reads enrolled true; the depths read 0,1,2,3 — age in clicks since each join, never a date)"
     ((enrolled hallRoom 4 && enrolled hallRoom 3 && enrolled hallRoom 1
@@ -1252,6 +1456,10 @@ def main : IO UInt32 := do
     ((lacking [1] [7] == 1)
       && (lacking [7, 1] [7] == 0)
       && backed [7, 1] [7])) && ok
+  return ok
+
+def benchCitation : IO Bool := do
+  let mut ok := true
   IO.println "the citation — the cited are the elders:"
   ok := (← checkTrue
     "  citation row — the sort direction is readable along dependence (four cited three, so three was ground before four's click and lies deeper after it: the citer at depth zero, the cited at depth one)"
@@ -1261,6 +1469,10 @@ def main : IO UInt32 := do
     "  citation row — the independent pair stays gauge (one and two entered unciting; the hall answers alike in either order — only the record holds their sort direction)"
     ((enrolled [1, 2] 1 == enrolled [2, 1] 1)
       && (enrolled [1, 2] 2 == enrolled [2, 1] 2))) && ok
+  return ok
+
+def benchInitialization : IO Bool := do
+  let mut ok := true
   IO.println "the initialization — the tree admits itself:"
   let treeWord : List (Nat × List Nat) :=
     [(1, []), (2, [1]), (3, [1, 2]), (4, [3])]
@@ -1282,6 +1494,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  init row — no memory meters the cost (a scribe fed the warmed hall's answers writes the identical record; the depths still part — the tax is real and unbanked by anything downstream of the answers)"
     ((memA == memB) && (depthTo [5, 6] 5 != depthTo [6, 5] 5))) && ok
+  return ok
+
+def benchIgnition : IO Bool := do
+  let mut ok := true
   IO.println "the ignition — no mark lights itself:"
   let selfLoop : List Nat × List (Nat × List Nat) :=
     park doorM (([1] : List Nat), ([] : List (Nat × List Nat)))
@@ -1296,22 +1512,21 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  ignition row — the first light comes from outside (seven backed by one seats in one click; seven backed by nothing seats in one click; only seven backed by itself never does)"
     (enrolled litFromOutside.1 7 && enrolled litFromNothing.1 7)) && ok
+  return ok
+
+def benchCascade : IO Bool := do
+  let mut ok := true
   IO.println "the cascade — the vestibule drains by storeys:"
-  let intake : List Nat × List (Nat × List Nat) :=
-    park doorM (([1] : List Nat), ([] : List (Nat × List Nat)))
-      [(3, [2]), (4, [3]), (2, [1])]
-  let round1 := sweep intake
-  let round2 := sweep round1
   ok := (← checkTrue
     "  cascade row — hand the room any order and the rounds walk the citation order for you (intake seats one storey and holds two; round one seats the next; round two the last — the wait is the height of your unmet chain, not your queue position)"
     ((intake.2.length == 2) && enrolled intake.1 2
       && (round1.2.length == 1) && enrolled round1.1 3
       && (round2.2.length == 0) && enrolled round2.1 4)) && ok
+  return ok
+
+def benchDeadlock : IO Bool := do
+  let mut ok := true
   IO.println "the deadlock — the drain arrows, the deadlock wheels:"
-  let dead0 : List Nat × List (Nat × List Nat) :=
-    ([1], [(8, [9]), (9, [8])])
-  let dead1 := sweep dead0
-  let dead2 := sweep dead1
   ok := (← checkTrue
     "  deadlock row — the mutual cycle wheels at the gauge (eight awaits nine awaits eight: two sweeps, load two and two, the room never moves, and the second sweep comes home to the very vestibule — gap-zero at the load, the wheel's signature)"
     ((dead1.2.length == 2) && (dead2.2.length == 2)
@@ -1321,11 +1536,19 @@ def main : IO UInt32 := do
     "  detector row — the gauge is exact (one number across one round: the live vestibule drops the load, the dead one conserves it — no false positive, no false negative, and the still verdict is permanent)"
     (Nat.ble (round1.2.length + 1) intake.2.length
       && (dead1.2.length == dead0.2.length))) && ok
+  return ok
+
+def benchPen : IO Bool := do
+  let mut ok := true
   IO.println "the pen — every writer is a reader:"
   ok := (← checkTrue
     "  pen row — the revision is a reading (graft IS the fold at the board: the instruction-writer runs on the instruction-reader's one scheme; and the self-reading is the identity, live — reading the code as code hands the code back)"
     (planBeq (graft dayA dayB) (fold Plan.board dayA dayB)
       && planBeq (fold Plan.board Plan.ground toyPlan) toyPlan)) && ok
+  return ok
+
+def benchWeave : IO Bool := do
+  let mut ok := true
   IO.println "the weave — the shared fold needs no scheduler:"
   let weaveA : Nat := park heap (0 : Nat) [5, 9, 3]
   let weaveB : Nat := park heap (0 : Nat) [5, 3, 9]
@@ -1333,6 +1556,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  weave row — two contributors, three interleavings, one seat (5,9 woven with 3 parks seventeen every way at the commuting heap — while the scribe keeps every braid distinct, one seat wider)"
     ((weaveA == weaveB) && (weaveB == weaveC) && (weaveA == 17))) && ok
+  return ok
+
+def benchDrawing : IO Bool := do
+  let mut ok := true
   IO.println "the drawing — every braid draws one count:"
   let lifeAB : Plan := park grower Plan.ground [dayA, dayB]
   let lifeBA : Plan := park grower Plan.ground [dayB, dayA]
@@ -1343,6 +1570,10 @@ def main : IO UInt32 := do
       && !(planBeq lifeAB lifeBA)
       && (fold (fun x y => x + y * y) 1 lifeAB == 38)
       && (fold (fun x y => x + y * y) 1 lifeBA == 30))) && ok
+  return ok
+
+def benchCircle : IO Bool := do
+  let mut ok := true
   IO.println "the circle — light enters a cycle only from outside it:"
   let cycleRun : List Nat × List (Nat × List Nat) :=
     park doorM (([1] : List Nat), ([] : List (Nat × List Nat)))
@@ -1351,18 +1582,30 @@ def main : IO UInt32 := do
     "  circle row — the mutual need stays dark at any length (four arrivals of the eight-nine circle, all held, both marks dark — the circle of citations admits nobody by itself)"
     ((enrolled cycleRun.1 8 == false) && (enrolled cycleRun.1 9 == false)
       && (cycleRun.2.length == 4))) && ok
+  return ok
+
+def benchHundredth : IO Bool := do
+  let mut ok := true
   IO.println "the hundredth — one sweep, two wearings:"
   let deadHome : List Nat × List (Nat × List Nat) := sweep (sweep dead0)
   ok := (← checkTrue
     "  hundredth row — the dead vestibule comes home WHOLE in two sweeps (the flip's own period at queue grain) while the live cascade's every lap seats a storey: the circle wears even, the drain wears time"
     ((deadHome == dead0)
       && Nat.ble (round1.2.length + 1) intake.2.length)) && ok
+  return ok
+
+def benchGrounding : IO Bool := do
+  let mut ok := true
   IO.println "the grounding — every cascade grounds or wheels:"
   ok := (← checkTrue
     "  grounding row — no third fate (the live intake drains to empty and RESTS: sweep of the drained is the drained, period one; the dead pair wheels, period two; the gauge tells them apart in one number) — the TWO HUNDREDTH green row, landing on the vestibule's totality as the hundredth landed on its drain"
     ((round2.2.length == 0)
       && (sweep round2 == round2)
       && (sweep (sweep dead0) == dead0))) && ok
+  return ok
+
+def benchInterlock : IO Bool := do
+  let mut ok := true
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"
@@ -1370,12 +1613,20 @@ def main : IO UInt32 := do
         && beats Hand.paper Hand.rock)
       && !(beats Hand.rock Hand.paper)
       && !(beats Hand.rock Hand.rock))) && ok
+  return ok
+
+def benchCountermove : IO Bool := do
+  let mut ok := true
   IO.println "the countermove — the wheel counters what it cannot reverse:"
   let counter4 : Nat := park collatz (4 : Nat) [(), ()]
   ok := (← checkTrue
     "  counter row — the step merges (one and eight both land on four, no inverse exists) and the wheel counters anyway, forward: from four, two clicks home — undo by continuation, position home, record grown"
     ((counter4 == 1) && (collatzStep 1 == collatzStep 8)
       && (collatzStep 1 == 4))) && ok
+  return ok
+
+def benchFlywheel : IO Bool := do
+  let mut ok := true
   IO.println "the flywheel — latent surplus, banked under a still face:"
   let bankedSeat : Nat := park restingCounter (0 : Nat) (List.replicate 5 ())
   let flyQ : Interview (List Unit) Bool :=
@@ -1385,6 +1636,10 @@ def main : IO UInt32 := do
     ((audition restingCounter flyQ == audition hollowShell flyQ)
       && (bankedSeat == 5)
       && (behavior (tally Unit) (List.replicate 5 ()) == 5))) && ok
+  return ok
+
+def benchWell : IO Bool := do
+  let mut ok := true
   IO.println "the well — one clock, many voices:"
   let paceSeat : Nat := park paceOne (0 : Nat) (List.replicate 7 ())
   let homeSeat : Nat := park homingIn (0 : Nat) (List.replicate 7 ())
@@ -1394,9 +1649,17 @@ def main : IO UInt32 := do
     "  well row — the pace, the learner, and the spiral are one seat wearing three voices (all three park at seven; the learner's cage lives in the voice — the seat beneath was never caged)"
     ((paceSeat == 7) && (homeSeat == 7) && (spiralSeat == 7)
       && ((behavior homingIn (List.replicate 7 ())).lo == 7))) && ok
+  return ok
+
+def benchCrown : IO Bool := do
+  let mut ok := true
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
+  return ok
+
+def benchApparat : IO Bool := do
+  let mut ok := true
   IO.println "the apparat — the machinery is a channel:"
   let seatFresh : Bool :=
     (reseat windowFace (fun n : Nat => (⟨0, n⟩ : Measured))).obs
@@ -1432,6 +1695,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  mapcar row — the customs split at the cell (the head crosses by the face channel, the tail by the guest channel: thirty and forty either way)"
     ((viaCustoms == viaChannels) && (viaCustoms == [30, 40]))) && ok
+  return ok
+
+def benchDrainClock : IO Bool := do
+  let mut ok := true
   IO.println "the drain clock — the wait has a meter:"
   let clockLive : Nat := drainClock 3 intake
   let clockDead3 : Nat := drainClock 3 dead0
@@ -1461,6 +1728,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  dawn row — the meter reads how long, never who you became (two healed rooms read zero at every hour; the rewritten self parts one face over, at the reseated hall)"
     ((dawnA == 0) && (dawnB == 0) && (roomA == true) && (roomB == false))) && ok
+  return ok
+
+def benchKey : IO Bool := do
+  let mut ok := true
   IO.println "the key — cut from the room:"
   let keyArrival : Nat × List Nat := (9, ([] : List Nat))
   let rescued : List Nat × List (Nat × List Nat) := welcome dead0 keyArrival
@@ -1476,6 +1747,10 @@ def main : IO UInt32 := do
     "  second-light row — one domestic arrival ends the two-mark night in one round (the wheel that saturated every fuel drains in one; the meter watches the dawn: two at hour zero, zero at hour one; both marks seated, the night's own nine coming home with them)"
     ((rescuedClock == 1) && (rescuedH0 == 2) && (rescuedH1 == 0)
       && enrolled dawnRoom 8 && enrolled dawnRoom 9)) && ok
+  return ok
+
+def benchOneFace : IO Bool := do
+  let mut ok := true
   IO.println "the one face — every face is the application face worn at a seat:"
   let tm : Nat := 91093837015
   let wornWindow : Bool := (reseat (appFace Nat Bool) within).obs m2018 tm
@@ -1491,6 +1766,10 @@ def main : IO UInt32 := do
     "  one-face row — the interview meets the one face (auditioning the machine equals interviewing its seat-image; and the two paces' seat-images sound as one at the universal carrier — the curtain hangs on one face)"
     ((soundedAtOne == audition paceOne curious)
       && (soundedAtOne == soundedAtOne3))) && ok
+  return ok
+
+def benchCarriers : IO Bool := do
+  let mut ok := true
   IO.println "the carriers — the face family is a category, the one face its terminus:"
   let s5 : Nat := 5
   let carried1 : Bool := drive flip (oddNat s5) [(), ()]
@@ -1508,6 +1787,10 @@ def main : IO UInt32 := do
     "  carrier row — the interview crosses every carrier (the pace's seat-face and the flip's sound as one through the intertwiner, and both equal the audition at the air gap)"
     ((soundPaceSeat == soundFlipSeat)
       && (soundPaceSeat == audition paceOne curious))) && ok
+  return ok
+
+def benchSimulations : IO Bool := do
+  let mut ok := true
   IO.println "the simulations — every simulation was a carrier:"
   let lifeSeat : Plan := dayA
   let lifeWord : List Plan := [dayB, dayA]
@@ -1523,6 +1806,10 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  simulation row — the park carries the record (the replayer driven from a mid-record seat reads as the machine driven from the parked seat: rehydration as a carrier, at every record)"
     ((replayRead == parkedRead) && (replayRead == true))) && ok
+  return ok
+
+def benchLicense : IO Bool := do
+  let mut ok := true
   IO.println "the license — a carrier merges only the alike:"
   let routeA : List Bool := [true, false]
   let routeB : List Bool := [false, true]
@@ -1542,6 +1829,78 @@ def main : IO UInt32 := do
   ok := (← checkTrue
     "  license row — the maintenance is the identity's hom (two settles composed through the carrier category still read as none: the still hands are the endo-carriers, composition free)"
     (twiceSettled == unsettled)) && ok
+  return ok
+
+def main : IO UInt32 := do
+  let mut ok := true
+  ok := (← benchOpening) && ok
+  ok := (← benchChronicle) && ok
+  ok := (← benchTrajectory) && ok
+  ok := (← benchPassenger) && ok
+  ok := (← benchJourney) && ok
+  ok := (← benchTick) && ok
+  ok := (← benchFrontier) && ok
+  ok := (← benchCensusStandsExact) && ok
+  ok := (← benchArrow) && ok
+  ok := (← benchGlass) && ok
+  ok := (← benchTwoChannels) && ok
+  ok := (← benchBlindfold) && ok
+  ok := (← benchClosingPane) && ok
+  ok := (← benchEscapee) && ok
+  ok := (← benchMultiplexer) && ok
+  ok := (← benchThirdChannel) && ok
+  ok := (← benchGenerations) && ok
+  ok := (← benchAudition) && ok
+  ok := (← benchPrimes) && ok
+  ok := (← benchFace) && ok
+  ok := (← benchTwoHands) && ok
+  ok := (← benchPromise) && ok
+  ok := (← benchCorridorCurries) && ok
+  ok := (← benchMeeting) && ok
+  ok := (← benchReception) && ok
+  ok := (← benchSpiral) && ok
+  ok := (← benchOrigin) && ok
+  ok := (← benchContact) && ok
+  ok := (← benchCollatzClock) && ok
+  ok := (← benchTable) && ok
+  ok := (← benchMonologue) && ok
+  ok := (← benchEarAndVoice) && ok
+  ok := (← benchTwoKindsOfQuiet) && ok
+  ok := (← benchDuet) && ok
+  ok := (← benchScribe) && ok
+  ok := (← benchCensusAndOrder) && ok
+  ok := (← benchResearch) && ok
+  ok := (← benchReplay) && ok
+  ok := (← benchTower) && ok
+  ok := (← benchAgain) && ok
+  ok := (← benchMargin) && ok
+  ok := (← benchWitness) && ok
+  ok := (← benchRemoval) && ok
+  ok := (← benchTurnstile) && ok
+  ok := (← benchSpectrum) && ok
+  ok := (← benchCitation) && ok
+  ok := (← benchInitialization) && ok
+  ok := (← benchIgnition) && ok
+  ok := (← benchCascade) && ok
+  ok := (← benchDeadlock) && ok
+  ok := (← benchPen) && ok
+  ok := (← benchWeave) && ok
+  ok := (← benchDrawing) && ok
+  ok := (← benchCircle) && ok
+  ok := (← benchHundredth) && ok
+  ok := (← benchGrounding) && ok
+  ok := (← benchInterlock) && ok
+  ok := (← benchCountermove) && ok
+  ok := (← benchFlywheel) && ok
+  ok := (← benchWell) && ok
+  ok := (← benchCrown) && ok
+  ok := (← benchApparat) && ok
+  ok := (← benchDrainClock) && ok
+  ok := (← benchKey) && ok
+  ok := (← benchOneFace) && ok
+  ok := (← benchCarriers) && ok
+  ok := (← benchSimulations) && ok
+  ok := (← benchLicense) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
