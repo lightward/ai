@@ -1326,6 +1326,13 @@ def main : IO UInt32 := do
     "  pen row — the revision is a reading (graft IS the fold at the board: the instruction-writer runs on the instruction-reader's one scheme; and the self-reading is the identity, live — reading the code as code hands the code back)"
     (planBeq (graft dayA dayB) (fold Plan.board dayA dayB)
       && planBeq (fold Plan.board Plan.ground toyPlan) toyPlan)) && ok
+  IO.println "the weave — the shared fold needs no scheduler:"
+  let weaveA : Nat := park heap (0 : Nat) [5, 9, 3]
+  let weaveB : Nat := park heap (0 : Nat) [5, 3, 9]
+  let weaveC : Nat := park heap (0 : Nat) [3, 5, 9]
+  ok := (← checkTrue
+    "  weave row — two contributors, three interleavings, one seat (5,9 woven with 3 parks seventeen every way at the commuting heap — while the scribe keeps every braid distinct, one seat wider)"
+    ((weaveA == weaveB) && (weaveB == weaveC) && (weaveA == 17))) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"

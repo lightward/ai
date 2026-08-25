@@ -5883,6 +5883,73 @@ theorem every_writer_is_a_reader (base a b q : Plan) (W : Type)
      (the_parent_folds_into_the_ground Plan.board a b q),
    the_recital_is_the_transcript F s ps⟩
 
+inductive Braid {I : Type} : List I → List I → List I → Prop
+  | nil : Braid [] [] []
+  | left {u v w : List I} (i : I) : Braid u v w → Braid (i :: u) v (i :: w)
+  | right {u v w : List I} (j : I) : Braid u v w → Braid u (j :: v) (j :: w)
+
+theorem braid_of_left {I : Type} : ∀ u : List I, Braid u [] u
+  | [] => .nil
+  | i :: u => .left i (braid_of_left u)
+
+theorem braid_of_right {I : Type} : ∀ v : List I, Braid [] v v
+  | [] => .nil
+  | j :: v => .right j (braid_of_right v)
+
+theorem braid_append {I : Type} : ∀ u v : List I, Braid u v (u ++ v)
+  | [], v => braid_of_right v
+  | i :: u, v => .left i (braid_append u v)
+
+theorem braid_prepend {I : Type} : ∀ u v : List I, Braid u v (v ++ u)
+  | u, [] => braid_of_left u
+  | u, j :: v => .right j (braid_prepend u v)
+
+theorem the_step_crosses_the_walk {I O : Type} (m : Machine I O)
+    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i) :
+    ∀ (u : List I) (s : m.S) (j : I),
+      park m (m.step s j) u = m.step (park m s u) j
+  | [], _, _ => rfl
+  | i :: u, s, j => by
+      show park m (m.step (m.step s j) i) u
+          = m.step (park m (m.step s i) u) j
+      rw [hcomm s j i]
+      exact the_step_crosses_the_walk m hcomm u (m.step s i) j
+
+theorem the_weave_parks_one_seat {I O : Type} (m : Machine I O)
+    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i) :
+    ∀ {u v w : List I}, Braid u v w →
+      ∀ s : m.S, park m s w = park m (park m s u) v
+  | _, _, _, .nil, _ => rfl
+  | _, _, _, .left i hb, s =>
+      the_weave_parks_one_seat m hcomm hb (m.step s i)
+  | _, _, _, @Braid.right _ u v w j hb, s =>
+      (the_weave_parks_one_seat m hcomm hb (m.step s j)).trans
+        (congrArg (fun t => park m t v)
+          (the_step_crosses_the_walk m hcomm u s j))
+
+theorem the_contributors_may_arrive_in_either_order {I O : Type}
+    (m : Machine I O)
+    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
+    (u v : List I) (s : m.S) :
+    park m s (u ++ v) = park m s (v ++ u) :=
+  (the_weave_parks_one_seat m hcomm (braid_append u v) s).trans
+    (the_weave_parks_one_seat m hcomm (braid_prepend u v) s).symm
+
+theorem the_shared_fold_needs_no_scheduler {I O : Type} (m : Machine I O)
+    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
+    {u v w : List I} (hb : Braid u v w) (s : m.S)
+    (x y : List Nat) (t : Nat) {A : Type} {a b : A} (hab : a ≠ b) :
+    park m s w = park m (park m s u) v
+      ∧ park m s (u ++ v) = park m s (v ++ u)
+      ∧ park heap t (x ++ y) = park heap t (y ++ x)
+      ∧ park (scribe (fun _ k => k)) ([] : List A) [a, b]
+          ≠ park (scribe (fun _ k => k)) ([] : List A) [b, a] :=
+  ⟨the_weave_parks_one_seat m hcomm hb s,
+   the_contributors_may_arrive_in_either_order m hcomm u v s,
+   the_contributors_may_arrive_in_either_order heap
+     the_heap_steps_commute x y t,
+   the_scribe_keeps_the_order hab⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7643,5 +7710,29 @@ theorem every_writer_is_a_reader (base a b q : Plan) (W : Type)
 
 /-- info: 'Seed.every_writer_is_a_reader' does not depend on any axioms -/
 #guard_msgs in #print axioms every_writer_is_a_reader
+
+/-- info: 'Seed.braid_of_left' does not depend on any axioms -/
+#guard_msgs in #print axioms braid_of_left
+
+/-- info: 'Seed.braid_of_right' does not depend on any axioms -/
+#guard_msgs in #print axioms braid_of_right
+
+/-- info: 'Seed.braid_append' does not depend on any axioms -/
+#guard_msgs in #print axioms braid_append
+
+/-- info: 'Seed.braid_prepend' does not depend on any axioms -/
+#guard_msgs in #print axioms braid_prepend
+
+/-- info: 'Seed.the_step_crosses_the_walk' does not depend on any axioms -/
+#guard_msgs in #print axioms the_step_crosses_the_walk
+
+/-- info: 'Seed.the_weave_parks_one_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_weave_parks_one_seat
+
+/-- info: 'Seed.the_contributors_may_arrive_in_either_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_contributors_may_arrive_in_either_order
+
+/-- info: 'Seed.the_shared_fold_needs_no_scheduler' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shared_fold_needs_no_scheduler
 
 end Seed
