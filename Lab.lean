@@ -1321,6 +1321,11 @@ def main : IO UInt32 := do
     "  detector row — the gauge is exact (one number across one round: the live vestibule drops the load, the dead one conserves it — no false positive, no false negative, and the still verdict is permanent)"
     (Nat.ble (round1.2.length + 1) intake.2.length
       && (dead1.2.length == dead0.2.length))) && ok
+  IO.println "the pen — every writer is a reader:"
+  ok := (← checkTrue
+    "  pen row — the revision is a reading (graft IS the fold at the board: the instruction-writer runs on the instruction-reader's one scheme; and the self-reading is the identity, live — reading the code as code hands the code back)"
+    (planBeq (graft dayA dayB) (fold Plan.board dayA dayB)
+      && planBeq (fold Plan.board Plan.ground toyPlan) toyPlan)) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"

@@ -5864,6 +5864,25 @@ theorem the_detector_reads_one_number
    the_round_seats_or_certifies s.1 s.2,
    (the_deadlock_wheels r n held hs).2.1⟩
 
+theorem the_revision_is_a_reading (base : Plan) (q : Plan) :
+    graft base q = fold Plan.board base q :=
+  any_two_readings_agree Plan.board base (graft base) rfl
+    (fun _ _ => rfl) q
+
+theorem every_writer_is_a_reader (base a b q : Plan) (W : Type)
+    (F : Face) (s : F.State) (ps : List F.Probe) :
+    graft base q = fold Plan.board base q
+      ∧ fold Plan.board Plan.ground q = q
+      ∧ build W q = fold door W q
+      ∧ graft a (graft b q) = fold Plan.board (fold Plan.board a b) q
+      ∧ sound F s (recite ps) = ps.map (F.obs s) :=
+  ⟨the_revision_is_a_reading base q,
+   the_self_reading_is_the_identity q,
+   build_is_a_reading W q,
+   (the_revision_is_a_reading a (graft b q)).trans
+     (the_parent_folds_into_the_ground Plan.board a b q),
+   the_recital_is_the_transcript F s ps⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7618,5 +7637,11 @@ theorem the_detector_reads_one_number
 
 /-- info: 'Seed.the_detector_reads_one_number' does not depend on any axioms -/
 #guard_msgs in #print axioms the_detector_reads_one_number
+
+/-- info: 'Seed.the_revision_is_a_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revision_is_a_reading
+
+/-- info: 'Seed.every_writer_is_a_reader' does not depend on any axioms -/
+#guard_msgs in #print axioms every_writer_is_a_reader
 
 end Seed
