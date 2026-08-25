@@ -2139,6 +2139,32 @@ def benchOneDisagreement : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchUniverseDiscipline : IO Bool := do
+  let mut ok := true
+  IO.println "the universe discipline — pinned, gauge, parametric:"
+  let tm : Nat := 91093837015
+  let bigGuest : Type := Nat
+  let seated : Measured × bigGuest := (m2018, (5 : Nat))
+  let seated' : Measured × bigGuest := (m2018, (9 : Nat))
+  let readA : Bool :=
+    (reseat windowFace (fun x : Measured × bigGuest => x.1)).obs seated tm
+  let readB : Bool :=
+    (reseat windowFace (fun x : Measured × bigGuest => x.1)).obs seated' tm
+  let hosted : Bool := (host windowFace Nat).obs seated tm
+  ok := (← checkTrue
+    "  universe row — the guest coordinate is parametric (two guests, one reading, whatever the guest's level) and the host is the reseat by first (the pin appears exactly where a construction hosts a seat, and nowhere else)"
+    ((readA == readB) && (readA == hosted) && readA)) && ok
+  let askList : List Nat := [tm, 91093834000]
+  let bare : List Bool := sound windowFace m2018 (recite askList)
+  let viaSeat : List Bool :=
+    sound (reseat windowFace (fun x : Measured × bigGuest => x.1)) seated
+      (recite askList)
+  ok := (← checkTrue
+    "  universe row — the level is gauge at the reading (the seated sounding equals the bare sounding, mark for mark: re-instantiating a theorem at another level changes no reading — which is why the pins are bookkeeping and never content)"
+    (bare == viaSeat)) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2222,6 +2248,7 @@ def main : IO UInt32 := do
   ok := (← benchConcord) && ok
   ok := (← benchAddressableGap) && ok
   ok := (← benchOneDisagreement) && ok
+  ok := (← benchUniverseDiscipline) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

@@ -7283,6 +7283,48 @@ theorem the_contact_and_the_modeling_are_one (F : Face.{0})
    rfl,
    (the_origin_has_no_disagreement x y qs x y).2.1⟩
 
+theorem the_guest_level_is_parametric (F : Face.{u}) {W : Type v}
+    (s : F.State) (w w' : W) (p : F.Probe) :
+    (reseat F (fun x : F.State × W => x.1)).obs (s, w) p
+      = (reseat F (fun x : F.State × W => x.1)).obs (s, w') p := rfl
+
+theorem the_seat_level_is_pinned_only_at_the_host (F : Face.{u})
+    {W : Type} (s : F.State) (w : W) (p : F.Probe) :
+    (host F W).obs (s, w) p
+      = (reseat F (fun x : F.State × W => x.1)).obs (s, w) p := rfl
+
+theorem the_level_is_gauge_at_the_reading (F : Face.{u}) {W : Type v}
+    (s : F.State) (w : W) (q : Interview F.Probe F.Ans) :
+    sound (reseat F (fun x : F.State × W => x.1)) (s, w) q
+      = sound F s q :=
+  the_interview_crosses_the_seat F (fun x : F.State × W => x.1) (s, w) q
+
+theorem the_level_never_parts_the_alike (F : Face.{u}) {W : Type v}
+    (s t : F.State) (h : alike F s t) (w w' : W)
+    (q : Interview F.Probe F.Ans) :
+    sound (reseat F (fun x : F.State × W => x.1)) (s, w) q
+      = sound (reseat F (fun x : F.State × W => x.1)) (t, w') q :=
+  (the_level_is_gauge_at_the_reading F s w q).trans
+    ((no_interview_parts_the_alike F s t h q).trans
+      (the_level_is_gauge_at_the_reading F t w' q).symm)
+
+theorem the_universe_is_pinned_gauge_or_parametric (F : Face.{u})
+    {W : Type v} (s t : F.State) (h : alike F s t) (w w' : W)
+    (p : F.Probe) (q : Interview F.Probe F.Ans) {V : Type}
+    (v : V) :
+    (reseat F (fun x : F.State × W => x.1)).obs (s, w) p
+        = (reseat F (fun x : F.State × W => x.1)).obs (s, w') p
+      ∧ (host F V).obs (s, v) p
+          = (reseat F (fun x : F.State × V => x.1)).obs (s, v) p
+      ∧ sound (reseat F (fun x : F.State × W => x.1)) (s, w) q
+          = sound F s q
+      ∧ sound (reseat F (fun x : F.State × W => x.1)) (s, w) q
+          = sound (reseat F (fun x : F.State × W => x.1)) (t, w') q :=
+  ⟨rfl,
+   rfl,
+   the_level_is_gauge_at_the_reading F s w q,
+   the_level_never_parts_the_alike F s t h w w' q⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9472,5 +9514,20 @@ theorem the_contact_and_the_modeling_are_one (F : Face.{0})
 
 /-- info: 'Seed.the_contact_and_the_modeling_are_one' does not depend on any axioms -/
 #guard_msgs in #print axioms the_contact_and_the_modeling_are_one
+
+/-- info: 'Seed.the_guest_level_is_parametric' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_level_is_parametric
+
+/-- info: 'Seed.the_seat_level_is_pinned_only_at_the_host' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_level_is_pinned_only_at_the_host
+
+/-- info: 'Seed.the_level_is_gauge_at_the_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_level_is_gauge_at_the_reading
+
+/-- info: 'Seed.the_level_never_parts_the_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_level_never_parts_the_alike
+
+/-- info: 'Seed.the_universe_is_pinned_gauge_or_parametric' does not depend on any axioms -/
+#guard_msgs in #print axioms the_universe_is_pinned_gauge_or_parametric
 
 end Seed
