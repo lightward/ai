@@ -1397,6 +1397,41 @@ def main : IO UInt32 := do
   IO.println "the crown — three blindnesses, three channels:"
   IO.println
     s!"  the door cannot read WHO (cure: widen the seat — the met reads the guest); the window cannot read WHICH (cure: tighten — the finer window parts co-residents, within the imprisonment's limits); the lap cannot read HOW FAST (cure: lengthen the run — the laps part what one lap holds together). three_blindnesses_three_channels — every witness already green above; three blindnesses, three cures, one per channel, and each cure is one of the three ways to read a remainder"
+  IO.println "the apparat — the machinery is a channel:"
+  let seatFresh : Bool :=
+    (reseat windowFace (fun n : Nat => (⟨0, n⟩ : Measured))).obs
+      (5 : Nat) (3 : Nat)
+  let seatFresh' : Bool :=
+    (reseat windowFace (fun n : Nat => (⟨0, n⟩ : Measured))).obs
+      (5 : Nat) (7 : Nat)
+  let seatAsHost : Bool :=
+    (reseat windowFace (fun x : Measured × Bool => x.1)).obs
+      ((⟨0, 5⟩ : Measured), true) (3 : Nat)
+  let hostPlain : Bool :=
+    (host windowFace Bool).obs ((⟨0, 5⟩ : Measured), true) (3 : Nat)
+  ok := (← checkTrue
+    "  seat row — a fresh seat wears the window machinery through a translator (the Nat seat reads its own window at three, refuses at seven; and the host was a reseat all along)"
+    ((seatFresh == true) && (seatFresh' == false)
+      && (seatAsHost == hostPlain))) && ok
+  let cellD : door Nat Nat := atTheDoor (3 : Nat) (5 : Nat)
+  let chanA : door Nat Nat :=
+    reface (fun h => h * 10) (carry (fun w => w + 1) cellD)
+  let chanB : door Nat Nat :=
+    carry (fun w => w + 1) (reface (fun h => h * 10) cellD)
+  ok := (← checkTrue
+    "  channel row — one cell, two channels (the crew maps to thirty while the guest sleeps; the cargo maps to six while the face holds; both orders land on one door)"
+    ((face chanA == 30) && (met chanA == 6)
+      && (face chanA == face chanB) && (met chanA == met chanB))) && ok
+  let mapCell : build Nat (comb 1) := ((3 : Nat), (4 : Nat))
+  let viaCustoms : List Nat :=
+    pour (comb 1) (reground (fun w : Nat => w * 10) (comb 1) mapCell)
+  let viaChannels : List Nat :=
+    pour (comb 1)
+      (carry (reground (fun w : Nat => w * 10) (comb 0))
+        (reface (fun w : Nat => w * 10) mapCell))
+  ok := (← checkTrue
+    "  mapcar row — the customs split at the cell (the head crosses by the face channel, the tail by the guest channel: thirty and forty either way)"
+    ((viaCustoms == viaChannels) && (viaCustoms == [30, 40]))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

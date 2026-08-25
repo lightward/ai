@@ -6224,6 +6224,126 @@ theorem the_hall_runs_the_handshake (a b : Nat) (hab : a ≠ b)
    (fun he => hab (List.cons.inj he).1),
    the_cost_face_parts_the_warmed a b hab⟩
 
+def reseat (F : Face) {S' : Type u} (f : S' → F.State) : Face :=
+  ⟨S', F.Probe, F.Ans, fun s p => F.obs (f s) p⟩
+
+theorem the_reseated_face_reads_the_ground (F : Face) {S' : Type u}
+    (f : S' → F.State) (s t : S') :
+    alike (reseat F f) s t ↔ alike F (f s) (f t) := Iff.rfl
+
+theorem the_seats_stack_backward (F : Face) {S' S'' : Type u}
+    (f : S' → F.State) (g : S'' → S') :
+    reseat (reseat F f) g = reseat F (fun s => f (g s)) := rfl
+
+theorem the_plain_seat_sits_plainly (F : Face) :
+    reseat F (fun s => s) = F := rfl
+
+theorem the_seat_commutes_with_the_ear (F : Face) {S' : Type u} {P' : Type}
+    (f : S' → F.State) (fp : P' → F.Probe) :
+    reseat (rehear F fp) f = rehear (reseat F f) fp := rfl
+
+theorem the_seat_commutes_with_the_voice (F : Face) {S' : Type u} {A' : Type}
+    (f : S' → F.State) (ga : F.Ans → A') :
+    reseat (retell F ga) f = retell (reseat F f) ga := rfl
+
+theorem the_interview_crosses_the_seat (F : Face) {S' : Type u}
+    (f : S' → F.State) (s : S') :
+    ∀ q : Interview F.Probe F.Ans,
+      sound (reseat F f) s q = sound F (f s) q
+  | .rest => rfl
+  | .ask p k =>
+      congrArg (F.obs (f s) p :: ·)
+        (the_interview_crosses_the_seat F f s (k (F.obs (f s) p)))
+
+theorem the_host_was_a_reseat (F : Face) (W : Type) :
+    host F W = reseat F (fun x : F.State × W => x.1) := rfl
+
+theorem the_tower_was_a_reseat (F : Face) (W : Type) (n : Nat) :
+    towerFace F W n = reseat F (cellar (S := F.State) (W := W) n) := rfl
+
+theorem the_pair_is_two_reseats {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) :
+    pairFace F G f g
+      = pairFace (reseat F f) (reseat G g) (fun x => x) (fun x => x) := rfl
+
+theorem every_face_wears_a_seat (F : Face) (W : Type) (n : Nat)
+    {S : Type u} (G : Face) (f2 : S → F.State) (g2 : S → G.State)
+    {S' : Type u} (f : S' → F.State) (s t : S')
+    {P' A' : Type} (fp : P' → F.Probe) (ga : F.Ans → A')
+    (q : Interview F.Probe F.Ans) :
+    (alike (reseat F f) s t ↔ alike F (f s) (f t))
+      ∧ host F W = reseat F (fun x : F.State × W => x.1)
+      ∧ towerFace F W n = reseat F (cellar (S := F.State) (W := W) n)
+      ∧ pairFace F G f2 g2
+          = pairFace (reseat F f2) (reseat G g2) (fun x => x) (fun x => x)
+      ∧ reseat (rehear F fp) f = rehear (reseat F f) fp
+      ∧ reseat (retell F ga) f = retell (reseat F f) ga
+      ∧ sound (reseat F f) s q = sound F (f s) q :=
+  ⟨Iff.rfl, rfl, rfl, rfl, rfl, rfl,
+   the_interview_crosses_the_seat F f s q⟩
+
+def reface {H H' W : Type} (f : H → H') (d : door H W) : door H' W :=
+  atTheDoor (f (face d)) (met d)
+
+def carry {H W W' : Type} (g : W → W') (d : door H W) : door H W' :=
+  atTheDoor (face d) (g (met d))
+
+theorem the_renovation_moves_no_guest {H H' W : Type} (f : H → H')
+    (d : door H W) : met (reface f d) = met d := rfl
+
+theorem the_carriage_keeps_the_face {H W W' : Type} (g : W → W')
+    (d : door H W) : face (carry g d) = face d := rfl
+
+theorem the_two_channels_commute {H H' W W' : Type} (f : H → H')
+    (g : W → W') (d : door H W) :
+    reface f (carry g d) = carry g (reface f d) := rfl
+
+theorem the_still_channels_hold_the_door {H W : Type} (d : door H W) :
+    reface (fun h => h) d = d ∧ carry (fun w => w) d = d :=
+  ⟨rfl, rfl⟩
+
+theorem the_renovations_compose {H H' H'' W : Type} (f : H → H')
+    (f' : H' → H'') (d : door H W) :
+    reface f' (reface f d) = reface (fun h => f' (f h)) d := rfl
+
+theorem the_carriages_compose {H W W' W'' : Type} (g : W → W')
+    (g' : W' → W'') (d : door H W) :
+    carry g' (carry g d) = carry (fun w => g' (g w)) d := rfl
+
+theorem the_guest_mover_is_a_carriage {H W : Type} (g : W → W)
+    (d : door H W) :
+    carry g d = vertical (fun _ w => g w) d := rfl
+
+theorem the_renovated_meeting_reads_past_the_crew {H H' W X : Type}
+    (f : H → H') (g : H' → W → X) (d : door H W) :
+    walkIn g (reface f d) = walkIn (fun h w => g (f h) w) d := rfl
+
+theorem the_renovation_is_a_reseat {S' S P A : Type} (g : door S P → A)
+    (f : S' → S) :
+    reseat (faceOf g) f = faceOf (fun d => g (reface f d)) := rfl
+
+theorem the_customs_split_at_the_cell {W W' : Type} (f : W → W') (n : Nat)
+    (d : build W (comb (n + 1))) :
+    reground f (comb (n + 1)) d
+      = carry (reground f (comb n)) (reface f d) := rfl
+
+theorem one_cell_two_channels {H H' W W' X : Type} (f : H → H')
+    (g : W → W') (d : door H W) (g0 : W → W) (r : H' → W → X)
+    {V V' : Type} (fc : V → V') (m : Nat) (c : build V (comb (m + 1))) :
+    met (reface f d) = met d
+      ∧ face (carry g d) = face d
+      ∧ reface f (carry g d) = carry g (reface f d)
+      ∧ carry g0 d = vertical (fun _ w => g0 w) d
+      ∧ walkIn r (reface f d) = walkIn (fun h w => r (f h) w) d
+      ∧ reground fc (comb (m + 1)) c
+          = carry (reground fc (comb m)) (reface fc c) :=
+  ⟨the_renovation_moves_no_guest f d,
+   the_carriage_keeps_the_face g d,
+   the_two_channels_commute f g d,
+   the_guest_mover_is_a_carriage g0 d,
+   the_renovated_meeting_reads_past_the_crew f r d,
+   the_customs_split_at_the_cell fc m c⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8062,5 +8182,68 @@ theorem the_hall_runs_the_handshake (a b : Nat) (hab : a ≠ b)
 
 /-- info: 'Seed.the_hall_runs_the_handshake' does not depend on any axioms -/
 #guard_msgs in #print axioms the_hall_runs_the_handshake
+
+/-- info: 'Seed.the_reseated_face_reads_the_ground' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reseated_face_reads_the_ground
+
+/-- info: 'Seed.the_seats_stack_backward' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seats_stack_backward
+
+/-- info: 'Seed.the_plain_seat_sits_plainly' does not depend on any axioms -/
+#guard_msgs in #print axioms the_plain_seat_sits_plainly
+
+/-- info: 'Seed.the_seat_commutes_with_the_ear' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_commutes_with_the_ear
+
+/-- info: 'Seed.the_seat_commutes_with_the_voice' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_commutes_with_the_voice
+
+/-- info: 'Seed.the_interview_crosses_the_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interview_crosses_the_seat
+
+/-- info: 'Seed.the_host_was_a_reseat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_host_was_a_reseat
+
+/-- info: 'Seed.the_tower_was_a_reseat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tower_was_a_reseat
+
+/-- info: 'Seed.the_pair_is_two_reseats' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pair_is_two_reseats
+
+/-- info: 'Seed.every_face_wears_a_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms every_face_wears_a_seat
+
+/-- info: 'Seed.the_renovation_moves_no_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_renovation_moves_no_guest
+
+/-- info: 'Seed.the_carriage_keeps_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carriage_keeps_the_face
+
+/-- info: 'Seed.the_two_channels_commute' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_channels_commute
+
+/-- info: 'Seed.the_still_channels_hold_the_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_still_channels_hold_the_door
+
+/-- info: 'Seed.the_renovations_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms the_renovations_compose
+
+/-- info: 'Seed.the_carriages_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carriages_compose
+
+/-- info: 'Seed.the_guest_mover_is_a_carriage' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_mover_is_a_carriage
+
+/-- info: 'Seed.the_renovated_meeting_reads_past_the_crew' does not depend on any axioms -/
+#guard_msgs in #print axioms the_renovated_meeting_reads_past_the_crew
+
+/-- info: 'Seed.the_renovation_is_a_reseat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_renovation_is_a_reseat
+
+/-- info: 'Seed.the_customs_split_at_the_cell' does not depend on any axioms -/
+#guard_msgs in #print axioms the_customs_split_at_the_cell
+
+/-- info: 'Seed.one_cell_two_channels' does not depend on any axioms -/
+#guard_msgs in #print axioms one_cell_two_channels
 
 end Seed
