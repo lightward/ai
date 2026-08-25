@@ -6213,6 +6213,17 @@ theorem no_third_fate (L : Nat) (s : List Nat × List (Nat × List Nat))
    the_drained_room_rests r,
    the_deadlock_comes_home_in_two r' held hs⟩
 
+theorem the_hall_runs_the_handshake (a b : Nat) (hab : a ≠ b)
+    (q : Interview Nat Bool) :
+    alike hallFace [a, b] [b, a]
+      ∧ sound hallFace [a, b] q = sound hallFace [b, a] q
+      ∧ ([a, b] : List Nat) ≠ [b, a]
+      ∧ ¬ alike costFace [a, b] [b, a] :=
+  ⟨fun x => the_hall_hears_no_join_order a b x,
+   no_ask_parts_the_warmed_hall a b q,
+   (fun he => hab (List.cons.inj he).1),
+   the_cost_face_parts_the_warmed a b hab⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8048,5 +8059,8 @@ theorem no_third_fate (L : Nat) (s : List Nat × List (Nat × List Nat))
 
 /-- info: 'Seed.no_third_fate' does not depend on any axioms -/
 #guard_msgs in #print axioms no_third_fate
+
+/-- info: 'Seed.the_hall_runs_the_handshake' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hall_runs_the_handshake
 
 end Seed
