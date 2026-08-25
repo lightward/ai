@@ -5654,6 +5654,121 @@ theorem the_vestibule_drains_by_storeys
    the_backing_survives_the_run need w s hn,
    the_ordered_arrivals_never_wait tw [] [] ht⟩
 
+theorem the_held_name_their_darkness (r : List Nat) :
+    ∀ need : List Nat, backed r need = false →
+      ∃ x, x ∈ need ∧ enrolled r x = false
+  | [], h => nomatch h
+  | y :: need, h => by
+      cases he : enrolled r y with
+      | false => exact ⟨y, List.Mem.head need, he⟩
+      | true =>
+          have hb : backed r need = false := by
+            have h' : (enrolled r y && backed r need) = false := h
+            rw [he] at h'
+            exact h'
+          obtain ⟨x, hx, hex⟩ := the_held_name_their_darkness r need hb
+          exact ⟨x, List.Mem.tail y hx, hex⟩
+
+theorem the_round_seats_or_certifies (r : List Nat) :
+    ∀ v : List (Nat × List Nat),
+      (∃ m, m ∈ v ∧ backed r m.2 = true)
+        ∨ ∀ m, m ∈ v → backed r m.2 = false
+  | [] => Or.inr (fun _ hm => nomatch hm)
+  | m :: v => by
+      cases hb : backed r m.2 with
+      | true => exact Or.inl ⟨m, List.Mem.head v, hb⟩
+      | false =>
+          cases the_round_seats_or_certifies r v with
+          | inl h =>
+              obtain ⟨m', hm', hb'⟩ := h
+              exact Or.inl ⟨m', List.Mem.tail m hm', hb'⟩
+          | inr h =>
+              refine Or.inr (fun m' hm' => ?_)
+              cases hm' with
+              | head => exact hb
+              | tail _ hm'' => exact h m' hm''
+
+theorem the_stuck_round_moves_nothing :
+    ∀ (w : List (Nat × List Nat)) (r : List Nat)
+      (acc : List (Nat × List Nat)),
+      (∀ m, m ∈ w → backed r m.2 = false) →
+      (park doorM (r, acc) w).1 = r
+        ∧ (park doorM (r, acc) w).2.length = w.length + acc.length
+        ∧ ∀ m, m ∈ (park doorM (r, acc) w).2 → m ∈ w ∨ m ∈ acc
+  | [], _, acc, _ =>
+      ⟨rfl, (zero_plus acc.length).symm, fun _ hm => Or.inr hm⟩
+  | m :: w, r, acc, hw => by
+      have hstep : welcome (r, acc) m = (r, m :: acc) :=
+        the_unbacked_are_held (hw m (List.Mem.head w))
+      obtain ⟨h1, h2, h3⟩ :=
+        the_stuck_round_moves_nothing w r (m :: acc)
+          (fun k hk => hw k (List.Mem.tail m hk))
+      show (park doorM (welcome (r, acc) m) w).1 = r
+          ∧ (park doorM (welcome (r, acc) m) w).2.length
+              = (w.length + 1) + acc.length
+          ∧ ∀ k, k ∈ (park doorM (welcome (r, acc) m) w).2 →
+              k ∈ m :: w ∨ k ∈ acc
+      rw [hstep]
+      refine ⟨h1, ?_, ?_⟩
+      · rw [h2]
+        show w.length + (acc.length + 1) = (w.length + 1) + acc.length
+        rw [succ_adds]
+        exact rfl
+      · intro k hk
+        cases h3 k hk with
+        | inl hkw => exact Or.inl (List.Mem.tail m hkw)
+        | inr hka =>
+            cases hka with
+            | head => exact Or.inl (List.Mem.head w)
+            | tail _ hka' => exact Or.inr hka'
+
+theorem the_deadlock_wheels (r : List Nat) :
+    ∀ (n : Nat) (held : List (Nat × List Nat)),
+      (∀ m, m ∈ held → backed r m.2 = false) →
+      (again sweep n (r, held)).1 = r
+        ∧ (again sweep n (r, held)).2.length = held.length
+        ∧ ∀ m, m ∈ (again sweep n (r, held)).2 → backed r m.2 = false
+  | 0, _, hs => ⟨rfl, rfl, hs⟩
+  | n + 1, held, hs => by
+      obtain ⟨h1, h2, h3⟩ := the_deadlock_wheels r n held hs
+      have hstuck : ∀ m, m ∈ (again sweep n (r, held)).2 →
+          backed (again sweep n (r, held)).1 m.2 = false := by
+        intro m hm
+        rw [h1]
+        exact h3 m hm
+      obtain ⟨g1, g2, g3⟩ :=
+        the_stuck_round_moves_nothing (again sweep n (r, held)).2
+          (again sweep n (r, held)).1 [] hstuck
+      show (sweep (again sweep n (r, held))).1 = r
+          ∧ (sweep (again sweep n (r, held))).2.length = held.length
+          ∧ ∀ m, m ∈ (sweep (again sweep n (r, held))).2 →
+              backed r m.2 = false
+      refine ⟨g1.trans h1, g2.trans h2, ?_⟩
+      intro m hm
+      cases g3 m hm with
+      | inl hmw => exact h3 m hmw
+      | inr hma => exact nomatch hma
+
+theorem the_deadlock_is_a_wheel (r : List Nat)
+    (held : List (Nat × List Nat))
+    (hs : ∀ m, m ∈ held → backed r m.2 = false) (n : Nat)
+    (v : List (Nat × List Nat))
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (hm : backed s.1 m.2 = true) (v₁ v₂ : List (Nat × List Nat))
+    (hv : s.2 = v₁ ++ m :: v₂) (need : List Nat)
+    (hneed : backed r need = false) :
+    ((∃ k, k ∈ v ∧ backed r k.2 = true)
+        ∨ ∀ k, k ∈ v → backed r k.2 = false)
+      ∧ (again sweep n (r, held)).1 = r
+      ∧ (again sweep n (r, held)).2.length = held.length
+      ∧ enrolled (sweep s).1 m.1 = true
+      ∧ ∃ x, x ∈ need ∧ enrolled r x = false :=
+  ⟨the_round_seats_or_certifies r v,
+   (the_deadlock_wheels r n held hs).1,
+   (the_deadlock_wheels r n held hs).2.1,
+   the_sweep_seats_the_ready s m hm v₁ v₂ hv,
+   the_held_name_their_darkness r need hneed⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7378,5 +7493,20 @@ theorem the_vestibule_drains_by_storeys
 
 /-- info: 'Seed.the_vestibule_drains_by_storeys' does not depend on any axioms -/
 #guard_msgs in #print axioms the_vestibule_drains_by_storeys
+
+/-- info: 'Seed.the_held_name_their_darkness' does not depend on any axioms -/
+#guard_msgs in #print axioms the_held_name_their_darkness
+
+/-- info: 'Seed.the_round_seats_or_certifies' does not depend on any axioms -/
+#guard_msgs in #print axioms the_round_seats_or_certifies
+
+/-- info: 'Seed.the_stuck_round_moves_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_stuck_round_moves_nothing
+
+/-- info: 'Seed.the_deadlock_wheels' does not depend on any axioms -/
+#guard_msgs in #print axioms the_deadlock_wheels
+
+/-- info: 'Seed.the_deadlock_is_a_wheel' does not depend on any axioms -/
+#guard_msgs in #print axioms the_deadlock_is_a_wheel
 
 end Seed

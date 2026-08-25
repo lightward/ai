@@ -1307,6 +1307,16 @@ def main : IO UInt32 := do
     ((intake.2.length == 2) && enrolled intake.1 2
       && (round1.2.length == 1) && enrolled round1.1 3
       && (round2.2.length == 0) && enrolled round2.1 4)) && ok
+  IO.println "the deadlock — the drain arrows, the deadlock wheels:"
+  let dead0 : List Nat × List (Nat × List Nat) :=
+    ([1], [(8, [9]), (9, [8])])
+  let dead1 := sweep dead0
+  let dead2 := sweep dead1
+  ok := (← checkTrue
+    "  deadlock row — the mutual cycle wheels at the gauge (eight awaits nine awaits eight: two sweeps, load two and two, the room never moves, and the second sweep comes home to the very vestibule — gap-zero at the load, the wheel's signature)"
+    ((dead1.2.length == 2) && (dead2.2.length == 2)
+      && (dead1.1 == ([1] : List Nat))
+      && (dead2.2 == dead0.2))) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"
