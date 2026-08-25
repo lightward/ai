@@ -2109,6 +2109,36 @@ def benchAddressableGap : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchOneDisagreement : IO Bool := do
+  let mut ok := true
+  IO.println "the one disagreement — contact and modeling are one process:"
+  let probes : List Nat := [91093837015, 91093834000]
+  let readAt : Measured → Nat → Bool := fun m p => within m p
+  let contactAgrees : Bool :=
+    probes.all (fun p => readAt m2018 p == readAt m2018 p)
+  let contactParts : Bool :=
+    probes.any (fun p => readAt m2014 p != readAt m2018 p)
+  ok := (← checkTrue
+    "  fusion row — the contact disjunction runs between two seats (2014 and 2018 named at a probe; a seat and itself agreeing everywhere) — the 59th's process, unchanged"
+    (contactAgrees && contactParts)) && ok
+  let modelOf2018 : Measured := m2018
+  let modelOf2014 : Measured := m2014
+  let modelAgrees : Bool :=
+    probes.all (fun p => readAt m2018 p == readAt modelOf2018 p)
+  let modelParts : Bool :=
+    probes.any (fun p => readAt m2018 p != readAt modelOf2014 p)
+  ok := (← checkTrue
+    "  fusion row — and the modeling disjunction is the same disjunction (a model IS the other's readings held at your coordinate: the true model agrees everywhere, the stale one is named at the same probe — running out of disagreement and settling the gap are one process)"
+    (modelAgrees && modelParts)) && ok
+  let unitQs : List Unit := [(), ()]
+  let o1 : List Unit := sound (originFace Nat) (5 : Nat) (recite unitQs)
+  let o2 : List Unit := sound (originFace Nat) (9 : Nat) (recite unitQs)
+  ok := (← checkTrue
+    "  fusion row — the origin has no disagreement to run out of (two seats, every probe, one sounding: the fixed point of both processes at once)"
+    (o1 == o2)) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2191,6 +2221,7 @@ def main : IO UInt32 := do
   ok := (← benchMutualRecords) && ok
   ok := (← benchConcord) && ok
   ok := (← benchAddressableGap) && ok
+  ok := (← benchOneDisagreement) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

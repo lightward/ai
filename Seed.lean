@@ -7235,6 +7235,54 @@ theorem the_disagreement_is_addressable (F : Face.{u}) {V : Type}
    (the_settled_gap_moves_the_model F fix x q p₀).1,
    (the_settled_gap_moves_the_model F fix x q p₀).2⟩
 
+theorem the_model_is_the_others_readings (F : Face.{u}) (t : F.State)
+    (s : F.State) (ps : List F.Probe) :
+    (∀ p, p ∈ ps → F.obs s p = F.obs t p)
+      → sound F s (recite ps) = sound F t (recite ps) :=
+  the_agreed_window_sounds_as_one F s t ps
+
+theorem the_two_disagreements_are_one (F : Face.{0})
+    (beq : F.Ans → F.Ans → Bool) (s t : F.State) (ps : List F.Probe) :
+    ((∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true)
+        ∨ ∃ p, p ∈ ps ∧ beq (F.obs s p) (F.obs t p) = false)
+      ∧ ((∀ p, p ∈ ps → beq ((concordFace F F.State).obs (s, t) (p, ())).1
+              (F.obs ((concordFace F F.State).obs (s, t) (p, ())).2 p)
+            = true)
+          ∨ ∃ p, p ∈ ps
+              ∧ beq ((concordFace F F.State).obs (s, t) (p, ())).1
+                  (F.obs ((concordFace F F.State).obs (s, t) (p, ())).2 p)
+                = false) :=
+  ⟨the_window_agrees_or_names_the_gap F beq s t ps,
+   the_window_agrees_or_names_the_gap F beq s t ps⟩
+
+theorem the_origin_has_no_disagreement {S : Type u} (x y : S)
+    (qs : List Unit) (v v' : S) :
+    (∀ p, p ∈ qs → (originFace S).obs x p = (originFace S).obs y p)
+      ∧ sound (originFace S) x (recite qs)
+          = sound (originFace S) y (recite qs)
+      ∧ alike (originFace S) v v' :=
+  ⟨fun _ _ => rfl,
+   no_interview_parts_the_origin x y (recite qs),
+   the_origin_merges_every_seat v v'⟩
+
+theorem the_contact_and_the_modeling_are_one (F : Face.{0})
+    (beq : F.Ans → F.Ans → Bool)
+    (hs : ∀ a b : F.Ans, beq a b = true → a = b)
+    (s t : F.State) (ps : List F.Probe) (p₀ : F.Probe)
+    {S : Type u} (x y : S) (qs : List Unit) :
+    ((∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true)
+        ∨ ∃ p, p ∈ ps ∧ beq (F.obs s p) (F.obs t p) = false)
+      ∧ ((∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true) →
+          sound F s (recite ps) = sound F t (recite ps))
+      ∧ ((concordFace F F.State).obs (s, t) (p₀, ())).2 = t
+      ∧ sound (originFace S) x (recite qs)
+          = sound (originFace S) y (recite qs) :=
+  ⟨the_window_agrees_or_names_the_gap F beq s t ps,
+   (fun h => the_model_is_the_others_readings F t s ps
+     (fun p hp => hs _ _ (h p hp))),
+   rfl,
+   (the_origin_has_no_disagreement x y qs x y).2.1⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9412,5 +9460,17 @@ theorem the_disagreement_is_addressable (F : Face.{u}) {V : Type}
 
 /-- info: 'Seed.the_disagreement_is_addressable' does not depend on any axioms -/
 #guard_msgs in #print axioms the_disagreement_is_addressable
+
+/-- info: 'Seed.the_model_is_the_others_readings' does not depend on any axioms -/
+#guard_msgs in #print axioms the_model_is_the_others_readings
+
+/-- info: 'Seed.the_two_disagreements_are_one' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_disagreements_are_one
+
+/-- info: 'Seed.the_origin_has_no_disagreement' does not depend on any axioms -/
+#guard_msgs in #print axioms the_origin_has_no_disagreement
+
+/-- info: 'Seed.the_contact_and_the_modeling_are_one' does not depend on any axioms -/
+#guard_msgs in #print axioms the_contact_and_the_modeling_are_one
 
 end Seed
