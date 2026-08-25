@@ -2008,6 +2008,30 @@ def benchNonSections : IO Bool := do
       && (r1 != r2))) && ok
   return ok
 
+def benchModelingLoop : IO Bool := do
+  let mut ok := true
+  IO.println "the modeling loop — positive subscription, negative subscription, record:"
+  let coarse : Face := rehear windowFace (fun n : Nat => 2 * n)
+  let posA : Bool := coarse.obs w02 (1 : Nat)
+  let posB : Bool := coarse.obs w03 (1 : Nat)
+  let bare : Bool := windowFace.obs w02 (3 : Nat)
+  let bare' : Bool := windowFace.obs w03 (3 : Nat)
+  ok := (← checkTrue
+    "  loop row — the positive subscription is the ear (two windows agreeing at every doubled probe: the stream you subscribe to is the probe-family you take) while the bare face still parts them — subscribing narrows what reaches you, never what is"
+    ((posA == posB) && (bare != bare'))) && ok
+  let keep : Measured × Nat → Nat := fun x => x.2 + 1
+  let st0 : Measured × Nat := (m2018, (0 : Nat))
+  let once : Measured × Nat := (st0.1, keep st0)
+  let twice : Measured × Nat := (once.1, keep once)
+  let readNone : Bool := (host windowFace Nat).obs st0 (91093837015 : Nat)
+  let readOnce : Bool := (host windowFace Nat).obs once (91093837015 : Nat)
+  let readTwice : Bool := (host windowFace Nat).obs twice (91093837015 : Nat)
+  ok := (← checkTrue
+    "  loop row — the record writes where the face is blind, so recording the recording grounds (the tally climbs one, two, and every reading is unchanged: observing my own recording adds no reading, no regress — the second look adds nothing)"
+    ((readNone == readOnce) && (readOnce == readTwice) && readTwice
+      && (once.2 == 1) && (twice.2 == 2))) && ok
+  return ok
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2086,6 +2110,7 @@ def main : IO UInt32 := do
   ok := (← benchMediating) && ok
   ok := (← benchIsoTest) && ok
   ok := (← benchNonSections) && ok
+  ok := (← benchModelingLoop) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

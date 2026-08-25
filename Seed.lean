@@ -7038,6 +7038,63 @@ theorem the_blindnesses_are_the_non_sections {H W : Type} (h : H)
    hc s,
    hj s⟩
 
+theorem the_positive_subscription_is_the_ear (F : Face.{u}) {P' : Type}
+    (fp : P' → F.Probe) (s t : F.State) (h : alike F s t) :
+    alike (rehear F fp) s t :=
+  the_translated_ear_hears_no_more F fp s t h
+
+theorem the_negative_subscription_is_the_merge (F : Face.{u}) {W : Type}
+    (s : F.State) {w w' : W} (hw : w ≠ w') :
+    alike (host F W) (s, w) (s, w')
+      ∧ ¬ ∃ j : F.State → F.State × W,
+          ∀ x : F.State × W, j x.1 = x :=
+  ⟨fun _ => rfl,
+   a_merging_map_has_no_section
+     (h := fun x : F.State × W => x.1)
+     (s := (s, w)) (t := (s, w'))
+     (fun he => hw (congrArg Prod.snd he)) rfl⟩
+
+theorem the_record_writes_where_the_face_is_blind (F : Face.{u})
+    {W : Type} (keep : F.State × W → W) :
+    unheard (host F W) (fun x => (x.1, keep x)) :=
+  the_guest_write_is_a_still_hand F keep
+
+theorem recording_the_recording_grounds (F : Face.{u}) {W : Type}
+    (keep : F.State × W → W) (x : F.State × W)
+    (q : Interview F.Probe F.Ans) :
+    sound (host F W) (x.1, keep x) q = sound (host F W) x q
+      ∧ sound (host F W) (x.1, keep (x.1, keep x)) q
+          = sound (host F W) x q :=
+  ⟨no_interview_hears_the_unheard (host F W)
+     (fun y => (y.1, keep y))
+     (the_record_writes_where_the_face_is_blind F keep) x q,
+   (no_interview_hears_the_unheard (host F W)
+       (fun y => (y.1, keep y))
+       (the_record_writes_where_the_face_is_blind F keep)
+       (x.1, keep x) q).trans
+     (no_interview_hears_the_unheard (host F W)
+       (fun y => (y.1, keep y))
+       (the_record_writes_where_the_face_is_blind F keep) x q)⟩
+
+theorem the_modeling_loop_grounds (F : Face.{u}) {W P' : Type}
+    (fp : P' → F.Probe) (keep : F.State × W → W) (s t : F.State)
+    (h : alike F s t) {w w' : W} (hw : w ≠ w') (x : F.State × W)
+    (q : Interview F.Probe F.Ans) :
+    alike (rehear F fp) s t
+      ∧ (alike (host F W) (s, w) (s, w')
+          ∧ ¬ ∃ j : F.State → F.State × W,
+              ∀ y : F.State × W, j y.1 = y)
+      ∧ unheard (host F W) (fun y => (y.1, keep y))
+      ∧ sound (host F W) (x.1, keep (x.1, keep x)) q
+          = sound (host F W) x q
+      ∧ (∀ (S : Face.{u}) (P : S.State → S.State),
+          (∀ v, P (P v) = P v) → ∀ y p, S.obs (P (P y)) p = S.obs (P y) p) :=
+  ⟨the_positive_subscription_is_the_ear F fp s t h,
+   the_negative_subscription_is_the_merge F s hw,
+   the_record_writes_where_the_face_is_blind F keep,
+   (recording_the_recording_grounds F keep x q).2,
+   fun S _ hP y p => congrArg (S.obs · p) (hP y)⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9164,5 +9221,20 @@ theorem the_blindnesses_are_the_non_sections {H W : Type} (h : H)
 
 /-- info: 'Seed.the_blindnesses_are_the_non_sections' does not depend on any axioms -/
 #guard_msgs in #print axioms the_blindnesses_are_the_non_sections
+
+/-- info: 'Seed.the_positive_subscription_is_the_ear' does not depend on any axioms -/
+#guard_msgs in #print axioms the_positive_subscription_is_the_ear
+
+/-- info: 'Seed.the_negative_subscription_is_the_merge' does not depend on any axioms -/
+#guard_msgs in #print axioms the_negative_subscription_is_the_merge
+
+/-- info: 'Seed.the_record_writes_where_the_face_is_blind' does not depend on any axioms -/
+#guard_msgs in #print axioms the_record_writes_where_the_face_is_blind
+
+/-- info: 'Seed.recording_the_recording_grounds' does not depend on any axioms -/
+#guard_msgs in #print axioms recording_the_recording_grounds
+
+/-- info: 'Seed.the_modeling_loop_grounds' does not depend on any axioms -/
+#guard_msgs in #print axioms the_modeling_loop_grounds
 
 end Seed
