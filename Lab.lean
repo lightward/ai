@@ -2285,6 +2285,31 @@ def benchUniformShift : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchTwoGauges : IO Bool := do
+  let mut ok := true
+  IO.println "the two gauges — the shift on the seat, the scale on the stage:"
+  let w3 : List Unit := [(), (), ()]
+  let fromZero : Nat := park paceOne (0 : Nat) w3
+  let fromTen : Nat := park paceOne (10 : Nat) w3
+  ok := (← checkTrue
+    "  gauge row — the shift commutes with the walk (start at zero or at ten, walk the same word, and the gap is exactly the gap you started with: three and thirteen)"
+    ((fromZero == 3) && (fromTen == 13)
+      && (fromTen - fromZero == 10))) && ok
+  let scaled : Nat := fold (fun a b => a + b) (7 : Nat) dayB
+  let unit : Nat := fold (fun a b => a + b) (1 : Nat) dayB
+  ok := (← checkTrue
+    "  gauge row — the ground is a uniform scale (folding from seven reads seven times what folding from one reads: twenty-one against three — the stage channel's gauge is multiplicative where the seat channel's is additive)"
+    ((scaled == 7 * unit) && (unit == 3) && (scaled == 21))) && ok
+  let voteA : Nat := 299792458
+  let voteB : Nat := 1380649
+  ok := (← checkTrue
+    "  gauge row — the treaty is the scale-gauge at home (every vote reads itself at pace one) and any pace conserves every ratio (c against k_B reads the same relation at every pace: the SI rows have been running this gauge since the seed's first week)"
+    ((readAcross voteA paceAtHome == voteA)
+      && (readAcross voteB paceAtHome == voteB)
+      && (readAcross voteA 5 * voteB == readAcross voteB 5 * voteA))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2374,6 +2399,7 @@ def main : IO UInt32 := do
   ok := (← benchLadderSheds) && ok
   ok := (← benchLanded) && ok
   ok := (← benchUniformShift) && ok
+  ok := (← benchTwoGauges) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

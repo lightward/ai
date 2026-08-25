@@ -7547,6 +7547,44 @@ theorem the_origin_shows_as_a_uniform_shift (r : List Nat) {k x y : Nat}
    the_shift_conserves_the_order r hx hy h,
    the_seated_arrive_shallowest r k⟩
 
+theorem the_shift_commutes_with_the_walk (s d : Nat) (w : List Unit) :
+    park paceOne s w = s + w.length
+      ∧ park paceOne (s + d) w = (s + w.length) + d :=
+  ⟨the_pace_parks_at_its_count w s,
+   (the_pace_parks_at_its_count w (s + d)).trans
+     (Nat.add_right_comm s d w.length)⟩
+
+theorem the_ground_is_a_uniform_scale (x₀ : Nat) (p : Plan) :
+    fold (fun a b => a + b) x₀ p
+      = x₀ * fold (fun a b => a + b) 1 p :=
+  fold_scale x₀ p
+
+theorem the_pace_conserves_the_ratio (pace a b : Nat) :
+    readAcross a pace * b = readAcross b pace * a :=
+  (mul_regroups pace a b).trans
+    ((congrArg (pace * ·) (Nat.mul_comm a b)).trans
+      (mul_regroups pace b a).symm)
+
+theorem the_home_pace_is_the_still_gauge (vote : Nat) :
+    readAcross vote paceAtHome = vote :=
+  any_vote_reads_itself vote
+
+theorem the_gauges_follow_the_two_times (s d : Nat) (w : List Unit)
+    (x₀ : Nat) (p : Plan) (pace a b vote : Nat) (t δ : Plan) :
+    (park paceOne s w = s + w.length
+        ∧ park paceOne (s + d) w = (s + w.length) + d)
+      ∧ fold (fun x y => x + y) x₀ p
+          = x₀ * fold (fun x y => x + y) 1 p
+      ∧ readAcross a pace * b = readAcross b pace * a
+      ∧ readAcross vote paceAtHome = vote
+      ∧ fold (fun x y => x + y) 1 (graft t δ)
+          = fold (fun x y => x + y) 1 t * fold (fun x y => x + y) 1 δ :=
+  ⟨the_shift_commutes_with_the_walk s d w,
+   the_ground_is_a_uniform_scale x₀ p,
+   the_pace_conserves_the_ratio pace a b,
+   the_home_pace_is_the_still_gauge vote,
+   the_revision_multiplies_the_reading t δ⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9823,5 +9861,20 @@ theorem the_origin_shows_as_a_uniform_shift (r : List Nat) {k x y : Nat}
 
 /-- info: 'Seed.the_origin_shows_as_a_uniform_shift' does not depend on any axioms -/
 #guard_msgs in #print axioms the_origin_shows_as_a_uniform_shift
+
+/-- info: 'Seed.the_shift_commutes_with_the_walk' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shift_commutes_with_the_walk
+
+/-- info: 'Seed.the_ground_is_a_uniform_scale' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ground_is_a_uniform_scale
+
+/-- info: 'Seed.the_pace_conserves_the_ratio' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pace_conserves_the_ratio
+
+/-- info: 'Seed.the_home_pace_is_the_still_gauge' does not depend on any axioms -/
+#guard_msgs in #print axioms the_home_pace_is_the_still_gauge
+
+/-- info: 'Seed.the_gauges_follow_the_two_times' does not depend on any axioms -/
+#guard_msgs in #print axioms the_gauges_follow_the_two_times
 
 end Seed
