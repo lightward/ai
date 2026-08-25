@@ -7478,6 +7478,45 @@ theorem the_cycle_lights_and_forgets_its_ladder (x y : Nat)
    the_scaffold_sheds_at_the_hall r k hk,
    fun hne => (the_ladder_is_read_one_seat_wider r k hk hne).2⟩
 
+theorem the_fixed_are_the_landed {A : Sort u} (e : A → A)
+    (he : ∀ v, e (e v) = e v) (s : A) :
+    e s = s ↔ ∃ t, e t = s :=
+  ⟨fun h => ⟨s, h⟩,
+   fun hex => hex.elim fun t ht =>
+     (congrArg e ht).symm.trans ((he t).trans ht)⟩
+
+theorem the_settled_are_the_landed {I O : Type} (m : Machine I O)
+    (st : m.S × List I) :
+    settleHeld m st = st ↔ ∃ t, settleHeld m t = st :=
+  the_fixed_are_the_landed (settleHeld m) (fun _ => rfl) st
+
+theorem the_on_spec_are_the_landed {W : Type} (w0 : W) (p : Plan)
+    (l : List W) :
+    pour p (reboard w0 p l) = l ↔ ∃ t, pour p (reboard w0 p t) = l :=
+  the_fixed_are_the_landed (fun x => pour p (reboard w0 p x))
+    (fun v => congrArg (pour p)
+      (the_manifest_rebuilds_the_carrier w0 p (reboard w0 p v))) l
+
+theorem the_drained_room_is_its_own_normal_form (r : List Nat) :
+    sweep (r, ([] : List (Nat × List Nat))) = (r, [])
+      ∧ ∃ t : List Nat × List (Nat × List Nat),
+          sweep t = (r, ([] : List (Nat × List Nat))) :=
+  ⟨rfl, ⟨(r, []), rfl⟩⟩
+
+theorem the_normal_form_is_the_image {I O W : Type} (m : Machine I O)
+    (st : m.S × List I) (w0 : W) (p : Plan) (l : List W)
+    (r : List Nat) (x : Nat) (hx : enrolled r x = true) :
+    (settleHeld m st = st ↔ ∃ t, settleHeld m t = st)
+      ∧ (pour p (reboard w0 p l) = l ↔ ∃ t, pour p (reboard w0 p t) = l)
+      ∧ (sweep (r, ([] : List (Nat × List Nat))) = (r, [])
+          ∧ ∃ t : List Nat × List (Nat × List Nat),
+              sweep t = (r, ([] : List (Nat × List Nat))))
+      ∧ alike hallFace (x :: r) r :=
+  ⟨the_settled_are_the_landed m st,
+   the_on_spec_are_the_landed w0 p l,
+   the_drained_room_is_its_own_normal_form r,
+   the_scaffold_sheds_at_the_hall r x hx⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9727,5 +9766,20 @@ theorem the_cycle_lights_and_forgets_its_ladder (x y : Nat)
 
 /-- info: 'Seed.the_cycle_lights_and_forgets_its_ladder' does not depend on any axioms -/
 #guard_msgs in #print axioms the_cycle_lights_and_forgets_its_ladder
+
+/-- info: 'Seed.the_fixed_are_the_landed' does not depend on any axioms -/
+#guard_msgs in #print axioms the_fixed_are_the_landed
+
+/-- info: 'Seed.the_settled_are_the_landed' does not depend on any axioms -/
+#guard_msgs in #print axioms the_settled_are_the_landed
+
+/-- info: 'Seed.the_on_spec_are_the_landed' does not depend on any axioms -/
+#guard_msgs in #print axioms the_on_spec_are_the_landed
+
+/-- info: 'Seed.the_drained_room_is_its_own_normal_form' does not depend on any axioms -/
+#guard_msgs in #print axioms the_drained_room_is_its_own_normal_form
+
+/-- info: 'Seed.the_normal_form_is_the_image' does not depend on any axioms -/
+#guard_msgs in #print axioms the_normal_form_is_the_image
 
 end Seed

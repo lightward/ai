@@ -2235,6 +2235,32 @@ def benchLadderSheds : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchLanded : IO Bool := do
+  let mut ok := true
+  IO.println "the landed — what survives normalizing is exactly what normalizing produces:"
+  let junk : List Nat := [7, 7, 7, 7, 7]
+  let normed : List Nat := pour toyPlan (reboard (0 : Nat) toyPlan junk)
+  let renormed : List Nat := pour toyPlan (reboard (0 : Nat) toyPlan normed)
+  ok := (← checkTrue
+    "  landed row — the on-spec are the landed (the drained word is its own normal form, and every normal form is something's drain: fixed and in-the-image are one predicate)"
+    ((renormed == normed) && (normed.length == 3)
+      && (junk.length != 3))) && ok
+  let held3 : Nat × List Unit := ((1 : Nat), [(), (), ()])
+  let settled : Nat × List Unit := settleHeld paceOne held3
+  let resettled : Nat × List Unit := settleHeld paceOne settled
+  ok := (← checkTrue
+    "  landed row — the settled are the landed (a settled margin is fixed under settling, and a fixed margin is a settled one: you cannot tell 'never needed working' from 'already worked')"
+    ((resettled == settled) && (settled.2.length == 0)
+      && (held3.2.length == 3) && (settled.1 == 4))) && ok
+  let restedRoom : List Nat × List (Nat × List Nat) :=
+    sweep ([5, 6], ([] : List (Nat × List Nat)))
+  ok := (← checkTrue
+    "  landed row — the drained room is its own normal form (the rest is a fixed point AND the image of itself: the room that needs no sweep and the room that has been swept are one room)"
+    ((restedRoom.2.length == 0) && (enrolled restedRoom.1 5)
+      && (enrolled restedRoom.1 6))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2322,6 +2348,7 @@ def main : IO UInt32 := do
   ok := (← benchPortability) && ok
   ok := (← benchUniversalProperties) && ok
   ok := (← benchLadderSheds) && ok
+  ok := (← benchLanded) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
