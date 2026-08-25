@@ -2032,6 +2032,36 @@ def benchModelingLoop : IO Bool := do
       && (once.2 == 1) && (twice.2 == 2))) && ok
   return ok
 
+def benchMutualRecords : IO Bool := do
+  let mut ok := true
+  IO.println "the mutual records — two seats recording each other, conduct one, records two:"
+  let mine : Measured × Nat × Nat → Nat := fun x => x.2.1 + 1
+  let yours : Measured × Nat × Nat → Nat := fun x => x.2.2 + 10
+  let start : Measured × Nat × Nat := (m2018, ((0 : Nat), (0 : Nat)))
+  let after1 : Measured × Nat × Nat := (start.1, (mine start, yours start))
+  let after2 : Measured × Nat × Nat := (after1.1, (mine after1, yours after1))
+  let tm : Nat := 91093837015
+  let r0 : Bool := (host windowFace (Nat × Nat)).obs start tm
+  let r1 : Bool := (host windowFace (Nat × Nat)).obs after1 tm
+  let r2 : Bool := (host windowFace (Nat × Nat)).obs after2 tm
+  ok := (← checkTrue
+    "  mutual row — both seats record and neither reading moves (two ticks of mutual recording: mine climbs one-two, yours climbs ten-twenty, and the window reads the true mass unchanged throughout)"
+    ((r0 == r1) && (r1 == r2) && r2
+      && (after2.2.1 == 2) && (after2.2.2 == 20))) && ok
+  let mineOnly : Measured × Nat × Nat := (m2018, ((7 : Nat), (0 : Nat)))
+  let yoursOnly : Measured × Nat × Nat := (m2018, ((9 : Nat), (0 : Nat)))
+  let seenA : Bool := (host windowFace (Nat × Nat)).obs mineOnly tm
+  let seenB : Bool := (host windowFace (Nat × Nat)).obs yoursOnly tm
+  let widerA : Nat := greet (fun _ => (0 : Nat)) (fun p => p.1)
+    ((widen windowFace (Nat × Nat)).obs mineOnly (viaRight ()))
+  let widerB : Nat := greet (fun _ => (0 : Nat)) (fun p => p.1)
+    ((widen windowFace (Nat × Nat)).obs yoursOnly (viaRight ()))
+  ok := (← checkTrue
+    "  mutual row — the records part the seats one seat wider (two histories, identical at every probe of the shared face, seven against nine at the wider ask: conduct one, records two — the handshake at the modeling loop's own grain)"
+    ((seenA == seenB) && (widerA != widerB)
+      && (widerA == 7) && (widerB == 9))) && ok
+  return ok
+
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2111,6 +2141,7 @@ def main : IO UInt32 := do
   ok := (← benchIsoTest) && ok
   ok := (← benchNonSections) && ok
   ok := (← benchModelingLoop) && ok
+  ok := (← benchMutualRecords) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

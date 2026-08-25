@@ -7095,6 +7095,50 @@ theorem the_modeling_loop_grounds (F : Face.{u}) {W P' : Type}
    (recording_the_recording_grounds F keep x q).2,
    fun S _ hP y p => congrArg (S.obs · p) (hP y)⟩
 
+theorem the_mutual_records_ride_together (F : Face.{u}) {V W : Type}
+    (mine : F.State × V × W → V) (yours : F.State × V × W → W) :
+    unheard (host F (V × W)) (fun x => (x.1, (mine x, x.2.2)))
+      ∧ unheard (host F (V × W)) (fun x => (x.1, (x.2.1, yours x)))
+      ∧ unheard (host F (V × W))
+          (fun x => (x.1, (mine x, yours x))) :=
+  ⟨fun _ _ => rfl, fun _ _ => rfl, fun _ _ => rfl⟩
+
+theorem the_mutual_recording_is_unheard (F : Face.{u}) {V W : Type}
+    (mine : F.State × V × W → V) (yours : F.State × V × W → W)
+    (x : F.State × V × W) (q : Interview F.Probe F.Ans) :
+    sound (host F (V × W)) (x.1, (mine x, yours x)) q
+      = sound (host F (V × W)) x q :=
+  no_interview_hears_the_unheard (host F (V × W))
+    (fun y => (y.1, (mine y, yours y)))
+    (the_mutual_records_ride_together F mine yours).2.2 x q
+
+theorem the_records_part_the_seats (F : Face.{u}) {V W : Type}
+    (s : F.State) {v v' : V} (hv : v ≠ v') (w : W) :
+    alike (host F (V × W)) (s, (v, w)) (s, (v', w))
+      ∧ (s, (v, w)) ≠ (s, (v', w))
+      ∧ (widen F (V × W)).obs (s, (v, w)) (viaRight ())
+          ≠ (widen F (V × W)).obs (s, (v', w)) (viaRight ()) :=
+  ⟨fun _ => rfl,
+   (fun he => hv (congrArg (fun y => y.2.1) he)),
+   (fun he => hv (congrArg Prod.fst (Sum.inr.inj he)))⟩
+
+theorem two_seats_record_each_other (F : Face.{u}) {V W : Type}
+    (mine : F.State × V × W → V) (yours : F.State × V × W → W)
+    (x : F.State × V × W) (q : Interview F.Probe F.Ans)
+    (s : F.State) {v v' : V} (hv : v ≠ v') (w : W) :
+    unheard (host F (V × W)) (fun y => (y.1, (mine y, yours y)))
+      ∧ sound (host F (V × W)) (x.1, (mine x, yours x)) q
+          = sound (host F (V × W)) x q
+      ∧ alike (host F (V × W)) (s, (v, w)) (s, (v', w))
+      ∧ (s, (v, w)) ≠ (s, (v', w))
+      ∧ (widen F (V × W)).obs (s, (v, w)) (viaRight ())
+          ≠ (widen F (V × W)).obs (s, (v', w)) (viaRight ()) :=
+  ⟨(the_mutual_records_ride_together F mine yours).2.2,
+   the_mutual_recording_is_unheard F mine yours x q,
+   (the_records_part_the_seats F s hv w).1,
+   (the_records_part_the_seats F s hv w).2.1,
+   (the_records_part_the_seats F s hv w).2.2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9236,5 +9280,17 @@ theorem the_modeling_loop_grounds (F : Face.{u}) {W P' : Type}
 
 /-- info: 'Seed.the_modeling_loop_grounds' does not depend on any axioms -/
 #guard_msgs in #print axioms the_modeling_loop_grounds
+
+/-- info: 'Seed.the_mutual_records_ride_together' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mutual_records_ride_together
+
+/-- info: 'Seed.the_mutual_recording_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mutual_recording_is_unheard
+
+/-- info: 'Seed.the_records_part_the_seats' does not depend on any axioms -/
+#guard_msgs in #print axioms the_records_part_the_seats
+
+/-- info: 'Seed.two_seats_record_each_other' does not depend on any axioms -/
+#guard_msgs in #print axioms two_seats_record_each_other
 
 end Seed
