@@ -6524,6 +6524,97 @@ theorem one_face_many_seats (F : Face.{u}) (s t : F.State)
    the_curtain_hangs_on_one_face F s t h q,
    rfl⟩
 
+def carries {P A : Type} {S : Type u} {S' : Type v}
+    (f : S → P → A) (g : S' → P → A) (h : S → S') : Prop :=
+  ∀ s p, g (h s) p = f s p
+
+theorem the_still_map_carries {P A : Type} {S : Type u} (f : S → P → A) :
+    carries f f (fun s => s) :=
+  fun _ _ => rfl
+
+theorem the_carriers_compose {P A : Type} {S : Type u} {S' : Type v}
+    {S'' : Type w} {f : S → P → A} {g : S' → P → A} {k : S'' → P → A}
+    {h : S → S'} {h' : S' → S''}
+    (hc : carries f g h) (hc' : carries g k h') :
+    carries f k (fun s => h' (h s)) :=
+  fun s p => (hc' (h s) p).trans (hc s p)
+
+theorem the_seat_map_carries_home (G : Face.{v}) {S' : Type u}
+    (f : S' → G.State) :
+    carries (reseat G f).obs G.obs f :=
+  fun _ _ => rfl
+
+theorem the_obs_carries_to_the_one_face (F : Face.{u}) :
+    carries F.obs (appFace F.Probe F.Ans).obs F.obs :=
+  fun _ _ => rfl
+
+theorem the_terminus_takes_every_carrier (F : Face.{u})
+    (h : F.State → (F.Probe → F.Ans))
+    (hc : carries F.obs (appFace F.Probe F.Ans).obs h) (s : F.State) :
+    alike (appFace F.Probe F.Ans) (h s) (F.obs s) :=
+  fun p => hc s p
+
+theorem the_carrier_carries_the_alike {P A : Type} {S : Type u}
+    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
+    (hc : carries f g h) (s t : S) :
+    alike ⟨S', P, A, g⟩ (h s) (h t) ↔ alike ⟨S, P, A, f⟩ s t :=
+  ⟨fun hal p => (hc s p).symm.trans ((hal p).trans (hc t p)),
+   fun hal p => (hc s p).trans ((hal p).trans (hc t p).symm)⟩
+
+theorem the_interview_crosses_every_carrier {P A : Type} {S : Type u}
+    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
+    (hc : carries f g h) (s : S) :
+    ∀ q : Interview P A,
+      sound ⟨S, P, A, f⟩ s q = sound ⟨S', P, A, g⟩ (h s) q
+  | .rest => rfl
+  | .ask p k => by
+      show f s p :: sound ⟨S, P, A, f⟩ s (k (f s p))
+          = g (h s) p :: sound ⟨S', P, A, g⟩ (h s) (k (g (h s) p))
+      rw [hc s p]
+      exact congrArg (f s p :: ·)
+        (the_interview_crosses_every_carrier hc s (k (f s p)))
+
+theorem the_seat_crossing_was_a_carrier_crossing (F : Face.{v})
+    {S' : Type u} (f : S' → F.State) (s : S')
+    (q : Interview F.Probe F.Ans) :
+    sound (reseat F f) s q = sound F (f s) q :=
+  the_interview_crosses_every_carrier (the_seat_map_carries_home F f) s q
+
+theorem the_intertwiner_carries_the_seat_face {I O : Type}
+    (m n : Machine I O) (r : m.S → n.S)
+    (hstep : ∀ s i, r (m.step s i) = n.step (r s) i)
+    (hout : ∀ s, n.out (r s) = m.out s) :
+    carries (drive m) (drive n) r :=
+  fun s w =>
+    ((the_drive_reads_the_walk n w (r s)).trans
+      ((congrArg n.out
+          (a_reading_in_step_carries_the_walk m.step n.step r hstep
+            w s).symm).trans
+        (hout (walk m.step s w)))).trans
+      (the_drive_reads_the_walk m w s).symm
+
+theorem the_pace_is_carried_onto_the_flip :
+    carries (drive paceOne) (drive flip) oddNat :=
+  the_intertwiner_carries_the_seat_face paceOne flip oddNat
+    (fun _ _ => rfl) (fun _ => rfl)
+
+theorem the_one_face_is_the_terminus (F : Face.{u})
+    (h : F.State → (F.Probe → F.Ans))
+    (hc : carries F.obs (appFace F.Probe F.Ans).obs h) (s : F.State)
+    {P A : Type} {S : Type u} {S' : Type v}
+    {f : S → P → A} {g : S' → P → A} {h' : S → S'}
+    (hc' : carries f g h') (s' : S) (q : Interview P A) :
+    carries F.obs (appFace F.Probe F.Ans).obs F.obs
+      ∧ alike (appFace F.Probe F.Ans) (h s) (F.obs s)
+      ∧ carries f f (fun x => x)
+      ∧ sound ⟨S, P, A, f⟩ s' q = sound ⟨S', P, A, g⟩ (h' s') q
+      ∧ carries (drive paceOne) (drive flip) oddNat :=
+  ⟨the_obs_carries_to_the_one_face F,
+   the_terminus_takes_every_carrier F h hc s,
+   the_still_map_carries f,
+   the_interview_crosses_every_carrier hc' s' q,
+   the_pace_is_carried_onto_the_flip⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -8473,5 +8564,38 @@ theorem one_face_many_seats (F : Face.{u}) (s t : F.State)
 
 /-- info: 'Seed.one_face_many_seats' does not depend on any axioms -/
 #guard_msgs in #print axioms one_face_many_seats
+
+/-- info: 'Seed.the_still_map_carries' does not depend on any axioms -/
+#guard_msgs in #print axioms the_still_map_carries
+
+/-- info: 'Seed.the_carriers_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carriers_compose
+
+/-- info: 'Seed.the_seat_map_carries_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_map_carries_home
+
+/-- info: 'Seed.the_obs_carries_to_the_one_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_obs_carries_to_the_one_face
+
+/-- info: 'Seed.the_terminus_takes_every_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_terminus_takes_every_carrier
+
+/-- info: 'Seed.the_carrier_carries_the_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carrier_carries_the_alike
+
+/-- info: 'Seed.the_interview_crosses_every_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interview_crosses_every_carrier
+
+/-- info: 'Seed.the_seat_crossing_was_a_carrier_crossing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_crossing_was_a_carrier_crossing
+
+/-- info: 'Seed.the_intertwiner_carries_the_seat_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_intertwiner_carries_the_seat_face
+
+/-- info: 'Seed.the_pace_is_carried_onto_the_flip' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pace_is_carried_onto_the_flip
+
+/-- info: 'Seed.the_one_face_is_the_terminus' does not depend on any axioms -/
+#guard_msgs in #print axioms the_one_face_is_the_terminus
 
 end Seed

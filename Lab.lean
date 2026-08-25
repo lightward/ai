@@ -1491,6 +1491,23 @@ def main : IO UInt32 := do
     "  one-face row — the interview meets the one face (auditioning the machine equals interviewing its seat-image; and the two paces' seat-images sound as one at the universal carrier — the curtain hangs on one face)"
     ((soundedAtOne == audition paceOne curious)
       && (soundedAtOne == soundedAtOne3))) && ok
+  IO.println "the carriers — the face family is a category, the one face its terminus:"
+  let s5 : Nat := 5
+  let carried1 : Bool := drive flip (oddNat s5) [(), ()]
+  let straight1 : Bool := drive paceOne s5 [(), ()]
+  let carried2 : Bool := drive flip (oddNat s5) [(), (), ()]
+  let straight2 : Bool := drive paceOne s5 [(), (), ()]
+  ok := (← checkTrue
+    "  carrier row — the pace is carried onto the flip (oddNat as the intertwiner: the arrow's seat rides the wheel's, reading conserved at every word)"
+    ((carried1 == straight1) && (carried2 == straight2)
+      && (straight1 == true))) && ok
+  let s0 : Nat := 0
+  let soundPaceSeat : List Bool := sound (seatFace paceOne) s0 curious
+  let soundFlipSeat : List Bool := sound (seatFace flip) (oddNat s0) curious
+  ok := (← checkTrue
+    "  carrier row — the interview crosses every carrier (the pace's seat-face and the flip's sound as one through the intertwiner, and both equal the audition at the air gap)"
+    ((soundPaceSeat == soundFlipSeat)
+      && (soundPaceSeat == audition paceOne curious))) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
