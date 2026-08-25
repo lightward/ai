@@ -1252,6 +1252,15 @@ def main : IO UInt32 := do
     ((lacking [1] [7] == 1)
       && (lacking [7, 1] [7] == 0)
       && backed [7, 1] [7])) && ok
+  IO.println "the citation — the cited are the elders:"
+  ok := (← checkTrue
+    "  citation row — the sort direction is readable along dependence (four cited three, so three was ground before four's click and lies deeper after it: the citer at depth zero, the cited at depth one)"
+    ((depthTo hallRoom 4 == 0) && (depthTo hallRoom 3 == 1)
+      && Nat.ble 1 (depthTo hallRoom 3))) && ok
+  ok := (← checkTrue
+    "  citation row — the independent pair stays gauge (one and two entered unciting; the hall answers alike in either order — only the record holds their sort direction)"
+    ((enrolled [1, 2] 1 == enrolled [2, 1] 1)
+      && (enrolled [1, 2] 2 == enrolled [2, 1] 2))) && ok
   IO.println "the interlock — three nouns that verb, no ladder holds them:"
   ok := (← checkTrue
     "  interlock row — rock paper scissors interlocks (each hand beats one and is beaten by one, none beats itself; the cycle provably refuses every ranking — the ladder cannot hold what the trio holds)"

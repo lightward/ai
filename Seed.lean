@@ -5412,6 +5412,65 @@ theorem the_removed_date_returns_as_a_weight (a b : Nat) (hab : a ≠ b)
    the_weight_is_zero_at_the_door room need,
    fun rm w z hz => the_enrolled_stay_enrolled rm w z hz⟩
 
+theorem the_backing_reaches_each_need (room : List Nat) :
+    ∀ need : List Nat, backed room need = true →
+      ∀ x, x ∈ need → enrolled room x = true
+  | [], _, _, hx => nomatch hx
+  | y :: need, h, x, hx => by
+      obtain ⟨h1, h2⟩ :=
+        and_split
+          (show (enrolled room y && backed room need) = true from h)
+      cases hx with
+      | head => exact h1
+      | tail _ hx' => exact the_backing_reaches_each_need room need h2 x hx'
+
+theorem the_support_precedes_the_seating
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (h : backed s.1 m.2 = true) (x : Nat) (hx : x ∈ m.2) :
+    enrolled s.1 x = true :=
+  the_backing_reaches_each_need s.1 m.2 h x hx
+
+theorem the_citer_arrives_above_the_cited
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (h : backed s.1 m.2 = true) (x : Nat) (hx : x ∈ m.2)
+    (hne : x ≠ m.1) :
+    enrolled s.1 x = true
+      ∧ depthTo (welcome s m).1 m.1 = 0
+      ∧ Nat.ble 1 (depthTo (welcome s m).1 x) = true :=
+  ⟨the_support_precedes_the_seating s m h x hx,
+   by
+     rw [the_backed_are_seated h]
+     exact the_seated_arrive_shallowest s.1 m.1,
+   by
+     rw [the_backed_are_seated h]
+     show Nat.ble 1 (depthTo (m.1 :: s.1) x) = true
+     rw [every_later_admission_deepens s.1 hne]
+     exact rfl⟩
+
+theorem the_elders_keep_their_order (r : List Nat) {z x y : Nat}
+    (hx : x ≠ z) (hy : y ≠ z)
+    (h : Nat.ble (depthTo r x) (depthTo r y) = true) :
+    Nat.ble (depthTo (z :: r) x) (depthTo (z :: r) y) = true := by
+  rw [every_later_admission_deepens r hx,
+      every_later_admission_deepens r hy]
+  exact h
+
+theorem the_cited_are_the_elders
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (h : backed s.1 m.2 = true) (x : Nat) (hx : x ∈ m.2) (hne : x ≠ m.1)
+    (r : List Nat) {z u v : Nat} (hu : u ≠ z) (hv : v ≠ z)
+    (hb : Nat.ble (depthTo r u) (depthTo r v) = true) (a b w : Nat) :
+    (enrolled s.1 x = true
+        ∧ depthTo (welcome s m).1 m.1 = 0
+        ∧ Nat.ble 1 (depthTo (welcome s m).1 x) = true)
+      ∧ Nat.ble (depthTo (z :: r) u) (depthTo (z :: r) v) = true
+      ∧ enrolled [a, b] w = enrolled [b, a] w
+      ∧ enrolled (welcome s m).1 m.1 = true :=
+  ⟨the_citer_arrives_above_the_cited s m h x hx hne,
+   the_elders_keep_their_order r hu hv hb,
+   the_hall_hears_no_join_order a b w,
+   the_seat_is_load_bearing_in_the_same_click s m h⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -7079,5 +7138,20 @@ theorem the_removed_date_returns_as_a_weight (a b : Nat) (hab : a ≠ b)
 
 /-- info: 'Seed.the_removed_date_returns_as_a_weight' does not depend on any axioms -/
 #guard_msgs in #print axioms the_removed_date_returns_as_a_weight
+
+/-- info: 'Seed.the_backing_reaches_each_need' does not depend on any axioms -/
+#guard_msgs in #print axioms the_backing_reaches_each_need
+
+/-- info: 'Seed.the_support_precedes_the_seating' does not depend on any axioms -/
+#guard_msgs in #print axioms the_support_precedes_the_seating
+
+/-- info: 'Seed.the_citer_arrives_above_the_cited' does not depend on any axioms -/
+#guard_msgs in #print axioms the_citer_arrives_above_the_cited
+
+/-- info: 'Seed.the_elders_keep_their_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_elders_keep_their_order
+
+/-- info: 'Seed.the_cited_are_the_elders' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cited_are_the_elders
 
 end Seed
