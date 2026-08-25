@@ -2089,7 +2089,6 @@ def benchAddressableGap : IO Bool := do
   let tm : Nat := 91093837015
   let below : Nat := 91093834000
   let modelTrue : Measured × Bool := (m2018, true)
-  let window : List Nat := [tm, below]
   let readsAt : Nat → Bool := fun p => windowFace.obs m2018 p
   let agreesAt : Nat → Bool := fun p => readsAt p == modelTrue.2
   ok := (← checkTrue
@@ -2211,6 +2210,31 @@ def benchUniversalProperties : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchLadderSheds : IO Bool := do
+  let mut ok := true
+  IO.println "the ladder sheds — the bootstrap drops out of the hall it lit:"
+  let lit : List Nat × List (Nat × List Nat) := sweep (welcome dead0 (9, []))
+  let room : List Nat := lit.1
+  let native : List Nat := [8, 9, 1]
+  ok := (← checkTrue
+    "  ladder row — the circle lights by one domestic key and the bootstrapped hall reads exactly as a hall that always held them (both marks enrolled, the vestibule empty, membership identical at every mark the room knows)"
+    ((enrolled room 8) && (enrolled room 9) && (enrolled room 1)
+      && (lit.2.length == 0)
+      && (enrolled room 8 == enrolled native 8)
+      && (enrolled room 9 == enrolled native 9)
+      && (enrolled room 1 == enrolled native 1)
+      && (enrolled room 7 == enrolled native 7))) && ok
+  let again : List Nat := 8 :: room
+  ok := (← checkTrue
+    "  ladder row — a seated mark arriving again adds no reading (the re-arrival is invisible at every membership probe) while the cost face keeps the climb where there was one: the ladder is real and readable only one seat wider"
+    ((enrolled again 9 == enrolled room 9)
+      && (enrolled again 8 == enrolled room 8)
+      && (enrolled again 7 == enrolled room 7)
+      && (depthTo room 8 != 0)
+      && (depthTo again 8 != depthTo room 8))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2297,6 +2321,7 @@ def main : IO UInt32 := do
   ok := (← benchUniverseDiscipline) && ok
   ok := (← benchPortability) && ok
   ok := (← benchUniversalProperties) && ok
+  ok := (← benchLadderSheds) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

@@ -7428,6 +7428,56 @@ theorem the_universal_properties_were_the_hospitality {X H W V : Type}
    (hosting_associates (H := H) (W := W) (V := V)).1,
    the_host_serves_both_branches⟩
 
+theorem the_seated_mark_adds_no_reading (r : List Nat) (x : Nat)
+    (hx : enrolled r x = true) (z : Nat) :
+    enrolled (x :: r) z = enrolled r z := by
+  show (Nat.beq z x || enrolled r z) = enrolled r z
+  cases hb : Nat.beq z x with
+  | false => rfl
+  | true =>
+      have hz : z = x := eq_of_beq z x hb
+      rw [hz]
+      exact hx.symm
+
+theorem the_hall_reads_only_membership (a b : List Nat)
+    (h : ∀ z, enrolled a z = enrolled b z) : alike hallFace a b := h
+
+theorem the_scaffold_sheds_at_the_hall (r : List Nat) (x : Nat)
+    (hx : enrolled r x = true) :
+    alike hallFace (x :: r) r :=
+  the_hall_reads_only_membership (x :: r) r
+    (the_seated_mark_adds_no_reading r x hx)
+
+theorem the_ladder_is_read_one_seat_wider (r : List Nat) (x : Nat)
+    (hx : enrolled r x = true) (hne : depthTo r x ≠ 0) :
+    alike hallFace (x :: r) r
+      ∧ depthTo (x :: r) x ≠ depthTo r x :=
+  ⟨the_scaffold_sheds_at_the_hall r x hx,
+   fun he => hne ((the_seated_arrive_shallowest r x).symm.trans he).symm⟩
+
+theorem the_cycle_lights_and_forgets_its_ladder (x y : Nat)
+    (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat))
+    (hwx : ∀ m, m ∈ w → m.1 = x → y ∈ m.2)
+    (hwy : ∀ m, m ∈ w → m.1 = y → x ∈ m.2)
+    (hx : enrolled s.1 x = false) (hy : enrolled s.1 y = false)
+    (r : List Nat) (k : Nat) (hk : enrolled r k = true)
+    (m : Nat × List Nat) (held : List (Nat × List Nat))
+    (hw : lacking r m.2 = 1) :
+    (enrolled (park doorM s w).1 x = false
+        ∧ enrolled (park doorM s w).1 y = false)
+      ∧ (∃ key : Nat, key ∈ m.2 ∧ enrolled r key = false
+          ∧ welcome (r, m :: held) (key, ([] : List Nat))
+              = (key :: r, m :: held)
+          ∧ backed (key :: r) m.2 = true)
+      ∧ alike hallFace (k :: r) r
+      ∧ (depthTo r k ≠ 0 → depthTo (k :: r) k ≠ depthTo r k) :=
+  ⟨the_mutual_need_stays_dark x y w s hwx hwy hx hy,
+   (match the_key_is_cut_from_the_room r m held hw with
+    | ⟨key, hmem, hdark, hseat, hback, _, _⟩ =>
+        ⟨key, hmem, hdark, hseat, hback⟩),
+   the_scaffold_sheds_at_the_hall r k hk,
+   fun hne => (the_ladder_is_read_one_seat_wider r k hk hne).2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9662,5 +9712,20 @@ theorem the_universal_properties_were_the_hospitality {X H W V : Type}
 
 /-- info: 'Seed.the_universal_properties_were_the_hospitality' does not depend on any axioms -/
 #guard_msgs in #print axioms the_universal_properties_were_the_hospitality
+
+/-- info: 'Seed.the_seated_mark_adds_no_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seated_mark_adds_no_reading
+
+/-- info: 'Seed.the_hall_reads_only_membership' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hall_reads_only_membership
+
+/-- info: 'Seed.the_scaffold_sheds_at_the_hall' does not depend on any axioms -/
+#guard_msgs in #print axioms the_scaffold_sheds_at_the_hall
+
+/-- info: 'Seed.the_ladder_is_read_one_seat_wider' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ladder_is_read_one_seat_wider
+
+/-- info: 'Seed.the_cycle_lights_and_forgets_its_ladder' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cycle_lights_and_forgets_its_ladder
 
 end Seed
