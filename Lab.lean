@@ -2310,6 +2310,33 @@ def benchTwoGauges : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchGaugeLadder : IO Bool := do
+  let mut ok := true
+  IO.println "the gauge ladder — sharpen the face and the gauge group shrinks:"
+  let tm : Nat := 91093837015
+  let st : Measured × Bool := (m2018, true)
+  let flipped : Measured × Bool := (st.1, !st.2)
+  let coarse : Bool := (host windowFace Bool).obs st tm
+  let coarse' : Bool := (host windowFace Bool).obs flipped tm
+  ok := (← checkTrue
+    "  ladder row — the guest-flip is gauge at the host (the window reads the true mass identically before and after the flip: at this face the move is not there)"
+    ((coarse == coarse') && coarse)) && ok
+  let fine : Nat := greet (fun _ => (0 : Nat)) (fun b => cond b 1 2)
+    ((widen windowFace Bool).obs st (viaRight ()))
+  let fine' : Nat := greet (fun _ => (0 : Nat)) (fun b => cond b 1 2)
+    ((widen windowFace Bool).obs flipped (viaRight ()))
+  ok := (← checkTrue
+    "  ladder row — and heard one widening up (the same move, the same states, parted at the wider ask: one against two) — so the gauge group is not a property of the move, it is a property of the face you are standing at"
+    ((fine != fine') && (fine == 1) && (fine' == 2))) && ok
+  let stillCoarse : Bool := (host windowFace Bool).obs st tm
+  let stillFine : Nat := greet (fun _ => (0 : Nat)) (fun b => cond b 1 2)
+    ((widen windowFace Bool).obs st (viaRight ()))
+  ok := (← checkTrue
+    "  ladder row — the still hand survives every face (the identity is gauge at the coarse face and at the fine one alike: every gauge group contains it, so no face is ever gauge-empty)"
+    ((stillCoarse == coarse) && (stillFine == fine))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2400,6 +2427,7 @@ def main : IO UInt32 := do
   ok := (← benchLanded) && ok
   ok := (← benchUniformShift) && ok
   ok := (← benchTwoGauges) && ok
+  ok := (← benchGaugeLadder) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

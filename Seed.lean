@@ -7585,6 +7585,41 @@ theorem the_gauges_follow_the_two_times (s d : Nat) (w : List Unit)
    the_home_pace_is_the_still_gauge vote,
    the_revision_multiplies_the_reading t δ⟩
 
+theorem the_sharper_face_hears_more {S : Type u} {P A P' A' : Type}
+    (f : S → P → A) (g : S → P' → A')
+    (href : ∀ s t, (∀ p, g s p = g t p) → ∀ p, f s p = f t p)
+    (m : S → S) (hm : ∀ s p, g (m s) p = g s p) :
+    ∀ s p, f (m s) p = f s p :=
+  fun s => href (m s) s (hm s)
+
+theorem the_still_hand_is_gauge_at_every_face {S : Type u} {P A : Type}
+    (f : S → P → A) (s : S) (p : P) :
+    f ((fun x => x) s) p = f s p := rfl
+
+theorem the_guest_flip_is_gauge_at_the_host :
+    unheard (host windowFace Bool) (fun x => (x.1, !x.2)) :=
+  fun _ _ => rfl
+
+theorem the_guest_flip_is_heard_one_widening_up :
+    ¬ unheard (widen windowFace Bool) (fun x => (x.1, !x.2)) :=
+  fun h =>
+    bool_escapes true
+      (Sum.inr.inj (h ((⟨0, 0⟩ : Measured), true) (viaRight ()))).symm
+
+theorem the_resolution_ladder_is_the_gauge_ladder {S : Type u}
+    {P A P' A' : Type} (f : S → P → A) (g : S → P' → A')
+    (href : ∀ s t, (∀ p, g s p = g t p) → ∀ p, f s p = f t p)
+    (m : S → S) (hm : ∀ s p, g (m s) p = g s p) (s : S) (p : P)
+    (x : S) (q : P) :
+    f (m s) p = f s p
+      ∧ f ((fun y => y) x) q = f x q
+      ∧ unheard (host windowFace Bool) (fun y => (y.1, !y.2))
+      ∧ ¬ unheard (widen windowFace Bool) (fun y => (y.1, !y.2)) :=
+  ⟨the_sharper_face_hears_more f g href m hm s p,
+   rfl,
+   the_guest_flip_is_gauge_at_the_host,
+   the_guest_flip_is_heard_one_widening_up⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9876,5 +9911,20 @@ theorem the_gauges_follow_the_two_times (s d : Nat) (w : List Unit)
 
 /-- info: 'Seed.the_gauges_follow_the_two_times' does not depend on any axioms -/
 #guard_msgs in #print axioms the_gauges_follow_the_two_times
+
+/-- info: 'Seed.the_sharper_face_hears_more' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sharper_face_hears_more
+
+/-- info: 'Seed.the_still_hand_is_gauge_at_every_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_still_hand_is_gauge_at_every_face
+
+/-- info: 'Seed.the_guest_flip_is_gauge_at_the_host' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_flip_is_gauge_at_the_host
+
+/-- info: 'Seed.the_guest_flip_is_heard_one_widening_up' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_flip_is_heard_one_widening_up
+
+/-- info: 'Seed.the_resolution_ladder_is_the_gauge_ladder' does not depend on any axioms -/
+#guard_msgs in #print axioms the_resolution_ladder_is_the_gauge_ladder
 
 end Seed
