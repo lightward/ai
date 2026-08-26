@@ -8374,6 +8374,108 @@ theorem light_enters_a_circle_only_from_outside (C : List Nat)
    the_unencumbered_are_welcome_everywhere r,
    the_seat_is_load_bearing_in_the_same_click t (n, []) rfl⟩
 
+def zeros : Nat → List Bool
+  | 0 => []
+  | n + 1 => false :: zeros n
+
+def full : List Bool → Bool
+  | [] => true
+  | b :: bs => b && full bs
+
+def val : List Bool → Nat
+  | [] => 0
+  | b :: bs => cond b 1 0 + (val bs + val bs)
+
+theorem the_zeros_span_the_width : ∀ n : Nat, (zeros n).length = n
+  | 0 => rfl
+  | n + 1 => congrArg (· + 1) (the_zeros_span_the_width n)
+
+theorem the_tick_keeps_the_width : ∀ s : List Bool, (inc s).length = s.length
+  | [] => rfl
+  | false :: _ => rfl
+  | true :: bs => congrArg (· + 1) (the_tick_keeps_the_width bs)
+
+theorem the_orbit_keeps_the_width :
+    ∀ (t : Nat) (s : List Bool), (again inc t s).length = s.length
+  | 0, _ => rfl
+  | t + 1, s =>
+      (the_tick_keeps_the_width (again inc t s)).trans
+        (the_orbit_keeps_the_width t s)
+
+theorem the_empty_register_reads_zero : ∀ n : Nat, val (zeros n) = 0
+  | 0 => rfl
+  | n + 1 => by
+      show (0 : Nat) + (val (zeros n) + val (zeros n)) = 0
+      rw [the_empty_register_reads_zero n]
+
+theorem the_full_register_fills_the_cap :
+    ∀ s : List Bool, full s = true → val s + 1 = roomCap s.length
+  | [], _ => rfl
+  | true :: bs, h => by
+      have hf : full bs = true := h
+      show (1 + (val bs + val bs)) + 1
+          = roomCap bs.length + roomCap bs.length
+      rw [Nat.add_comm 1 (val bs + val bs),
+          ← the_full_register_fills_the_cap bs hf]
+      exact (succ_adds (val bs) (val bs + 1)).symm
+  | false :: bs, h => nomatch h
+
+theorem the_tick_carries_the_count :
+    ∀ s : List Bool, val (inc s) = cond (full s) 0 (val s + 1)
+  | [] => rfl
+  | false :: bs => by
+      show 1 + (val bs + val bs) = (0 + (val bs + val bs)) + 1
+      rw [zero_plus, Nat.add_comm 1 (val bs + val bs)]
+  | true :: bs => by
+      show (0 : Nat) + (val (inc bs) + val (inc bs))
+          = cond (full bs) 0 ((1 + (val bs + val bs)) + 1)
+      rw [zero_plus, the_tick_carries_the_count bs]
+      cases hf : full bs with
+      | true => rfl
+      | false =>
+          show (val bs + 1) + (val bs + 1)
+              = (1 + (val bs + val bs)) + 1
+          rw [succ_adds (val bs) (val bs + 1),
+              Nat.add_comm 1 (val bs + val bs)]
+          exact rfl
+
+theorem the_clock_reads_its_count (n : Nat) :
+    ∀ t : Nat, Nat.ble (t + 1) (roomCap n) = true →
+      val (again inc t (zeros n)) = t
+  | 0, _ => the_empty_register_reads_zero n
+  | t + 1, h => by
+      have h' : Nat.ble (t + 1) (roomCap n) = true :=
+        ble_trans _ _ _ (ble_le_succ (t + 1)) h
+      have ih := the_clock_reads_its_count n t h'
+      show val (inc (again inc t (zeros n))) = t + 1
+      rw [the_tick_carries_the_count]
+      cases hf : full (again inc t (zeros n)) with
+      | false =>
+          show val (again inc t (zeros n)) + 1 = t + 1
+          rw [ih]
+      | true =>
+          have hcap : val (again inc t (zeros n)) + 1
+              = roomCap (again inc t (zeros n)).length :=
+            the_full_register_fills_the_cap _ hf
+          rw [the_orbit_keeps_the_width, the_zeros_span_the_width, ih]
+            at hcap
+          rw [← hcap] at h
+          exact nomatch (ble_succ_false (t + 1)).symm.trans h
+
+theorem the_odometer_counts_in_binary {W : Type} (n t : Nat)
+    (hle : Nat.ble (t + 1) (roomCap n) = true) (s : List Bool)
+    (w : List W) (k : Nat) :
+    val (again inc t (zeros n)) = t
+      ∧ val (inc s) = cond (full s) 0 (val s + 1)
+      ∧ (full s = true → val s + 1 = roomCap s.length)
+      ∧ again inc (roomCap s.length) s = s
+      ∧ drive (tally W) k w = k + w.length :=
+  ⟨the_clock_reads_its_count n t hle,
+   the_tick_carries_the_count s,
+   the_full_register_fills_the_cap s,
+   the_odometer_comes_home_at_the_cap s,
+   drive_counts w k⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10884,5 +10986,29 @@ theorem light_enters_a_circle_only_from_outside (C : List Nat)
 
 /-- info: 'Seed.light_enters_a_circle_only_from_outside' does not depend on any axioms -/
 #guard_msgs in #print axioms light_enters_a_circle_only_from_outside
+
+/-- info: 'Seed.the_zeros_span_the_width' does not depend on any axioms -/
+#guard_msgs in #print axioms the_zeros_span_the_width
+
+/-- info: 'Seed.the_tick_keeps_the_width' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tick_keeps_the_width
+
+/-- info: 'Seed.the_orbit_keeps_the_width' does not depend on any axioms -/
+#guard_msgs in #print axioms the_orbit_keeps_the_width
+
+/-- info: 'Seed.the_empty_register_reads_zero' does not depend on any axioms -/
+#guard_msgs in #print axioms the_empty_register_reads_zero
+
+/-- info: 'Seed.the_full_register_fills_the_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_full_register_fills_the_cap
+
+/-- info: 'Seed.the_tick_carries_the_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tick_carries_the_count
+
+/-- info: 'Seed.the_clock_reads_its_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_reads_its_count
+
+/-- info: 'Seed.the_odometer_counts_in_binary' does not depend on any axioms -/
+#guard_msgs in #print axioms the_odometer_counts_in_binary
 
 end Seed

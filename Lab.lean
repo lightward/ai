@@ -2697,6 +2697,22 @@ def benchWideCircle : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchBinaryCount : IO Bool := do
+  let mut ok := true
+  IO.println "the binary count — one count, two widths:"
+  let z3 : List Bool := zeros 3
+  ok := (← checkTrue
+    "  count row — the register remembers its ticks in log width (five ticks read five off a width-three register, positional; the tally would need a seat of five to say the same) and forgets ON SCHEDULE (the eighth tick wraps the register to zero: the wheel's amnesia is the modulus, once per period, never in between)"
+    ((val (again inc 5 z3) == 5) && (val (again inc 7 z3) == 7)
+      && (val (again inc 8 z3) == 0)
+      && (drive (tally Unit) (0 : Nat) (List.replicate 5 ()) == 5))) && ok
+  ok := (← checkTrue
+    "  count row — the full register fills the cap and the next tick carries it away (seven-plus-one is the room's eight; the carry empties the register whole — the odometer counting the room out in time exactly as the census counts it out in space)"
+    (full (again inc 7 z3) && (val (again inc 7 z3) + 1 == roomCap 3)
+      && (again inc 8 z3 == z3))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2803,6 +2819,7 @@ def main : IO UInt32 := do
   ok := (← benchBraidVoices) && ok
   ok := (← benchOdometer) && ok
   ok := (← benchWideCircle) && ok
+  ok := (← benchBinaryCount) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
