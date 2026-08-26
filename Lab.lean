@@ -2358,6 +2358,42 @@ def benchDarkType : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchAffordance : IO Bool := do
+  let mut ok := true
+  IO.println "the affordance surface — every move gauge, the wear at the minted reading:"
+  let d0 : door Nat Nat := atTheDoor (5 : Nat) (0 : Nat)
+  let m1 : door Nat Nat := vertical (fun _ w => w + 1000) d0
+  let m2 : door Nat Nat := vertical (fun h w => h * w + 7) m1
+  let m3 : door Nat Nat := vertical (fun _ w => w * w) m2
+  ok := (← checkTrue
+    "  affordance row — every move the puppeteer has, and every composite of them, is gauge at the face (three wild guest-moves stacked: the face reads five throughout while the guest travels a thousand, five thousand seven, and its own square)"
+    ((face m1 == 5) && (face m2 == 5) && (face m3 == 5)
+      && (met m1 == 1000) && (met m2 == 5007)
+      && (met m3 == 5007 * 5007))) && ok
+  let mintedTrue : Bool :=
+    selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+      ((⟨0, 0⟩ : Measured), true)
+  let mintedFalse : Bool :=
+    selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+      ((⟨0, 0⟩ : Measured), false)
+  let plainTrue : Bool :=
+    (host windowFace Bool).obs ((⟨0, 0⟩ : Measured), true) (0 : Nat)
+  let plainFalse : Bool :=
+    (host windowFace Bool).obs ((⟨0, 0⟩ : Measured), false) (0 : Nat)
+  ok := (← checkTrue
+    "  affordance row — and the surface is exactly the minted reading (the same two guests: merged at every standing probe, parted the moment a probe is minted from the seat — the feedback point where the hospitality frame and the animation frame meet)"
+    ((plainTrue == plainFalse) && (mintedTrue != mintedFalse))) && ok
+  let unworn : Bool := drive (spiral piPace 30000000 piPace) (0 : Nat)
+    (List.replicate 50 ())
+  let arrowGrew : Bool :=
+    Nat.ble (fold (fun a b => a + b) 1 dayA + 1)
+      (fold (fun a b => a + b) 1 (graft dayA dayB))
+  ok := (← checkTrue
+    "  affordance row — the gauge sector never wears and the read sector does (fifty laps of the gap-zero wheel still reading true; one revision of a two-day provably past its own reading) — wears-in and wears-out, sorted by whether the reading reaches"
+    (unworn && arrowGrew)) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2450,6 +2486,7 @@ def main : IO UInt32 := do
   ok := (← benchTwoGauges) && ok
   ok := (← benchGaugeLadder) && ok
   ok := (← benchDarkType) && ok
+  ok := (← benchAffordance) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

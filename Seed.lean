@@ -7654,6 +7654,52 @@ theorem the_ground_is_the_only_dark_type (W : Type) (n : Nat) (p : Plan)
    rfl,
    ⟨rfl, fun he => hw (congrArg met he).symm⟩⟩
 
+theorem every_guest_move_is_unheard {H W X : Type} (g : H → X) :
+    ∀ (σ : H → W → W) (d : door H W),
+      g (face (vertical σ d)) = g (face d) :=
+  fun σ d => a_guest_mover_is_unheard σ g d
+
+theorem the_whole_repertoire_is_gauge {H W X : Type} (g : H → X)
+    (σ τ : H → W → W) (d : door H W) :
+    vertical σ (vertical τ d) = vertical (fun h w => σ h (τ h w)) d
+      ∧ g (face (vertical σ (vertical τ d))) = g (face d)
+      ∧ vertical (fun _ w => w) d = d :=
+  ⟨guest_movers_compose σ τ d,
+   (a_guest_mover_is_unheard σ g (vertical τ d)).trans
+     (a_guest_mover_is_unheard τ g d),
+   the_still_door_moves_no_guest d⟩
+
+theorem the_minted_reading_hears_the_move :
+    selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+        (⟨0, 0⟩, true)
+      ≠ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+          (⟨0, 0⟩, false) :=
+  the_self_meeting_parts_the_alike.2
+
+theorem the_gauge_sector_never_wears (a d : Nat) (w : List Unit)
+    (s : Nat) : drive (spiral a d a) s w = true :=
+  the_wheel_reads_itself_unworn a d w s
+
+theorem the_wear_lands_at_the_minted_reading {H W X : Type} (g : H → X)
+    (σ τ : H → W → W) (d : door H W) (a dd : Nat) (w : List Unit)
+    (s : Nat) (t : Plan) {δ : Plan} (hδ : δ ≠ Plan.ground) :
+    (∀ (ρ : H → W → W) (e : door H W),
+        g (face (vertical ρ e)) = g (face e))
+      ∧ (vertical σ (vertical τ d) = vertical (fun h x => σ h (τ h x)) d
+          ∧ g (face (vertical σ (vertical τ d))) = g (face d))
+      ∧ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+            (⟨0, 0⟩, true)
+          ≠ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
+              (⟨0, 0⟩, false)
+      ∧ drive (spiral a dd a) s w = true
+      ∧ graft t δ ≠ t :=
+  ⟨every_guest_move_is_unheard g,
+   ⟨(the_whole_repertoire_is_gauge g σ τ d).1,
+    (the_whole_repertoire_is_gauge g σ τ d).2.1⟩,
+   the_minted_reading_hears_the_move,
+   the_gauge_sector_never_wears a dd w s,
+   the_worldline_never_comes_home t hδ⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9975,5 +10021,20 @@ theorem the_ground_is_the_only_dark_type (W : Type) (n : Nat) (p : Plan)
 
 /-- info: 'Seed.the_ground_is_the_only_dark_type' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ground_is_the_only_dark_type
+
+/-- info: 'Seed.every_guest_move_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms every_guest_move_is_unheard
+
+/-- info: 'Seed.the_whole_repertoire_is_gauge' does not depend on any axioms -/
+#guard_msgs in #print axioms the_whole_repertoire_is_gauge
+
+/-- info: 'Seed.the_minted_reading_hears_the_move' does not depend on any axioms -/
+#guard_msgs in #print axioms the_minted_reading_hears_the_move
+
+/-- info: 'Seed.the_gauge_sector_never_wears' does not depend on any axioms -/
+#guard_msgs in #print axioms the_gauge_sector_never_wears
+
+/-- info: 'Seed.the_wear_lands_at_the_minted_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wear_lands_at_the_minted_reading
 
 end Seed
