@@ -2798,6 +2798,16 @@ def benchOrderCensus : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchShuffleRoom : IO Bool := do
+  let mut ok := true
+  IO.println "the room of orders — sound, counted, and one seat deaf to all of it:"
+  let sums : List Nat := (perms [5, 9, 3]).map (fun p => park heap (0 : Nat) p)
+  ok := (← checkTrue
+    "  shuffle row — all six orderings of three marks park the commuting seat on seventeen (every ordering a true shuffle of the ground, the factorial counting them, the heap deaf to every one) while the scribe parts any two — the whole order-census readable at one seat and invisible at another, which is the handshake the room of orders was built to run"
+    ((sums.length == 6) && sums.all (· == 17))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2911,6 +2921,7 @@ def main : IO UInt32 := do
   ok := (← benchRetrace) && ok
   ok := (← benchCompare) && ok
   ok := (← benchOrderCensus) && ok
+  ok := (← benchShuffleRoom) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

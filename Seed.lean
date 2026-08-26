@@ -8887,6 +8887,68 @@ theorem the_census_of_orders {A : Type} (l p : List A) (x : A)
    the_orders_keep_the_length l p hp,
    the_orders_count_to_the_factorial l⟩
 
+theorem perm_refl {A : Type} : ∀ l : List A, l.Perm l
+  | [] => .nil
+  | x :: l => .cons x (perm_refl l)
+
+theorem the_insertion_is_a_shuffle {A : Type} (x : A) :
+    ∀ (r q : List A), q ∈ inserts x r → q.Perm (x :: r)
+  | [], q, h => by
+      cases h with
+      | head => exact perm_refl [x]
+      | tail _ h' => exact nomatch h'
+  | y :: r, q, h => by
+      cases h with
+      | head => exact perm_refl (x :: y :: r)
+      | tail _ h' =>
+          obtain ⟨q', hq', he⟩ := mem_map_back (inserts x r) h'
+          rw [← he]
+          exact List.Perm.trans
+            (List.Perm.cons y (the_insertion_is_a_shuffle x r q' hq'))
+            (List.Perm.swap x y r)
+
+theorem every_order_is_a_shuffle {A : Type} :
+    ∀ (l p : List A), p ∈ perms l → p.Perm l
+  | [], p, h => by
+      cases h with
+      | head => exact .nil
+      | tail _ h' => exact nomatch h'
+  | x :: l, p, h => by
+      have h' : p ∈ joinMap (inserts x) (perms l) := h
+      obtain ⟨r, hr, hp⟩ := mem_joinMap_back (perms l) h'
+      exact List.Perm.trans (the_insertion_is_a_shuffle x r p hp)
+        (List.Perm.cons x (every_order_is_a_shuffle l r hr))
+
+theorem the_commuting_seat_hears_every_shuffle {I O : Type}
+    (m : Machine I O)
+    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i) :
+    ∀ {xs ys : List I}, xs.Perm ys → ∀ s, park m s xs = park m s ys := by
+  intro xs ys h
+  induction h with
+  | nil => intro _; rfl
+  | cons x _ ih => intro s; exact ih (m.step s x)
+  | swap x y l => intro s; exact congrArg (fun t => park m t l) (hcomm s y x)
+  | trans _ _ ih₁ ih₂ => intro s; exact (ih₁ s).trans (ih₂ s)
+
+theorem the_room_of_orders_is_sound {A I O : Type} (l p : List A)
+    (hp : p ∈ perms l) (m : Machine I O)
+    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
+    {xs ys : List I} (hperm : xs.Perm ys) (s : m.S)
+    (q : List Nat) (hq : q ∈ perms ([5, 9] : List Nat))
+    {B : Type} {a b : B} (hab : a ≠ b) :
+    p.Perm l
+      ∧ (perms l).length = fact l.length
+      ∧ park m s xs = park m s ys
+      ∧ park heap (0 : Nat) q = park heap (0 : Nat) [5, 9]
+      ∧ park (scribe (fun _ w => w)) ([] : List B) [a, b]
+          ≠ park (scribe (fun _ w => w)) ([] : List B) [b, a] :=
+  ⟨every_order_is_a_shuffle l p hp,
+   the_orders_count_to_the_factorial l,
+   the_commuting_seat_hears_every_shuffle m hcomm hperm s,
+   the_commuting_seat_hears_every_shuffle heap the_heap_steps_commute
+     (every_order_is_a_shuffle [5, 9] q hq) ((0 : Nat)),
+   the_scribe_keeps_the_order hab⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -11538,5 +11600,20 @@ theorem the_census_of_orders {A : Type} (l p : List A) (x : A)
 
 /-- info: 'Seed.the_census_of_orders' does not depend on any axioms -/
 #guard_msgs in #print axioms the_census_of_orders
+
+/-- info: 'Seed.perm_refl' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_refl
+
+/-- info: 'Seed.the_insertion_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_insertion_is_a_shuffle
+
+/-- info: 'Seed.every_order_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms every_order_is_a_shuffle
+
+/-- info: 'Seed.the_commuting_seat_hears_every_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_commuting_seat_hears_every_shuffle
+
+/-- info: 'Seed.the_room_of_orders_is_sound' does not depend on any axioms -/
+#guard_msgs in #print axioms the_room_of_orders_is_sound
 
 end Seed
