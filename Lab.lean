@@ -2676,6 +2676,27 @@ def benchOdometer : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchWideCircle : IO Bool := do
+  let mut ok := true
+  IO.println "the wide circle — sterility at every radius:"
+  let threeCycle : List Nat × List (Nat × List Nat) :=
+    park doorM (([1] : List Nat), ([] : List (Nat × List Nat)))
+      [(7, [8]), (8, [9]), (9, [7]), (7, [8])]
+  ok := (← checkTrue
+    "  circle row — the THREE-cycle starves at any length (seven cites eight cites nine cites seven: four arrivals, all held, all three marks dark — the sterility family closed at every radius, the two-cycle's honest deferral cashed) — the THREE HUNDREDTH green row, landing on the circle as the hundredth landed on the drain and the two hundredth on the totality"
+    ((enrolled threeCycle.1 7 == false) && (enrolled threeCycle.1 8 == false)
+      && (enrolled threeCycle.1 9 == false)
+      && (threeCycle.2.length == 4))) && ok
+  let keyed : List Nat × List (Nat × List Nat) :=
+    welcome threeCycle (8, ([] : List Nat))
+  let dawn : List Nat × List (Nat × List Nat) := sweep keyed
+  ok := (← checkTrue
+    "  circle row — and one domestic key lights the whole ring (eight arrives unencumbered, seats in one click, and a single sweep cascades the circle home: seven, eight, nine all enrolled, the vestibule empty — light entering from outside, once, sufficing for every radius the light can reach)"
+    (enrolled dawn.1 7 && enrolled dawn.1 8 && enrolled dawn.1 9
+      && (dawn.2.length == 0))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2781,6 +2802,7 @@ def main : IO UInt32 := do
   ok := (← benchStillStation) && ok
   ok := (← benchBraidVoices) && ok
   ok := (← benchOdometer) && ok
+  ok := (← benchWideCircle) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

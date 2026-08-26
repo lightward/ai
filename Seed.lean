@@ -8301,6 +8301,79 @@ theorem the_odometer_winds_the_room (s : List Bool) (c : Nat)
    the_flip_wheels bb,
    the_caps_multiply i j⟩
 
+theorem any_lights_somewhere {A : Type} (p : A → Bool) :
+    ∀ l : List A, l.any p = true → ∃ x, x ∈ l ∧ p x = true
+  | [], h => nomatch h
+  | a :: l, h => by
+      cases hp : p a with
+      | true => exact ⟨a, List.Mem.head l, hp⟩
+      | false =>
+          have h' : l.any p = true := by
+            have hsplit : (p a || l.any p) = true := h
+            rw [hp] at hsplit
+            exact hsplit
+          obtain ⟨x, hx, hpx⟩ := any_lights_somewhere p l h'
+          exact ⟨x, List.Mem.tail a hx, hpx⟩
+
+theorem every_circle_starves (C : List Nat) :
+    ∀ (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat)),
+      (∀ m, m ∈ w → enrolled C m.1 = true →
+        m.2.any (enrolled C) = true) →
+      (∀ c, enrolled C c = true → enrolled s.1 c = false) →
+      ∀ c, enrolled C c = true → enrolled (park doorM s w).1 c = false
+  | [], _, _, hdark => hdark
+  | m :: w, s, hw, hdark => by
+      have hstep : ∀ c, enrolled C c = true →
+          enrolled (welcome s m).1 c = false := by
+        intro c hc
+        cases hb : backed s.1 m.2 with
+        | false =>
+            rw [the_unbacked_are_held hb]
+            exact hdark c hc
+        | true =>
+            rw [the_backed_are_seated hb]
+            cases hm1 : enrolled C m.1 with
+            | true =>
+                obtain ⟨x, hx, hcx⟩ :=
+                  any_lights_somewhere (enrolled C) m.2
+                    (hw m (List.Mem.head w) hm1)
+                exact absurd
+                  (the_backing_reaches_each_need s.1 m.2 hb x hx)
+                  (ne_true_of_eq_false (hdark x hcx))
+            | false =>
+                refine the_stranger_leaves_the_hall_dark s.1 m.1 c
+                  ?_ (hdark c hc)
+                intro he
+                rw [he] at hc
+                exact nomatch hc.symm.trans hm1
+      show ∀ c, enrolled C c = true →
+          enrolled (park doorM (welcome s m) w).1 c = false
+      exact every_circle_starves C w (welcome s m)
+        (fun k hk => hw k (List.Mem.tail m hk)) hstep
+
+theorem light_enters_a_circle_only_from_outside (C : List Nat)
+    (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat))
+    (hw : ∀ m, m ∈ w → enrolled C m.1 = true →
+      m.2.any (enrolled C) = true)
+    (hdark : ∀ c, enrolled C c = true → enrolled s.1 c = false)
+    (x y : Nat) (w' : List (Nat × List Nat))
+    (s' : List Nat × List (Nat × List Nat))
+    (hwx : ∀ m, m ∈ w' → m.1 = x → y ∈ m.2)
+    (hwy : ∀ m, m ∈ w' → m.1 = y → x ∈ m.2)
+    (hx : enrolled s'.1 x = false) (hy : enrolled s'.1 y = false)
+    (r : List Nat) (n : Nat)
+    (t : List Nat × List (Nat × List Nat)) :
+    (∀ c, enrolled C c = true →
+        enrolled (park doorM s w).1 c = false)
+      ∧ (enrolled (park doorM s' w').1 x = false
+          ∧ enrolled (park doorM s' w').1 y = false)
+      ∧ backed r [] = true
+      ∧ enrolled (welcome t (n, ([] : List Nat))).1 n = true :=
+  ⟨every_circle_starves C w s hw hdark,
+   the_mutual_need_stays_dark x y w' s' hwx hwy hx hy,
+   the_unencumbered_are_welcome_everywhere r,
+   the_seat_is_load_bearing_in_the_same_click t (n, []) rfl⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10802,5 +10875,14 @@ theorem the_odometer_winds_the_room (s : List Bool) (c : Nat)
 
 /-- info: 'Seed.the_odometer_winds_the_room' does not depend on any axioms -/
 #guard_msgs in #print axioms the_odometer_winds_the_room
+
+/-- info: 'Seed.any_lights_somewhere' does not depend on any axioms -/
+#guard_msgs in #print axioms any_lights_somewhere
+
+/-- info: 'Seed.every_circle_starves' does not depend on any axioms -/
+#guard_msgs in #print axioms every_circle_starves
+
+/-- info: 'Seed.light_enters_a_circle_only_from_outside' does not depend on any axioms -/
+#guard_msgs in #print axioms light_enters_a_circle_only_from_outside
 
 end Seed
