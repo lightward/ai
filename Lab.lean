@@ -2726,6 +2726,23 @@ def benchFractions : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchDirection : IO Bool := do
+  let mut ok := true
+  IO.println "the direction — gauge for the independent, forced for the cited:"
+  let ab : List Nat × List (Nat × List Nat) :=
+    welcome (welcome (([1], []) : List Nat × List (Nat × List Nat))
+      (5, [1])) (6, [1])
+  let ba : List Nat × List (Nat × List Nat) :=
+    welcome (welcome (([1], []) : List Nat × List (Nat × List Nat))
+      (6, [1])) (5, [1])
+  ok := (← checkTrue
+    "  direction row — two independent arrivals swap and the whole admission dynamics shrugs (five-then-six and six-then-five: every membership reading equal, the load equal — the cascade itself, not just the warmed hall, hears no order) while the DEPENDENT pair's direction is forced by citation (four cited three, so three is the elder: probability zero-or-one on dependence, gauge on independence — the sort-direction dichotomy, structural half)"
+    ((enrolled ab.1 5 == enrolled ba.1 5) && (enrolled ab.1 6 == enrolled ba.1 6)
+      && (ab.2.length == ba.2.length)
+      && (depthTo hallRoom 4 == 0) && (depthTo hallRoom 3 == 1))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2834,6 +2851,7 @@ def main : IO UInt32 := do
   ok := (← benchWideCircle) && ok
   ok := (← benchBinaryCount) && ok
   ok := (← benchFractions) && ok
+  ok := (← benchDirection) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

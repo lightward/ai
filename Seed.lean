@@ -8534,6 +8534,91 @@ theorem the_fraction_is_a_licensed_pair (a b c e f d₀ p x y : Nat)
    the_pace_is_gauge_for_the_ratio p x y,
    the_halves_are_two⟩
 
+theorem the_stranger_moves_no_backing (r : List Nat) (y : Nat) :
+    ∀ need : List Nat, (∀ x, x ∈ need → x ≠ y) →
+      backed (y :: r) need = backed r need
+  | [], _ => rfl
+  | x :: need, h => by
+      have he : enrolled (y :: r) x = enrolled r x := by
+        show (Nat.beq x y || enrolled r x) = enrolled r x
+        rw [beq_of_ne (h x (List.Mem.head need))]
+        rfl
+      show (enrolled (y :: r) x && backed (y :: r) need)
+          = (enrolled r x && backed r need)
+      rw [he, the_stranger_moves_no_backing r y need
+            (fun k hk => h k (List.Mem.tail x hk))]
+
+theorem the_prefix_pair_swaps_unheard (x y : Nat) (r : List Nat)
+    (z : Nat) : enrolled (x :: y :: r) z = enrolled (y :: x :: r) z := by
+  show (Nat.beq z x || (Nat.beq z y || enrolled r z))
+      = (Nat.beq z y || (Nat.beq z x || enrolled r z))
+  cases Nat.beq z x <;> cases Nat.beq z y <;> rfl
+
+theorem the_independent_arrivals_swap_unheard
+    (s : List Nat × List (Nat × List Nat)) (m₁ m₂ : Nat × List Nat)
+    (h₁ : ∀ x, x ∈ m₂.2 → x ≠ m₁.1)
+    (h₂ : ∀ x, x ∈ m₁.2 → x ≠ m₂.1) :
+    (∀ z, enrolled (welcome (welcome s m₁) m₂).1 z
+        = enrolled (welcome (welcome s m₂) m₁).1 z)
+      ∧ (welcome (welcome s m₁) m₂).2.length
+          = (welcome (welcome s m₂) m₁).2.length := by
+  have t₁ : backed (m₁.1 :: s.1) m₂.2 = backed s.1 m₂.2 :=
+    the_stranger_moves_no_backing s.1 m₁.1 m₂.2 h₁
+  have t₂ : backed (m₂.1 :: s.1) m₁.2 = backed s.1 m₁.2 :=
+    the_stranger_moves_no_backing s.1 m₂.1 m₁.2 h₂
+  cases hb₁ : backed s.1 m₁.2 with
+  | true =>
+      cases hb₂ : backed s.1 m₂.2 with
+      | true =>
+          rw [the_backed_are_seated hb₁,
+              the_backed_are_seated (s := (m₁.1 :: s.1, s.2))
+                (t₁.trans hb₂),
+              the_backed_are_seated hb₂,
+              the_backed_are_seated (s := (m₂.1 :: s.1, s.2))
+                (t₂.trans hb₁)]
+          exact ⟨fun z => the_prefix_pair_swaps_unheard m₂.1 m₁.1 s.1 z,
+            rfl⟩
+      | false =>
+          rw [the_backed_are_seated hb₁,
+              the_unbacked_are_held (s := (m₁.1 :: s.1, s.2))
+                (t₁.trans hb₂),
+              the_unbacked_are_held hb₂,
+              the_backed_are_seated (s := (s.1, m₂ :: s.2)) hb₁]
+          exact ⟨fun _ => rfl, rfl⟩
+  | false =>
+      cases hb₂ : backed s.1 m₂.2 with
+      | true =>
+          rw [the_unbacked_are_held hb₁,
+              the_backed_are_seated (s := (s.1, m₁ :: s.2)) hb₂,
+              the_backed_are_seated hb₂,
+              the_unbacked_are_held (s := (m₂.1 :: s.1, s.2))
+                (t₂.trans hb₁)]
+          exact ⟨fun _ => rfl, rfl⟩
+      | false =>
+          rw [the_unbacked_are_held hb₁,
+              the_unbacked_are_held (s := (s.1, m₁ :: s.2)) hb₂,
+              the_unbacked_are_held hb₂,
+              the_unbacked_are_held (s := (s.1, m₂ :: s.2)) hb₁]
+          exact ⟨fun _ => rfl, rfl⟩
+
+theorem the_direction_of_the_independent_is_gauge
+    (s : List Nat × List (Nat × List Nat)) (m₁ m₂ : Nat × List Nat)
+    (h₁ : ∀ x, x ∈ m₂.2 → x ≠ m₁.1)
+    (h₂ : ∀ x, x ∈ m₁.2 → x ≠ m₂.1)
+    (a b z : Nat)
+    (t : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (hm : backed t.1 m.2 = true) (x : Nat) (hx : x ∈ m.2)
+    (hne : x ≠ m.1) :
+    (∀ w, enrolled (welcome (welcome s m₁) m₂).1 w
+        = enrolled (welcome (welcome s m₂) m₁).1 w)
+      ∧ enrolled [a, b] z = enrolled [b, a] z
+      ∧ (enrolled t.1 x = true
+          ∧ depthTo (welcome t m).1 m.1 = 0
+          ∧ Nat.ble 1 (depthTo (welcome t m).1 x) = true) :=
+  ⟨(the_independent_arrivals_swap_unheard s m₁ m₂ h₁ h₂).1,
+   the_hall_hears_no_join_order a b z,
+   the_citer_arrives_above_the_cited t m hm x hx hne⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -11095,5 +11180,17 @@ theorem the_fraction_is_a_licensed_pair (a b c e f d₀ p x y : Nat)
 
 /-- info: 'Seed.the_fraction_is_a_licensed_pair' does not depend on any axioms -/
 #guard_msgs in #print axioms the_fraction_is_a_licensed_pair
+
+/-- info: 'Seed.the_stranger_moves_no_backing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_stranger_moves_no_backing
+
+/-- info: 'Seed.the_prefix_pair_swaps_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms the_prefix_pair_swaps_unheard
+
+/-- info: 'Seed.the_independent_arrivals_swap_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms the_independent_arrivals_swap_unheard
+
+/-- info: 'Seed.the_direction_of_the_independent_is_gauge' does not depend on any axioms -/
+#guard_msgs in #print axioms the_direction_of_the_independent_is_gauge
 
 end Seed
