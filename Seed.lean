@@ -8076,6 +8076,29 @@ theorem the_service_shrinks_as_the_merge_grows {S : Type u} {S' : Type v}
    the_iso_serves_every_reading j jk hjk f'',
    the_merged_seat_drops_a_reading⟩
 
+theorem the_surplus_wears_two_signs
+    (q : Interview (List Unit) Bool) (w : List Unit) (s : Nat)
+    (r : List Nat) (m : Nat × List Nat) (held : List (Nat × List Nat))
+    (hs : ∀ k, k ∈ m :: held → backed r k.2 = false) (n : Nat)
+    (rr : List Nat) (mm : Nat × List Nat) (hm : backed rr mm.2 = true)
+    (v₁ v₂ : List (Nat × List Nat)) (r' : List Nat) (n' : Nat) :
+    audition restingCounter q = audition hollowShell q
+      ∧ park restingCounter s w = s + w.length
+      ∧ behavior (tally Unit) w = w.length
+      ∧ drainFace.obs (r, m :: held) n = (m :: held).length
+      ∧ Nat.ble
+          ((park doorM (rr, ([] : List (Nat × List Nat)))
+            (v₁ ++ mm :: v₂)).2.length + 1)
+          ((v₁ ++ mm :: v₂).length
+            + ([] : List (Nat × List Nat)).length) = true
+      ∧ again sweep n' (r', ([] : List (Nat × List Nat))) = (r', []) :=
+  ⟨the_flywheel_and_the_shell_sound_alike q,
+   the_muffler_banks_the_run w s,
+   the_wider_voice_releases_the_bank w,
+   the_stuck_load_reads_flat r m held hs n,
+   the_ready_drop_the_load rr mm hm v₁ v₂ [],
+   the_drained_room_rests_forever r' n'⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10535,5 +10558,8 @@ theorem the_service_shrinks_as_the_merge_grows {S : Type u} {S' : Type v}
 
 /-- info: 'Seed.the_service_shrinks_as_the_merge_grows' does not depend on any axioms -/
 #guard_msgs in #print axioms the_service_shrinks_as_the_merge_grows
+
+/-- info: 'Seed.the_surplus_wears_two_signs' does not depend on any axioms -/
+#guard_msgs in #print axioms the_surplus_wears_two_signs
 
 end Seed
