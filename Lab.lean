@@ -2786,6 +2786,18 @@ def benchCompare : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchOrderCensus : IO Bool := do
+  let mut ok := true
+  IO.println "the census of orders — the factorial, counter-signed:"
+  ok := (← checkTrue
+    "  order row — the orderings count to the factorial (three marks order six ways, four marks twenty-four: the community's own numbers reached by insertion-and-join, counter-signed across the sky) and every ordering keeps the length (each of the six carries all three marks)"
+    (((perms [1, 2, 3]).length == 6)
+      && ((perms [1, 2, 3, 4]).length == 24)
+      && ((inserts (9 : Nat) [1, 2]).length == 3)
+      && ((perms [1, 2, 3]).all (fun p => p.length == 3)))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2898,6 +2910,7 @@ def main : IO UInt32 := do
   ok := (← benchCompound) && ok
   ok := (← benchRetrace) && ok
   ok := (← benchCompare) && ok
+  ok := (← benchOrderCensus) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

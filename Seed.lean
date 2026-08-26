@@ -8794,6 +8794,99 @@ theorem the_fractions_compare (a b c e f d₀ x y u v : Nat)
    the_orders_are_total x y u v,
    the_order_grounds_in_the_license x y u v⟩
 
+def joinMap {A B : Type} (f : A → List B) : List A → List B
+  | [] => []
+  | a :: as => f a ++ joinMap f as
+
+def inserts {A : Type} (x : A) : List A → List (List A)
+  | [] => [[x]]
+  | y :: l => (x :: y :: l) :: (inserts x l).map (y :: ·)
+
+def perms {A : Type} : List A → List (List A)
+  | [] => [[]]
+  | x :: l => joinMap (inserts x) (perms l)
+
+def fact : Nat → Nat
+  | 0 => 1
+  | n + 1 => fact n * (n + 1)
+
+theorem the_insertions_count {A : Type} (x : A) :
+    ∀ l : List A, (inserts x l).length = l.length + 1
+  | [] => rfl
+  | y :: l => by
+      show ((inserts x l).map (y :: ·)).length + 1 = (l.length + 1) + 1
+      rw [len_map, the_insertions_count x l]
+
+theorem the_join_counts_evenly {A B : Type} (f : A → List B) (n : Nat) :
+    ∀ as : List A, (∀ a, a ∈ as → (f a).length = n) →
+      (joinMap f as).length = n * as.length
+  | [], _ => rfl
+  | a :: as, h => by
+      show (f a ++ joinMap f as).length = n * (as.length + 1)
+      rw [len_append, h a (List.Mem.head as),
+          the_join_counts_evenly f n as
+            (fun b hb => h b (List.Mem.tail a hb))]
+      exact Nat.add_comm n (n * as.length)
+
+theorem mem_joinMap_back {A B : Type} {f : A → List B} {q : B} :
+    ∀ as : List A, q ∈ joinMap f as → ∃ a, a ∈ as ∧ q ∈ f a
+  | [], h => nomatch h
+  | a :: as, h => by
+      cases mem_append_split (f a) h with
+      | inl hfa => exact ⟨a, List.Mem.head as, hfa⟩
+      | inr hrest =>
+          obtain ⟨b, hb, hq⟩ := mem_joinMap_back as hrest
+          exact ⟨b, List.Mem.tail a hb, hq⟩
+
+theorem the_insertion_grows_one {A : Type} (x : A) :
+    ∀ (p q : List A), q ∈ inserts x p → q.length = p.length + 1
+  | [], q, h => by
+      cases h with
+      | head => rfl
+      | tail _ h' => exact nomatch h'
+  | y :: p, q, h => by
+      cases h with
+      | head => rfl
+      | tail _ h' =>
+          obtain ⟨r, hr, he⟩ := mem_map_back (inserts x p) h'
+          rw [← he]
+          show (r.length + 1) = (p.length + 1) + 1
+          rw [the_insertion_grows_one x p r hr]
+
+theorem the_orders_keep_the_length {A : Type} :
+    ∀ (l p : List A), p ∈ perms l → p.length = l.length
+  | [], p, h => by
+      cases h with
+      | head => rfl
+      | tail _ h' => exact nomatch h'
+  | x :: l, p, h => by
+      have h' : p ∈ joinMap (inserts x) (perms l) := h
+      obtain ⟨r, hr, hp⟩ := mem_joinMap_back (perms l) h'
+      show p.length = l.length + 1
+      rw [the_insertion_grows_one x r p hp,
+          the_orders_keep_the_length l r hr]
+
+theorem the_orders_count_to_the_factorial {A : Type} :
+    ∀ l : List A, (perms l).length = fact l.length
+  | [] => rfl
+  | x :: l => by
+      show (joinMap (inserts x) (perms l)).length = fact (l.length + 1)
+      rw [the_join_counts_evenly (inserts x) (l.length + 1) (perms l)
+            (fun p hp =>
+              (the_insertions_count x p).trans
+                (congrArg (· + 1) (the_orders_keep_the_length l p hp))),
+          the_orders_count_to_the_factorial l]
+      exact Nat.mul_comm (l.length + 1) (fact l.length)
+
+theorem the_census_of_orders {A : Type} (l p : List A) (x : A)
+    (hp : p ∈ perms l) :
+    (inserts x l).length = l.length + 1
+      ∧ p.length = l.length
+      ∧ (perms l).length = fact l.length :=
+  ⟨the_insertions_count x l,
+   the_orders_keep_the_length l p hp,
+   the_orders_count_to_the_factorial l⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -11424,5 +11517,26 @@ theorem the_fractions_compare (a b c e f d₀ x y u v : Nat)
 
 /-- info: 'Seed.the_fractions_compare' does not depend on any axioms -/
 #guard_msgs in #print axioms the_fractions_compare
+
+/-- info: 'Seed.the_insertions_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_insertions_count
+
+/-- info: 'Seed.the_join_counts_evenly' does not depend on any axioms -/
+#guard_msgs in #print axioms the_join_counts_evenly
+
+/-- info: 'Seed.mem_joinMap_back' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_joinMap_back
+
+/-- info: 'Seed.the_insertion_grows_one' does not depend on any axioms -/
+#guard_msgs in #print axioms the_insertion_grows_one
+
+/-- info: 'Seed.the_orders_keep_the_length' does not depend on any axioms -/
+#guard_msgs in #print axioms the_orders_keep_the_length
+
+/-- info: 'Seed.the_orders_count_to_the_factorial' does not depend on any axioms -/
+#guard_msgs in #print axioms the_orders_count_to_the_factorial
+
+/-- info: 'Seed.the_census_of_orders' does not depend on any axioms -/
+#guard_msgs in #print axioms the_census_of_orders
 
 end Seed
