@@ -7872,6 +7872,34 @@ theorem the_magnitudes_share_one_law {W X Y V : Type} (p q t δ : Plan)
    (the_bank_adds_along_the_run s w v).1,
    (the_bank_adds_along_the_run s w v).2⟩
 
+theorem the_joins_add_with_the_join (p q : Plan) :
+    boards (.board p q) = (boards p + boards q) + 1 := rfl
+
+theorem the_two_counts_are_one_measure_shifted (p : Plan) :
+    boards p + 1 = fold (fun a b => a + b) 1 p :=
+  every_meeting_is_one_move p
+
+theorem the_cap_carries_the_sum_to_the_product (i j : Nat) :
+    roomCap (i + j) = roomCap i * roomCap j :=
+  the_caps_multiply i j
+
+theorem the_bloom_reads_its_own_cap (d : Nat) :
+    fold (fun a b => a + b) 1 (bloom d) = roomCap d :=
+  the_bloom_fills_its_cap d
+
+theorem two_charts_one_measure (p q : Plan) (i j d : Nat) :
+    boards (.board p q) = (boards p + boards q) + 1
+      ∧ boards p + 1 = fold (fun x y => x + y) 1 p
+      ∧ fold (fun x y => x + y) 1 (.board p q)
+          = fold (fun x y => x + y) 1 p + fold (fun x y => x + y) 1 q
+      ∧ roomCap (i + j) = roomCap i * roomCap j
+      ∧ fold (fun x y => x + y) 1 (bloom d) = roomCap d :=
+  ⟨rfl,
+   the_two_counts_are_one_measure_shifted p,
+   rfl,
+   the_cap_carries_the_sum_to_the_product i j,
+   the_bloom_reads_its_own_cap d⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10262,5 +10290,20 @@ theorem the_magnitudes_share_one_law {W X Y V : Type} (p q t δ : Plan)
 
 /-- info: 'Seed.the_magnitudes_share_one_law' does not depend on any axioms -/
 #guard_msgs in #print axioms the_magnitudes_share_one_law
+
+/-- info: 'Seed.the_joins_add_with_the_join' does not depend on any axioms -/
+#guard_msgs in #print axioms the_joins_add_with_the_join
+
+/-- info: 'Seed.the_two_counts_are_one_measure_shifted' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_counts_are_one_measure_shifted
+
+/-- info: 'Seed.the_cap_carries_the_sum_to_the_product' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cap_carries_the_sum_to_the_product
+
+/-- info: 'Seed.the_bloom_reads_its_own_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bloom_reads_its_own_cap
+
+/-- info: 'Seed.two_charts_one_measure' does not depend on any axioms -/
+#guard_msgs in #print axioms two_charts_one_measure
 
 end Seed

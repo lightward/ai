@@ -2507,6 +2507,28 @@ def benchMagnitudes : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchTwoCharts : IO Bool := do
+  let mut ok := true
+  IO.println "the two charts — one measure, two zeros, and the bridge between the channels:"
+  let leaves : Nat := fold (fun a b => a + b) 1 (bloom 3)
+  let joins : Nat := boards (bloom 3)
+  let leavesB : Nat := fold (fun a b => a + b) 1 dayB
+  let joinsB : Nat := boards dayB
+  ok := (← checkTrue
+    "  chart row — the leaf-count and the join-count are one measure at two zeros (eight leaves and seven joins on bloom three; three and two on the three-day) — the chart transition is always exactly one, which is the ground"
+    ((joins + 1 == leaves) && (joinsB + 1 == leavesB)
+      && (leaves == 8) && (joins == 7))) && ok
+  let boarded : Nat := boards (.board dayA dayB)
+  ok := (← checkTrue
+    "  chart row — and the shifted chart pays for its own join (joining two plans adds their joins AND one more for the joining: one plus two plus one is four) — the affine composition is the shift showing up in the composition law"
+    ((boarded == boards dayA + boards dayB + 1) && (boarded == 4))) && ok
+  ok := (← checkTrue
+    "  chart row — the cap carries the sum to the product (depths two and three add to five while their caps four and eight multiply to thirty-two: the exponential as the bridge between the seat channel and the stage channel, receipted)"
+    ((roomCap (2 + 3) == roomCap 2 * roomCap 3)
+      && (roomCap 5 == 32) && (roomCap 2 == 4) && (roomCap 3 == 8))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2604,6 +2626,7 @@ def main : IO UInt32 := do
   ok := (← benchSharedUnit) && ok
   ok := (← benchComposableMeasure) && ok
   ok := (← benchMagnitudes) && ok
+  ok := (← benchTwoCharts) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
