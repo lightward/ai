@@ -7831,6 +7831,47 @@ theorem the_measure_composes_by_the_semiring {W : Type} (p q t δ : Plan)
    the_pace_conserves_the_ratio paceA a b,
    the_pace_conserves_the_ratio paceB a b⟩
 
+theorem the_patience_is_the_boards_reading {W X Y : Type} (n m : Nat)
+    (g : strokes W X n) (h : X → strokes W Y m) (α : Nat → W) :
+    doorsOpened
+        (handOff (strokesReception n g)
+          (fun x => strokesReception m (h x))) α
+      = fold (fun a b => a + b) 1 (Plan.board (comb n) (comb m)) :=
+  the_handoff_is_the_board_at_the_ledger n m g h α
+
+theorem the_patience_multiplies_at_the_revision {W X : Type} (t δ : Plan)
+    (n : Nat) (hn : fold (fun a b => a + b) 1 (graft t δ) = n + 1)
+    (g : strokes W X n) (α : Nat → W) :
+    doorsOpened (strokesReception n g) α
+      = fold (fun a b => a + b) 1 t * fold (fun a b => a + b) 1 δ :=
+  the_revision_multiplies_the_patience t δ n hn g α
+
+theorem the_magnitudes_share_one_law {W X Y V : Type} (p q t δ : Plan)
+    (n m : Nat) (g : strokes W X n) (h : X → strokes W Y m)
+    (α : Nat → W) (hn : fold (fun a b => a + b) 1 (graft t δ) = n + 1)
+    (d : build V (.board p q)) (s : Nat) (w v : List Unit) :
+    (fold (fun x y => x + y) 1 (.board p q)
+        = fold (fun x y => x + y) 1 p + fold (fun x y => x + y) 1 q
+      ∧ fold (fun x y => x + y) 1 (graft t δ)
+          = fold (fun x y => x + y) 1 t * fold (fun x y => x + y) 1 δ)
+      ∧ (doorsOpened
+            (handOff (strokesReception n g)
+              (fun x => strokesReception m (h x))) α
+            = fold (fun x y => x + y) 1 (Plan.board (comb n) (comb m))
+          ∧ doorsOpened (strokesReception n g) α
+              = fold (fun x y => x + y) 1 t
+                * fold (fun x y => x + y) 1 δ)
+      ∧ (pour (.board p q) d).length
+          = fold (fun x y => x + y) 1 p + fold (fun x y => x + y) 1 q
+      ∧ park restingCounter s w = s + w.length
+      ∧ park restingCounter (s + w.length) v = (s + w.length) + v.length :=
+  ⟨⟨rfl, the_measure_multiplies_at_the_graft t δ⟩,
+   ⟨the_patience_is_the_boards_reading n m g h α,
+    the_patience_multiplies_at_the_revision t δ n hn g α⟩,
+   the_manifest_counts_the_compound p q d,
+   (the_bank_adds_along_the_run s w v).1,
+   (the_bank_adds_along_the_run s w v).2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10212,5 +10253,14 @@ theorem the_measure_composes_by_the_semiring {W : Type} (p q t δ : Plan)
 
 /-- info: 'Seed.the_measure_composes_by_the_semiring' does not depend on any axioms -/
 #guard_msgs in #print axioms the_measure_composes_by_the_semiring
+
+/-- info: 'Seed.the_patience_is_the_boards_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_patience_is_the_boards_reading
+
+/-- info: 'Seed.the_patience_multiplies_at_the_revision' does not depend on any axioms -/
+#guard_msgs in #print axioms the_patience_multiplies_at_the_revision
+
+/-- info: 'Seed.the_magnitudes_share_one_law' does not depend on any axioms -/
+#guard_msgs in #print axioms the_magnitudes_share_one_law
 
 end Seed

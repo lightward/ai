@@ -2480,6 +2480,33 @@ def benchComposableMeasure : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchMagnitudes : IO Bool := do
+  let mut ok := true
+  IO.println "the magnitudes — four numbers, one composition law:"
+  let readBoard : Nat := fold (fun a b => a + b) 1 (.board dayA dayB)
+  let readGraft : Nat := fold (fun a b => a + b) 1 (graft dayA dayB)
+  let patienceBoard : Nat :=
+    doorsOpened
+      (handOff (strokesReception 1 doormanTower)
+        (fun x => strokesReception 0 (fun v => x + v)))
+      (fun n => n)
+  let boardOfCombs : Nat :=
+    fold (fun a b => a + b) 1 (Plan.board (comb 1) (comb 0))
+  ok := (← checkTrue
+    "  magnitude row — the patience obeys the reading's own law (a handoff's door-ledger reads the board's census exactly: three and three) — so the composition law is a fact about the CHANNELS, not about the reading"
+    ((patienceBoard == boardOfCombs) && (patienceBoard == 3)
+      && (readBoard == 5) && (readGraft == 6))) && ok
+  let manifestLen : Nat := (pour lineagePlan electronLineage).length
+  let readLineage : Nat := fold (fun a b => a + b) 1 lineagePlan
+  let bank1 : Nat := park restingCounter (0 : Nat) [(), ()]
+  let bank2 : Nat := park restingCounter (2 : Nat) [(), (), ()]
+  ok := (← checkTrue
+    "  magnitude row — and the manifest and the bank keep it too (the carrier's guest-count IS its plan's reading; a run banked in two legs sums) — four magnitudes, one law: add at the join, multiply at the revision"
+    ((manifestLen == readLineage) && (manifestLen == 2)
+      && (bank1 == 2) && (bank2 == 5))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2576,6 +2603,7 @@ def main : IO UInt32 := do
   ok := (← benchVestibule) && ok
   ok := (← benchSharedUnit) && ok
   ok := (← benchComposableMeasure) && ok
+  ok := (← benchMagnitudes) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
