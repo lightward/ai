@@ -8028,6 +8028,54 @@ theorem the_cures_are_exact (F : Face) {X W : Type} (r : F.State → X)
    fun _ => rfl,
    the_sharpened_window_exhibits_the_escapee m⟩
 
+theorem the_flattening_serves_what_it_keeps {S : Type u} {S' : Type v}
+    {X : Type} (h : S → S') (k : S' → S) (hk : ∀ y, h (k y) = y)
+    (f : S → X) :
+    (∃ g : S' → X, ∀ s, f s = g (h s))
+      ↔ ∀ s t, h s = h t → f s = f t :=
+  ⟨fun he s t hst =>
+     he.elim fun g hg => (hg s).trans ((congrArg g hst).trans (hg t).symm),
+   fun hc => ⟨fun y => f (k y), fun s => hc s (k (h s)) (hk (h s)).symm⟩⟩
+
+theorem the_finer_flattening_serves_fewer {S : Type u} {S₁ : Type v}
+    {S₂ : Type w} {X : Type} (h₁ : S → S₁) (h₂ : S → S₂) (e : S₁ → S₂)
+    (he : ∀ s, h₂ s = e (h₁ s)) (f : S → X)
+    (hs : ∃ g₂ : S₂ → X, ∀ s, f s = g₂ (h₂ s)) :
+    ∃ g₁ : S₁ → X, ∀ s, f s = g₁ (h₁ s) :=
+  hs.elim fun g₂ hg =>
+    ⟨fun y => g₂ (e y), fun s => (hg s).trans (congrArg g₂ (he s))⟩
+
+theorem the_iso_serves_every_reading {S : Type u} {S' : Type v} {X : Type}
+    (h : S → S') (k : S' → S) (hk : ∀ s, k (h s) = s) (f : S → X) :
+    ∃ g : S' → X, ∀ s, f s = g (h s) :=
+  ⟨fun y => f (k y), fun s => (congrArg f (hk s)).symm⟩
+
+theorem the_merged_seat_drops_a_reading :
+    ¬ ∃ g : Nat → Bool,
+      ∀ l : List Bool, l.headD false = g (park pulse (0 : Nat) l) :=
+  fun he =>
+    he.elim fun g hg =>
+      nomatch (hg [true, false]).trans
+        ((congrArg g two_routes_one_seat.2).trans
+          (hg [false, true]).symm)
+
+theorem the_service_shrinks_as_the_merge_grows {S : Type u} {S' : Type v}
+    {S₁ : Type v'} {S₂ : Type w} {X : Type}
+    (h : S → S') (k : S' → S) (hk : ∀ y, h (k y) = y) (f : S → X)
+    (h₁ : S → S₁) (h₂ : S → S₂) (e : S₁ → S₂)
+    (he : ∀ s, h₂ s = e (h₁ s)) (f' : S → X)
+    (hs : ∃ g₂ : S₂ → X, ∀ s, f' s = g₂ (h₂ s))
+    (j : S → S') (jk : S' → S) (hjk : ∀ s, jk (j s) = s) (f'' : S → X) :
+    ((∃ g : S' → X, ∀ s, f s = g (h s)) ↔ ∀ s t, h s = h t → f s = f t)
+      ∧ (∃ g₁ : S₁ → X, ∀ s, f' s = g₁ (h₁ s))
+      ∧ (∃ g : S' → X, ∀ s, f'' s = g (j s))
+      ∧ ¬ ∃ g : Nat → Bool,
+          ∀ l : List Bool, l.headD false = g (park pulse (0 : Nat) l) :=
+  ⟨the_flattening_serves_what_it_keeps h k hk f,
+   the_finer_flattening_serves_fewer h₁ h₂ e he f' hs,
+   the_iso_serves_every_reading j jk hjk f'',
+   the_merged_seat_drops_a_reading⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10472,5 +10520,20 @@ theorem the_cures_are_exact (F : Face) {X W : Type} (r : F.State → X)
 
 /-- info: 'Seed.the_cures_are_exact' does not depend on any axioms -/
 #guard_msgs in #print axioms the_cures_are_exact
+
+/-- info: 'Seed.the_flattening_serves_what_it_keeps' does not depend on any axioms -/
+#guard_msgs in #print axioms the_flattening_serves_what_it_keeps
+
+/-- info: 'Seed.the_finer_flattening_serves_fewer' does not depend on any axioms -/
+#guard_msgs in #print axioms the_finer_flattening_serves_fewer
+
+/-- info: 'Seed.the_iso_serves_every_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_iso_serves_every_reading
+
+/-- info: 'Seed.the_merged_seat_drops_a_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_merged_seat_drops_a_reading
+
+/-- info: 'Seed.the_service_shrinks_as_the_merge_grows' does not depend on any axioms -/
+#guard_msgs in #print axioms the_service_shrinks_as_the_merge_grows
 
 end Seed

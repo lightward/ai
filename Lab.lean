@@ -2608,6 +2608,26 @@ def benchExactCures : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchServiceLadder : IO Bool := do
+  let mut ok := true
+  IO.println "the service ladder — the widest flattening serves the most:"
+  let recA : List Bool := park (ledger Bool) ([] : List Bool) [true, false]
+  let recB : List Bool := park (ledger Bool) ([] : List Bool) [false, true]
+  let seatA : Nat := park pulse (0 : Nat) [true, false]
+  let seatB : Nat := park pulse (0 : Nat) [false, true]
+  ok := (← checkTrue
+    "  service row — the record serves the reading the parked seat provably cannot (the ledger's head reads true against false while the pulse parks both routes on one seat: the wide flattening keeps the order-reading in service, the narrow one drops it forever)"
+    ((recA.headD false != recB.headD false)
+      && (seatA == seatB))) && ok
+  let long : List Bool := [true, false, true]
+  let short : List Bool := [true]
+  ok := (← checkTrue
+    "  service row — the finer flattening serves fewer, live (parity is served through length — odd both ways — but length is not served through parity: two lists agreeing at the parity-flattening and parting at the length-reading, the unserved reading witnessed)"
+    ((oddNat long.length == oddNat short.length)
+      && (long.length != short.length))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2709,6 +2729,7 @@ def main : IO UInt32 := do
   ok := (← benchRulerAndWheel) && ok
   ok := (← benchSemiring) && ok
   ok := (← benchExactCures) && ok
+  ok := (← benchServiceLadder) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
