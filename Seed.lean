@@ -7620,6 +7620,40 @@ theorem the_resolution_ladder_is_the_gauge_ladder {S : Type u}
    the_guest_flip_is_gauge_at_the_host,
    the_guest_flip_is_heard_one_widening_up⟩
 
+theorem the_type_is_a_reading_of_the_plan (W : Type) (p : Plan) :
+    build W p = fold door W p :=
+  build_is_a_reading W p
+
+theorem every_built_type_is_named_below_the_horizon (W : Type) (n : Nat)
+    (p : Plan)
+    (hp : Nat.ble (fold (fun a b => a + b) 1 p) (n + 1) = true) :
+    p ∈ allPlans n ∧ build W p = fold door W p :=
+  ⟨the_horizon_holds_every_reading n p hp, build_is_a_reading W p⟩
+
+theorem a_built_type_grounds_the_next_tower (W : Type) (base q : Plan) :
+    build W (graft base q) = build (build W base) q :=
+  a_stage_may_ground_a_stage W base q
+
+theorem the_plan_rides_as_data {W : Type} (p : Plan) (s : build W p) :
+    met (label W p s) = p ∧ fold Plan.board Plan.ground p = p :=
+  ⟨the_meeting_reads_the_label W p s, the_self_reading_is_the_identity p⟩
+
+theorem the_ground_is_the_only_dark_type (W : Type) (n : Nat) (p : Plan)
+    (hp : Nat.ble (fold (fun a b => a + b) 1 p) (n + 1) = true)
+    (base q : Plan) (s : build W p) {X : Type} (g : W → X)
+    (w w' : W) (hw : w ≠ w') :
+    (p ∈ allPlans n ∧ build W p = fold door W p)
+      ∧ build W (graft base q) = build (build W base) q
+      ∧ (met (label W p s) = p ∧ fold Plan.board Plan.ground p = p)
+      ∧ build W Plan.ground = W
+      ∧ (g (face (atTheDoor w w')) = g (face (atTheDoor w w))
+          ∧ atTheDoor w w' ≠ atTheDoor w w) :=
+  ⟨every_built_type_is_named_below_the_horizon W n p hp,
+   a_built_type_grounds_the_next_tower W base q,
+   the_plan_rides_as_data p s,
+   rfl,
+   ⟨rfl, fun he => hw (congrArg met he).symm⟩⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -9926,5 +9960,20 @@ theorem the_resolution_ladder_is_the_gauge_ladder {S : Type u}
 
 /-- info: 'Seed.the_resolution_ladder_is_the_gauge_ladder' does not depend on any axioms -/
 #guard_msgs in #print axioms the_resolution_ladder_is_the_gauge_ladder
+
+/-- info: 'Seed.the_type_is_a_reading_of_the_plan' does not depend on any axioms -/
+#guard_msgs in #print axioms the_type_is_a_reading_of_the_plan
+
+/-- info: 'Seed.every_built_type_is_named_below_the_horizon' does not depend on any axioms -/
+#guard_msgs in #print axioms every_built_type_is_named_below_the_horizon
+
+/-- info: 'Seed.a_built_type_grounds_the_next_tower' does not depend on any axioms -/
+#guard_msgs in #print axioms a_built_type_grounds_the_next_tower
+
+/-- info: 'Seed.the_plan_rides_as_data' does not depend on any axioms -/
+#guard_msgs in #print axioms the_plan_rides_as_data
+
+/-- info: 'Seed.the_ground_is_the_only_dark_type' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ground_is_the_only_dark_type
 
 end Seed

@@ -2337,6 +2337,27 @@ def benchGaugeLadder : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchDarkType : IO Bool := do
+  let mut ok := true
+  IO.println "the dark type — the ground is the only one, and every ground after it is built:"
+  let room3 : List Plan := allPlans 3
+  let named : Bool := room3.any (fun p => planBeq p toyPlan)
+  ok := (← checkTrue
+    "  dark row — every built type is named below the horizon (the toy plan's type is one of twenty-six in room three; the enumeration of type-shapes is exact — nothing missed, nothing doubled)"
+    (named && (room3.length == 26))) && ok
+  let quoted : Plan := met (label Nat toyPlan toyImport)
+  let evaled : Plan := fold Plan.board Plan.ground toyPlan
+  ok := (← checkTrue
+    "  dark row — the plan rides as data and reads back as itself (the carrier carries its own type-shape as an unread guest; reading the shape as a shape hands it back: quote and eval, both directions)"
+    (planBeq quoted toyPlan && planBeq evaled toyPlan)) && ok
+  let stacked : Nat :=
+    (pour (graft toyPlan revision) (ride toyImport revision)).length
+  ok := (← checkTrue
+    "  dark row — a built type grounds the next tower (the toy plan's own carrier serves as the ground of a revision, six guests deep: every ground after the first is one you built, so the unenumerable part is exactly one type)"
+    (stacked == 6)) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2428,6 +2449,7 @@ def main : IO UInt32 := do
   ok := (← benchUniformShift) && ok
   ok := (← benchTwoGauges) && ok
   ok := (← benchGaugeLadder) && ok
+  ok := (← benchDarkType) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
