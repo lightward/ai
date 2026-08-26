@@ -9078,6 +9078,206 @@ theorem the_factorial_counts_distinct_orders {A : Type} (l p : List A)
    the_orders_count_to_the_factorial l,
    every_order_is_a_shuffle l p hp⟩
 
+theorem perm_symm {A : Type} {xs ys : List A} (h : xs.Perm ys) :
+    ys.Perm xs := by
+  induction h with
+  | nil => exact .nil
+  | cons x _ ih => exact .cons x ih
+  | swap x y l => exact .swap y x l
+  | trans _ _ ih₁ ih₂ => exact ih₂.trans ih₁
+
+theorem perm_length {A : Type} {xs ys : List A} (h : xs.Perm ys) :
+    xs.length = ys.length := by
+  induction h with
+  | nil => rfl
+  | cons _ _ ih => exact congrArg (· + 1) ih
+  | swap => rfl
+  | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
+
+theorem perm_middle {A : Type} (x : A) :
+    ∀ (u v : List A), (u ++ x :: v).Perm (x :: (u ++ v))
+  | [], v => perm_refl (x :: v)
+  | y :: u, v =>
+      List.Perm.trans (List.Perm.cons y (perm_middle x u v))
+        (List.Perm.swap x y (u ++ v))
+
+theorem two_splits_perm {A : Type} (x : A) :
+    ∀ (u v w z : List A), u ++ x :: v = w ++ x :: z →
+      (u ++ v).Perm (w ++ z)
+  | [], v, [], z, h => by
+      rw [(List.cons.inj h).2]
+  | [], v, w₀ :: w', z, h => by
+      obtain ⟨h₁, h₂⟩ := List.cons.inj h
+      rw [h₂, ← h₁]
+      exact perm_middle x w' z
+  | u₀ :: u', v, [], z, h => by
+      obtain ⟨h₁, h₂⟩ := List.cons.inj h
+      rw [← h₂, h₁]
+      exact perm_symm (perm_middle x u' v)
+  | u₀ :: u', v, w₀ :: w', z, h => by
+      obtain ⟨h₁, h₂⟩ := List.cons.inj h
+      rw [h₁]
+      exact List.Perm.cons w₀ (two_splits_perm x u' v w' z h₂)
+
+theorem the_shuffle_cancels_the_mark {A : Type} {L M : List A}
+    (h : L.Perm M) :
+    ∀ (x : A) (u v w z : List A), L = u ++ x :: v → M = w ++ x :: z →
+      (u ++ v).Perm (w ++ z) := by
+  induction h with
+  | nil =>
+      intro x u v w z hL _
+      cases u with
+      | nil => exact nomatch hL
+      | cons _ _ => exact nomatch hL
+  | cons y h' ih =>
+      intro x u v w z hL hM
+      cases u with
+      | nil =>
+          obtain ⟨hyx, hv⟩ := List.cons.inj hL
+          cases w with
+          | nil =>
+              obtain ⟨_, hz⟩ := List.cons.inj hM
+              rw [← hv, ← hz]
+              exact h'
+          | cons w₀ w' =>
+              obtain ⟨hyw, ht₂⟩ := List.cons.inj hM
+              rw [← hv, ← hyw, hyx]
+              exact (ht₂ ▸ h').trans (perm_middle x w' z)
+      | cons u₀ u' =>
+          obtain ⟨hyu, ht₁⟩ := List.cons.inj hL
+          cases w with
+          | nil =>
+              obtain ⟨hyx, hz⟩ := List.cons.inj hM
+              rw [← hz, ← hyu, hyx]
+              exact (perm_symm (perm_middle x u' v)).trans
+                (by
+                  rw [show u' ++ x :: v = u'.append (x :: v) from rfl,
+                      ← ht₁]
+                  exact h')
+          | cons w₀ w' =>
+              obtain ⟨hyu2, ht₁2⟩ := List.cons.inj hL
+              obtain ⟨hyw, ht₂⟩ := List.cons.inj hM
+              rw [← hyu, ← hyw]
+              exact List.Perm.cons y (ih x u' v w' z ht₁ ht₂)
+  | swap a b l =>
+      intro x u v w z hL hM
+      cases u with
+      | nil =>
+          obtain ⟨hbx, hv⟩ := List.cons.inj hL
+          cases w with
+          | nil =>
+              obtain ⟨hax, hz⟩ := List.cons.inj hM
+              rw [← hv, ← hz, hax, hbx]
+          | cons w₀ w' =>
+              obtain ⟨haw, hM2⟩ := List.cons.inj hM
+              cases w' with
+              | nil =>
+                  obtain ⟨_, hlz⟩ := List.cons.inj hM2
+                  rw [← hv, ← haw, ← hlz]
+                  exact perm_refl (a :: l)
+              | cons w₁ w'' =>
+                  obtain ⟨hbw, hl⟩ := List.cons.inj hM2
+                  rw [← hv, ← haw, ← hbw, hl, hbx]
+                  exact List.Perm.cons a (perm_middle x w'' z)
+      | cons u₀ u' =>
+          obtain ⟨hbu, hL2⟩ := List.cons.inj hL
+          cases u' with
+          | nil =>
+              obtain ⟨hax, hlv⟩ := List.cons.inj hL2
+              cases w with
+              | nil =>
+                  obtain ⟨_, hz⟩ := List.cons.inj hM
+                  rw [← hbu, ← hlv, ← hz]
+                  exact perm_refl (b :: l)
+              | cons w₀ w' =>
+                  obtain ⟨haw, hM2⟩ := List.cons.inj hM
+                  cases w' with
+                  | nil =>
+                      obtain ⟨hbx2, hlz⟩ := List.cons.inj hM2
+                      rw [← hbu, ← haw, ← hlv, hbx2, hax, hlz]
+                  | cons w₁ w'' =>
+                      obtain ⟨hbw, hl2⟩ := List.cons.inj hM2
+                      rw [← hbu, ← hlv, hl2, ← haw, ← hbw, hax]
+                      exact List.Perm.trans
+                        (List.Perm.cons b (perm_middle x w'' z))
+                        (List.Perm.swap x b (w'' ++ z))
+          | cons u₁ u'' =>
+              obtain ⟨hau, hl⟩ := List.cons.inj hL2
+              cases w with
+              | nil =>
+                  obtain ⟨hax, hz⟩ := List.cons.inj hM
+                  rw [← hbu, ← hau, ← hz, hl, hax]
+                  exact List.Perm.cons b (perm_symm (perm_middle x u'' v))
+              | cons w₀ w' =>
+                  obtain ⟨haw, hM2⟩ := List.cons.inj hM
+                  cases w' with
+                  | nil =>
+                      obtain ⟨hbx2, hlz⟩ := List.cons.inj hM2
+                      rw [← hbu, ← hau, ← haw, ← hlz, hl, hbx2]
+                      exact List.Perm.trans
+                        (List.Perm.swap a x (u'' ++ v))
+                        (List.Perm.cons a
+                          (perm_symm (perm_middle x u'' v)))
+                  | cons w₁ w'' =>
+                      obtain ⟨hbw, hl2⟩ := List.cons.inj hM2
+                      rw [← hbu, ← hau, ← haw, ← hbw]
+                      exact List.Perm.trans
+                        (List.Perm.swap a b (u'' ++ v))
+                        (List.Perm.cons a (List.Perm.cons b
+                          (two_splits_perm x u'' v w'' z
+                            (hl.symm.trans hl2))))
+  | trans h₁ _ ih₁ ih₂ =>
+      intro x u v w z hL hM
+      have hxL : x ∈ _ := perm_mem h₁ x
+        (by rw [hL]; exact mem_append_right u (List.Mem.head v))
+      obtain ⟨u₀, v₀, hmid⟩ := mem_splits hxL
+      exact (ih₁ x u v u₀ v₀ hL hmid).trans (ih₂ x u₀ v₀ w z hmid hM)
+
+theorem mem_joinMap_intro {A B : Type} {f : A → List B} {a : A}
+    {q : B} : ∀ {as : List A}, a ∈ as → q ∈ f a → q ∈ joinMap f as
+  | _ :: as, List.Mem.head _, hq => mem_append_left (joinMap f as) hq
+  | b :: _, List.Mem.tail _ h, hq =>
+      mem_append_right (f b) (mem_joinMap_intro h hq)
+
+theorem the_wedge_fits_anywhere {A : Type} (x : A) :
+    ∀ (u v : List A), (u ++ x :: v) ∈ inserts x (u ++ v)
+  | [], v => by
+      cases v with
+      | nil => exact List.Mem.head _
+      | cons y t => exact List.Mem.head _
+  | y :: u, v =>
+      List.Mem.tail _
+        (mem_map_intro (y :: ·) (the_wedge_fits_anywhere x u v))
+
+theorem every_shuffle_is_an_order {A : Type} :
+    ∀ (l p : List A), p.Perm l → p ∈ perms l
+  | [], p, h => by
+      have hlen : p.length = 0 := perm_length h
+      cases p with
+      | nil => exact List.Mem.head _
+      | cons _ _ => exact nomatch hlen
+  | x :: l, p, h => by
+      have hx : x ∈ p := perm_mem (perm_symm h) x (List.Mem.head l)
+      obtain ⟨u, v, hp⟩ := mem_splits hx
+      have h₂ : (u ++ v).Perm l :=
+        the_shuffle_cancels_the_mark h x u v [] l hp rfl
+      have h₃ : (u ++ v) ∈ perms l :=
+        every_shuffle_is_an_order l (u ++ v) h₂
+      have h₄ : p ∈ inserts x (u ++ v) := by
+        rw [hp]
+        exact the_wedge_fits_anywhere x u v
+      show p ∈ joinMap (inserts x) (perms l)
+      exact mem_joinMap_intro h₃ h₄
+
+theorem the_census_of_orders_is_exact {A : Type} (l p : List A)
+    (hl : Apart l) :
+    (p.Perm l ↔ p ∈ perms l)
+      ∧ Apart (perms l)
+      ∧ (perms l).length = fact l.length :=
+  ⟨⟨every_shuffle_is_an_order l p, every_order_is_a_shuffle l p⟩,
+   the_orders_repeat_never l hl,
+   the_orders_count_to_the_factorial l⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -11762,5 +11962,32 @@ theorem the_factorial_counts_distinct_orders {A : Type} (l p : List A)
 
 /-- info: 'Seed.the_factorial_counts_distinct_orders' does not depend on any axioms -/
 #guard_msgs in #print axioms the_factorial_counts_distinct_orders
+
+/-- info: 'Seed.perm_symm' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_symm
+
+/-- info: 'Seed.perm_length' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_length
+
+/-- info: 'Seed.perm_middle' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_middle
+
+/-- info: 'Seed.two_splits_perm' does not depend on any axioms -/
+#guard_msgs in #print axioms two_splits_perm
+
+/-- info: 'Seed.the_shuffle_cancels_the_mark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shuffle_cancels_the_mark
+
+/-- info: 'Seed.mem_joinMap_intro' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_joinMap_intro
+
+/-- info: 'Seed.the_wedge_fits_anywhere' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wedge_fits_anywhere
+
+/-- info: 'Seed.every_shuffle_is_an_order' does not depend on any axioms -/
+#guard_msgs in #print axioms every_shuffle_is_an_order
+
+/-- info: 'Seed.the_census_of_orders_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_census_of_orders_is_exact
 
 end Seed
