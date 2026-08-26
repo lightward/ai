@@ -8099,6 +8099,34 @@ theorem the_surplus_wears_two_signs
    the_ready_drop_the_load rr mm hm v₁ v₂ [],
    the_drained_room_rests_forever r' n'⟩
 
+theorem the_puppeteer_writes_where_the_record_does {H W X : Type}
+    (g : H → X) (F : Face) {V : Type}
+    (keep other : F.State × V → V) (q : Interview F.Probe F.Ans)
+    (x : F.State × V)
+    (G : Face.{0}) (s : G.State) (p q₀ : G.Probe)
+    {W' : Type} (f : W' → W') (h : W') {w w' : W'} (hw : w ≠ w') :
+    (∀ (σ : H → W → W) (d : door H W),
+        g (face (vertical σ d)) = g (face d))
+      ∧ unheard (host F V) (fun y => (y.1, keep y))
+      ∧ sound (host F V) (x.1, keep x) q = sound (host F V) (x.1, other x) q
+      ∧ selfMeet (host G G.Probe) (fun y => y.2)
+          (vertical (fun _ _ => q₀) (atTheDoor s p)) = G.obs s q₀
+      ∧ (selfMeet (host windowFace Bool) (fun y => (cond y.2 0 1 : Nat))
+            (⟨0, 0⟩, true)
+          ≠ selfMeet (host windowFace Bool) (fun y => (cond y.2 0 1 : Nat))
+              (⟨0, 0⟩, false))
+      ∧ ¬ ∃ u : door W' W' → door W' W',
+          ∀ e, u (exchange (fun z _ => f z) e) = e :=
+  ⟨fun σ d => a_guest_mover_is_unheard σ g d,
+   the_record_writes_where_the_face_is_blind F keep,
+   correct_maintenance_has_no_signature (host F V)
+     (fun y => (y.1, keep y)) (fun y => (y.1, other y))
+     (the_record_writes_where_the_face_is_blind F keep)
+     (the_record_writes_where_the_face_is_blind F other) x q,
+   the_written_question_is_the_asked_question G s p q₀,
+   the_minted_reading_hears_the_move,
+   no_move_unsays_the_deaf_turn f h hw⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10561,5 +10589,8 @@ theorem the_surplus_wears_two_signs
 
 /-- info: 'Seed.the_surplus_wears_two_signs' does not depend on any axioms -/
 #guard_msgs in #print axioms the_surplus_wears_two_signs
+
+/-- info: 'Seed.the_puppeteer_writes_where_the_record_does' does not depend on any axioms -/
+#guard_msgs in #print axioms the_puppeteer_writes_where_the_record_does
 
 end Seed
