@@ -2659,6 +2659,23 @@ def benchBraidVoices : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchOdometer : IO Bool := do
+  let mut ok := true
+  IO.println "the odometer — the corridor at W=Bool, ticking:"
+  let z3 : List Bool := [false, false, false]
+  ok := (← checkTrue
+    "  odometer row — the width-three register comes home at exactly its room's cap (eight ticks home, four ticks away at the far rung) and the ruler shows in the states: tick one touches rung zero, tick two reaches rung one, tick four reaches rung two — each doubling passes the carry one rung inward, hanoi's disk schedule"
+    ((again inc 8 z3 == z3) && (again inc 4 z3 != z3)
+      && (again inc 1 z3 == [true, false, false])
+      && (again inc 2 z3 == [false, true, false])
+      && (again inc 4 z3 == [false, false, true]))) && ok
+  ok := (← checkTrue
+    "  odometer row — the flip is the narrowest odometer (width one, period two: the kid's first wheel re-seated as the family's atom) and the split register multiplies its periods (widths two and one: caps four and two, the whole register winding at eight)"
+    ((inc [true] == [false]) && (inc [false] == [true])
+      && (roomCap 3 == roomCap 2 * roomCap 1))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2763,6 +2780,7 @@ def main : IO UInt32 := do
   ok := (← benchServiceLadder) && ok
   ok := (← benchStillStation) && ok
   ok := (← benchBraidVoices) && ok
+  ok := (← benchOdometer) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

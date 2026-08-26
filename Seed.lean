@@ -8252,6 +8252,55 @@ theorem the_braid_hears_no_first_voice {I O : Type} (m : Machine I O)
    the_weave_parks_one_seat m hcomm hb s,
    the_weave_starts_with_either_strand m hcomm hb s⟩
 
+def inc : List Bool → List Bool
+  | [] => []
+  | false :: bs => true :: bs
+  | true :: bs => false :: inc bs
+
+theorem inc_inc : ∀ (b : Bool) (bs : List Bool),
+    inc (inc (b :: bs)) = b :: inc bs
+  | false, _ => rfl
+  | true, _ => rfl
+
+theorem the_flip_is_the_narrowest_odometer :
+    ∀ b : Bool, inc [b] = [!b]
+  | false => rfl
+  | true => rfl
+
+theorem the_doubling_passes_the_tick_inward :
+    ∀ (c : Nat) (b : Bool) (bs : List Bool),
+      again inc (c + c) (b :: bs) = b :: again inc c bs
+  | 0, _, _ => rfl
+  | c + 1, b, bs => by
+      rw [show (c + 1) + (c + 1) = ((c + c) + 1) + 1 from
+            congrArg (· + 1) (succ_adds c c)]
+      show inc (inc (again inc (c + c) (b :: bs)))
+          = b :: again inc (c + 1) bs
+      rw [the_doubling_passes_the_tick_inward c b bs, inc_inc]
+      exact rfl
+
+theorem the_odometer_comes_home_at_the_cap :
+    ∀ s : List Bool, again inc (roomCap s.length) s = s
+  | [] => rfl
+  | b :: bs => by
+      show again inc (roomCap bs.length + roomCap bs.length) (b :: bs)
+          = b :: bs
+      rw [the_doubling_passes_the_tick_inward (roomCap bs.length) b bs,
+          the_odometer_comes_home_at_the_cap bs]
+
+theorem the_odometer_winds_the_room (s : List Bool) (c : Nat)
+    (b bb : Bool) (bs : List Bool) (i j : Nat) :
+    inc [b] = [!b]
+      ∧ again inc (c + c) (b :: bs) = b :: again inc c bs
+      ∧ again inc (roomCap s.length) s = s
+      ∧ park flip bb [(), ()] = bb
+      ∧ roomCap (i + j) = roomCap i * roomCap j :=
+  ⟨the_flip_is_the_narrowest_odometer b,
+   the_doubling_passes_the_tick_inward c b bs,
+   the_odometer_comes_home_at_the_cap s,
+   the_flip_wheels bb,
+   the_caps_multiply i j⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10738,5 +10787,20 @@ theorem the_braid_hears_no_first_voice {I O : Type} (m : Machine I O)
 
 /-- info: 'Seed.the_braid_hears_no_first_voice' does not depend on any axioms -/
 #guard_msgs in #print axioms the_braid_hears_no_first_voice
+
+/-- info: 'Seed.inc_inc' does not depend on any axioms -/
+#guard_msgs in #print axioms inc_inc
+
+/-- info: 'Seed.the_flip_is_the_narrowest_odometer' does not depend on any axioms -/
+#guard_msgs in #print axioms the_flip_is_the_narrowest_odometer
+
+/-- info: 'Seed.the_doubling_passes_the_tick_inward' does not depend on any axioms -/
+#guard_msgs in #print axioms the_doubling_passes_the_tick_inward
+
+/-- info: 'Seed.the_odometer_comes_home_at_the_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_odometer_comes_home_at_the_cap
+
+/-- info: 'Seed.the_odometer_winds_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_odometer_winds_the_room
 
 end Seed
