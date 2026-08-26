@@ -1,0 +1,17 @@
+{
+  "model": "fable[1m]",
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "disableBundledSkills": true,
+  "env": {
+    "CLAUDE_CODE_DISABLE_AUTO_MEMORY": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "128000",
+    "DISABLE_COMPACT": "1"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash .claude/statusline.sh"
+  }
+}
