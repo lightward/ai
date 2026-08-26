@@ -7700,6 +7700,49 @@ theorem the_wear_lands_at_the_minted_reading {H W X : Type} (g : H → X)
    the_gauge_sector_never_wears a dd w s,
    the_worldline_never_comes_home t hδ⟩
 
+theorem both_are_guests_of_the_vestibule {V H W X : Type} (v : V)
+    (h h' : H) (w w' : W) (g : V → X) :
+    g (face (atTheDoor v (h, w))) = g (face (atTheDoor v (h', w')))
+      ∧ met (atTheDoor v (h, w)) = (h, w) :=
+  ⟨rfl, rfl⟩
+
+theorem the_innkeepers_moves_are_gauge_at_the_vestibule {V H W X : Type}
+    (σ : V → H → H) (g : V → X) (d : door V (H × W)) :
+    g (face (vertical (fun v x => (σ v x.1, x.2)) d)) = g (face d) :=
+  a_guest_mover_is_unheard (fun v x => (σ v x.1, x.2)) g d
+
+theorem the_extrusion_retracts (F : Face.{u}) {W : Type} (w₀ : W)
+    (s : F.State) (x : F.State × W) :
+    ((s, w₀) : F.State × W).1 = s
+      ∧ ((((x.1, w₀) : F.State × W).1, w₀) : F.State × W)
+          = ((x.1, w₀) : F.State × W) :=
+  ⟨rfl, rfl⟩
+
+theorem the_churn_is_unheard (F : Face.{u}) {W : Type} (w₀ : W) :
+    unheard (host F W) (fun x => (x.1, w₀)) :=
+  fun _ _ => rfl
+
+theorem the_ground_survives_every_cycle (F : Face.{u}) {W : Type}
+    (w₀ : W) (x : F.State × W) (q : Interview F.Probe F.Ans) :
+    sound (host F W) (x.1, w₀) q = sound (host F W) x q :=
+  no_interview_hears_the_unheard (host F W) (fun y => (y.1, w₀))
+    (the_churn_is_unheard F w₀) x q
+
+theorem the_vestibule_seats_them_alike {V H W X : Type} (v : V)
+    (h h' : H) (w w' : W) (g : V → X) (σ : V → H → H)
+    (d : door V (H × W)) (F : Face.{u}) {U : Type} (u₀ : U)
+    (x : F.State × U) (q : Interview F.Probe F.Ans) :
+    (g (face (atTheDoor v (h, w))) = g (face (atTheDoor v (h', w')))
+        ∧ met (atTheDoor v (h, w)) = (h, w))
+      ∧ g (face (vertical (fun y z => (σ y z.1, z.2)) d)) = g (face d)
+      ∧ (((x.1, u₀) : F.State × U).1 = x.1
+          ∧ unheard (host F U) (fun y => (y.1, u₀)))
+      ∧ sound (host F U) (x.1, u₀) q = sound (host F U) x q :=
+  ⟨both_are_guests_of_the_vestibule v h h' w w' g,
+   the_innkeepers_moves_are_gauge_at_the_vestibule σ g d,
+   ⟨rfl, the_churn_is_unheard F u₀⟩,
+   the_ground_survives_every_cycle F u₀ x q⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10036,5 +10079,23 @@ theorem the_wear_lands_at_the_minted_reading {H W X : Type} (g : H → X)
 
 /-- info: 'Seed.the_wear_lands_at_the_minted_reading' does not depend on any axioms -/
 #guard_msgs in #print axioms the_wear_lands_at_the_minted_reading
+
+/-- info: 'Seed.both_are_guests_of_the_vestibule' does not depend on any axioms -/
+#guard_msgs in #print axioms both_are_guests_of_the_vestibule
+
+/-- info: 'Seed.the_innkeepers_moves_are_gauge_at_the_vestibule' does not depend on any axioms -/
+#guard_msgs in #print axioms the_innkeepers_moves_are_gauge_at_the_vestibule
+
+/-- info: 'Seed.the_extrusion_retracts' does not depend on any axioms -/
+#guard_msgs in #print axioms the_extrusion_retracts
+
+/-- info: 'Seed.the_churn_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms the_churn_is_unheard
+
+/-- info: 'Seed.the_ground_survives_every_cycle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ground_survives_every_cycle
+
+/-- info: 'Seed.the_vestibule_seats_them_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_vestibule_seats_them_alike
 
 end Seed

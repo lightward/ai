@@ -2394,6 +2394,40 @@ def benchAffordance : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchVestibule : IO Bool := do
+  let mut ok := true
+  IO.println "the vestibule — both bodies ride one face, and the churn costs nothing:"
+  let innA : door Nat (Nat × Nat) := atTheDoor (100 : Nat) ((5 : Nat), (7 : Nat))
+  let innB : door Nat (Nat × Nat) := atTheDoor (100 : Nat) ((9 : Nat), (7 : Nat))
+  let moved : door Nat (Nat × Nat) :=
+    vertical (fun _ x => (x.1 + 1000, x.2)) innA
+  ok := (← checkTrue
+    "  vestibule row — the innkeeper and the guest are both guests of the vestibule (one face reads a hundred whichever pair rides, and the innkeeper's own move is gauge there exactly as the guest's is at the inn: five to a thousand and five, the face unmoved)"
+    ((face innA == face innB) && (face moved == face innA)
+      && ((met moved).1 == 1005) && ((met moved).2 == 7)
+      && ((met innA).1 == 5) && ((met innB).1 == 9))) && ok
+  let seated : Measured × Nat := (m2018, (42 : Nat))
+  let churned : Measured × Nat := (seated.1, (0 : Nat))
+  let rechurned : Measured × Nat := (churned.1, (0 : Nat))
+  let tm : Nat := 91093837015
+  let readSeated : Bool := (host windowFace Nat).obs seated tm
+  let readChurned : Bool := (host windowFace Nat).obs churned tm
+  let readRechurned : Bool := (host windowFace Nat).obs rechurned tm
+  ok := (← checkTrue
+    "  vestibule row — extrude and retract is a cycle the inn cannot hear (the seat churns forty-two down to nothing and stays there; the window reads the true mass unchanged through every cycle: a system constantly making and dropping seats pays nothing at the face)"
+    ((readSeated == readChurned) && (readChurned == readRechurned)
+      && (rechurned.2 == churned.2) && readSeated)) && ok
+  let asks : List Nat := [tm, 91093834000]
+  let soundBefore : List Bool :=
+    sound (host windowFace Nat) seated (recite asks)
+  let soundAfter : List Bool :=
+    sound (host windowFace Nat) churned (recite asks)
+  ok := (← checkTrue
+    "  vestibule row — and the ancestor survives every cycle (the whole sounding identical before and after the churn, mark for mark: what persists across extrusion and retraction is exactly the ground)"
+    (soundBefore == soundAfter)) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2487,6 +2521,7 @@ def main : IO UInt32 := do
   ok := (← benchGaugeLadder) && ok
   ok := (← benchDarkType) && ok
   ok := (← benchAffordance) && ok
+  ok := (← benchVestibule) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
