@@ -2428,6 +2428,33 @@ def benchVestibule : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchSharedUnit : IO Bool := do
+  let mut ok := true
+  IO.println "the shared unit — no map between the banks, a span through the minted seat:"
+  let c : Nat := meterVote
+  let kB : Nat := boltzmannVote
+  let homeC : Nat := readAcross c paceAtHome
+  let homeK : Nat := readAcross kB paceAtHome
+  ok := (← checkTrue
+    "  span row — each seat reads its own scale as one (c and k_B read themselves at home: from inside, your measure is always already normalized — which is why no seat can read its own unit)"
+    ((homeC == c) && (homeK == kB))) && ok
+  let farC : Nat := readAcross c 5
+  let farK : Nat := readAcross kB 5
+  ok := (← checkTrue
+    "  span row — and any two paces agree on the ratio (a seat at pace five and a seat at home cross-multiply to the same number: the unit is a choice, the ratio is not — so the units compare without either bank ever mapping into the other)"
+    ((farC * kB == farK * c) && (homeC * kB == homeK * c))) && ok
+  let pairedA : Bool × Bool :=
+    (pairFace windowFace windowFace (fun x => x) (fun _ => m2018)).obs
+      m2018 ((91093837015 : Nat), (91093837015 : Nat))
+  let pairedB : Bool × Bool :=
+    (pairFace windowFace windowFace (fun x => x) (fun _ => m2018)).obs
+      m2014 ((91093837015 : Nat), (91093837015 : Nat))
+  ok := (← checkTrue
+    "  span row — the comparison reads both units at one probe (the minted third seat holds each bank's own reading side by side: 2018 agreeing with itself, 2014 parting from it — the place the sticks are laid together, mintable by nothing but the comparison)"
+    ((pairedA.1 == pairedA.2) && (pairedB.1 != pairedB.2))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2522,6 +2549,7 @@ def main : IO UInt32 := do
   ok := (← benchDarkType) && ok
   ok := (← benchAffordance) && ok
   ok := (← benchVestibule) && ok
+  ok := (← benchSharedUnit) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

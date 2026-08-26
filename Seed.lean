@@ -7743,6 +7743,52 @@ theorem the_vestibule_seats_them_alike {V H W X : Type} (v : V)
    ⟨rfl, the_churn_is_unheard F u₀⟩,
    the_ground_survives_every_cycle F u₀ x q⟩
 
+theorem the_comparison_reads_both_units {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) {R : Type}
+    (c : F.Ans → G.Ans → R) (s : S) (p : F.Probe) (q : G.Probe) :
+    c (F.obs (f s) p) (G.obs (g s) q)
+      = (fun x : F.Ans × G.Ans => c x.1 x.2)
+          ((pairFace F G f g).obs s (p, q)) := rfl
+
+theorem every_pace_agrees_on_the_ratio (paceA paceB a b : Nat) :
+    readAcross a paceA * b = readAcross b paceA * a
+      ∧ readAcross a paceB * b = readAcross b paceB * a
+      ∧ readAcross a paceAtHome = a :=
+  ⟨the_pace_conserves_the_ratio paceA a b,
+   the_pace_conserves_the_ratio paceB a b,
+   the_home_pace_is_the_still_gauge a⟩
+
+theorem the_arrived_agreement_sounds_as_one {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) (s t : S) :
+    ∀ ps : List (F.Probe × G.Probe),
+      (∀ pq, pq ∈ ps →
+          (pairFace F G f g).obs s pq = (pairFace F G f g).obs t pq) →
+        sound (pairFace F G f g) s (recite ps)
+          = sound (pairFace F G f g) t (recite ps) :=
+  the_agreed_window_sounds_as_one (pairFace F G f g) s t
+
+theorem the_units_compare_at_the_minted_seat {S : Type u} (F G : Face)
+    (f : S → F.State) (g : S → G.State) {R : Type}
+    (c : F.Ans → G.Ans → R) (s t : S) (p : F.Probe) (q : G.Probe)
+    (ps : List (F.Probe × G.Probe))
+    (hagree : ∀ pq, pq ∈ ps →
+      (pairFace F G f g).obs s pq = (pairFace F G f g).obs t pq)
+    (paceA paceB a b : Nat) {V H W X : Type} (v : V) (h h' : H)
+    (w w' : W) (gv : V → X) :
+    c (F.obs (f s) p) (G.obs (g s) q)
+        = (fun x : F.Ans × G.Ans => c x.1 x.2)
+            ((pairFace F G f g).obs s (p, q))
+      ∧ (readAcross a paceA * b = readAcross b paceA * a
+          ∧ readAcross a paceB * b = readAcross b paceB * a
+          ∧ readAcross a paceAtHome = a)
+      ∧ sound (pairFace F G f g) s (recite ps)
+          = sound (pairFace F G f g) t (recite ps)
+      ∧ gv (face (atTheDoor v (h, w))) = gv (face (atTheDoor v (h', w'))) :=
+  ⟨the_comparison_reads_both_units F G f g c s p q,
+   every_pace_agrees_on_the_ratio paceA paceB a b,
+   the_arrived_agreement_sounds_as_one F G f g s t ps hagree,
+   (both_are_guests_of_the_vestibule v h h' w w' gv).1⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10097,5 +10143,17 @@ theorem the_vestibule_seats_them_alike {V H W X : Type} (v : V)
 
 /-- info: 'Seed.the_vestibule_seats_them_alike' does not depend on any axioms -/
 #guard_msgs in #print axioms the_vestibule_seats_them_alike
+
+/-- info: 'Seed.the_comparison_reads_both_units' does not depend on any axioms -/
+#guard_msgs in #print axioms the_comparison_reads_both_units
+
+/-- info: 'Seed.every_pace_agrees_on_the_ratio' does not depend on any axioms -/
+#guard_msgs in #print axioms every_pace_agrees_on_the_ratio
+
+/-- info: 'Seed.the_arrived_agreement_sounds_as_one' does not depend on any axioms -/
+#guard_msgs in #print axioms the_arrived_agreement_sounds_as_one
+
+/-- info: 'Seed.the_units_compare_at_the_minted_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_units_compare_at_the_minted_seat
 
 end Seed
