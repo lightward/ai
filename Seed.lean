@@ -8619,6 +8619,61 @@ theorem the_direction_of_the_independent_is_gauge
    the_hall_hears_no_join_order a b z,
    the_citer_arrives_above_the_cited t m hm x hx hne⟩
 
+def growth : List Plan → Nat
+  | [] => 1
+  | q :: qs => fold (fun a b => a + b) 1 q * growth qs
+
+theorem the_life_compounds :
+    ∀ (qs : List Plan) (t : Plan),
+      fold (fun a b => a + b) 1 (worldline t qs)
+        = fold (fun a b => a + b) 1 t * growth qs
+  | [], t => (zero_plus (fold (fun a b => a + b) 1 t)).symm
+  | q :: qs, t =>
+      (the_life_compounds qs (graft t q)).trans
+        ((congrArg (· * growth qs)
+            (the_revision_multiplies_the_reading t q)).trans
+          (mul_regroups (fold (fun a b => a + b) 1 t)
+            (fold (fun a b => a + b) 1 q) (growth qs)))
+
+theorem the_growth_resumes :
+    ∀ qs rs : List Plan, growth (qs ++ rs) = growth qs * growth rs
+  | [], rs => (one_times (growth rs)).symm
+  | q :: qs, rs =>
+      (congrArg (fold (fun a b => a + b) 1 q * ·)
+          (the_growth_resumes qs rs)).trans
+        (mul_regroups (fold (fun a b => a + b) 1 q)
+          (growth qs) (growth rs)).symm
+
+theorem the_revisions_ratio_is_its_own_reading (t δ : Plan) :
+    sameRatio (fold (fun a b => a + b) 1 (graft t δ))
+      (fold (fun a b => a + b) 1 t)
+      (fold (fun a b => a + b) 1 δ) 1 :=
+  (zero_plus (fold (fun a b => a + b) 1 (graft t δ))).trans
+    ((the_revision_multiplies_the_reading t δ).trans
+      (Nat.mul_comm (fold (fun a b => a + b) 1 t)
+        (fold (fun a b => a + b) 1 δ)))
+
+theorem the_lifes_rate_is_a_licensed_pair (qs : List Plan) (t : Plan) :
+    sameRatio (fold (fun a b => a + b) 1 (worldline t qs))
+      (fold (fun a b => a + b) 1 t) (growth qs) 1 :=
+  (zero_plus (fold (fun a b => a + b) 1 (worldline t qs))).trans
+    ((the_life_compounds qs t).trans
+      (Nat.mul_comm (fold (fun a b => a + b) 1 t) (growth qs)))
+
+theorem the_growth_factorizes_by_epoch (qs rs : List Plan) (t δ : Plan) :
+    fold (fun a b => a + b) 1 (worldline t qs)
+        = fold (fun a b => a + b) 1 t * growth qs
+      ∧ growth (qs ++ rs) = growth qs * growth rs
+      ∧ sameRatio (fold (fun a b => a + b) 1 (graft t δ))
+          (fold (fun a b => a + b) 1 t)
+          (fold (fun a b => a + b) 1 δ) 1
+      ∧ sameRatio (fold (fun a b => a + b) 1 (worldline t qs))
+          (fold (fun a b => a + b) 1 t) (growth qs) 1 :=
+  ⟨the_life_compounds qs t,
+   the_growth_resumes qs rs,
+   the_revisions_ratio_is_its_own_reading t δ,
+   the_lifes_rate_is_a_licensed_pair qs t⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -11192,5 +11247,20 @@ theorem the_direction_of_the_independent_is_gauge
 
 /-- info: 'Seed.the_direction_of_the_independent_is_gauge' does not depend on any axioms -/
 #guard_msgs in #print axioms the_direction_of_the_independent_is_gauge
+
+/-- info: 'Seed.the_life_compounds' does not depend on any axioms -/
+#guard_msgs in #print axioms the_life_compounds
+
+/-- info: 'Seed.the_growth_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_growth_resumes
+
+/-- info: 'Seed.the_revisions_ratio_is_its_own_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revisions_ratio_is_its_own_reading
+
+/-- info: 'Seed.the_lifes_rate_is_a_licensed_pair' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lifes_rate_is_a_licensed_pair
+
+/-- info: 'Seed.the_growth_factorizes_by_epoch' does not depend on any axioms -/
+#guard_msgs in #print axioms the_growth_factorizes_by_epoch
 
 end Seed

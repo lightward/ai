@@ -2743,6 +2743,20 @@ def benchDirection : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchCompound : IO Bool := do
+  let mut ok := true
+  IO.println "the compound — growth as a licensed ratio:"
+  let life3 : List Plan := [dayA, dayB, dayA]
+  let grown : Nat := fold (fun a b => a + b) 1 (worldline dayA life3)
+  let rate : Nat := growth life3
+  ok := (← checkTrue
+    "  compound row — the life compounds by epoch (a two-day ground through two-three-two reads twenty-four: the ground's two times the twelve-fold rate; the rate itself factorizes across any cut, two times six) and the rate rides as a licensed pair (twenty-four against two crosses with twelve against one, exactly)"
+    ((grown == 24) && (rate == 12)
+      && (growth ([dayA] ++ [dayB, dayA]) == growth [dayA] * growth [dayB, dayA])
+      && (grown * 1 == rate * 2))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2852,6 +2866,7 @@ def main : IO UInt32 := do
   ok := (← benchBinaryCount) && ok
   ok := (← benchFractions) && ok
   ok := (← benchDirection) && ok
+  ok := (← benchCompound) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
