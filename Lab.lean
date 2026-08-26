@@ -2583,6 +2583,31 @@ def benchSemiring : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchExactCures : IO Bool := do
+  let mut ok := true
+  IO.println "the exact cures — the mint pays the merge back whole:"
+  let hiMint1 : Nat := empty1.hi
+  let hiMint2 : Nat := empty2.hi
+  let loMint1 : Nat := empty1.lo
+  let loMint2 : Nat := empty2.lo
+  ok := (← checkTrue
+    "  cure row — the sharpening is exact (the two empty windows, alike at every probe, stay merged under the hi-mint — zero and zero — and part at the lo-mint — one against two: the sharpened face reads conduct plus the mint, no more, no less)"
+    ((within empty1 0 == within empty2 0) && (within empty1 7 == within empty2 7)
+      && (hiMint1 == hiMint2) && (loMint1 != loMint2))) && ok
+  let readW : fork Bool Nat → Nat := greet (fun _ => (0 : Nat)) (fun n => n)
+  let sameGuestA : Nat :=
+    readW ((widen windowFace Nat).obs (empty1, (5 : Nat)) (viaRight ()))
+  let sameGuestB : Nat :=
+    readW ((widen windowFace Nat).obs (empty2, (5 : Nat)) (viaRight ()))
+  let otherGuest : Nat :=
+    readW ((widen windowFace Nat).obs (empty1, (9 : Nat)) (viaRight ()))
+  ok := (← checkTrue
+    "  cure row — the widening is exact both ways (two provably distinct empty windows carrying one guest read alike at the widened face — conduct-alike and guest-equal is all it takes — while unequal guests part at the wider ask: the flattening's loss is the widening's exact yield)"
+    ((sameGuestA == sameGuestB) && (sameGuestA == 5)
+      && (sameGuestA != otherGuest))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2683,6 +2708,7 @@ def main : IO UInt32 := do
   ok := (← benchTwoCharts) && ok
   ok := (← benchRulerAndWheel) && ok
   ok := (← benchSemiring) && ok
+  ok := (← benchExactCures) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

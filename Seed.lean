@@ -7974,6 +7974,60 @@ theorem the_door_and_the_fork_are_a_semiring {H W V : Type}
    (hosting_associates (H := H) (W := W) (V := V)).1 dd,
    the_host_serves_both_branches dv⟩
 
+theorem the_sharpening_is_exact (F : Face) {X : Type} (r : F.State → X)
+    (s t : F.State) :
+    alike (sharpen F r) s t ↔ (alike F s t ∧ r s = r t) :=
+  ⟨fun h =>
+     ⟨fun p => Sum.inl.inj (h (viaLeft p)),
+      Sum.inr.inj (h (viaRight ()))⟩,
+   fun h q =>
+     match q with
+     | .inl p => congrArg viaLeft (h.1 p)
+     | .inr _ => congrArg viaRight h.2⟩
+
+theorem the_widening_is_exact (F : Face) {W : Type} (s t : F.State)
+    (w w' : W) :
+    alike (widen F W) (s, w) (t, w') ↔ (alike F s t ∧ w = w') :=
+  ⟨fun h =>
+     ⟨fun p => Sum.inl.inj (h (viaLeft p)),
+      Sum.inr.inj (h (viaRight ()))⟩,
+   fun h q =>
+     match q with
+     | .inl p => congrArg viaLeft (h.1 p)
+     | .inr _ => congrArg viaRight h.2⟩
+
+theorem the_pairing_is_exact {S : Type u} (F G : Face) (f : S → F.State)
+    (g : S → G.State) (p₀ : F.Probe) (q₀ : G.Probe) (s t : S) :
+    alike (pairFace F G f g) s t
+      ↔ ((∀ p, F.obs (f s) p = F.obs (f t) p)
+          ∧ ∀ q, G.obs (g s) q = G.obs (g t) q) :=
+  ⟨fun h =>
+     ⟨the_pair_refines_the_first_look F G f g q₀ s t h,
+      the_pair_refines_the_second_look F G f g p₀ s t h⟩,
+   fun h pq => by
+     show (F.obs (f s) pq.1, G.obs (g s) pq.2)
+         = (F.obs (f t) pq.1, G.obs (g t) pq.2)
+     rw [h.1 pq.1, h.2 pq.2]⟩
+
+theorem the_cures_are_exact (F : Face) {X W : Type} (r : F.State → X)
+    (s t : F.State) (w w' : W) {S : Type u} (G K : Face)
+    (f : S → G.State) (g : S → K.State) (p₀ : G.Probe) (q₀ : K.Probe)
+    (x y : S) (u : F.State) (m : Measured) :
+    (alike (sharpen F r) s t ↔ (alike F s t ∧ r s = r t))
+      ∧ (alike (widen F W) (s, w) (t, w') ↔ (alike F s t ∧ w = w'))
+      ∧ (alike (pairFace G K f g) x y
+          ↔ ((∀ p, G.obs (f x) p = G.obs (f y) p)
+              ∧ ∀ q, K.obs (g x) q = K.obs (g y) q))
+      ∧ alike (host F W) (u, w) (u, w')
+      ∧ ((sharpen windowFace (fun v => v.hi + 1)).obs m (viaRight ())
+            = viaRight (m.hi + 1)
+          ∧ within m (m.hi + 1) = false) :=
+  ⟨the_sharpening_is_exact F r s t,
+   the_widening_is_exact F s t w w',
+   the_pairing_is_exact G K f g p₀ q₀ x y,
+   fun _ => rfl,
+   the_sharpened_window_exhibits_the_escapee m⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10406,5 +10460,17 @@ theorem the_door_and_the_fork_are_a_semiring {H W V : Type}
 
 /-- info: 'Seed.the_door_and_the_fork_are_a_semiring' does not depend on any axioms -/
 #guard_msgs in #print axioms the_door_and_the_fork_are_a_semiring
+
+/-- info: 'Seed.the_sharpening_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sharpening_is_exact
+
+/-- info: 'Seed.the_widening_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_widening_is_exact
+
+/-- info: 'Seed.the_pairing_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pairing_is_exact
+
+/-- info: 'Seed.the_cures_are_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cures_are_exact
 
 end Seed
