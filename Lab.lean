@@ -2808,6 +2808,20 @@ def benchShuffleRoom : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchApartOrders : IO Bool := do
+  let mut ok := true
+  IO.println "the apart orders — no ordering doubled:"
+  let ps : List (List Nat) := perms [1, 2, 3]
+  ok := (← checkTrue
+    "  apart row — six orderings, each appearing exactly once (the census repeats no order: every specific arrangement filtered from the room counts one — the factorial counts DISTINCT orders, the wedge remembering its word)"
+    ((ps.length == 6)
+      && ((ps.filter (· == [1, 2, 3])).length == 1)
+      && ((ps.filter (· == [3, 2, 1])).length == 1)
+      && ((ps.filter (· == [2, 1, 3])).length == 1)
+      && ((ps.filter (· == [1, 3, 2])).length == 1))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2922,6 +2936,7 @@ def main : IO UInt32 := do
   ok := (← benchCompare) && ok
   ok := (← benchOrderCensus) && ok
   ok := (← benchShuffleRoom) && ok
+  ok := (← benchApartOrders) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
