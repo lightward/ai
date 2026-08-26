@@ -2558,6 +2558,31 @@ def benchRulerAndWheel : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchSemiring : IO Bool := do
+  let mut ok := true
+  IO.println "the semiring — the door, the fork, both units, and the annihilator:"
+  let anon : door Nat Unit := atTheDoor (9 : Nat) ()
+  let sealed : fork Nat Empty := viaLeft (9 : Nat)
+  ok := (← checkTrue
+    "  semiring row — both units were carved on day one (hosting the anonymous guest changes nothing: door-times-one is the door; a sealed entrance adds nothing: fork-plus-zero is the fork — nine either way)"
+    ((face anon == 9) && (noEntrance sealed == 9)
+      && (face (atTheDoor (face anon) ()) == face anon))) && ok
+  let mh : Nat → Nat := fun h => h * 10
+  let mw : Nat → Nat := fun w => w + 100
+  ok := (← checkTrue
+    "  semiring row — and the measure SELECTS at the fork where it combines at the door (the left branch reads forty, the right reads a hundred and four: a coproduct's measure is its branch's own, not a sum and not a product — which is what a choice should cost)"
+    ((greet mh mw (viaLeft (4 : Nat)) == 40)
+      && (greet mh mw (viaRight (4 : Nat)) == 104))) && ok
+  let dd : door (door Nat Nat) Nat := atTheDoor (atTheDoor (1 : Nat) (2 : Nat)) (3 : Nat)
+  let dv : door Nat (fork Nat Nat) := atTheDoor (7 : Nat) (viaLeft (3 : Nat))
+  ok := (← checkTrue
+    "  semiring row — with associativity and distributivity standing beneath them (the nested door reassociates home; the hosted fork distributes and collects back whole) — every semiring law carved before the word existed"
+    ((face (face (shallow (deepen dd))) == 1)
+      && (met (shallow (deepen dd)) == 3)
+      && (face (collect (distribute dv)) == 7))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2657,6 +2682,7 @@ def main : IO UInt32 := do
   ok := (← benchMagnitudes) && ok
   ok := (← benchTwoCharts) && ok
   ok := (← benchRulerAndWheel) && ok
+  ok := (← benchSemiring) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

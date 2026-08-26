@@ -7936,6 +7936,44 @@ theorem the_measure_rules_the_arrow_and_flattens_the_wheel
    the_meter_flattens_on_the_dead_vestibule r m held hs n,
    the_gauge_sector_never_wears a dd w s⟩
 
+theorem the_unit_guest_is_the_products_unit {H : Type} (d : door H Unit)
+    (h : H) :
+    atTheDoor (face d) () = d ∧ face (atTheDoor h ()) = h :=
+  ⟨the_anonymous_guest_is_free d, rfl⟩
+
+theorem the_sealed_entrance_is_the_coproducts_unit {H : Type} :
+    (∀ h : H, noEntrance (viaLeft h) = h)
+      ∧ ∀ f : fork H Empty, viaLeft (noEntrance f) = f :=
+  a_sealed_entrance_adds_nothing
+
+theorem the_impossible_guest_annihilates {H : Type} :
+    ∀ _ : door H Empty, False :=
+  fun d => no_world_hosts_the_impossible d
+
+theorem the_measure_selects_at_the_fork {H W : Type}
+    (mh : H → Nat) (mw : W → Nat) (h : H) (w : W) :
+    greet mh mw (viaLeft h) = mh h ∧ greet mh mw (viaRight w) = mw w :=
+  the_two_entrances_share_one_lobby mh mw h w
+
+theorem the_door_and_the_fork_are_a_semiring {H W V : Type}
+    (d : door H Unit) (mh : H → Nat)
+    (mw : W → Nat) (h : H) (w : W) (dv : door H (fork W V))
+    (dd : door (door H W) V) :
+    (atTheDoor (face d) () = d
+        ∧ ((∀ x : H, noEntrance (viaLeft x) = x)
+            ∧ ∀ f : fork H Empty, viaLeft (noEntrance f) = f))
+      ∧ (∀ _ : door H Empty, False)
+      ∧ (greet mh mw (viaLeft h) = mh h
+          ∧ greet mh mw (viaRight w) = mw w)
+      ∧ shallow (deepen dd) = dd
+      ∧ collect (distribute dv) = dv :=
+  ⟨⟨the_anonymous_guest_is_free d,
+    the_sealed_entrance_is_the_coproducts_unit⟩,
+   fun q => the_impossible_guest_annihilates (H := H) q,
+   the_measure_selects_at_the_fork mh mw h w,
+   (hosting_associates (H := H) (W := W) (V := V)).1 dd,
+   the_host_serves_both_branches dv⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10353,5 +10391,20 @@ theorem the_measure_rules_the_arrow_and_flattens_the_wheel
 
 /-- info: 'Seed.the_measure_rules_the_arrow_and_flattens_the_wheel' does not depend on any axioms -/
 #guard_msgs in #print axioms the_measure_rules_the_arrow_and_flattens_the_wheel
+
+/-- info: 'Seed.the_unit_guest_is_the_products_unit' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unit_guest_is_the_products_unit
+
+/-- info: 'Seed.the_sealed_entrance_is_the_coproducts_unit' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sealed_entrance_is_the_coproducts_unit
+
+/-- info: 'Seed.the_impossible_guest_annihilates' does not depend on any axioms -/
+#guard_msgs in #print axioms the_impossible_guest_annihilates
+
+/-- info: 'Seed.the_measure_selects_at_the_fork' does not depend on any axioms -/
+#guard_msgs in #print axioms the_measure_selects_at_the_fork
+
+/-- info: 'Seed.the_door_and_the_fork_are_a_semiring' does not depend on any axioms -/
+#guard_msgs in #print axioms the_door_and_the_fork_are_a_semiring
 
 end Seed
