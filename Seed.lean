@@ -7900,6 +7900,42 @@ theorem two_charts_one_measure (p q : Plan) (i j d : Nat) :
    the_cap_carries_the_sum_to_the_product i j,
    the_bloom_reads_its_own_cap d⟩
 
+theorem no_measure_parts_the_home_wheel (rank : Nat → Nat)
+    (h : ∀ n : Nat, Nat.ble (rank (collatzStep n)) (rank n) = true) :
+    rank 1 = rank 2 ∧ rank 2 = rank 4 ∧ rank 4 = rank 1 :=
+  ⟨(the_wheel_flattens_the_monotone rank h).2.2,
+   (the_wheel_flattens_the_monotone rank h).2.1,
+   (the_wheel_flattens_the_monotone rank h).1⟩
+
+theorem the_arrow_grows_its_measure (t : Plan) {δ : Plan}
+    (hδ : δ ≠ Plan.ground) :
+    Nat.ble (fold (fun a b => a + b) 1 t + 1)
+      (fold (fun a b => a + b) 1 (graft t δ)) = true :=
+  a_true_tick_grows_the_reading t hδ
+
+theorem the_meter_flattens_on_the_dead_vestibule (r : List Nat)
+    (m : Nat × List Nat) (held : List (Nat × List Nat))
+    (hs : ∀ k, k ∈ m :: held → backed r k.2 = false) (n : Nat) :
+    drainFace.obs (r, m :: held) n = (m :: held).length :=
+  the_stuck_load_reads_flat r m held hs n
+
+theorem the_measure_rules_the_arrow_and_flattens_the_wheel
+    (rank : Nat → Nat)
+    (h : ∀ n : Nat, Nat.ble (rank (collatzStep n)) (rank n) = true)
+    (t : Plan) {δ : Plan} (hδ : δ ≠ Plan.ground) (r : List Nat)
+    (m : Nat × List Nat) (held : List (Nat × List Nat))
+    (hs : ∀ k, k ∈ m :: held → backed r k.2 = false) (n : Nat)
+    (a dd s : Nat) (w : List Unit) :
+    (rank 1 = rank 2 ∧ rank 2 = rank 4 ∧ rank 4 = rank 1)
+      ∧ Nat.ble (fold (fun x y => x + y) 1 t + 1)
+          (fold (fun x y => x + y) 1 (graft t δ)) = true
+      ∧ drainFace.obs (r, m :: held) n = (m :: held).length
+      ∧ drive (spiral a dd a) s w = true :=
+  ⟨no_measure_parts_the_home_wheel rank h,
+   the_arrow_grows_its_measure t hδ,
+   the_meter_flattens_on_the_dead_vestibule r m held hs n,
+   the_gauge_sector_never_wears a dd w s⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10305,5 +10341,17 @@ theorem two_charts_one_measure (p q : Plan) (i j d : Nat) :
 
 /-- info: 'Seed.two_charts_one_measure' does not depend on any axioms -/
 #guard_msgs in #print axioms two_charts_one_measure
+
+/-- info: 'Seed.no_measure_parts_the_home_wheel' does not depend on any axioms -/
+#guard_msgs in #print axioms no_measure_parts_the_home_wheel
+
+/-- info: 'Seed.the_arrow_grows_its_measure' does not depend on any axioms -/
+#guard_msgs in #print axioms the_arrow_grows_its_measure
+
+/-- info: 'Seed.the_meter_flattens_on_the_dead_vestibule' does not depend on any axioms -/
+#guard_msgs in #print axioms the_meter_flattens_on_the_dead_vestibule
+
+/-- info: 'Seed.the_measure_rules_the_arrow_and_flattens_the_wheel' does not depend on any axioms -/
+#guard_msgs in #print axioms the_measure_rules_the_arrow_and_flattens_the_wheel
 
 end Seed

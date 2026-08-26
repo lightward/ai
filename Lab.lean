@@ -2529,6 +2529,35 @@ def benchTwoCharts : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchRulerAndWheel : IO Bool := do
+  let mut ok := true
+  IO.println "the ruler and the wheel — a measure rules the arrow and flattens the wheel:"
+  let flight : List Nat :=
+    [park collatz (1 : Nat) (List.replicate 0 ()),
+     park collatz (1 : Nat) (List.replicate 1 ()),
+     park collatz (1 : Nat) (List.replicate 2 ()),
+     park collatz (1 : Nat) (List.replicate 3 ())]
+  ok := (← checkTrue
+    "  ruler row — the home wheel returns to itself and any non-increasing rank is forced flat across it (one, four, two, one: three points a monotone measure provably cannot tell apart — the wheel is one measure-point)"
+    ((flight == [1, 4, 2, 1]) && (flight.headD 0 == flight.getD 3 0))) && ok
+  let grown : Nat := fold (fun a b => a + b) 1 (graft dayA dayB)
+  let before : Nat := fold (fun a b => a + b) 1 dayA
+  ok := (← checkTrue
+    "  ruler row — while the arrow's measure strictly grows at every true tick (two revised by three reads six, past its own prior reading forever) — so a measure is a ruler exactly where the dynamics is an arrow"
+    ((Nat.ble (before + 1) grown) && (grown == 6) && (before == 2))) && ok
+  let deadFlat0 : Nat := drainFace.obs dead0 (0 : Nat)
+  let deadFlat3 : Nat := drainFace.obs dead0 (3 : Nat)
+  let liveDrop0 : Nat := drainFace.obs intake (0 : Nat)
+  let liveDrop2 : Nat := drainFace.obs intake (2 : Nat)
+  let spiralUnworn : Bool :=
+    drive (spiral piPace 30000000 piPace) (0 : Nat) (List.replicate 40 ())
+  ok := (← checkTrue
+    "  ruler row — and the same law reads at three other strata (the drain meter flat at every hour on the dead vestibule and descending two-to-zero on the live one; the gap-zero spiral true at forty laps): one statement, four addresses"
+    ((deadFlat0 == deadFlat3) && (liveDrop0 != liveDrop2)
+      && (liveDrop2 == 0) && spiralUnworn)) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2627,6 +2656,7 @@ def main : IO UInt32 := do
   ok := (← benchComposableMeasure) && ok
   ok := (← benchMagnitudes) && ok
   ok := (← benchTwoCharts) && ok
+  ok := (← benchRulerAndWheel) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
