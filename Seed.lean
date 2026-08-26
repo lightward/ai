@@ -8674,6 +8674,40 @@ theorem the_growth_factorizes_by_epoch (qs rs : List Plan) (t δ : Plan) :
    the_revisions_ratio_is_its_own_reading t δ,
    the_lifes_rate_is_a_licensed_pair qs t⟩
 
+def dec : List Bool → List Bool
+  | [] => []
+  | true :: bs => false :: bs
+  | false :: bs => true :: dec bs
+
+theorem the_tick_unwinds : ∀ s : List Bool, dec (inc s) = s
+  | [] => rfl
+  | false :: _ => rfl
+  | true :: bs => congrArg (true :: ·) (the_tick_unwinds bs)
+
+theorem the_unwind_ticks : ∀ s : List Bool, inc (dec s) = s
+  | [] => rfl
+  | true :: _ => rfl
+  | false :: bs => congrArg (false :: ·) (the_unwind_ticks bs)
+
+theorem the_tick_merges_nothing {s t : List Bool} (h : inc s = inc t) :
+    s = t :=
+  an_iso_merges_nothing the_tick_unwinds h
+
+theorem the_two_kinds_of_wheel (s : List Bool) {u v : List Bool}
+    (h : inc u = inc v) :
+    dec (inc s) = s
+      ∧ inc (dec s) = s
+      ∧ u = v
+      ∧ again inc (roomCap s.length) s = s
+      ∧ (¬ ∃ g : Nat → Nat, ∀ n : Nat, g (collatzStep n) = n)
+      ∧ park collatz (1 : Nat) [(), (), ()] = (1 : Nat) :=
+  ⟨the_tick_unwinds s,
+   the_unwind_ticks s,
+   the_tick_merges_nothing h,
+   the_odometer_comes_home_at_the_cap s,
+   no_inverse_unsteps_the_collatz,
+   the_home_wheel_turns.1⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -11262,5 +11296,17 @@ theorem the_growth_factorizes_by_epoch (qs rs : List Plan) (t δ : Plan) :
 
 /-- info: 'Seed.the_growth_factorizes_by_epoch' does not depend on any axioms -/
 #guard_msgs in #print axioms the_growth_factorizes_by_epoch
+
+/-- info: 'Seed.the_tick_unwinds' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tick_unwinds
+
+/-- info: 'Seed.the_unwind_ticks' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unwind_ticks
+
+/-- info: 'Seed.the_tick_merges_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tick_merges_nothing
+
+/-- info: 'Seed.the_two_kinds_of_wheel' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_kinds_of_wheel
 
 end Seed

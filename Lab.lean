@@ -2757,6 +2757,21 @@ def benchCompound : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchRetrace : IO Bool := do
+  let mut ok := true
+  IO.println "the retrace — two kinds of wheel:"
+  let s5 : List Bool := again inc 5 (zeros 3)
+  let homeFromFour : Nat := park collatz (4 : Nat) [(), ()]
+  let step1 : Nat := collatzStep 1
+  let step8 : Nat := collatzStep 8
+  ok := (← checkTrue
+    "  retrace row — the odometer walks backward as freely as forward (five ticks then two unwinds reads three; every tick undone by a step: the reversible wheel) while the collatz wheel comes home and provably cannot back up one step (one and eight merged at four forever: undo only by continuation, two clicks forward from four)"
+    ((val (again dec 2 s5) == 3) && (dec (inc [true, false, true]) == [true, false, true])
+      && (step1 == step8)
+      && (homeFromFour == 1))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2867,6 +2882,7 @@ def main : IO UInt32 := do
   ok := (← benchFractions) && ok
   ok := (← benchDirection) && ok
   ok := (← benchCompound) && ok
+  ok := (← benchRetrace) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
