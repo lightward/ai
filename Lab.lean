@@ -2628,6 +2628,23 @@ def benchServiceLadder : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchStillStation : IO Bool := do
+  let mut ok := true
+  IO.println "the still station — quiescence is drained, or evenly worn:"
+  let palDead : List Nat × List (Nat × List Nat) :=
+    ([1], [(8, [9]), (9, [8]), (8, [9])])
+  ok := (← checkTrue
+    "  stillness row — the palindromic deadlock survives its own observation unchanged (three held marks reading the same both ways: ONE sweep fixes it — even wear, the feather's signature at queue grain) while the non-palindromic pair is moved by every single sweep and comes home only at two"
+    ((sweep palDead == palDead)
+      && (sweep dead0 != dead0)
+      && (sweep (sweep dead0) == dead0))) && ok
+  let rested : List Nat × List (Nat × List Nat) := ([5, 6], [])
+  ok := (← checkTrue
+    "  stillness row — and the only other fixed point is the drained room (the empty queue rests, period one, exit 0: the station re-reads itself unchanged exactly when drained or palindromic-deadlocked — the cascade's quiescence characterized whole)"
+    ((sweep rested == rested) && (sweep intake != intake))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2730,6 +2747,7 @@ def main : IO UInt32 := do
   ok := (← benchSemiring) && ok
   ok := (← benchExactCures) && ok
   ok := (← benchServiceLadder) && ok
+  ok := (← benchStillStation) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

@@ -8127,6 +8127,51 @@ theorem the_puppeteer_writes_where_the_record_does {H W X : Type}
    the_minted_reading_hears_the_move,
    no_move_unsays_the_deaf_turn f h hw⟩
 
+theorem the_sweep_fixes_the_drained_and_the_palindromes
+    (r : List Nat) (held : List (Nat × List Nat)) :
+    sweep (r, held) = (r, held)
+      ↔ (held = []
+          ∨ ((∀ m, m ∈ held → backed r m.2 = false)
+              ∧ turnQueue held [] = held)) := by
+  constructor
+  · intro h
+    cases held with
+    | nil => exact Or.inl rfl
+    | cons m t =>
+        have hlen : (sweep (r, m :: t)).2.length = (m :: t).length :=
+          congrArg
+            (fun s : List Nat × List (Nat × List Nat) => s.2.length) h
+        have hall : ∀ k, k ∈ m :: t → backed r k.2 = false :=
+          (the_gauge_is_exact (r, m :: t)).mp hlen
+        have hturn : sweep (r, m :: t) = (r, turnQueue (m :: t) []) :=
+          the_stuck_round_turns_the_queue (m :: t) r [] hall
+        exact Or.inr ⟨hall, congrArg Prod.snd (hturn.symm.trans h)⟩
+  · intro h
+    cases h with
+    | inl he =>
+        rw [he]
+        exact the_drained_room_rests r
+    | inr hp =>
+        exact (the_stuck_round_turns_the_queue held r [] hp.1).trans
+          (congrArg (fun q => (r, q)) hp.2)
+
+theorem the_stillness_is_drained_or_evenly_worn
+    (r : List Nat) (held : List (Nat × List Nat))
+    (r' : List Nat) (held' : List (Nat × List Nat))
+    (hs' : ∀ m, m ∈ held' → backed r' m.2 = false)
+    (r'' : List Nat) (n : Nat) (a d s : Nat) (w : List Unit) :
+    (sweep (r, held) = (r, held)
+        ↔ (held = []
+            ∨ ((∀ m, m ∈ held → backed r m.2 = false)
+                ∧ turnQueue held [] = held)))
+      ∧ sweep (sweep (r', held')) = (r', held')
+      ∧ again sweep n (r'', ([] : List (Nat × List Nat))) = (r'', [])
+      ∧ drive (spiral a d a) s w = true :=
+  ⟨the_sweep_fixes_the_drained_and_the_palindromes r held,
+   the_deadlock_comes_home_in_two r' held' hs',
+   the_drained_room_rests_forever r'' n,
+   the_wheel_reads_itself_unworn a d w s⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10592,5 +10637,11 @@ theorem the_puppeteer_writes_where_the_record_does {H W X : Type}
 
 /-- info: 'Seed.the_puppeteer_writes_where_the_record_does' does not depend on any axioms -/
 #guard_msgs in #print axioms the_puppeteer_writes_where_the_record_does
+
+/-- info: 'Seed.the_sweep_fixes_the_drained_and_the_palindromes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sweep_fixes_the_drained_and_the_palindromes
+
+/-- info: 'Seed.the_stillness_is_drained_or_evenly_worn' does not depend on any axioms -/
+#guard_msgs in #print axioms the_stillness_is_drained_or_evenly_worn
 
 end Seed
