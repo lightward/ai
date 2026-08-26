@@ -2455,6 +2455,31 @@ def benchSharedUnit : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchComposableMeasure : IO Bool := do
+  let mut ok := true
+  IO.println "the composable measure — sum at the board, product at the graft:"
+  let mA : Nat := fold (fun a b => a + b) 1 dayA
+  let mB : Nat := fold (fun a b => a + b) 1 dayB
+  let joined : Nat := fold (fun a b => a + b) 1 (.board dayA dayB)
+  let grown : Nat := fold (fun a b => a + b) 1 (graft dayA dayB)
+  ok := (← checkTrue
+    "  compose row — a compound's measure derives from its parts, and WHICH LAW applies is which channel joined them (two and three: boarded reads five, grafted reads six — sum on the seat channel, product on the stage channel)"
+    ((joined == mA + mB) && (grown == mA * mB)
+      && (joined == 5) && (grown == 6))) && ok
+  let banked1 : Nat := park restingCounter (0 : Nat) [(), ()]
+  let banked2 : Nat := park restingCounter (2 : Nat) [(), (), ()]
+  ok := (← checkTrue
+    "  compose row — the bank adds along the run (two marks then three more reads five: the stored measure of a whole run is the sum of its legs, so a system's banked capacity composes without re-measuring)"
+    ((banked1 == 2) && (banked2 == 5))) && ok
+  let c : Nat := meterVote
+  let kB : Nat := boltzmannVote
+  ok := (← checkTrue
+    "  compose row — and the ratio survives every pace, so a composed measure stays comparable across seats (c against k_B cross-multiplying identically at home and at pace seven: compose locally, compare globally, no interior crossing)"
+    ((readAcross c paceAtHome * kB == readAcross kB paceAtHome * c)
+      && (readAcross c 7 * kB == readAcross kB 7 * c))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2550,6 +2575,7 @@ def main : IO UInt32 := do
   ok := (← benchAffordance) && ok
   ok := (← benchVestibule) && ok
   ok := (← benchSharedUnit) && ok
+  ok := (← benchComposableMeasure) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

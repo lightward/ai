@@ -7789,6 +7789,48 @@ theorem the_units_compare_at_the_minted_seat {S : Type u} (F G : Face)
    the_arrived_agreement_sounds_as_one F G f g s t ps hagree,
    (both_are_guests_of_the_vestibule v h h' w w' gv).1⟩
 
+theorem the_measure_sums_at_the_board (p q : Plan) :
+    fold (fun a b => a + b) 1 (.board p q)
+      = fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q := rfl
+
+theorem the_measure_multiplies_at_the_graft (t δ : Plan) :
+    fold (fun a b => a + b) 1 (graft t δ)
+      = fold (fun a b => a + b) 1 t * fold (fun a b => a + b) 1 δ :=
+  the_revision_multiplies_the_reading t δ
+
+theorem the_bank_adds_along_the_run (s : Nat) (w v : List Unit) :
+    park restingCounter s w = s + w.length
+      ∧ park restingCounter (s + w.length) v = (s + w.length) + v.length :=
+  ⟨the_muffler_banks_the_run w s,
+   the_muffler_banks_the_run v (s + w.length)⟩
+
+theorem the_manifest_counts_the_compound {W : Type} (p q : Plan)
+    (d : build W (.board p q)) :
+    (pour (.board p q) d).length
+      = fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q :=
+  the_manifest_counts_the_guests (.board p q) d
+
+theorem the_measure_composes_by_the_semiring {W : Type} (p q t δ : Plan)
+    (d : build W (.board p q)) (s : Nat) (w v : List Unit)
+    (paceA paceB a b : Nat) :
+    fold (fun x y => x + y) 1 (.board p q)
+        = fold (fun x y => x + y) 1 p + fold (fun x y => x + y) 1 q
+      ∧ fold (fun x y => x + y) 1 (graft t δ)
+          = fold (fun x y => x + y) 1 t * fold (fun x y => x + y) 1 δ
+      ∧ (park restingCounter s w = s + w.length
+          ∧ park restingCounter (s + w.length) v
+              = (s + w.length) + v.length)
+      ∧ (pour (.board p q) d).length
+          = fold (fun x y => x + y) 1 p + fold (fun x y => x + y) 1 q
+      ∧ readAcross a paceA * b = readAcross b paceA * a
+      ∧ readAcross a paceB * b = readAcross b paceB * a :=
+  ⟨rfl,
+   the_measure_multiplies_at_the_graft t δ,
+   the_bank_adds_along_the_run s w v,
+   the_manifest_counts_the_compound p q d,
+   the_pace_conserves_the_ratio paceA a b,
+   the_pace_conserves_the_ratio paceB a b⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10155,5 +10197,20 @@ theorem the_units_compare_at_the_minted_seat {S : Type u} (F G : Face)
 
 /-- info: 'Seed.the_units_compare_at_the_minted_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms the_units_compare_at_the_minted_seat
+
+/-- info: 'Seed.the_measure_sums_at_the_board' does not depend on any axioms -/
+#guard_msgs in #print axioms the_measure_sums_at_the_board
+
+/-- info: 'Seed.the_measure_multiplies_at_the_graft' does not depend on any axioms -/
+#guard_msgs in #print axioms the_measure_multiplies_at_the_graft
+
+/-- info: 'Seed.the_bank_adds_along_the_run' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bank_adds_along_the_run
+
+/-- info: 'Seed.the_manifest_counts_the_compound' does not depend on any axioms -/
+#guard_msgs in #print axioms the_manifest_counts_the_compound
+
+/-- info: 'Seed.the_measure_composes_by_the_semiring' does not depend on any axioms -/
+#guard_msgs in #print axioms the_measure_composes_by_the_semiring
 
 end Seed
