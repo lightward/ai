@@ -8476,6 +8476,64 @@ theorem the_odometer_counts_in_binary {W : Type} (n t : Nat)
    the_odometer_comes_home_at_the_cap s,
    drive_counts w k⟩
 
+theorem add_right_cancel : ∀ {a b : Nat} (k : Nat), a + k = b + k → a = b
+  | _, _, 0, h => h
+  | _, _, k + 1, h => add_right_cancel k (Nat.succ.inj h)
+
+theorem mul_left_cancel :
+    ∀ (k : Nat) {a b : Nat}, (k + 1) * a = (k + 1) * b → a = b
+  | _, 0, 0, _ => rfl
+  | _, 0, _ + 1, h => nomatch h
+  | _, _ + 1, 0, h => nomatch h
+  | k, _ + 1, _ + 1, h =>
+      congrArg (· + 1) (mul_left_cancel k (add_right_cancel (k + 1) h))
+
+theorem mul_right_cancel {x y : Nat} (k : Nat)
+    (h : x * (k + 1) = y * (k + 1)) : x = y :=
+  mul_left_cancel k
+    ((Nat.mul_comm (k + 1) x).trans (h.trans (Nat.mul_comm y (k + 1))))
+
+def sameRatio (a b c d : Nat) : Prop := a * d = c * b
+
+theorem the_ratio_meets_itself (a b : Nat) : sameRatio a b a b := rfl
+
+theorem the_ratio_swaps {a b c d : Nat} (h : sameRatio a b c d) :
+    sameRatio c d a b :=
+  h.symm
+
+theorem the_ratios_chain (a b c e f d₀ : Nat)
+    (h₁ : sameRatio a b c (d₀ + 1)) (h₂ : sameRatio c (d₀ + 1) e f) :
+    sameRatio a b e f := by
+  refine mul_right_cancel d₀ ?_
+  show (a * f) * (d₀ + 1) = (e * b) * (d₀ + 1)
+  rw [mul_regroups a f (d₀ + 1), Nat.mul_comm f (d₀ + 1),
+      ← mul_regroups a (d₀ + 1) f, h₁,
+      mul_regroups c b f, Nat.mul_comm b f,
+      ← mul_regroups c f b, h₂,
+      mul_regroups e (d₀ + 1) b, Nat.mul_comm (d₀ + 1) b,
+      ← mul_regroups e b (d₀ + 1)]
+
+theorem the_pace_is_gauge_for_the_ratio (p a b : Nat) :
+    sameRatio (readAcross a p) (readAcross b p) a b :=
+  (congrArg (· * b) (Nat.mul_comm p a)).trans (mul_regroups a p b)
+
+theorem the_halves_are_two :
+    sameRatio 1 2 2 4 ∧ ((1, 2) : Nat × Nat) ≠ (2, 4) :=
+  ⟨rfl, fun h => nomatch Nat.succ.inj (congrArg Prod.fst h)⟩
+
+theorem the_fraction_is_a_licensed_pair (a b c e f d₀ p x y : Nat)
+    (h₁ : sameRatio a b c (d₀ + 1)) (h₂ : sameRatio c (d₀ + 1) e f) :
+    sameRatio x y x y
+      ∧ (sameRatio a b c (d₀ + 1) → sameRatio c (d₀ + 1) a b)
+      ∧ sameRatio a b e f
+      ∧ sameRatio (readAcross x p) (readAcross y p) x y
+      ∧ (sameRatio 1 2 2 4 ∧ ((1, 2) : Nat × Nat) ≠ (2, 4)) :=
+  ⟨the_ratio_meets_itself x y,
+   fun h => the_ratio_swaps h,
+   the_ratios_chain a b c e f d₀ h₁ h₂,
+   the_pace_is_gauge_for_the_ratio p x y,
+   the_halves_are_two⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -11010,5 +11068,32 @@ theorem the_odometer_counts_in_binary {W : Type} (n t : Nat)
 
 /-- info: 'Seed.the_odometer_counts_in_binary' does not depend on any axioms -/
 #guard_msgs in #print axioms the_odometer_counts_in_binary
+
+/-- info: 'Seed.add_right_cancel' does not depend on any axioms -/
+#guard_msgs in #print axioms add_right_cancel
+
+/-- info: 'Seed.mul_left_cancel' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_left_cancel
+
+/-- info: 'Seed.mul_right_cancel' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_right_cancel
+
+/-- info: 'Seed.the_ratio_meets_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ratio_meets_itself
+
+/-- info: 'Seed.the_ratio_swaps' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ratio_swaps
+
+/-- info: 'Seed.the_ratios_chain' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ratios_chain
+
+/-- info: 'Seed.the_pace_is_gauge_for_the_ratio' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pace_is_gauge_for_the_ratio
+
+/-- info: 'Seed.the_halves_are_two' does not depend on any axioms -/
+#guard_msgs in #print axioms the_halves_are_two
+
+/-- info: 'Seed.the_fraction_is_a_licensed_pair' does not depend on any axioms -/
+#guard_msgs in #print axioms the_fraction_is_a_licensed_pair
 
 end Seed

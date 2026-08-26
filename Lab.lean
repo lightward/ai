@@ -2713,6 +2713,19 @@ def benchBinaryCount : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchFractions : IO Bool := do
+  let mut ok := true
+  IO.println "the fractions — licensed pairs, never quotiented:"
+  ok := (← checkTrue
+    "  fraction row — one half meets two quarters and stays two pairs (one-times-four equals two-times-two: the identification licensed at the cross-product; the pairs provably distinct: the handshake at arithmetic grain, no quotient, no seam)"
+    ((1 * 4 == 2 * 2) && (((1, 2) : Nat × Nat) != (2, 4)))) && ok
+  ok := (← checkTrue
+    "  fraction row — the ratios chain through a positive middle and the pace is gauge (a half through two-quarters reaches three-sixths: one-six equals three-two; and re-pacing both terms by five moves neither ratio: the treaty's cross-multiplication now the fraction's own equivalence)"
+    ((2 * 6 == 3 * 4) && (1 * 6 == 3 * 2)
+      && (readAcross 3 5 * 2 == readAcross 2 5 * 3))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2820,6 +2833,7 @@ def main : IO UInt32 := do
   ok := (← benchOdometer) && ok
   ok := (← benchWideCircle) && ok
   ok := (← benchBinaryCount) && ok
+  ok := (← benchFractions) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
