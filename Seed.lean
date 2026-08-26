@@ -8708,6 +8708,92 @@ theorem the_two_kinds_of_wheel (s : List Bool) {u v : List Bool}
    no_inverse_unsteps_the_collatz,
    the_home_wheel_turns.1⟩
 
+theorem ble_total : ∀ a b : Nat, Nat.ble a b = true ∨ Nat.ble b a = true
+  | 0, _ => Or.inl rfl
+  | _ + 1, 0 => Or.inr rfl
+  | a + 1, b + 1 => ble_total a b
+
+theorem ble_mul : ∀ (c : Nat) {a b : Nat},
+    Nat.ble a b = true → Nat.ble (a * c) (b * c) = true
+  | 0, _, _, _ => rfl
+  | c + 1, _, _, h => ble_add_both (ble_mul c h) h
+
+theorem ble_flip : ∀ (a b : Nat),
+    Nat.ble a b = false → Nat.ble (b + 1) a = true
+  | 0, _, h => nomatch h
+  | _ + 1, 0, _ => rfl
+  | a + 1, b + 1, h => ble_flip a b h
+
+theorem succ_mul : ∀ b c : Nat, (b + 1) * c = b * c + c
+  | _, 0 => rfl
+  | b, c + 1 => by
+      show (b + 1) * c + (b + 1) = (b * c + b) + (c + 1)
+      rw [succ_mul b c, Nat.add_assoc (b * c) c (b + 1),
+          Nat.add_assoc (b * c) b (c + 1)]
+      exact congrArg (b * c + ·) (congrArg (· + 1) (Nat.add_comm c b))
+
+theorem ble_mul_cancel (k : Nat) {a b : Nat}
+    (h : Nat.ble (a * (k + 1)) (b * (k + 1)) = true) :
+    Nat.ble a b = true := by
+  cases hab : Nat.ble a b with
+  | true => rfl
+  | false =>
+      have hstep : Nat.ble ((b + 1) * (k + 1)) (a * (k + 1)) = true :=
+        ble_mul (k + 1) (ble_flip a b hab)
+      have hbad : Nat.ble (b * (k + 1) + (k + 1)) (b * (k + 1)) = true := by
+        rw [← succ_mul b (k + 1)]
+        exact ble_trans _ _ _ hstep h
+      exact nomatch (ble_gain_false (b * (k + 1)) k).symm.trans hbad
+
+def ratLe (a b c d : Nat) : Prop := Nat.ble (a * d) (c * b) = true
+
+theorem the_ratio_le_meets_itself (a b : Nat) : ratLe a b a b :=
+  ble_refl (a * b)
+
+theorem the_ratio_le_chains (a b c e f d₀ : Nat)
+    (h₁ : ratLe a b c (d₀ + 1)) (h₂ : ratLe c (d₀ + 1) e f) :
+    ratLe a b e f := by
+  refine ble_mul_cancel d₀ ?_
+  have s₁ : (a * f) * (d₀ + 1) = (a * (d₀ + 1)) * f := by
+    rw [mul_regroups a f (d₀ + 1), Nat.mul_comm f (d₀ + 1),
+        ← mul_regroups a (d₀ + 1) f]
+  have s₂ : (c * b) * f = (c * f) * b := by
+    rw [mul_regroups c b f, Nat.mul_comm b f, ← mul_regroups c f b]
+  have s₃ : (e * (d₀ + 1)) * b = (e * b) * (d₀ + 1) := by
+    rw [mul_regroups e (d₀ + 1) b, Nat.mul_comm (d₀ + 1) b,
+        ← mul_regroups e b (d₀ + 1)]
+  rw [s₁, ← s₃]
+  exact ble_trans _ _ _ (ble_mul f h₁)
+    (by rw [s₂]; exact ble_mul b h₂)
+
+theorem the_orders_are_total (a b c d : Nat) :
+    ratLe a b c d ∨ ratLe c d a b :=
+  ble_total (a * d) (c * b)
+
+theorem the_order_grounds_in_the_license (a b c d : Nat) :
+    (ratLe a b c d ∧ ratLe c d a b) ↔ sameRatio a b c d :=
+  ⟨fun h => ble_antisymm _ _ h.1 h.2,
+   fun h =>
+     ⟨(by
+        show Nat.ble (a * d) (c * b) = true
+        rw [show a * d = c * b from h]
+        exact ble_refl (c * b)),
+      (by
+        show Nat.ble (c * b) (a * d) = true
+        rw [show a * d = c * b from h]
+        exact ble_refl (c * b))⟩⟩
+
+theorem the_fractions_compare (a b c e f d₀ x y u v : Nat)
+    (h₁ : ratLe a b c (d₀ + 1)) (h₂ : ratLe c (d₀ + 1) e f) :
+    ratLe x y x y
+      ∧ ratLe a b e f
+      ∧ (ratLe x y u v ∨ ratLe u v x y)
+      ∧ ((ratLe x y u v ∧ ratLe u v x y) ↔ sameRatio x y u v) :=
+  ⟨the_ratio_le_meets_itself x y,
+   the_ratio_le_chains a b c e f d₀ h₁ h₂,
+   the_orders_are_total x y u v,
+   the_order_grounds_in_the_license x y u v⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -11308,5 +11394,35 @@ theorem the_two_kinds_of_wheel (s : List Bool) {u v : List Bool}
 
 /-- info: 'Seed.the_two_kinds_of_wheel' does not depend on any axioms -/
 #guard_msgs in #print axioms the_two_kinds_of_wheel
+
+/-- info: 'Seed.ble_total' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_total
+
+/-- info: 'Seed.ble_mul' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_mul
+
+/-- info: 'Seed.ble_flip' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_flip
+
+/-- info: 'Seed.succ_mul' does not depend on any axioms -/
+#guard_msgs in #print axioms succ_mul
+
+/-- info: 'Seed.ble_mul_cancel' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_mul_cancel
+
+/-- info: 'Seed.the_ratio_le_meets_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ratio_le_meets_itself
+
+/-- info: 'Seed.the_ratio_le_chains' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ratio_le_chains
+
+/-- info: 'Seed.the_orders_are_total' does not depend on any axioms -/
+#guard_msgs in #print axioms the_orders_are_total
+
+/-- info: 'Seed.the_order_grounds_in_the_license' does not depend on any axioms -/
+#guard_msgs in #print axioms the_order_grounds_in_the_license
+
+/-- info: 'Seed.the_fractions_compare' does not depend on any axioms -/
+#guard_msgs in #print axioms the_fractions_compare
 
 end Seed

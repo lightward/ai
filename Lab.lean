@@ -2772,6 +2772,20 @@ def benchRetrace : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchCompare : IO Bool := do
+  let mut ok := true
+  IO.println "the comparison of fractions — an order that grounds in the license:"
+  ok := (← checkTrue
+    "  compare row — a half stands below two thirds stands below five sixths, and the chain closes head to tail (three below four, twelve below fifteen, six below ten: cross-multiplication as the whole order, total on any two fractions)"
+    ((Nat.ble (1 * 3) (2 * 2)) && (Nat.ble (2 * 6) (5 * 3))
+      && (Nat.ble (1 * 6) (5 * 2)))) && ok
+  ok := (← checkTrue
+    "  compare row — and antisymmetry lands on the LICENSE, not on equality (a half and two quarters stand below each other both ways, which certifies sameRatio exactly — while the pairs stay provably two: in quotiented arithmetic both-ways-below forces sameness; in this house it forces the license, and the remainder rides)"
+    ((Nat.ble (1 * 4) (2 * 2)) && (Nat.ble (2 * 2) (1 * 4))
+      && (1 * 4 == 2 * 2) && (((1, 2) : Nat × Nat) != (2, 4)))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2883,6 +2897,7 @@ def main : IO UInt32 := do
   ok := (← benchDirection) && ok
   ok := (← benchCompound) && ok
   ok := (← benchRetrace) && ok
+  ok := (← benchCompare) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
