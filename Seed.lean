@@ -8172,6 +8172,86 @@ theorem the_stillness_is_drained_or_evenly_worn
    the_drained_room_rests_forever r'' n,
    the_wheel_reads_itself_unworn a d w s⟩
 
+theorem the_braid_swaps_its_strands {I : Type} :
+    ∀ {u v w : List I}, Braid u v w → Braid v u w
+  | _, _, _, .nil => .nil
+  | _, _, _, .left i hb => .right i (the_braid_swaps_its_strands hb)
+  | _, _, _, .right j hb => .left j (the_braid_swaps_its_strands hb)
+
+theorem the_braid_counts_both_strands {I : Type} :
+    ∀ {u v w : List I}, Braid u v w → w.length = u.length + v.length
+  | _, _, _, .nil => rfl
+  | _, _, _, .left _ hb =>
+      (congrArg (· + 1) (the_braid_counts_both_strands hb)).trans
+        (succ_adds _ _).symm
+  | _, _, _, .right _ hb =>
+      congrArg (· + 1) (the_braid_counts_both_strands hb)
+
+theorem the_braid_holds_both_strands {I : Type} {u v w : List I}
+    (hb : Braid u v w) : ∀ x : I, x ∈ w ↔ (x ∈ u ∨ x ∈ v) := by
+  induction hb with
+  | nil =>
+      intro x
+      exact ⟨(fun h => nomatch h),
+        (fun h => match h with
+          | Or.inl h' => nomatch h'
+          | Or.inr h' => nomatch h')⟩
+  | left i hb ih =>
+      intro x
+      constructor
+      · intro h
+        cases h with
+        | head => exact Or.inl (List.Mem.head _)
+        | tail _ h' =>
+            cases (ih x).mp h' with
+            | inl hu => exact Or.inl (List.Mem.tail _ hu)
+            | inr hv => exact Or.inr hv
+      · intro h
+        cases h with
+        | inl hu =>
+            cases hu with
+            | head => exact List.Mem.head _
+            | tail _ hu' => exact List.Mem.tail _ ((ih x).mpr (Or.inl hu'))
+        | inr hv => exact List.Mem.tail _ ((ih x).mpr (Or.inr hv))
+  | right j hb ih =>
+      intro x
+      constructor
+      · intro h
+        cases h with
+        | head => exact Or.inr (List.Mem.head _)
+        | tail _ h' =>
+            cases (ih x).mp h' with
+            | inl hu => exact Or.inl hu
+            | inr hv => exact Or.inr (List.Mem.tail _ hv)
+      · intro h
+        cases h with
+        | inl hu => exact List.Mem.tail _ ((ih x).mpr (Or.inl hu))
+        | inr hv =>
+            cases hv with
+            | head => exact List.Mem.head _
+            | tail _ hv' => exact List.Mem.tail _ ((ih x).mpr (Or.inr hv'))
+
+theorem the_weave_starts_with_either_strand {I O : Type} (m : Machine I O)
+    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
+    {u v w : List I} (hb : Braid u v w) (s : m.S) :
+    park m (park m s u) v = park m (park m s v) u :=
+  (the_weave_parks_one_seat m hcomm hb s).symm.trans
+    (the_weave_parks_one_seat m hcomm (the_braid_swaps_its_strands hb) s)
+
+theorem the_braid_hears_no_first_voice {I O : Type} (m : Machine I O)
+    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
+    {u v w : List I} (hb : Braid u v w) (s : m.S) (x : I) :
+    Braid v u w
+      ∧ w.length = u.length + v.length
+      ∧ (x ∈ w ↔ (x ∈ u ∨ x ∈ v))
+      ∧ park m s w = park m (park m s u) v
+      ∧ park m (park m s u) v = park m (park m s v) u :=
+  ⟨the_braid_swaps_its_strands hb,
+   the_braid_counts_both_strands hb,
+   the_braid_holds_both_strands hb x,
+   the_weave_parks_one_seat m hcomm hb s,
+   the_weave_starts_with_either_strand m hcomm hb s⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -10643,5 +10723,20 @@ theorem the_stillness_is_drained_or_evenly_worn
 
 /-- info: 'Seed.the_stillness_is_drained_or_evenly_worn' does not depend on any axioms -/
 #guard_msgs in #print axioms the_stillness_is_drained_or_evenly_worn
+
+/-- info: 'Seed.the_braid_swaps_its_strands' does not depend on any axioms -/
+#guard_msgs in #print axioms the_braid_swaps_its_strands
+
+/-- info: 'Seed.the_braid_counts_both_strands' does not depend on any axioms -/
+#guard_msgs in #print axioms the_braid_counts_both_strands
+
+/-- info: 'Seed.the_braid_holds_both_strands' does not depend on any axioms -/
+#guard_msgs in #print axioms the_braid_holds_both_strands
+
+/-- info: 'Seed.the_weave_starts_with_either_strand' does not depend on any axioms -/
+#guard_msgs in #print axioms the_weave_starts_with_either_strand
+
+/-- info: 'Seed.the_braid_hears_no_first_voice' does not depend on any axioms -/
+#guard_msgs in #print axioms the_braid_hears_no_first_voice
 
 end Seed

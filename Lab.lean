@@ -2645,6 +2645,20 @@ def benchStillStation : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchBraidVoices : IO Bool := do
+  let mut ok := true
+  IO.println "the braid's voices — no strand is first:"
+  let uFirst : Nat := park heap (park heap (0 : Nat) [5, 9]) [3]
+  let vFirst : Nat := park heap (park heap (0 : Nat) [3]) [5, 9]
+  let woven : Nat := park heap (0 : Nat) [5, 3, 9]
+  ok := (← checkTrue
+    "  braid row — the weave starts with either strand (one braid, both decompositions, one seat: seventeen whether the pair or the single goes first) and the braid counts both strands whole (three marks from two and one)"
+    ((uFirst == vFirst) && (uFirst == woven) && (woven == 17)
+      && (([5, 3, 9] : List Nat).length
+          == ([5, 9] : List Nat).length + ([3] : List Nat).length))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2748,6 +2762,7 @@ def main : IO UInt32 := do
   ok := (← benchExactCures) && ok
   ok := (← benchServiceLadder) && ok
   ok := (← benchStillStation) && ok
+  ok := (← benchBraidVoices) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
