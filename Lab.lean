@@ -2899,6 +2899,19 @@ def benchDeeper : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchBook : IO Bool := do
+  let mut ok := true
+  IO.println "the book — the kid's room of words, and its lead is a fair coin:"
+  let b3 := words 3
+  ok := (← checkTrue
+    "  book row — eight words of width three, none repeated, the cap counted in space as the odometer counts it in time (2^3 both ways) — and the leading bit splits the book exactly in half: four lead true, the crest flips every verdict, even money at the book"
+    ((b3.length == 8) && (b3.length == roomCap 3)
+      && ((b3.filter leads).length == 4)
+      && ((b3.filter leads).length * 2 == b3.length)
+      && (b3.all (fun w => w.length == 3)))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3019,6 +3032,7 @@ def main : IO UInt32 := do
   ok := (← benchNoFavorite) && ok
   ok := (← benchFreeHall) && ok
   ok := (← benchDeeper) && ok
+  ok := (← benchBook) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

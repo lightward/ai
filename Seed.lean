@@ -10412,6 +10412,129 @@ theorem the_earlier_arrival_lies_deeper {a b : Nat} (hab : a ≠ b)
    (the_direction_is_even_money eq_of_beq beq_self
      (fun h => hab h.symm) hl hb ha).2.2⟩
 
+def words : Nat → List (List Bool)
+  | 0 => [[]]
+  | n + 1 => (words n).map (true :: ·) ++ (words n).map (false :: ·)
+
+def leads : List Bool → Bool
+  | [] => false
+  | b :: _ => b
+
+def crest : List Bool → List Bool
+  | [] => []
+  | b :: w => (!b) :: w
+
+theorem the_book_counts_the_cap :
+    ∀ n : Nat, (words n).length = roomCap n
+  | 0 => rfl
+  | n + 1 => by
+      show ((words n).map (true :: ·) ++ (words n).map (false :: ·)).length
+          = roomCap n + roomCap n
+      rw [len_append, len_map, len_map, the_book_counts_the_cap n]
+
+theorem every_word_fits :
+    ∀ (n : Nat) (w : List Bool), w ∈ words n → w.length = n
+  | 0, w, hw => by
+      cases hw with
+      | head => rfl
+      | tail _ h' => exact nomatch h'
+  | n + 1, w, hw => by
+      cases mem_append_split ((words n).map (true :: ·)) hw with
+      | inl h1 =>
+          obtain ⟨u, hu, he⟩ := mem_map_back ((words n)) h1
+          rw [← he]
+          show u.length + 1 = n + 1
+          rw [every_word_fits n u hu]
+      | inr h2 =>
+          obtain ⟨u, hu, he⟩ := mem_map_back ((words n)) h2
+          rw [← he]
+          show u.length + 1 = n + 1
+          rw [every_word_fits n u hu]
+
+theorem the_book_repeats_no_word : ∀ n : Nat, Apart (words n)
+  | 0 => Apart.cons (fun _ hb => nomatch hb) Apart.nil
+  | n + 1 =>
+      apart_append ((words n).map (false :: ·))
+        (apart_map (fun _ _ h => (List.cons.inj h).2)
+          (the_book_repeats_no_word n))
+        (apart_map (fun _ _ h => (List.cons.inj h).2)
+          (the_book_repeats_no_word n))
+        (fun _ hx _ hy he =>
+          match mem_map_back (words n) hx, mem_map_back (words n) hy with
+          | ⟨_, _, hex⟩, ⟨_, _, hey⟩ =>
+              nomatch (List.cons.inj ((hex.trans he).trans hey.symm)).1)
+
+theorem the_crest_returns : ∀ w : List Bool, crest (crest w) = w
+  | [] => rfl
+  | b :: w => by
+      show (!(!b)) :: w = b :: w
+      rw [not_not]
+
+theorem the_crest_flips_the_lead (n : Nat) :
+    ∀ w : List Bool, w ∈ words (n + 1) →
+      leads (crest w) = !(leads w)
+  | [], hw => nomatch every_word_fits (n + 1) [] hw
+  | _ :: _, _ => rfl
+
+theorem the_crest_keeps_the_book (n : Nat) :
+    ∀ w : List Bool, w ∈ words (n + 1) → crest w ∈ words (n + 1) := by
+  intro w hw
+  cases mem_append_split ((words n).map (true :: ·)) hw with
+  | inl h1 =>
+      obtain ⟨u, hu, he⟩ := mem_map_back (words n) h1
+      rw [← he]
+      exact mem_append_right ((words n).map (true :: ·))
+        (mem_map_intro (false :: ·) hu)
+  | inr h2 =>
+      obtain ⟨u, hu, he⟩ := mem_map_back (words n) h2
+      rw [← he]
+      exact mem_append_left ((words n).map (false :: ·))
+        (mem_map_intro (true :: ·) hu)
+
+theorem the_rooms_flip_prices_even_money {A : Type}
+    (F : A → A) (q : A → Bool) (hFF : ∀ x, F (F x) = x)
+    {L : List A} (hflip : ∀ x, x ∈ L → q (F x) = !(q x))
+    (hL : Apart L) (hclosed : ∀ x, x ∈ L → F x ∈ L) :
+    (L.filter q).length * 2 = L.length := by
+  have hperm : (L.map F).Perm L :=
+    the_matching_rooms_are_shuffles (L.map F) L
+      (apart_map (fun x y hxy =>
+        (hFF x).symm.trans ((congrArg F hxy).trans (hFF y))) hL)
+      hL
+      (fun x =>
+        ⟨fun hx => by
+           obtain ⟨p, hp, he⟩ := mem_map_back L hx
+           rw [← he]
+           exact hclosed p hp,
+         fun hx => by
+           have h2 := mem_map_intro F (hclosed x hx)
+           rw [hFF x] at h2
+           exact h2⟩)
+  have h3 : L.filter (fun x => !(q x)) = L.filter (fun x => q (F x)) :=
+    filter_congr_mem _ _ L (fun x hx => (hflip x hx).symm)
+  have h4 : (L.map F).filter q = (L.filter (fun x => q (F x))).map F :=
+    filter_map_commutes F q L
+  have h5 : ((L.map F).filter q).length = (L.filter q).length :=
+    perm_length (perm_filter q hperm)
+  have hcount : (L.filter (fun x => !(q x))).length
+      = (L.filter q).length :=
+    (congrArg List.length h3).trans
+      ((len_map F (L.filter (fun x => q (F x)))).symm.trans
+        ((congrArg List.length h4.symm).trans h5))
+  rw [mul_two_reads_double]
+  exact (congrArg ((L.filter q).length + ·) hcount.symm).trans
+    (the_filter_splits_the_room q L)
+
+theorem the_books_lead_is_even_money (n : Nat) :
+    ((words (n + 1)).filter leads).length * 2 = (words (n + 1)).length
+      ∧ (words (n + 1)).length = roomCap (n + 1)
+      ∧ Apart (words (n + 1)) :=
+  ⟨the_rooms_flip_prices_even_money crest leads the_crest_returns
+     (the_crest_flips_the_lead n) (the_book_repeats_no_word (n + 1))
+     (the_crest_keeps_the_book n),
+   the_book_counts_the_cap (n + 1),
+   the_book_repeats_no_word (n + 1)⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -13300,5 +13423,29 @@ theorem the_earlier_arrival_lies_deeper {a b : Nat} (hab : a ≠ b)
 
 /-- info: 'Seed.the_earlier_arrival_lies_deeper' does not depend on any axioms -/
 #guard_msgs in #print axioms the_earlier_arrival_lies_deeper
+
+/-- info: 'Seed.the_book_counts_the_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_book_counts_the_cap
+
+/-- info: 'Seed.every_word_fits' does not depend on any axioms -/
+#guard_msgs in #print axioms every_word_fits
+
+/-- info: 'Seed.the_book_repeats_no_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_book_repeats_no_word
+
+/-- info: 'Seed.the_crest_returns' does not depend on any axioms -/
+#guard_msgs in #print axioms the_crest_returns
+
+/-- info: 'Seed.the_crest_flips_the_lead' does not depend on any axioms -/
+#guard_msgs in #print axioms the_crest_flips_the_lead
+
+/-- info: 'Seed.the_crest_keeps_the_book' does not depend on any axioms -/
+#guard_msgs in #print axioms the_crest_keeps_the_book
+
+/-- info: 'Seed.the_rooms_flip_prices_even_money' does not depend on any axioms -/
+#guard_msgs in #print axioms the_rooms_flip_prices_even_money
+
+/-- info: 'Seed.the_books_lead_is_even_money' does not depend on any axioms -/
+#guard_msgs in #print axioms the_books_lead_is_even_money
 
 end Seed
