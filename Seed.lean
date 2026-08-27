@@ -9942,6 +9942,54 @@ theorem one_room_up_to_shuffle {A : Type} {l l' : List A}
      (the_orders_count_to_the_factorial l),
    the_room_repeats_no_plan d⟩
 
+theorem the_flipping_involution_prices_even_money {A : Type}
+    (F : A → A) (q : A → Bool) (hFF : ∀ x, F (F x) = x)
+    (hflip : ∀ x, q (F x) = !(q x)) {L : List A} (hL : Apart L)
+    (hclosed : ∀ x, x ∈ L → F x ∈ L) :
+    (L.filter q).length * 2 = L.length := by
+  have hperm : (L.map F).Perm L :=
+    the_matching_rooms_are_shuffles (L.map F) L
+      (apart_map (fun x y hxy =>
+        (hFF x).symm.trans ((congrArg F hxy).trans (hFF y))) hL)
+      hL
+      (fun x =>
+        ⟨fun hx => by
+           obtain ⟨p, hp, he⟩ := mem_map_back L hx
+           rw [← he]
+           exact hclosed p hp,
+         fun hx => by
+           have h2 := mem_map_intro F (hclosed x hx)
+           rw [hFF x] at h2
+           exact h2⟩)
+  have h3 : L.filter (fun x => !(q x)) = L.filter (fun x => q (F x)) :=
+    filter_congr_mem _ _ L (fun x _ => (hflip x).symm)
+  have h4 : (L.map F).filter q = (L.filter (fun x => q (F x))).map F :=
+    filter_map_commutes F q L
+  have h5 : ((L.map F).filter q).length = (L.filter q).length :=
+    perm_length (perm_filter q hperm)
+  have hcount : (L.filter (fun x => !(q x))).length
+      = (L.filter q).length :=
+    (congrArg List.length h3).trans
+      ((len_map F (L.filter (fun x => q (F x)))).symm.trans
+        ((congrArg List.length h4.symm).trans h5))
+  rw [mul_two_reads_double]
+  exact (congrArg ((L.filter q).length + ·) hcount.symm).trans
+    (the_filter_splits_the_room q L)
+
+theorem the_coin_is_a_flipping_involution {A : Type}
+    (F : A → A) (q : A → Bool) (hFF : ∀ x, F (F x) = x)
+    (hflip : ∀ x, q (F x) = !(q x)) {L : List A} (hL : Apart L)
+    (hclosed : ∀ x, x ∈ L → F x ∈ L)
+    {B : Type} {beq : B → B → Bool}
+    (hE : ∀ x y : B, beq x y = true → x = y)
+    (hR : ∀ x : B, beq x x = true) {a b : B} (hab : a ≠ b)
+    {l : List B} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
+    (L.filter q).length * 2 = L.length
+      ∧ sameRatio ((perms l).filter (firstOf beq a b)).length
+          (fact l.length) 1 2 :=
+  ⟨the_flipping_involution_prices_even_money F q hFF hflip hL hclosed,
+   (the_direction_is_even_money hE hR hab hl ha hb).2.2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -12761,5 +12809,11 @@ theorem one_room_up_to_shuffle {A : Type} {l l' : List A}
 
 /-- info: 'Seed.one_room_up_to_shuffle' does not depend on any axioms -/
 #guard_msgs in #print axioms one_room_up_to_shuffle
+
+/-- info: 'Seed.the_flipping_involution_prices_even_money' does not depend on any axioms -/
+#guard_msgs in #print axioms the_flipping_involution_prices_even_money
+
+/-- info: 'Seed.the_coin_is_a_flipping_involution' does not depend on any axioms -/
+#guard_msgs in #print axioms the_coin_is_a_flipping_involution
 
 end Seed
