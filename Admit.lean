@@ -1,5 +1,5 @@
 import Lean
-import Foam.Turnstile
+import Seed
 
 open Lean
 
@@ -30,7 +30,7 @@ partial def drain (room : List Nat) (pending : List (Nat × List Nat)) :
     Sum (List (Nat × List Nat)) (List Nat) :=
   if pending.isEmpty then .inr room
   else
-    let held := pending.foldl Foam.admission (room, [])
+    let held := pending.foldl Seed.welcome (room, [])
     if held.2.length == pending.length then .inl pending
     else drain held.1 held.2.reverse
 
@@ -56,7 +56,7 @@ def main : IO UInt32 := do
   match drain [] marks with
   | .inr room =>
       if room.length == marks.length then
-        IO.println s!"foam admits itself: {room.length} modules through Foam.admission, vestibule empty"
+        IO.println s!"foam admits itself: {room.length} modules through Seed.welcome, vestibule empty"
         return 0
       else
         IO.eprintln s!"admit: room holds {room.length} of {marks.length}"
