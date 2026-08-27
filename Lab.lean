@@ -2822,6 +2822,26 @@ def benchApartOrders : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchEvenMoney : IO Bool := do
+  let mut ok := true
+  IO.println "the even money — the direction of an independent pair, priced exactly:"
+  let room3 := perms [1, 2, 3]
+  let oneFirst := (room3.filter (firstOf Nat.beq 1 2)).length
+  let twoFirst := (room3.filter (firstOf Nat.beq 2 1)).length
+  ok := (← checkTrue
+    "  money row — three marks, six orders, three each way (the trade of one-and-two is an involution on the room: every verdict flipped, the census permuted, so one-before-two and two-before-one split the factorial exactly)"
+    ((oneFirst == 3) && (twoFirst == 3) && (room3.length == 6)
+      && (oneFirst + twoFirst == room3.length))) && ok
+  let room4 := perms [1, 2, 3, 4]
+  let threeFirst := (room4.filter (firstOf Nat.beq 3 4)).length
+  let fourFirst := (room4.filter (firstOf Nat.beq 4 3)).length
+  ok := (← checkTrue
+    "  money row — four marks, twenty-four orders, twelve each way, and the licensed pair says HALF (twelve against twenty-four crosses with one against two: sameRatio, even money with no measure imported — the sort direction of an independent pair, priced whole)"
+    ((threeFirst == 12) && (fourFirst == 12) && (room4.length == 24)
+      && (threeFirst * 2 == 1 * room4.length))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2937,6 +2957,7 @@ def main : IO UInt32 := do
   ok := (← benchOrderCensus) && ok
   ok := (← benchShuffleRoom) && ok
   ok := (← benchApartOrders) && ok
+  ok := (← benchEvenMoney) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
