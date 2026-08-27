@@ -11315,6 +11315,150 @@ theorem the_average_ink_is_the_middle (n : Nat) :
   rw [mul_two_reads_double]
   exact hkey
 
+theorem the_sum_multiplies (a b c : Nat) :
+    (a + b) * c = a * c + b * c := by
+  rw [Nat.mul_comm (a + b) c, Nat.left_distrib,
+      Nat.mul_comm c a, Nat.mul_comm c b]
+
+theorem mul_four_reads_quadruple (x : Nat) : x * 4 = ((x + x) + x) + x := by
+  show (((0 + x) + x) + x) + x = ((x + x) + x) + x
+  rw [zero_plus]
+
+theorem mul_swap_mid (a b c d : Nat) :
+    (a * b) * (c * d) = (a * c) * (b * d) := by
+  rw [mul_regroups a b (c * d), ← mul_regroups b c d,
+      Nat.mul_comm b c, mul_regroups c b d,
+      ← mul_regroups a c (b * d)]
+
+theorem band_shuffle (p q c : Nat) :
+    ((p + (q + q)) + ((q + q) + (((c + c) + c) + c))) + p
+      = (p + p) + (((q + q) + (c + c)) + ((q + q) + (c + c))) := by
+  rw [Nat.add_assoc (c + c) c c,
+      add_swap_mid (q + q) (c + c) (q + q) (c + c),
+      ← Nat.add_assoc (p + (q + q)) (q + q) ((c + c) + (c + c)),
+      Nat.add_assoc p (q + q) (q + q),
+      Nat.add_comm ((p + ((q + q) + (q + q))) + ((c + c) + (c + c))) p,
+      ← Nat.add_assoc p (p + ((q + q) + (q + q))) ((c + c) + (c + c)),
+      ← Nat.add_assoc p p ((q + q) + (q + q)),
+      Nat.add_assoc (p + p) ((q + q) + (q + q)) ((c + c) + (c + c))]
+
+theorem the_inked_branch_squares (n : Nat) :
+    natSum ((words n).map (fun w => ink (true :: w) * ink (true :: w)))
+      = ((natSum ((words n).map (fun w => ink w * ink w))
+            + natSum ((words n).map ink))
+          + (natSum ((words n).map ink) + (words n).length)) := by
+  rw [map_congr_mem (fun w => ink (true :: w) * ink (true :: w))
+        (fun w => (ink w * ink w + ink w) + (ink w + 1)) (words n)
+        (fun w _ =>
+          show ink (true :: w) * ink (true :: w)
+              = (ink w * ink w + ink w) + (ink w + 1) from
+            congrArg (· + (ink w + 1)) (succ_mul (ink w) (ink w)))]
+  have h1 :
+      natSum ((words n).map
+          (fun w => (ink w * ink w + ink w) + (ink w + 1)))
+        = natSum ((words n).map (fun w => ink w * ink w + ink w))
+          + natSum ((words n).map (fun w => ink w + 1)) :=
+    the_sums_add (fun w => ink w * ink w + ink w) (fun w => ink w + 1)
+      (words n)
+  have h2 :
+      natSum ((words n).map (fun w => ink w * ink w + ink w))
+        = natSum ((words n).map (fun w => ink w * ink w))
+          + natSum ((words n).map ink) :=
+    the_sums_add (fun w => ink w * ink w) ink (words n)
+  have h3 :
+      natSum ((words n).map (fun w => ink w + 1))
+        = natSum ((words n).map ink) + (words n).length := by
+    have h4 :
+        natSum ((words n).map (fun w => ink w + 1))
+          = natSum ((words n).map ink)
+            + natSum ((words n).map (fun _ => 1)) :=
+      the_sums_add ink (fun _ => 1) (words n)
+    rw [h4, the_ones_count_the_room (words n)]
+  rw [h1, h2, h3]
+
+theorem the_blank_branch_squares (n : Nat) :
+    natSum ((words n).map (fun w => ink (false :: w) * ink (false :: w)))
+      = natSum ((words n).map (fun w => ink w * ink w)) :=
+  congrArg natSum
+    (map_congr_mem (fun w => ink (false :: w) * ink (false :: w))
+      (fun w => ink w * ink w) (words n) (fun _ _ => rfl))
+
+theorem the_squares_split_at_the_growth (n : Nat) :
+    natSum ((words (n + 1)).map (fun w => ink w * ink w))
+      = (((natSum ((words n).map (fun w => ink w * ink w))
+              + natSum ((words n).map ink))
+            + (natSum ((words n).map ink) + (words n).length))
+          + natSum ((words n).map (fun w => ink w * ink w))) := by
+  have hsplit :
+      natSum ((words (n + 1)).map (fun w => ink w * ink w))
+        = natSum ((words n).map
+            (fun w => ink (true :: w) * ink (true :: w)))
+          + natSum ((words n).map
+            (fun w => ink (false :: w) * ink (false :: w))) := by
+    show natSum
+        ((((words n).map (true :: ·) ++ (words n).map (false :: ·)).map
+          (fun w => ink w * ink w)))
+      = _
+    rw [map_append (fun w => ink w * ink w) ((words n).map (true :: ·))
+          ((words n).map (false :: ·)),
+        the_sum_resumes]
+    exact congr
+      (congrArg (· + ·)
+        (congrArg natSum
+          (map_map (true :: ·) (fun w => ink w * ink w) (words n))))
+      (congrArg natSum
+        (map_map (false :: ·) (fun w => ink w * ink w) (words n)))
+  rw [hsplit, the_inked_branch_squares n, the_blank_branch_squares n]
+
+theorem the_band_recursion (A B C n : Nat)
+    (hA : A * 4 = (n * (n + 1)) * C)
+    (hB : B * 2 = n * C) :
+    (((A + B) + (B + C)) + A) * 4
+      = ((n + 1) * (n + 2)) * (C + C) := by
+  have hB4 : B * 4 = n * C + n * C :=
+    ((show B * 4 = (B * 2) * 2 from (mul_regroups B 2 2).symm).trans
+      (congrArg (· * 2) hB)).trans (mul_two_reads_double (n * C))
+  rw [the_sum_multiplies ((A + B) + (B + C)) A 4,
+      the_sum_multiplies (A + B) (B + C) 4,
+      the_sum_multiplies A B 4,
+      the_sum_multiplies B C 4,
+      hA, hB4, mul_four_reads_quadruple C,
+      show (n + 1) * (n + 2) = n * (n + 1) + ((n + 1) + (n + 1)) from
+        (congrArg (· + (n + 1)) (succ_mul n (n + 1))).trans
+          (Nat.add_assoc (n * (n + 1)) (n + 1) (n + 1)),
+      the_sum_multiplies (n * (n + 1)) ((n + 1) + (n + 1)) (C + C),
+      Nat.left_distrib (n * (n + 1)) C C,
+      the_sum_multiplies (n + 1) (n + 1) (C + C),
+      succ_mul n (C + C),
+      Nat.left_distrib n C C]
+  exact band_shuffle ((n * (n + 1)) * C) (n * C) C
+
+theorem the_squares_pool_to_the_width :
+    ∀ n : Nat,
+      natSum ((words n).map (fun w => ink w * ink w)) * 4
+        = (n * (n + 1)) * roomCap n
+  | 0 => rfl
+  | n + 1 => by
+      rw [the_squares_split_at_the_growth n, the_book_counts_the_cap n]
+      exact the_band_recursion _ _ _ n
+        (the_squares_pool_to_the_width n)
+        ((the_average_ink_is_the_middle n).1)
+
+theorem the_ink_scatters_a_quarter_per_mark (n : Nat) :
+    natSum ((words n).map (fun w => ink w * ink w)) * 4
+        = (n * (n + 1)) * roomCap n
+      ∧ (natSum ((words n).map (fun w => ink w * ink w)) * 4) * roomCap n
+          = (natSum ((words n).map ink) * 2)
+              * (natSum ((words n).map ink) * 2)
+            + n * (roomCap n * roomCap n) := by
+  refine ⟨the_squares_pool_to_the_width n, ?_⟩
+  rw [the_squares_pool_to_the_width n,
+      show natSum ((words n).map ink) * 2 = n * roomCap n from
+        (the_average_ink_is_the_middle n).1,
+      mul_regroups (n * (n + 1)) (roomCap n) (roomCap n),
+      mul_swap_mid n (roomCap n) n (roomCap n)]
+  exact the_sum_multiplies (n * n) n (roomCap n * roomCap n)
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -14407,5 +14551,35 @@ theorem the_average_ink_is_the_middle (n : Nat) :
 
 /-- info: 'Seed.the_average_ink_is_the_middle' does not depend on any axioms -/
 #guard_msgs in #print axioms the_average_ink_is_the_middle
+
+/-- info: 'Seed.the_sum_multiplies' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sum_multiplies
+
+/-- info: 'Seed.mul_four_reads_quadruple' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_four_reads_quadruple
+
+/-- info: 'Seed.mul_swap_mid' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_swap_mid
+
+/-- info: 'Seed.band_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms band_shuffle
+
+/-- info: 'Seed.the_inked_branch_squares' does not depend on any axioms -/
+#guard_msgs in #print axioms the_inked_branch_squares
+
+/-- info: 'Seed.the_blank_branch_squares' does not depend on any axioms -/
+#guard_msgs in #print axioms the_blank_branch_squares
+
+/-- info: 'Seed.the_squares_split_at_the_growth' does not depend on any axioms -/
+#guard_msgs in #print axioms the_squares_split_at_the_growth
+
+/-- info: 'Seed.the_band_recursion' does not depend on any axioms -/
+#guard_msgs in #print axioms the_band_recursion
+
+/-- info: 'Seed.the_squares_pool_to_the_width' does not depend on any axioms -/
+#guard_msgs in #print axioms the_squares_pool_to_the_width
+
+/-- info: 'Seed.the_ink_scatters_a_quarter_per_mark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ink_scatters_a_quarter_per_mark
 
 end Seed

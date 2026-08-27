@@ -3011,6 +3011,22 @@ def benchInkMiddle : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchInkSpread : IO Bool := do
+  let mut ok := true
+  IO.println "the ink's spread — the second moment, a quarter per mark:"
+  let b3 := words 3
+  let s1 : Nat := natSum (b3.map ink)
+  let s2 : Nat := natSum (b3.map (fun w => ink w * ink w))
+  ok := (← checkTrue
+    "  square row — the squares pool to the width (eight words, squared ink totaling twenty-four: four times the total is width-times-successor times the cap — the parent's pool-to-the-depth law, subtraction-free at the kid's book)"
+    ((s2 == 24) && (s2 * 4 == (3 * 4) * roomCap 3))) && ok
+  ok := (← checkTrue
+    "  spread row — the second moment exceeds the squared mean by a quarter per mark (ninety-six times the cap equals twenty-four squared plus three cap-squared-quarters: the variance is n-over-four, said additively — no subtraction, no division, no measure)"
+    ((s2 * 4) * roomCap 3
+      == (s1 * 2) * (s1 * 2) + 3 * (roomCap 3 * roomCap 3))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3138,6 +3154,7 @@ def main : IO UInt32 := do
   ok := (← benchMiddleAge) && ok
   ok := (← benchBiasedBook) && ok
   ok := (← benchInkMiddle) && ok
+  ok := (← benchInkSpread) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
