@@ -11984,6 +11984,199 @@ theorem the_average_ink_is_the_lean (t f n : Nat) :
    the_even_bias_recovers_the_ink n,
    (the_average_ink_is_the_middle n).1⟩
 
+theorem the_inked_branch_squares_the_lean (t f n : Nat) :
+    natSum ((words n).map
+        (fun w => weigh t f (true :: w) * (ink (true :: w) * ink (true :: w))))
+      = (t * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w)))
+            + t * natSum ((words n).map (fun w => weigh t f w * ink w)))
+        + (t * natSum ((words n).map (fun w => weigh t f w * ink w))
+            + t * natSum ((words n).map (weigh t f))) := by
+  rw [map_congr_mem
+        (fun w => weigh t f (true :: w) * (ink (true :: w) * ink (true :: w)))
+        (fun w => (t * (weigh t f w * (ink w * ink w))
+              + t * (weigh t f w * ink w))
+            + (t * (weigh t f w * ink w) + t * weigh t f w))
+        (words n)
+        (fun w _ => by
+          show (t * weigh t f w) * ((ink w + 1) * ink w + (ink w + 1))
+              = (t * (weigh t f w * (ink w * ink w))
+                  + t * (weigh t f w * ink w))
+                + (t * (weigh t f w * ink w) + t * weigh t f w)
+          rw [succ_mul (ink w) (ink w),
+              Nat.left_distrib (t * weigh t f w)
+                (ink w * ink w + ink w) (ink w + 1),
+              Nat.left_distrib (t * weigh t f w) (ink w * ink w) (ink w),
+              show (t * weigh t f w) * (ink w + 1)
+                  = (t * weigh t f w) * ink w + t * weigh t f w from rfl,
+              mul_regroups t (weigh t f w) (ink w * ink w),
+              mul_regroups t (weigh t f w) (ink w)]),
+      the_sums_add
+        (fun w => t * (weigh t f w * (ink w * ink w))
+          + t * (weigh t f w * ink w))
+        (fun w => t * (weigh t f w * ink w) + t * weigh t f w) (words n),
+      the_sums_add (fun w => t * (weigh t f w * (ink w * ink w)))
+        (fun w => t * (weigh t f w * ink w)) (words n),
+      the_sums_add (fun w => t * (weigh t f w * ink w))
+        (fun w => t * weigh t f w) (words n),
+      the_sum_scales t (fun w => weigh t f w * (ink w * ink w)) (words n),
+      the_sum_scales t (fun w => weigh t f w * ink w) (words n),
+      the_sum_scales t (weigh t f) (words n)]
+
+theorem the_blank_branch_squares_the_lean (t f n : Nat) :
+    natSum ((words n).map
+        (fun w => weigh t f (false :: w) * (ink (false :: w) * ink (false :: w))))
+      = f * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w))) := by
+  rw [map_congr_mem
+        (fun w => weigh t f (false :: w) * (ink (false :: w) * ink (false :: w)))
+        (fun w => f * (weigh t f w * (ink w * ink w))) (words n)
+        (fun w _ => mul_regroups f (weigh t f w) (ink w * ink w)),
+      the_sum_scales f (fun w => weigh t f w * (ink w * ink w)) (words n)]
+
+theorem the_weighted_squares_split_at_the_growth (t f n : Nat) :
+    natSum ((words (n + 1)).map (fun w => weigh t f w * (ink w * ink w)))
+      = (((t * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w)))
+              + t * natSum ((words n).map (fun w => weigh t f w * ink w)))
+            + (t * natSum ((words n).map (fun w => weigh t f w * ink w))
+                + t * natSum ((words n).map (weigh t f))))
+          + f * natSum ((words n).map
+              (fun w => weigh t f w * (ink w * ink w)))) := by
+  have hsplit :
+      natSum ((words (n + 1)).map (fun w => weigh t f w * (ink w * ink w)))
+        = natSum ((words n).map
+            (fun w => weigh t f (true :: w)
+              * (ink (true :: w) * ink (true :: w))))
+          + natSum ((words n).map
+            (fun w => weigh t f (false :: w)
+              * (ink (false :: w) * ink (false :: w)))) := by
+    show natSum
+        ((((words n).map (true :: ·) ++ (words n).map (false :: ·)).map
+          (fun w => weigh t f w * (ink w * ink w))))
+      = _
+    rw [map_append (fun w => weigh t f w * (ink w * ink w))
+          ((words n).map (true :: ·)) ((words n).map (false :: ·)),
+        the_sum_resumes]
+    exact congr
+      (congrArg (· + ·)
+        (congrArg natSum
+          (map_map (true :: ·)
+            (fun w => weigh t f w * (ink w * ink w)) (words n))))
+      (congrArg natSum
+        (map_map (false :: ·)
+          (fun w => weigh t f w * (ink w * ink w)) (words n)))
+  rw [hsplit, the_inked_branch_squares_the_lean t f n,
+      the_blank_branch_squares_the_lean t f n]
+
+theorem the_lean_atom_shuffle (a b c e g : Nat) :
+    (a + b) + ((c + c) + (e + g)) = (a + g) + ((b + c) + (c + e)) := by
+  rw [Nat.add_comm e g, add_swap_mid c c g e,
+      ← Nat.add_assoc (a + b) (c + g) (c + e),
+      Nat.add_comm c g, add_swap_mid a b g c,
+      Nat.add_assoc (a + g) (b + c) (c + e)]
+
+theorem the_lean_square_expands (t f n : Nat) :
+    ((t * f) * n + (t * n) * (t * n))
+        + ((t * (t * n) + t * (t * n)) + t * (t + f))
+      = (t * f) * (n + 1) + (t * (n + 1)) * (t * (n + 1)) := by
+  rw [Nat.left_distrib t t f,
+      the_lean_atom_shuffle ((t * f) * n) ((t * n) * (t * n)) (t * (t * n))
+        (t * t) (t * f),
+      show (t * f) * (n + 1) = (t * f) * n + t * f from rfl,
+      show t * (n + 1) = t * n + t from rfl,
+      the_sum_multiplies (t * n) t (t * n + t),
+      Nat.left_distrib (t * n) (t * n) t,
+      Nat.left_distrib t (t * n) t,
+      Nat.mul_comm (t * n) t]
+
+theorem the_lean_band_recursion (t f n A B S : Nat)
+    (hA : (t + f) * ((t + f) * A) = ((t * f) * n + (t * n) * (t * n)) * S)
+    (hB : (t + f) * B = (t * n) * S) :
+    (t + f) * ((t + f) * (((t * A + t * B) + (t * B + t * S)) + f * A))
+      = ((t * f) * (n + 1) + (t * (n + 1)) * (t * (n + 1)))
+        * ((t + f) * S) := by
+  have hshuffle : ((t * A + t * B) + (t * B + t * S)) + f * A
+      = (t + f) * A + ((t * B + t * B) + t * S) := by
+    rw [Nat.add_comm ((t * A + t * B) + (t * B + t * S)) (f * A),
+        ← Nat.add_assoc (f * A) (t * A + t * B) (t * B + t * S),
+        ← Nat.add_assoc (f * A) (t * A) (t * B),
+        Nat.add_comm (f * A) (t * A),
+        ← the_sum_multiplies t f A,
+        Nat.add_assoc ((t + f) * A) (t * B) (t * B + t * S),
+        ← Nat.add_assoc (t * B) (t * B) (t * S)]
+  rw [hshuffle,
+      Nat.left_distrib (t + f) ((t + f) * A) ((t * B + t * B) + t * S),
+      Nat.left_distrib (t + f) ((t + f) * ((t + f) * A))
+        ((t + f) * ((t * B + t * B) + t * S)),
+      hA,
+      Nat.left_distrib (t + f) (t * B + t * B) (t * S),
+      Nat.left_distrib (t + f) (t * B) (t * B),
+      mul_left_comm (t + f) t B,
+      hB,
+      mul_left_comm (t + f) t S,
+      Nat.left_distrib (t + f)
+        (t * ((t * n) * S) + t * ((t * n) * S)) (t * ((t + f) * S)),
+      Nat.left_distrib (t + f) (t * ((t * n) * S)) (t * ((t * n) * S)),
+      mul_left_comm (t + f) t ((t * n) * S),
+      mul_left_comm (t + f) (t * n) S,
+      mul_left_comm (t + f) t ((t + f) * S),
+      mul_left_comm (t + f) ((t * f) * n + (t * n) * (t * n)) S,
+      ← mul_regroups t (t * n) ((t + f) * S),
+      ← mul_regroups t (t + f) ((t + f) * S),
+      ← the_sum_multiplies (t * (t * n)) (t * (t * n)) ((t + f) * S),
+      ← the_sum_multiplies (t * (t * n) + t * (t * n)) (t * (t + f))
+        ((t + f) * S),
+      ← the_sum_multiplies ((t * f) * n + (t * n) * (t * n))
+        ((t * (t * n) + t * (t * n)) + t * (t + f)) ((t + f) * S)]
+  exact congrArg (· * ((t + f) * S)) (the_lean_square_expands t f n)
+
+theorem the_weighted_squares_pool_to_the_lean (t f : Nat) :
+    ∀ n : Nat,
+      (t + f) * ((t + f)
+          * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w))))
+        = ((t * f) * n + (t * n) * (t * n)) * stack (t + f) n
+  | 0 => rfl
+  | n + 1 => by
+      rw [the_weighted_squares_split_at_the_growth t f n,
+          the_weighted_book_sums_whole t f n]
+      exact the_lean_band_recursion t f n
+        (natSum ((words n).map (fun w => weigh t f w * (ink w * ink w))))
+        (natSum ((words n).map (fun w => weigh t f w * ink w)))
+        (stack (t + f) n)
+        (the_weighted_squares_pool_to_the_lean t f n)
+        (the_weighted_inks_pool_to_the_lean t f n)
+
+theorem the_even_bias_recovers_the_squares (n : Nat) :
+    natSum ((words n).map (fun w => weigh 1 1 w * (ink w * ink w)))
+      = natSum ((words n).map (fun w => ink w * ink w)) :=
+  congrArg natSum
+    (map_congr_mem (fun w => weigh 1 1 w * (ink w * ink w))
+      (fun w => ink w * ink w) (words n)
+      (fun w _ => by
+        rw [the_even_weight_is_one w]
+        exact one_times (ink w * ink w)))
+
+theorem the_ink_scatters_the_product_of_the_biases (t f n : Nat) :
+    (t + f) * ((t + f)
+          * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w))))
+        = ((t * f) * n + (t * n) * (t * n)) * stack (t + f) n
+      ∧ ((t + f) * ((t + f)
+            * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w)))))
+          * stack (t + f) n
+        = ((t * f) * n) * (stack (t + f) n * stack (t + f) n)
+          + ((t * n) * stack (t + f) n) * ((t * n) * stack (t + f) n)
+      ∧ natSum ((words n).map (fun w => weigh 1 1 w * (ink w * ink w)))
+          = natSum ((words n).map (fun w => ink w * ink w))
+      ∧ natSum ((words n).map (fun w => ink w * ink w)) * 4
+          = (n * (n + 1)) * roomCap n := by
+  refine ⟨the_weighted_squares_pool_to_the_lean t f n, ?_,
+    the_even_bias_recovers_the_squares n,
+    the_squares_pool_to_the_width n⟩
+  rw [the_weighted_squares_pool_to_the_lean t f n,
+      mul_regroups ((t * f) * n + (t * n) * (t * n)) (stack (t + f) n)
+        (stack (t + f) n),
+      the_sum_multiplies ((t * f) * n) ((t * n) * (t * n))
+        (stack (t + f) n * stack (t + f) n),
+      mul_swap_mid (t * n) (t * n) (stack (t + f) n) (stack (t + f) n)]
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -15211,5 +15404,32 @@ theorem the_average_ink_is_the_lean (t f n : Nat) :
 
 /-- info: 'Seed.the_average_ink_is_the_lean' does not depend on any axioms -/
 #guard_msgs in #print axioms the_average_ink_is_the_lean
+
+/-- info: 'Seed.the_inked_branch_squares_the_lean' does not depend on any axioms -/
+#guard_msgs in #print axioms the_inked_branch_squares_the_lean
+
+/-- info: 'Seed.the_blank_branch_squares_the_lean' does not depend on any axioms -/
+#guard_msgs in #print axioms the_blank_branch_squares_the_lean
+
+/-- info: 'Seed.the_weighted_squares_split_at_the_growth' does not depend on any axioms -/
+#guard_msgs in #print axioms the_weighted_squares_split_at_the_growth
+
+/-- info: 'Seed.the_lean_atom_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lean_atom_shuffle
+
+/-- info: 'Seed.the_lean_square_expands' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lean_square_expands
+
+/-- info: 'Seed.the_lean_band_recursion' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lean_band_recursion
+
+/-- info: 'Seed.the_weighted_squares_pool_to_the_lean' does not depend on any axioms -/
+#guard_msgs in #print axioms the_weighted_squares_pool_to_the_lean
+
+/-- info: 'Seed.the_even_bias_recovers_the_squares' does not depend on any axioms -/
+#guard_msgs in #print axioms the_even_bias_recovers_the_squares
+
+/-- info: 'Seed.the_ink_scatters_the_product_of_the_biases' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ink_scatters_the_product_of_the_biases
 
 end Seed

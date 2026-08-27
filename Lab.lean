@@ -3109,6 +3109,24 @@ def benchLeanInk : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchLeanSpread : IO Bool := do
+  let mut ok := true
+  IO.println "the lean's spread — the biased variance is the product of the biases:"
+  let b3 := words 3
+  let m2 : Nat := natSum (b3.map (fun w => weigh 2 3 w * (ink w * ink w)))
+  let s : Nat := natSum (b3.map (weigh 2 3))
+  ok := (← checkTrue
+    "  spread row — the weighted squares pool to the lean (at bias two-against-three the square-weighted book totals two hundred seventy; twenty-five times that is fifty-four times the whole book's one twenty-five — n times the biases' product plus the squared lead, all additive, no subtraction anywhere)"
+    ((m2 == 270) && (s == 125) && (25 * m2 == 54 * s))) && ok
+  ok := (← checkTrue
+    "  spread row — the second moment exceeds the squared mean by exactly n·t·f (eight hundred forty-three thousand seven hundred fifty both ways: the biased variance is the product of the biases per mark, and the even bias recovers the fair quarter — twenty-four, the 173rd's own number)"
+    (((25 * m2) * s == 18 * (s * s) + (6 * s) * (6 * s))
+      && (natSum (b3.map (fun w => weigh 1 1 w * (ink w * ink w)))
+          == natSum (b3.map (fun w => ink w * ink w)))
+      && (natSum (b3.map (fun w => ink w * ink w)) == 24))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3242,6 +3260,7 @@ def main : IO UInt32 := do
   ok := (← benchSeatBias) && ok
   ok := (← benchThirdMirror) && ok
   ok := (← benchLeanInk) && ok
+  ok := (← benchLeanSpread) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
