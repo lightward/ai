@@ -2856,6 +2856,20 @@ def benchOneRoom : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchNoFavorite : IO Bool := do
+  let mut ok := true
+  IO.println "the no favorite — every mark heads the room alike, one in n:"
+  let room := perms [1, 2, 3]
+  let h1 := (room.filter (headIs Nat.beq 1)).length
+  let h2 := (room.filter (headIs Nat.beq 2)).length
+  let h3 := (room.filter (headIs Nat.beq 3)).length
+  ok := (← checkTrue
+    "  favorite row — three marks, six orders, each mark heading exactly two (the uniform law: the room has no favorite; two-of-six crosses with one-of-three exactly, one in n as a licensed pair)"
+    ((h1 == 2) && (h2 == 2) && (h3 == 2)
+      && (h1 * 3 == 6) && (2 * 3 == 1 * 6))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2973,6 +2987,7 @@ def main : IO UInt32 := do
   ok := (← benchApartOrders) && ok
   ok := (← benchEvenMoney) && ok
   ok := (← benchOneRoom) && ok
+  ok := (← benchNoFavorite) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

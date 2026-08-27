@@ -10030,6 +10030,133 @@ theorem the_fair_coin_never_rests {A : Type} (F : A → A) (q : A → Bool)
    the_flip_wheels b,
    the_first_wheel_was_a_coin⟩
 
+def headIs {A : Type} (beq : A → A → Bool) (a : A) : List A → Bool
+  | [] => false
+  | x :: _ => beq x a
+
+theorem filter_append_splits {A : Type} (q : A → Bool) :
+    ∀ (xs ys : List A), (xs ++ ys).filter q = xs.filter q ++ ys.filter q
+  | [], _ => rfl
+  | x :: xs, ys => by
+      show (x :: (xs ++ ys)).filter q = (x :: xs).filter q ++ ys.filter q
+      cases hq : q x with
+      | true =>
+          rw [List.filter_cons_of_pos hq, List.filter_cons_of_pos hq,
+              filter_append_splits q xs ys]
+          exact rfl
+      | false =>
+          rw [List.filter_cons_of_neg (ne_true_of_eq_false hq),
+              List.filter_cons_of_neg (ne_true_of_eq_false hq),
+              filter_append_splits q xs ys]
+
+theorem the_foreign_heads_filter_away {A : Type} {beq : A → A → Bool}
+    {a y : A} (hya : beq y a = false) :
+    ∀ L : List (List A),
+      (L.map (y :: ·)).filter (headIs beq a) = []
+  | [] => rfl
+  | w :: L => by
+      show ((y :: w) :: L.map (y :: ·)).filter (headIs beq a) = []
+      have hh : headIs beq a (y :: w) = false := hya
+      rw [List.filter_cons_of_neg (ne_true_of_eq_false hh),
+          the_foreign_heads_filter_away hya L]
+
+theorem the_wedge_heads_once {A : Type} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a : A} :
+    ∀ p : List A, ¬ a ∈ p →
+      (inserts a p).filter (headIs beq a) = [a :: p]
+  | [], _ => by
+      show ([[a]] : List (List A)).filter (headIs beq a) = [[a]]
+      have hh : headIs beq a [a] = true := hR a
+      rw [List.filter_cons_of_pos hh]
+      exact rfl
+  | y :: p, ha => by
+      have hay : a ≠ y := fun he => ha (by rw [he]; exact List.Mem.head p)
+      have hya : beq y a = false := beq_no hE (fun he => hay he.symm)
+      have hh : headIs beq a (a :: y :: p) = true := hR a
+      show ((a :: y :: p) :: (inserts a p).map (y :: ·)).filter
+          (headIs beq a) = [a :: y :: p]
+      rw [List.filter_cons_of_pos hh,
+          the_foreign_heads_filter_away hya (inserts a p)]
+
+theorem the_join_filters_fiberwise {A B : Type} (f : A → List B)
+    (q : B → Bool) :
+    ∀ as : List A,
+      (joinMap f as).filter q = joinMap (fun x => (f x).filter q) as
+  | [] => rfl
+  | x :: as => by
+      show (f x ++ joinMap f as).filter q
+          = (f x).filter q ++ joinMap (fun y => (f y).filter q) as
+      rw [filter_append_splits q (f x) (joinMap f as),
+          the_join_filters_fiberwise f q as]
+
+theorem the_head_wedge_counts {A : Type} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a : A} {m : List A}
+    (ham : ¬ a ∈ m) :
+    ((perms (a :: m)).filter (headIs beq a)).length = fact m.length := by
+  have hfib : ∀ p, p ∈ perms m →
+      ((inserts a p).filter (headIs beq a)).length = 1 := by
+    intro p hp
+    rw [the_wedge_heads_once hE hR p
+      (fun hmem => ham (perm_mem (every_order_is_a_shuffle m p hp) a hmem))]
+    exact rfl
+  show ((joinMap (inserts a) (perms m)).filter (headIs beq a)).length
+      = fact m.length
+  rw [the_join_filters_fiberwise (inserts a) (headIs beq a) (perms m),
+      the_join_counts_evenly (fun p => (inserts a p).filter (headIs beq a))
+        1 (perms m) hfib,
+      one_times, the_orders_count_to_the_factorial m]
+
+theorem the_occupied_room_counts_past_zero {A : Type} {a : A} :
+    ∀ l : List A, a ∈ l → ∃ k, l.length = k + 1
+  | _ :: t, _ => ⟨t.length, rfl⟩
+
+theorem the_head_pays_the_factorial {A : Type} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a : A} {l : List A}
+    (hl : Apart l) (ha : a ∈ l) :
+    ((perms l).filter (headIs beq a)).length * l.length
+      = fact l.length := by
+  obtain ⟨u, v, huv⟩ := mem_splits ha
+  subst huv
+  have hcount : ((perms (u ++ a :: v)).filter (headIs beq a)).length
+      = fact (u ++ v).length := by
+    rw [perm_length (perm_filter (headIs beq a)
+          (the_reordered_ground_keeps_the_room (perm_middle a u v) hl))]
+    exact the_head_wedge_counts hE hR (the_apart_mark_sits_once u v hl)
+  have hlen : (u ++ a :: v).length = (u ++ v).length + 1 := by
+    rw [len_append u (a :: v), len_append u v]
+    exact rfl
+  rw [hcount, hlen]
+  exact rfl
+
+theorem the_room_has_no_favorite {A : Type} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} {l : List A}
+    (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
+    ((perms l).filter (headIs beq a)).length * l.length = fact l.length
+      ∧ sameRatio ((perms l).filter (headIs beq a)).length
+          (fact l.length) 1 l.length
+      ∧ ((perms l).filter (headIs beq a)).length
+          = ((perms l).filter (headIs beq b)).length := by
+  have hA := the_head_pays_the_factorial hE hR hl ha
+  have hB := the_head_pays_the_factorial hE hR hl hb
+  obtain ⟨k, hk⟩ := the_occupied_room_counts_past_zero l ha
+  have hA' : ((perms l).filter (headIs beq a)).length * (k + 1)
+      = fact l.length := by
+    rw [← hk]
+    exact hA
+  have hB' : ((perms l).filter (headIs beq b)).length * (k + 1)
+      = fact l.length := by
+    rw [← hk]
+    exact hB
+  refine ⟨hA, ?_, mul_right_cancel k (hA'.trans hB'.symm)⟩
+  show ((perms l).filter (headIs beq a)).length * l.length
+      = 1 * fact l.length
+  rw [one_times]
+  exact hA
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -12864,5 +12991,29 @@ theorem the_fair_coin_never_rests {A : Type} (F : A → A) (q : A → Bool)
 
 /-- info: 'Seed.the_fair_coin_never_rests' does not depend on any axioms -/
 #guard_msgs in #print axioms the_fair_coin_never_rests
+
+/-- info: 'Seed.filter_append_splits' does not depend on any axioms -/
+#guard_msgs in #print axioms filter_append_splits
+
+/-- info: 'Seed.the_foreign_heads_filter_away' does not depend on any axioms -/
+#guard_msgs in #print axioms the_foreign_heads_filter_away
+
+/-- info: 'Seed.the_wedge_heads_once' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wedge_heads_once
+
+/-- info: 'Seed.the_join_filters_fiberwise' does not depend on any axioms -/
+#guard_msgs in #print axioms the_join_filters_fiberwise
+
+/-- info: 'Seed.the_head_wedge_counts' does not depend on any axioms -/
+#guard_msgs in #print axioms the_head_wedge_counts
+
+/-- info: 'Seed.the_occupied_room_counts_past_zero' does not depend on any axioms -/
+#guard_msgs in #print axioms the_occupied_room_counts_past_zero
+
+/-- info: 'Seed.the_head_pays_the_factorial' does not depend on any axioms -/
+#guard_msgs in #print axioms the_head_pays_the_factorial
+
+/-- info: 'Seed.the_room_has_no_favorite' does not depend on any axioms -/
+#guard_msgs in #print axioms the_room_has_no_favorite
 
 end Seed
