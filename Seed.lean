@@ -10593,6 +10593,28 @@ theorem the_odometer_reads_the_whole_book (n : Nat) (w : List Bool)
      exact the_odometer_comes_home_at_the_cap (zeros n),
    the_book_counts_the_cap n⟩
 
+theorem the_three_rooms_stand_exact (k : Nat) {A : Type}
+    (l p : List A) (hl : Apart l) (v : List Bool) :
+    (Apart ((allPlans k).filter
+          (fun q => Nat.beq (fold (fun a b => a + b) 1 q) (k + 1)))
+        ∧ ∀ q : Plan,
+            q ∈ (allPlans k).filter
+                (fun q => Nat.beq (fold (fun a b => a + b) 1 q) (k + 1))
+              ↔ fold (fun a b => a + b) 1 q = k + 1)
+      ∧ ((p.Perm l ↔ p ∈ perms l)
+          ∧ Apart (perms l)
+          ∧ (perms l).length = fact l.length)
+      ∧ (Apart (words v.length)
+          ∧ v ∈ words v.length
+          ∧ (words v.length).length = roomCap v.length
+          ∧ again inc (val v) (zeros v.length) = v) :=
+  ⟨the_census_is_exact k,
+   the_census_of_orders_is_exact l p hl,
+   ⟨the_book_repeats_no_word v.length,
+    the_book_holds_every_word v,
+    the_book_counts_the_cap v.length,
+    the_clock_reaches_every_word v⟩⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -13517,5 +13539,8 @@ theorem the_odometer_reads_the_whole_book (n : Nat) (w : List Bool)
 
 /-- info: 'Seed.the_odometer_reads_the_whole_book' does not depend on any axioms -/
 #guard_msgs in #print axioms the_odometer_reads_the_whole_book
+
+/-- info: 'Seed.the_three_rooms_stand_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_three_rooms_stand_exact
 
 end Seed
