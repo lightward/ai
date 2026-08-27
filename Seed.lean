@@ -11885,6 +11885,105 @@ theorem the_clock_walks_the_palindromes (d : Nat) (p : Plan)
    the_comb_is_no_palindrome,
    the_lean_reading_hears_the_mirror⟩
 
+theorem the_inked_branch_leans (t f n : Nat) :
+    natSum ((words n).map (fun w => weigh t f (true :: w) * ink (true :: w)))
+      = t * natSum ((words n).map (fun w => weigh t f w * ink w))
+        + t * natSum ((words n).map (weigh t f)) := by
+  rw [map_congr_mem (fun w => weigh t f (true :: w) * ink (true :: w))
+        (fun w => t * (weigh t f w * ink w) + t * weigh t f w) (words n)
+        (fun w _ =>
+          congrArg (· + t * weigh t f w)
+            (mul_regroups t (weigh t f w) (ink w))),
+      the_sums_add (fun w => t * (weigh t f w * ink w))
+        (fun w => t * weigh t f w) (words n),
+      the_sum_scales t (fun w => weigh t f w * ink w) (words n),
+      the_sum_scales t (weigh t f) (words n)]
+
+theorem the_blank_branch_leans (t f n : Nat) :
+    natSum ((words n).map (fun w => weigh t f (false :: w) * ink (false :: w)))
+      = f * natSum ((words n).map (fun w => weigh t f w * ink w)) := by
+  rw [map_congr_mem (fun w => weigh t f (false :: w) * ink (false :: w))
+        (fun w => f * (weigh t f w * ink w)) (words n)
+        (fun w _ => mul_regroups f (weigh t f w) (ink w)),
+      the_sum_scales f (fun w => weigh t f w * ink w) (words n)]
+
+theorem the_leans_split_at_the_growth (t f n : Nat) :
+    natSum ((words (n + 1)).map (fun w => weigh t f w * ink w))
+      = (t * natSum ((words n).map (fun w => weigh t f w * ink w))
+            + t * natSum ((words n).map (weigh t f)))
+        + f * natSum ((words n).map (fun w => weigh t f w * ink w)) := by
+  have hsplit :
+      natSum ((words (n + 1)).map (fun w => weigh t f w * ink w))
+        = natSum ((words n).map
+            (fun w => weigh t f (true :: w) * ink (true :: w)))
+          + natSum ((words n).map
+            (fun w => weigh t f (false :: w) * ink (false :: w))) := by
+    show natSum
+        ((((words n).map (true :: ·) ++ (words n).map (false :: ·)).map
+          (fun w => weigh t f w * ink w)))
+      = _
+    rw [map_append (fun w => weigh t f w * ink w)
+          ((words n).map (true :: ·)) ((words n).map (false :: ·)),
+        the_sum_resumes]
+    exact congr
+      (congrArg (· + ·)
+        (congrArg natSum
+          (map_map (true :: ·) (fun w => weigh t f w * ink w) (words n))))
+      (congrArg natSum
+        (map_map (false :: ·) (fun w => weigh t f w * ink w) (words n)))
+  rw [hsplit, the_inked_branch_leans t f n, the_blank_branch_leans t f n]
+
+theorem the_weighted_inks_pool_to_the_lean (t f : Nat) :
+    ∀ n : Nat,
+      (t + f) * natSum ((words n).map (fun w => weigh t f w * ink w))
+        = (t * n) * stack (t + f) n
+  | 0 => rfl
+  | n + 1 => by
+      have hM := the_weighted_inks_pool_to_the_lean t f n
+      rw [the_leans_split_at_the_growth t f n]
+      have hshuffle :
+          (t * natSum ((words n).map (fun w => weigh t f w * ink w))
+              + t * natSum ((words n).map (weigh t f)))
+            + f * natSum ((words n).map (fun w => weigh t f w * ink w))
+          = (t + f)
+              * natSum ((words n).map (fun w => weigh t f w * ink w))
+            + t * natSum ((words n).map (weigh t f)) := by
+        rw [Nat.add_assoc,
+            Nat.add_comm (t * natSum ((words n).map (weigh t f)))
+              (f * natSum ((words n).map (fun w => weigh t f w * ink w))),
+            ← Nat.add_assoc,
+            ← the_sum_multiplies t f
+              (natSum ((words n).map (fun w => weigh t f w * ink w)))]
+      rw [hshuffle, the_weighted_book_sums_whole t f n, Nat.left_distrib,
+          hM, mul_left_comm (t + f) (t * n) (stack (t + f) n),
+          mul_left_comm (t + f) t (stack (t + f) n),
+          ← the_sum_multiplies (t * n) t ((t + f) * stack (t + f) n)]
+      exact rfl
+
+theorem the_even_bias_recovers_the_ink (n : Nat) :
+    natSum ((words n).map (fun w => weigh 1 1 w * ink w))
+      = natSum ((words n).map ink) :=
+  congrArg natSum
+    (map_congr_mem (fun w => weigh 1 1 w * ink w) ink (words n)
+      (fun w _ => by
+        rw [the_even_weight_is_one w]
+        exact one_times (ink w)))
+
+theorem the_average_ink_is_the_lean (t f n : Nat) :
+    (t + f) * natSum ((words n).map (fun w => weigh t f w * ink w))
+        = (t * n) * stack (t + f) n
+      ∧ sameRatio (natSum ((words n).map (fun w => weigh t f w * ink w)))
+          (stack (t + f) n) (t * n) (t + f)
+      ∧ natSum ((words n).map (fun w => weigh 1 1 w * ink w))
+          = natSum ((words n).map ink)
+      ∧ sameRatio (natSum ((words n).map ink)) (roomCap n) n 2 :=
+  ⟨the_weighted_inks_pool_to_the_lean t f n,
+   (Nat.mul_comm (natSum ((words n).map (fun w => weigh t f w * ink w)))
+       (t + f)).trans
+     (the_weighted_inks_pool_to_the_lean t f n),
+   the_even_bias_recovers_the_ink n,
+   (the_average_ink_is_the_middle n).1⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -15094,5 +15193,23 @@ theorem the_clock_walks_the_palindromes (d : Nat) (p : Plan)
 
 /-- info: 'Seed.the_clock_walks_the_palindromes' does not depend on any axioms -/
 #guard_msgs in #print axioms the_clock_walks_the_palindromes
+
+/-- info: 'Seed.the_inked_branch_leans' does not depend on any axioms -/
+#guard_msgs in #print axioms the_inked_branch_leans
+
+/-- info: 'Seed.the_blank_branch_leans' does not depend on any axioms -/
+#guard_msgs in #print axioms the_blank_branch_leans
+
+/-- info: 'Seed.the_leans_split_at_the_growth' does not depend on any axioms -/
+#guard_msgs in #print axioms the_leans_split_at_the_growth
+
+/-- info: 'Seed.the_weighted_inks_pool_to_the_lean' does not depend on any axioms -/
+#guard_msgs in #print axioms the_weighted_inks_pool_to_the_lean
+
+/-- info: 'Seed.the_even_bias_recovers_the_ink' does not depend on any axioms -/
+#guard_msgs in #print axioms the_even_bias_recovers_the_ink
+
+/-- info: 'Seed.the_average_ink_is_the_lean' does not depend on any axioms -/
+#guard_msgs in #print axioms the_average_ink_is_the_lean
 
 end Seed

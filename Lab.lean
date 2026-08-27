@@ -3091,6 +3091,24 @@ def benchThirdMirror : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchLeanInk : IO Bool := do
+  let mut ok := true
+  IO.println "the lean of the ink — the biased book's mean:"
+  let b3 := words 3
+  let m : Nat := natSum (b3.map (fun w => weigh 2 3 w * ink w))
+  let s : Nat := natSum (b3.map (weigh 2 3))
+  ok := (← checkTrue
+    "  lean row — the weighted inks pool to the lean (at bias two-against-three the ink-weighted book totals one hundred fifty; five times that is six times the whole book's one twenty-five: the average ink is six against five — n times t over t plus f, the binomial mean as a licensed pair, no measure, no subtraction, no coefficient ever named)"
+    ((m == 150) && (s == 125) && (5 * m == 6 * s)
+      && (m * 5 == (2 * 3) * s))) && ok
+  ok := (← checkTrue
+    "  lean row — the even bias recovers the middle (weight one-and-one reads the ink-weighted book as the plain ink book, twelve; and twice twelve is three times the cap — the fair middle standing as the lean's balanced instance, exactly as the even money stood inside the biased lead)"
+    ((natSum (b3.map (fun w => weigh 1 1 w * ink w)) == natSum (b3.map ink))
+      && (natSum (b3.map ink) == 12)
+      && (natSum (b3.map ink) * 2 == 3 * roomCap 3))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3223,6 +3241,7 @@ def main : IO UInt32 := do
   ok := (← benchBiasedLead) && ok
   ok := (← benchSeatBias) && ok
   ok := (← benchThirdMirror) && ok
+  ok := (← benchLeanInk) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
