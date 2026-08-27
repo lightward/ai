@@ -9990,6 +9990,46 @@ theorem the_coin_is_a_flipping_involution {A : Type}
   ⟨the_flipping_involution_prices_even_money F q hFF hflip hL hclosed,
    (the_direction_is_even_money hE hR hab hl ha hb).2.2⟩
 
+theorem a_flipping_involution_never_rests {A : Type} (F : A → A)
+    (q : A → Bool) (hflip : ∀ x, q (F x) = !(q x)) (x : A) :
+    F x ≠ x :=
+  fun he => bool_escapes (q x) ((congrArg q he).symm.trans (hflip x))
+
+theorem the_first_wheel_was_a_coin :
+    ((([false, true] : List Bool).filter (fun x => x)).length) * 2
+      = ([false, true] : List Bool).length :=
+  the_flipping_involution_prices_even_money (fun b => !b) (fun x => x)
+    not_not (fun _ => rfl)
+    (Apart.cons
+      (fun b hb => by
+        cases hb with
+        | head => exact fun h => nomatch h
+        | tail _ h' => exact nomatch h')
+      (Apart.cons (fun b hb => nomatch hb) Apart.nil))
+    (fun x hx => by
+      cases hx with
+      | head => exact List.Mem.tail false (List.Mem.head [])
+      | tail _ h' =>
+          cases h' with
+          | head => exact List.Mem.head [true]
+          | tail _ h'' => exact nomatch h'')
+
+theorem the_fair_coin_never_rests {A : Type} (F : A → A) (q : A → Bool)
+    (hFF : ∀ x, F (F x) = x) (hflip : ∀ x, q (F x) = !(q x))
+    {L : List A} (hL : Apart L) (hclosed : ∀ x, x ∈ L → F x ∈ L)
+    (x : A) (b : Bool) :
+    F x ≠ x
+      ∧ (L.filter q).length * 2 = L.length
+      ∧ (!(!b)) = b
+      ∧ park flip b [(), ()] = b
+      ∧ ((([false, true] : List Bool).filter (fun y => y)).length) * 2
+          = ([false, true] : List Bool).length :=
+  ⟨a_flipping_involution_never_rests F q hflip x,
+   the_flipping_involution_prices_even_money F q hFF hflip hL hclosed,
+   not_not b,
+   the_flip_wheels b,
+   the_first_wheel_was_a_coin⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -12815,5 +12855,14 @@ theorem the_coin_is_a_flipping_involution {A : Type}
 
 /-- info: 'Seed.the_coin_is_a_flipping_involution' does not depend on any axioms -/
 #guard_msgs in #print axioms the_coin_is_a_flipping_involution
+
+/-- info: 'Seed.a_flipping_involution_never_rests' does not depend on any axioms -/
+#guard_msgs in #print axioms a_flipping_involution_never_rests
+
+/-- info: 'Seed.the_first_wheel_was_a_coin' does not depend on any axioms -/
+#guard_msgs in #print axioms the_first_wheel_was_a_coin
+
+/-- info: 'Seed.the_fair_coin_never_rests' does not depend on any axioms -/
+#guard_msgs in #print axioms the_fair_coin_never_rests
 
 end Seed
