@@ -11553,6 +11553,72 @@ theorem the_odometer_logs_the_triangle (n : Nat) :
   rw [hrev, the_book_counts_the_cap n] at h1
   exact h1
 
+theorem the_inked_lead_weighs (t f n : Nat) :
+    natSum (((words n).map (true :: ·)).map (weigh t f))
+      = t * natSum ((words n).map (weigh t f)) := by
+  have h1 : ((words n).map (true :: ·)).map (weigh t f)
+      = (words n).map (fun w => weigh t f (true :: w)) :=
+    map_map (true :: ·) (weigh t f) (words n)
+  have h2 : (words n).map (fun w => weigh t f (true :: w))
+      = (words n).map (fun w => t * weigh t f w) :=
+    map_congr_mem (fun w => weigh t f (true :: w))
+      (fun w => t * weigh t f w) (words n) (fun _ _ => rfl)
+  rw [h1, h2]
+  exact the_sum_scales t (weigh t f) (words n)
+
+theorem the_blank_lead_weighs (t f n : Nat) :
+    natSum (((words n).map (false :: ·)).map (weigh t f))
+      = f * natSum ((words n).map (weigh t f)) := by
+  have h1 : ((words n).map (false :: ·)).map (weigh t f)
+      = (words n).map (fun w => weigh t f (false :: w)) :=
+    map_map (false :: ·) (weigh t f) (words n)
+  have h2 : (words n).map (fun w => weigh t f (false :: w))
+      = (words n).map (fun w => f * weigh t f w) :=
+    map_congr_mem (fun w => weigh t f (false :: w))
+      (fun w => f * weigh t f w) (words n) (fun _ _ => rfl)
+  rw [h1, h2]
+  exact the_sum_scales f (weigh t f) (words n)
+
+theorem the_lead_splits_the_weight (t f n : Nat) :
+    natSum ((words (n + 1)).map (weigh t f))
+      = t * natSum ((words n).map (weigh t f))
+        + f * natSum ((words n).map (weigh t f)) := by
+  show natSum
+      ((((words n).map (true :: ·) ++ (words n).map (false :: ·)).map
+        (weigh t f)))
+    = _
+  rw [map_append (weigh t f) ((words n).map (true :: ·))
+        ((words n).map (false :: ·)),
+      the_sum_resumes,
+      the_inked_lead_weighs t f n, the_blank_lead_weighs t f n]
+
+theorem the_lead_weighs_its_bias (t f n : Nat) :
+    sameRatio (natSum (((words n).map (true :: ·)).map (weigh t f)))
+        (natSum ((words (n + 1)).map (weigh t f))) t (t + f)
+      ∧ sameRatio (natSum (((words n).map (false :: ·)).map (weigh t f)))
+          (natSum ((words (n + 1)).map (weigh t f))) f (t + f)
+      ∧ natSum (((words n).map (true :: ·)).map (weigh t f))
+          + natSum (((words n).map (false :: ·)).map (weigh t f))
+        = natSum ((words (n + 1)).map (weigh t f))
+      ∧ natSum ((words (n + 1)).map (weigh t f)) = stack (t + f) (n + 1) := by
+  refine ⟨?_, ?_, ?_, the_weighted_book_sums_whole t f (n + 1)⟩
+  · show (natSum (((words n).map (true :: ·)).map (weigh t f))) * (t + f)
+        = t * natSum ((words (n + 1)).map (weigh t f))
+    rw [the_inked_lead_weighs t f n, the_lead_splits_the_weight t f n,
+        ← the_sum_multiplies t f (natSum ((words n).map (weigh t f))),
+        mul_regroups t (natSum ((words n).map (weigh t f))) (t + f)]
+    exact congrArg (t * ·)
+      (Nat.mul_comm (natSum ((words n).map (weigh t f))) (t + f))
+  · show (natSum (((words n).map (false :: ·)).map (weigh t f))) * (t + f)
+        = f * natSum ((words (n + 1)).map (weigh t f))
+    rw [the_blank_lead_weighs t f n, the_lead_splits_the_weight t f n,
+        ← the_sum_multiplies t f (natSum ((words n).map (weigh t f))),
+        mul_regroups f (natSum ((words n).map (weigh t f))) (t + f)]
+    exact congrArg (f * ·)
+      (Nat.mul_comm (natSum ((words n).map (weigh t f))) (t + f))
+  · rw [the_inked_lead_weighs t f n, the_blank_lead_weighs t f n,
+        the_lead_splits_the_weight t f n]
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -14693,5 +14759,17 @@ theorem the_odometer_logs_the_triangle (n : Nat) :
 
 /-- info: 'Seed.the_odometer_logs_the_triangle' does not depend on any axioms -/
 #guard_msgs in #print axioms the_odometer_logs_the_triangle
+
+/-- info: 'Seed.the_inked_lead_weighs' does not depend on any axioms -/
+#guard_msgs in #print axioms the_inked_lead_weighs
+
+/-- info: 'Seed.the_blank_lead_weighs' does not depend on any axioms -/
+#guard_msgs in #print axioms the_blank_lead_weighs
+
+/-- info: 'Seed.the_lead_splits_the_weight' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lead_splits_the_weight
+
+/-- info: 'Seed.the_lead_weighs_its_bias' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lead_weighs_its_bias
 
 end Seed

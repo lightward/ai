@@ -3043,6 +3043,21 @@ def benchOdometerTriangle : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchBiasedLead : IO Bool := do
+  let mut ok := true
+  IO.println "the biased lead — the coin learns its weights:"
+  let b2 := words 2
+  let inked : Nat := natSum ((b2.map (true :: ·)).map (weigh 2 3))
+  let blank : Nat := natSum ((b2.map (false :: ·)).map (weigh 2 3))
+  let whole : Nat := natSum ((words 3).map (weigh 2 3))
+  ok := (← checkTrue
+    "  odds row — the lead weighs its bias (at bias two-against-three the inked lead carries fifty of one twenty-five and the blank lead seventy-five: two-in-five and three-in-five as licensed pairs, the kid's first biased odds — the crest's even money as the balanced instance)"
+    ((inked == 50) && (blank == 75) && (whole == 125)
+      && (inked * 5 == 2 * whole) && (blank * 5 == 3 * whole)
+      && (inked + blank == whole))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3172,6 +3187,7 @@ def main : IO UInt32 := do
   ok := (← benchInkMiddle) && ok
   ok := (← benchInkSpread) && ok
   ok := (← benchOdometerTriangle) && ok
+  ok := (← benchBiasedLead) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
