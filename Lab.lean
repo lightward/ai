@@ -2962,6 +2962,24 @@ def benchEveryAge : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchMiddleAge : IO Bool := do
+  let mut ok := true
+  IO.println "the average age — the kid's first expectation:"
+  let room := perms [1, 2, 3]
+  let total : Nat := natSum (room.map (fun p => depthTo p 2))
+  let revTotal : Nat :=
+    natSum (room.map (fun p => depthTo (turnQueue p []) 2))
+  ok := (← checkTrue
+    "  middle row — the ages sum to the middle (six stackings, total age six: twice the total crosses with the room-count times the top age, so the average age is ONE — the exact middle of seats zero-one-two, a licensed pair, no measure and no division anywhere)"
+    ((total == 6) && (total * 2 == 2 * fact 3) && (fact 3 == 6))) && ok
+  ok := (← checkTrue
+    "  facing row — every stacking faces its reversal (age plus turned age plus one reads the room's own length at every member; the turned ages sum to the same total — the reversal deaf at the sum, because the sum is a HEAP-reading and the heap forgets order by trade)"
+    ((room.all (fun p =>
+        (depthTo p 2 + depthTo (turnQueue p []) 2) + 1 == 3))
+      && (revTotal == total))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3086,6 +3104,7 @@ def main : IO UInt32 := do
   ok := (← benchClockBook) && ok
   ok := (← benchEverySeat) && ok
   ok := (← benchEveryAge) && ok
+  ok := (← benchMiddleAge) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

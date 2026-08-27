@@ -10905,6 +10905,228 @@ theorem every_age_counts_alike {l : List Nat} (hl : Apart l)
     hpay,
     hpay.trans (one_times (fact l.length)).symm⟩
 
+def natSum : List Nat → Nat
+  | [] => 0
+  | x :: w => x + natSum w
+
+theorem the_sum_is_a_heap_reading :
+    ∀ (w : List Nat) (s : Nat), park heap s w = s + natSum w
+  | [], _ => rfl
+  | x :: w, s => by
+      show park heap (s + x) w = s + (x + natSum w)
+      rw [the_sum_is_a_heap_reading w (s + x)]
+      exact Nat.add_assoc s x (natSum w)
+
+theorem the_sum_hears_no_shuffle {xs ys : List Nat} (h : xs.Perm ys) :
+    natSum xs = natSum ys :=
+  ((zero_plus (natSum xs)).symm.trans
+    ((the_sum_is_a_heap_reading xs 0).symm.trans
+      ((the_commuting_seat_hears_every_shuffle heap
+          the_heap_steps_commute h ((0 : Nat))).trans
+        (the_sum_is_a_heap_reading ys 0)))).trans
+    (zero_plus (natSum ys))
+
+theorem add_swap_mid (a b c d : Nat) :
+    (a + b) + (c + d) = (a + c) + (b + d) := by
+  rw [Nat.add_assoc a b (c + d), ← Nat.add_assoc b c d,
+      Nat.add_comm b c, Nat.add_assoc c b d,
+      ← Nat.add_assoc a c (b + d)]
+
+theorem the_sums_add {A : Type} (f g : A → Nat) :
+    ∀ L : List A,
+      natSum (L.map (fun x => f x + g x))
+        = natSum (L.map f) + natSum (L.map g)
+  | [] => rfl
+  | x :: L => by
+      show (f x + g x) + natSum (L.map (fun y => f y + g y))
+          = (f x + natSum (L.map f)) + (g x + natSum (L.map g))
+      rw [the_sums_add f g L]
+      exact add_swap_mid (f x) (g x) (natSum (L.map f)) (natSum (L.map g))
+
+theorem the_ones_count_the_room {A : Type} :
+    ∀ L : List A, natSum (L.map (fun _ => 1)) = L.length
+  | [] => rfl
+  | _ :: L => by
+      show 1 + natSum (L.map (fun _ => 1)) = L.length + 1
+      rw [the_ones_count_the_room L]
+      exact Nat.add_comm 1 L.length
+
+theorem a_level_reading_sums_by_count {A : Type} (f : A → Nat) (c : Nat) :
+    ∀ L : List A, (∀ x, x ∈ L → f x = c) →
+      natSum (L.map f) = c * L.length
+  | [], _ => rfl
+  | x :: L, h => by
+      show f x + natSum (L.map f) = c * (L.length + 1)
+      rw [h x (List.Mem.head L),
+          a_level_reading_sums_by_count f c L
+            (fun y hy => h y (List.Mem.tail x hy))]
+      exact Nat.add_comm c (c * L.length)
+
+theorem map_map {A B C : Type} (f : A → B) (g : B → C) :
+    ∀ L : List A, (L.map f).map g = L.map (fun x => g (f x))
+  | [] => rfl
+  | x :: L => congrArg (g (f x) :: ·) (map_map f g L)
+
+theorem turnQueue_of_append {A : Type} :
+    ∀ x y : List A, turnQueue (x ++ y) [] = turnQueue y [] ++ turnQueue x []
+  | [], y => (append_nil (turnQueue y [])).symm
+  | c :: x, y => by
+      show turnQueue (x ++ y) [c] = turnQueue y [] ++ turnQueue (c :: x) []
+      rw [turnQueue_append (x ++ y) [c], turnQueue_of_append x y,
+          show turnQueue (c :: x) [] = turnQueue x [] ++ [c] from
+            turnQueue_append x [c],
+          append_regroups]
+
+theorem the_turned_queue_counts {A : Type} :
+    ∀ (w acc : List A), (turnQueue w acc).length = w.length + acc.length
+  | [], acc => (zero_plus acc.length).symm
+  | x :: w, acc => by
+      show (turnQueue w (x :: acc)).length = (w.length + 1) + acc.length
+      rw [the_turned_queue_counts w (x :: acc), succ_adds]
+      exact rfl
+
+theorem the_turned_queue_is_a_shuffle {A : Type} :
+    ∀ w : List A, (turnQueue w []).Perm w
+  | [] => .nil
+  | x :: w => by
+      show (turnQueue w [x]).Perm (x :: w)
+      rw [turnQueue_append w [x]]
+      exact List.Perm.trans (perm_append_comm (turnQueue w []) [x])
+        (List.Perm.cons x (the_turned_queue_is_a_shuffle w))
+
+theorem the_turned_queue_keeps_the_room {A : Type} {l : List A}
+    {p : List A} (hp : p ∈ perms l) : turnQueue p [] ∈ perms l :=
+  every_shuffle_is_an_order l (turnQueue p [])
+    ((the_turned_queue_is_a_shuffle p).trans
+      (every_order_is_a_shuffle l p hp))
+
+theorem the_reversed_room_is_the_room {A : Type} {l : List A}
+    (hl : Apart l) :
+    ((perms l).map (fun p => turnQueue p [])).Perm (perms l) :=
+  the_matching_rooms_are_shuffles _ _
+    (apart_map
+      (fun p q h =>
+        (the_double_turn_comes_home p).symm.trans
+          ((congrArg (fun w => turnQueue w []) h).trans
+            (the_double_turn_comes_home q)))
+      (the_orders_repeat_never l hl))
+    (the_orders_repeat_never l hl)
+    (fun x =>
+      ⟨fun hx =>
+         match mem_map_back (perms l) hx with
+         | ⟨_, hp, he⟩ => he ▸ the_turned_queue_keeps_the_room hp,
+       fun hx =>
+         (the_double_turn_comes_home x) ▸
+           mem_map_intro (fun p => turnQueue p [])
+             (the_turned_queue_keeps_the_room hx)⟩)
+
+theorem the_split_reads_its_depth (a : Nat) (u v : List Nat)
+    (hfresh : ∀ y, y ∈ u → a ≠ y) :
+    depthTo (u ++ a :: v) a = u.length := by
+  rw [the_depth_counts_the_clicks_since a u (a :: v) hfresh,
+      the_seated_arrive_shallowest v a]
+  exact zero_plus u.length
+
+theorem the_ages_face_each_other {a : Nat} {p : List Nat}
+    (hap : Apart p) (ha : a ∈ p) :
+    (depthTo p a + depthTo (turnQueue p []) a) + 1 = p.length := by
+  obtain ⟨u, v, he⟩ := mem_splits ha
+  subst he
+  have hfu : ∀ y, y ∈ u → a ≠ y := fun y hy hea =>
+    apart_across u (a :: v) hap y hy a (List.Mem.head v) hea.symm
+  have hav : ∀ y, y ∈ v → a ≠ y := by
+    have htail : Apart (a :: v) := apart_drop u (a :: v) hap
+    cases htail with
+    | cons hhead _ => exact fun y hy => hhead y hy
+  have hrev : turnQueue (u ++ a :: v) []
+      = turnQueue v [] ++ (a :: turnQueue u []) := by
+    rw [turnQueue_of_append u (a :: v),
+        show turnQueue (a :: v) [] = turnQueue v [] ++ [a] from
+          turnQueue_append v [a],
+        snoc_append]
+  have hfr : ∀ y, y ∈ turnQueue v [] → a ≠ y := fun y hy =>
+    hav y (match mem_turnQueue v [] hy with
+      | Or.inl h => h
+      | Or.inr h => nomatch h)
+  have hlen : (turnQueue v []).length = v.length :=
+    the_turned_queue_counts v []
+  rw [the_split_reads_its_depth a u v hfu, hrev,
+      the_depth_counts_the_clicks_since a (turnQueue v [])
+        (a :: turnQueue u []) hfr,
+      the_seated_arrive_shallowest (turnQueue u []) a,
+      hlen, zero_plus, len_append u (a :: v)]
+  exact Nat.add_assoc u.length v.length 1
+
+theorem the_turned_ages_sum_alike (a : Nat) {l : List Nat}
+    (hl : Apart l) :
+    natSum ((perms l).map (fun p => depthTo (turnQueue p []) a))
+      = natSum ((perms l).map (fun p => depthTo p a)) := by
+  rw [show (perms l).map (fun p => depthTo (turnQueue p []) a)
+        = ((perms l).map (fun p => turnQueue p [])).map
+            (fun p => depthTo p a)
+      from (map_map (fun p => turnQueue p [])
+        (fun p => depthTo p a) (perms l)).symm]
+  exact the_sum_hears_no_shuffle
+    (perm_map (fun p => depthTo p a) (the_reversed_room_is_the_room hl))
+
+theorem the_ages_pay_the_room (a : Nat) {l : List Nat} (hl : Apart l)
+    (ha : a ∈ l) :
+    natSum ((perms l).map
+        (fun p => (depthTo p a + depthTo (turnQueue p []) a) + 1))
+      = l.length * (perms l).length :=
+  a_level_reading_sums_by_count
+    (fun p => (depthTo p a + depthTo (turnQueue p []) a) + 1) l.length
+    (perms l)
+    (fun p hp =>
+      (the_ages_face_each_other
+        (perm_apart (perm_symm (every_order_is_a_shuffle l p hp)) hl)
+        (perm_mem (perm_symm (every_order_is_a_shuffle l p hp)) a ha)).trans
+        (the_orders_keep_the_length l p hp))
+
+theorem the_average_age_is_the_middle {l : List Nat} (hl : Apart l)
+    {a : Nat} (ha : a ∈ l) (n : Nat) (hn : l.length = n + 1) :
+    sameRatio (natSum ((perms l).map (fun p => depthTo p a)))
+        (fact l.length) n 2
+      ∧ natSum ((perms l).map (fun p => depthTo (turnQueue p []) a))
+          = natSum ((perms l).map (fun p => depthTo p a))
+      ∧ ∀ p, p ∈ perms l →
+          (depthTo p a + depthTo (turnQueue p []) a) + 1 = l.length := by
+  have hface : ∀ p, p ∈ perms l →
+      (depthTo p a + depthTo (turnQueue p []) a) + 1 = l.length :=
+    fun p hp =>
+      (the_ages_face_each_other
+        (perm_apart (perm_symm (every_order_is_a_shuffle l p hp)) hl)
+        (perm_mem (perm_symm (every_order_is_a_shuffle l p hp)) a ha)).trans
+        (the_orders_keep_the_length l p hp)
+  have hrev := the_turned_ages_sum_alike a hl
+  refine ⟨?_, hrev, hface⟩
+  have hsplit :
+      natSum ((perms l).map
+          (fun p => (depthTo p a + depthTo (turnQueue p []) a) + 1))
+        = (natSum ((perms l).map (fun p => depthTo p a))
+            + natSum ((perms l).map (fun p => depthTo (turnQueue p []) a)))
+          + (perms l).length :=
+    (the_sums_add (fun p => depthTo p a + depthTo (turnQueue p []) a)
+        (fun _ => 1) (perms l)).trans
+      (congr
+        (congrArg (· + ·)
+          (the_sums_add (fun p => depthTo p a)
+            (fun p => depthTo (turnQueue p []) a) (perms l)))
+        (the_ones_count_the_room (perms l)))
+  have h1 := hsplit.symm.trans (the_ages_pay_the_room a hl ha)
+  rw [hrev, the_orders_count_to_the_factorial l] at h1
+  have h2 : l.length * fact l.length
+      = n * fact l.length + fact l.length :=
+    (congrArg (· * fact l.length) hn).trans (succ_mul n (fact l.length))
+  have hSS : natSum ((perms l).map (fun p => depthTo p a))
+        + natSum ((perms l).map (fun p => depthTo p a))
+      = n * fact l.length :=
+    add_right_cancel (fact l.length) (h1.trans h2)
+  show natSum ((perms l).map (fun p => depthTo p a)) * 2
+      = n * fact l.length
+  rw [mul_two_reads_double]
+  exact hSS
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -13901,5 +14123,56 @@ theorem every_age_counts_alike {l : List Nat} (hl : Apart l)
 
 /-- info: 'Seed.every_age_counts_alike' does not depend on any axioms -/
 #guard_msgs in #print axioms every_age_counts_alike
+
+/-- info: 'Seed.the_sum_is_a_heap_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sum_is_a_heap_reading
+
+/-- info: 'Seed.the_sum_hears_no_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sum_hears_no_shuffle
+
+/-- info: 'Seed.add_swap_mid' does not depend on any axioms -/
+#guard_msgs in #print axioms add_swap_mid
+
+/-- info: 'Seed.the_sums_add' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sums_add
+
+/-- info: 'Seed.the_ones_count_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ones_count_the_room
+
+/-- info: 'Seed.a_level_reading_sums_by_count' does not depend on any axioms -/
+#guard_msgs in #print axioms a_level_reading_sums_by_count
+
+/-- info: 'Seed.map_map' does not depend on any axioms -/
+#guard_msgs in #print axioms map_map
+
+/-- info: 'Seed.turnQueue_of_append' does not depend on any axioms -/
+#guard_msgs in #print axioms turnQueue_of_append
+
+/-- info: 'Seed.the_turned_queue_counts' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turned_queue_counts
+
+/-- info: 'Seed.the_turned_queue_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turned_queue_is_a_shuffle
+
+/-- info: 'Seed.the_turned_queue_keeps_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turned_queue_keeps_the_room
+
+/-- info: 'Seed.the_reversed_room_is_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reversed_room_is_the_room
+
+/-- info: 'Seed.the_split_reads_its_depth' does not depend on any axioms -/
+#guard_msgs in #print axioms the_split_reads_its_depth
+
+/-- info: 'Seed.the_ages_face_each_other' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ages_face_each_other
+
+/-- info: 'Seed.the_turned_ages_sum_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turned_ages_sum_alike
+
+/-- info: 'Seed.the_ages_pay_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ages_pay_the_room
+
+/-- info: 'Seed.the_average_age_is_the_middle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_average_age_is_the_middle
 
 end Seed
