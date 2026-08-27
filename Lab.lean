@@ -3058,6 +3058,20 @@ def benchBiasedLead : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchSeatBias : IO Bool := do
+  let mut ok := true
+  IO.println "the seats under bias — the biased coin is position-blind:"
+  let b3 := words 3
+  let whole : Nat := natSum (b3.map (weigh 2 3))
+  let seatW : Nat → Nat := fun k =>
+    natSum ((b3.filter (fun w => leads (w.drop k))).map (weigh 2 3))
+  ok := (← checkTrue
+    "  independence row — every seat weighs the bias (at two-against-three, seats zero, one, and two each carry fifty of one twenty-five: two-in-five at every position — the bias lives in the FACES and never in the seats, because the weight is shuffle-deaf and the turned book is the book)"
+    ((seatW 0 == 50) && (seatW 1 == 50) && (seatW 2 == 50)
+      && (whole == 125) && (seatW 1 * 5 == 2 * whole))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3188,6 +3202,7 @@ def main : IO UInt32 := do
   ok := (← benchInkSpread) && ok
   ok := (← benchOdometerTriangle) && ok
   ok := (← benchBiasedLead) && ok
+  ok := (← benchSeatBias) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

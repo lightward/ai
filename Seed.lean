@@ -11619,6 +11619,176 @@ theorem the_lead_weighs_its_bias (t f n : Nat) :
   · rw [the_inked_lead_weighs t f n, the_blank_lead_weighs t f n,
         the_lead_splits_the_weight t f n]
 
+theorem mul_left_comm (a b c : Nat) : a * (b * c) = b * (a * c) := by
+  rw [← mul_regroups a b c, Nat.mul_comm a b, mul_regroups b a c]
+
+theorem weigh_hears_no_shuffle (t f : Nat) {p q : List Bool}
+    (h : p.Perm q) : weigh t f p = weigh t f q := by
+  induction h with
+  | nil => rfl
+  | cons x _ ih =>
+      cases x with
+      | true => exact congrArg (t * ·) ih
+      | false => exact congrArg (f * ·) ih
+  | swap x y l =>
+      cases x with
+      | true =>
+          cases y with
+          | true => rfl
+          | false => exact mul_left_comm f t (weigh t f l)
+      | false =>
+          cases y with
+          | true => exact mul_left_comm t f (weigh t f l)
+          | false => rfl
+  | trans _ _ ih1 ih2 => exact ih1.trans ih2
+
+theorem the_turn_keeps_the_book {n : Nat} (k : Nat) {w : List Bool}
+    (hw : w ∈ words n) : rotate k w ∈ words n := by
+  have hlen : (rotate k w).length = n :=
+    (the_turn_keeps_the_length k w).trans (every_word_fits n w hw)
+  have h := the_book_holds_every_word (rotate k w)
+  rw [hlen] at h
+  exact h
+
+theorem the_turn_covers_the_book {n : Nat} (k : Nat) {x : List Bool}
+    (hx : x ∈ words n) : ∃ y, y ∈ words n ∧ rotate k y = x := by
+  cases hble : Nat.ble k x.length with
+  | true =>
+      obtain ⟨m, hm⟩ := ble_gives_the_gap k x.length hble
+      exact ⟨rotate m x, the_turn_keeps_the_book m hx,
+        the_turns_undo m k x (hm.symm.trans (Nat.add_comm k m))⟩
+  | false =>
+      have hxk : Nat.ble x.length k = true :=
+        ble_trans _ _ _ (ble_le_succ x.length) (ble_flip k x.length hble)
+      exact ⟨x, hx, the_short_word_turns_home x k hxk⟩
+
+theorem the_turned_book_is_the_book (n k : Nat) :
+    ((words n).map (rotate k)).Perm (words n) :=
+  the_matching_rooms_are_shuffles _ _
+    (apart_map (fun p q h => the_turn_merges_nothing k p q h)
+      (the_book_repeats_no_word n))
+    (the_book_repeats_no_word n)
+    (fun _x =>
+      ⟨fun hx =>
+         match mem_map_back (words n) hx with
+         | ⟨_, hp, he⟩ => he ▸ the_turn_keeps_the_book k hp,
+       fun hx =>
+         match the_turn_covers_the_book k hx with
+         | ⟨_, hy, he⟩ => he ▸ mem_map_intro (rotate k) hy⟩)
+
+theorem the_seat_leads_through_the_turn (k m : Nat) (w : List Bool)
+    (h : w.length = k + (m + 1)) :
+    leads (rotate k w) = leads (w.drop k) := by
+  obtain ⟨x, t, he⟩ :=
+    the_positive_word_leads (w.drop k) m (drop_length k w h)
+  show leads (w.drop k ++ w.take k) = leads (w.drop k)
+  rw [he]
+  exact rfl
+
+theorem filter_keeps_the_passing {A : Type} (q : A → Bool) :
+    ∀ L : List A, (∀ x, x ∈ L → q x = true) → L.filter q = L
+  | [], _ => rfl
+  | x :: L, h => by
+      rw [List.filter_cons_of_pos (h x (List.Mem.head L)),
+          filter_keeps_the_passing q L
+            (fun y hy => h y (List.Mem.tail x hy))]
+
+theorem filter_drops_the_failing {A : Type} (q : A → Bool) :
+    ∀ L : List A, (∀ x, x ∈ L → q x = false) → L.filter q = []
+  | [], _ => rfl
+  | x :: L, h => by
+      rw [List.filter_cons_of_neg
+            (ne_true_of_eq_false (h x (List.Mem.head L))),
+          filter_drops_the_failing q L
+            (fun y hy => h y (List.Mem.tail x hy))]
+
+theorem the_lead_filter_is_the_branch (n : Nat) :
+    (words (n + 1)).filter leads = (words n).map (true :: ·) := by
+  show ((words n).map (true :: ·) ++ (words n).map (false :: ·)).filter
+      leads
+    = (words n).map (true :: ·)
+  rw [filter_append_splits leads ((words n).map (true :: ·))
+        ((words n).map (false :: ·)),
+      filter_keeps_the_passing leads ((words n).map (true :: ·))
+        (fun x hx =>
+          match mem_map_back (words n) hx with
+          | ⟨_, _, he⟩ => by rw [← he]; exact rfl),
+      filter_drops_the_failing leads ((words n).map (false :: ·))
+        (fun x hx =>
+          match mem_map_back (words n) hx with
+          | ⟨_, _, he⟩ => by rw [← he]; exact rfl),
+      append_nil]
+
+theorem the_seat_marginal_is_the_lead_marginal (t f k m n : Nat)
+    (hn : n = k + (m + 1)) :
+    natSum (((words n).filter (fun w => leads (w.drop k))).map
+        (weigh t f))
+      = natSum (((words n).filter leads).map (weigh t f)) := by
+  have hcongr :
+      (words n).filter (fun w => leads (w.drop k))
+        = (words n).filter (fun w => leads (rotate k w)) :=
+    filter_congr_mem (fun w => leads (w.drop k))
+      (fun w => leads (rotate k w)) (words n)
+      (fun w hw =>
+        (the_seat_leads_through_the_turn k m w
+          ((every_word_fits n w hw).trans hn)).symm)
+  have hweigh :
+      ((words n).filter (fun w => leads (rotate k w))).map (weigh t f)
+        = ((words n).filter (fun w => leads (rotate k w))).map
+            (fun w => weigh t f (rotate k w)) :=
+    map_congr_mem (weigh t f) (fun w => weigh t f (rotate k w))
+      ((words n).filter (fun w => leads (rotate k w)))
+      (fun w _ =>
+        weigh_hears_no_shuffle t f
+          (perm_symm (the_turned_word_is_a_shuffle k w)))
+  have hmapmap :
+      (((words n).filter (fun w => leads (rotate k w))).map
+          (rotate k)).map (weigh t f)
+        = ((words n).filter (fun w => leads (rotate k w))).map
+            (fun w => weigh t f (rotate k w)) :=
+    map_map (rotate k) (weigh t f)
+      ((words n).filter (fun w => leads (rotate k w)))
+  have hcomm :
+      ((words n).map (rotate k)).filter leads
+        = ((words n).filter (fun w => leads (rotate k w))).map
+            (rotate k) :=
+    filter_map_commutes (rotate k) leads (words n)
+  have hperm :
+      natSum ((((words n).map (rotate k)).filter leads).map (weigh t f))
+        = natSum (((words n).filter leads).map (weigh t f)) :=
+    the_sum_hears_no_shuffle
+      (perm_map (weigh t f)
+        (perm_filter leads (the_turned_book_is_the_book n k)))
+  rw [hcongr, hweigh, ← hmapmap, ← hcomm]
+  exact hperm
+
+theorem every_seat_weighs_the_bias (t f k m n : Nat)
+    (hn : n + 1 = k + (m + 1)) :
+    natSum (((words (n + 1)).filter (fun w => leads (w.drop k))).map
+        (weigh t f))
+        = t * natSum ((words n).map (weigh t f))
+      ∧ (words (n + 1)).filter leads = (words n).map (true :: ·)
+      ∧ sameRatio
+          (natSum (((words (n + 1)).filter
+            (fun w => leads (w.drop k))).map (weigh t f)))
+          (natSum ((words (n + 1)).map (weigh t f))) t (t + f) := by
+  have hmarg :
+      natSum (((words (n + 1)).filter (fun w => leads (w.drop k))).map
+          (weigh t f))
+        = t * natSum ((words n).map (weigh t f)) := by
+    rw [the_seat_marginal_is_the_lead_marginal t f k m (n + 1) hn,
+        the_lead_filter_is_the_branch n]
+    exact the_inked_lead_weighs t f n
+  refine ⟨hmarg, the_lead_filter_is_the_branch n, ?_⟩
+  show natSum (((words (n + 1)).filter (fun w => leads (w.drop k))).map
+        (weigh t f)) * (t + f)
+      = t * natSum ((words (n + 1)).map (weigh t f))
+  rw [hmarg, the_lead_splits_the_weight t f n,
+      ← the_sum_multiplies t f (natSum ((words n).map (weigh t f))),
+      mul_regroups t (natSum ((words n).map (weigh t f))) (t + f)]
+  exact congrArg (t * ·)
+    (Nat.mul_comm (natSum ((words n).map (weigh t f))) (t + f))
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -14771,5 +14941,38 @@ theorem the_lead_weighs_its_bias (t f n : Nat) :
 
 /-- info: 'Seed.the_lead_weighs_its_bias' does not depend on any axioms -/
 #guard_msgs in #print axioms the_lead_weighs_its_bias
+
+/-- info: 'Seed.mul_left_comm' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_left_comm
+
+/-- info: 'Seed.weigh_hears_no_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms weigh_hears_no_shuffle
+
+/-- info: 'Seed.the_turn_keeps_the_book' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turn_keeps_the_book
+
+/-- info: 'Seed.the_turn_covers_the_book' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turn_covers_the_book
+
+/-- info: 'Seed.the_turned_book_is_the_book' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turned_book_is_the_book
+
+/-- info: 'Seed.the_seat_leads_through_the_turn' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_leads_through_the_turn
+
+/-- info: 'Seed.filter_keeps_the_passing' does not depend on any axioms -/
+#guard_msgs in #print axioms filter_keeps_the_passing
+
+/-- info: 'Seed.filter_drops_the_failing' does not depend on any axioms -/
+#guard_msgs in #print axioms filter_drops_the_failing
+
+/-- info: 'Seed.the_lead_filter_is_the_branch' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lead_filter_is_the_branch
+
+/-- info: 'Seed.the_seat_marginal_is_the_lead_marginal' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_marginal_is_the_lead_marginal
+
+/-- info: 'Seed.every_seat_weighs_the_bias' does not depend on any axioms -/
+#guard_msgs in #print axioms every_seat_weighs_the_bias
 
 end Seed
