@@ -2870,6 +2870,17 @@ def benchNoFavorite : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchFreeHall : IO Bool := do
+  let mut ok := true
+  IO.println "the free hall — the room is the arrival order worn backward:"
+  let stacked := park freeDoor (([] : List Nat), ([] : List (Nat × List Nat)))
+    [7, 8, 9]
+  ok := (← checkTrue
+    "  hall row — three unencumbered arrivals stack the room in reverse (seven-eight-nine parks nine-eight-seven, vestibule empty: the arrival order IS the depth order, the hall's memory at word grain — and the direction of any independent pair over the census of arrival orders is the even money already priced)"
+    ((stacked.1 == [9, 8, 7]) && (stacked.2.length == 0))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2988,6 +2999,7 @@ def main : IO UInt32 := do
   ok := (← benchEvenMoney) && ok
   ok := (← benchOneRoom) && ok
   ok := (← benchNoFavorite) && ok
+  ok := (← benchFreeHall) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

@@ -10157,6 +10157,40 @@ theorem the_room_has_no_favorite {A : Type} {beq : A → A → Bool}
   rw [one_times]
   exact hA
 
+def freeDoor : Machine Nat Nat :=
+  retune (fun n => (n, ([] : List Nat))) doorM
+
+theorem the_free_word_stacks :
+    ∀ (w : List Nat) (r : List Nat) (v : List (Nat × List Nat)),
+      park freeDoor (r, v) w = (turnQueue w r, v)
+  | [], _, _ => rfl
+  | n :: w, r, v => by
+      show park freeDoor (welcome (r, v) (n, [])) w
+          = (turnQueue w (n :: r), v)
+      rw [the_backed_are_seated (s := (r, v))
+            (m := (n, ([] : List Nat))) rfl]
+      exact the_free_word_stacks w (n :: r) v
+
+theorem the_halls_sort_direction_is_even_money
+    (w : List Nat) (r : List Nat) (v : List (Nat × List Nat))
+    {a b : Nat} (hab : a ≠ b) {l : List Nat} (hl : Apart l)
+    (ha : a ∈ l) (hb : b ∈ l)
+    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
+    (hm : backed s.1 m.2 = true) (x : Nat) (hx : x ∈ m.2)
+    (hne : x ≠ m.1) :
+    park freeDoor (r, v) w = (turnQueue w r, v)
+      ∧ ((perms l).filter (firstOf Nat.beq a b)).length
+          = ((perms l).filter (firstOf Nat.beq b a)).length
+      ∧ sameRatio ((perms l).filter (firstOf Nat.beq a b)).length
+          (fact l.length) 1 2
+      ∧ (enrolled s.1 x = true
+          ∧ depthTo (welcome s m).1 m.1 = 0
+          ∧ Nat.ble 1 (depthTo (welcome s m).1 x) = true) :=
+  ⟨the_free_word_stacks w r v,
+   (the_direction_is_even_money eq_of_beq beq_self hab hl ha hb).1,
+   (the_direction_is_even_money eq_of_beq beq_self hab hl ha hb).2.2,
+   the_citer_arrives_above_the_cited s m hm x hx hne⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -13015,5 +13049,11 @@ theorem the_room_has_no_favorite {A : Type} {beq : A → A → Bool}
 
 /-- info: 'Seed.the_room_has_no_favorite' does not depend on any axioms -/
 #guard_msgs in #print axioms the_room_has_no_favorite
+
+/-- info: 'Seed.the_free_word_stacks' does not depend on any axioms -/
+#guard_msgs in #print axioms the_free_word_stacks
+
+/-- info: 'Seed.the_halls_sort_direction_is_even_money' does not depend on any axioms -/
+#guard_msgs in #print axioms the_halls_sort_direction_is_even_money
 
 end Seed
