@@ -2912,6 +2912,18 @@ def benchBook : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchClockBook : IO Bool := do
+  let mut ok := true
+  IO.println "the clock and the book — every word is a time, every time a word:"
+  let reached := (words 3).all
+    (fun w => again inc (val w) (zeros 3) == w)
+  ok := (← checkTrue
+    "  clock-book row — the register reaches every word of the book at exactly its own reading (all eight words of width three arrived at by ticking their own value from zero; five ticks land true-false-true whose value is five) — the orbit IS the book: the naming-time of each seat is the seat's own value, one 2^n read as breadth and as period at once"
+    (reached && (again inc 5 (zeros 3) == [true, false, true])
+      && (val [true, false, true] == 5))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3033,6 +3045,7 @@ def main : IO UInt32 := do
   ok := (← benchFreeHall) && ok
   ok := (← benchDeeper) && ok
   ok := (← benchBook) && ok
+  ok := (← benchClockBook) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

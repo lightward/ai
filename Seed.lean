@@ -10535,6 +10535,64 @@ theorem the_books_lead_is_even_money (n : Nat) :
    the_book_counts_the_cap (n + 1),
    the_book_repeats_no_word (n + 1)⟩
 
+theorem the_book_holds_every_word :
+    ∀ w : List Bool, w ∈ words w.length
+  | [] => List.Mem.head _
+  | true :: t =>
+      mem_append_left ((words t.length).map (false :: ·))
+        (mem_map_intro (true :: ·) (the_book_holds_every_word t))
+  | false :: t =>
+      mem_append_right ((words t.length).map (true :: ·))
+        (mem_map_intro (false :: ·) (the_book_holds_every_word t))
+
+theorem the_clock_reaches_every_word :
+    ∀ w : List Bool, again inc (val w) (zeros w.length) = w
+  | [] => rfl
+  | false :: t => by
+      show again inc ((0 : Nat) + (val t + val t))
+          (false :: zeros t.length) = false :: t
+      rw [zero_plus,
+          the_doubling_passes_the_tick_inward (val t) false
+            (zeros t.length),
+          the_clock_reaches_every_word t]
+  | true :: t => by
+      show again inc ((1 : Nat) + (val t + val t))
+          (false :: zeros t.length) = true :: t
+      rw [Nat.add_comm 1 (val t + val t)]
+      show inc (again inc (val t + val t) (false :: zeros t.length))
+          = true :: t
+      rw [the_doubling_passes_the_tick_inward (val t) false
+            (zeros t.length),
+          the_clock_reaches_every_word t]
+      exact rfl
+
+theorem the_clock_never_repeats_below_the_cap (n : Nat) {t t' : Nat}
+    (ht : Nat.ble (t + 1) (roomCap n) = true)
+    (ht' : Nat.ble (t' + 1) (roomCap n) = true) (hne : t ≠ t') :
+    again inc t (zeros n) ≠ again inc t' (zeros n) :=
+  fun he => hne ((the_clock_reads_its_count n t ht).symm.trans
+    ((congrArg val he).trans (the_clock_reads_its_count n t' ht')))
+
+theorem the_odometer_reads_the_whole_book (n : Nat) (w : List Bool)
+    (hw : w ∈ words n) {t t' : Nat}
+    (ht : Nat.ble (t + 1) (roomCap n) = true)
+    (ht' : Nat.ble (t' + 1) (roomCap n) = true) (hne : t ≠ t') :
+    again inc (val w) (zeros n) = w
+      ∧ (∀ v : List Bool, v ∈ words v.length)
+      ∧ again inc t (zeros n) ≠ again inc t' (zeros n)
+      ∧ again inc (roomCap n) (zeros n) = zeros n
+      ∧ (words n).length = roomCap n :=
+  ⟨by
+     rw [← every_word_fits n w hw]
+     exact the_clock_reaches_every_word w,
+   the_book_holds_every_word,
+   the_clock_never_repeats_below_the_cap n ht ht' hne,
+   by
+     rw [show roomCap n = roomCap (zeros n).length from
+       (congrArg roomCap (the_zeros_span_the_width n)).symm]
+     exact the_odometer_comes_home_at_the_cap (zeros n),
+   the_book_counts_the_cap n⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -13447,5 +13505,17 @@ theorem the_books_lead_is_even_money (n : Nat) :
 
 /-- info: 'Seed.the_books_lead_is_even_money' does not depend on any axioms -/
 #guard_msgs in #print axioms the_books_lead_is_even_money
+
+/-- info: 'Seed.the_book_holds_every_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_book_holds_every_word
+
+/-- info: 'Seed.the_clock_reaches_every_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_reaches_every_word
+
+/-- info: 'Seed.the_clock_never_repeats_below_the_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_never_repeats_below_the_cap
+
+/-- info: 'Seed.the_odometer_reads_the_whole_book' does not depend on any axioms -/
+#guard_msgs in #print axioms the_odometer_reads_the_whole_book
 
 end Seed
