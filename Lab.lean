@@ -2881,6 +2881,24 @@ def benchFreeHall : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchDeeper : IO Bool := do
+  let mut ok := true
+  IO.println "the earlier arrival lies deeper — the depth-direction iff, live:"
+  let word : List Nat := [7, 8, 9]
+  let room := turnQueue word []
+  let nineShallower :=
+    Nat.ble (depthTo room 9 + 1) (depthTo room 7)
+  let sevenShallower :=
+    Nat.ble (depthTo room 7 + 1) (depthTo room 9)
+  ok := (← checkTrue
+    "  deeper row — seven spoke first and lies deeper (nine at depth zero, seven at depth two: nine-is-shallower reads true exactly because seven spoke first, and seven-is-shallower reads false exactly because nine did not — the room's depth order IS the word's speaking order reversed, the iff both ways)"
+    ((nineShallower == firstOf Nat.beq 7 9 word)
+      && (sevenShallower == firstOf Nat.beq 9 7 word)
+      && nineShallower && !sevenShallower
+      && (depthTo room 9 == 0) && (depthTo room 7 == 2))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3000,6 +3018,7 @@ def main : IO UInt32 := do
   ok := (← benchOneRoom) && ok
   ok := (← benchNoFavorite) && ok
   ok := (← benchFreeHall) && ok
+  ok := (← benchDeeper) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

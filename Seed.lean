@@ -10191,6 +10191,227 @@ theorem the_halls_sort_direction_is_even_money
    (the_direction_is_even_money eq_of_beq beq_self hab hl ha hb).2.2,
    the_citer_arrives_above_the_cited s m hm x hx hne⟩
 
+theorem turnQueue_append {A : Type} :
+    ∀ (w acc : List A), turnQueue w acc = turnQueue w [] ++ acc
+  | [], _ => rfl
+  | x :: w, acc => by
+      show turnQueue w (x :: acc) = turnQueue (x :: w) [] ++ acc
+      rw [turnQueue_append w (x :: acc),
+          show turnQueue (x :: w) [] = turnQueue w [x] from rfl,
+          turnQueue_append w [x], snoc_append]
+
+theorem mem_turnQueue_acc {A : Type} {x : A} :
+    ∀ (w acc : List A), x ∈ acc → x ∈ turnQueue w acc
+  | [], _, h => h
+  | y :: w, acc, h => mem_turnQueue_acc w (y :: acc) (List.Mem.tail y h)
+
+theorem mem_turnQueue_intro {A : Type} {x : A} :
+    ∀ (w : List A), x ∈ w → ∀ acc, x ∈ turnQueue w acc
+  | y :: w, hx, acc => by
+      cases hx with
+      | head => exact mem_turnQueue_acc w (x :: acc) (List.Mem.head acc)
+      | tail _ h' => exact mem_turnQueue_intro w h' (y :: acc)
+
+theorem the_lone_mark_decides_against {A : Type} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} :
+    ∀ u : List A, ¬ a ∈ u → b ∈ u → ∀ acc : List A,
+      firstOf beq a b (u ++ acc) = false
+  | [], _, hb, _ => nomatch hb
+  | y :: u, ha, hb, acc => by
+      have hya : beq y a = false :=
+        beq_no hE (fun he => ha (by rw [← he]; exact List.Mem.head u))
+      show cond (beq y a) true
+          (cond (beq y b) false (firstOf beq a b (u ++ acc))) = false
+      rw [hya]
+      cases hyb : beq y b with
+      | true => exact rfl
+      | false =>
+          have hb' : b ∈ u := by
+            cases hb with
+            | head => exact absurd (hR _) (ne_true_of_eq_false hyb)
+            | tail _ h' => exact h'
+          rw [the_lone_mark_decides_against hE hR u
+                (fun h => ha (List.Mem.tail y h)) hb' acc]
+          exact rfl
+
+theorem the_decided_scan_stops {A : Type} {beq : A → A → Bool}
+    (hR : ∀ x : A, beq x x = true) {a b : A} :
+    ∀ u : List A, (a ∈ u ∨ b ∈ u) → ∀ acc : List A,
+      firstOf beq a b (u ++ acc) = firstOf beq a b u
+  | [], h, _ => by
+      cases h with
+      | inl h' => exact nomatch h'
+      | inr h' => exact nomatch h'
+  | y :: u, h, acc => by
+      show cond (beq y a) true
+          (cond (beq y b) false (firstOf beq a b (u ++ acc)))
+        = cond (beq y a) true
+          (cond (beq y b) false (firstOf beq a b u))
+      cases hya : beq y a with
+      | true => rfl
+      | false =>
+          cases hyb : beq y b with
+          | true => rfl
+          | false =>
+              have h' : a ∈ u ∨ b ∈ u := by
+                cases h with
+                | inl hh =>
+                    cases hh with
+                    | head => exact absurd (hR _) (ne_true_of_eq_false hya)
+                    | tail _ ht => exact Or.inl ht
+                | inr hh =>
+                    cases hh with
+                    | head => exact absurd (hR _) (ne_true_of_eq_false hyb)
+                    | tail _ ht => exact Or.inr ht
+              rw [the_decided_scan_stops hR u h' acc]
+
+theorem the_turned_word_reverses_the_verdict {A : Type}
+    {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) :
+    ∀ w : List A, Apart w → a ∈ w → b ∈ w →
+      firstOf beq a b (turnQueue w []) = firstOf beq b a w
+  | [], _, ha, _ => nomatch ha
+  | x :: w, hl, ha, hb => by
+      cases hl with
+      | cons hx hrest =>
+          have htq : turnQueue (x :: w) [] = turnQueue w [] ++ [x] := by
+            show turnQueue w [x] = turnQueue w [] ++ [x]
+            exact turnQueue_append w [x]
+          rw [htq]
+          cases hxa : beq x a with
+          | true =>
+              have hxe : x = a := hE x a hxa
+              have hbx : b ≠ x := fun he =>
+                hab (hE b a
+                  ((congrArg (fun z => beq z a) he).trans hxa)).symm
+              have hat : ¬ a ∈ w := fun h => hx a h hxe
+              have hbt : b ∈ w := by
+                cases hb with
+                | head => exact absurd rfl hbx
+                | tail _ h' => exact h'
+              have hau : ¬ a ∈ turnQueue w [] := fun h => by
+                cases mem_turnQueue w [] h with
+                | inl h' => exact hat h'
+                | inr h' => exact nomatch h'
+              have hbu : b ∈ turnQueue w [] := mem_turnQueue_intro w hbt []
+              rw [the_lone_mark_decides_against hE hR
+                    (turnQueue w []) hau hbu [x]]
+              show (false : Bool)
+                  = cond (beq x b) true
+                      (cond (beq x a) false (firstOf beq b a w))
+              rw [hxe, beq_no hE hab, hR a]
+              exact rfl
+          | false =>
+              have hax : a ≠ x := fun he =>
+                (ne_of_beq_no hR hxa) he.symm
+              cases hxb : beq x b with
+              | true =>
+                  have hxe : x = b := hE x b hxb
+                  have hbt : ¬ b ∈ w := fun h => hx b h hxe
+                  have hat : a ∈ w := by
+                    cases ha with
+                    | head => exact absurd rfl hax
+                    | tail _ h' => exact h'
+                  have hbu : ¬ b ∈ turnQueue w [] := fun h => by
+                    cases mem_turnQueue w [] h with
+                    | inl h' => exact hbt h'
+                    | inr h' => exact nomatch h'
+                  have hau : a ∈ turnQueue w [] :=
+                    mem_turnQueue_intro w hat []
+                  have hvoice := the_first_voice_decides hE hR hab
+                    (turnQueue w [] ++ [x])
+                    (mem_append_left [x] hau)
+                  rw [hvoice,
+                      the_lone_mark_decides_against hE hR
+                        (turnQueue w []) hbu hau [x]]
+                  show (true : Bool)
+                      = cond (beq x b) true
+                          (cond (beq x a) false (firstOf beq b a w))
+                  rw [hxb]
+                  exact rfl
+              | false =>
+                  have hbx : b ≠ x := fun he =>
+                    (ne_of_beq_no hR hxb) he.symm
+                  have hat : a ∈ w := by
+                    cases ha with
+                    | head => exact absurd rfl hax
+                    | tail _ h' => exact h'
+                  have hbt : b ∈ w := by
+                    cases hb with
+                    | head => exact absurd rfl hbx
+                    | tail _ h' => exact h'
+                  rw [the_decided_scan_stops hR (turnQueue w [])
+                        (Or.inl (mem_turnQueue_intro w hat [])) [x],
+                      the_turned_word_reverses_the_verdict hE hR hab
+                        w hrest hat hbt]
+                  show firstOf beq b a w
+                      = cond (beq x b) true
+                          (cond (beq x a) false (firstOf beq b a w))
+                  rw [hxa, hxb]
+                  exact rfl
+
+theorem the_scan_reads_the_depth {a b : Nat} (hab : a ≠ b) :
+    ∀ r : List Nat, a ∈ r → b ∈ r →
+      firstOf Nat.beq a b r
+        = Nat.ble (depthTo r a + 1) (depthTo r b)
+  | [], ha, _ => nomatch ha
+  | y :: r, ha, hb => by
+      cases hya : Nat.beq y a with
+      | true =>
+          have hye : y = a := eq_of_beq y a hya
+          have hba : b ≠ a := fun h => hab h.symm
+          show cond (Nat.beq y a) true
+              (cond (Nat.beq y b) false (firstOf Nat.beq a b r))
+            = Nat.ble (depthTo (y :: r) a + 1) (depthTo (y :: r) b)
+          rw [hya, hye, the_seated_arrive_shallowest r a,
+              every_later_admission_deepens r hba]
+          exact rfl
+      | false =>
+          have hay : a ≠ y := fun h => (ne_of_beq_false hya) h.symm
+          cases hyb : Nat.beq y b with
+          | true =>
+              have hye : y = b := eq_of_beq y b hyb
+              show cond (Nat.beq y a) true
+                  (cond (Nat.beq y b) false (firstOf Nat.beq a b r))
+                = Nat.ble (depthTo (y :: r) a + 1) (depthTo (y :: r) b)
+              rw [hya, hyb, hye, the_seated_arrive_shallowest r b,
+                  every_later_admission_deepens r hab]
+              exact rfl
+          | false =>
+              have hby : b ≠ y := fun h => (ne_of_beq_false hyb) h.symm
+              have hat : a ∈ r := by
+                cases ha with
+                | head => exact absurd rfl (fun h => hay h.symm)
+                | tail _ h' => exact h'
+              have hbt : b ∈ r := by
+                cases hb with
+                | head => exact absurd rfl (fun h => hby h.symm)
+                | tail _ h' => exact h'
+              show cond (Nat.beq y a) true
+                  (cond (Nat.beq y b) false (firstOf Nat.beq a b r))
+                = Nat.ble (depthTo (y :: r) a + 1) (depthTo (y :: r) b)
+              rw [hya, hyb, every_later_admission_deepens r hay,
+                  every_later_admission_deepens r hby,
+                  the_scan_reads_the_depth hab r hat hbt]
+              exact rfl
+
+theorem the_earlier_arrival_lies_deeper {a b : Nat} (hab : a ≠ b)
+    {w : List Nat} (hl : Apart w) (ha : a ∈ w) (hb : b ∈ w) :
+    Nat.ble (depthTo (turnQueue w []) a + 1) (depthTo (turnQueue w []) b)
+        = firstOf Nat.beq b a w
+      ∧ park freeDoor (([] : List Nat), ([] : List (Nat × List Nat))) w
+          = (turnQueue w [], [])
+      ∧ sameRatio ((perms w).filter (firstOf Nat.beq b a)).length
+          (fact w.length) 1 2 :=
+  ⟨(the_scan_reads_the_depth hab (turnQueue w [])
+      (mem_turnQueue_intro w ha []) (mem_turnQueue_intro w hb [])).symm.trans
+    (the_turned_word_reverses_the_verdict eq_of_beq beq_self hab w hl ha hb),
+   the_free_word_stacks w [] [],
+   (the_direction_is_even_money eq_of_beq beq_self
+     (fun h => hab h.symm) hl hb ha).2.2⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -13055,5 +13276,29 @@ theorem the_halls_sort_direction_is_even_money
 
 /-- info: 'Seed.the_halls_sort_direction_is_even_money' does not depend on any axioms -/
 #guard_msgs in #print axioms the_halls_sort_direction_is_even_money
+
+/-- info: 'Seed.turnQueue_append' does not depend on any axioms -/
+#guard_msgs in #print axioms turnQueue_append
+
+/-- info: 'Seed.mem_turnQueue_acc' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_turnQueue_acc
+
+/-- info: 'Seed.mem_turnQueue_intro' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_turnQueue_intro
+
+/-- info: 'Seed.the_lone_mark_decides_against' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lone_mark_decides_against
+
+/-- info: 'Seed.the_decided_scan_stops' does not depend on any axioms -/
+#guard_msgs in #print axioms the_decided_scan_stops
+
+/-- info: 'Seed.the_turned_word_reverses_the_verdict' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turned_word_reverses_the_verdict
+
+/-- info: 'Seed.the_scan_reads_the_depth' does not depend on any axioms -/
+#guard_msgs in #print axioms the_scan_reads_the_depth
+
+/-- info: 'Seed.the_earlier_arrival_lies_deeper' does not depend on any axioms -/
+#guard_msgs in #print axioms the_earlier_arrival_lies_deeper
 
 end Seed
