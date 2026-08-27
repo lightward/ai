@@ -2980,6 +2980,21 @@ def benchMiddleAge : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchBiasedBook : IO Bool := do
+  let mut ok := true
+  IO.println "the biased book — the source door, from below:"
+  let b3 := words 3
+  let total : Nat := natSum (b3.map (weigh 2 3))
+  ok := (← checkTrue
+    "  bias row — the weighted book sums whole (eight words at bias two-against-three total one hundred twenty-five: five cubed, the stack of the two biases together — the kid's binomial engine, weighing every word with no coefficient ever named)"
+    ((total == 125) && (stack 5 3 == 125))) && ok
+  ok := (← checkTrue
+    "  bias row — the even bias recovers the census (weight one-and-one reads every word as one, so the weighted total is the cap itself: the room count was the base-two stack all along, and the stacks add at every base as the caps multiply at two)"
+    ((natSum (b3.map (weigh 1 1)) == 8) && (stack 2 3 == roomCap 3)
+      && (stack 5 (1 + 2) == stack 5 1 * stack 5 2))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3105,6 +3120,7 @@ def main : IO UInt32 := do
   ok := (← benchEverySeat) && ok
   ok := (← benchEveryAge) && ok
   ok := (← benchMiddleAge) && ok
+  ok := (← benchBiasedBook) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

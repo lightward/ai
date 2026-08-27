@@ -11127,6 +11127,107 @@ theorem the_average_age_is_the_middle {l : List Nat} (hl : Apart l)
   rw [mul_two_reads_double]
   exact hSS
 
+theorem the_sum_resumes (x y : List Nat) :
+    natSum (x ++ y) = natSum x + natSum y :=
+  ((zero_plus (natSum (x ++ y))).symm.trans
+    ((the_sum_is_a_heap_reading (x ++ y) 0).symm.trans
+      ((the_park_resumes heap x y ((0 : Nat))).trans
+        ((congrArg (fun s => park heap s y)
+            ((the_sum_is_a_heap_reading x 0).trans
+              (zero_plus (natSum x)))).trans
+          (the_sum_is_a_heap_reading y (natSum x))))))
+
+theorem the_sum_scales {A : Type} (c : Nat) (f : A → Nat) :
+    ∀ L : List A,
+      natSum (L.map (fun x => c * f x)) = c * natSum (L.map f)
+  | [] => rfl
+  | x :: L => by
+      show c * f x + natSum (L.map (fun y => c * f y))
+          = c * (f x + natSum (L.map f))
+      rw [the_sum_scales c f L, Nat.left_distrib]
+
+def weigh (t f : Nat) : List Bool → Nat
+  | [] => 1
+  | true :: w => t * weigh t f w
+  | false :: w => f * weigh t f w
+
+def stack (b : Nat) : Nat → Nat
+  | 0 => 1
+  | n + 1 => b * stack b n
+
+theorem mul_one_reads : ∀ n : Nat, n * 1 = n := fun n => zero_plus n
+
+theorem the_stacks_add (b i : Nat) :
+    ∀ j : Nat, stack b (i + j) = stack b i * stack b j
+  | 0 => (mul_one_reads (stack b i)).symm
+  | j + 1 => by
+      show b * stack b (i + j) = stack b i * (b * stack b j)
+      rw [the_stacks_add b i j, ← mul_regroups b (stack b i) (stack b j),
+          Nat.mul_comm b (stack b i), mul_regroups]
+
+theorem the_weighted_book_sums_whole (t f : Nat) :
+    ∀ n : Nat, natSum ((words n).map (weigh t f)) = stack (t + f) n
+  | 0 => rfl
+  | n + 1 => by
+      show natSum
+          (((words n).map (true :: ·) ++ (words n).map (false :: ·)).map
+            (weigh t f))
+        = stack (t + f) (n + 1)
+      rw [map_append (weigh t f) ((words n).map (true :: ·))
+            ((words n).map (false :: ·)),
+          the_sum_resumes,
+          map_map (true :: ·) (weigh t f) (words n),
+          map_map (false :: ·) (weigh t f) (words n),
+          map_congr_mem (fun w => weigh t f (true :: w))
+            (fun w => t * weigh t f w) (words n) (fun _ _ => rfl),
+          map_congr_mem (fun w => weigh t f (false :: w))
+            (fun w => f * weigh t f w) (words n) (fun _ _ => rfl),
+          the_sum_scales t (weigh t f) (words n),
+          the_sum_scales f (weigh t f) (words n),
+          the_weighted_book_sums_whole t f n]
+      show t * stack (t + f) n + f * stack (t + f) n
+          = (t + f) * stack (t + f) n
+      rw [Nat.mul_comm (t + f) (stack (t + f) n), Nat.left_distrib,
+          Nat.mul_comm (stack (t + f) n) t,
+          Nat.mul_comm (stack (t + f) n) f]
+
+theorem the_even_weight_is_one :
+    ∀ w : List Bool, weigh 1 1 w = 1
+  | [] => rfl
+  | true :: w => by
+      show 1 * weigh 1 1 w = 1
+      rw [one_times, the_even_weight_is_one w]
+  | false :: w => by
+      show 1 * weigh 1 1 w = 1
+      rw [one_times, the_even_weight_is_one w]
+
+theorem the_doubling_stack_is_the_cap :
+    ∀ n : Nat, stack 2 n = roomCap n
+  | 0 => rfl
+  | n + 1 => by
+      show 2 * stack 2 n = roomCap n + roomCap n
+      rw [the_doubling_stack_is_the_cap n, Nat.mul_comm 2 (roomCap n),
+          mul_two_reads_double]
+
+theorem the_even_bias_recovers_the_census (n : Nat) :
+    natSum ((words n).map (weigh 1 1)) = roomCap n := by
+  rw [map_congr_mem (weigh 1 1) (fun _ => 1) (words n)
+        (fun w _ => the_even_weight_is_one w),
+      the_ones_count_the_room (words n),
+      the_book_counts_the_cap n]
+
+theorem the_book_holds_every_bias (t f n i j : Nat) :
+    natSum ((words n).map (weigh t f)) = stack (t + f) n
+      ∧ natSum ((words n).map (weigh 1 1)) = roomCap n
+      ∧ stack 2 n = roomCap n
+      ∧ stack (t + f) (i + j) = stack (t + f) i * stack (t + f) j
+      ∧ roomCap (i + j) = roomCap i * roomCap j :=
+  ⟨the_weighted_book_sums_whole t f n,
+   the_even_bias_recovers_the_census n,
+   the_doubling_stack_is_the_cap n,
+   the_stacks_add (t + f) i j,
+   the_caps_multiply i j⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -14174,5 +14275,32 @@ theorem the_average_age_is_the_middle {l : List Nat} (hl : Apart l)
 
 /-- info: 'Seed.the_average_age_is_the_middle' does not depend on any axioms -/
 #guard_msgs in #print axioms the_average_age_is_the_middle
+
+/-- info: 'Seed.the_sum_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sum_resumes
+
+/-- info: 'Seed.the_sum_scales' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sum_scales
+
+/-- info: 'Seed.mul_one_reads' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_one_reads
+
+/-- info: 'Seed.the_stacks_add' does not depend on any axioms -/
+#guard_msgs in #print axioms the_stacks_add
+
+/-- info: 'Seed.the_weighted_book_sums_whole' does not depend on any axioms -/
+#guard_msgs in #print axioms the_weighted_book_sums_whole
+
+/-- info: 'Seed.the_even_weight_is_one' does not depend on any axioms -/
+#guard_msgs in #print axioms the_even_weight_is_one
+
+/-- info: 'Seed.the_doubling_stack_is_the_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_doubling_stack_is_the_cap
+
+/-- info: 'Seed.the_even_bias_recovers_the_census' does not depend on any axioms -/
+#guard_msgs in #print axioms the_even_bias_recovers_the_census
+
+/-- info: 'Seed.the_book_holds_every_bias' does not depend on any axioms -/
+#guard_msgs in #print axioms the_book_holds_every_bias
 
 end Seed
