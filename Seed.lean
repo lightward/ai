@@ -11789,6 +11789,102 @@ theorem every_seat_weighs_the_bias (t f k m n : Nat)
   exact congrArg (t * ·)
     (Nat.mul_comm (natSum ((words n).map (weigh t f))) (t + f))
 
+def reflect : Plan → Plan
+  | .ground => .ground
+  | .board p q => .board (reflect q) (reflect p)
+
+theorem the_reflection_returns : ∀ p : Plan, reflect (reflect p) = p
+  | .ground => rfl
+  | .board p q => by
+      show Plan.board (reflect (reflect p)) (reflect (reflect q))
+          = Plan.board p q
+      rw [the_reflection_returns p, the_reflection_returns q]
+
+theorem the_reflection_keeps_the_reading :
+    ∀ p : Plan,
+      fold (fun a b => a + b) 1 (reflect p)
+        = fold (fun a b => a + b) 1 p
+  | .ground => rfl
+  | .board p q => by
+      show fold (fun a b => a + b) 1 (reflect q)
+            + fold (fun a b => a + b) 1 (reflect p)
+          = fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q
+      rw [the_reflection_keeps_the_reading p,
+          the_reflection_keeps_the_reading q]
+      exact Nat.add_comm _ _
+
+theorem the_reflection_keeps_the_room :
+    ∀ (d : Nat) {p : Plan}, p ∈ allPlans d → reflect p ∈ allPlans d
+  | 0, _, h => by
+      cases h with
+      | head => exact List.Mem.head _
+      | tail _ h' => exact nomatch h'
+  | d + 1, _, h => by
+      cases h with
+      | head => exact List.Mem.head _
+      | tail _ hc =>
+          obtain ⟨l, r, rfl, hl, hr⟩ := mem_cross_split (allPlans d) hc
+          exact List.Mem.tail _
+            (mem_cross (the_reflection_keeps_the_room d hl)
+              (the_reflection_keeps_the_room d hr))
+
+theorem the_reflected_room_is_the_room (d : Nat) :
+    ((allPlans d).map reflect).Perm (allPlans d) :=
+  the_matching_rooms_are_shuffles _ _
+    (apart_map
+      (fun p q h =>
+        (the_reflection_returns p).symm.trans
+          ((congrArg reflect h).trans (the_reflection_returns q)))
+      (the_room_repeats_no_plan d))
+    (the_room_repeats_no_plan d)
+    (fun _x =>
+      ⟨fun hx =>
+         match mem_map_back (allPlans d) hx with
+         | ⟨_, hp, he⟩ => he ▸ the_reflection_keeps_the_room d hp,
+       fun hx =>
+         (the_reflection_returns _x) ▸
+           mem_map_intro reflect (the_reflection_keeps_the_room d hx)⟩)
+
+theorem the_bloom_is_a_palindrome :
+    ∀ d : Nat, reflect (bloom d) = bloom d
+  | 0 => rfl
+  | d + 1 => by
+      show Plan.board (reflect (bloom d)) (reflect (bloom d))
+          = Plan.board (bloom d) (bloom d)
+      rw [the_bloom_is_a_palindrome d]
+
+theorem the_comb_is_no_palindrome : reflect (comb 2) ≠ comb 2 :=
+  fun h => nomatch (Plan.board.inj h).1
+
+theorem the_lean_reading_hears_the_mirror :
+    fold (fun a b => 2 * a + 3 * b) 1
+        (reflect (.board .ground (.board .ground .ground)))
+      ≠ fold (fun a b => 2 * a + 3 * b) 1
+        (.board .ground (.board .ground .ground)) :=
+  fun h =>
+    nomatch (congrArg (Nat.beq 13) h).symm.trans (beq_self 13)
+
+theorem the_clock_walks_the_palindromes (d : Nat) (p : Plan)
+    (hp : p ∈ allPlans d) :
+    reflect (reflect p) = p
+      ∧ fold (fun a b => a + b) 1 (reflect p)
+          = fold (fun a b => a + b) 1 p
+      ∧ reflect p ∈ allPlans d
+      ∧ ((allPlans d).map reflect).Perm (allPlans d)
+      ∧ reflect (bloom d) = bloom d
+      ∧ reflect (comb 2) ≠ comb 2
+      ∧ fold (fun a b => 2 * a + 3 * b) 1
+            (reflect (.board .ground (.board .ground .ground)))
+          ≠ fold (fun a b => 2 * a + 3 * b) 1
+            (.board .ground (.board .ground .ground)) :=
+  ⟨the_reflection_returns p,
+   the_reflection_keeps_the_reading p,
+   the_reflection_keeps_the_room d hp,
+   the_reflected_room_is_the_room d,
+   the_bloom_is_a_palindrome d,
+   the_comb_is_no_palindrome,
+   the_lean_reading_hears_the_mirror⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -14974,5 +15070,29 @@ theorem every_seat_weighs_the_bias (t f k m n : Nat)
 
 /-- info: 'Seed.every_seat_weighs_the_bias' does not depend on any axioms -/
 #guard_msgs in #print axioms every_seat_weighs_the_bias
+
+/-- info: 'Seed.the_reflection_returns' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reflection_returns
+
+/-- info: 'Seed.the_reflection_keeps_the_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reflection_keeps_the_reading
+
+/-- info: 'Seed.the_reflection_keeps_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reflection_keeps_the_room
+
+/-- info: 'Seed.the_reflected_room_is_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reflected_room_is_the_room
+
+/-- info: 'Seed.the_bloom_is_a_palindrome' does not depend on any axioms -/
+#guard_msgs in #print axioms the_bloom_is_a_palindrome
+
+/-- info: 'Seed.the_comb_is_no_palindrome' does not depend on any axioms -/
+#guard_msgs in #print axioms the_comb_is_no_palindrome
+
+/-- info: 'Seed.the_lean_reading_hears_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lean_reading_hears_the_mirror
+
+/-- info: 'Seed.the_clock_walks_the_palindromes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_walks_the_palindromes
 
 end Seed

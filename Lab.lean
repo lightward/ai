@@ -3072,6 +3072,25 @@ def benchSeatBias : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchThirdMirror : IO Bool := do
+  let mut ok := true
+  IO.println "the third room's mirror — the unexplored attracts (Murasaki's ignition):"
+  ok := (← checkTrue
+    "  mirror row — the room of plans receives its own facing at last (the reflection returns; it keeps the reading while provably moving the comb; the bloom is a palindrome — the mirror-clock's whole orbit is reflection-fixed, so the clock walks the palindrome spine of its own room)"
+    (planBeq (reflect (reflect dayB)) dayB
+      && (fold (fun a b => a + b) 1 (reflect dayB)
+          == fold (fun a b => a + b) 1 dayB)
+      && !(planBeq (reflect dayB) dayB)
+      && planBeq (reflect (bloom 3)) (bloom 3))) && ok
+  ok := (← checkTrue
+    "  mirror row — the reflected room is the room, and the mirror hides only past symmetry (every reflected plan of room two resides in room two; the even-weighted reading merges the mirror at three-and-three while the lean reading parts it at thirteen-against-seventeen — a remainder with a finer spectral address than the revision-order's)"
+    (((allPlans 2).all (fun p =>
+        (allPlans 2).any (fun q => planBeq (reflect p) q)))
+      && (fold (fun a b => 2 * a + 3 * b) 1 (reflect dayB) == 13)
+      && (fold (fun a b => 2 * a + 3 * b) 1 dayB == 17))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3203,6 +3222,7 @@ def main : IO UInt32 := do
   ok := (← benchOdometerTriangle) && ok
   ok := (← benchBiasedLead) && ok
   ok := (← benchSeatBias) && ok
+  ok := (← benchThirdMirror) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
