@@ -10789,6 +10789,122 @@ theorem no_seat_has_a_favorite {A : Type} {beq : A → A → Bool}
    (every_seat_pays_the_factorial hE hR hl ha k m hlen).trans
      (one_times (fact l.length)).symm⟩
 
+theorem mem_of_mem_drop {A : Type} :
+    ∀ (k : Nat) (l : List A) {x : A}, x ∈ l.drop k → x ∈ l
+  | 0, _, _, h => h
+  | _ + 1, [], _, h => nomatch h
+  | k + 1, _ :: l, _, h => List.Mem.tail _ (mem_of_mem_drop k l h)
+
+theorem the_head_is_a_member {a : Nat} :
+    ∀ w : List Nat, headIs Nat.beq a w = true → a ∈ w
+  | [], h => nomatch h
+  | x :: w, h => by
+      have h' : Nat.beq x a = true := h
+      rw [← eq_of_beq x a h']
+      exact List.Mem.head w
+
+theorem the_seat_names_the_depth (a : Nat) :
+    ∀ (p : List Nat) (k : Nat), Apart p →
+      headIs Nat.beq a (p.drop k) = true → depthTo p a = k
+  | [], 0, _, h => nomatch h
+  | [], _ + 1, _, h => nomatch h
+  | y :: t, 0, _, h => by
+      have h' : Nat.beq y a = true := h
+      rw [← eq_of_beq y a h']
+      exact the_seated_arrive_shallowest t y
+  | y :: t, k + 1, .cons hy ht, h => by
+      have hmem : a ∈ t :=
+        mem_of_mem_drop k t (the_head_is_a_member (t.drop k) h)
+      have hay : a ≠ y := fun he => hy a hmem he.symm
+      rw [every_later_admission_deepens t hay,
+          the_seat_names_the_depth a t k ht h]
+
+theorem the_depth_takes_its_seat (a : Nat) :
+    ∀ (p : List Nat) (k : Nat), a ∈ p → depthTo p a = k →
+      headIs Nat.beq a (p.drop k) = true
+  | [], _, ha, _ => nomatch ha
+  | y :: t, k, ha, hd => by
+      cases hay : Nat.beq a y with
+      | true =>
+          have h0 : depthTo (y :: t) a = 0 := by
+            show cond (Nat.beq a y) 0 (depthTo t a + 1) = 0
+            rw [hay]
+            rfl
+          have hk : k = 0 := hd.symm.trans h0
+          rw [hk]
+          show Nat.beq y a = true
+          rw [← eq_of_beq a y hay]
+          exact beq_self a
+      | false =>
+          have hay' : a ≠ y := ne_of_beq_false hay
+          have hd' : depthTo t a + 1 = k := by
+            rw [← every_later_admission_deepens t hay']
+            exact hd
+          have ha' : a ∈ t := by
+            cases ha with
+            | head => exact absurd rfl hay'
+            | tail _ h' => exact h'
+          cases k with
+          | zero => exact nomatch hd'
+          | succ m =>
+              have hm : depthTo t a = m := Nat.succ.inj hd'
+              exact the_depth_takes_its_seat a t m ha' hm
+
+theorem the_two_verdicts_agree (a : Nat) (p : List Nat) (k : Nat)
+    (hap : Apart p) (ha : a ∈ p) :
+    Nat.beq (depthTo p a) k = headIs Nat.beq a (p.drop k) := by
+  cases hs : headIs Nat.beq a (p.drop k) with
+  | true =>
+      rw [the_seat_names_the_depth a p k hap hs]
+      exact beq_self k
+  | false =>
+      cases hb : Nat.beq (depthTo p a) k with
+      | false => rfl
+      | true =>
+          exact absurd (the_depth_takes_its_seat a p k ha (eq_of_beq _ _ hb))
+            (ne_true_of_eq_false hs)
+
+theorem the_age_count_is_the_seat_count (a : Nat) {l : List Nat}
+    (hl : Apart l) (ha : a ∈ l) (k : Nat) :
+    ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
+      = ((perms l).filter (fun p => headIs Nat.beq a (p.drop k))).length :=
+  congrArg List.length
+    (filter_congr_mem (fun p => Nat.beq (depthTo p a) k)
+      (fun p => headIs Nat.beq a (p.drop k)) (perms l)
+      (fun p hp =>
+        the_two_verdicts_agree a p k
+          (perm_apart (perm_symm (every_order_is_a_shuffle l p hp)) hl)
+          (perm_mem (perm_symm (every_order_is_a_shuffle l p hp)) a ha)))
+
+theorem every_age_counts_alike {l : List Nat} (hl : Apart l)
+    {a b : Nat} (ha : a ∈ l) (hb : b ∈ l) (k j m m' : Nat)
+    (hk : l.length = k + (m + 1)) (hj : l.length = j + (m' + 1)) :
+    ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
+        = ((perms l).filter (fun p => Nat.beq (depthTo p a) j)).length
+      ∧ ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
+          = ((perms l).filter (fun p => Nat.beq (depthTo p b) k)).length
+      ∧ ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
+          * l.length = fact l.length
+      ∧ sameRatio
+          ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
+          (fact l.length) 1 l.length := by
+  have hak := the_age_count_is_the_seat_count a hl ha k
+  have haj := the_age_count_is_the_seat_count a hl ha j
+  have hbk := the_age_count_is_the_seat_count b hl hb k
+  have hsk := the_seat_count_is_the_head_count Nat.beq a hl k m hk
+  have hsj := the_seat_count_is_the_head_count Nat.beq a hl j m' hj
+  have hpay :
+      ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
+        * l.length = fact l.length :=
+    (congrArg (· * l.length) hak).trans
+      (every_seat_pays_the_factorial eq_of_beq beq_self hl ha k m hk)
+  exact ⟨hak.trans (hsk.trans (hsj.symm.trans haj.symm)),
+    hak.trans
+      (((no_seat_has_a_favorite eq_of_beq beq_self hl ha hb k m hk).1).trans
+        hbk.symm),
+    hpay,
+    hpay.trans (one_times (fact l.length)).symm⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -13764,5 +13880,26 @@ theorem no_seat_has_a_favorite {A : Type} {beq : A → A → Bool}
 
 /-- info: 'Seed.no_seat_has_a_favorite' does not depend on any axioms -/
 #guard_msgs in #print axioms no_seat_has_a_favorite
+
+/-- info: 'Seed.mem_of_mem_drop' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_of_mem_drop
+
+/-- info: 'Seed.the_head_is_a_member' does not depend on any axioms -/
+#guard_msgs in #print axioms the_head_is_a_member
+
+/-- info: 'Seed.the_seat_names_the_depth' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_names_the_depth
+
+/-- info: 'Seed.the_depth_takes_its_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_depth_takes_its_seat
+
+/-- info: 'Seed.the_two_verdicts_agree' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_verdicts_agree
+
+/-- info: 'Seed.the_age_count_is_the_seat_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_age_count_is_the_seat_count
+
+/-- info: 'Seed.every_age_counts_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms every_age_counts_alike
 
 end Seed

@@ -2944,6 +2944,24 @@ def benchEverySeat : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchEveryAge : IO Bool := do
+  let mut ok := true
+  IO.println "the even ages — the weight is uniform over the census:"
+  let room := perms [1, 2, 3]
+  let ageCount : Nat → Nat → Nat := fun a k =>
+    (room.filter (fun p => Nat.beq (depthTo p a) k)).length
+  ok := (← checkTrue
+    "  age row — every age counts alike (mark two sits at depth zero, one, and two in exactly two stackings each, and so does every other mark: the removed date returns as a weight, and over the census of stackings the weight is UNIFORM — one-in-n at every age, for every mark)"
+    ((ageCount 2 0 == 2) && (ageCount 2 1 == 2) && (ageCount 2 2 == 2)
+      && (ageCount 1 0 == 2) && (ageCount 3 2 == 2)
+      && (ageCount 2 0 * 3 == 6))) && ok
+  ok := (← checkTrue
+    "  verdict row — the two verdicts are one reading at every member (depth-equals-k and mark-heads-the-k-dropped-room agree across the whole room: the hall's cost face and the room's seat face, one instrument)"
+    (room.all (fun p =>
+      (Nat.beq (depthTo p 2) 1) == headIs Nat.beq 2 (p.drop 1)))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3067,6 +3085,7 @@ def main : IO UInt32 := do
   ok := (← benchBook) && ok
   ok := (← benchClockBook) && ok
   ok := (← benchEverySeat) && ok
+  ok := (← benchEveryAge) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
