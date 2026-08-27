@@ -9879,6 +9879,69 @@ theorem the_direction_is_even_money {A : Type} {beq : A → A → Bool}
   exact (congrArg (((perms l).filter (firstOf beq a b)).length + ·)
     hsym).trans htotal
 
+theorem perm_apart {A : Type} {xs ys : List A} (h : xs.Perm ys) :
+    Apart xs → Apart ys := by
+  induction h with
+  | nil => exact fun h' => h'
+  | cons x h' ih =>
+      intro hx
+      cases hx with
+      | cons hhead hrest =>
+          exact Apart.cons
+            (fun b hb => hhead b (perm_mem (perm_symm h') b hb))
+            (ih hrest)
+  | swap x y l =>
+      intro hx
+      cases hx with
+      | cons hy hrest =>
+          cases hrest with
+          | cons hx' hl =>
+              exact Apart.cons
+                (fun b hb => by
+                  cases hb with
+                  | head => exact fun he => hy x (List.Mem.head l) he.symm
+                  | tail _ hb' => exact hx' b hb')
+                (Apart.cons (fun b hb => hy b (List.Mem.tail x hb)) hl)
+  | trans _ _ ih₁ ih₂ => exact fun h' => ih₂ (ih₁ h')
+
+theorem the_reordered_ground_keeps_the_room {A : Type} {l l' : List A}
+    (hll' : l.Perm l') (hl : Apart l) :
+    (perms l).Perm (perms l') :=
+  the_matching_rooms_are_shuffles (perms l) (perms l')
+    (the_orders_repeat_never l hl)
+    (the_orders_repeat_never l' (perm_apart hll' hl))
+    (fun p =>
+      ⟨fun hp => every_shuffle_is_an_order l' p
+         ((every_order_is_a_shuffle l p hp).trans hll'),
+       fun hp => every_shuffle_is_an_order l p
+         ((every_order_is_a_shuffle l' p hp).trans (perm_symm hll'))⟩)
+
+theorem an_exact_enumerator_is_the_room {A : Type} {R L : List A}
+    (hR : Apart R) (hL : Apart L) (hmem : ∀ x, x ∈ R ↔ x ∈ L) :
+    R.Perm L ∧ R.length = L.length :=
+  ⟨the_matching_rooms_are_shuffles R L hR hL hmem,
+   perm_length (the_matching_rooms_are_shuffles R L hR hL hmem)⟩
+
+theorem one_room_up_to_shuffle {A : Type} {l l' : List A}
+    (hll' : l.Perm l') (hl : Apart l) {R : List (List A)} (hR : Apart R)
+    (hmem : ∀ p, p ∈ R ↔ p ∈ perms l) (d : Nat) :
+    Apart l'
+      ∧ (perms l).Perm (perms l')
+      ∧ (perms l').length = fact l.length
+      ∧ R.Perm (perms l)
+      ∧ R.length = fact l.length
+      ∧ Apart (allPlans d) :=
+  ⟨perm_apart hll' hl,
+   the_reordered_ground_keeps_the_room hll' hl,
+   (perm_length (the_reordered_ground_keeps_the_room hll' hl)).symm.trans
+     (the_orders_count_to_the_factorial l),
+   (an_exact_enumerator_is_the_room hR
+     (the_orders_repeat_never l hl) hmem).1,
+   ((an_exact_enumerator_is_the_room hR
+     (the_orders_repeat_never l hl) hmem).2).trans
+     (the_orders_count_to_the_factorial l),
+   the_room_repeats_no_plan d⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -12686,5 +12749,17 @@ theorem the_direction_is_even_money {A : Type} {beq : A → A → Bool}
 
 /-- info: 'Seed.the_direction_is_even_money' does not depend on any axioms -/
 #guard_msgs in #print axioms the_direction_is_even_money
+
+/-- info: 'Seed.perm_apart' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_apart
+
+/-- info: 'Seed.the_reordered_ground_keeps_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reordered_ground_keeps_the_room
+
+/-- info: 'Seed.an_exact_enumerator_is_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms an_exact_enumerator_is_the_room
+
+/-- info: 'Seed.one_room_up_to_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms one_room_up_to_shuffle
 
 end Seed

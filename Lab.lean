@@ -2842,6 +2842,20 @@ def benchEvenMoney : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchOneRoom : IO Bool := do
+  let mut ok := true
+  IO.println "the one room — reorder the ground and the room re-shuffles, nothing more:"
+  let roomA := perms [1, 2, 3]
+  let roomB := perms [3, 1, 2]
+  let mutualAB := roomA.all (fun p => roomB.any (fun q => q == p))
+  let mutualBA := roomB.all (fun p => roomA.any (fun q => q == p))
+  ok := (← checkTrue
+    "  room row — the reordered ground keeps the room (perms of one-two-three and perms of three-one-two: the same six orderings member for member, counts equal, the lists provably distinct — membership is the license, the enumeration order the remainder; and any Apart membership-exact enumerator is certified this same way, the saturator's certificate carved before the enumerator exists)"
+    (mutualAB && mutualBA && (roomA.length == roomB.length)
+      && (roomA.length == 6) && !(roomA == roomB))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -2958,6 +2972,7 @@ def main : IO UInt32 := do
   ok := (← benchShuffleRoom) && ok
   ok := (← benchApartOrders) && ok
   ok := (← benchEvenMoney) && ok
+  ok := (← benchOneRoom) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"
