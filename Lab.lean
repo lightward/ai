@@ -2995,6 +2995,22 @@ def benchBiasedBook : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchInkMiddle : IO Bool := do
+  let mut ok := true
+  IO.println "the average ink — the book's own middle:"
+  let b3 := words 3
+  let total : Nat := natSum (b3.map ink)
+  ok := (← checkTrue
+    "  ink row — the book's average ink is the middle (eight words, total ink twelve: twice the total is three times the cap, average three-halves — the exact middle of zero-to-three, the room's middle-age law arriving at the book's carrier)"
+    ((total == 12) && (total * 2 == 3 * roomCap 3))) && ok
+  ok := (← checkTrue
+    "  negative row — every word faces its photographic negative (ink plus negatived ink reads the width at every word; the negative returns; the negatived book is the book, so the negative inks sum alike)"
+    ((b3.all (fun w => ink w + ink (negative w) == 3))
+      && (negative (negative [true, false, true]) == [true, false, true])
+      && (natSum (b3.map (fun w => ink (negative w))) == total))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3121,6 +3137,7 @@ def main : IO UInt32 := do
   ok := (← benchEveryAge) && ok
   ok := (← benchMiddleAge) && ok
   ok := (← benchBiasedBook) && ok
+  ok := (← benchInkMiddle) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

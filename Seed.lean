@@ -11228,6 +11228,93 @@ theorem the_book_holds_every_bias (t f n i j : Nat) :
    the_stacks_add (t + f) i j,
    the_caps_multiply i j⟩
 
+def ink : List Bool → Nat
+  | [] => 0
+  | true :: w => ink w + 1
+  | false :: w => ink w
+
+def negative (w : List Bool) : List Bool := w.map (fun b => !b)
+
+theorem the_negative_returns : ∀ w : List Bool, negative (negative w) = w
+  | [] => rfl
+  | b :: w => by
+      show (!(!b)) :: negative (negative w) = b :: w
+      rw [not_not, the_negative_returns w]
+
+theorem the_ink_faces_its_negative :
+    ∀ w : List Bool, ink w + ink (negative w) = w.length
+  | [] => rfl
+  | true :: w => by
+      show (ink w + 1) + ink (negative w) = w.length + 1
+      rw [succ_adds, the_ink_faces_its_negative w]
+  | false :: w => by
+      show (ink w + ink (negative w)) + 1 = w.length + 1
+      exact congrArg (· + 1) (the_ink_faces_its_negative w)
+
+theorem the_negative_keeps_the_book {n : Nat} {w : List Bool}
+    (hw : w ∈ words n) : negative w ∈ words n := by
+  have hlen : (negative w).length = n :=
+    (len_map (fun b => !b) w).trans (every_word_fits n w hw)
+  have h := the_book_holds_every_word (negative w)
+  rw [hlen] at h
+  exact h
+
+theorem the_negative_book_is_the_book (n : Nat) :
+    ((words n).map negative).Perm (words n) :=
+  the_matching_rooms_are_shuffles _ _
+    (apart_map
+      (fun p q h =>
+        (the_negative_returns p).symm.trans
+          ((congrArg negative h).trans (the_negative_returns q)))
+      (the_book_repeats_no_word n))
+    (the_book_repeats_no_word n)
+    (fun x =>
+      ⟨fun hx =>
+         match mem_map_back (words n) hx with
+         | ⟨_, hp, he⟩ => he ▸ the_negative_keeps_the_book hp,
+       fun hx =>
+         (the_negative_returns x) ▸
+           mem_map_intro negative (the_negative_keeps_the_book hx)⟩)
+
+theorem the_negative_inks_sum_alike (n : Nat) :
+    natSum ((words n).map (fun w => ink (negative w)))
+      = natSum ((words n).map ink) := by
+  rw [show (words n).map (fun w => ink (negative w))
+        = ((words n).map negative).map ink
+      from (map_map negative ink (words n)).symm]
+  exact the_sum_hears_no_shuffle
+    (perm_map ink (the_negative_book_is_the_book n))
+
+theorem the_average_ink_is_the_middle (n : Nat) :
+    sameRatio (natSum ((words n).map ink)) (roomCap n) n 2
+      ∧ natSum ((words n).map (fun w => ink (negative w)))
+          = natSum ((words n).map ink)
+      ∧ (∀ w, w ∈ words n → ink w + ink (negative w) = n)
+      ∧ ∀ w : List Bool, negative (negative w) = w := by
+  have hface : ∀ w, w ∈ words n → ink w + ink (negative w) = n :=
+    fun w hw =>
+      (the_ink_faces_its_negative w).trans (every_word_fits n w hw)
+  have hrev := the_negative_inks_sum_alike n
+  refine ⟨?_, hrev, hface, the_negative_returns⟩
+  have hsplit :
+      natSum ((words n).map (fun w => ink w + ink (negative w)))
+        = natSum ((words n).map ink)
+          + natSum ((words n).map (fun w => ink (negative w))) :=
+    the_sums_add ink (fun w => ink (negative w)) (words n)
+  have hlevel :
+      natSum ((words n).map (fun w => ink w + ink (negative w)))
+        = n * (words n).length :=
+    a_level_reading_sums_by_count (fun w => ink w + ink (negative w)) n
+      (words n) hface
+  have hkey : natSum ((words n).map ink) + natSum ((words n).map ink)
+      = n * roomCap n := by
+    have h1 := hsplit.symm.trans hlevel
+    rw [hrev, the_book_counts_the_cap n] at h1
+    exact h1
+  show natSum ((words n).map ink) * 2 = n * roomCap n
+  rw [mul_two_reads_double]
+  exact hkey
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -14302,5 +14389,23 @@ theorem the_book_holds_every_bias (t f n i j : Nat) :
 
 /-- info: 'Seed.the_book_holds_every_bias' does not depend on any axioms -/
 #guard_msgs in #print axioms the_book_holds_every_bias
+
+/-- info: 'Seed.the_negative_returns' does not depend on any axioms -/
+#guard_msgs in #print axioms the_negative_returns
+
+/-- info: 'Seed.the_ink_faces_its_negative' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ink_faces_its_negative
+
+/-- info: 'Seed.the_negative_keeps_the_book' does not depend on any axioms -/
+#guard_msgs in #print axioms the_negative_keeps_the_book
+
+/-- info: 'Seed.the_negative_book_is_the_book' does not depend on any axioms -/
+#guard_msgs in #print axioms the_negative_book_is_the_book
+
+/-- info: 'Seed.the_negative_inks_sum_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_negative_inks_sum_alike
+
+/-- info: 'Seed.the_average_ink_is_the_middle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_average_ink_is_the_middle
 
 end Seed
