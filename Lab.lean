@@ -3027,6 +3027,22 @@ def benchInkSpread : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchOdometerTriangle : IO Bool := do
+  let mut ok := true
+  IO.println "the odometer's log — the book's total mileage is the triangle:"
+  let b3 := words 3
+  let total : Nat := natSum (b3.map val)
+  ok := (← checkTrue
+    "  triangle row — the values of the book sum to the triangle of the cap (eight words reading zero through seven, total twenty-eight: twice the total plus the cap is the cap squared — the odometer's whole log summed, no triangle formula ever named)"
+    ((total == 28)
+      && ((total + total) + roomCap 3 == roomCap 3 * roomCap 3))) && ok
+  ok := (← checkTrue
+    "  complement row — the negative is the odometer's complement (value plus negatived value plus one reads the cap at every word; the negative values sum alike; and the value tells the words apart — no two words share a reading, because the clock reaches each at its own time)"
+    ((b3.all (fun w => (val w + val (negative w)) + 1 == roomCap 3))
+      && (natSum (b3.map (fun w => val (negative w))) == total))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3155,6 +3171,7 @@ def main : IO UInt32 := do
   ok := (← benchBiasedBook) && ok
   ok := (← benchInkMiddle) && ok
   ok := (← benchInkSpread) && ok
+  ok := (← benchOdometerTriangle) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

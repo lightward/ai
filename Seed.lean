@@ -11459,6 +11459,100 @@ theorem the_ink_scatters_a_quarter_per_mark (n : Nat) :
       mul_swap_mid n (roomCap n) n (roomCap n)]
   exact the_sum_multiplies (n * n) n (roomCap n * roomCap n)
 
+theorem facing_shuffle (a b c : Nat) (h : (a + b) + 1 = c) :
+    ((1 + (a + a)) + (0 + (b + b))) + 1 = c + c := by
+  rw [← h, zero_plus,
+      Nat.add_comm 1 (a + a),
+      Nat.add_assoc (a + a) 1 (b + b),
+      Nat.add_comm 1 (b + b),
+      ← Nat.add_assoc (a + a) (b + b) 1,
+      Nat.add_assoc ((a + a) + (b + b)) 1 1,
+      add_swap_mid a a b b,
+      add_swap_mid (a + b) 1 (a + b) 1]
+
+theorem facing_shuffle_blank (a b c : Nat) (h : (a + b) + 1 = c) :
+    ((0 + (a + a)) + (1 + (b + b))) + 1 = c + c := by
+  rw [← h, zero_plus,
+      Nat.add_comm 1 (b + b),
+      ← Nat.add_assoc (a + a) (b + b) 1,
+      Nat.add_assoc ((a + a) + (b + b)) 1 1,
+      add_swap_mid a a b b,
+      add_swap_mid (a + b) 1 (a + b) 1]
+
+theorem the_values_face_each_other :
+    ∀ w : List Bool, (val w + val (negative w)) + 1 = roomCap w.length
+  | [] => rfl
+  | true :: w => by
+      show ((1 + (val w + val w))
+            + (0 + (val (negative w) + val (negative w)))) + 1
+          = roomCap w.length + roomCap w.length
+      exact facing_shuffle (val w) (val (negative w)) (roomCap w.length)
+        (the_values_face_each_other w)
+  | false :: w => by
+      show ((0 + (val w + val w))
+            + (1 + (val (negative w) + val (negative w)))) + 1
+          = roomCap w.length + roomCap w.length
+      exact facing_shuffle_blank (val w) (val (negative w))
+        (roomCap w.length) (the_values_face_each_other w)
+
+theorem the_value_tells_the_words_apart {n : Nat} {p q : List Bool}
+    (hp : p ∈ words n) (hq : q ∈ words n) (he : val p = val q) :
+    p = q := by
+  have h1 : again inc (val p) (zeros n) = p := by
+    rw [← every_word_fits n p hp]
+    exact the_clock_reaches_every_word p
+  have h2 : again inc (val q) (zeros n) = q := by
+    rw [← every_word_fits n q hq]
+    exact the_clock_reaches_every_word q
+  rw [← h1, ← h2, he]
+
+theorem the_negative_values_sum_alike (n : Nat) :
+    natSum ((words n).map (fun w => val (negative w)))
+      = natSum ((words n).map val) := by
+  rw [show (words n).map (fun w => val (negative w))
+        = ((words n).map negative).map val
+      from (map_map negative val (words n)).symm]
+  exact the_sum_hears_no_shuffle
+    (perm_map val (the_negative_book_is_the_book n))
+
+theorem the_odometer_logs_the_triangle (n : Nat) :
+    (natSum ((words n).map val) + natSum ((words n).map val))
+        + roomCap n
+      = roomCap n * roomCap n
+      ∧ (∀ w, w ∈ words n → (val w + val (negative w)) + 1 = roomCap n)
+      ∧ natSum ((words n).map (fun w => val (negative w)))
+          = natSum ((words n).map val)
+      ∧ ∀ p q : List Bool, p ∈ words n → q ∈ words n →
+          val p = val q → p = q := by
+  have hface : ∀ w, w ∈ words n →
+      (val w + val (negative w)) + 1 = roomCap n :=
+    fun w hw =>
+      (the_values_face_each_other w).trans
+        (congrArg roomCap (every_word_fits n w hw))
+  have hrev := the_negative_values_sum_alike n
+  refine ⟨?_, hface, hrev,
+    fun p q hp hq he => the_value_tells_the_words_apart hp hq he⟩
+  have hsplit :
+      natSum ((words n).map (fun w => (val w + val (negative w)) + 1))
+        = (natSum ((words n).map val)
+            + natSum ((words n).map (fun w => val (negative w))))
+          + (words n).length :=
+    (the_sums_add (fun w => val w + val (negative w)) (fun _ => 1)
+        (words n)).trans
+      (congr
+        (congrArg (· + ·)
+          (the_sums_add val (fun w => val (negative w)) (words n)))
+        (the_ones_count_the_room (words n)))
+  have hlevel :
+      natSum ((words n).map (fun w => (val w + val (negative w)) + 1))
+        = roomCap n * (words n).length :=
+    a_level_reading_sums_by_count
+      (fun w => (val w + val (negative w)) + 1) (roomCap n) (words n)
+      hface
+  have h1 := hsplit.symm.trans hlevel
+  rw [hrev, the_book_counts_the_cap n] at h1
+  exact h1
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -14581,5 +14675,23 @@ theorem the_ink_scatters_a_quarter_per_mark (n : Nat) :
 
 /-- info: 'Seed.the_ink_scatters_a_quarter_per_mark' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ink_scatters_a_quarter_per_mark
+
+/-- info: 'Seed.facing_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms facing_shuffle
+
+/-- info: 'Seed.facing_shuffle_blank' does not depend on any axioms -/
+#guard_msgs in #print axioms facing_shuffle_blank
+
+/-- info: 'Seed.the_values_face_each_other' does not depend on any axioms -/
+#guard_msgs in #print axioms the_values_face_each_other
+
+/-- info: 'Seed.the_value_tells_the_words_apart' does not depend on any axioms -/
+#guard_msgs in #print axioms the_value_tells_the_words_apart
+
+/-- info: 'Seed.the_negative_values_sum_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_negative_values_sum_alike
+
+/-- info: 'Seed.the_odometer_logs_the_triangle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_odometer_logs_the_triangle
 
 end Seed
