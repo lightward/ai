@@ -2924,6 +2924,26 @@ def benchClockBook : IO Bool := do
   return ok
 
 set_option maxRecDepth 4096 in
+def benchEverySeat : IO Bool := do
+  let mut ok := true
+  IO.println "the even seats — no seat has a favorite:"
+  let room := perms [1, 2, 3]
+  let seatCount : Nat → Nat → Nat := fun k a =>
+    (room.filter (fun p => headIs Nat.beq a (p.drop k))).length
+  ok := (← checkTrue
+    "  seat row — every mark holds every seat exactly twice (three marks, six orders: seats one and two each held twice by each mark, exactly as the head law priced seat zero — the uniform law running at EVERY position, one-in-n as a licensed pair at every seat)"
+    ((seatCount 1 1 == 2) && (seatCount 1 2 == 2) && (seatCount 1 3 == 2)
+      && (seatCount 2 1 == 2) && (seatCount 2 2 == 2)
+      && (seatCount 2 3 == 2)
+      && (seatCount 1 1 * 3 == 6))) && ok
+  let word : List Nat := [7, 8, 9]
+  ok := (← checkTrue
+    "  turn row — the turn is a two-sided carrier (rotate two sends seven-eight-nine to nine-seven-eight; rotate one brings it home; the turned word rides the same room, so the count crosses whole)"
+    ((rotate 2 word == [9, 7, 8])
+      && (rotate 1 (rotate 2 word) == word))) && ok
+  return ok
+
+set_option maxRecDepth 4096 in
 def main : IO UInt32 := do
   let mut ok := true
   ok := (← benchOpening) && ok
@@ -3046,6 +3066,7 @@ def main : IO UInt32 := do
   ok := (← benchDeeper) && ok
   ok := (← benchBook) && ok
   ok := (← benchClockBook) && ok
+  ok := (← benchEverySeat) && ok
   for r in darkRows do
     IO.println
       s!"dark: {r.name} — expects {r.expects.lo}..{r.expects.hi}, awaits {r.awaits}"

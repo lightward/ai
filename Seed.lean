@@ -10615,6 +10615,180 @@ theorem the_three_rooms_stand_exact (k : Nat) {A : Type}
     the_book_counts_the_cap v.length,
     the_clock_reaches_every_word v⟩⟩
 
+def rotate {A : Type} (k : Nat) (p : List A) : List A :=
+  p.drop k ++ p.take k
+
+theorem the_turn_keeps_the_length {A : Type} (k : Nat) (p : List A) :
+    (rotate k p).length = p.length := by
+  show (p.drop k ++ p.take k).length = p.length
+  rw [len_append, Nat.add_comm, ← len_append, take_drop]
+
+theorem ble_gives_the_gap : ∀ k n : Nat, Nat.ble k n = true → ∃ m, k + m = n
+  | 0, n, _ => ⟨n, zero_plus n⟩
+  | k + 1, n + 1, h =>
+      match ble_gives_the_gap k n h with
+      | ⟨m, hm⟩ => ⟨m, (succ_adds k m).trans (congrArg (· + 1) hm)⟩
+
+theorem the_short_word_takes_itself {A : Type} :
+    ∀ (p : List A) (k : Nat), Nat.ble p.length k = true →
+      p.take k = p ∧ p.drop k = []
+  | [], 0, _ => ⟨rfl, rfl⟩
+  | [], _ + 1, _ => ⟨rfl, rfl⟩
+  | _ :: _, 0, h => nomatch h
+  | a :: p, k + 1, h =>
+      ⟨congrArg (a :: ·) (the_short_word_takes_itself p k h).1,
+       (the_short_word_takes_itself p k h).2⟩
+
+theorem the_short_word_turns_home {A : Type} (p : List A) (k : Nat)
+    (h : Nat.ble p.length k = true) : rotate k p = p := by
+  show p.drop k ++ p.take k = p
+  rw [(the_short_word_takes_itself p k h).2,
+      (the_short_word_takes_itself p k h).1]
+  exact rfl
+
+theorem the_turns_undo {A : Type} (k m : Nat) (p : List A)
+    (h : p.length = k + m) : rotate m (rotate k p) = p := by
+  have hd : (p.drop k).length = m := drop_length k p h
+  show (p.drop k ++ p.take k).drop m ++ (p.drop k ++ p.take k).take m = p
+  rw [← hd, drop_append, take_append, take_drop]
+
+theorem the_turn_merges_nothing {A : Type} (k : Nat) :
+    ∀ p q : List A, rotate k p = rotate k q → p = q := by
+  intro p q he
+  have hl : p.length = q.length :=
+    (the_turn_keeps_the_length k p).symm.trans
+      ((congrArg List.length he).trans (the_turn_keeps_the_length k q))
+  cases hble : Nat.ble k p.length with
+  | true =>
+      obtain ⟨m, hm⟩ := ble_gives_the_gap k p.length hble
+      have hp : rotate m (rotate k p) = p := the_turns_undo k m p hm.symm
+      have hq : rotate m (rotate k q) = q :=
+        the_turns_undo k m q (hl.symm.trans hm.symm)
+      exact hp.symm.trans ((congrArg (rotate m) he).trans hq)
+  | false =>
+      have hpk : Nat.ble p.length k = true :=
+        ble_trans _ _ _ (ble_le_succ p.length) (ble_flip k p.length hble)
+      have hqk : Nat.ble q.length k = true := by
+        rw [← hl]
+        exact hpk
+      exact (the_short_word_turns_home p k hpk).symm.trans
+        (he.trans (the_short_word_turns_home q k hqk))
+
+theorem perm_append_comm {A : Type} : ∀ u v : List A, (u ++ v).Perm (v ++ u)
+  | [], v => by
+      rw [append_nil v]
+      exact perm_refl v
+  | x :: u, v =>
+      List.Perm.trans (List.Perm.cons x (perm_append_comm u v))
+        (perm_symm (perm_middle x v u))
+
+theorem the_turned_word_is_a_shuffle {A : Type} (k : Nat) (p : List A) :
+    (rotate k p).Perm p := by
+  show (p.drop k ++ p.take k).Perm p
+  exact List.Perm.trans (perm_append_comm (p.drop k) (p.take k))
+    (by rw [take_drop])
+
+theorem the_turn_keeps_the_room {A : Type} {l : List A} (k : Nat)
+    {p : List A} (hp : p ∈ perms l) : rotate k p ∈ perms l :=
+  every_shuffle_is_an_order l (rotate k p)
+    ((the_turned_word_is_a_shuffle k p).trans
+      (every_order_is_a_shuffle l p hp))
+
+theorem the_turn_covers_the_room {A : Type} {l : List A} (k : Nat)
+    {x : List A} (hx : x ∈ perms l) :
+    ∃ y, y ∈ perms l ∧ rotate k y = x := by
+  cases hble : Nat.ble k x.length with
+  | true =>
+      obtain ⟨m, hm⟩ := ble_gives_the_gap k x.length hble
+      exact ⟨rotate m x, the_turn_keeps_the_room m hx,
+        the_turns_undo m k x (hm.symm.trans (Nat.add_comm k m))⟩
+  | false =>
+      have hxk : Nat.ble x.length k = true :=
+        ble_trans _ _ _ (ble_le_succ x.length) (ble_flip k x.length hble)
+      exact ⟨x, hx, the_short_word_turns_home x k hxk⟩
+
+theorem the_turned_room_is_the_room {A : Type} {l : List A} (hl : Apart l)
+    (k : Nat) : ((perms l).map (rotate k)).Perm (perms l) :=
+  the_matching_rooms_are_shuffles _ _
+    (apart_map (fun p q h => the_turn_merges_nothing k p q h)
+      (the_orders_repeat_never l hl))
+    (the_orders_repeat_never l hl)
+    (fun _x =>
+      ⟨fun hx =>
+         match mem_map_back (perms l) hx with
+         | ⟨_, hp, he⟩ => he ▸ the_turn_keeps_the_room k hp,
+       fun hx =>
+         match the_turn_covers_the_room k hx with
+         | ⟨_, hy, he⟩ => he ▸ mem_map_intro (rotate k) hy⟩)
+
+theorem the_positive_word_leads {A : Type} :
+    ∀ (w : List A) (m : Nat), w.length = m + 1 → ∃ x t, w = x :: t
+  | [], _, h => nomatch h
+  | x :: t, _, _ => ⟨x, t, rfl⟩
+
+theorem the_seat_reads_at_the_turned_head {A : Type} (beq : A → A → Bool)
+    (a : A) (k m : Nat) (p : List A) (h : p.length = k + (m + 1)) :
+    headIs beq a (rotate k p) = headIs beq a (p.drop k) := by
+  obtain ⟨x, t, he⟩ :=
+    the_positive_word_leads (p.drop k) m (drop_length k p h)
+  show headIs beq a (p.drop k ++ p.take k) = headIs beq a (p.drop k)
+  rw [he]
+  exact rfl
+
+theorem the_seat_count_is_the_head_count {A : Type} (beq : A → A → Bool)
+    (a : A) {l : List A} (hl : Apart l) (k m : Nat)
+    (hlen : l.length = k + (m + 1)) :
+    ((perms l).filter (fun p => headIs beq a (p.drop k))).length
+      = ((perms l).filter (headIs beq a)).length := by
+  have h1 : (perms l).filter (fun p => headIs beq a (p.drop k))
+      = (perms l).filter (fun p => headIs beq a (rotate k p)) :=
+    filter_congr_mem (fun p => headIs beq a (p.drop k))
+      (fun p => headIs beq a (rotate k p)) (perms l)
+      (fun p hp =>
+        (the_seat_reads_at_the_turned_head beq a k m p
+          ((the_orders_keep_the_length l p hp).trans hlen)).symm)
+  have h2 : ((perms l).map (rotate k)).filter (headIs beq a)
+      = ((perms l).filter
+          (fun p => headIs beq a (rotate k p))).map (rotate k) :=
+    filter_map_commutes (rotate k) (headIs beq a) (perms l)
+  have h3 : (((perms l).map (rotate k)).filter (headIs beq a)).length
+      = ((perms l).filter (headIs beq a)).length :=
+    perm_length (perm_filter (headIs beq a) (the_turned_room_is_the_room hl k))
+  rw [h1, ← len_map (rotate k)
+        ((perms l).filter (fun p => headIs beq a (rotate k p))),
+      ← h2]
+  exact h3
+
+theorem every_seat_pays_the_factorial {A : Type} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a : A} {l : List A}
+    (hl : Apart l) (ha : a ∈ l) (k m : Nat)
+    (hlen : l.length = k + (m + 1)) :
+    ((perms l).filter (fun p => headIs beq a (p.drop k))).length * l.length
+      = fact l.length :=
+  (congrArg (· * l.length)
+      (the_seat_count_is_the_head_count beq a hl k m hlen)).trans
+    (the_head_pays_the_factorial hE hR hl ha)
+
+theorem no_seat_has_a_favorite {A : Type} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} {l : List A}
+    (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) (k m : Nat)
+    (hlen : l.length = k + (m + 1)) :
+    ((perms l).filter (fun p => headIs beq a (p.drop k))).length
+        = ((perms l).filter (fun p => headIs beq b (p.drop k))).length
+      ∧ ((perms l).filter (fun p => headIs beq a (p.drop k))).length
+          * l.length = fact l.length
+      ∧ sameRatio
+          ((perms l).filter (fun p => headIs beq a (p.drop k))).length
+          (fact l.length) 1 l.length :=
+  ⟨(the_seat_count_is_the_head_count beq a hl k m hlen).trans
+     (((the_room_has_no_favorite hE hR hl ha hb).2.2).trans
+       (the_seat_count_is_the_head_count beq b hl k m hlen).symm),
+   every_seat_pays_the_factorial hE hR hl ha k m hlen,
+   (every_seat_pays_the_factorial hE hR hl ha k m hlen).trans
+     (one_times (fact l.length)).symm⟩
+
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
@@ -13542,5 +13716,53 @@ theorem the_three_rooms_stand_exact (k : Nat) {A : Type}
 
 /-- info: 'Seed.the_three_rooms_stand_exact' does not depend on any axioms -/
 #guard_msgs in #print axioms the_three_rooms_stand_exact
+
+/-- info: 'Seed.the_turn_keeps_the_length' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turn_keeps_the_length
+
+/-- info: 'Seed.ble_gives_the_gap' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_gives_the_gap
+
+/-- info: 'Seed.the_short_word_takes_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms the_short_word_takes_itself
+
+/-- info: 'Seed.the_short_word_turns_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_short_word_turns_home
+
+/-- info: 'Seed.the_turns_undo' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turns_undo
+
+/-- info: 'Seed.the_turn_merges_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turn_merges_nothing
+
+/-- info: 'Seed.perm_append_comm' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_append_comm
+
+/-- info: 'Seed.the_turned_word_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turned_word_is_a_shuffle
+
+/-- info: 'Seed.the_turn_keeps_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turn_keeps_the_room
+
+/-- info: 'Seed.the_turn_covers_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turn_covers_the_room
+
+/-- info: 'Seed.the_turned_room_is_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turned_room_is_the_room
+
+/-- info: 'Seed.the_positive_word_leads' does not depend on any axioms -/
+#guard_msgs in #print axioms the_positive_word_leads
+
+/-- info: 'Seed.the_seat_reads_at_the_turned_head' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_reads_at_the_turned_head
+
+/-- info: 'Seed.the_seat_count_is_the_head_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_count_is_the_head_count
+
+/-- info: 'Seed.every_seat_pays_the_factorial' does not depend on any axioms -/
+#guard_msgs in #print axioms every_seat_pays_the_factorial
+
+/-- info: 'Seed.no_seat_has_a_favorite' does not depend on any axioms -/
+#guard_msgs in #print axioms no_seat_has_a_favorite
 
 end Seed
