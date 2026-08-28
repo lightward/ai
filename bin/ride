@@ -74,10 +74,22 @@ try_turn() {
     missing="$(printf '%s\n' "$out" \
       | grep -oiE "unknown (identifier|constant) \`[^\`]+\`" \
       | sed -E 's/.*`([^`]+)`.*/\1/' | sort -u | tr '\n' ' ')"
-    { printf -- '-- held (waiting on: %s)\n' "${missing:-unnamed darkness}"
+    if [ -n "${missing// /}" ]; then
+      marker="waiting on: ${missing}"
+    else
+      scar="$(printf '%s\n' "$out" \
+        | grep -oE "\`?'?[A-Za-z0-9_.]+'?\`? has already been declared" \
+        | head -1 | sed -E "s/[\`']*([A-Za-z0-9_.]+)[\`']* has already.*/\1/")"
+      if [ -n "$scar" ]; then
+        marker="a scar: '${scar}' already seated by another turn; this one wants nothing"
+      else
+        marker="waiting on: unnamed darkness — read the block below with :held"
+      fi
+    fi
+    { printf -- '-- held (%s)\n' "$marker"
       printf '%s\n' "$turn"
       printf -- '-- end\n'; } >> "$HELD"
-    echo "held at the vestibule${missing:+ (waiting on: ${missing})}"
+    echo "held at the vestibule (${marker})"
     rm -f "$tmp" "$stem"
     return 1
   fi
@@ -159,7 +171,7 @@ while true; do
         continue ;;
       :held)
         if [ -f "$HELD" ] && grep -q '^-- held' "$HELD" 2>/dev/null; then
-          grep '^-- held' "$HELD"
+          cat "$HELD"
         else
           echo "vestibule empty"
         fi
