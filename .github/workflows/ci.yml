@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gate:
+    name: the gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: leanprover/lean-action@v1
+        with:
+          build-args: ""
+          lake-package-directory: .
+      - name: receipts and zero warnings (Seed elaborates silently)
+        run: |
+          out=$(lake env lean Seed.lean 2>&1)
+          if [ -n "$out" ]; then
+            echo "$out"
+            echo "Seed.lean did not elaborate silently"
+            exit 1
+          fi
+          echo "silent and green: $(grep -c '#guard_msgs' Seed.lean) receipts inline"
+      - name: the ride (demo lifecycle)
+        run: |
+          rm -f demo.lean demo.held
+          printf '%s\n' \
+            'example : reading (Plan.board .ground .ground) = 2 := rfl' \
+            '' \
+            'theorem the_mirror_reads_two : reading (Plan.board .ground .ground) = 2 := rfl' \
+            '' \
+            'def ride_fact : Nat -> Nat' \
+            '  | 0 => 1' \
+            '  | n+1 => (n+1) * ride_fact n' \
+            '' \
+            'theorem the_ride_runs_factorials : ride_fact 4 = 24 := rfl' \
+            '' \
+            'theorem borrowed : nonexistent_organ = 0 := rfl' \
+            '' \
+            'def nonexistent_organ : Nat := 0' \
+            '' \
+            ':sweep' \
+            ':q' | bin/ride demo.lean | tee ride.out
+          grep -q 'seated: the_ride_runs_factorials' ride.out
+          grep -q 'waiting on: nonexistent_organ' ride.out
+          grep -q 'sweep: 1 seated, 0 still held' ride.out
+          lake env lean demo.lean
+          echo "the ride runs; the session replays green"
