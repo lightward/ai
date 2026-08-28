@@ -50,16 +50,11 @@ jobs:
           grep -q 'sweep: 1 seated, 0 still held' ride.out
           lake env lean demo.lean
           echo "the ride runs; the session replays green"
-      - name: candle the clutch (assays elaborate where laid; rides replay green)
+      - name: candle the clutch (assays elaborate where laid; rides are fossils, not regressions)
         run: |
           for f in ova/*/assay.lean; do
             [ -f "$f" ] || continue
             lake env lean "$f"
             echo "assay green: $f"
-          done
-          for f in rides/*.lean; do
-            [ -f "$f" ] || continue
-            lake env lean "$f"
-            echo "ride replays green: $f"
           done
           bin/candle

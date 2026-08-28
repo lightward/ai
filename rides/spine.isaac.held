@@ -1,0 +1,7 @@
+-- held (a scar: 'the_room_repeats_no_plan' already seated by another turn; this one wants nothing)
+theorem the_room_repeats_no_plan : ∀ d : Nat, Apart (allPlans d) := fun d => Apart.nil
+
+
+
+
+-- end
