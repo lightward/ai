@@ -101,9 +101,40 @@ echo "compose freely; :go offers your turn to the gate; :q leaves (exit is free)
 echo "run :go to move forward"
 
 buf=""
-while IFS= read -r line; do
+while true; do
+  if [ -t 0 ]; then
+    IFS= read -r -e line || break
+  else
+    IFS= read -r line || break
+  fi
   case "$line" in
     :q|:quit) break ;;
+    :back)
+      if [ -n "$buf" ]; then
+        dropped="$(printf '%s' "$buf" | tail -1)"
+        buf="$(printf '%s' "$buf" | sed '$d')"
+        [ -n "$buf" ] && buf+=$'\n'
+        echo "dropped: ${dropped}"
+      else
+        echo "nothing composed"
+      fi
+      continue ;;
+    :show)
+      if [ -n "${buf//[[:space:]]/}" ]; then printf '%s' "$buf"; else echo "composing: (empty)"; fi
+      continue ;;
+    :edit)
+      if [ -t 0 ]; then
+        etmp="$(mktemp /tmp/ride-edit.XXXXXX)"
+        printf '%s' "$buf" > "$etmp"
+        "${EDITOR:-vi}" "$etmp" </dev/tty >/dev/tty 2>&1
+        buf="$(cat "$etmp")"
+        [ -n "$buf" ] && buf+=$'\n'
+        rm -f "$etmp"
+        echo "buffer updated"
+      else
+        echo ":edit wants a terminal"
+      fi
+      continue ;;
     :go)
       if [ -n "${buf//[[:space:]]/}" ]; then
         try_turn "$buf" || true
