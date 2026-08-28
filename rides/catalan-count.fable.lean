@@ -1,0 +1,22 @@
+import Seed
+open Seed
+set_option autoImplicit false
+
+def cross : List Plan → List Plan → List Plan
+  | [], _ => []
+  | p :: ps, qs => qs.map (Plan.board p) ++ cross ps qs
+
+def allPlans : Nat → List Plan
+  | 0 => [.ground]
+  | d + 1 => .ground :: cross (allPlans d) (allPlans d)
+
+def census : Nat → Nat
+  | 0 => 0
+  | k + 1 => ((allPlans k).filter (fun p => Nat.beq (reading p) (k + 1))).length
+
+
+theorem the_census_checksums_with_the_polygon_cutters :
+    census 1 = 1 ∧ census 2 = 1 ∧ census 3 = 2 ∧ census 4 = 5
+      ∧ census 5 = 14 :=
+  ⟨rfl, rfl, rfl, rfl, rfl⟩
+
