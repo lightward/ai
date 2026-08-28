@@ -96,34 +96,42 @@ do_sweep() {
   echo "sweep: ${seated} seated, ${kept} still held"
 }
 
-echo "the ride (session: ${SESSION}); a blank line ends a turn; :q leaves (exit is free)"
-status_line
+echo "the ride (session: ${SESSION})"
+echo "compose freely; :go offers your turn to the gate; :q leaves (exit is free)"
+echo "run :go to move forward"
 
 buf=""
 while IFS= read -r line; do
-  if [ -z "$buf" ]; then
-    case "$line" in
-      :q|:quit) break ;;
-      :spells) spells; continue ;;
-      :held)
-        if [ -f "$HELD" ]; then grep '^-- held' "$HELD"; else echo "vestibule empty"; fi
-        continue ;;
-      :sweep) do_sweep; status_line; continue ;;
-      :status) status_line; continue ;;
-    esac
-  fi
-  if [ -z "$line" ]; then
-    if [ -n "$buf" ]; then
-      try_turn "$buf" || true
+  case "$line" in
+    :q|:quit) break ;;
+    :go)
+      if [ -n "${buf//[[:space:]]/}" ]; then
+        try_turn "$buf" || true
+      fi
       buf=""
       status_line
-    fi
-    continue
+      continue ;;
+  esac
+  if [ -z "${buf//[[:space:]]/}" ]; then
+    case "$line" in
+      :spells)
+        if [ -n "$(spells | head -1)" ]; then spells; else echo "spellbook empty"; fi
+        continue ;;
+      :held)
+        if [ -f "$HELD" ] && grep -q '^-- held' "$HELD" 2>/dev/null; then
+          grep '^-- held' "$HELD"
+        else
+          echo "vestibule empty"
+        fi
+        continue ;;
+      :sweep) do_sweep; continue ;;
+      :status) status_line; continue ;;
+    esac
   fi
   buf+="$line"$'\n'
 done
 
-if [ -n "$buf" ]; then
+if [ -n "${buf//[[:space:]]/}" ]; then
   try_turn "$buf" || true
   status_line
 fi

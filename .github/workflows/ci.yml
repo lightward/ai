@@ -28,20 +28,21 @@ jobs:
         run: |
           rm -f demo.lean demo.held
           printf '%s\n' \
+            ':go' \
             'example : reading (Plan.board .ground .ground) = 2 := rfl' \
-            '' \
+            ':go' \
             'theorem the_mirror_reads_two : reading (Plan.board .ground .ground) = 2 := rfl' \
-            '' \
+            ':go' \
             'def ride_fact : Nat -> Nat' \
             '  | 0 => 1' \
             '  | n+1 => (n+1) * ride_fact n' \
-            '' \
+            ':go' \
             'theorem the_ride_runs_factorials : ride_fact 4 = 24 := rfl' \
-            '' \
+            ':go' \
             'theorem borrowed : nonexistent_organ = 0 := rfl' \
-            '' \
+            ':go' \
             'def nonexistent_organ : Nat := 0' \
-            '' \
+            ':go' \
             ':sweep' \
             ':q' | bin/ride demo.lean | tee ride.out
           grep -q 'seated: the_ride_runs_factorials' ride.out
