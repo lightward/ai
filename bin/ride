@@ -50,6 +50,15 @@ try_turn() {
   cat "$SESSION" > "$tmp"
   printf '\n%s\n' "$turn" >> "$tmp"
   if out="$(lake env lean "$tmp" 2>&1)"; then
+    if printf '%s\n' "$out" | grep -q "declaration uses .sorry"; then
+      [ -z "$quiet" ] && printf '%s\n' "$out"
+      { printf -- '-- held (waiting on: an honest proof — sorry refused)\n'
+        printf '%s\n' "$turn"
+        printf -- '-- end\n'; } >> "$HELD"
+      echo "held at the vestibule (sorry refused — the gate does not accept trust-me)"
+      rm -f "$tmp" "$stem"
+      return 1
+    fi
     names="$(named_in "$turn" | tr '\n' ' ')"
     if [ -n "${names// /}" ]; then
       { printf '\n%s\n' "$turn"; } >> "$SESSION"
