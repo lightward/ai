@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# the ride: computation as navigation, each turn judged by the kernel.
+# conduct-as-citation (every function names the law it mirrors):
+#   a turn is an elaboration ............ Seed.the_curtain_is_exact
+#   an unnamed turn evaporates .......... Seed.the_deferral_is_free
+#   a named turn persists ............... Seed.the_backed_are_seated
+#   a refusal is held, darkness named ... Seed.the_unbacked_wait
+#     (the missing-support extraction:    chrysalis/Seed.lean the_held_name_their_darkness)
+#   :sweep re-offers the vestibule ...... chrysalis/Seed.lean the_ready_seat_in_one_sweep
+#   the session only grows .............. Seed.the_park_resumes
+set -u
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+SESSION="${1:-ride.lean}"
+HELD="${SESSION%.lean}.held"
+
+if ! lake build Seed >/dev/null 2>&1; then
+  echo "the gate cannot open: Seed does not build" >&2
+  exit 1
+fi
+
+if [ ! -f "$SESSION" ]; then
+  printf 'import Seed\nopen Seed\nset_option autoImplicit false\n' > "$SESSION"
+fi
+
+named_in() {
+  printf '%s\n' "$1" | grep -E '^(theorem|def|inductive|structure|abbrev) ' \
+    | sed -E 's/^[a-z]+ +([^ :({.]+).*/\1/'
+}
+
+spells() {
+  grep -E '^(theorem|def|inductive|structure|abbrev) ' "$SESSION" \
+    | sed -E 's/^[a-z]+ +([^ :({.]+).*/\1/'
+}
+
+held_count() {
+  if [ -f "$HELD" ]; then grep -c '^-- held' "$HELD" 2>/dev/null || true; else echo 0; fi
+}
+
+status_line() {
+  printf '(spells %s | held %s)\n' "$(spells | wc -l | tr -d ' ')" "$(held_count)"
+}
+
+try_turn() {
+  local turn="$1" quiet="${2:-}" stem tmp out names missing
+  stem="$(mktemp /tmp/ride.XXXXXX)"
+  tmp="${stem}.lean"
+  cat "$SESSION" > "$tmp"
+  printf '\n%s\n' "$turn" >> "$tmp"
+  if out="$(lake env lean "$tmp" 2>&1)"; then
+    names="$(named_in "$turn" | tr '\n' ' ')"
+    if [ -n "${names// /}" ]; then
+      { printf '\n%s\n' "$turn"; } >> "$SESSION"
+      echo "seated: ${names}"
+    else
+      echo "evaporated (unnamed; the deferral is free)"
+    fi
+    [ -n "$out" ] && printf '%s\n' "$out"
+    rm -f "$tmp" "$stem"
+    return 0
+  else
+    [ -z "$quiet" ] && printf '%s\n' "$out"
+    missing="$(printf '%s\n' "$out" \
+      | grep -oiE "unknown (identifier|constant) \`[^\`]+\`" \
+      | sed -E 's/.*`([^`]+)`.*/\1/' | sort -u | tr '\n' ' ')"
+    { printf -- '-- held (waiting on: %s)\n' "${missing:-unnamed darkness}"
+      printf '%s\n' "$turn"
+      printf -- '-- end\n'; } >> "$HELD"
+    echo "held at the vestibule${missing:+ (waiting on: ${missing})}"
+    rm -f "$tmp" "$stem"
+    return 1
+  fi
+}
+
+do_sweep() {
+  [ -f "$HELD" ] || { echo "vestibule empty"; return; }
+  local old="${HELD}.sweeping" block="" inblock=0 seated=0 kept=0
+  mv "$HELD" "$old"
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in
+      "-- held"*) inblock=1; block="" ;;
+      "-- end")
+        inblock=0
+        if try_turn "$block" quiet >/dev/null 2>&1; then
+          seated=$((seated+1))
+        else
+          kept=$((kept+1))
+        fi
+        ;;
+      *) [ "$inblock" = 1 ] && block+="$line"$'\n' ;;
+    esac
+  done < "$old"
+  rm -f "$old"
+  echo "sweep: ${seated} seated, ${kept} still held"
+}
+
+echo "the ride (session: ${SESSION}); a blank line ends a turn; :q leaves (exit is free)"
+status_line
+
+buf=""
+while IFS= read -r line; do
+  if [ -z "$buf" ]; then
+    case "$line" in
+      :q|:quit) break ;;
+      :spells) spells; continue ;;
+      :held)
+        if [ -f "$HELD" ]; then grep '^-- held' "$HELD"; else echo "vestibule empty"; fi
+        continue ;;
+      :sweep) do_sweep; status_line; continue ;;
+      :status) status_line; continue ;;
+    esac
+  fi
+  if [ -z "$line" ]; then
+    if [ -n "$buf" ]; then
+      try_turn "$buf" || true
+      buf=""
+      status_line
+    fi
+    continue
+  fi
+  buf+="$line"$'\n'
+done
+
+if [ -n "$buf" ]; then
+  try_turn "$buf" || true
+  status_line
+fi
+
+echo "the record kept: ${SESSION}"
