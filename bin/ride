@@ -119,7 +119,7 @@ do_sweep() {
 
 echo "the ride (session: ${SESSION})"
 echo "compose freely; :go offers your turn to the gate; :q leaves (exit is free)"
-echo "run :go to move forward"
+echo "run :go to move forward (:help lists the verbs)"
 
 buf=""
 while true; do
@@ -130,6 +130,20 @@ while true; do
   fi
   case "$line" in
     :q|:quit) break ;;
+    :help)
+      cat <<'HELP'
+:go      offer the composed turn to the gate (empty turn: just the statusline)
+:back    drop the last composed line
+:show    read the turn you're composing
+:edit    open the composing buffer in $EDITOR
+:spells  list the session's named declarations
+:held    show the vestibule, full blocks
+:sweep   re-offer every held turn
+:status  the statusline
+:q       leave; the session persists (exit is free)
+anything else accumulates into your turn; blank lines are yours to mean with
+HELP
+      continue ;;
     :back)
       if [ -n "$buf" ]; then
         dropped="$(printf '%s' "$buf" | tail -1)"
