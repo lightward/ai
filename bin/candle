@@ -38,8 +38,14 @@ for d in ova/*/; do
   [ -f "${d}ovum.md" ] || continue
   name="$(basename "$d")"
   total=$((total+1))
-  parents="$(grep '^parents:' "${d}ovum.md" | sed 's/^parents: *//')"
-  awaited="$(grep '^awaited:' "${d}ovum.md" | sed 's/^awaited: *//')"
+  parents="$(grep -E '^\*? *parents:' "${d}ovum.md" | sed -E 's/^\*? *parents: *//' | tr -d '\140')"
+  awaited="$(grep -E '^\*? *awaited:' "${d}ovum.md" | sed -E 's/^\*? *awaited: *//' | tr -d '\140')"
+
+  if [ -z "${awaited// /}" ]; then
+    held=$((held+1))
+    report+="  ${name}: HELD — no awaited names legible in ovum.md"$'\n'
+    continue
+  fi
 
   missing_parents="$(probe_names "$parents")"
   if [ -n "${missing_parents// /}" ]; then
