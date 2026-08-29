@@ -10,6 +10,8 @@
 #   the session only grows .............. Seed.the_park_resumes
 set -u
 
+main() {
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
@@ -215,3 +217,6 @@ if [ -n "${buf//[[:space:]]/}" ]; then
 fi
 
 echo "the record kept: ${SESSION}"
+}
+
+main "$@"
