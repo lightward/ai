@@ -22,7 +22,7 @@ if ! lake build Seed >/dev/null 2>&1; then
 fi
 
 if [ ! -f "$SESSION" ]; then
-  printf 'import Seed\nopen Seed\nset_option autoImplicit false\n' > "$SESSION"
+  printf 'import Seed\nopen Seed\nset_option autoImplicit false\nuniverse u v w\n' > "$SESSION"
 fi
 
 named_in() {
@@ -75,8 +75,13 @@ try_turn() {
     missing="$(printf '%s\n' "$out" \
       | grep -oiE "unknown (identifier|constant) \`[^\`]+\`" \
       | sed -E 's/.*`([^`]+)`.*/\1/' | sort -u | tr '\n' ' ')"
+    unis="$(printf '%s\n' "$out" \
+      | grep -oE 'unknown universe level \`[^\`]+\`' \
+      | sed -E 's/.*\`([^\`]+)\`.*/\1/' | sort -u | tr '\n' ' ')"
     if [ -n "${missing// /}" ]; then
       marker="waiting on: ${missing}"
+    elif [ -n "${unis// /}" ]; then
+      marker="waiting on: universe ${unis}- declare it in a turn that seats (new sessions carry u v w from birth)"
     else
       scar="$(printf '%s\n' "$out" \
         | grep -oE "\`?'?[A-Za-z0-9_.]+'?\`? has already been declared" \
