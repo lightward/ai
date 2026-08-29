@@ -228,4 +228,4 @@ fi
 echo "the record kept: ${SESSION}"
 }
 
-main "$@"
+main "$@"; exit
