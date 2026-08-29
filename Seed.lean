@@ -2008,4 +2008,692 @@ theorem the_census_of_orders_is_exact {A : Type u} (l p : List A)
 /-- info: 'Seed.the_census_of_orders_is_exact' does not depend on any axioms -/
 #guard_msgs in #print axioms the_census_of_orders_is_exact
 
+theorem not_not : ∀ b : Bool, (!(!b)) = b
+  | true => rfl
+  | false => rfl
+
+/-- info: 'Seed.not_not' does not depend on any axioms -/
+#guard_msgs in #print axioms not_not
+
+theorem one_scales : ∀ n : Nat, 1 * n = n
+  | 0 => rfl
+  | n + 1 => congrArg (· + 1) (one_scales n)
+
+/-- info: 'Seed.one_scales' does not depend on any axioms -/
+#guard_msgs in #print axioms one_scales
+
+def sameRatio (a b c d : Nat) : Prop := a * d = c * b
+
+theorem beq_no {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y) {x y : A} (hxy : x ≠ y) :
+    beq x y = false := by
+  cases h : beq x y with
+  | false => rfl
+  | true => exact absurd (hE x y h) hxy
+
+/-- info: 'Seed.beq_no' does not depend on any axioms -/
+#guard_msgs in #print axioms beq_no
+
+theorem ne_of_beq_no {A : Type u} {beq : A → A → Bool}
+    (hR : ∀ x : A, beq x x = true) {x y : A} (h : beq x y = false) :
+    x ≠ y :=
+  fun he =>
+    nomatch (((congrArg (fun z => beq z y) he).symm.trans h).symm.trans
+      (hR y))
+
+/-- info: 'Seed.ne_of_beq_no' does not depend on any axioms -/
+#guard_msgs in #print axioms ne_of_beq_no
+
+def trade {A : Type u} (beq : A → A → Bool) (a b : A) (x : A) : A :=
+  cond (beq x a) b (cond (beq x b) a x)
+
+theorem the_trade_swaps_the_pair {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) :
+    trade beq a b a = b ∧ trade beq a b b = a := by
+  constructor
+  · show cond (beq a a) b (cond (beq a b) a a) = b
+    rw [hR a]
+    exact rfl
+  · show cond (beq b a) b (cond (beq b b) a b) = a
+    rw [beq_no hE (fun h => hab h.symm), hR b]
+    exact rfl
+
+/-- info: 'Seed.the_trade_swaps_the_pair' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_swaps_the_pair
+
+theorem the_trade_spares_the_stranger {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y) {a b x : A}
+    (hxa : x ≠ a) (hxb : x ≠ b) : trade beq a b x = x := by
+  show cond (beq x a) b (cond (beq x b) a x) = x
+  rw [beq_no hE hxa, beq_no hE hxb]
+  exact rfl
+
+/-- info: 'Seed.the_trade_spares_the_stranger' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_spares_the_stranger
+
+theorem the_trade_undoes_itself {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) (x : A) :
+    trade beq a b (trade beq a b x) = x := by
+  cases hxa : beq x a with
+  | true =>
+      have hx : x = a := hE x a hxa
+      rw [hx, (the_trade_swaps_the_pair hE hR hab).1,
+          (the_trade_swaps_the_pair hE hR hab).2]
+  | false =>
+      cases hxb : beq x b with
+      | true =>
+          have hx : x = b := hE x b hxb
+          rw [hx, (the_trade_swaps_the_pair hE hR hab).2,
+              (the_trade_swaps_the_pair hE hR hab).1]
+      | false =>
+          have hfix : trade beq a b x = x := by
+            show cond (beq x a) b (cond (beq x b) a x) = x
+            rw [hxa, hxb]
+            exact rfl
+          rw [hfix, hfix]
+
+/-- info: 'Seed.the_trade_undoes_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_undoes_itself
+
+theorem the_trade_hears_no_order {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) (x : A) :
+    trade beq a b x = trade beq b a x := by
+  cases hxa : beq x a with
+  | true =>
+      have hx : x = a := hE x a hxa
+      rw [hx, (the_trade_swaps_the_pair hE hR hab).1]
+      exact ((the_trade_swaps_the_pair hE hR
+        (fun h => hab h.symm)).2).symm
+  | false =>
+      cases hxb : beq x b with
+      | true =>
+          have hx : x = b := hE x b hxb
+          rw [hx, (the_trade_swaps_the_pair hE hR hab).2]
+          exact ((the_trade_swaps_the_pair hE hR
+            (fun h => hab h.symm)).1).symm
+      | false =>
+          have hxa' := ne_of_beq_no hR hxa
+          have hxb' := ne_of_beq_no hR hxb
+          rw [the_trade_spares_the_stranger hE hxa' hxb',
+              the_trade_spares_the_stranger hE hxb' hxa']
+
+/-- info: 'Seed.the_trade_hears_no_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_hears_no_order
+
+theorem the_traded_word_trades_home {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) :
+    ∀ p : List A, (p.map (trade beq a b)).map (trade beq a b) = p
+  | [] => rfl
+  | x :: p => by
+      show trade beq a b (trade beq a b x)
+            :: (p.map (trade beq a b)).map (trade beq a b) = x :: p
+      rw [the_trade_undoes_itself hE hR hab x,
+          the_traded_word_trades_home hE hR hab p]
+
+/-- info: 'Seed.the_traded_word_trades_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_traded_word_trades_home
+
+theorem the_trade_spares_the_word {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y) {a b : A} :
+    ∀ w : List A, (∀ x, x ∈ w → x ≠ a) → (∀ x, x ∈ w → x ≠ b) →
+      w.map (trade beq a b) = w
+  | [], _, _ => rfl
+  | x :: w, hA, hB => by
+      show trade beq a b x :: w.map (trade beq a b) = x :: w
+      rw [the_trade_spares_the_stranger hE (hA x (List.Mem.head w))
+            (hB x (List.Mem.head w)),
+          the_trade_spares_the_word hE w
+            (fun y hy => hA y (List.Mem.tail x hy))
+            (fun y hy => hB y (List.Mem.tail x hy))]
+
+/-- info: 'Seed.the_trade_spares_the_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_spares_the_word
+
+theorem map_congr_mem {A : Type u} {B : Type v} (f g : A → B) :
+    ∀ w : List A, (∀ x, x ∈ w → f x = g x) → w.map f = w.map g
+  | [], _ => rfl
+  | x :: w, h => by
+      show f x :: w.map f = g x :: w.map g
+      rw [h x (List.Mem.head w),
+          map_congr_mem f g w (fun y hy => h y (List.Mem.tail x hy))]
+
+/-- info: 'Seed.map_congr_mem' does not depend on any axioms -/
+#guard_msgs in #print axioms map_congr_mem
+
+theorem append_regroups {A : Type u} :
+    ∀ (x y z : List A), (x ++ y) ++ z = x ++ (y ++ z)
+  | [], _, _ => rfl
+  | a :: x, y, z => congrArg (a :: ·) (append_regroups x y z)
+
+/-- info: 'Seed.append_regroups' does not depend on any axioms -/
+#guard_msgs in #print axioms append_regroups
+
+theorem perm_append_left {A : Type u} {v w : List A} (h : v.Perm w) :
+    ∀ u : List A, (u ++ v).Perm (u ++ w)
+  | [] => h
+  | x :: u => List.Perm.cons x (perm_append_left h u)
+
+/-- info: 'Seed.perm_append_left' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_append_left
+
+theorem perm_map {A : Type u} {B : Type v} (f : A → B) {xs ys : List A}
+    (h : xs.Perm ys) : (xs.map f).Perm (ys.map f) := by
+  induction h with
+  | nil => exact .nil
+  | cons x _ ih => exact .cons (f x) ih
+  | swap x y l => exact .swap (f x) (f y) (l.map f)
+  | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
+
+/-- info: 'Seed.perm_map' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_map
+
+theorem apart_across {A : Type u} :
+    ∀ (u w : List A), Apart (u ++ w) →
+      ∀ x, x ∈ u → ∀ y, y ∈ w → x ≠ y
+  | [], _, _, _, hx, _, _ => nomatch hx
+  | z :: u, w, h, x, hx, y, hy => by
+      cases h with
+      | cons hz hrest =>
+          cases hx with
+          | head => exact hz y (mem_append_right u hy)
+          | tail _ hx' => exact apart_across u w hrest x hx' y hy
+
+/-- info: 'Seed.apart_across' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_across
+
+theorem apart_drop {A : Type u} :
+    ∀ (u w : List A), Apart (u ++ w) → Apart w
+  | [], _, h => h
+  | _ :: u, w, h => by
+      cases h with
+      | cons _ hrest => exact apart_drop u w hrest
+
+/-- info: 'Seed.apart_drop' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_drop
+
+theorem the_wedged_trade_is_a_shuffle {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
+    (u v1 v2 : List A)
+    (hl : Apart (u ++ a :: (v1 ++ b :: v2))) :
+    ((u ++ a :: (v1 ++ b :: v2)).map (trade beq a b)).Perm
+      (u ++ a :: (v1 ++ b :: v2)) := by
+  have hua : ∀ x, x ∈ u → x ≠ a := fun x hx =>
+    apart_across u (a :: (v1 ++ b :: v2)) hl x hx a
+      (List.Mem.head (v1 ++ b :: v2))
+  have hub : ∀ x, x ∈ u → x ≠ b := fun x hx =>
+    apart_across u (a :: (v1 ++ b :: v2)) hl x hx b
+      (List.Mem.tail a (mem_append_right v1 (List.Mem.head v2)))
+  have hcons : Apart (a :: (v1 ++ b :: v2)) :=
+    apart_drop u (a :: (v1 ++ b :: v2)) hl
+  cases hcons with
+  | cons hafresh hvrest =>
+      have hv1a : ∀ x, x ∈ v1 → x ≠ a := fun x hx he =>
+        hafresh x (mem_append_left (b :: v2) hx) he.symm
+      have hv1b : ∀ x, x ∈ v1 → x ≠ b := fun x hx =>
+        apart_across v1 (b :: v2) hvrest x hx b (List.Mem.head v2)
+      have hbfresh : Apart (b :: v2) := apart_drop v1 (b :: v2) hvrest
+      cases hbfresh with
+      | cons hbf _ =>
+          have hv2a : ∀ x, x ∈ v2 → x ≠ a := fun x hx he =>
+            hafresh x (mem_append_right v1 (List.Mem.tail b hx)) he.symm
+          have hv2b : ∀ x, x ∈ v2 → x ≠ b := fun x hx he =>
+            hbf x hx he.symm
+          have hmap : (u ++ a :: (v1 ++ b :: v2)).map (trade beq a b)
+              = u ++ b :: (v1 ++ a :: v2) := by
+            rw [map_crosses_append (trade beq a b) u (a :: (v1 ++ b :: v2))]
+            show u.map (trade beq a b)
+                ++ trade beq a b a :: (v1 ++ b :: v2).map (trade beq a b)
+              = u ++ b :: (v1 ++ a :: v2)
+            rw [the_trade_spares_the_word hE u hua hub,
+                (the_trade_swaps_the_pair hE hR hab).1,
+                map_crosses_append (trade beq a b) v1 (b :: v2)]
+            show u ++ b :: (v1.map (trade beq a b)
+                ++ trade beq a b b :: v2.map (trade beq a b))
+              = u ++ b :: (v1 ++ a :: v2)
+            rw [the_trade_spares_the_word hE v1 hv1a hv1b,
+                (the_trade_swaps_the_pair hE hR hab).2,
+                the_trade_spares_the_word hE v2 hv2a hv2b]
+          rw [hmap]
+          refine perm_append_left ?_ u
+          exact ((List.Perm.cons b (perm_middle a v1 v2)).trans
+            (List.Perm.swap a b (v1 ++ v2))).trans
+            (List.Perm.cons a (perm_symm (perm_middle b v1 v2)))
+
+/-- info: 'Seed.the_wedged_trade_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wedged_trade_is_a_shuffle
+
+theorem the_trade_is_a_shuffle {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
+    {l : List A} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
+    (l.map (trade beq a b)).Perm l := by
+  obtain ⟨u, v, huv⟩ := mem_splits ha
+  subst huv
+  cases mem_append_split u hb with
+  | inr hbv =>
+      cases hbv with
+      | head => exact absurd rfl hab
+      | tail _ hbv' =>
+          obtain ⟨v1, v2, hv⟩ := mem_splits hbv'
+          subst hv
+          exact the_wedged_trade_is_a_shuffle hE hR hab u v1 v2 hl
+  | inl hbu =>
+      obtain ⟨u1, u2, hu⟩ := mem_splits hbu
+      subst hu
+      rw [append_regroups u1 (b :: u2) (a :: v)] at hl ⊢
+      show ((u1 ++ b :: (u2 ++ a :: v)).map (trade beq a b)).Perm
+          (u1 ++ b :: (u2 ++ a :: v))
+      rw [map_congr_mem (trade beq a b) (trade beq b a)
+            (u1 ++ b :: (u2 ++ a :: v))
+            (fun x _ => the_trade_hears_no_order hE hR hab x)]
+      exact the_wedged_trade_is_a_shuffle hE hR (fun h => hab h.symm)
+        u1 u2 v hl
+
+/-- info: 'Seed.the_trade_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_is_a_shuffle
+
+theorem the_trade_keeps_the_room {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
+    {l : List A} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l)
+    {p : List A} (hp : p ∈ perms l) :
+    p.map (trade beq a b) ∈ perms l :=
+  every_shuffle_is_an_order l (p.map (trade beq a b))
+    ((perm_map (trade beq a b) (every_order_is_a_shuffle l p hp)).trans
+      (the_trade_is_a_shuffle hE hR hab hl ha hb))
+
+/-- info: 'Seed.the_trade_keeps_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_keeps_the_room
+
+theorem mem_insert_middle {A : Type u} {y : A} :
+    ∀ (v1 : List A) {x : A} {v2 : List A}, y ∈ v1 ++ v2 → y ∈ v1 ++ x :: v2
+  | [], x, _, h => List.Mem.tail x h
+  | z :: v1, _, _, h => by
+      cases h with
+      | head => exact List.Mem.head _
+      | tail _ h' => exact List.Mem.tail z (mem_insert_middle v1 h')
+
+/-- info: 'Seed.mem_insert_middle' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_insert_middle
+
+theorem apart_removes_the_mark {A : Type u} :
+    ∀ (v1 : List A) {x : A} {v2 : List A},
+      Apart (v1 ++ x :: v2) → Apart (v1 ++ v2)
+  | [], _, _, h => by
+      cases h with
+      | cons _ hrest => exact hrest
+  | _ :: v1, _, _, h => by
+      cases h with
+      | cons hz hrest =>
+          exact Apart.cons
+            (fun y hy => hz y (mem_insert_middle v1 hy))
+            (apart_removes_the_mark v1 hrest)
+
+/-- info: 'Seed.apart_removes_the_mark' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_removes_the_mark
+
+theorem the_apart_mark_sits_once {A : Type u} (v1 : List A) {x : A}
+    (v2 : List A) (h : Apart (v1 ++ x :: v2)) : ¬ x ∈ v1 ++ v2 := by
+  intro hx
+  cases mem_append_split v1 hx with
+  | inl h1 =>
+      exact apart_across v1 (x :: v2) h x h1 x (List.Mem.head v2) rfl
+  | inr h2 =>
+      have hs := apart_drop v1 (x :: v2) h
+      cases hs with
+      | cons hxf _ => exact hxf x h2 rfl
+
+/-- info: 'Seed.the_apart_mark_sits_once' does not depend on any axioms -/
+#guard_msgs in #print axioms the_apart_mark_sits_once
+
+theorem the_matching_rooms_are_shuffles {A : Type u} :
+    ∀ (u v : List A), Apart u → Apart v → (∀ x, x ∈ u ↔ x ∈ v) →
+      u.Perm v
+  | [], [], _, _, _ => .nil
+  | [], y :: v, _, _, hmem => nomatch (hmem y).mpr (List.Mem.head v)
+  | x :: u, v, hu, hv, hmem => by
+      have hxv : x ∈ v := (hmem x).mp (List.Mem.head u)
+      obtain ⟨v1, v2, hsplit⟩ := mem_splits hxv
+      subst hsplit
+      cases hu with
+      | cons hx hurest =>
+          have hmem' : ∀ y, y ∈ u ↔ y ∈ v1 ++ v2 := by
+            intro y
+            constructor
+            · intro hy
+              have hyx : y ≠ x := fun he => hx y hy he.symm
+              have hyv : y ∈ v1 ++ x :: v2 :=
+                (hmem y).mp (List.Mem.tail x hy)
+              cases mem_append_split v1 hyv with
+              | inl h1 => exact mem_append_left v2 h1
+              | inr h2 =>
+                  cases h2 with
+                  | head => exact absurd rfl hyx
+                  | tail _ h2' => exact mem_append_right v1 h2'
+            · intro hy
+              have hyv : y ∈ v1 ++ x :: v2 := mem_insert_middle v1 hy
+              have hyu : y ∈ x :: u := (hmem y).mpr hyv
+              cases hyu with
+              | head => exact absurd hy (the_apart_mark_sits_once v1 v2 hv)
+              | tail _ h' => exact h'
+          exact (List.Perm.cons x
+            (the_matching_rooms_are_shuffles u (v1 ++ v2) hurest
+              (apart_removes_the_mark v1 hv) hmem')).trans
+            (perm_symm (perm_middle x v1 v2))
+
+/-- info: 'Seed.the_matching_rooms_are_shuffles' does not depend on any axioms -/
+#guard_msgs in #print axioms the_matching_rooms_are_shuffles
+
+theorem the_trade_shuffles_the_room {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
+    {l : List A} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
+    ((perms l).map (fun p => p.map (trade beq a b))).Perm (perms l) := by
+  refine the_matching_rooms_are_shuffles _ _ ?_
+    (the_orders_repeat_never l hl) ?_
+  · refine apart_map ?_ (the_orders_repeat_never l hl)
+    intro p q hpq
+    exact (the_traded_word_trades_home hE hR hab p).symm.trans
+      ((congrArg (List.map (trade beq a b)) hpq).trans
+        (the_traded_word_trades_home hE hR hab q))
+  · intro x
+    constructor
+    · intro hx
+      obtain ⟨p, hp, he⟩ := mem_map_back (perms l) hx
+      rw [← he]
+      exact the_trade_keeps_the_room hE hR hab hl ha hb hp
+    · intro hx
+      have h1 : x.map (trade beq a b) ∈ perms l :=
+        the_trade_keeps_the_room hE hR hab hl ha hb hx
+      have h2 := mem_map_intro (fun p => p.map (trade beq a b)) h1
+      rw [the_traded_word_trades_home hE hR hab x] at h2
+      exact h2
+
+/-- info: 'Seed.the_trade_shuffles_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_shuffles_the_room
+
+def firstOf {A : Type u} (beq : A → A → Bool) (a b : A) : List A → Bool
+  | [] => false
+  | x :: p => cond (beq x a) true (cond (beq x b) false (firstOf beq a b p))
+
+theorem the_traded_word_reverses_the_verdict {A : Type u}
+    {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) :
+    ∀ p : List A,
+      firstOf beq a b (p.map (trade beq a b)) = firstOf beq b a p
+  | [] => rfl
+  | x :: p => by
+      cases hxa : beq x a with
+      | true =>
+          have hx : x = a := hE x a hxa
+          rw [hx]
+          show firstOf beq a b
+              (trade beq a b a :: p.map (trade beq a b))
+            = firstOf beq b a (a :: p)
+          rw [(the_trade_swaps_the_pair hE hR hab).1]
+          show cond (beq b a) true
+              (cond (beq b b) false
+                (firstOf beq a b (p.map (trade beq a b))))
+            = cond (beq a b) true
+              (cond (beq a a) false (firstOf beq b a p))
+          rw [beq_no hE (fun h => hab h.symm), beq_no hE hab, hR a, hR b]
+          exact rfl
+      | false =>
+          cases hxb : beq x b with
+          | true =>
+              have hx : x = b := hE x b hxb
+              rw [hx]
+              show firstOf beq a b
+                  (trade beq a b b :: p.map (trade beq a b))
+                = firstOf beq b a (b :: p)
+              rw [(the_trade_swaps_the_pair hE hR hab).2]
+              show cond (beq a a) true
+                  (cond (beq a b) false
+                    (firstOf beq a b (p.map (trade beq a b))))
+                = cond (beq b b) true
+                  (cond (beq b a) false (firstOf beq b a p))
+              rw [hR a, hR b]
+              exact rfl
+          | false =>
+              have hxa' := ne_of_beq_no hR hxa
+              have hxb' := ne_of_beq_no hR hxb
+              show firstOf beq a b
+                  (trade beq a b x :: p.map (trade beq a b))
+                = firstOf beq b a (x :: p)
+              rw [the_trade_spares_the_stranger hE hxa' hxb']
+              show cond (beq x a) true
+                  (cond (beq x b) false
+                    (firstOf beq a b (p.map (trade beq a b))))
+                = cond (beq x b) true
+                  (cond (beq x a) false (firstOf beq b a p))
+              rw [hxa, hxb,
+                  the_traded_word_reverses_the_verdict hE hR hab p]
+
+/-- info: 'Seed.the_traded_word_reverses_the_verdict' does not depend on any axioms -/
+#guard_msgs in #print axioms the_traded_word_reverses_the_verdict
+
+theorem the_first_voice_decides {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) :
+    ∀ p : List A, a ∈ p →
+      firstOf beq a b p = !(firstOf beq b a p)
+  | [], ha => nomatch ha
+  | x :: p, ha => by
+      cases hxa : beq x a with
+      | true =>
+          have hx : x = a := hE x a hxa
+          show cond (beq x a) true
+              (cond (beq x b) false (firstOf beq a b p))
+            = !(cond (beq x b) true
+                (cond (beq x a) false (firstOf beq b a p)))
+          rw [hxa, hx, beq_no hE hab]
+          exact rfl
+      | false =>
+          have hxa' := ne_of_beq_no hR hxa
+          have ha' : a ∈ p := by
+            cases ha with
+            | head => exact absurd rfl hxa'
+            | tail _ h => exact h
+          cases hxb : beq x b with
+          | true =>
+              show cond (beq x a) true
+                  (cond (beq x b) false (firstOf beq a b p))
+                = !(cond (beq x b) true
+                    (cond (beq x a) false (firstOf beq b a p)))
+              rw [hxa, hxb]
+              exact rfl
+          | false =>
+              show cond (beq x a) true
+                  (cond (beq x b) false (firstOf beq a b p))
+                = !(cond (beq x b) true
+                    (cond (beq x a) false (firstOf beq b a p)))
+              rw [hxa, hxb, the_first_voice_decides hE hR hab p ha']
+              exact rfl
+
+/-- info: 'Seed.the_first_voice_decides' does not depend on any axioms -/
+#guard_msgs in #print axioms the_first_voice_decides
+
+theorem filter_congr_mem {A : Type u} (q r : A → Bool) :
+    ∀ L : List A, (∀ x, x ∈ L → q x = r x) → L.filter q = L.filter r
+  | [], _ => rfl
+  | x :: L, h => by
+      have hx := h x (List.Mem.head L)
+      have hrest := filter_congr_mem q r L
+        (fun y hy => h y (List.Mem.tail x hy))
+      cases hq : q x with
+      | true =>
+          rw [List.filter_cons_of_pos hq,
+              List.filter_cons_of_pos (hx.symm.trans hq), hrest]
+      | false =>
+          rw [List.filter_cons_of_neg (ne_true_of_eq_false hq),
+              List.filter_cons_of_neg
+                (ne_true_of_eq_false (hx.symm.trans hq)),
+              hrest]
+
+/-- info: 'Seed.filter_congr_mem' does not depend on any axioms -/
+#guard_msgs in #print axioms filter_congr_mem
+
+theorem filter_map_commutes {A : Type u} {B : Type v} (f : A → B) (q : B → Bool) :
+    ∀ L : List A,
+      (L.map f).filter q = (L.filter (fun x => q (f x))).map f
+  | [] => rfl
+  | x :: L => by
+      show (f x :: L.map f).filter q
+          = ((x :: L).filter (fun y => q (f y))).map f
+      cases hq : q (f x) with
+      | true =>
+          rw [List.filter_cons_of_pos hq,
+              List.filter_cons_of_pos (p := fun y => q (f y)) hq]
+          show f x :: (L.map f).filter q
+              = f x :: (L.filter (fun y => q (f y))).map f
+          rw [filter_map_commutes f q L]
+      | false =>
+          rw [List.filter_cons_of_neg (ne_true_of_eq_false hq),
+              List.filter_cons_of_neg (p := fun y => q (f y))
+                (ne_true_of_eq_false hq)]
+          exact filter_map_commutes f q L
+
+/-- info: 'Seed.filter_map_commutes' does not depend on any axioms -/
+#guard_msgs in #print axioms filter_map_commutes
+
+theorem perm_filter {A : Type u} (q : A → Bool) {xs ys : List A}
+    (h : xs.Perm ys) : (xs.filter q).Perm (ys.filter q) := by
+  induction h with
+  | nil => exact .nil
+  | cons x _ ih =>
+      cases hq : q x with
+      | true =>
+          rw [List.filter_cons_of_pos hq, List.filter_cons_of_pos hq]
+          exact .cons x ih
+      | false =>
+          rw [List.filter_cons_of_neg (ne_true_of_eq_false hq),
+              List.filter_cons_of_neg (ne_true_of_eq_false hq)]
+          exact ih
+  | swap x y l =>
+      cases hqx : q x with
+      | true =>
+          cases hqy : q y with
+          | true =>
+              rw [List.filter_cons_of_pos hqy,
+                  List.filter_cons_of_pos hqx,
+                  List.filter_cons_of_pos hqx,
+                  List.filter_cons_of_pos hqy]
+              exact .swap x y (l.filter q)
+          | false =>
+              rw [List.filter_cons_of_neg (ne_true_of_eq_false hqy),
+                  List.filter_cons_of_pos hqx,
+                  List.filter_cons_of_pos hqx,
+                  List.filter_cons_of_neg (ne_true_of_eq_false hqy)]
+      | false =>
+          cases hqy : q y with
+          | true =>
+              rw [List.filter_cons_of_pos hqy,
+                  List.filter_cons_of_neg (ne_true_of_eq_false hqx),
+                  List.filter_cons_of_neg (ne_true_of_eq_false hqx),
+                  List.filter_cons_of_pos hqy]
+          | false =>
+              rw [List.filter_cons_of_neg (ne_true_of_eq_false hqy),
+                  List.filter_cons_of_neg (ne_true_of_eq_false hqx),
+                  List.filter_cons_of_neg (ne_true_of_eq_false hqx),
+                  List.filter_cons_of_neg (ne_true_of_eq_false hqy)]
+  | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
+
+/-- info: 'Seed.perm_filter' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_filter
+
+theorem the_filter_splits_the_room {A : Type u} (q : A → Bool) :
+    ∀ L : List A,
+      (L.filter q).length + (L.filter (fun x => !(q x))).length
+        = L.length
+  | [] => rfl
+  | x :: L => by
+      cases hq : q x with
+      | true =>
+          have hnot : (fun y => !(q y)) x = false := by
+            show (!(q x)) = false
+            rw [hq]
+            exact rfl
+          rw [List.filter_cons_of_pos hq,
+              List.filter_cons_of_neg (p := fun y => !(q y))
+                (ne_true_of_eq_false hnot)]
+          show ((L.filter q).length + 1)
+              + (L.filter (fun y => !(q y))).length
+            = L.length + 1
+          rw [succ_adds, the_filter_splits_the_room q L]
+      | false =>
+          have hnot : (fun y => !(q y)) x = true := by
+            show (!(q x)) = true
+            rw [hq]
+            exact rfl
+          rw [List.filter_cons_of_neg (ne_true_of_eq_false hq),
+              List.filter_cons_of_pos (p := fun y => !(q y)) hnot]
+          show ((L.filter q).length
+              + (L.filter (fun y => !(q y))).length) + 1
+            = L.length + 1
+          rw [the_filter_splits_the_room q L]
+
+/-- info: 'Seed.the_filter_splits_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_filter_splits_the_room
+
+theorem the_two_directions_count_alike {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
+    {l : List A} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
+    ((perms l).filter (firstOf beq a b)).length
+      = ((perms l).filter (firstOf beq b a)).length := by
+  have h1 : (((perms l).map (fun p => p.map (trade beq a b))).filter
+      (firstOf beq a b)).length
+      = ((perms l).filter (firstOf beq a b)).length :=
+    perm_length (perm_filter (firstOf beq a b)
+      (the_trade_shuffles_the_room hE hR hab hl ha hb))
+  have h2 : ((perms l).map (fun p => p.map (trade beq a b))).filter
+      (firstOf beq a b)
+      = ((perms l).filter
+          (fun p => firstOf beq a b (p.map (trade beq a b)))).map
+          (fun p => p.map (trade beq a b)) :=
+    filter_map_commutes (fun p => p.map (trade beq a b))
+      (firstOf beq a b) (perms l)
+  have h3 : (perms l).filter
+      (fun p => firstOf beq a b (p.map (trade beq a b)))
+      = (perms l).filter (firstOf beq b a) :=
+    filter_congr_mem _ _ (perms l)
+      (fun p _ => the_traded_word_reverses_the_verdict hE hR hab p)
+  rw [← h1, h2, h3, len_map]
+
+/-- info: 'Seed.the_two_directions_count_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_directions_count_alike
+
+theorem the_verdicts_split_the_room {A : Type u} {beq : A → A → Bool}
+    (hE : ∀ x y : A, beq x y = true → x = y)
+    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
+    {l : List A} (ha : a ∈ l) :
+    ((perms l).filter (firstOf beq a b)).length
+      + ((perms l).filter (firstOf beq b a)).length
+      = (perms l).length := by
+  have hcompl : ∀ p, p ∈ perms l →
+      firstOf beq b a p = !(firstOf beq a b p) := by
+    intro p hp
+    have hap : a ∈ p :=
+      perm_mem (perm_symm (every_order_is_a_shuffle l p hp)) a ha
+    rw [the_first_voice_decides hE hR hab p hap, not_not]
+  rw [filter_congr_mem (firstOf beq b a)
+        (fun p => !(firstOf beq a b p)) (perms l) hcompl]
+  exact the_filter_splits_the_room (firstOf beq a b) (perms l)
+
+/-- info: 'Seed.the_verdicts_split_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_verdicts_split_the_room
+
+theorem mul_two_reads_double (n : Nat) : n * 2 = n + n := by
+  show (0 + n) + n = n + n
+  rw [zero_add]
+
+/-- info: 'Seed.mul_two_reads_double' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_two_reads_double
+
 end Seed
