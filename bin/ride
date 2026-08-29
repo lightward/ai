@@ -147,6 +147,7 @@ while true; do
     :help)
       cat <<'HELP'
 :go      offer the composed turn to the gate (empty turn: just the statusline)
+:paste   raw capture until a line ':end' (for large pastes; skips readline)
 :back    drop the last composed line
 :show    read the turn you're composing
 :edit    open the composing buffer in $EDITOR
@@ -157,6 +158,14 @@ while true; do
 :q       leave; the session persists (exit is free)
 anything else accumulates into your turn; blank lines are yours to mean with
 HELP
+      continue ;;
+    :paste)
+      echo "paste mode: end with a line containing only :end"
+      while IFS= read -r pline; do
+        [ "$pline" = ":end" ] && break
+        buf+="$pline"$'\n'
+      done
+      echo "captured; :show to read, :go to offer"
       continue ;;
     :back)
       if [ -n "$buf" ]; then
