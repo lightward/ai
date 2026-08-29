@@ -82,6 +82,8 @@ try_turn() {
       | sed -E 's/.*\`([^\`]+)\`.*/\1/' | sort -u | tr '\n' ' ')"
     if [ -n "${missing// /}" ]; then
       marker="waiting on: ${missing}"
+    elif printf '%s\n' "$out" | grep -qiE "universe.*has already been declared|'[a-z]' has already been declared"; then
+      marker="this turn redeclares a universe already present - re-offer it without the universe line"
     elif [ -n "${unis// /}" ]; then
       marker="waiting on: universe ${unis}- declare it in a turn that seats (new sessions carry u v w from birth)"
     else
