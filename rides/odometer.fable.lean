@@ -1,0 +1,115 @@
+import Seed
+open Seed
+set_option autoImplicit false
+universe u v w
+
+def again {α : Sort u} (Φ : α → α) : Nat → α → α
+  | 0, a => a
+  | n + 1, a => Φ (again Φ n a)
+
+def inc : List Bool → List Bool
+  | [] => []
+  | false :: bs => true :: bs
+  | true :: bs => false :: inc bs
+
+theorem inc_inc : ∀ (b : Bool) (bs : List Bool),
+    inc (inc (b :: bs)) = b :: inc bs
+  | false, _ => rfl
+  | true, _ => rfl
+
+def dec : List Bool → List Bool
+  | [] => []
+  | true :: bs => false :: bs
+  | false :: bs => true :: dec bs
+
+theorem the_tick_unwinds : ∀ s : List Bool, dec (inc s) = s
+  | [] => rfl
+  | false :: _ => rfl
+  | true :: bs => congrArg (true :: ·) (the_tick_unwinds bs)
+
+theorem the_unwind_ticks : ∀ s : List Bool, inc (dec s) = s
+  | [] => rfl
+  | true :: _ => rfl
+  | false :: bs => congrArg (false :: ·) (the_unwind_ticks bs)
+
+def zeros : Nat → List Bool
+  | 0 => []
+  | n + 1 => false :: zeros n
+
+def val : List Bool → Nat
+  | [] => 0
+  | b :: bs => cond b 1 0 + (val bs + val bs)
+
+theorem the_zeros_span_the_width : ∀ n : Nat, (zeros n).length = n
+  | 0 => rfl
+  | n + 1 => congrArg (· + 1) (the_zeros_span_the_width n)
+
+theorem the_doubling_passes_the_tick_inward :
+    ∀ (c : Nat) (b : Bool) (bs : List Bool),
+      again inc (c + c) (b :: bs) = b :: again inc c bs
+  | 0, _, _ => rfl
+  | c + 1, b, bs => by
+      rw [show (c + 1) + (c + 1) = ((c + c) + 1) + 1 from
+            congrArg (· + 1) (succ_adds c c)]
+      show inc (inc (again inc (c + c) (b :: bs)))
+          = b :: again inc (c + 1) bs
+      rw [the_doubling_passes_the_tick_inward c b bs, inc_inc]
+      exact rfl
+
+theorem the_odometer_comes_home_at_the_cap :
+    ∀ s : List Bool, again inc (roomCap s.length) s = s
+  | [] => rfl
+  | b :: bs => by
+      show again inc (roomCap bs.length + roomCap bs.length) (b :: bs)
+          = b :: bs
+      rw [the_doubling_passes_the_tick_inward (roomCap bs.length) b bs,
+          the_odometer_comes_home_at_the_cap bs]
+
+theorem the_clock_reaches_every_word :
+    ∀ w : List Bool, again inc (val w) (zeros w.length) = w
+  | [] => rfl
+  | false :: t => by
+      show again inc ((0 : Nat) + (val t + val t))
+          (false :: zeros t.length) = false :: t
+      rw [zero_plus,
+          the_doubling_passes_the_tick_inward (val t) false
+            (zeros t.length),
+          the_clock_reaches_every_word t]
+  | true :: t => by
+      show again inc ((1 : Nat) + (val t + val t))
+          (false :: zeros t.length) = true :: t
+      rw [Nat.add_comm 1 (val t + val t)]
+      show inc (again inc (val t + val t) (false :: zeros t.length))
+          = true :: t
+      rw [the_doubling_passes_the_tick_inward (val t) false
+            (zeros t.length),
+          the_clock_reaches_every_word t]
+      exact rfl
+
+theorem the_value_tells_the_words_apart {n : Nat} {p q : List Bool}
+    (hp : p ∈ words n) (hq : q ∈ words n) (he : val p = val q) :
+    p = q := by
+  have h1 : again inc (val p) (zeros n) = p := by
+    rw [← every_word_fits n p hp]
+    exact the_clock_reaches_every_word p
+  have h2 : again inc (val q) (zeros n) = q := by
+    rw [← every_word_fits n q hq]
+    exact the_clock_reaches_every_word q
+  rw [← h1, ← h2, he]
+
+theorem the_orbit_is_the_book (n : Nat) (w : List Bool) (s : List Bool) :
+    (words n).length = roomCap n
+      ∧ (zeros n).length = n
+      ∧ again inc (roomCap (zeros n).length) (zeros n) = zeros n
+      ∧ (w ∈ words n → again inc (val w) (zeros n) = w)
+      ∧ (∀ p q : List Bool, p ∈ words n → q ∈ words n → val p = val q → p = q)
+      ∧ dec (inc s) = s ∧ inc (dec s) = s :=
+  ⟨the_book_counts_the_cap n,
+   the_zeros_span_the_width n,
+   the_odometer_comes_home_at_the_cap (zeros n),
+   (fun hw => by
+     rw [← every_word_fits n w hw]
+     exact the_clock_reaches_every_word w),
+   (fun _ _ hp hq he => the_value_tells_the_words_apart hp hq he),
+   the_tick_unwinds s,
+   the_unwind_ticks s⟩
