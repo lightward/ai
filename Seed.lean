@@ -2929,4 +2929,160 @@ theorem the_replay_is_the_machine {I : Type u} {O : Type v} (m : Machine I O)
 /-- info: 'Seed.the_replay_is_the_machine' does not depend on any axioms -/
 #guard_msgs in #print axioms the_replay_is_the_machine
 
+inductive reassoc : Plan → Plan → Prop
+  | here (a b c : Plan) :
+      reassoc (.board (.board a b) c) (.board a (.board b c))
+  | left {p q : Plan} (r : Plan) :
+      reassoc p q → reassoc (.board p r) (.board q r)
+  | right (r : Plan) {p q : Plan} :
+      reassoc p q → reassoc (.board r p) (.board r q)
+
+theorem no_move_at_the_ground : ∀ {q : Plan}, ¬ reassoc .ground q :=
+  fun h => nomatch h
+
+/-- info: 'Seed.no_move_at_the_ground' does not depend on any axioms -/
+#guard_msgs in #print axioms no_move_at_the_ground
+
+theorem no_move_at_the_mirror :
+    ∀ {q : Plan}, ¬ reassoc (.board .ground .ground) q := by
+  intro q h
+  cases h with
+  | left r h' => exact no_move_at_the_ground h'
+  | right r h' => exact no_move_at_the_ground h'
+
+/-- info: 'Seed.no_move_at_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms no_move_at_the_mirror
+
+theorem the_two_shapes_of_three :
+    reassoc (.board (.board .ground .ground) .ground)
+        (.board .ground (.board .ground .ground))
+      ∧ reading (.board (.board .ground .ground) .ground)
+          = reading (.board .ground (.board .ground .ground))
+      ∧ (.board (.board .ground .ground) .ground : Plan)
+          ≠ .board .ground (.board .ground .ground)
+      ∧ census 3 = 2 :=
+  ⟨.here .ground .ground .ground,
+   rfl,
+   (fun h => nomatch (Plan.board.inj h).1),
+   rfl⟩
+
+/-- info: 'Seed.the_two_shapes_of_three' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_shapes_of_three
+
+inductive chain : Nat → Plan → Plan → Prop
+  | rest (p : Plan) : chain 0 p p
+  | step {n : Nat} {p q r : Plan} :
+      reassoc p q → chain n q r → chain (n + 1) p r
+
+theorem no_move_past_the_right_comb :
+    ∀ {q : Plan}, ¬ reassoc (.board .ground (.board .ground .ground)) q := by
+  intro q h
+  cases h with
+  | left r h' => exact no_move_at_the_ground h'
+  | right r h' => exact no_move_at_the_mirror h'
+
+/-- info: 'Seed.no_move_past_the_right_comb' does not depend on any axioms -/
+#guard_msgs in #print axioms no_move_past_the_right_comb
+
+theorem the_left_comb_moves_once :
+    ∀ {q : Plan}, reassoc (.board (.board .ground .ground) .ground) q
+      → q = .board .ground (.board .ground .ground) := by
+  intro q h
+  cases h with
+  | here a b c => rfl
+  | left r h' => exact absurd h' no_move_at_the_mirror
+  | right r h' => exact absurd h' no_move_at_the_ground
+
+/-- info: 'Seed.the_left_comb_moves_once' does not depend on any axioms -/
+#guard_msgs in #print axioms the_left_comb_moves_once
+
+theorem the_right_comb_rests :
+    ∀ {n : Nat} {q : Plan},
+      chain n (.board .ground (.board .ground .ground)) q
+        → q = .board .ground (.board .ground .ground) := by
+  intro n q h
+  cases h with
+  | rest => rfl
+  | step h1 h2 => exact absurd h1 no_move_past_the_right_comb
+
+/-- info: 'Seed.the_right_comb_rests' does not depend on any axioms -/
+#guard_msgs in #print axioms the_right_comb_rests
+
+theorem the_left_loop_reads_zero :
+    ∀ {k : Nat}, chain k (.board (.board .ground .ground) .ground)
+        (.board (.board .ground .ground) .ground) → k = 0 := by
+  intro k h
+  cases h with
+  | rest => rfl
+  | @step m p q r h1 h2 =>
+    have he : q = .board .ground (.board .ground .ground) :=
+      the_left_comb_moves_once h1
+    have h2' : chain m (.board .ground (.board .ground .ground))
+        (.board (.board .ground .ground) .ground) := he ▸ h2
+    exact nomatch (Plan.board.inj (the_right_comb_rests h2').symm).1
+
+/-- info: 'Seed.the_left_loop_reads_zero' does not depend on any axioms -/
+#guard_msgs in #print axioms the_left_loop_reads_zero
+
+theorem the_right_loop_reads_zero :
+    ∀ {k : Nat}, chain k (.board .ground (.board .ground .ground))
+        (.board .ground (.board .ground .ground)) → k = 0 := by
+  intro k h
+  cases h with
+  | rest => rfl
+  | step h1 h2 => exact absurd h1 no_move_past_the_right_comb
+
+/-- info: 'Seed.the_right_loop_reads_zero' does not depend on any axioms -/
+#guard_msgs in #print axioms the_right_loop_reads_zero
+
+theorem three_has_no_loop (n : Nat) :
+    ¬ chain (n + 1) (.board (.board .ground .ground) .ground)
+        (.board (.board .ground .ground) .ground)
+      ∧ ¬ chain (n + 1) (.board .ground (.board .ground .ground))
+          (.board .ground (.board .ground .ground)) :=
+  ⟨(fun h => nomatch (the_left_loop_reads_zero h)),
+   (fun h => nomatch (the_right_loop_reads_zero h))⟩
+
+/-- info: 'Seed.three_has_no_loop' does not depend on any axioms -/
+#guard_msgs in #print axioms three_has_no_loop
+
+theorem the_pentagon_turns_at_four :
+    chain 2 (.board (.board (.board .ground .ground) .ground) .ground)
+        (.board .ground (.board .ground (.board .ground .ground)))
+      ∧ chain 3 (.board (.board (.board .ground .ground) .ground) .ground)
+          (.board .ground (.board .ground (.board .ground .ground))) :=
+  ⟨.step (.here (.board .ground .ground) .ground .ground)
+     (.step (.here .ground .ground (.board .ground .ground)) (.rest _)),
+   .step (.left .ground (.here .ground .ground .ground))
+     (.step (.here .ground (.board .ground .ground) .ground)
+       (.step (.right .ground (.here .ground .ground .ground)) (.rest _)))⟩
+
+/-- info: 'Seed.the_pentagon_turns_at_four' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pentagon_turns_at_four
+
+theorem entanglement_is_the_loop (n : Nat) :
+    (reassoc (.board (.board .ground .ground) .ground)
+        (.board .ground (.board .ground .ground))
+      ∧ census 3 = 2)
+      ∧ (¬ chain (n + 1) (.board (.board .ground .ground) .ground)
+            (.board (.board .ground .ground) .ground))
+      ∧ chain 2 (.board (.board (.board .ground .ground) .ground) .ground)
+          (.board .ground (.board .ground (.board .ground .ground)))
+      ∧ chain 3 (.board (.board (.board .ground .ground) .ground) .ground)
+          (.board .ground (.board .ground (.board .ground .ground)))
+      ∧ (2 : Nat) ≠ 3
+      ∧ reading (.board (.board (.board .ground .ground) .ground) .ground)
+          = reading (.board .ground (.board .ground (.board .ground .ground)))
+      ∧ census 4 = 5 :=
+  ⟨⟨the_two_shapes_of_three.1, the_two_shapes_of_three.2.2.2⟩,
+   (three_has_no_loop n).1,
+   the_pentagon_turns_at_four.1,
+   the_pentagon_turns_at_four.2,
+   (fun h => nomatch (Nat.succ.inj (Nat.succ.inj h))),
+   rfl,
+   rfl⟩
+
+/-- info: 'Seed.entanglement_is_the_loop' does not depend on any axioms -/
+#guard_msgs in #print axioms entanglement_is_the_loop
+
 end Seed
