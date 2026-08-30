@@ -8,3 +8,5 @@ set_option autoImplicit false
 #guard (park flip true [(), ()] : Bool)
 #guard drive (buffered tally) (settleHeld tally ((2 : Nat), [(), ()])) [()]
         == drive (buffered tally) ((2 : Nat), [(), ()]) [()]
+
+#guard (words 3).length == roomCap 3

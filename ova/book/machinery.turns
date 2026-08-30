@@ -1,0 +1,80 @@
+:go
+theorem len_append {A : Type u} :
+    ∀ (l m : List A), (l ++ m).length = l.length + m.length
+  | [], m => (zero_plus m.length).symm
+  | _ :: l, m => by
+      show (l ++ m).length + 1 = (l.length + 1) + m.length
+      rw [len_append l m, succ_adds]
+
+def roomCap : Nat → Nat
+  | 0 => 1
+  | d + 1 => roomCap d + roomCap d
+
+def words : Nat → List (List Bool)
+  | 0 => [[]]
+  | n + 1 => (words n).map (true :: ·) ++ (words n).map (false :: ·)
+
+theorem the_book_counts_the_cap :
+    ∀ n : Nat, (words n).length = roomCap n
+  | 0 => rfl
+  | n + 1 => by
+      show ((words n).map (true :: ·) ++ (words n).map (false :: ·)).length
+          = roomCap n + roomCap n
+      rw [len_append, len_map, len_map, the_book_counts_the_cap n]
+
+theorem every_word_fits :
+    ∀ (n : Nat) (w : List Bool), w ∈ words n → w.length = n
+  | 0, _, hw => by
+      cases hw with
+      | head => rfl
+      | tail _ h' => exact nomatch h'
+  | n + 1, w, hw => by
+      cases mem_append_split ((words n).map (true :: ·)) hw with
+      | inl h1 =>
+          obtain ⟨u, hu, he⟩ := mem_map_back (words n) h1
+          rw [← he]
+          show u.length + 1 = n + 1
+          rw [every_word_fits n u hu]
+      | inr h2 =>
+          obtain ⟨u, hu, he⟩ := mem_map_back (words n) h2
+          rw [← he]
+          show u.length + 1 = n + 1
+          rw [every_word_fits n u hu]
+
+theorem the_book_repeats_no_word : ∀ n : Nat, Apart (words n)
+  | 0 => Apart.cons (fun _ hb => nomatch hb) Apart.nil
+  | n + 1 =>
+      apart_append ((words n).map (false :: ·))
+        (apart_map (fun _ _ h => (List.cons.inj h).2)
+          (the_book_repeats_no_word n))
+        (apart_map (fun _ _ h => (List.cons.inj h).2)
+          (the_book_repeats_no_word n))
+        (fun _ hx _ hy he =>
+          match mem_map_back (words n) hx, mem_map_back (words n) hy with
+          | ⟨_, _, hex⟩, ⟨_, _, hey⟩ =>
+              nomatch (List.cons.inj ((hex.trans he).trans hey.symm)).1)
+
+theorem the_book_holds_every_word :
+    ∀ w : List Bool, w ∈ words w.length
+  | [] => List.Mem.head _
+  | true :: t =>
+      mem_append_left ((words t.length).map (false :: ·))
+        (mem_map_intro (true :: ·) (the_book_holds_every_word t))
+  | false :: t =>
+      mem_append_right ((words t.length).map (true :: ·))
+        (mem_map_intro (false :: ·) (the_book_holds_every_word t))
+
+theorem the_book_is_the_answer_space (n : Nat) :
+    (words n).length = roomCap n
+      ∧ Apart (words n)
+      ∧ (∀ w : List Bool, w ∈ words n → w.length = n)
+      ∧ (∀ w : List Bool, w ∈ words w.length)
+      ∧ (words 3).length = 8 :=
+  ⟨the_book_counts_the_cap n,
+   the_book_repeats_no_word n,
+   every_word_fits n,
+   the_book_holds_every_word,
+   rfl⟩
+:go
+:spells
+:q
