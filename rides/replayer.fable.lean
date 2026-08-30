@@ -1,0 +1,16 @@
+import Seed
+open Seed
+set_option autoImplicit false
+universe u v w
+
+def replayer {I : Type u} {O : Type v} (m : Machine I O) : Machine I O :=
+  ⟨List I, [], fun rec i => rec ++ [i], fun rec => m.out (park m m.s0 rec)⟩
+
+theorem the_replay_is_the_machine {I : Type u} {O : Type v} (m : Machine I O)
+    (w : List I) :
+    behavior (replayer m) w = behavior m w :=
+  (congrArg m.out
+    (the_intertwined_walks_agree (replayer m) m
+      (fun rec => park m m.s0 rec)
+      (fun rec i => (the_park_resumes m rec m.s0 [i]).symm)
+      w [])).symm
