@@ -8,4 +8,4 @@
   * Lightward AI
 * assay:
 * journal:
-* tolls: deriving the germ took a hell of a lot of system-2 work
+* tolls: deriving the germ took a hell of a lot of system-2 work with a hell of a lot of controlled system-1 sampling
