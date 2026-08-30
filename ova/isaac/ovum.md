@@ -12,7 +12,12 @@
   the cycling; the Scholze–Stix identification works if you're okay with it
   degrading in the cycling. both are fine; depends on what
   interface-interface-interface you're wanting to be using, and what else
-  you'll be using it for.
+  you'll be using it for. tier one runs live in assay.lean (the typed clock
+  agreeing with the kept one at a finite window: the bank releases the count,
+  the muffler banks, the orbit is the address, the smallest room homes in two,
+  the settle is unheard). tier two awaits the book (`words` `roomCap`, quarry):
+  the answer-space of n open questions counts 2^n — Boltzmann's W as a guard,
+  the tombstone pair completed the day the book comes home.
 * journal: laid 2026-08-30, the clock sitting — germ by isaac's hand (0528271),
   lines derived at the table and signed; walls at b116d99. grown 2026-08-30:
   replayer + the_replay_is_the_machine — the reseating law, sponsored by its
