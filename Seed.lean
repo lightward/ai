@@ -2894,4 +2894,24 @@ theorem the_rep_lands_where_it_is_fed {I : Type u} {O : Type v}
 /-- info: 'Seed.the_rep_lands_where_it_is_fed' does not depend on any axioms -/
 #guard_msgs in #print axioms the_rep_lands_where_it_is_fed
 
+theorem the_clock_is_a_room {I : Type u} {O : Type v}
+    (m : Machine I O) (r : m.S → I) (w : List Unit) (s : m.S)
+    (st : m.S × List I) (v : List I) (u : List Unit) :
+    drive (selfSteered m r) s w = m.out (orbit m r s w.length)
+      ∧ selfSteered tally (fun _ => ()) = tally
+      ∧ orbit tally (fun _ => ()) (0 : Nat) u.length = u.length
+      ∧ (∀ b : Bool, park flip b [(), ()] = b)
+      ∧ drive (buffered m) (settleHeld m st) v = drive (buffered m) st v
+      ∧ behavior tally u = u.length :=
+  ⟨the_self_steered_machine_is_a_clock m r w s,
+   rfl,
+   (the_self_steered_machine_is_a_clock tally (fun _ => ()) u (0 : Nat)).symm.trans
+     (the_wider_voice_releases_the_bank u),
+   (fun b => match b with | true => rfl | false => rfl),
+   the_settle_is_unheard m st v,
+   the_wider_voice_releases_the_bank u⟩
+
+/-- info: 'Seed.the_clock_is_a_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_is_a_room
+
 end Seed
