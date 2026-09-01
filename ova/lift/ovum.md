@@ -36,4 +36,8 @@
   the next sheet"). the freshest bank at an occupied depth, per the deflation
   law's standing pattern. sponsors: isaac (the question), the business README
   (the prose), Counter's API (the well as the running lift).
-* tolls: (campaign pending)
+* tolls: campaign FIRST-TRY, ZERO TOLLS, one build — four theorems, three of
+  them rfl-or-citation, the finality induction the one real move (two cases,
+  the cons closing by congrFun + resumption, every joint definitional). the
+  hatch left Seed at 256 receipts exactly — 2^8, the book's own number, at
+  the egg about the space of completed answers; derived, not aimed.

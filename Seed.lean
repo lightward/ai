@@ -3643,4 +3643,65 @@ theorem room_margin_flywheel_door {I : Type u} {O : Type v} {A : Type w}
 /-- info: 'Seed.room_margin_flywheel_door' does not depend on any axioms -/
 #guard_msgs in #print axioms room_margin_flywheel_door
 
+def sheet (I : Type u) (O : Type v) : Type (max u v) :=
+  List I → O
+
+def peek {I : Type u} {O : Type v} (f : sheet I O) : O :=
+  f []
+
+def feed {I : Type u} {O : Type v} (f : sheet I O) (i : I) : sheet I O :=
+  fun w => f (i :: w)
+
+def liftFrom {I : Type u} {O : Type v} (m : Machine I O) (s : m.S) : sheet I O :=
+  fun w => drive m s w
+
+theorem the_lift_peeks_the_out {I : Type u} {O : Type v} (m : Machine I O) (s : m.S) :
+    peek (liftFrom m s) = m.out s :=
+  rfl
+
+/-- info: 'Seed.the_lift_peeks_the_out' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lift_peeks_the_out
+
+theorem the_lift_feeds_the_step {I : Type u} {O : Type v} (m : Machine I O)
+    (s : m.S) (i : I) :
+    feed (liftFrom m s) i = liftFrom m (m.step s i) :=
+  rfl
+
+/-- info: 'Seed.the_lift_feeds_the_step' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lift_feeds_the_step
+
+theorem the_lift_is_unique {I : Type u} {O : Type v} (m : Machine I O)
+    (h : m.S → sheet I O)
+    (hpeek : ∀ s, peek (h s) = m.out s)
+    (hfeed : ∀ s i, feed (h s) i = h (m.step s i)) :
+    ∀ (w : List I) (s : m.S), h s w = liftFrom m s w
+  | [], s => hpeek s
+  | i :: w, s =>
+      (congrFun (hfeed s i) w).trans
+        (the_lift_is_unique m h hpeek hfeed w (m.step s i))
+
+/-- info: 'Seed.the_lift_is_unique' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lift_is_unique
+
+theorem the_lift_is_the_conduct {I : Type u} {O : Type v} (m n : Machine I O)
+    (f g : sheet I O) :
+    (∀ s, peek (liftFrom m s) = m.out s)
+      ∧ (∀ s i, feed (liftFrom m s) i = liftFrom m (m.step s i))
+      ∧ (∀ (h : m.S → sheet I O),
+          (∀ s, peek (h s) = m.out s) →
+          (∀ s i, feed (h s) i = h (m.step s i)) →
+          ∀ (w : List I) (s : m.S), h s w = liftFrom m s w)
+      ∧ liftFrom m m.s0 = behavior m
+      ∧ (alike (airGap I O) m n ↔ ∀ q, sound (airGap I O) m q = sound (airGap I O) n q)
+      ∧ (alike (appFace (List I) O) f g ↔ ∀ w, f w = g w) :=
+  ⟨fun _ => rfl,
+   fun _ _ => rfl,
+   the_lift_is_unique m,
+   rfl,
+   the_audition_is_exact m n,
+   the_pointwise_license (List I) O f g⟩
+
+/-- info: 'Seed.the_lift_is_the_conduct' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lift_is_the_conduct
+
 end Seed
