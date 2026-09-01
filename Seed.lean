@@ -3710,4 +3710,84 @@ theorem the_lift_is_the_conduct {I : Type u} {O : Type v} (m n : Machine I O)
 /-- info: 'Seed.the_lift_is_the_conduct' does not depend on any axioms -/
 #guard_msgs in #print axioms the_lift_is_the_conduct
 
+def stream (A : Type u) : Type u :=
+  Nat → A
+
+def toStream {O : Type v} (f : sheet Unit O) : stream O :=
+  fun n => f (List.replicate n ())
+
+def toSheet {O : Type v} (g : stream O) : sheet Unit O :=
+  fun w => g w.length
+
+theorem len_replicate {A : Type u} (a : A) :
+    ∀ n : Nat, (List.replicate n a).length = n
+  | 0 => rfl
+  | n + 1 => congrArg (· + 1) (len_replicate a n)
+
+/-- info: 'Seed.len_replicate' does not depend on any axioms -/
+#guard_msgs in #print axioms len_replicate
+
+theorem the_unit_word_is_its_count :
+    ∀ w : List Unit, List.replicate w.length () = w
+  | [] => rfl
+  | _ :: t => congrArg (List.cons ()) (the_unit_word_is_its_count t)
+
+/-- info: 'Seed.the_unit_word_is_its_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unit_word_is_its_count
+
+theorem the_unit_machine_steers_itself {O : Type v} (m : Machine Unit O) :
+    selfSteered m (fun _ => ()) = m :=
+  rfl
+
+/-- info: 'Seed.the_unit_machine_steers_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unit_machine_steers_itself
+
+theorem the_round_trips_come_home {O : Type v} (f : sheet Unit O) (g : stream O)
+    (w : List Unit) (n : Nat) :
+    toSheet (toStream f) w = f w ∧ toStream (toSheet g) n = g n :=
+  ⟨congrArg f (the_unit_word_is_its_count w),
+   congrArg g (len_replicate () n)⟩
+
+/-- info: 'Seed.the_round_trips_come_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_round_trips_come_home
+
+def streamOf {O : Type v} (m : Machine Unit O) : stream O :=
+  fun n => m.out (orbit m (fun _ => ()) m.s0 n)
+
+theorem the_clocks_lift_is_a_stream {O : Type v} (m : Machine Unit O) (n : Nat) :
+    streamOf m n = toStream (liftFrom m m.s0) n :=
+  ((congrArg (fun k => m.out (orbit m (fun _ => ()) m.s0 k))
+      (len_replicate () n)).symm).trans
+    ((the_self_steered_machine_is_a_clock m (fun _ => ())
+        (List.replicate n ()) m.s0).symm)
+
+/-- info: 'Seed.the_clocks_lift_is_a_stream' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clocks_lift_is_a_stream
+
+theorem the_tallys_stream_counts (n : Nat) :
+    streamOf tally n = n :=
+  (the_clocks_lift_is_a_stream tally n).trans
+    ((the_wider_voice_releases_the_bank (List.replicate n ())).trans
+      (len_replicate () n))
+
+/-- info: 'Seed.the_tallys_stream_counts' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tallys_stream_counts
+
+theorem the_clock_writes_its_sequence {O : Type v} (m m' : Machine Unit O)
+    (f : sheet Unit O) (g : stream O) (w : List Unit) (n : Nat) :
+    streamOf m n = toStream (liftFrom m m.s0) n
+      ∧ toSheet (toStream f) w = f w
+      ∧ toStream (toSheet g) n = g n
+      ∧ streamOf tally n = n
+      ∧ (alike (airGap Unit O) m m' ↔
+          ∀ q, sound (airGap Unit O) m q = sound (airGap Unit O) m' q) :=
+  ⟨the_clocks_lift_is_a_stream m n,
+   (the_round_trips_come_home f g w n).1,
+   (the_round_trips_come_home f g w n).2,
+   the_tallys_stream_counts n,
+   the_audition_is_exact m m'⟩
+
+/-- info: 'Seed.the_clock_writes_its_sequence' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_writes_its_sequence
+
 end Seed

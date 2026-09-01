@@ -29,4 +29,7 @@
   correspondence one induction away). THE FIRST EGG LAID UNDER THE WIDTH
   CLAMP — every worked statement at contact width by construction, checked by
   bin/width at the lay.
-* tolls: (campaign pending)
+* tolls: campaign FIRST-TRY, ZERO TOLLS, one build — the third zero-toll
+  campaign of the sitting; every worked statement at contact width by
+  construction, bin/width green at the hatch with the crown correctly read
+  as a pane. hatched 2026-09-01, same sitting as the lay.
