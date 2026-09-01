@@ -8,7 +8,7 @@
   are-you-in-YET answered by arithmetic), the reading is a complete name below
   the cap, and the tick has an exact inverse: the retraceable wheel, the
   license-side archetype — time on this wheel loses nothing.
-* parents: `words` `roomCap` `the_book_counts_the_cap` `every_word_fits` `succ_adds` `zero_plus`
+* parents: `words` `roomCap` `the_book_counts_the_cap` `every_word_fits` `succ_adds` `zero_add`
 * awaited: `again` `inc` `dec` `zeros` `val` `clockAt` `the_doubling_passes_the_tick_inward` `the_odometer_comes_home_at_the_cap` `the_clock_reaches_every_word` `the_value_tells_the_words_apart` `the_tick_unwinds` `the_unwind_ticks` `the_orbit_is_the_book`
 * witness:
   * the ruler sequence, OEIS A001511 — the carry pattern; the disk moved at

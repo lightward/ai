@@ -2164,14 +2164,6 @@ theorem map_congr_mem {A : Type u} {B : Type v} (f g : A → B) :
 /-- info: 'Seed.map_congr_mem' does not depend on any axioms -/
 #guard_msgs in #print axioms map_congr_mem
 
-theorem append_regroups {A : Type u} :
-    ∀ (x y z : List A), (x ++ y) ++ z = x ++ (y ++ z)
-  | [], _, _ => rfl
-  | a :: x, y, z => congrArg (a :: ·) (append_regroups x y z)
-
-/-- info: 'Seed.append_regroups' does not depend on any axioms -/
-#guard_msgs in #print axioms append_regroups
-
 theorem perm_append_left {A : Type u} {v w : List A} (h : v.Perm w) :
     ∀ u : List A, (u ++ v).Perm (u ++ w)
   | [] => h
@@ -2285,7 +2277,7 @@ theorem the_trade_is_a_shuffle {A : Type u} {beq : A → A → Bool}
   | inl hbu =>
       obtain ⟨u1, u2, hu⟩ := mem_splits hbu
       subst hu
-      rw [append_regroups u1 (b :: u2) (a :: v)] at hl ⊢
+      rw [the_appends_regroup u1 (b :: u2) (a :: v)] at hl ⊢
       show ((u1 ++ b :: (u2 ++ a :: v)).map (trade beq a b)).Perm
           (u1 ++ b :: (u2 ++ a :: v))
       rw [map_congr_mem (trade beq a b) (trade beq b a)
@@ -2721,13 +2713,6 @@ theorem the_direction_is_even_money {A : Type u} {beq : A → A → Bool}
 /-- info: 'Seed.the_direction_is_even_money' does not depend on any axioms -/
 #guard_msgs in #print axioms the_direction_is_even_money
 
-theorem zero_plus : ∀ n : Nat, 0 + n = n
-  | 0 => rfl
-  | n + 1 => congrArg (· + 1) (zero_plus n)
-
-/-- info: 'Seed.zero_plus' does not depend on any axioms -/
-#guard_msgs in #print axioms zero_plus
-
 def recite {P : Type v} {A : Type w} : List P → Interview P A
   | [] => .rest
   | p :: ps => .ask p (fun _ => recite ps)
@@ -2772,7 +2757,7 @@ theorem the_muffler_banks_the_run (w : List Unit) (s : Nat) :
 
 theorem the_wider_voice_releases_the_bank (w : List Unit) :
     behavior tally w = w.length :=
-  (the_tally_parks_at_its_count w 0).trans (zero_plus w.length)
+  (the_tally_parks_at_its_count w 0).trans (zero_add w.length)
 
 /-- info: 'Seed.the_wider_voice_releases_the_bank' does not depend on any axioms -/
 #guard_msgs in #print axioms the_wider_voice_releases_the_bank
@@ -3085,16 +3070,6 @@ theorem entanglement_is_the_loop (n : Nat) :
 /-- info: 'Seed.entanglement_is_the_loop' does not depend on any axioms -/
 #guard_msgs in #print axioms entanglement_is_the_loop
 
-theorem len_append {A : Type u} :
-    ∀ (l m : List A), (l ++ m).length = l.length + m.length
-  | [], m => (zero_plus m.length).symm
-  | _ :: l, m => by
-      show (l ++ m).length + 1 = (l.length + 1) + m.length
-      rw [len_append l m, succ_adds]
-
-/-- info: 'Seed.len_append' does not depend on any axioms -/
-#guard_msgs in #print axioms len_append
-
 def roomCap : Nat → Nat
   | 0 => 1
   | d + 1 => roomCap d + roomCap d
@@ -3109,7 +3084,7 @@ theorem the_book_counts_the_cap :
   | n + 1 => by
       show ((words n).map (true :: ·) ++ (words n).map (false :: ·)).length
           = roomCap n + roomCap n
-      rw [len_append, len_map, len_map, the_book_counts_the_cap n]
+      rw [lengths_add, len_map, len_map, the_book_counts_the_cap n]
 
 /-- info: 'Seed.the_book_counts_the_cap' does not depend on any axioms -/
 #guard_msgs in #print axioms the_book_counts_the_cap
@@ -3269,7 +3244,7 @@ theorem the_clock_reaches_every_word :
   | false :: t => by
       show again inc ((0 : Nat) + (val t + val t))
           (false :: zeros t.length) = false :: t
-      rw [zero_plus,
+      rw [zero_add,
           the_doubling_passes_the_tick_inward (val t) false
             (zeros t.length)]
       show false :: clockAt t.length (val t) = false :: t
