@@ -3383,4 +3383,264 @@ theorem the_wear_is_a_reading (n : Nat) (s : List Bool) :
 /-- info: 'Seed.the_wear_is_a_reading' does not depend on any axioms -/
 #guard_msgs in #print axioms the_wear_is_a_reading
 
+def intake {A : Type u} (beq : A → A → Bool) :
+    List A × List (A × List A) → List (A × List A) → List A × List (A × List A)
+  | st, [] => st
+  | st, arr :: w => intake beq (welcome beq st arr) w
+
+def lacking {A : Type u} (beq : A → A → Bool) (room : List A) : List A → Nat
+  | [] => 0
+  | n :: needs =>
+      cond (enrolled beq room n) (lacking beq room needs) (lacking beq room needs + 1)
+
+theorem and_reads : ∀ a b : Bool, (a && b) = true → a = true ∧ b = true
+  | true, true, _ => ⟨rfl, rfl⟩
+  | true, false, h => nomatch h
+  | false, _, h => nomatch h
+
+/-- info: 'Seed.and_reads' does not depend on any axioms -/
+#guard_msgs in #print axioms and_reads
+
+theorem enrolled_grows {A : Type u} (beq : A → A → Bool) (room : List A) (y x : A)
+    (h : enrolled beq room x = true) : enrolled beq (y :: room) x = true := by
+  show (beq y x || enrolled beq room x) = true
+  rw [h]
+  exact or_swallows (beq y x)
+
+/-- info: 'Seed.enrolled_grows' does not depend on any axioms -/
+#guard_msgs in #print axioms enrolled_grows
+
+theorem the_backing_reaches_each_need {A : Type u} (beq : A → A → Bool) (room : List A) :
+    ∀ needs : List A, backed beq room needs = true →
+      ∀ n, n ∈ needs → enrolled beq room n = true := by
+  intro needs
+  induction needs with
+  | nil => intro _ n hn; cases hn
+  | cons n' needs ih =>
+      intro h n hn
+      have hh : (enrolled beq room n' && backed beq room needs) = true := h
+      have hp := and_reads _ _ hh
+      cases hn with
+      | head => exact hp.1
+      | tail _ hm => exact ih hp.2 n hm
+
+/-- info: 'Seed.the_backing_reaches_each_need' does not depend on any axioms -/
+#guard_msgs in #print axioms the_backing_reaches_each_need
+
+theorem the_backing_survives_the_seating {A : Type u} (beq : A → A → Bool)
+    (room : List A) (y : A) :
+    ∀ needs : List A, backed beq room needs = true →
+      backed beq (y :: room) needs = true := by
+  intro needs
+  induction needs with
+  | nil => intro _; rfl
+  | cons n' needs ih =>
+      intro h
+      have hh : (enrolled beq room n' && backed beq room needs) = true := h
+      have hp := and_reads _ _ hh
+      show (enrolled beq (y :: room) n' && backed beq (y :: room) needs) = true
+      rw [enrolled_grows beq room y n' hp.1, ih hp.2]
+      exact rfl
+
+/-- info: 'Seed.the_backing_survives_the_seating' does not depend on any axioms -/
+#guard_msgs in #print axioms the_backing_survives_the_seating
+
+theorem the_held_name_their_darkness {A : Type u} (beq : A → A → Bool) (room : List A) :
+    ∀ needs : List A, backed beq room needs = false →
+      ∃ n, n ∈ needs ∧ enrolled beq room n = false := by
+  intro needs
+  induction needs with
+  | nil =>
+      intro h
+      have h' : (true : Bool) = false := h
+      exact nomatch h'
+  | cons n' needs ih =>
+      intro h
+      cases he : enrolled beq room n' with
+      | false => exact ⟨n', .head _, he⟩
+      | true =>
+          have hh : (enrolled beq room n' && backed beq room needs) = false := h
+          rw [he] at hh
+          obtain ⟨n, hn, hf⟩ := ih hh
+          exact ⟨n, .tail _ hn, hf⟩
+
+/-- info: 'Seed.the_held_name_their_darkness' does not depend on any axioms -/
+#guard_msgs in #print axioms the_held_name_their_darkness
+
+theorem the_weight_is_zero_at_the_door {A : Type u} (beq : A → A → Bool) (room : List A) :
+    ∀ needs : List A, lacking beq room needs = 0 ↔ backed beq room needs = true := by
+  intro needs
+  induction needs with
+  | nil => exact ⟨fun _ => rfl, fun _ => rfl⟩
+  | cons n' needs ih =>
+      cases he : enrolled beq room n' with
+      | true =>
+          constructor
+          · intro h0
+            have hh : cond (enrolled beq room n')
+                (lacking beq room needs) (lacking beq room needs + 1) = 0 := h0
+            rw [he] at hh
+            have hb := ih.mp hh
+            show (enrolled beq room n' && backed beq room needs) = true
+            rw [he, hb]
+            exact rfl
+          · intro hb
+            have hh : (enrolled beq room n' && backed beq room needs) = true := hb
+            rw [he] at hh
+            show cond (enrolled beq room n')
+                (lacking beq room needs) (lacking beq room needs + 1) = 0
+            rw [he]
+            exact ih.mpr hh
+      | false =>
+          constructor
+          · intro h0
+            have hh : cond (enrolled beq room n')
+                (lacking beq room needs) (lacking beq room needs + 1) = 0 := h0
+            rw [he] at hh
+            exact nomatch hh
+          · intro hb
+            have hh : (enrolled beq room n' && backed beq room needs) = true := hb
+            rw [he] at hh
+            exact nomatch hh
+
+/-- info: 'Seed.the_weight_is_zero_at_the_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_weight_is_zero_at_the_door
+
+theorem the_click_spares_the_dark {A : Type u} (beq : A → A → Bool)
+    (st : List A × List (A × List A)) (arr : A × List A) (x : A)
+    (hdark : enrolled beq st.1 x = false)
+    (hcite : beq arr.1 x = true → ∃ z, z ∈ arr.2 ∧ enrolled beq st.1 z = false) :
+    enrolled beq (welcome beq st arr).1 x = false := by
+  cases hb : backed beq st.1 arr.2 with
+  | false =>
+      rw [the_unbacked_wait beq st arr hb]
+      exact hdark
+  | true =>
+      rw [the_backed_are_seated beq st arr hb]
+      show (beq arr.1 x || enrolled beq st.1 x) = false
+      cases ha : beq arr.1 x with
+      | false => exact hdark
+      | true =>
+          obtain ⟨z, hz, hzd⟩ := hcite ha
+          have hze := the_backing_reaches_each_need beq st.1 arr.2 hb z hz
+          rw [hze] at hzd
+          exact nomatch hzd
+
+/-- info: 'Seed.the_click_spares_the_dark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_click_spares_the_dark
+
+theorem no_mark_lights_itself {A : Type u} (beq : A → A → Bool) (x : A) :
+    ∀ (w : List (A × List A)) (st : List A × List (A × List A)),
+      enrolled beq st.1 x = false →
+      (∀ arr, arr ∈ w → beq arr.1 x = true → x ∈ arr.2) →
+      enrolled beq (intake beq st w).1 x = false := by
+  intro w
+  induction w with
+  | nil => intro st hdark _; exact hdark
+  | cons arr w ih =>
+      intro st hdark hself
+      show enrolled beq (intake beq (welcome beq st arr) w).1 x = false
+      exact ih (welcome beq st arr)
+        (the_click_spares_the_dark beq st arr x hdark
+          (fun ha => ⟨x, hself arr (.head _) ha, hdark⟩))
+        (fun a ha hb => hself a (.tail _ ha) hb)
+
+/-- info: 'Seed.no_mark_lights_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms no_mark_lights_itself
+
+theorem the_circle_stays_dark {A : Type u} (beq : A → A → Bool) (x y : A) :
+    ∀ (w : List (A × List A)) (st : List A × List (A × List A)),
+      enrolled beq st.1 x = false → enrolled beq st.1 y = false →
+      (∀ arr, arr ∈ w → beq arr.1 x = true → y ∈ arr.2) →
+      (∀ arr, arr ∈ w → beq arr.1 y = true → x ∈ arr.2) →
+      enrolled beq (intake beq st w).1 x = false
+        ∧ enrolled beq (intake beq st w).1 y = false := by
+  intro w
+  induction w with
+  | nil => intro st hdx hdy _ _; exact ⟨hdx, hdy⟩
+  | cons arr w ih =>
+      intro st hdx hdy hcx hcy
+      have hdx' := the_click_spares_the_dark beq st arr x hdx
+        (fun ha => ⟨y, hcx arr (.head _) ha, hdy⟩)
+      have hdy' := the_click_spares_the_dark beq st arr y hdy
+        (fun ha => ⟨x, hcy arr (.head _) ha, hdx⟩)
+      show enrolled beq (intake beq (welcome beq st arr) w).1 x = false
+        ∧ enrolled beq (intake beq (welcome beq st arr) w).1 y = false
+      exact ih (welcome beq st arr) hdx' hdy'
+        (fun a ha hb => hcx a (.tail _ ha) hb)
+        (fun a ha hb => hcy a (.tail _ ha) hb)
+
+/-- info: 'Seed.the_circle_stays_dark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_circle_stays_dark
+
+theorem the_key_is_cut_from_the_room {A : Type u} (beq : A → A → Bool)
+    (hrefl : ∀ y : A, beq y y = true) (room : List A) :
+    ∀ needs : List A, lacking beq room needs = 1 →
+      ∃ k, k ∈ needs ∧ enrolled beq room k = false ∧
+        backed beq (k :: room) needs = true := by
+  intro needs
+  induction needs with
+  | nil =>
+      intro h
+      have h' : (0 : Nat) = 1 := h
+      exact nomatch h'
+  | cons n' needs ih =>
+      intro h
+      cases he : enrolled beq room n' with
+      | true =>
+          have hh : cond (enrolled beq room n')
+              (lacking beq room needs) (lacking beq room needs + 1) = 1 := h
+          rw [he] at hh
+          obtain ⟨k, hk, hkd, hkb⟩ := ih hh
+          refine ⟨k, .tail _ hk, hkd, ?_⟩
+          show (enrolled beq (k :: room) n' && backed beq (k :: room) needs) = true
+          rw [enrolled_grows beq room k n' he, hkb]
+          exact rfl
+      | false =>
+          have hh : cond (enrolled beq room n')
+              (lacking beq room needs) (lacking beq room needs + 1) = 1 := h
+          rw [he] at hh
+          have h0 : lacking beq room needs = 0 := Nat.succ.inj hh
+          have hb := (the_weight_is_zero_at_the_door beq room needs).mp h0
+          refine ⟨n', .head _, he, ?_⟩
+          show (enrolled beq (n' :: room) n' && backed beq (n' :: room) needs) = true
+          have h1 : enrolled beq (n' :: room) n' = true := by
+            show (beq n' n' || enrolled beq room n') = true
+            rw [hrefl n']
+            exact rfl
+          rw [h1, the_backing_survives_the_seating beq room n' needs hb]
+          exact rfl
+
+/-- info: 'Seed.the_key_is_cut_from_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_key_is_cut_from_the_room
+
+theorem room_margin_flywheel_door {I : Type u} {O : Type v} {A : Type w}
+    (m : Machine I O) (r : m.S → I) (u : List Unit) (s : m.S)
+    (st : m.S × List I) (v : List I) (q : Interview (List Unit) Bool)
+    (beq : A → A → Bool) (hrefl : ∀ y : A, beq y y = true)
+    (x : A) (st' : List A × List (A × List A)) (word : List (A × List A))
+    (hall needs : List A)
+    (F : Face) {W : Type v'} (g : F.State) {w1 w2 : W} (hw : w1 ≠ w2) :
+    drive (selfSteered m r) s u = m.out (orbit m r s u.length)
+      ∧ drive (buffered m) (settleHeld m st) v = drive (buffered m) st v
+      ∧ sound (airGap Unit Bool) restingCounter q = sound (airGap Unit Bool) hollowShell q
+      ∧ (∀ tw : List Unit, behavior tally tw = tw.length)
+      ∧ (enrolled beq st'.1 x = false →
+          (∀ arr, arr ∈ word → beq arr.1 x = true → x ∈ arr.2) →
+          enrolled beq (intake beq st' word).1 x = false)
+      ∧ (lacking beq hall needs = 1 →
+          ∃ k, k ∈ needs ∧ enrolled beq hall k = false ∧
+            backed beq (k :: hall) needs = true)
+      ∧ ¬ alike (widen F W) (atTheDoor g w1) (atTheDoor g w2) :=
+  ⟨the_self_steered_machine_is_a_clock m r u s,
+   the_settle_is_unheard m st v,
+   the_flywheel_and_the_shell_sound_alike q,
+   the_wider_voice_releases_the_bank,
+   fun hd hs => no_mark_lights_itself beq x word st' hd hs,
+   the_key_is_cut_from_the_room beq hrefl hall needs,
+   a_wider_seat_reads_the_remainder F g hw⟩
+
+/-- info: 'Seed.room_margin_flywheel_door' does not depend on any axioms -/
+#guard_msgs in #print axioms room_margin_flywheel_door
+
 end Seed

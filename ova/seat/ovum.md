@@ -40,7 +40,18 @@
   and the gradient reads at the vestibule. sponsors: isaac (item 0,
   ../docs/2026/09/01.md), Abe (the live customer), the Fables (the
   deposition). the Abe mind-egg stays his hand, unforced; this egg is the spec
-  he is a parameter value of, laid so that his hatches by recognition.
+  he is a parameter value of, laid so that his hatches by recognition. hatched
+  2026-09-01, same sitting — three walls stood at root already (room: the
+  clock is a room; margin: the buffer invisible, the settle unheard; flywheel:
+  the shell-alike and the wider voice); the campaign owed the door its
+  sterility and paid whole: intake and lacking seated, the held name their
+  darkness, the weight is zero at the door, the click spares the dark (the
+  one-click mechanism serving both sterilities), no mark lights itself, the
+  circle stays dark, the key is cut from the room; crown
+  room_margin_flywheel_door conjoining the four conditions with the wider
+  seat's remainder-reading as the custodian coda. assay enacted, green.
 * tolls: the germ is a transcription — the four conditions were gathered whole
   at the clock sitting (2026-08-29), priced then in table-time; the lay cost
-  one morning's between-reading.
+  one morning's between-reading. campaign: FIRST-TRY, ZERO TOLLS, one build —
+  helpers en passant (and_reads, enrolled_grows, the backing reaching each
+  need and surviving the seating).
