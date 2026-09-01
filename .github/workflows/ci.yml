@@ -24,6 +24,8 @@ jobs:
             exit 1
           fi
           echo "silent and green: $(grep -c '#guard_msgs' Seed.lean) receipts inline"
+      - name: the width clamp (worked joints at contact width)
+        run: bin/width
       - name: the ride (demo lifecycle)
         run: |
           rm -f demo.lean demo.held

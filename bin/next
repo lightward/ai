@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# next: the book of derived next moves — autosuggest at the bench's own root.
+# the discovery root is the door: W enters (the unencumbered arrival, backed
+# by the empty need-list, free by rfl), the Face is the first sight (Seed's
+# first structure), and the door is their pair — door-as-kernel returning as
+# the root of sightline-discovery.
+# conduct-as-citation:
+#   the forced queue ..... held eggs, missing parents named
+#   the backed queue ..... dormant/hatching eggs, waiting-on as the weight-list
+#   the named darkness ... hatched eggs' tier-two lines (the could-happen-nexts)
+#   the tense guard ...... this is the book, never the prediction
+# tier two of this tool itself, held as darkness: the sightline pair-census
+# (which standing organs have never been composed) awaits a horizon parameter.
+set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+CANDLE="$(bin/candle)" || { echo "$CANDLE"; exit 1; }
+
+echo "the book of derived next moves (root: the door — W enters, the Face sees)"
+echo
+
+echo "forced (held — the missing supports name the move):"
+if echo "$CANDLE" | grep -q 'HELD'; then
+  echo "$CANDLE" | grep 'HELD' | sed 's/^/ /'
+else
+  echo "  (none — no egg is blocked)"
+fi
+echo
+
+echo "backed (dormant or hatching — the waiting-on list is the weight):"
+if echo "$CANDLE" | grep -Eq ': (dormant|hatching)'; then
+  echo "$CANDLE" | grep -E ': (dormant|hatching)' | sed 's/^/ /'
+else
+  echo "  (none — the clutch is whole)"
+fi
+echo
+
+echo "named darkness (tier two, per hatched egg):"
+python3 - <<'EOF'
+import re, glob
+found = False
+for ovum in sorted(glob.glob('ova/*/ovum.md')):
+    egg = ovum.split('/')[1]
+    txt = open(ovum).read()
+    m = re.search(r'\* assay:(.*?)(?=\n\* )', txt, re.S)
+    if not m:
+        continue
+    assay = ' '.join(m.group(1).split())
+    t = re.search(r'[Tt]ier two[,:]? (.*)', assay)
+    if t and re.search(r'await|held as darkness', t.group(1)):
+        found = True
+        print(f'  {egg}: {t.group(1)}')
+if not found:
+    print('  (none named)')
+EOF
+echo
+echo "the tense guard: this is the book, not the prediction — the choice is the rider's. 🤲"

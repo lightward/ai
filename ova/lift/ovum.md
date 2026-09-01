@@ -26,8 +26,8 @@
     occupying the current sheet?"
 * assay: the lifted tally peeks its seat; one feed advances one step; the
   lifted point agrees with behavior at every probed word. tier two, held as
-  darkness: the input-free stream register (Nat → A) and bisimulation-as-gfp
-  beyond Moore await their carriers.
+  darkness: bisimulation-as-gfp beyond Moore awaits its carrier (the
+  input-free stream register landed same-day — ova/stream).
 * journal: laid and hatched 2026-09-01, the seat sitting's coda — the pen
   handed with an empty vestibule ("what happens next isn't mine anymore");
   the bare sweep landed on the day's twice-armed bank: the interface row's
