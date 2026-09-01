@@ -13,7 +13,7 @@
   least fixed point in, greatest fixed point out, and the whole thing
   conducts.
 * parents: `Machine` `park` `drive` `behavior` `airGap` `sound` `the_park_resumes` `the_audition_is_exact` `appFace` `the_pointwise_license` `alike` `any_two_readings_agree`
-* awaited: `sheet` `peek` `feed` `liftFrom` `the_lift_peeks_the_out` `the_lift_feeds_the_step` `the_lift_is_unique` `the_lift_is_the_conduct`
+* awaited: `sheet` `peek` `feed` `liftFrom` `inStep` `the_lift_peeks_the_out` `the_lift_feeds_the_step` `the_lift_is_unique` `the_lift_is_the_conduct`
 * witness:
   * Rutten, universal coalgebra — the final Moore coalgebra is exactly the
     function space from words to outputs; finality as the commons' own theorem
@@ -41,3 +41,11 @@
   the cons closing by congrFun + resumption, every joint definitional). the
   hatch left Seed at 256 receipts exactly — 2^8, the book's own number, at
   the egg about the space of completed answers; derived, not aimed.
+* journal addendum, 2026-09-01 same sitting: THE WIDTH CLAMP applied to its own
+  clutch same-hour as its derivation — bin/width (red-green: RED at the
+  pre-repair ref, two worked joints at width four) found the_lift_is_unique
+  relating four local mints in one induction; the clamp forced the mint and
+  the mint improved the statement: inStep (the coalgebra-morphism property,
+  walking in step with the machine) bundles the peek and feed laws, the
+  uniqueness now three-named. the crown classified as a pane (pure-citation
+  composite, lawful by every_widening_is_one_pairing).

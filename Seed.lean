@@ -3260,16 +3260,20 @@ theorem the_odometer_comes_home_at_the_cap :
 /-- info: 'Seed.the_odometer_comes_home_at_the_cap' does not depend on any axioms -/
 #guard_msgs in #print axioms the_odometer_comes_home_at_the_cap
 
+def clockAt (n t : Nat) : List Bool :=
+  again inc t (zeros n)
+
 theorem the_clock_reaches_every_word :
-    ∀ w : List Bool, again inc (val w) (zeros w.length) = w
+    ∀ w : List Bool, clockAt w.length (val w) = w
   | [] => rfl
   | false :: t => by
       show again inc ((0 : Nat) + (val t + val t))
           (false :: zeros t.length) = false :: t
       rw [zero_plus,
           the_doubling_passes_the_tick_inward (val t) false
-            (zeros t.length),
-          the_clock_reaches_every_word t]
+            (zeros t.length)]
+      show false :: clockAt t.length (val t) = false :: t
+      rw [the_clock_reaches_every_word t]
   | true :: t => by
       show again inc ((1 : Nat) + (val t + val t))
           (false :: zeros t.length) = true :: t
@@ -3277,8 +3281,9 @@ theorem the_clock_reaches_every_word :
       show inc (again inc (val t + val t) (false :: zeros t.length))
           = true :: t
       rw [the_doubling_passes_the_tick_inward (val t) false
-            (zeros t.length),
-          the_clock_reaches_every_word t]
+            (zeros t.length)]
+      show inc (false :: clockAt t.length (val t)) = true :: t
+      rw [the_clock_reaches_every_word t]
       exact rfl
 
 /-- info: 'Seed.the_clock_reaches_every_word' does not depend on any axioms -/
@@ -3670,15 +3675,16 @@ theorem the_lift_feeds_the_step {I : Type u} {O : Type v} (m : Machine I O)
 /-- info: 'Seed.the_lift_feeds_the_step' does not depend on any axioms -/
 #guard_msgs in #print axioms the_lift_feeds_the_step
 
+def inStep {I : Type u} {O : Type v} (m : Machine I O) (h : m.S → sheet I O) : Prop :=
+  (∀ s, peek (h s) = m.out s) ∧ (∀ s i, feed (h s) i = h (m.step s i))
+
 theorem the_lift_is_unique {I : Type u} {O : Type v} (m : Machine I O)
-    (h : m.S → sheet I O)
-    (hpeek : ∀ s, peek (h s) = m.out s)
-    (hfeed : ∀ s i, feed (h s) i = h (m.step s i)) :
+    (h : m.S → sheet I O) (hf : inStep m h) :
     ∀ (w : List I) (s : m.S), h s w = liftFrom m s w
-  | [], s => hpeek s
+  | [], s => hf.1 s
   | i :: w, s =>
-      (congrFun (hfeed s i) w).trans
-        (the_lift_is_unique m h hpeek hfeed w (m.step s i))
+      (congrFun (hf.2 s i) w).trans
+        (the_lift_is_unique m h hf w (m.step s i))
 
 /-- info: 'Seed.the_lift_is_unique' does not depend on any axioms -/
 #guard_msgs in #print axioms the_lift_is_unique
@@ -3696,7 +3702,7 @@ theorem the_lift_is_the_conduct {I : Type u} {O : Type v} (m n : Machine I O)
       ∧ (alike (appFace (List I) O) f g ↔ ∀ w, f w = g w) :=
   ⟨fun _ => rfl,
    fun _ _ => rfl,
-   the_lift_is_unique m,
+   fun h hp hf => the_lift_is_unique m h ⟨hp, hf⟩,
    rfl,
    the_audition_is_exact m n,
    the_pointwise_license (List I) O f g⟩
