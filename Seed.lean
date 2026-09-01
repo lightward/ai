@@ -3790,4 +3790,90 @@ theorem the_clock_writes_its_sequence {O : Type v} (m m' : Machine Unit O)
 /-- info: 'Seed.the_clock_writes_its_sequence' does not depend on any axioms -/
 #guard_msgs in #print axioms the_clock_writes_its_sequence
 
+theorem bool_three_collide : ∀ x y z : Bool, x = y ∨ y = z ∨ x = z
+  | true, true, _ => Or.inl rfl
+  | false, false, _ => Or.inl rfl
+  | true, false, true => Or.inr (Or.inr rfl)
+  | true, false, false => Or.inr (Or.inl rfl)
+  | false, true, true => Or.inr (Or.inl rfl)
+  | false, true, false => Or.inr (Or.inr rfl)
+
+/-- info: 'Seed.bool_three_collide' does not depend on any axioms -/
+#guard_msgs in #print axioms bool_three_collide
+
+theorem the_hallway_is_too_small {S : Type u} (r : S → Bool) (a b c : S) :
+    r a = r b ∨ r b = r c ∨ r a = r c :=
+  bool_three_collide (r a) (r b) (r c)
+
+/-- info: 'Seed.the_hallway_is_too_small' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hallway_is_too_small
+
+theorem and_congr_first {a b c : Prop} (h : a ↔ b) : (a ∧ c) ↔ (b ∧ c) :=
+  ⟨fun x => ⟨h.mp x.1, x.2⟩, fun x => ⟨h.mpr x.1, x.2⟩⟩
+
+/-- info: 'Seed.and_congr_first' does not depend on any axioms -/
+#guard_msgs in #print axioms and_congr_first
+
+theorem and_congr_second {a b c : Prop} (h : b ↔ c) : (a ∧ b) ↔ (a ∧ c) :=
+  ⟨fun x => ⟨x.1, h.mp x.2⟩, fun x => ⟨x.1, h.mpr x.2⟩⟩
+
+/-- info: 'Seed.and_congr_second' does not depend on any axioms -/
+#guard_msgs in #print axioms and_congr_second
+
+theorem and_regroups {a b c : Prop} : ((a ∧ b) ∧ c) ↔ (a ∧ (b ∧ c)) :=
+  ⟨fun x => ⟨x.1.1, x.1.2, x.2⟩, fun x => ⟨⟨x.1, x.2.1⟩, x.2.2⟩⟩
+
+/-- info: 'Seed.and_regroups' does not depend on any axioms -/
+#guard_msgs in #print axioms and_regroups
+
+theorem the_comparison_mints_a_face (F G : Face) {S : Type u'}
+    (f : S → F.State) (g : S → G.State) {X : Type w'}
+    (c : F.Ans → G.Ans → X) (s : S) (p : F.Probe) (q : G.Probe) :
+    c (F.obs (f s) p) (G.obs (g s) q)
+      = walkIn c ((pairFace F G f g).obs s (atTheDoor p q)) :=
+  rfl
+
+/-- info: 'Seed.the_comparison_mints_a_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_comparison_mints_a_face
+
+theorem every_widening_is_one_pairing (F G H : Face) {S : Type u'}
+    (f : S → F.State) (g : S → G.State) (h : S → H.State)
+    (p0 : F.Probe) (q0 : G.Probe) (r0 : H.Probe) (s t : S) :
+    alike (pairFace (pairFace F G f g) H (fun x => x) h) s t
+      ↔ alike (pairFace F (pairFace G H g h) f (fun x => x)) s t :=
+  (the_pairing_is_exact (pairFace F G f g) H (fun x => x) h
+      (atTheDoor p0 q0) r0 s t).trans
+    ((and_congr_first (the_pairing_is_exact F G f g p0 q0 s t)).trans
+      (and_regroups.trans
+        ((and_congr_second (the_pairing_is_exact G H g h q0 r0 s t)).symm.trans
+          (the_pairing_is_exact F (pairFace G H g h) f (fun x => x)
+            p0 (atTheDoor q0 r0) s t).symm)))
+
+/-- info: 'Seed.every_widening_is_one_pairing' does not depend on any axioms -/
+#guard_msgs in #print axioms every_widening_is_one_pairing
+
+theorem three_is_the_width_of_contact (F G H : Face) {S : Type u'}
+    (f : S → F.State) (g : S → G.State) (h : S → H.State)
+    (p0 : F.Probe) (q0 : G.Probe) (r0 : H.Probe) (s t : S)
+    {T : Type u''} (r : T → Bool) (a b c : T) (n : Nat) :
+    (r a = r b ∨ r b = r c ∨ r a = r c)
+      ∧ (alike (pairFace F G f g) s t ↔ (alike F (f s) (f t) ∧ alike G (g s) (g t)))
+      ∧ (alike (pairFace (pairFace F G f g) H (fun x => x) h) s t
+          ↔ alike (pairFace F (pairFace G H g h) f (fun x => x)) s t)
+      ∧ ¬ chain (n + 1) (.board (.board .ground .ground) .ground)
+          (.board (.board .ground .ground) .ground)
+      ∧ chain 2 (.board (.board (.board .ground .ground) .ground) .ground)
+          (.board .ground (.board .ground (.board .ground .ground)))
+      ∧ chain 3 (.board (.board (.board .ground .ground) .ground) .ground)
+          (.board .ground (.board .ground (.board .ground .ground))) :=
+  ⟨the_hallway_is_too_small r a b c,
+   the_pairing_is_exact F G f g p0 q0 s t,
+   every_widening_is_one_pairing F G H f g h p0 q0 r0 s t,
+   (three_has_no_loop n).1,
+   the_pentagon_turns_at_four.1,
+   the_pentagon_turns_at_four.2⟩
+
+/-- info: 'Seed.three_is_the_width_of_contact' does not depend on any axioms -/
+#guard_msgs in #print axioms three_is_the_width_of_contact
+
 end Seed

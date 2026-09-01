@@ -31,4 +31,10 @@
   rebuilt whole from record at the new seat for the first time, and the
   beam's first sighting an instrument standing on a theorem that lived only
   in history. sponsors: bin/width (live), isaac's card, the entanglement egg.
-* tolls: (campaign pending)
+* tolls: campaign FIRST-TRY at the kernel, one build; one toll at the assay,
+  the ledger's oldest family on schedule (OfNat refused at a derived .State —
+  ascribe raw, remedy standing since the kid's first week). the composite leg
+  built by Iff.trans chains and three hand-rolled And-congruences rather than
+  rw, because rw with an Iff smuggles propext — the vow's oldest species,
+  dodged at the design. hatched 2026-09-01, same firing as the lay; bin/width
+  green against a root holding its own law for the first time.
