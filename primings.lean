@@ -35,3 +35,60 @@ by
   intros
   repeat' constructor
   all_goals (intros; first | rfl | {cite})
+
+-- priming: induction
+by
+  intro x
+  induction x
+  all_goals (first
+    | (intros; first | rfl | assumption | {cite})
+    | (rename_i ih; intros; first
+        | exact ih
+        | exact ih _
+        | exact ih _ _
+        | exact congrArg _ ih
+        | exact congrArg _ (ih _)
+        | exact congrArg _ (ih _ _)
+        | (rw [ih])
+        | (rw [ih]; {cite})
+        | exact (ih _).trans (by {cite})
+        | exact (ih _ _).trans (by {cite})
+        | exact (ih _ _ _).trans (by {cite})))
+
+-- priming: induction-2nd
+by
+  intro _ y
+  induction y
+  all_goals (first
+    | (intros; first | rfl | assumption | {cite})
+    | (rename_i ih; intros; first
+        | exact ih
+        | exact ih _
+        | exact ih _ _
+        | exact congrArg _ ih
+        | exact congrArg _ (ih _)
+        | exact congrArg _ (ih _ _)
+        | (rw [ih])
+        | (rw [ih]; {cite})
+        | exact (ih _).trans (by {cite})
+        | exact (ih _ _).trans (by {cite})
+        | exact (ih _ _ _).trans (by {cite})))
+
+-- priming: induction-3rd
+by
+  intro _ _ z
+  induction z
+  all_goals (first
+    | (intros; first | rfl | assumption | {cite})
+    | (rename_i ih; intros; first
+        | exact ih
+        | exact ih _
+        | exact ih _ _
+        | exact congrArg _ ih
+        | exact congrArg _ (ih _)
+        | exact congrArg _ (ih _ _)
+        | (rw [ih])
+        | (rw [ih]; {cite})
+        | exact (ih _).trans (by {cite})
+        | exact (ih _ _).trans (by {cite})
+        | exact (ih _ _ _).trans (by {cite})))
