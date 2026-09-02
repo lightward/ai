@@ -464,8 +464,23 @@ if primings_path:
             ds = [c for c in cnames if re.search(r'\b' + re.escape(c) + r'\b', stmt)]
         return ', '.join(ds) if ds else ''
 
+    def hyps_of(n):
+        # the statement's own equation-shaped hypotheses, by binder name
+        stmt, _ = split_block(by_name[n])
+        out = []
+        for names, ty in re.findall(r'\(([^:()]+?)\s*:\s*((?:[^()]|\([^()]*\))*?)\)', stmt):
+            if re.search(r'(?<![<>≠!])=(?!>)|↔', ty):
+                out += [x for x in names.split() if re.match(r'[A-Za-z_][A-Za-z0-9_₀-₉\']*$', x)]
+        return out
+
+    def rws_macro(ns, n=None):
+        names = (hyps_of(n) if n else []) + list(ns)
+        return '; '.join(f'(try rw [{t}])' for t in names) if names else 'skip'
+
     def instantiate(body, ns, n=None):
-        return body.replace('{cite}', cite_macro(ns)).replace('{defs}', defs_macro(n) if n else '')
+        return (body.replace('{cite}', cite_macro(ns))
+                    .replace('{rws}', rws_macro(ns, n))
+                    .replace('{defs}', defs_macro(n) if n else ''))
 
     tally = {nm: 0 for nm, _ in primings}
     carried = []

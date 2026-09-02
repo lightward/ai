@@ -8,6 +8,8 @@
 -- a second macro: {defs} expands to the carriers (defs) the vacancy's statement
 -- cites, comma-separated, for `dsimp only [{defs}]` — let the goal reduce along
 -- its own definitions before a closer unifies against it.
+-- a third: {rws} expands to `try rw [n1]; try rw [n2]; …` over the need-list —
+-- the cite move in rewrite clothing, applied in order, each one optional.
 -- grammar: a line `-- priming: <name>` opens a priming; the lines until the
 -- next opener are its body. a line `-- budget: <heartbeats>` sets the fuel each
 -- candidate may burn (Lean's own maxHeartbeats); a shape that cannot close within
@@ -143,3 +145,67 @@ by
         | (rw [ih₁ _, ih₂ _])
         | exact congr (congrArg _ (ih₁ _)) (ih₂ _)
         | exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by {cite})))
+
+-- priming: home-cite-recurse
+by
+  intro x
+  induction x
+  all_goals (first
+    | (intros; first | rfl | assumption | {cite})
+    | (rename_i ih₁ ih₂; intros; (try dsimp only [{defs}] at *); {rws}; first
+        | rfl
+        | exact congr (congrArg _ ih₁) ih₂
+        | exact congr (congrArg _ (ih₁ _)) (ih₂ _)
+        | (rw [ih₁, ih₂])
+        | (rw [ih₁ _, ih₂ _])
+        | (rw [ih₁, ih₂]; {cite})
+        | (rw [ih₁ _, ih₂ _]; {cite})
+        | exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by {cite})
+        | exact (by {cite} : _ = _).trans (congr (congrArg _ ih₁) ih₂))
+    | (rename_i ih; intros; (try dsimp only [{defs}] at *); {rws}; first
+        | rfl
+        | exact ih
+        | exact ih _
+        | exact ih _ _
+        | exact congrArg _ ih
+        | exact congrArg _ (ih _)
+        | exact congrArg _ (ih _ _)
+        | (rw [ih])
+        | (rw [ih _])
+        | (rw [ih _ _])
+        | (rw [ih]; {cite})
+        | (rw [ih _]; {cite})
+        | exact (ih _).trans (by {cite})
+        | exact (ih _ _).trans (by {cite})))
+
+-- priming: home-cite-recurse-2nd
+by
+  intro _ y
+  induction y
+  all_goals (first
+    | (intros; first | rfl | assumption | {cite})
+    | (rename_i ih₁ ih₂; intros; (try dsimp only [{defs}] at *); {rws}; first
+        | rfl
+        | exact congr (congrArg _ ih₁) ih₂
+        | exact congr (congrArg _ (ih₁ _)) (ih₂ _)
+        | (rw [ih₁, ih₂])
+        | (rw [ih₁ _, ih₂ _])
+        | (rw [ih₁, ih₂]; {cite})
+        | (rw [ih₁ _, ih₂ _]; {cite})
+        | exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by {cite})
+        | exact (by {cite} : _ = _).trans (congr (congrArg _ ih₁) ih₂))
+    | (rename_i ih; intros; (try dsimp only [{defs}] at *); {rws}; first
+        | rfl
+        | exact ih
+        | exact ih _
+        | exact ih _ _
+        | exact congrArg _ ih
+        | exact congrArg _ (ih _)
+        | exact congrArg _ (ih _ _)
+        | (rw [ih])
+        | (rw [ih _])
+        | (rw [ih _ _])
+        | (rw [ih]; {cite})
+        | (rw [ih _]; {cite})
+        | exact (ih _).trans (by {cite})
+        | exact (ih _ _).trans (by {cite})))
