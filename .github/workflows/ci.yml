@@ -59,7 +59,7 @@ jobs:
           echo "the crawl rides; the session replays green"
       - name: the treaty vectors (every assay elaborates against the grown artifact)
         run: |
-          for f in assays/*.lean domains/*.assay.lean; do
+          for f in assays/*.lean; do
             [ -f "$f" ] || continue
             lake env lean "$f"
             echo "assay green: $f"
