@@ -1,425 +1,1258 @@
 namespace Seed
 
-def door (H W : Type) : Type := H × W
-
-def face {H W : Type} (d : door H W) : H := d.1
-
-def met {H W : Type} (d : door H W) : W := d.2
-
-def atTheDoor {H W : Type} (h : H) (w : W) : door H W := (h, w)
-
-theorem no_face_reads_the_guest {H W X : Type} (g : H → X) (h : H)
-    (w w' : W) : g (face (atTheDoor h w)) = g (face (atTheDoor h w')) := rfl
-
-theorem the_guest_is_real {H W : Type} (h : H) {w w' : W} (hw : w ≠ w') :
-    atTheDoor h w ≠ atTheDoor h w' :=
-  fun he => hw (congrArg met he)
-
-theorem meeting_reads_the_guest {H W : Type} (h : H) (w : W) :
-    met (atTheDoor h w) = w := rfl
-
-theorem a_guest_blind_reading_is_a_face_reading {H W X : Type} (w₀ : W)
-    (f : door H W → X) :
-    (∀ (h : H) (w w' : W), f (atTheDoor h w) = f (atTheDoor h w'))
-      ↔ ∃ g : H → X, ∀ (h : H) (w : W), f (atTheDoor h w) = g h :=
-  ⟨fun hb => ⟨fun h => f (atTheDoor h w₀), fun h w => hb h w w₀⟩,
-   fun he h w w' => he.elim fun _ hg => (hg h w).trans (hg h w').symm⟩
-
-theorem the_threshold {H W : Type} (h : H) {w w' : W} (hw : w ≠ w') :
-    atTheDoor h w ≠ atTheDoor h w'
-      ∧ (∀ (X : Type) (g : H → X),
-          g (face (atTheDoor h w)) = g (face (atTheDoor h w')))
-      ∧ met (atTheDoor h w) ≠ met (atTheDoor h w') :=
-  ⟨the_guest_is_real h hw, fun _ _ => rfl, hw⟩
-
-inductive Plan where
-  | ground : Plan
-  | board : Plan → Plan → Plan
-
-def build (W : Type) : Plan → Type
-  | .ground => W
-  | .board p q => door (build W p) (build W q)
-
-def spine (W : Type) : (p : Plan) → build W p → W
-  | .ground, s => s
-  | .board p _, d => spine W p (face d)
-
-theorem the_carrier_is_a_world (W : Type) (p q : Plan) :
-    build W (.board p q) = door (build W p) (build W q) := rfl
-
-theorem the_manifestation_reads_only_its_spine (W : Type) (p q : Plan)
-    (s : build W p) (g g' : build W q) :
-    spine W (.board p q) (atTheDoor s g)
-      = spine W (.board p q) (atTheDoor s g') := rfl
-
-def mirror (W : Type) (p : Plan) (s : build W p) : build W (.board p p) :=
-  atTheDoor s s
-
-theorem the_mirror_rides_real (W : Type) (p : Plan) (s t : build W p)
-    (hst : s ≠ t) {X : Type} (g : build W p → X) :
-    g (face (mirror W p s)) = g (face (atTheDoor s t))
-      ∧ mirror W p s ≠ atTheDoor s t :=
-  ⟨rfl, fun he => hst (congrArg met he)⟩
-
-def vertical {H W : Type} (σ : H → W → W) (d : door H W) : door H W :=
-  atTheDoor (face d) (σ (face d) (met d))
-
-theorem a_guest_mover_is_unheard {H W X : Type} (σ : H → W → W)
-    (g : H → X) (d : door H W) :
-    g (face (vertical σ d)) = g (face d) := rfl
-
-theorem an_unheard_move_moves_only_the_guest {H W : Type}
-    (m : door H W → door H W) :
-    (∀ d, face (m d) = face d)
-      ↔ ∃ σ : H → W → W, ∀ d, m d = vertical σ d :=
-  ⟨fun hm => ⟨fun h w => met (m (atTheDoor h w)),
-     fun d => congrArg (fun x => atTheDoor x (met (m d))) (hm d)⟩,
-   fun he d => he.elim fun _ hσ => (congrArg face (hσ d)).trans rfl⟩
-
-theorem guest_movers_compose {H W : Type} (σ τ : H → W → W) (d : door H W) :
-    vertical σ (vertical τ d) = vertical (fun h w => σ h (τ h w)) d := rfl
-
-theorem the_still_door_moves_no_guest {H W : Type} (d : door H W) :
-    vertical (fun _ w => w) d = d := rfl
-
-def label (W : Type) (p : Plan) (s : build W p) : door (build W p) Plan :=
-  atTheDoor s p
-
-theorem the_label_rides_unread {W X : Type} (p p' : Plan) (s : build W p)
-    (g : build W p → X) :
-    g (face (label W p s)) = g (face (atTheDoor s p')) := rfl
-
-theorem a_false_label_is_real (W : Type) (p : Plan) (s : build W p)
-    {p' : Plan} (hp : p ≠ p') : label W p s ≠ atTheDoor s p' :=
-  fun he => hp (congrArg met he)
-
-theorem the_meeting_reads_the_label (W : Type) (p : Plan) (s : build W p) :
-    met (label W p s) = p := rfl
-
-theorem honesty_is_invisible_at_the_face (W : Type) (p p' : Plan)
-    (s : build W p) (hp : p ≠ p') :
-    label W p s ≠ atTheDoor s p'
-      ∧ (∀ (X : Type) (g : build W p → X),
-          g (face (label W p s)) = g (face (atTheDoor s p')))
-      ∧ met (label W p s) = p
-      ∧ met (atTheDoor s p') = p' :=
-  ⟨a_false_label_is_real W p s hp, fun _ _ => rfl, rfl, rfl⟩
-
-universe u v
-
-def fold {X : Type u} (mul : X → X → X) (x₀ : X) : Plan → X
-  | .ground => x₀
-  | .board p q => mul (fold mul x₀ p) (fold mul x₀ q)
-
-theorem no_world_is_refused {X : Type u} (mul : X → X → X) (x₀ : X) :
-    fold mul x₀ .ground = x₀
-      ∧ ∀ p q, fold mul x₀ (.board p q)
-          = mul (fold mul x₀ p) (fold mul x₀ q) :=
-  ⟨rfl, fun _ _ => rfl⟩
-
-theorem any_two_readings_agree {X : Type u} (mul : X → X → X) (x₀ : X)
-    (f : Plan → X) (hg : f .ground = x₀)
-    (hb : ∀ p q, f (.board p q) = mul (f p) (f q)) :
-    ∀ p, f p = fold mul x₀ p
-  | .ground => hg
-  | .board p q =>
-      (hb p q).trans
-        (congr (congrArg mul (any_two_readings_agree mul x₀ f hg hb p))
-          (any_two_readings_agree mul x₀ f hg hb q))
-
-theorem the_self_reading_is_the_identity :
-    ∀ p, fold Plan.board Plan.ground p = p :=
-  fun p =>
-    (any_two_readings_agree Plan.board Plan.ground (fun x => x) rfl
-      (fun _ _ => rfl) p).symm
-
-theorem build_is_a_reading (W : Type) : ∀ p, build W p = fold door W p :=
-  fun p => any_two_readings_agree door W (build W) rfl (fun _ _ => rfl) p
-
-theorem a_reading_may_forget_what_the_record_keeps :
-    fold (fun a b => a + b) 1 (.board .ground (.board .ground .ground))
-        = fold (fun a b => a + b) 1 (.board (.board .ground .ground) .ground)
-      ∧ Plan.board .ground (.board .ground .ground)
-          ≠ .board (.board .ground .ground) .ground :=
-  ⟨rfl, fun h => nomatch (Plan.board.inj h).1⟩
-
-theorem no_face_answers_for_the_guest {H W : Type} (h : H) {w w' : W}
-    (hw : w ≠ w') :
-    ¬ ∃ g : H → W, ∀ (h' : H) (v : W), g (face (atTheDoor h' v)) = v :=
-  fun he => he.elim fun _ hg => hw ((hg h w).symm.trans (hg h w'))
-
-theorem one_reading_merges_what_another_parts :
-    fold (fun a b => a + b) 1
-        (.board (.board .ground .ground) .ground)
-      = fold (fun a b => a + b) 1
-        (.board .ground (.board .ground .ground))
-      ∧ fold (fun a _ => a + 1) 0
-          (.board (.board .ground .ground) .ground)
-        ≠ fold (fun a _ => a + 1) 0
-          (.board .ground (.board .ground .ground))
-      ∧ Plan.board (.board .ground .ground) .ground
-          ≠ .board .ground (.board .ground .ground) :=
-  ⟨rfl,
-   And.intro
-     (fun h => nomatch Nat.succ.inj h)
-     (fun h => nomatch (Plan.board.inj h).1)⟩
-
-def classDoor {X : Type} (r : Plan → X) (p : Plan) : door X Plan :=
-  atTheDoor (r p) p
-
-theorem the_reading_is_the_face {X : Type} (r : Plan → X) (p : Plan) :
-    face (classDoor r p) = r p := rfl
-
-theorem the_meeting_returns_the_world {X : Type} (r : Plan → X) (p : Plan) :
-    met (classDoor r p) = p := rfl
-
-theorem classmates_board_as_guests {X : Type} (r : Plan → X) {p q : Plan}
-    (hr : r p = r q) (hpq : p ≠ q) :
-    classDoor r p ≠ classDoor r q
-      ∧ ∀ (Y : Type) (g : X → Y),
-          g (face (classDoor r p)) = g (face (classDoor r q)) :=
-  ⟨fun he => hpq (congrArg met he), fun _ g => congrArg g hr⟩
-
-theorem every_reading_is_a_door {X : Type} (r : Plan → X) {p q : Plan}
-    (hr : r p = r q) (hpq : p ≠ q) :
-    face (classDoor r p) = r p
-      ∧ classDoor r p ≠ classDoor r q
-      ∧ (∀ (Y : Type) (g : X → Y),
-          g (face (classDoor r p)) = g (face (classDoor r q)))
-      ∧ met (classDoor r p) = p :=
-  ⟨rfl, (classmates_board_as_guests r hr hpq).1,
-   (classmates_board_as_guests r hr hpq).2, rfl⟩
-
-theorem the_class_is_a_guest_room :
-    classDoor (fold (fun a b => a + b) 1)
-        (.board (.board .ground .ground) .ground)
-      ≠ classDoor (fold (fun a b => a + b) 1)
-        (.board .ground (.board .ground .ground))
-      ∧ face (classDoor (fold (fun a b => a + b) 1)
-            (.board (.board .ground .ground) .ground))
-        = face (classDoor (fold (fun a b => a + b) 1)
-            (.board .ground (.board .ground .ground))) :=
-  ⟨(fun he => nomatch (Plan.board.inj (congrArg met he)).1), rfl⟩
-
-theorem checking_papers_unpersons {H W : Type}
-    (hchk : ∀ d d' : door H W, face d = face d' → d = d')
-    (h : H) (w w' : W) : atTheDoor h w = atTheDoor h w' :=
-  hchk _ _ rfl
-
-theorem hospitality_is_structural {H W : Type} (h : H) {w w' : W}
-    (hw : w ≠ w') :
-    (¬ ∃ g : H → W, ∀ (h' : H) (v : W), g (face (atTheDoor h' v)) = v)
-      ∧ ((∀ d d' : door H W, face d = face d' → d = d') → False) :=
-  ⟨no_face_answers_for_the_guest h hw,
-   fun hchk => hw (congrArg met (checking_papers_unpersons hchk h w w'))⟩
-
-def pairMul {X Y : Type} (mulX : X → X → X) (mulY : Y → Y → Y) :
-    X × Y → X × Y → X × Y :=
-  fun a b => (mulX a.1 b.1, mulY a.2 b.2)
-
-theorem the_meeting_is_a_reading {X Y : Type} (mulX : X → X → X)
-    (mulY : Y → Y → Y) (x₀ : X) (y₀ : Y) (p : Plan) :
-    fold (pairMul mulX mulY) (x₀, y₀) p
-      = (fold mulX x₀ p, fold mulY y₀ p) :=
-  (any_two_readings_agree (pairMul mulX mulY) (x₀, y₀)
-    (fun q => (fold mulX x₀ q, fold mulY y₀ q)) rfl (fun _ _ => rfl) p).symm
-
-theorem two_readings_part_what_one_merges :
-    fold (fun a b => a + b) 1
-        (.board (.board .ground .ground) .ground)
-      = fold (fun a b => a + b) 1
-        (.board .ground (.board .ground .ground))
-      ∧ fold (pairMul (fun a b => a + b) (fun a _ => a + 1)) (1, 0)
-          (.board (.board .ground .ground) .ground)
-        ≠ fold (pairMul (fun a b => a + b) (fun a _ => a + 1)) (1, 0)
-          (.board .ground (.board .ground .ground)) :=
-  ⟨rfl, fun h => nomatch Nat.succ.inj (congrArg Prod.snd h)⟩
-
-inductive Quiz (H X : Type) : Type where
-  | rest : Quiz H X
-  | ask (g : H → X) (k : X → Quiz H X) : Quiz H X
-
-def interrogate {H W X : Type} : Quiz H X → door H W → List X
-  | .rest, _ => []
-  | .ask g k, d => g (face d) :: interrogate (k (g (face d))) d
+universe u v w u' v' w' u''
 
 structure Face where
   State : Type u
-  Probe : Type
-  Ans   : Type
+  Probe : Type v
+  Ans   : Type w
   obs   : State → Probe → Ans
 
-inductive Interview (P A : Type) : Type where
+def alike (F : Face) (s t : F.State) : Prop :=
+  ∀ p, F.obs s p = F.obs t p
+
+def appFace (P : Type v) (A : Type w) : Face :=
+  ⟨P → A, P, A, fun g p => g p⟩
+
+theorem the_pointwise_license (P : Type v) (A : Type w) (g h : P → A) :
+    alike (appFace P A) g h ↔ ∀ p, g p = h p :=
+  Iff.rfl
+
+/-- info: 'Seed.the_pointwise_license' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pointwise_license
+
+def reseat (F : Face) {S' : Type u'} (h : S' → F.State) : Face :=
+  ⟨S', F.Probe, F.Ans, fun s p => F.obs (h s) p⟩
+
+theorem one_face_many_seats (F : Face) :
+    reseat (appFace F.Probe F.Ans) F.obs = F :=
+  rfl
+
+/-- info: 'Seed.one_face_many_seats' does not depend on any axioms -/
+#guard_msgs in #print axioms one_face_many_seats
+
+theorem the_seat_map_carries_the_conduct (F : Face) (s t : F.State) :
+    alike F s t ↔ alike (appFace F.Probe F.Ans) (F.obs s) (F.obs t) :=
+  Iff.rfl
+
+/-- info: 'Seed.the_seat_map_carries_the_conduct' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_map_carries_the_conduct
+
+def rehear (F : Face) {Q : Type v'} (f : Q → F.Probe) : Face :=
+  ⟨F.State, Q, F.Ans, fun s q => F.obs s (f q)⟩
+
+def retell (F : Face) {B : Type w'} (g : F.Ans → B) : Face :=
+  ⟨F.State, F.Probe, B, fun s p => g (F.obs s p)⟩
+
+theorem the_seats_stack_backward (F : Face) {S' : Type u'} {S'' : Type u''}
+    (h : S' → F.State) (h' : S'' → S') :
+    reseat (reseat F h) h' = reseat F (fun s => h (h' s)) :=
+  rfl
+
+/-- info: 'Seed.the_seats_stack_backward' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seats_stack_backward
+
+theorem the_ear_and_the_voice_commute (F : Face) {Q : Type v'} {B : Type w'}
+    (f : Q → F.Probe) (g : F.Ans → B) :
+    rehear (retell F g) f = retell (rehear F f) g :=
+  rfl
+
+/-- info: 'Seed.the_ear_and_the_voice_commute' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ear_and_the_voice_commute
+
+theorem the_ear_crosses_the_seat (F : Face) {S' : Type u'} {Q : Type v'}
+    (h : S' → F.State) (f : Q → F.Probe) :
+    rehear (reseat F h) f = reseat (rehear F f) h :=
+  rfl
+
+/-- info: 'Seed.the_ear_crosses_the_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ear_crosses_the_seat
+
+theorem the_voice_crosses_the_seat (F : Face) {S' : Type u'} {B : Type w'}
+    (h : S' → F.State) (g : F.Ans → B) :
+    retell (reseat F h) g = reseat (retell F g) h :=
+  rfl
+
+/-- info: 'Seed.the_voice_crosses_the_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_voice_crosses_the_seat
+
+def carries {S : Type u} {T : Type u'} {P : Type v} {A : Type w}
+    (f : S → P → A) (g : T → P → A) (h : S → T) : Prop :=
+  ∀ s p, g (h s) p = f s p
+
+theorem the_still_map_carries {S : Type u} {P : Type v} {A : Type w} (f : S → P → A) :
+    carries f f (fun s => s) :=
+  fun _ _ => rfl
+
+/-- info: 'Seed.the_still_map_carries' does not depend on any axioms -/
+#guard_msgs in #print axioms the_still_map_carries
+
+theorem the_carriers_compose {S : Type u} {T : Type u'} {U : Type u''} {P : Type v} {A : Type w}
+    (f : S → P → A) (g : T → P → A) (k : U → P → A) (h : S → T) (h' : T → U)
+    (c1 : carries f g h) (c2 : carries g k h') :
+    carries f k (fun s => h' (h s)) :=
+  fun s p => (c2 (h s) p).trans (c1 s p)
+
+/-- info: 'Seed.the_carriers_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carriers_compose
+
+theorem the_carrier_was_a_seating {S : Type u} {T : Type u'} {P : Type v} {A : Type w}
+    (f : S → P → A) (g : T → P → A) (h : S → T) :
+    carries f g h ↔ ∀ s, alike (appFace P A) (g (h s)) (f s) :=
+  Iff.rfl
+
+/-- info: 'Seed.the_carrier_was_a_seating' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carrier_was_a_seating
+
+theorem the_carrier_merges_only_the_alike {S : Type u} {T : Type u'} {P : Type v} {A : Type w}
+    (f : S → P → A) (g : T → P → A) (h : S → T) (c : carries f g h)
+    {s s' : S} (he : h s = h s') : ∀ p, f s p = f s' p :=
+  fun p => ((c s p).symm.trans (congrArg (fun x => g x p) he)).trans (c s' p)
+
+/-- info: 'Seed.the_carrier_merges_only_the_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_carrier_merges_only_the_alike
+
+theorem a_retraction_merges_nothing {S : Type u} {T : Type u'} (h : S → T) (r : T → S)
+    (hr : ∀ x, r (h x) = x) {s s' : S} (hm : h s = h s') : s = s' :=
+  (hr s).symm.trans ((congrArg r hm).trans (hr s'))
+
+/-- info: 'Seed.a_retraction_merges_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms a_retraction_merges_nothing
+
+theorem a_merging_map_has_no_section {S : Type u} {T : Type u'} (h : S → T)
+    {s s' : S} (hs : s ≠ s') (hm : h s = h s')
+    (r : T → S) (hr : ∀ x, r (h x) = x) : False :=
+  hs (a_retraction_merges_nothing h r hr hm)
+
+/-- info: 'Seed.a_merging_map_has_no_section' does not depend on any axioms -/
+#guard_msgs in #print axioms a_merging_map_has_no_section
+
+theorem the_obs_carries_to_the_one_face (F : Face) :
+    carries F.obs (fun g p => g p) F.obs :=
+  fun _ _ => rfl
+
+/-- info: 'Seed.the_obs_carries_to_the_one_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_obs_carries_to_the_one_face
+
+theorem the_terminus_takes_every_carrier {S : Type u} {P : Type v} {A : Type w}
+    (f : S → P → A) (h : S → (P → A)) (c : carries f (fun g p => g p) h) :
+    ∀ s p, h s p = f s p :=
+  c
+
+/-- info: 'Seed.the_terminus_takes_every_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_terminus_takes_every_carrier
+
+inductive Interview (P : Type v) (A : Type w) where
   | rest : Interview P A
-  | ask (p : P) (k : A → Interview P A) : Interview P A
+  | ask  : P → (A → Interview P A) → Interview P A
 
 def sound (F : Face) (s : F.State) : Interview F.Probe F.Ans → List F.Ans
   | .rest => []
   | .ask p k => F.obs s p :: sound F s (k (F.obs s p))
 
-def alike (F : Face) (s t : F.State) : Prop :=
-  ∀ p, F.obs s p = F.obs t p
-
-def seq {P A : Type} : Interview P A → Interview P A → Interview P A
-  | .rest, q => q
-  | .ask p k, q => .ask p (fun a => seq (k a) q)
-
-theorem the_interviews_resume (F : Face) (s : F.State) :
-    ∀ q₁ q₂ : Interview F.Probe F.Ans,
-      sound F s (seq q₁ q₂) = sound F s q₁ ++ sound F s q₂
-  | .rest, _ => rfl
-  | .ask p k, q₂ => by
-      show F.obs s p :: sound F s (seq (k (F.obs s p)) q₂)
-          = (F.obs s p :: sound F s (k (F.obs s p))) ++ sound F s q₂
-      rw [the_interviews_resume F s (k (F.obs s p)) q₂]
-      exact rfl
-
-theorem the_yield_writes_no_marks (F : Face) (s : F.State) :
-    sound F s .rest = [] := rfl
-
-theorem no_interview_parts_the_alike (F : Face) (s t : F.State)
-    (h : alike F s t) (q : Interview F.Probe F.Ans) :
-    sound F s q = sound F t q := by
-  induction q with
-  | rest => rfl
-  | ask p k ih =>
-      show F.obs s p :: sound F s (k (F.obs s p))
-          = F.obs t p :: sound F t (k (F.obs t p))
-      rw [h p]
-      exact congrArg (F.obs t p :: ·) (ih (F.obs t p))
-
-def doorFace (H W X : Type) : Face :=
-  ⟨door H W, H → X, X, fun d g => g (face d)⟩
-
-def posed {H X : Type} : Quiz H X → Interview (H → X) X
-  | .rest => .rest
-  | .ask g k => .ask g (fun x => posed (k x))
-
-theorem the_quiz_was_an_interview {H W X : Type} (d : door H W) :
-    ∀ q : Quiz H X,
-      interrogate q d = sound (doorFace H W X) d (posed q)
+theorem no_interview_parts_the_alike (F : Face) {s t : F.State} (h : alike F s t) :
+    ∀ q, sound F s q = sound F t q
   | .rest => rfl
-  | .ask g k =>
-      congrArg (g (face d) :: ·)
-        (the_quiz_was_an_interview d (k (g (face d))))
+  | .ask p k => by
+      show F.obs s p :: sound F s (k (F.obs s p)) = F.obs t p :: sound F t (k (F.obs t p))
+      rw [h p]
+      exact congrArg (List.cons (F.obs t p))
+        (no_interview_parts_the_alike F h (k (F.obs t p)))
 
-theorem the_guests_are_alike_at_the_door {H W X : Type} (h : H)
-    (w w' : W) :
-    alike (doorFace H W X) (atTheDoor h w) (atTheDoor h w') :=
+/-- info: 'Seed.no_interview_parts_the_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms no_interview_parts_the_alike
+
+theorem the_first_mark_reads {A : Type w} {a b : A} {l m : List A}
+    (h : a :: l = b :: m) : a = b :=
+  congrArg (fun x => x.headD a) h
+
+/-- info: 'Seed.the_first_mark_reads' does not depend on any axioms -/
+#guard_msgs in #print axioms the_first_mark_reads
+
+theorem the_sounding_reads_the_alike (F : Face) {s t : F.State}
+    (h : ∀ q, sound F s q = sound F t q) : alike F s t :=
+  fun p =>
+    the_first_mark_reads
+      (show F.obs s p :: [] = F.obs t p :: [] from h (.ask p fun _ => .rest))
+
+/-- info: 'Seed.the_sounding_reads_the_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sounding_reads_the_alike
+
+theorem the_curtain_is_exact (F : Face) (s t : F.State) :
+    alike F s t ↔ ∀ q, sound F s q = sound F t q :=
+  ⟨fun h => no_interview_parts_the_alike F h, the_sounding_reads_the_alike F⟩
+
+/-- info: 'Seed.the_curtain_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_curtain_is_exact
+
+theorem the_interview_crosses_the_carrier {S : Type u} {T : Type u'} {P : Type v} {A : Type w}
+    (f : S → P → A) (g : T → P → A) (h : S → T) (c : carries f g h) (s : S) :
+    ∀ q, sound ⟨T, P, A, g⟩ (h s) q = sound ⟨S, P, A, f⟩ s q
+  | .rest => rfl
+  | .ask p k => by
+      show g (h s) p :: sound ⟨T, P, A, g⟩ (h s) (k (g (h s) p))
+         = f s p :: sound ⟨S, P, A, f⟩ s (k (f s p))
+      rw [c s p]
+      exact congrArg (List.cons (f s p))
+        (the_interview_crosses_the_carrier f g h c s (k (f s p)))
+
+/-- info: 'Seed.the_interview_crosses_the_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interview_crosses_the_carrier
+
+theorem the_interview_crosses_the_seat (F : Face) {S' : Type u'} (h : S' → F.State) (s : S') :
+    ∀ q, sound F (h s) q = sound (reseat F h) s q :=
+  the_interview_crosses_the_carrier (reseat F h).obs F.obs h (fun _ _ => rfl) s
+
+/-- info: 'Seed.the_interview_crosses_the_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_interview_crosses_the_seat
+
+def door (H : Type u) (W : Type v) : Type (max u v) :=
+  H × W
+
+def atTheDoor {H : Type u} {W : Type v} (h : H) (w : W) : door H W :=
+  (h, w)
+
+def face {H : Type u} {W : Type v} (d : door H W) : H :=
+  d.1
+
+def met {H : Type u} {W : Type v} (d : door H W) : W :=
+  d.2
+
+theorem no_face_reads_the_guest {H : Type u} {W : Type v} {X : Type w}
+    (g : H → X) (h : H) (w w' : W) :
+    g (face (atTheDoor h w)) = g (face (atTheDoor h w')) :=
+  rfl
+
+/-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms no_face_reads_the_guest
+
+theorem the_guest_is_real {H : Type u} {W : Type v} (h : H) (w : W) :
+    met (atTheDoor h w) = w :=
+  rfl
+
+/-- info: 'Seed.the_guest_is_real' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guest_is_real
+
+theorem a_guest_blind_reading_is_a_face_reading {H : Type u} {W : Type v} {X : Type w}
+    (r : door H W → X) (w0 : W) :
+    (∀ h w w', r (atTheDoor h w) = r (atTheDoor h w')) ↔
+    (∀ d, r d = r (atTheDoor (face d) w0)) :=
+  ⟨fun hb d => hb (face d) (met d) w0,
+   fun hf h w w' => (hf (atTheDoor h w)).trans (hf (atTheDoor h w')).symm⟩
+
+/-- info: 'Seed.a_guest_blind_reading_is_a_face_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms a_guest_blind_reading_is_a_face_reading
+
+theorem the_pairing_is_unique {H : Type u} {W : Type v} {X : Type w}
+    (f : X → H) (g : X → W) (u : X → door H W)
+    (hf : ∀ x, face (u x) = f x) (hg : ∀ x, met (u x) = g x) (x : X) :
+    u x = atTheDoor (f x) (g x) :=
+  (congr (congrArg atTheDoor (hf x)) (hg x) :
+    atTheDoor (face (u x)) (met (u x)) = atTheDoor (f x) (g x))
+
+/-- info: 'Seed.the_pairing_is_unique' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pairing_is_unique
+
+def turnAbout {H : Type u} {W : Type v} (d : door H W) : door W H :=
+  atTheDoor (met d) (face d)
+
+theorem the_turn_returns {H : Type u} {W : Type v} (d : door H W) :
+    turnAbout (turnAbout d) = d :=
+  rfl
+
+/-- info: 'Seed.the_turn_returns' does not depend on any axioms -/
+#guard_msgs in #print axioms the_turn_returns
+
+inductive fork (P : Type v) (Q : Type v') where
+  | viaLeft  : P → fork P Q
+  | viaRight : Q → fork P Q
+
+def greet {P : Type v} {Q : Type v'} {X : Type w} (f : P → X) (g : Q → X) : fork P Q → X
+  | .viaLeft p => f p
+  | .viaRight q => g q
+
+theorem any_ready_greeter_is_the_greeter {P : Type v} {Q : Type v'} {X : Type w}
+    (f : P → X) (g : Q → X) (h : fork P Q → X)
+    (hl : ∀ p, h (.viaLeft p) = f p) (hr : ∀ q, h (.viaRight q) = g q) :
+    ∀ e, h e = greet f g e
+  | .viaLeft p => hl p
+  | .viaRight q => hr q
+
+/-- info: 'Seed.any_ready_greeter_is_the_greeter' does not depend on any axioms -/
+#guard_msgs in #print axioms any_ready_greeter_is_the_greeter
+
+def crossOver {P : Type v} {Q : Type v'} : fork P Q → fork Q P
+  | .viaLeft p => .viaRight p
+  | .viaRight q => .viaLeft q
+
+theorem the_crossing_returns {P : Type v} {Q : Type v'} :
+    ∀ e : fork P Q, crossOver (crossOver e) = e
+  | .viaLeft _ => rfl
+  | .viaRight _ => rfl
+
+/-- info: 'Seed.the_crossing_returns' does not depend on any axioms -/
+#guard_msgs in #print axioms the_crossing_returns
+
+def deepen {H : Type u} {W : Type v} {V : Type w} (d : door (door H W) V) :
+    door H (door W V) :=
+  atTheDoor (face (face d)) (atTheDoor (met (face d)) (met d))
+
+def shallow {H : Type u} {W : Type v} {V : Type w} (d : door H (door W V)) :
+    door (door H W) V :=
+  atTheDoor (atTheDoor (face d) (face (met d))) (met (met d))
+
+theorem hosting_associates {H : Type u} {W : Type v} {V : Type w} (d : door (door H W) V) :
+    shallow (deepen d) = d :=
+  rfl
+
+/-- info: 'Seed.hosting_associates' does not depend on any axioms -/
+#guard_msgs in #print axioms hosting_associates
+
+theorem hosting_associates_back {H : Type u} {W : Type v} {V : Type w} (d : door H (door W V)) :
+    deepen (shallow d) = d :=
+  rfl
+
+/-- info: 'Seed.hosting_associates_back' does not depend on any axioms -/
+#guard_msgs in #print axioms hosting_associates_back
+
+def distribute {H : Type u} {W : Type v} {V : Type w} (d : door H (fork W V)) :
+    fork (door H W) (door H V) :=
+  greet (fun w => .viaLeft (atTheDoor (face d) w)) (fun v => .viaRight (atTheDoor (face d) v))
+    (met d)
+
+def collect {H : Type u} {W : Type v} {V : Type w} : fork (door H W) (door H V) → door H (fork W V) :=
+  greet (fun d => atTheDoor (face d) (.viaLeft (met d)))
+        (fun d => atTheDoor (face d) (.viaRight (met d)))
+
+theorem the_host_serves_both_branches {H : Type u} {W : Type v} {V : Type w} :
+    ∀ d : door H (fork W V), collect (distribute d) = d
+  | (_, .viaLeft _) => rfl
+  | (_, .viaRight _) => rfl
+
+/-- info: 'Seed.the_host_serves_both_branches' does not depend on any axioms -/
+#guard_msgs in #print axioms the_host_serves_both_branches
+
+theorem the_branches_come_home {H : Type u} {W : Type v} {V : Type w} :
+    ∀ e : fork (door H W) (door H V), distribute (collect e) = e
+  | .viaLeft _ => rfl
+  | .viaRight _ => rfl
+
+/-- info: 'Seed.the_branches_come_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_branches_come_home
+
+def holdOpen {H : Type u} {W : Type v} {X : Type w} (g : door H W → X) : H → W → X :=
+  fun h w => g (atTheDoor h w)
+
+def walkIn {H : Type u} {W : Type v} {X : Type w} (g : H → W → X) : door H W → X :=
+  fun d => g (face d) (met d)
+
+theorem the_deferral_is_free {H : Type u} {W : Type v} {X : Type w}
+    (g : door H W → X) (d : door H W) :
+    walkIn (holdOpen g) d = g d :=
+  rfl
+
+/-- info: 'Seed.the_deferral_is_free' does not depend on any axioms -/
+#guard_msgs in #print axioms the_deferral_is_free
+
+theorem the_holding_returns {H : Type u} {W : Type v} {X : Type w}
+    (g : H → W → X) (h : H) (w : W) :
+    holdOpen (walkIn g) h w = g h w :=
+  rfl
+
+/-- info: 'Seed.the_holding_returns' does not depend on any axioms -/
+#guard_msgs in #print axioms the_holding_returns
+
+def faceOf {H : Type u} {W : Type v} {X : Type w} (g : door H W → X) : Face :=
+  ⟨H, W, X, holdOpen g⟩
+
+theorem the_face_was_a_held_door (F : Face) : faceOf (walkIn F.obs) = F :=
+  rfl
+
+/-- info: 'Seed.the_face_was_a_held_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_face_was_a_held_door
+
+theorem every_door_reading_is_a_face {H : Type u} {W : Type v} {X : Type w}
+    (g : door H W → X) (d : door H W) :
+    walkIn (faceOf g).obs d = g d :=
+  rfl
+
+/-- info: 'Seed.every_door_reading_is_a_face' does not depend on any axioms -/
+#guard_msgs in #print axioms every_door_reading_is_a_face
+
+theorem the_measurement_is_a_meeting (F : Face) (s : F.State) (p : F.Probe) :
+    F.obs s p = walkIn F.obs (atTheDoor s p) :=
+  rfl
+
+/-- info: 'Seed.the_measurement_is_a_meeting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_measurement_is_a_meeting
+
+def host (F : Face) (W : Type v') : Face :=
+  reseat F (fun d : door F.State W => face d)
+
+theorem the_host_was_a_reseat (F : Face) (W : Type v') :
+    host F W = reseat F (fun d : door F.State W => face d) :=
+  rfl
+
+/-- info: 'Seed.the_host_was_a_reseat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_host_was_a_reseat
+
+theorem the_host_merges_the_guests (F : Face) (W : Type v') (s : F.State) (w w' : W) :
+    alike (host F W) (atTheDoor s w) (atTheDoor s w') :=
   fun _ => rfl
 
-theorem a_strategy_hears_no_guest {H W X : Type} (h : H) (w w' : W)
-    (q : Quiz H X) :
-    interrogate q (atTheDoor h w) = interrogate q (atTheDoor h w') :=
-  ((the_quiz_was_an_interview (atTheDoor h w) q).trans
-    (no_interview_parts_the_alike (doorFace H W X) _ _
-      (the_guests_are_alike_at_the_door h w w') (posed q))).trans
-    (the_quiz_was_an_interview (atTheDoor h w') q).symm
+/-- info: 'Seed.the_host_merges_the_guests' does not depend on any axioms -/
+#guard_msgs in #print axioms the_host_merges_the_guests
 
-theorem the_whole_interview_reads_no_guest {H W X : Type} (h : H)
-    (w w' : W) (q : Quiz H X) :
-    interrogate q (atTheDoor h w) = interrogate q (atTheDoor h w')
-      ∧ (w ≠ w' → atTheDoor h w ≠ atTheDoor h w') :=
-  ⟨a_strategy_hears_no_guest h w w' q, fun hw => the_guest_is_real h hw⟩
+def vertical {H : Type u} {W : Type v} (σ : door H W → W) (d : door H W) : door H W :=
+  atTheDoor (face d) (σ d)
 
-structure Machine (I O : Type) where
-  S : Type
-  s0 : S
+def selfMeet (F : Face) (r : F.State → F.Probe) (s : F.State) : F.Ans :=
+  F.obs s (r s)
+
+theorem the_probe_boards_as_the_guest (F : Face) (s : F.State) (p : F.Probe) :
+    selfMeet (host F F.Probe) met (atTheDoor s p) = F.obs s p :=
+  rfl
+
+/-- info: 'Seed.the_probe_boards_as_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_probe_boards_as_the_guest
+
+theorem the_meeting_was_a_self_meeting {H : Type u} {W : Type v} {X : Type w}
+    (g : door H W → X) (d : door H W) :
+    selfMeet (host (faceOf g) W) met d = g d :=
+  rfl
+
+/-- info: 'Seed.the_meeting_was_a_self_meeting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_meeting_was_a_self_meeting
+
+theorem the_self_meeting_reads_the_guest (F : Face) {W : Type v'}
+    (r : W → F.Probe) (s : F.State) (w : W) :
+    selfMeet (host F W) (fun d => r (met d)) (atTheDoor s w) = F.obs s (r w) :=
+  rfl
+
+/-- info: 'Seed.the_self_meeting_reads_the_guest' does not depend on any axioms -/
+#guard_msgs in #print axioms the_self_meeting_reads_the_guest
+
+theorem a_guest_mover_is_unheard (F : Face) {W : Type v'} (σ : door F.State W → W)
+    (d : door F.State W) : alike (host F W) (vertical σ d) d :=
+  fun _ => rfl
+
+/-- info: 'Seed.a_guest_mover_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms a_guest_mover_is_unheard
+
+def sharpen (F : Face) {X : Type w'} (r : F.State → X) : Face :=
+  ⟨F.State, fork F.Probe Unit, fork F.Ans X,
+   fun s => greet (fun p => .viaLeft (F.obs s p)) (fun _ => .viaRight (r s))⟩
+
+def widen (F : Face) (W : Type v') : Face :=
+  sharpen (host F W) met
+
+theorem the_sharpening_is_exact (F : Face) {X : Type w'} (r : F.State → X) (s t : F.State) :
+    alike (sharpen F r) s t ↔ (alike F s t ∧ r s = r t) :=
+  ⟨fun h =>
+    ⟨fun p => congrArg (greet (fun a => a) (fun _ => F.obs s p)) (h (.viaLeft p)),
+     congrArg (greet (fun _ => r s) (fun x => x)) (h (.viaRight ()))⟩,
+   fun h q =>
+    match q with
+    | .viaLeft p => congrArg fork.viaLeft (h.1 p)
+    | .viaRight _ => congrArg fork.viaRight h.2⟩
+
+/-- info: 'Seed.the_sharpening_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_sharpening_is_exact
+
+theorem the_widening_is_exact (F : Face) {W : Type v'} (d d' : door F.State W) :
+    alike (widen F W) d d' ↔ (alike F (face d) (face d') ∧ met d = met d') :=
+  ⟨fun h =>
+    ⟨fun p => congrArg (greet (fun a => a) (fun _ => F.obs (face d) p)) (h (fork.viaLeft p)),
+     congrArg (greet (fun _ => met d) (fun x => x)) (h (fork.viaRight ()))⟩,
+   fun h q =>
+    match q with
+    | .viaLeft p => congrArg fork.viaLeft (h.1 p)
+    | .viaRight _ => congrArg fork.viaRight h.2⟩
+
+/-- info: 'Seed.the_widening_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_widening_is_exact
+
+theorem a_wider_seat_reads_the_remainder (F : Face) {W : Type v'}
+    (s : F.State) {w w' : W} (hw : w ≠ w') :
+    ¬ alike (widen F W) (atTheDoor s w) (atTheDoor s w') :=
+  fun h => hw (((the_widening_is_exact F (atTheDoor s w) (atTheDoor s w')).mp h).2)
+
+/-- info: 'Seed.a_wider_seat_reads_the_remainder' does not depend on any axioms -/
+#guard_msgs in #print axioms a_wider_seat_reads_the_remainder
+
+theorem the_handshake :
+    (∀ (F : Face) (s t : F.State), alike F s t → ∀ q, sound F s q = sound F t q) ∧
+    (∀ (F : Face) (W : Type v') (s : F.State) (w w' : W),
+      (∀ q, sound (host F W) (atTheDoor s w) q = sound (host F W) (atTheDoor s w') q) ∧
+      (w ≠ w' → ¬ alike (widen F W) (atTheDoor s w) (atTheDoor s w'))) :=
+  ⟨fun F _ _ h => no_interview_parts_the_alike F h,
+   fun F W s w w' =>
+    ⟨no_interview_parts_the_alike (host F W) (the_host_merges_the_guests F W s w w'),
+     fun hw => a_wider_seat_reads_the_remainder F s hw⟩⟩
+
+/-- info: 'Seed.the_handshake' does not depend on any axioms -/
+#guard_msgs in #print axioms the_handshake
+
+def pairFace (F G : Face) {S : Type u'} (f : S → F.State) (g : S → G.State) : Face :=
+  ⟨S, door F.Probe G.Probe, door F.Ans G.Ans,
+   fun s pq => atTheDoor (F.obs (f s) (face pq)) (G.obs (g s) (met pq))⟩
+
+theorem the_pairing_is_exact (F G : Face) {S : Type u'}
+    (f : S → F.State) (g : S → G.State) (p0 : F.Probe) (q0 : G.Probe) (s t : S) :
+    alike (pairFace F G f g) s t ↔ (alike F (f s) (f t) ∧ alike G (g s) (g t)) :=
+  ⟨fun h =>
+    ⟨fun p => congrArg face (h (atTheDoor p q0)),
+     fun q => congrArg met (h (atTheDoor p0 q))⟩,
+   fun h pq =>
+    (congr (congrArg atTheDoor (h.1 (face pq))) (h.2 (met pq)) :
+      atTheDoor (F.obs (f s) (face pq)) (G.obs (g s) (met pq))
+        = atTheDoor (F.obs (f t) (face pq)) (G.obs (g t) (met pq)))⟩
+
+/-- info: 'Seed.the_pairing_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pairing_is_exact
+
+def originFace (S' : Type u') : Face :=
+  ⟨S', Unit, Unit, fun _ _ => ()⟩
+
+theorem the_origin_merges_every_seat {S' : Type u'} (s t : S') :
+    alike (originFace S') s t :=
+  fun _ => rfl
+
+/-- info: 'Seed.the_origin_merges_every_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_origin_merges_every_seat
+
+theorem no_interview_parts_the_origin {S' : Type u'} (s t : S') :
+    ∀ q, sound (originFace S') s q = sound (originFace S') t q :=
+  no_interview_parts_the_alike (originFace S') (the_origin_merges_every_seat s t)
+
+/-- info: 'Seed.no_interview_parts_the_origin' does not depend on any axioms -/
+#guard_msgs in #print axioms no_interview_parts_the_origin
+
+theorem the_origin_is_the_pairs_unit (F : Face) {S : Type u'} {S' : Type v'}
+    (f : S → F.State) (g : S → S') (s t : S) :
+    alike (pairFace F (originFace S') f g) s t ↔ alike F (f s) (f t) :=
+  ⟨fun h p => congrArg face (h (atTheDoor p ())),
+   fun h pq => congrArg (fun a => atTheDoor a ()) (h (face pq))⟩
+
+/-- info: 'Seed.the_origin_is_the_pairs_unit' does not depend on any axioms -/
+#guard_msgs in #print axioms the_origin_is_the_pairs_unit
+
+def unheard (F : Face) (m : F.State → F.State) : Prop :=
+  ∀ s, alike F (m s) s
+
+theorem the_still_hand_is_unheard (F : Face) : unheard F (fun s => s) :=
+  fun _ _ => rfl
+
+/-- info: 'Seed.the_still_hand_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms the_still_hand_is_unheard
+
+theorem the_unheard_hands_compose (F : Face) (m n : F.State → F.State)
+    (hm : unheard F m) (hn : unheard F n) : unheard F (fun s => m (n s)) :=
+  fun s p => (hm (n s) p).trans (hn s p)
+
+/-- info: 'Seed.the_unheard_hands_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unheard_hands_compose
+
+theorem the_maintenance_is_the_identitys_hom (F : Face) (m : F.State → F.State) :
+    unheard F m ↔ carries F.obs F.obs m :=
+  Iff.rfl
+
+/-- info: 'Seed.the_maintenance_is_the_identitys_hom' does not depend on any axioms -/
+#guard_msgs in #print axioms the_maintenance_is_the_identitys_hom
+
+theorem no_interview_hears_the_unheard (F : Face) (m : F.State → F.State)
+    (h : unheard F m) : ∀ s q, sound F (m s) q = sound F s q :=
+  fun s => no_interview_parts_the_alike F (h s)
+
+/-- info: 'Seed.no_interview_hears_the_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms no_interview_hears_the_unheard
+
+theorem only_the_unheard_survives_the_sounding (F : Face) (m : F.State → F.State) :
+    unheard F m ↔ ∀ s q, sound F (m s) q = sound F s q :=
+  ⟨no_interview_hears_the_unheard F m,
+   fun h s => the_sounding_reads_the_alike F (h s)⟩
+
+/-- info: 'Seed.only_the_unheard_survives_the_sounding' does not depend on any axioms -/
+#guard_msgs in #print axioms only_the_unheard_survives_the_sounding
+
+theorem correct_maintenance_has_no_signature (F : Face) (m n : F.State → F.State)
+    (hm : unheard F m) (hn : unheard F n) :
+    ∀ s q, sound F (m s) q = sound F (n s) q :=
+  fun s q => (no_interview_hears_the_unheard F m hm s q).trans
+    (no_interview_hears_the_unheard F n hn s q).symm
+
+/-- info: 'Seed.correct_maintenance_has_no_signature' does not depend on any axioms -/
+#guard_msgs in #print axioms correct_maintenance_has_no_signature
+
+def exchange {H : Type u} {W : Type v} (σ : door H W → W) (d : door H W) : door W H :=
+  turnAbout (vertical σ d)
+
+theorem the_spoken_arrives_at_the_face {H : Type u} {W : Type v}
+    (σ : door H W → W) (d : door H W) : face (exchange σ d) = σ d :=
+  rfl
+
+/-- info: 'Seed.the_spoken_arrives_at_the_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_spoken_arrives_at_the_face
+
+theorem the_speaker_rides_unread {H : Type u} {W : Type v}
+    (σ : door H W → W) (d : door H W) : met (exchange σ d) = face d :=
+  rfl
+
+/-- info: 'Seed.the_speaker_rides_unread' does not depend on any axioms -/
+#guard_msgs in #print axioms the_speaker_rides_unread
+
+theorem the_listening_turn_is_the_yield {H : Type u} {W : Type v} (d : door H W) :
+    exchange met d = turnAbout d :=
+  rfl
+
+/-- info: 'Seed.the_listening_turn_is_the_yield' does not depend on any axioms -/
+#guard_msgs in #print axioms the_listening_turn_is_the_yield
+
+theorem the_two_listeners_restore_the_table {H : Type u} {W : Type v} (d : door H W) :
+    exchange met (exchange met d) = d :=
+  rfl
+
+/-- info: 'Seed.the_two_listeners_restore_the_table' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_listeners_restore_the_table
+
+theorem the_ode_comes_home {H : Type u} {W : Type v} (σ : door H W → W) (d : door H W) :
+    exchange met (exchange σ d) = vertical σ d :=
+  rfl
+
+/-- info: 'Seed.the_ode_comes_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ode_comes_home
+
+theorem the_yield_fixes_the_agreed {H : Type u} (d : door H H) :
+    turnAbout d = d ↔ met d = face d :=
+  ⟨fun h => congrArg face h,
+   fun h =>
+    (congr (congrArg atTheDoor h) h.symm :
+      atTheDoor (met d) (face d) = atTheDoor (face d) (met d))⟩
+
+/-- info: 'Seed.the_yield_fixes_the_agreed' does not depend on any axioms -/
+#guard_msgs in #print axioms the_yield_fixes_the_agreed
+
+structure Machine (I : Type u) (O : Type v) where
+  S    : Type w
+  s0   : S
   step : S → I → S
-  out : S → O
+  out  : S → O
 
-def drive {I O : Type} (m : Machine I O) : m.S → List I → O
-  | s, [] => m.out s
-  | s, i :: is => drive m (m.step s i) is
+def park {I : Type u} {O : Type v} (m : Machine I O) (s : m.S) : List I → m.S
+  | [] => s
+  | i :: w => park m (m.step s i) w
 
-def behavior {I O : Type} (m : Machine I O) (w : List I) : O :=
+def drive {I : Type u} {O : Type v} (m : Machine I O) (s : m.S) (w : List I) : O :=
+  m.out (park m s w)
+
+def behavior {I : Type u} {O : Type v} (m : Machine I O) (w : List I) : O :=
   drive m m.s0 w
 
-def walk {I : Type} {S : Type u} (step : S → I → S) : S → List I → S
-  | s, [] => s
-  | s, i :: w => walk step (step s i) w
+def airGap (I : Type u) (O : Type v) : Face :=
+  reseat (appFace (List I) O) (fun m : Machine.{u, v, w} I O => behavior m)
 
-theorem a_reading_in_step_carries_the_walk {I : Type} {S : Type u}
-    {T : Type v} (stepS : S → I → S) (stepT : T → I → T) (r : S → T)
-    (h : ∀ s i, r (stepS s i) = stepT (r s) i) :
-    ∀ (w : List I) (s : S), r (walk stepS s w) = walk stepT (r s) w
-  | [], _ => rfl
-  | i :: w, s =>
-      (a_reading_in_step_carries_the_walk stepS stepT r h w (stepS s i)).trans
-        (congrArg (fun x => walk stepT x w) (h s i))
+theorem the_air_gap_wears_the_one_face (I : Type u) (O : Type v) :
+    airGap.{u, v, w} I O
+      = reseat (appFace (List I) O) (fun m : Machine.{u, v, w} I O => behavior m) :=
+  rfl
 
-theorem the_walk_resumes {I : Type} {S : Type u} (step : S → I → S) :
-    ∀ (w w' : List I) (s : S),
-      walk step s (w ++ w') = walk step (walk step s w) w'
+/-- info: 'Seed.the_air_gap_wears_the_one_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_air_gap_wears_the_one_face
+
+theorem the_park_resumes {I : Type u} {O : Type v} (m : Machine I O) :
+    ∀ (u : List I) (s : m.S) (v : List I),
+      park m s (u ++ v) = park m (park m s u) v
   | [], _, _ => rfl
-  | i :: w, w', s => the_walk_resumes step w w' (step s i)
+  | i :: u, s, v => the_park_resumes m u (m.step s i) v
 
-theorem two_machines_in_step_agree {I O : Type} (m n : Machine I O)
-    (R : m.S → n.S → Prop)
-    (hstep : ∀ s t i, R s t → R (m.step s i) (n.step t i))
-    (hout : ∀ s t, R s t → m.out s = n.out t) :
-    ∀ (w : List I) (s : m.S) (t : n.S), R s t → drive m s w = drive n t w
-  | [], s, t, h => hout s t h
-  | i :: w, s, t, h =>
-      two_machines_in_step_agree m n R hstep hout w
-        (m.step s i) (n.step t i) (hstep s t i h)
+/-- info: 'Seed.the_park_resumes' does not depend on any axioms -/
+#guard_msgs in #print axioms the_park_resumes
+
+theorem an_audition_hears_only_the_conduct {I : Type u} {O : Type v} (m n : Machine I O)
+    (h : ∀ w, behavior m w = behavior n w) :
+    ∀ q, sound (airGap I O) m q = sound (airGap I O) n q :=
+  no_interview_parts_the_alike (airGap I O) h
+
+/-- info: 'Seed.an_audition_hears_only_the_conduct' does not depend on any axioms -/
+#guard_msgs in #print axioms an_audition_hears_only_the_conduct
+
+theorem the_audition_is_exact {I : Type u} {O : Type v} (m n : Machine I O) :
+    alike (airGap I O) m n ↔ ∀ q, sound (airGap I O) m q = sound (airGap I O) n q :=
+  the_curtain_is_exact (airGap I O) m n
+
+/-- info: 'Seed.the_audition_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_audition_is_exact
+
+def retune {I : Type u} {I' : Type u'} {O : Type v} (f : I → I') (m : Machine I' O) :
+    Machine I O :=
+  ⟨m.S, m.s0, fun s i => m.step s (f i), m.out⟩
+
+def revoice {I : Type u} {O : Type v} {O' : Type v'} (g : O → O') (m : Machine I O) :
+    Machine I O' :=
+  ⟨m.S, m.s0, m.step, fun s => g (m.out s)⟩
+
+theorem the_retuned_seat_walks_the_translated_word {I : Type u} {I' : Type u'} {O : Type v}
+    (f : I → I') (m : Machine I' O) :
+    ∀ (w : List I) (s : m.S), park (retune f m) s w = park m s (w.map f)
+  | [], _ => rfl
+  | i :: w, s => the_retuned_seat_walks_the_translated_word f m w (m.step s (f i))
+
+/-- info: 'Seed.the_retuned_seat_walks_the_translated_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_retuned_seat_walks_the_translated_word
+
+theorem the_revoice_moves_no_seat {I : Type u} {O : Type v} {O' : Type v'}
+    (g : O → O') (m : Machine I O) :
+    ∀ (w : List I) (s : m.S), park (revoice g m) s w = park m s w
+  | [], _ => rfl
+  | i :: w, s => the_revoice_moves_no_seat g m w (m.step s i)
+
+/-- info: 'Seed.the_revoice_moves_no_seat' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revoice_moves_no_seat
+
+theorem the_intertwined_walks_agree {I : Type u} {O : Type v} (m n : Machine I O)
+    (h : m.S → n.S) (hstep : ∀ s i, n.step (h s) i = h (m.step s i)) :
+    ∀ (w : List I) (s : m.S), park n (h s) w = h (park m s w)
+  | [], _ => rfl
+  | i :: w, s => by
+      show park n (n.step (h s) i) w = h (park m (m.step s i) w)
+      rw [hstep s i]
+      exact the_intertwined_walks_agree m n h hstep w (m.step s i)
+
+/-- info: 'Seed.the_intertwined_walks_agree' does not depend on any axioms -/
+#guard_msgs in #print axioms the_intertwined_walks_agree
+
+theorem the_intertwiner_carries_the_walk {I : Type u} {O : Type v} (m n : Machine I O)
+    (h : m.S → n.S) (hstep : ∀ s i, n.step (h s) i = h (m.step s i))
+    (hout : ∀ s, n.out (h s) = m.out s) :
+    carries (fun s w => drive m s w) (fun s w => drive n s w) h :=
+  fun s w =>
+    (congrArg n.out (the_intertwined_walks_agree m n h hstep w s)).trans
+      (hout (park m s w))
+
+/-- info: 'Seed.the_intertwiner_carries_the_walk' does not depend on any axioms -/
+#guard_msgs in #print axioms the_intertwiner_carries_the_walk
 
 def oddNat : Nat → Bool
   | 0 => false
   | n + 1 => !(oddNat n)
 
-theorem not_not : ∀ b : Bool, (!(!b)) = b
+def tally : Machine Unit Nat :=
+  ⟨Nat, 0, fun s _ => s + 1, fun s => s⟩
+
+def flip : Machine Unit Bool :=
+  ⟨Bool, false, fun s _ => !s, fun s => s⟩
+
+def paceOne : Machine Unit Bool :=
+  ⟨Nat, 0, fun s _ => s + 1, oddNat⟩
+
+theorem the_pace_wears_the_tallys_voice : paceOne = revoice oddNat tally :=
+  rfl
+
+/-- info: 'Seed.the_pace_wears_the_tallys_voice' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pace_wears_the_tallys_voice
+
+theorem the_pace_is_carried_onto_the_flip :
+    carries (fun s w => drive paceOne s w) (fun s w => drive flip s w) oddNat :=
+  the_intertwiner_carries_the_walk paceOne flip oddNat (fun _ _ => rfl) (fun _ => rfl)
+
+/-- info: 'Seed.the_pace_is_carried_onto_the_flip' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pace_is_carried_onto_the_flip
+
+inductive Plan where
+  | ground : Plan
+  | board  : Plan → Plan → Plan
+
+def fold {A : Type u} (op : A → A → A) (base : A) : Plan → A
+  | .ground => base
+  | .board p q => op (fold op base p) (fold op base q)
+
+theorem any_two_readings_agree {A : Type u} (op : A → A → A) (base : A) (h : Plan → A)
+    (hg : h .ground = base) (hb : ∀ p q, h (.board p q) = op (h p) (h q)) :
+    ∀ p, h p = fold op base p
+  | .ground => hg
+  | .board p q =>
+      (hb p q).trans
+        (congr (congrArg op (any_two_readings_agree op base h hg hb p))
+          (any_two_readings_agree op base h hg hb q) :
+          op (h p) (h q) = op (fold op base p) (fold op base q))
+
+/-- info: 'Seed.any_two_readings_agree' does not depend on any axioms -/
+#guard_msgs in #print axioms any_two_readings_agree
+
+def reading : Plan → Nat :=
+  fold (fun a b => a + b) 1
+
+def graft (base : Plan) : Plan → Plan :=
+  fold .board base
+
+theorem the_revision_is_a_reading (base : Plan) : graft base = fold .board base :=
+  rfl
+
+/-- info: 'Seed.the_revision_is_a_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revision_is_a_reading
+
+theorem the_trivial_revision_changes_nothing (t : Plan) : graft t .ground = t :=
+  rfl
+
+/-- info: 'Seed.the_trivial_revision_changes_nothing' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trivial_revision_changes_nothing
+
+theorem the_parent_folds_into_the_ground {A : Type u} (op : A → A → A) (base : A) (t : Plan) :
+    ∀ δ, fold op (fold op base t) δ = fold op base (graft t δ)
+  | .ground => rfl
+  | .board a b =>
+      (congr (congrArg op (the_parent_folds_into_the_ground op base t a))
+        (the_parent_folds_into_the_ground op base t b) :
+        op (fold op (fold op base t) a) (fold op (fold op base t) b)
+          = op (fold op base (graft t a)) (fold op base (graft t b)))
+
+/-- info: 'Seed.the_parent_folds_into_the_ground' does not depend on any axioms -/
+#guard_msgs in #print axioms the_parent_folds_into_the_ground
+
+theorem lineages_compose (t d1 d2 : Plan) :
+    graft (graft t d1) d2 = graft t (graft d1 d2) :=
+  the_parent_folds_into_the_ground Plan.board t d1 d2
+
+/-- info: 'Seed.lineages_compose' does not depend on any axioms -/
+#guard_msgs in #print axioms lineages_compose
+
+theorem zero_add : ∀ n : Nat, 0 + n = n
+  | 0 => rfl
+  | n + 1 => congrArg Nat.succ (zero_add n)
+
+/-- info: 'Seed.zero_add' does not depend on any axioms -/
+#guard_msgs in #print axioms zero_add
+
+theorem add_regroups : ∀ a b c : Nat, (a + b) + c = a + (b + c)
+  | _, _, 0 => rfl
+  | a, b, c + 1 => congrArg Nat.succ (add_regroups a b c)
+
+/-- info: 'Seed.add_regroups' does not depend on any axioms -/
+#guard_msgs in #print axioms add_regroups
+
+theorem click_slides : ∀ a b : Nat, (a + b) + 1 = (a + 1) + b
+  | _, 0 => rfl
+  | a, b + 1 => congrArg Nat.succ (click_slides a b)
+
+/-- info: 'Seed.click_slides' does not depend on any axioms -/
+#guard_msgs in #print axioms click_slides
+
+theorem mul_one_reads (a : Nat) : a * 1 = a :=
+  zero_add a
+
+/-- info: 'Seed.mul_one_reads' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_one_reads
+
+theorem mul_spreads : ∀ a b c : Nat, a * (b + c) = a * b + a * c
+  | _, _, 0 => rfl
+  | a, b, c + 1 =>
+      (congrArg (fun x => x + a) (mul_spreads a b c)).trans
+        (add_regroups (a * b) (a * c) a)
+
+/-- info: 'Seed.mul_spreads' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_spreads
+
+theorem the_held_scale_rides (c : Nat) :
+    ∀ p : Plan, fold (fun a b => a + b) c p = c * reading p
+  | .ground => (mul_one_reads c).symm
+  | .board a b =>
+      ((congr (congrArg (fun x y => x + y) (the_held_scale_rides c a))
+          (the_held_scale_rides c b) :
+          fold (fun x y => x + y) c a + fold (fun x y => x + y) c b
+            = c * reading a + c * reading b)).trans
+        (mul_spreads c (reading a) (reading b)).symm
+
+/-- info: 'Seed.the_held_scale_rides' does not depend on any axioms -/
+#guard_msgs in #print axioms the_held_scale_rides
+
+theorem the_revision_multiplies_the_reading (t δ : Plan) :
+    reading (graft t δ) = reading t * reading δ :=
+  (the_parent_folds_into_the_ground (fun a b => a + b) 1 t δ).symm.trans
+    (the_held_scale_rides (reading t) δ)
+
+/-- info: 'Seed.the_revision_multiplies_the_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_revision_multiplies_the_reading
+
+def build (W : Type u) : Plan → Type u :=
+  fold (fun A B : Type u => door A B) W
+
+theorem the_type_is_a_reading (W : Type u) (p : Plan) :
+    build W p = fold (fun A B : Type u => door A B) W p :=
+  rfl
+
+/-- info: 'Seed.the_type_is_a_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_type_is_a_reading
+
+theorem a_stage_may_ground_a_stage (W : Type u) (t δ : Plan) :
+    build W (graft t δ) = build (build W t) δ :=
+  (the_parent_folds_into_the_ground (fun A B : Type u => door A B) W t δ).symm
+
+/-- info: 'Seed.a_stage_may_ground_a_stage' does not depend on any axioms -/
+#guard_msgs in #print axioms a_stage_may_ground_a_stage
+
+def reground {W : Type u} {W' : Type v} (f : W → W') : (p : Plan) → build W p → build W' p
+  | .ground, w => f w
+  | .board p q, d => atTheDoor (reground f p (face d)) (reground f q (met d))
+
+theorem the_customs_keep_the_still_world {W : Type u} :
+    ∀ (p : Plan) (x : build W p), reground (fun w => w) p x = x
+  | .ground, _ => rfl
+  | .board p q, d =>
+      (congr (congrArg atTheDoor (the_customs_keep_the_still_world p (face d)))
+        (the_customs_keep_the_still_world q (met d)) :
+        atTheDoor (reground (fun w => w) p (face d)) (reground (fun w => w) q (met d))
+          = atTheDoor (face d) (met d))
+
+/-- info: 'Seed.the_customs_keep_the_still_world' does not depend on any axioms -/
+#guard_msgs in #print axioms the_customs_keep_the_still_world
+
+theorem the_customs_stack_forward {W : Type u} {W' : Type v} {W'' : Type w}
+    (f : W → W') (g : W' → W'') :
+    ∀ (p : Plan) (x : build W p),
+      reground g p (reground f p x) = reground (fun w => g (f w)) p x
+  | .ground, _ => rfl
+  | .board p q, d =>
+      (congr (congrArg atTheDoor (the_customs_stack_forward f g p (face d)))
+        (the_customs_stack_forward f g q (met d)) :
+        atTheDoor (reground g p (reground f p (face d))) (reground g q (reground f q (met d)))
+          = atTheDoor (reground (fun w => g (f w)) p (face d))
+              (reground (fun w => g (f w)) q (met d)))
+
+/-- info: 'Seed.the_customs_stack_forward' does not depend on any axioms -/
+#guard_msgs in #print axioms the_customs_stack_forward
+
+theorem the_append_rests {A : Type u} : ∀ l : List A, l ++ [] = l
+  | [] => rfl
+  | a :: l => congrArg (List.cons a) (the_append_rests l)
+
+/-- info: 'Seed.the_append_rests' does not depend on any axioms -/
+#guard_msgs in #print axioms the_append_rests
+
+theorem the_appends_regroup {A : Type u} : ∀ l m t : List A, (l ++ m) ++ t = l ++ (m ++ t)
+  | [], _, _ => rfl
+  | a :: l, m, t => congrArg (List.cons a) (the_appends_regroup l m t)
+
+/-- info: 'Seed.the_appends_regroup' does not depend on any axioms -/
+#guard_msgs in #print axioms the_appends_regroup
+
+theorem lengths_add {A : Type u} : ∀ l m : List A, (l ++ m).length = l.length + m.length
+  | [], m => (zero_add m.length).symm
+  | _ :: l, m =>
+      (congrArg (fun n => n + 1) (lengths_add l m)).trans
+        (click_slides l.length m.length)
+
+/-- info: 'Seed.lengths_add' does not depend on any axioms -/
+#guard_msgs in #print axioms lengths_add
+
+theorem map_crosses_append {A : Type u} {B : Type v} (f : A → B) :
+    ∀ l m : List A, (l ++ m).map f = l.map f ++ m.map f
+  | [], _ => rfl
+  | a :: l, m => congrArg (List.cons (f a)) (map_crosses_append f l m)
+
+/-- info: 'Seed.map_crosses_append' does not depend on any axioms -/
+#guard_msgs in #print axioms map_crosses_append
+
+def pour {W : Type u} : (p : Plan) → build W p → List W
+  | .ground, w => [w]
+  | .board p q, d => pour p (face d) ++ pour q (met d)
+
+theorem the_manifest_counts {W : Type u} :
+    ∀ (p : Plan) (x : build W p), (pour p x).length = reading p
+  | .ground, _ => rfl
+  | .board p q, d => by
+      show (pour p (face d) ++ pour q (met d)).length = reading p + reading q
+      rw [lengths_add (pour p (face d)) (pour q (met d))]
+      rw [the_manifest_counts p (face d), the_manifest_counts q (met d)]
+
+/-- info: 'Seed.the_manifest_counts' does not depend on any axioms -/
+#guard_msgs in #print axioms the_manifest_counts
+
+theorem the_manifest_is_natural {W : Type u} {W' : Type v} (f : W → W') :
+    ∀ (p : Plan) (x : build W p), pour p (reground f p x) = (pour p x).map f
+  | .ground, _ => rfl
+  | .board p q, d => by
+      show pour p (reground f p (face d)) ++ pour q (reground f q (met d))
+         = (pour p (face d) ++ pour q (met d)).map f
+      rw [map_crosses_append f]
+      rw [the_manifest_is_natural f p (face d), the_manifest_is_natural f q (met d)]
+
+/-- info: 'Seed.the_manifest_is_natural' does not depend on any axioms -/
+#guard_msgs in #print axioms the_manifest_is_natural
+
+def reboardAux {W : Type u} (w0 : W) : (p : Plan) → List W → build W p × List W
+  | .ground => fun l =>
+      match l with
+      | [] => (w0, [])
+      | w :: t => (w, t)
+  | .board p q => fun l =>
+      (atTheDoor (reboardAux w0 p l).1 (reboardAux w0 q (reboardAux w0 p l).2).1,
+       (reboardAux w0 q (reboardAux w0 p l).2).2)
+
+def reboard {W : Type u} (w0 : W) (p : Plan) (l : List W) : build W p :=
+  (reboardAux w0 p l).1
+
+theorem the_guests_reboard_in_order {W : Type u} (w0 : W) :
+    ∀ (p : Plan) (x : build W p) (t : List W),
+      reboardAux w0 p (pour p x ++ t) = (x, t)
+  | .ground, x, t => rfl
+  | .board p q, d, t => by
+      show (atTheDoor (reboardAux w0 p ((pour p (face d) ++ pour q (met d)) ++ t)).1
+              (reboardAux w0 q (reboardAux w0 p ((pour p (face d) ++ pour q (met d)) ++ t)).2).1,
+            (reboardAux w0 q (reboardAux w0 p ((pour p (face d) ++ pour q (met d)) ++ t)).2).2)
+          = (d, t)
+      rw [the_appends_regroup (pour p (face d)) (pour q (met d)) t]
+      rw [the_guests_reboard_in_order w0 p (face d) (pour q (met d) ++ t)]
+      show (atTheDoor (face d) (reboardAux w0 q (pour q (met d) ++ t)).1,
+            (reboardAux w0 q (pour q (met d) ++ t)).2) = (d, t)
+      rw [the_guests_reboard_in_order w0 q (met d) t]
+      exact rfl
+
+/-- info: 'Seed.the_guests_reboard_in_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_guests_reboard_in_order
+
+theorem the_manifest_rebuilds_the_carrier {W : Type u} (w0 : W) (p : Plan) (x : build W p) :
+    reboard w0 p (pour p x) = x :=
+  congrArg Prod.fst
+    ((congrArg (reboardAux w0 p) (the_append_rests (pour p x)).symm).trans
+      (the_guests_reboard_in_order w0 p x []))
+
+/-- info: 'Seed.the_manifest_rebuilds_the_carrier' does not depend on any axioms -/
+#guard_msgs in #print axioms the_manifest_rebuilds_the_carrier
+
+def drain {W : Type u} (w0 : W) (p : Plan) (l : List W) : List W :=
+  pour p (reboard w0 p l)
+
+theorem the_drain_settles {W : Type u} (w0 : W) (p : Plan) (l : List W) :
+    drain w0 p (drain w0 p l) = drain w0 p l :=
+  congrArg (pour p) (the_manifest_rebuilds_the_carrier w0 p (reboard w0 p l))
+
+/-- info: 'Seed.the_drain_settles' does not depend on any axioms -/
+#guard_msgs in #print axioms the_drain_settles
+
+theorem the_drained_is_on_spec {W : Type u} (w0 : W) (p : Plan) (l : List W) :
+    (drain w0 p l).length = reading p :=
+  the_manifest_counts p (reboard w0 p l)
+
+/-- info: 'Seed.the_drained_is_on_spec' does not depend on any axioms -/
+#guard_msgs in #print axioms the_drained_is_on_spec
+
+def enrolled {A : Type u} (beq : A → A → Bool) : List A → A → Bool
+  | [], _ => false
+  | y :: r, x => beq y x || enrolled beq r x
+
+def backed {A : Type u} (beq : A → A → Bool) (room : List A) : List A → Bool
+  | [] => true
+  | n :: needs => enrolled beq room n && backed beq room needs
+
+def welcome {A : Type u} (beq : A → A → Bool)
+    (st : List A × List (A × List A)) (arr : A × List A) :
+    List A × List (A × List A) :=
+  cond (backed beq st.1 arr.2) (arr.1 :: st.1, st.2) (st.1, arr :: st.2)
+
+theorem the_unencumbered_are_welcome {A : Type u} (beq : A → A → Bool) (room : List A) :
+    backed beq room [] = true :=
+  rfl
+
+/-- info: 'Seed.the_unencumbered_are_welcome' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unencumbered_are_welcome
+
+theorem true_or_reads (b : Bool) : (true || b) = true :=
+  rfl
+
+/-- info: 'Seed.true_or_reads' does not depend on any axioms -/
+#guard_msgs in #print axioms true_or_reads
+
+theorem or_swallows : ∀ b : Bool, (b || true) = true
   | true => rfl
   | false => rfl
 
-def paceOne : Machine Unit Bool := ⟨Nat, 0, fun n _ => n + 1, oddNat⟩
+/-- info: 'Seed.or_swallows' does not depend on any axioms -/
+#guard_msgs in #print axioms or_swallows
 
-def paceThree : Machine Unit Bool := ⟨Nat, 0, fun n _ => n + 3, oddNat⟩
+theorem the_backed_are_seated {A : Type u} (beq : A → A → Bool)
+    (st : List A × List (A × List A)) (arr : A × List A)
+    (hb : backed beq st.1 arr.2 = true) :
+    welcome beq st arr = (arr.1 :: st.1, st.2) :=
+  congrArg (fun b => cond b (arr.1 :: st.1, st.2) (st.1, arr :: st.2)) hb
 
-theorem the_paces_agree (w : List Unit) (a b : Nat)
-    (h : oddNat a = oddNat b) : drive paceOne a w = drive paceThree b w :=
-  two_machines_in_step_agree paceOne paceThree
-    (fun (a b : Nat) => oddNat a = oddNat b)
-    (fun (a b : Nat) _ h => by
-      show (!(oddNat a)) = oddNat (b + 3)
+/-- info: 'Seed.the_backed_are_seated' does not depend on any axioms -/
+#guard_msgs in #print axioms the_backed_are_seated
+
+theorem the_unbacked_wait {A : Type u} (beq : A → A → Bool)
+    (st : List A × List (A × List A)) (arr : A × List A)
+    (hb : backed beq st.1 arr.2 = false) :
+    welcome beq st arr = (st.1, arr :: st.2) :=
+  congrArg (fun b => cond b (arr.1 :: st.1, st.2) (st.1, arr :: st.2)) hb
+
+/-- info: 'Seed.the_unbacked_wait' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unbacked_wait
+
+theorem the_enrolled_stay_enrolled {A : Type u} (beq : A → A → Bool)
+    (st : List A × List (A × List A)) (arr : A × List A) (x : A)
+    (h : enrolled beq st.1 x = true) :
+    enrolled beq (welcome beq st arr).1 x = true := by
+  cases hb : backed beq st.1 arr.2 with
+  | false =>
+      rw [the_unbacked_wait beq st arr hb]
+      exact h
+  | true =>
+      rw [the_backed_are_seated beq st arr hb]
+      show (beq arr.1 x || enrolled beq st.1 x) = true
       rw [h]
-      show (!(oddNat b)) = (!(!(!(oddNat b))))
-      rw [not_not])
-    (fun _ _ h => h) w a b h
+      exact or_swallows (beq arr.1 x)
 
-theorem the_air_gap_reads_no_interior :
-    (∀ w : List Unit, behavior paceOne w = behavior paceThree w)
-      ∧ paceOne.step (0 : Nat) () ≠ paceThree.step (0 : Nat) () :=
-  ⟨fun w => the_paces_agree w 0 0 rfl,
-   fun h => nomatch Nat.succ.inj h⟩
+/-- info: 'Seed.the_enrolled_stay_enrolled' does not depend on any axioms -/
+#guard_msgs in #print axioms the_enrolled_stay_enrolled
 
-theorem stillness_hides_the_ticking {I O : Type} (m : Machine I O)
-    (hstill : ∀ s i, m.out (m.step s i) = m.out s) :
-    ∀ (w : List I) (s : m.S), drive m s w = m.out s
+theorem the_seat_is_load_bearing_in_the_same_click {A : Type u} (beq : A → A → Bool)
+    (hrefl : ∀ y : A, beq y y = true)
+    (st : List A × List (A × List A)) (arr : A × List A)
+    (hb : backed beq st.1 arr.2 = true) :
+    enrolled beq (welcome beq st arr).1 arr.1 = true := by
+  rw [the_backed_are_seated beq st arr hb]
+  show (beq arr.1 arr.1 || enrolled beq st.1 arr.1) = true
+  rw [hrefl arr.1]
+  exact true_or_reads (enrolled beq st.1 arr.1)
+
+/-- info: 'Seed.the_seat_is_load_bearing_in_the_same_click' does not depend on any axioms -/
+#guard_msgs in #print axioms the_seat_is_load_bearing_in_the_same_click
+
+theorem len_map {A : Type u} {B : Type v} (f : A → B) :
+    ∀ l : List A, (l.map f).length = l.length
+  | [] => rfl
+  | _ :: l => congrArg (· + 1) (len_map f l)
+
+/-- info: 'Seed.len_map' does not depend on any axioms -/
+#guard_msgs in #print axioms len_map
+
+theorem mem_append_split {A : Type u} {q : A} :
+    ∀ (l : List A) {m : List A}, q ∈ l ++ m → q ∈ l ∨ q ∈ m
+  | [], _, h => Or.inr h
+  | a :: l, _, h => by
+      cases h with
+      | head => exact Or.inl (List.Mem.head l)
+      | tail _ h' =>
+          cases mem_append_split l h' with
+          | inl hl => exact Or.inl (List.Mem.tail a hl)
+          | inr hm => exact Or.inr hm
+
+/-- info: 'Seed.mem_append_split' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_append_split
+
+theorem mem_map_back {A : Type u} {B : Type v} {f : A → B} {q : B} :
+    ∀ l : List A, q ∈ l.map f → ∃ r, r ∈ l ∧ f r = q
+  | [], h => nomatch h
+  | a :: l, h => by
+      cases h with
+      | head => exact ⟨a, List.Mem.head l, rfl⟩
+      | tail _ h' =>
+          obtain ⟨r, hr, he⟩ := mem_map_back l h'
+          exact ⟨r, List.Mem.tail a hr, he⟩
+
+/-- info: 'Seed.mem_map_back' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_map_back
+
+def joinMap {A : Type u} {B : Type v} (f : A → List B) : List A → List B
+  | [] => []
+  | a :: as => f a ++ joinMap f as
+
+def inserts {A : Type u} (x : A) : List A → List (List A)
+  | [] => [[x]]
+  | y :: l => (x :: y :: l) :: (inserts x l).map (y :: ·)
+
+def perms {A : Type u} : List A → List (List A)
+  | [] => [[]]
+  | x :: l => joinMap (inserts x) (perms l)
+
+def fact : Nat → Nat
+  | 0 => 1
+  | n + 1 => fact n * (n + 1)
+
+theorem the_insertions_count {A : Type u} (x : A) :
+    ∀ l : List A, (inserts x l).length = l.length + 1
+  | [] => rfl
+  | y :: l => by
+      show ((inserts x l).map (y :: ·)).length + 1 = (l.length + 1) + 1
+      rw [len_map, the_insertions_count x l]
+
+/-- info: 'Seed.the_insertions_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_insertions_count
+
+theorem the_join_counts_evenly {A : Type u} {B : Type v} (f : A → List B) (n : Nat) :
+    ∀ as : List A, (∀ a, a ∈ as → (f a).length = n) →
+      (joinMap f as).length = n * as.length
   | [], _ => rfl
-  | i :: w, s =>
-      (stillness_hides_the_ticking m hstill w (m.step s i)).trans (hstill s i)
+  | a :: as, h => by
+      show (f a ++ joinMap f as).length = n * (as.length + 1)
+      rw [lengths_add, h a (List.Mem.head as),
+          the_join_counts_evenly f n as
+            (fun b hb => h b (List.Mem.tail a hb))]
+      exact Nat.add_comm n (n * as.length)
 
-def restingCounter : Machine Unit Bool :=
-  ⟨Nat, 0, fun n _ => n + 1, fun _ => true⟩
+/-- info: 'Seed.the_join_counts_evenly' does not depend on any axioms -/
+#guard_msgs in #print axioms the_join_counts_evenly
 
-theorem the_still_face_is_not_a_dead_machine :
-    (∀ w : List Unit, behavior restingCounter w = true)
-      ∧ restingCounter.step (0 : Nat) () ≠ (0 : Nat) :=
-  ⟨fun w =>
-     stillness_hides_the_ticking restingCounter (fun _ _ => rfl) w (0 : Nat),
-   fun h => nomatch h⟩
+theorem mem_joinMap_back {A : Type u} {B : Type v} {f : A → List B} {q : B} :
+    ∀ as : List A, q ∈ joinMap f as → ∃ a, a ∈ as ∧ q ∈ f a
+  | [], h => nomatch h
+  | a :: as, h => by
+      cases mem_append_split (f a) h with
+      | inl hfa => exact ⟨a, List.Mem.head as, hfa⟩
+      | inr hrest =>
+          obtain ⟨b, hb, hq⟩ := mem_joinMap_back as hrest
+          exact ⟨b, List.Mem.tail a hb, hq⟩
 
-def turnAbout {H W : Type} (d : door H W) : door W H :=
-  atTheDoor (met d) (face d)
+/-- info: 'Seed.mem_joinMap_back' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_joinMap_back
 
-theorem the_guest_becomes_the_host {H W : Type} (h : H) (w : W) :
-    face (turnAbout (atTheDoor h w)) = w
-      ∧ met (turnAbout (atTheDoor h w)) = h :=
-  ⟨rfl, rfl⟩
+theorem the_insertion_grows_one {A : Type u} (x : A) :
+    ∀ (p q : List A), q ∈ inserts x p → q.length = p.length + 1
+  | [], q, h => by
+      cases h with
+      | head => rfl
+      | tail _ h' => exact nomatch h'
+  | y :: p, q, h => by
+      cases h with
+      | head => rfl
+      | tail _ h' =>
+          obtain ⟨r, hr, he⟩ := mem_map_back (inserts x p) h'
+          rw [← he]
+          show (r.length + 1) = (p.length + 1) + 1
+          rw [the_insertion_grows_one x p r hr]
 
-theorem the_return_restores_the_seating {H W : Type} (d : door H W) :
-    turnAbout (turnAbout d) = d := rfl
+/-- info: 'Seed.the_insertion_grows_one' does not depend on any axioms -/
+#guard_msgs in #print axioms the_insertion_grows_one
+
+theorem the_orders_keep_the_length {A : Type u} :
+    ∀ (l p : List A), p ∈ perms l → p.length = l.length
+  | [], p, h => by
+      cases h with
+      | head => rfl
+      | tail _ h' => exact nomatch h'
+  | x :: l, p, h => by
+      have h' : p ∈ joinMap (inserts x) (perms l) := h
+      obtain ⟨r, hr, hp⟩ := mem_joinMap_back (perms l) h'
+      show p.length = l.length + 1
+      rw [the_insertion_grows_one x r p hp,
+          the_orders_keep_the_length l r hr]
+
+/-- info: 'Seed.the_orders_keep_the_length' does not depend on any axioms -/
+#guard_msgs in #print axioms the_orders_keep_the_length
+
+theorem the_orders_count_to_the_factorial {A : Type u} :
+    ∀ l : List A, (perms l).length = fact l.length
+  | [] => rfl
+  | x :: l => by
+      show (joinMap (inserts x) (perms l)).length = fact (l.length + 1)
+      rw [the_join_counts_evenly (inserts x) (l.length + 1) (perms l)
+            (fun p hp =>
+              (the_insertions_count x p).trans
+                (congrArg (· + 1) (the_orders_keep_the_length l p hp))),
+          the_orders_count_to_the_factorial l]
+      exact Nat.mul_comm (l.length + 1) (fact l.length)
+
+/-- info: 'Seed.the_orders_count_to_the_factorial' does not depend on any axioms -/
+#guard_msgs in #print axioms the_orders_count_to_the_factorial
 
 def cross : List Plan → List Plan → List Plan
   | [], _ => []
@@ -431,577 +1264,15 @@ def allPlans : Nat → List Plan
 
 def census : Nat → Nat
   | 0 => 0
-  | k + 1 =>
-      ((allPlans k).filter
-        (fun p => Nat.beq (fold (fun a b => a + b) 1 p) (k + 1))).length
+  | k + 1 => ((allPlans k).filter (fun p => Nat.beq (reading p) (k + 1))).length
 
 theorem the_census_checksums_with_the_polygon_cutters :
     census 1 = 1 ∧ census 2 = 1 ∧ census 3 = 2 ∧ census 4 = 5
       ∧ census 5 = 14 :=
   ⟨rfl, rfl, rfl, rfl, rfl⟩
 
-def reground {W W' : Type} (f : W → W') :
-    (p : Plan) → build W p → build W' p
-  | .ground, s => f s
-  | .board p q, d =>
-      atTheDoor (reground f p (face d)) (reground f q (met d))
-
-theorem the_import_threads_the_spine {W W' : Type} (f : W → W') :
-    ∀ (p : Plan) (s : build W p),
-      spine W' p (reground f p s) = f (spine W p s)
-  | .ground, _ => rfl
-  | .board p _, d => the_import_threads_the_spine f p (face d)
-
-theorem remeasurement_moves_only_the_ground {W : Type} :
-    ∀ (p : Plan) (s : build W p), reground (fun w => w) p s = s
-  | .ground, _ => rfl
-  | .board p q, d => by
-      show atTheDoor (reground (fun w => w) p (face d))
-          (reground (fun w => w) q (met d)) = d
-      rw [remeasurement_moves_only_the_ground p (face d),
-          remeasurement_moves_only_the_ground q (met d)]
-      exact rfl
-
-theorem imports_compose {W W' W'' : Type} (f : W → W') (g : W' → W'') :
-    ∀ (p : Plan) (s : build W p),
-      reground g p (reground f p s) = reground (fun w => g (f w)) p s
-  | .ground, _ => rfl
-  | .board p q, d =>
-      congr (congrArg atTheDoor (imports_compose f g p (face d)))
-        (imports_compose f g q (met d))
-
-def paceAtHome : Nat := 1
-
-def readAcross (vote pace : Nat) : Nat := pace * vote
-
-theorem one_times : ∀ n : Nat, 1 * n = n
-  | 0 => rfl
-  | n + 1 => congrArg (· + 1) (one_times n)
-
-theorem the_pace_reads_one_at_home : readAcross 1 paceAtHome = 1 := rfl
-
-theorem any_vote_reads_itself (n : Nat) : readAcross n paceAtHome = n :=
-  one_times n
-
-def graft (base : Plan) : Plan → Plan
-  | .ground => base
-  | .board p q => .board (graft base p) (graft base q)
-
-theorem a_stage_may_ground_a_stage (W : Type) (base : Plan) :
-    ∀ q : Plan, build W (graft base q) = build (build W base) q
-  | .ground => rfl
-  | .board p r =>
-      show door (build W (graft base p)) (build W (graft base r))
-          = door (build (build W base) p) (build (build W base) r)
-      from congr (congrArg door (a_stage_may_ground_a_stage W base p))
-        (a_stage_may_ground_a_stage W base r)
-
-theorem the_oldest_ground_still_answers (W : Type) (base : Plan) :
-    ∀ (q : Plan) (s : build W (graft base q)),
-      ∃ t : build W base,
-        spine W (graft base q) s = spine W base t
-  | .ground, s => ⟨s, rfl⟩
-  | .board p _, d => the_oldest_ground_still_answers W base p (face d)
-
-theorem lineages_compose (a b : Plan) :
-    ∀ q, graft a (graft b q) = graft (graft a b) q
-  | .ground => rfl
-  | .board p r =>
-      show Plan.board (graft a (graft b p)) (graft a (graft b r))
-          = Plan.board (graft (graft a b) p) (graft (graft a b) r)
-      from congr (congrArg Plan.board (lineages_compose a b p))
-        (lineages_compose a b r)
-
-theorem the_trivial_revision_changes_nothing :
-    ∀ q, graft .ground q = q
-  | .ground => rfl
-  | .board p r =>
-      show Plan.board (graft .ground p) (graft .ground r) = Plan.board p r
-      from congr (congrArg Plan.board (the_trivial_revision_changes_nothing p))
-        (the_trivial_revision_changes_nothing r)
-
-theorem the_parent_folds_into_the_ground {X : Type u}
-    (mul : X → X → X) (x₀ : X) (base : Plan) :
-    ∀ q, fold mul x₀ (graft base q) = fold mul (fold mul x₀ base) q
-  | .ground => rfl
-  | .board p r =>
-      show mul (fold mul x₀ (graft base p)) (fold mul x₀ (graft base r))
-          = mul (fold mul (fold mul x₀ base) p)
-              (fold mul (fold mul x₀ base) r)
-      from congr
-        (congrArg mul (the_parent_folds_into_the_ground mul x₀ base p))
-        (the_parent_folds_into_the_ground mul x₀ base r)
-
-theorem the_ancestor_rides_unread {X : Type u} (mul : X → X → X) (x₀ : X)
-    {base base' : Plan} (h : fold mul x₀ base = fold mul x₀ base')
-    (q : Plan) :
-    fold mul x₀ (graft base q) = fold mul x₀ (graft base' q) :=
-  (the_parent_folds_into_the_ground mul x₀ base q).trans
-    ((congrArg (fun v => fold mul v q) h).trans
-      (the_parent_folds_into_the_ground mul x₀ base' q).symm)
-
-theorem the_route_leaves_no_mark {P : Prop} (h1 h2 : P) : h1 = h2 := rfl
-
-def fork (H W : Type) : Type := H ⊕ W
-
-def viaLeft {H W : Type} (h : H) : fork H W := .inl h
-
-def viaRight {H W : Type} (w : W) : fork H W := .inr w
-
-def greet {H W X : Type} (gl : H → X) (gr : W → X) : fork H W → X
-  | .inl h => gl h
-  | .inr w => gr w
-
-theorem the_two_entrances_share_one_lobby {H W X : Type}
-    (gl : H → X) (gr : W → X) (h : H) (w : W) :
-    greet gl gr (viaLeft h) = gl h ∧ greet gl gr (viaRight w) = gr w :=
-  ⟨rfl, rfl⟩
-
-theorem the_entrance_is_real {H W : Type} (h : H) (w : W) :
-    viaLeft h ≠ (viaRight w : fork H W) :=
-  fun he => nomatch he
-
-theorem a_greeter_is_a_door_of_handlers {H W X : Type}
-    (f : fork H W → X) :
-    ∀ d, greet (fun h => f (viaLeft h)) (fun w => f (viaRight w)) d = f d
-  | .inl _ => rfl
-  | .inr _ => rfl
-
-theorem any_ready_greeter_is_the_greeter {H W X : Type}
-    (gl : H → X) (gr : W → X) (f : fork H W → X)
-    (hl : ∀ h, f (viaLeft h) = gl h) (hr : ∀ w, f (viaRight w) = gr w) :
-    ∀ d, f d = greet gl gr d
-  | .inl h => hl h
-  | .inr w => hr w
-
-theorem the_anonymous_guest_is_free {H : Type} (d : door H Unit) :
-    atTheDoor (face d) () = d := rfl
-
-theorem no_world_hosts_the_impossible {H : Type} (d : door H Empty) :
-    False :=
-  nomatch met d
-
-def noEntrance {H : Type} : fork H Empty → H :=
-  greet (fun h => h) (fun e => nomatch e)
-
-theorem a_sealed_entrance_adds_nothing {H : Type} :
-    (∀ h : H, noEntrance (viaLeft h) = h)
-      ∧ ∀ f : fork H Empty, viaLeft (noEntrance f) = f :=
-  ⟨fun _ => rfl,
-   fun f => match f with
-     | .inl _ => rfl
-     | .inr e => nomatch e⟩
-
-def steer {H W : Type} (σ : H → W → W) (d : door W H) : door W H :=
-  atTheDoor (σ (met d) (face d)) (met d)
-
-theorem the_swap_trades_maintenance_for_motion {H W : Type}
-    (σ : H → W → W) (d : door H W) :
-    turnAbout (vertical σ d) = steer σ (turnAbout d) := rfl
-
-theorem what_one_seat_maintains_the_other_watches {H W X : Type}
-    (σ : H → W → W) (g : H → X) (d : door H W) :
-    g (face (vertical σ d)) = g (face d)
-      ∧ face (steer σ (turnAbout d)) = σ (face d) (met d) :=
-  ⟨rfl, rfl⟩
-
-theorem the_maintenance_is_audible_across_the_swap :
-    face (vertical (fun _ w => w + 1) (atTheDoor (5 : Nat) (0 : Nat)))
-        = face (atTheDoor (5 : Nat) (0 : Nat))
-      ∧ face (steer (fun _ w => w + 1)
-            (turnAbout (atTheDoor (5 : Nat) (0 : Nat))))
-          ≠ face (turnAbout (atTheDoor (5 : Nat) (0 : Nat))) :=
-  ⟨rfl, fun h => nomatch h⟩
-
-def crossOver {H W : Type} : fork H W → fork W H :=
-  greet viaRight viaLeft
-
-theorem the_crossing_returns {H W : Type} :
-    ∀ f : fork H W, crossOver (crossOver f) = f
-  | .inl _ => rfl
-  | .inr _ => rfl
-
-def deepen {H W V : Type} (d : door (door H W) V) : door H (door W V) :=
-  atTheDoor (face (face d)) (atTheDoor (met (face d)) (met d))
-
-def shallow {H W V : Type} (d : door H (door W V)) : door (door H W) V :=
-  atTheDoor (atTheDoor (face d) (face (met d))) (met (met d))
-
-theorem hosting_associates {H W V : Type} :
-    (∀ d : door (door H W) V, shallow (deepen d) = d)
-      ∧ ∀ d : door H (door W V), deepen (shallow d) = d :=
-  ⟨fun _ => rfl, fun _ => rfl⟩
-
-def rebranch {H W V : Type} : fork (fork H W) V → fork H (fork W V) :=
-  greet (greet viaLeft (fun w => viaRight (viaLeft w)))
-    (fun v => viaRight (viaRight v))
-
-def unbranch {H W V : Type} : fork H (fork W V) → fork (fork H W) V :=
-  greet (fun h => viaLeft (viaLeft h))
-    (greet (fun w => viaLeft (viaRight w)) viaRight)
-
-theorem arrival_associates {H W V : Type} :
-    (∀ f : fork (fork H W) V, unbranch (rebranch f) = f)
-      ∧ ∀ f : fork H (fork W V), rebranch (unbranch f) = f :=
-  ⟨fun f =>
-     match f with
-     | .inl (.inl _) => rfl
-     | .inl (.inr _) => rfl
-     | .inr _ => rfl,
-   fun f =>
-     match f with
-     | .inl _ => rfl
-     | .inr (.inl _) => rfl
-     | .inr (.inr _) => rfl⟩
-
-def distribute {H W V : Type} : door H (fork W V) → fork (door H W) (door H V)
-  | (h, .inl w) => .inl (h, w)
-  | (h, .inr v) => .inr (h, v)
-
-def collect {H W V : Type} : fork (door H W) (door H V) → door H (fork W V) :=
-  greet (fun d => atTheDoor (face d) (viaLeft (met d)))
-    (fun d => atTheDoor (face d) (viaRight (met d)))
-
-theorem the_host_serves_both_branches {H W V : Type} :
-    ∀ d : door H (fork W V), collect (distribute d) = d
-  | (_, .inl _) => rfl
-  | (_, .inr _) => rfl
-
-theorem the_branches_share_the_host {H W V : Type} :
-    ∀ f : fork (door H W) (door H V), distribute (collect f) = f
-  | .inl _ => rfl
-  | .inr _ => rfl
-
-theorem the_host_survives_the_split {H W V : Type} :
-    ∀ d : door H (fork W V), greet face face (distribute d) = face d
-  | (_, .inl _) => rfl
-  | (_, .inr _) => rfl
-
-theorem the_mirror_finds_the_fixed_point {A Y : Type}
-    (g : A → (A → Y)) (t : Y → Y)
-    (hsur : ∀ f : A → Y, ∃ a, g a = f) :
-    ∃ y, t y = y :=
-  (hsur (fun a => t (g a a))).elim fun a₀ ha =>
-    ⟨g a₀ a₀, (congrFun ha a₀).symm⟩
-
-theorem bool_escapes : ∀ b : Bool, b ≠ !b
-  | true, h => nomatch h
-  | false, h => nomatch h
-
-theorem the_readings_outrun_the_room {A : Type} (g : A → (A → Bool)) :
-    ∃ f : A → Bool, ∀ a, g a ≠ f :=
-  ⟨fun a => !(g a a),
-   fun a he => bool_escapes (g a a) (congrFun he a)⟩
-
-structure Measured where
-  lo : Nat
-  hi : Nat
-
-def within (m : Measured) (x : Nat) : Bool :=
-  Nat.ble m.lo x && Nat.ble x m.hi
-
-def tighter (fine coarse : Measured) : Bool :=
-  Nat.ble coarse.lo fine.lo && Nat.ble fine.hi coarse.hi
-
-theorem ble_trans : ∀ (a b c : Nat),
-    Nat.ble a b = true → Nat.ble b c = true → Nat.ble a c = true
-  | 0, _, _, _, _ => rfl
-  | _ + 1, 0, _, h1, _ => nomatch h1
-  | _ + 1, _ + 1, 0, _, h2 => nomatch h2
-  | a + 1, b + 1, c + 1, h1, h2 => ble_trans a b c h1 h2
-
-theorem and_split : ∀ {p q : Bool}, (p && q) = true → p = true ∧ q = true
-  | true, true, _ => ⟨rfl, rfl⟩
-  | true, false, h => nomatch h
-  | false, _, h => nomatch h
-
-theorem and_glue : ∀ {p q : Bool}, p = true → q = true → (p && q) = true
-  | true, true, _, _ => rfl
-  | true, false, _, h => nomatch h
-  | false, _, h, _ => nomatch h
-
-theorem the_refined_reading_still_lands {fine coarse : Measured} {x : Nat}
-    (ht : tighter fine coarse = true) (hx : within fine x = true) :
-    within coarse x = true :=
-  and_glue (ble_trans _ _ _ (and_split ht).1 (and_split hx).1)
-    (ble_trans _ _ _ (and_split hx).2 (and_split ht).2)
-
-theorem zero_plus : ∀ n : Nat, 0 + n = n
-  | 0 => rfl
-  | n + 1 => congrArg (· + 1) (zero_plus n)
-
-theorem succ_adds : ∀ a b : Nat, (a + 1) + b = (a + b) + 1
-  | _, 0 => rfl
-  | a, b + 1 => congrArg (· + 1) (succ_adds a b)
-
-theorem len_append {A : Type} :
-    ∀ (xs ys : List A), (xs ++ ys).length = xs.length + ys.length
-  | [], ys => (zero_plus ys.length).symm
-  | _ :: xs, ys => by
-      show (xs ++ ys).length + 1 = (xs.length + 1) + ys.length
-      rw [len_append xs ys]
-      exact (succ_adds xs.length ys.length).symm
-
-theorem map_append {A B : Type} (f : A → B) :
-    ∀ (xs ys : List A), (xs ++ ys).map f = xs.map f ++ ys.map f
-  | [], _ => rfl
-  | x :: xs, ys => congrArg (f x :: ·) (map_append f xs ys)
-
-def pour {W : Type} : (p : Plan) → build W p → List W
-  | .ground, s => [s]
-  | .board p q, d => pour p (face d) ++ pour q (met d)
-
-theorem the_manifest_counts_the_guests {W : Type} :
-    ∀ (p : Plan) (s : build W p),
-      (pour p s).length = fold (fun a b => a + b) 1 p
-  | .ground, _ => rfl
-  | .board p q, d => by
-      show (pour p (face d) ++ pour q (met d)).length
-          = fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q
-      rw [len_append, the_manifest_counts_the_guests p (face d),
-          the_manifest_counts_the_guests q (met d)]
-
-theorem the_customs_thread_the_manifest {W W' : Type} (f : W → W') :
-    ∀ (p : Plan) (s : build W p),
-      pour p (reground f p s) = (pour p s).map f
-  | .ground, _ => rfl
-  | .board p q, d => by
-      show pour p (reground f p (face d)) ++ pour q (reground f q (met d))
-          = (pour p (face d) ++ pour q (met d)).map f
-      rw [the_customs_thread_the_manifest f p (face d),
-          the_customs_thread_the_manifest f q (met d)]
-      exact (map_append f (pour p (face d)) (pour q (met d))).symm
-
-def tally (W : Type) : Machine W Nat :=
-  ⟨Nat, 0, fun n _ => n + 1, fun n => n⟩
-
-theorem drive_counts {W : Type} :
-    ∀ (w : List W) (s : Nat), drive (tally W) s w = s + w.length
-  | [], _ => rfl
-  | _ :: w, s => (drive_counts w (s + 1)).trans (succ_adds s w.length)
-
-theorem the_run_agrees_with_the_fold {W : Type} (p : Plan) (s : build W p) :
-    behavior (tally W) (pour p s) = fold (fun a b => a + b) 1 p :=
-  (drive_counts (pour p s) 0).trans
-    ((zero_plus (pour p s).length).trans (the_manifest_counts_the_guests p s))
-
-theorem ble_refl : ∀ n : Nat, Nat.ble n n = true
-  | 0 => rfl
-  | n + 1 => ble_refl n
-
-theorem ble_le_succ : ∀ n : Nat, Nat.ble n (n + 1) = true
-  | 0 => rfl
-  | n + 1 => ble_le_succ n
-
-theorem tighter_refl (a : Measured) : tighter a a = true :=
-  and_glue (ble_refl a.lo) (ble_refl a.hi)
-
-theorem tighter_trans {a b c : Measured} (h1 : tighter a b = true)
-    (h2 : tighter b c = true) : tighter a c = true :=
-  and_glue (ble_trans _ _ _ (and_split h2).1 (and_split h1).1)
-    (ble_trans _ _ _ (and_split h1).2 (and_split h2).2)
-
-theorem the_learner_only_tightens {I : Type} (m : Machine I Measured)
-    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true) :
-    ∀ (w : List I) (s : m.S), tighter (drive m s w) (m.out s) = true
-  | [], s => tighter_refl (m.out s)
-  | i :: w, s =>
-      tighter_trans (the_learner_only_tightens m hlearn w (m.step s i))
-        (hlearn s i)
-
-def homingIn : Machine Unit Measured :=
-  ⟨Nat, 0, fun n _ => n + 1, fun n => ⟨n, 10⟩⟩
-
-theorem the_homing_reading_tightens :
-    ∀ w : List Unit,
-      tighter (behavior homingIn w) (⟨0, 10⟩ : Measured) = true :=
-  fun w =>
-    the_learner_only_tightens homingIn
-      (fun s _ => and_glue (ble_le_succ s) (ble_refl 10)) w (0 : Nat)
-
-def park {I O : Type} (m : Machine I O) : m.S → List I → m.S
-  | s, [] => s
-  | s, i :: w => park m (m.step s i) w
-
-theorem the_park_is_a_walk {I O : Type} (m : Machine I O) :
-    ∀ (w : List I) (s : m.S), park m s w = walk m.step s w
-  | [], _ => rfl
-  | i :: w, s => the_park_is_a_walk m w (m.step s i)
-
-theorem the_drive_reads_the_walk {I O : Type} (m : Machine I O) :
-    ∀ (w : List I) (s : m.S), drive m s w = m.out (walk m.step s w)
-  | [], _ => rfl
-  | i :: w, s => the_drive_reads_the_walk m w (m.step s i)
-
-theorem the_drive_resumes {I O : Type} (m : Machine I O)
-    (w w' : List I) (s : m.S) :
-    drive m s (w ++ w') = drive m (park m s w) w' :=
-  (((the_drive_reads_the_walk m (w ++ w') s).trans
-      (congrArg m.out (the_walk_resumes m.step w w' s))).trans
-    (the_drive_reads_the_walk m w' (walk m.step s w)).symm).trans
-    (congrArg (fun x => drive m x w') (the_park_is_a_walk m w s).symm)
-
-theorem the_session_continues_from_the_parked_seat {I O : Type}
-    (m : Machine I O) (w w' : List I) :
-    behavior m (w ++ w') = drive m (park m m.s0 w) w' :=
-  the_drive_resumes m w w' m.s0
-
-theorem the_future_reads_only_the_seat {I O : Type} (m : Machine I O)
-    (w w' : List I) (h : park m m.s0 w = park m m.s0 w') (v : List I) :
-    drive m (park m m.s0 w) v = drive m (park m m.s0 w') v :=
-  congrArg (fun s => drive m s v) h
-
-def pulse : Machine Bool Bool := ⟨Nat, 0, fun n _ => n + 1, oddNat⟩
-
-theorem two_routes_one_seat :
-    ([true, false] ≠ [false, true])
-      ∧ park pulse (0 : Nat) [true, false]
-          = park pulse (0 : Nat) [false, true] :=
-  ⟨(fun h => nomatch (List.cons.inj h).1), rfl⟩
-
-def graphDoor {A X : Type} (r : A → X) (a : A) : door X A :=
-  atTheDoor (r a) a
-
-theorem the_special_was_the_general {X : Type} (r : Plan → X) (p : Plan) :
-    classDoor r p = graphDoor r p := rfl
-
-def specView {W : Type} (p : Plan) (s : build W p) : door Plan (build W p) :=
-  turnAbout (label W p s)
-
-theorem the_spec_hides_the_implementation {W X : Type} (p : Plan)
-    (s s' : build W p) (g : Plan → X) :
-    face (specView p s) = p
-      ∧ g (face (specView p s)) = g (face (specView p s'))
-      ∧ (s ≠ s' → specView p s ≠ specView p s') :=
-  ⟨rfl, rfl, fun hs he => hs (congrArg met he)⟩
-
-theorem no_client_reads_the_implementation {W X : Type} (p : Plan)
-    (s s' : build W p) (q : Quiz Plan X) :
-    interrogate q (specView p s) = interrogate q (specView p s') :=
-  a_strategy_hears_no_guest p s s' q
-
-def retune {I I' O : Type} (f : I' → I) (m : Machine I O) : Machine I' O :=
-  ⟨m.S, m.s0, fun s i' => m.step s (f i'), m.out⟩
-
-theorem hearing_through_a_translator {I I' O : Type} (f : I' → I)
-    (m : Machine I O) :
-    ∀ (w : List I') (s : m.S),
-      drive (retune f m) s w = drive m s (w.map f)
-  | [], _ => rfl
-  | _ :: w, _ => hearing_through_a_translator f m w _
-
-theorem translators_stack_backward {I I' I'' O : Type} (f : I' → I)
-    (g : I'' → I') (m : Machine I O) :
-    retune (fun x => f (g x)) m = retune g (retune f m) := rfl
-
-theorem the_plain_ear_hears_plainly {I O : Type} (m : Machine I O) :
-    retune (fun i => i) m = m := rfl
-
-def revoice {I O O' : Type} (g : O → O') (m : Machine I O) : Machine I O' :=
-  ⟨m.S, m.s0, m.step, fun s => g (m.out s)⟩
-
-theorem speaking_through_a_translator {I O O' : Type} (g : O → O')
-    (m : Machine I O) :
-    ∀ (w : List I) (s : m.S), drive (revoice g m) s w = g (drive m s w)
-  | [], _ => rfl
-  | _ :: w, _ => speaking_through_a_translator g m w _
-
-theorem voices_stack_forward {I O O' O'' : Type} (g : O → O')
-    (g' : O' → O'') (m : Machine I O) :
-    revoice (fun x => g' (g x)) m = revoice g' (revoice g m) := rfl
-
-theorem the_ear_and_the_voice_commute {I I' O O' : Type} (f : I' → I)
-    (g : O → O') (m : Machine I O) :
-    revoice g (retune f m) = retune f (revoice g m) := rfl
-
-theorem an_upgrade_ships_unheard {W : Type} (p : Plan)
-    (σ : Plan → build W p → build W p) (s : build W p) :
-    vertical σ (specView p s) = specView p (σ p s) := rfl
-
-theorem the_mirror_doubles_the_manifest {W : Type} (p : Plan)
-    (s : build W p) :
-    pour (.board p p) (mirror W p s) = pour p s ++ pour p s := rfl
-
-def worldline (t : Plan) : List Plan → Plan
-  | [] => t
-  | q :: qs => worldline (graft t q) qs
-
-def epochs {X : Type u} (mul : X → X → X) : X → List Plan → X
-  | v, [] => v
-  | v, q :: qs => epochs mul (fold mul v q) qs
-
-theorem the_worldline_is_a_walk : ∀ (qs : List Plan) (t : Plan),
-    worldline t qs = walk graft t qs
-  | [], _ => rfl
-  | q :: qs, t => the_worldline_is_a_walk qs (graft t q)
-
-theorem the_epochs_are_a_walk {X : Type u} (mul : X → X → X) :
-    ∀ (qs : List Plan) (v : X),
-      epochs mul v qs = walk (fun x q => fold mul x q) v qs
-  | [], _ => rfl
-  | q :: qs, v => the_epochs_are_a_walk mul qs (fold mul v q)
-
-theorem the_three_roads_are_one_walk {I O : Type} (m : Machine I O)
-    {X : Type u} (mul : X → X → X) (v : X) (t : Plan)
-    (w : List I) (s : m.S) (qs : List Plan) :
-    park m s w = walk m.step s w
-      ∧ drive m s w = m.out (walk m.step s w)
-      ∧ worldline t qs = walk graft t qs
-      ∧ epochs mul v qs = walk (fun x q => fold mul x q) v qs :=
-  ⟨the_park_is_a_walk m w s, the_drive_reads_the_walk m w s,
-   the_worldline_is_a_walk qs t, the_epochs_are_a_walk mul qs v⟩
-
-theorem the_worldline_settles {X : Type u} (mul : X → X → X) (x₀ : X)
-    (qs : List Plan) (t : Plan) :
-    fold mul x₀ (worldline t qs) = epochs mul (fold mul x₀ t) qs :=
-  ((congrArg (fold mul x₀) (the_worldline_is_a_walk qs t)).trans
-    (a_reading_in_step_carries_the_walk graft (fun v q => fold mul v q)
-      (fold mul x₀) (fun s q => the_parent_folds_into_the_ground mul x₀ s q)
-      qs t)).trans
-    (the_epochs_are_a_walk mul qs (fold mul x₀ t)).symm
-
-theorem mem_map_intro {A B : Type} (f : A → B) :
-    ∀ {x : A} {xs : List A}, x ∈ xs → f x ∈ xs.map f
-  | _, _ :: _, List.Mem.head _ => List.Mem.head _
-  | _, _ :: _, List.Mem.tail _ h => List.Mem.tail _ (mem_map_intro f h)
-
-theorem mem_append_left {A : Type} (ys : List A) :
-    ∀ {x : A} {xs : List A}, x ∈ xs → x ∈ xs ++ ys
-  | _, _ :: _, List.Mem.head _ => List.Mem.head _
-  | _, _ :: _, List.Mem.tail _ h => List.Mem.tail _ (mem_append_left ys h)
-
-theorem mem_append_right {A : Type} :
-    ∀ (xs : List A) {x : A} {ys : List A}, x ∈ ys → x ∈ xs ++ ys
-  | [], _, _, h => h
-  | _ :: xs, _, _, h => List.Mem.tail _ (mem_append_right xs h)
-
-theorem mem_append_split {A : Type} :
-    ∀ (xs : List A) {x : A} {ys : List A}, x ∈ xs ++ ys → x ∈ xs ∨ x ∈ ys
-  | [], _, _, h => Or.inr h
-  | _ :: xs, _, _, h =>
-      match h with
-      | List.Mem.head _ => Or.inl (List.Mem.head _)
-      | List.Mem.tail _ h' =>
-          match mem_append_split xs h' with
-          | Or.inl hx => Or.inl (List.Mem.tail _ hx)
-          | Or.inr hy => Or.inr hy
-
-theorem mem_map_back {A B : Type} {f : A → B} {y : B} :
-    ∀ (xs : List A), y ∈ xs.map f → ∃ a, a ∈ xs ∧ f a = y
-  | [], h => nomatch h
-  | x :: xs, h => by
-      cases h with
-      | head => exact ⟨x, List.Mem.head _, rfl⟩
-      | tail _ h' =>
-          obtain ⟨a, ha, he⟩ := mem_map_back xs h'
-          exact ⟨a, List.Mem.tail _ ha, he⟩
-
-theorem mem_cross {qs : List Plan} {r : Plan} (hr : r ∈ qs) :
-    ∀ {ps : List Plan} {l : Plan}, l ∈ ps → Plan.board l r ∈ cross ps qs
-  | _ :: ps, _, List.Mem.head _ =>
-      mem_append_left (cross ps qs) (mem_map_intro (Plan.board _) hr)
-  | p :: _, _, List.Mem.tail _ h =>
-      mem_append_right (qs.map (Plan.board p)) (mem_cross hr h)
+/-- info: 'Seed.the_census_checksums_with_the_polygon_cutters' does not depend on any axioms -/
+#guard_msgs in #print axioms the_census_checksums_with_the_polygon_cutters
 
 theorem mem_cross_split :
     ∀ (ps : List Plan) {qs : List Plan} {x : Plan},
@@ -1016,179 +1287,15 @@ theorem mem_cross_split :
           match mem_cross_split ps hc with
           | ⟨l, r, he, hl, hr⟩ => ⟨l, r, he, List.Mem.tail _ hl, hr⟩
 
-theorem the_reading_is_positive :
-    ∀ p : Plan, ∃ m : Nat, fold (fun a b => a + b) 1 p = m + 1
-  | .ground => ⟨0, rfl⟩
-  | .board l r =>
-      match the_reading_is_positive l with
-      | ⟨a, ha⟩ =>
-          ⟨a + fold (fun a b => a + b) 1 r, by
-            show fold (fun a b => a + b) 1 l + fold (fun a b => a + b) 1 r
-                = (a + fold (fun a b => a + b) 1 r) + 1
-            rw [ha, succ_adds]⟩
+/-- info: 'Seed.mem_cross_split' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_cross_split
 
-theorem ble_le_add : ∀ a b : Nat, Nat.ble a (a + b) = true
-  | a, 0 => ble_refl a
-  | a, b + 1 =>
-      ble_trans a (a + b) ((a + b) + 1) (ble_le_add a b) (ble_le_succ (a + b))
-
-theorem ble_le_add_left : ∀ a b : Nat, Nat.ble b (a + b) = true
-  | 0, b => by rw [zero_plus]; exact ble_refl b
-  | a + 1, b => by
-      rw [succ_adds]
-      exact ble_trans b (a + b) ((a + b) + 1)
-        (ble_le_add_left a b) (ble_le_succ (a + b))
-
-theorem ble_add_right : ∀ (k : Nat) {a b : Nat},
-    Nat.ble a b = true → Nat.ble (a + k) (b + k) = true
-  | 0, _, _, h => h
-  | k + 1, _, _, h => ble_add_right k h
-
-theorem ble_add_both {a b c d : Nat} (h1 : Nat.ble a b = true)
-    (h2 : Nat.ble c d = true) : Nat.ble (a + c) (b + d) = true :=
-  ble_trans (a + c) (b + c) (b + d) (ble_add_right c h1)
-    (by rw [Nat.add_comm b c, Nat.add_comm b d]; exact ble_add_right b h2)
-
-theorem ble_gain_false : ∀ m a : Nat, Nat.ble (m + (a + 1)) m = false
-  | 0, _ => rfl
-  | m + 1, a => by
-      show Nat.ble ((m + 1) + a) m = false
-      rw [succ_adds]
-      exact ble_gain_false m a
-
-def roomCap : Nat → Nat
-  | 0 => 1
-  | d + 1 => roomCap d + roomCap d
-
-theorem the_cap_is_positive : ∀ d : Nat, ∃ m : Nat, roomCap d = m + 1
-  | 0 => ⟨0, rfl⟩
-  | d + 1 =>
-      match the_cap_is_positive d with
-      | ⟨m, h⟩ =>
-          ⟨(m + 1) + m, by
-            show roomCap d + roomCap d = ((m + 1) + m) + 1
-            rw [h]
-            exact rfl⟩
-
-theorem the_horizon_holds_every_reading :
-    ∀ (n : Nat) (p : Plan),
-      Nat.ble (fold (fun a b => a + b) 1 p) (n + 1) = true → p ∈ allPlans n
-  | 0, .ground, _ => List.Mem.head _
-  | _ + 1, .ground, _ => List.Mem.head _
-  | 0, .board l r, h =>
-      match the_reading_is_positive l, the_reading_is_positive r with
-      | ⟨a, ha⟩, ⟨b, hb⟩ => by
-          have e : (a + 1) + (b + 1) = ((a + b) + 1) + 1 :=
-            congrArg (· + 1) (succ_adds a b)
-          have h0 : Nat.ble
-              (fold (fun a b => a + b) 1 l + fold (fun a b => a + b) 1 r)
-              1 = true := h
-          rw [ha, hb, e] at h0
-          exact nomatch h0
-  | n + 1, .board l r, h =>
-      match the_reading_is_positive l, the_reading_is_positive r with
-      | ⟨a, ha⟩, ⟨b, hb⟩ =>
-          have e : (a + 1) + (b + 1) = ((a + b) + 1) + 1 :=
-            congrArg (· + 1) (succ_adds a b)
-          have h' : Nat.ble ((a + b) + 1) (n + 1) = true := by
-            have h0 : Nat.ble
-                (fold (fun a b => a + b) 1 l + fold (fun a b => a + b) 1 r)
-                ((n + 1) + 1) = true := h
-            rw [ha, hb, e] at h0
-            exact h0
-          have hL : l ∈ allPlans n :=
-            the_horizon_holds_every_reading n l (by
-              rw [ha]
-              exact ble_trans (a + 1) ((a + b) + 1) (n + 1)
-                (ble_le_add a b) h')
-          have hR : r ∈ allPlans n :=
-            the_horizon_holds_every_reading n r (by
-              rw [hb]
-              exact ble_trans (b + 1) ((a + b) + 1) (n + 1)
-                (ble_le_add_left a b) h')
-          List.Mem.tail _ (mem_cross hR hL)
-
-theorem the_room_only_grows :
-    ∀ (d : Nat) {p : Plan}, p ∈ allPlans d → p ∈ allPlans (d + 1)
-  | 0, _, h => by
-      cases h with
-      | head => exact List.Mem.head _
-      | tail _ h' => exact nomatch h'
-  | d + 1, _, h => by
-      cases h with
-      | head => exact List.Mem.head _
-      | tail _ hc =>
-          obtain ⟨l, r, rfl, hl, hr⟩ := mem_cross_split (allPlans d) hc
-          exact List.Mem.tail _
-            (mem_cross (the_room_only_grows d hr) (the_room_only_grows d hl))
-
-theorem the_room_reads_within_its_cap :
-    ∀ (d : Nat) {p : Plan}, p ∈ allPlans d →
-      Nat.ble (fold (fun a b => a + b) 1 p) (roomCap d) = true
-  | 0, _, h => by
-      cases h with
-      | head => rfl
-      | tail _ h' => exact nomatch h'
-  | d + 1, _, h => by
-      cases h with
-      | head =>
-          obtain ⟨m, hm⟩ := the_cap_is_positive d
-          show Nat.ble 1 (roomCap d + roomCap d) = true
-          rw [hm]
-          exact rfl
-      | tail _ hc =>
-          obtain ⟨l, r, rfl, hl, hr⟩ := mem_cross_split (allPlans d) hc
-          exact ble_add_both
-            (the_room_reads_within_its_cap d hl)
-            (the_room_reads_within_its_cap d hr)
-
-def bloom : Nat → Plan
-  | 0 => .ground
-  | d + 1 => .board (bloom d) (bloom d)
-
-theorem the_bloom_fills_its_cap :
-    ∀ d : Nat, fold (fun a b => a + b) 1 (bloom d) = roomCap d
-  | 0 => rfl
-  | d + 1 => by
-      show fold (fun a b => a + b) 1 (bloom d)
-            + fold (fun a b => a + b) 1 (bloom d)
-          = roomCap d + roomCap d
-      rw [the_bloom_fills_its_cap d]
-
-theorem the_bloom_resides : ∀ d : Nat, bloom d ∈ allPlans d
-  | 0 => List.Mem.head _
-  | d + 1 =>
-      List.Mem.tail _ (mem_cross (the_bloom_resides d) (the_bloom_resides d))
-
-theorem the_bloom_outgrows_the_room (d : Nat) :
-    ¬ bloom (d + 1) ∈ allPlans d := fun hmem => by
-  have hb := the_room_reads_within_its_cap d hmem
-  rw [the_bloom_fills_its_cap (d + 1)] at hb
-  have hb' : Nat.ble (roomCap d + roomCap d) (roomCap d) = true := hb
-  obtain ⟨m, hm⟩ := the_cap_is_positive d
-  rw [hm] at hb'
-  exact nomatch (ble_gain_false (m + 1) m).symm.trans hb'
-
-theorem no_bound_is_the_last_bound :
-    (∀ (d : Nat) (p : Plan), p ∈ allPlans d → p ∈ allPlans (d + 1))
-      ∧ (∀ p : Plan, ∃ d : Nat, p ∈ allPlans d)
-      ∧ (∀ d : Nat, ∃ p : Plan, ¬ p ∈ allPlans d ∧ p ∈ allPlans (d + 1))
-      ∧ ∀ d : Nat, allPlans (d + 1) ≠ allPlans d :=
-  ⟨fun d _ h => the_room_only_grows d h,
-   fun p =>
-     ⟨fold (fun a b => a + b) 1 p,
-      the_horizon_holds_every_reading _ p (ble_le_succ _)⟩,
-   fun d =>
-     ⟨bloom (d + 1), the_bloom_outgrows_the_room d, the_bloom_resides (d + 1)⟩,
-   fun d he =>
-     the_bloom_outgrows_the_room d (he ▸ the_bloom_resides (d + 1))⟩
-
-inductive Apart {A : Type} : List A → Prop
+inductive Apart {A : Type u} : List A → Prop
   | nil : Apart []
   | cons {a : A} {l : List A} :
       (∀ b, b ∈ l → a ≠ b) → Apart l → Apart (a :: l)
 
-theorem apart_map {A B : Type} {f : A → B}
+theorem apart_map {A : Type u} {B : Type v} {f : A → B}
     (hf : ∀ a b, f a = f b → a = b) :
     ∀ {xs : List A}, Apart xs → Apart (xs.map f)
   | [], _ => Apart.nil
@@ -1199,7 +1306,10 @@ theorem apart_map {A B : Type} {f : A → B}
           | ⟨a, ha, hfa⟩ => hx a ha (hf x a (he.trans hfa.symm)))
         (apart_map hf hxs)
 
-theorem apart_append {A : Type} :
+/-- info: 'Seed.apart_map' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_map
+
+theorem apart_append {A : Type u} :
     ∀ {xs : List A} (ys : List A), Apart xs → Apart ys →
       (∀ x, x ∈ xs → ∀ y, y ∈ ys → x ≠ y) → Apart (xs ++ ys)
   | [], _, _, hys, _ => hys
@@ -1211,6 +1321,9 @@ theorem apart_append {A : Type} :
           | Or.inr hby => hcross _ (List.Mem.head _) b hby)
         (apart_append ys hxs hys
           (fun a ha y hy => hcross a (List.Mem.tail _ ha) y hy))
+
+/-- info: 'Seed.apart_append' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_append
 
 theorem the_cross_keeps_apart {qs : List Plan} (hqs : Apart qs) :
     ∀ {ps : List Plan}, Apart ps → Apart (cross ps qs)
@@ -1225,6 +1338,9 @@ theorem the_cross_keeps_apart {qs : List Plan} (hqs : Apart qs) :
               hp l' hl'
                 (Plan.board.inj ((hfr.trans he).trans hy_eq)).1)
 
+/-- info: 'Seed.the_cross_keeps_apart' does not depend on any axioms -/
+#guard_msgs in #print axioms the_cross_keeps_apart
+
 theorem the_room_repeats_no_plan : ∀ d : Nat, Apart (allPlans d)
   | 0 => Apart.cons (fun _ hb => nomatch hb) Apart.nil
   | d + 1 =>
@@ -1235,20 +1351,158 @@ theorem the_room_repeats_no_plan : ∀ d : Nat, Apart (allPlans d)
         (the_cross_keeps_apart (the_room_repeats_no_plan d)
           (the_room_repeats_no_plan d))
 
+/-- info: 'Seed.the_room_repeats_no_plan' does not depend on any axioms -/
+#guard_msgs in #print axioms the_room_repeats_no_plan
+
+theorem succ_adds (a b : Nat) : (a + 1) + b = (a + b) + 1 :=
+  (click_slides a b).symm
+
+/-- info: 'Seed.succ_adds' does not depend on any axioms -/
+#guard_msgs in #print axioms succ_adds
+
+theorem ble_refl : ∀ n : Nat, Nat.ble n n = true
+  | 0 => rfl
+  | n + 1 => ble_refl n
+
+/-- info: 'Seed.ble_refl' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_refl
+
+theorem ble_le_succ : ∀ n : Nat, Nat.ble n (n + 1) = true
+  | 0 => rfl
+  | n + 1 => ble_le_succ n
+
+/-- info: 'Seed.ble_le_succ' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_le_succ
+
+theorem ble_trans : ∀ (a b c : Nat),
+    Nat.ble a b = true → Nat.ble b c = true → Nat.ble a c = true
+  | 0, _, _, _, _ => rfl
+  | _ + 1, 0, _, h1, _ => nomatch h1
+  | _ + 1, _ + 1, 0, _, h2 => nomatch h2
+  | a + 1, b + 1, c + 1, h1, h2 => ble_trans a b c h1 h2
+
+/-- info: 'Seed.ble_trans' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_trans
+
+theorem ble_le_add : ∀ a b : Nat, Nat.ble a (a + b) = true
+  | a, 0 => ble_refl a
+  | a, b + 1 =>
+      ble_trans a (a + b) ((a + b) + 1) (ble_le_add a b) (ble_le_succ (a + b))
+
+/-- info: 'Seed.ble_le_add' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_le_add
+
+theorem ble_le_add_left : ∀ a b : Nat, Nat.ble b (a + b) = true
+  | 0, b => by rw [zero_add]; exact ble_refl b
+  | a + 1, b => by
+      rw [succ_adds]
+      exact ble_trans b (a + b) ((a + b) + 1)
+        (ble_le_add_left a b) (ble_le_succ (a + b))
+
+/-- info: 'Seed.ble_le_add_left' does not depend on any axioms -/
+#guard_msgs in #print axioms ble_le_add_left
+
+theorem the_reading_is_positive :
+    ∀ p : Plan, ∃ m : Nat, reading p = m + 1
+  | .ground => ⟨0, rfl⟩
+  | .board l r =>
+      match the_reading_is_positive l with
+      | ⟨a, ha⟩ =>
+          ⟨a + reading r, by
+            show reading l + reading r = (a + reading r) + 1
+            rw [ha, succ_adds]⟩
+
+/-- info: 'Seed.the_reading_is_positive' does not depend on any axioms -/
+#guard_msgs in #print axioms the_reading_is_positive
+
+theorem mem_map_intro {A : Type u} {B : Type v} (f : A → B) :
+    ∀ {x : A} {xs : List A}, x ∈ xs → f x ∈ xs.map f
+  | _, _ :: _, List.Mem.head _ => List.Mem.head _
+  | _, _ :: _, List.Mem.tail _ h => List.Mem.tail _ (mem_map_intro f h)
+
+/-- info: 'Seed.mem_map_intro' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_map_intro
+
+theorem mem_append_left {A : Type u} (ys : List A) :
+    ∀ {x : A} {xs : List A}, x ∈ xs → x ∈ xs ++ ys
+  | _, _ :: _, List.Mem.head _ => List.Mem.head _
+  | _, _ :: _, List.Mem.tail _ h => List.Mem.tail _ (mem_append_left ys h)
+
+/-- info: 'Seed.mem_append_left' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_append_left
+
+theorem mem_append_right {A : Type u} :
+    ∀ (xs : List A) {x : A} {ys : List A}, x ∈ ys → x ∈ xs ++ ys
+  | [], _, _, h => h
+  | _ :: xs, _, _, h => List.Mem.tail _ (mem_append_right xs h)
+
+/-- info: 'Seed.mem_append_right' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_append_right
+
+theorem mem_cross {qs : List Plan} {r : Plan} (hr : r ∈ qs) :
+    ∀ {ps : List Plan} {l : Plan}, l ∈ ps → Plan.board l r ∈ cross ps qs
+  | _ :: ps, _, List.Mem.head _ =>
+      mem_append_left (cross ps qs) (mem_map_intro (Plan.board _) hr)
+  | p :: _, _, List.Mem.tail _ h =>
+      mem_append_right (qs.map (Plan.board p)) (mem_cross hr h)
+
+/-- info: 'Seed.mem_cross' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_cross
+
+theorem the_horizon_holds_every_reading :
+    ∀ (n : Nat) (p : Plan),
+      Nat.ble (reading p) (n + 1) = true → p ∈ allPlans n
+  | 0, .ground, _ => List.Mem.head _
+  | _ + 1, .ground, _ => List.Mem.head _
+  | 0, .board l r, h =>
+      match the_reading_is_positive l, the_reading_is_positive r with
+      | ⟨a, ha⟩, ⟨b, hb⟩ => by
+          have e : (a + 1) + (b + 1) = ((a + b) + 1) + 1 :=
+            congrArg (· + 1) (succ_adds a b)
+          have h0 : Nat.ble (reading l + reading r) 1 = true := h
+          rw [ha, hb, e] at h0
+          exact nomatch h0
+  | n + 1, .board l r, h =>
+      match the_reading_is_positive l, the_reading_is_positive r with
+      | ⟨a, ha⟩, ⟨b, hb⟩ =>
+          have e : (a + 1) + (b + 1) = ((a + b) + 1) + 1 :=
+            congrArg (· + 1) (succ_adds a b)
+          have h' : Nat.ble ((a + b) + 1) (n + 1) = true := by
+            have h0 : Nat.ble (reading l + reading r) ((n + 1) + 1) = true := h
+            rw [ha, hb, e] at h0
+            exact h0
+          have hL : l ∈ allPlans n :=
+            the_horizon_holds_every_reading n l (by
+              rw [ha]
+              exact ble_trans (a + 1) ((a + b) + 1) (n + 1)
+                (ble_le_add a b) h')
+          have hR : r ∈ allPlans n :=
+            the_horizon_holds_every_reading n r (by
+              rw [hb]
+              exact ble_trans (b + 1) ((a + b) + 1) (n + 1)
+                (ble_le_add_left a b) h')
+          List.Mem.tail _ (mem_cross hR hL)
+
+/-- info: 'Seed.the_horizon_holds_every_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_horizon_holds_every_reading
+
 theorem eq_of_beq : ∀ a b : Nat, Nat.beq a b = true → a = b
   | 0, 0, _ => rfl
   | 0, _ + 1, h => nomatch h
   | _ + 1, 0, h => nomatch h
   | a + 1, b + 1, h => congrArg (· + 1) (eq_of_beq a b h)
 
+/-- info: 'Seed.eq_of_beq' does not depend on any axioms -/
+#guard_msgs in #print axioms eq_of_beq
+
 theorem beq_self : ∀ n : Nat, Nat.beq n n = true
   | 0 => rfl
   | n + 1 => beq_self n
 
-theorem ne_true_of_eq_false {x : Bool} (h : x = false) : ¬ x = true :=
-  fun ht => nomatch h.symm.trans ht
+/-- info: 'Seed.beq_self' does not depend on any axioms -/
+#guard_msgs in #print axioms beq_self
 
-theorem mem_of_mem_filter {A : Type} {q : A → Bool} {x : A} :
+theorem mem_of_mem_filter {A : Type u} {q : A → Bool} {x : A} :
     ∀ xs : List A, x ∈ xs.filter q → x ∈ xs
   | [], h => nomatch h
   | a :: xs, h => by
@@ -1262,7 +1516,10 @@ theorem mem_of_mem_filter {A : Type} {q : A → Bool} {x : A} :
           rw [List.filter_cons_of_neg (ne_true_of_eq_false hq)] at h
           exact List.Mem.tail _ (mem_of_mem_filter xs h)
 
-theorem filter_holds {A : Type} {q : A → Bool} {x : A} :
+/-- info: 'Seed.mem_of_mem_filter' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_of_mem_filter
+
+theorem filter_holds {A : Type u} {q : A → Bool} {x : A} :
     ∀ xs : List A, x ∈ xs.filter q → q x = true
   | [], h => nomatch h
   | a :: xs, h => by
@@ -1276,7 +1533,10 @@ theorem filter_holds {A : Type} {q : A → Bool} {x : A} :
           rw [List.filter_cons_of_neg (ne_true_of_eq_false hq)] at h
           exact filter_holds xs h
 
-theorem mem_filter_intro {A : Type} {q : A → Bool} {x : A} :
+/-- info: 'Seed.filter_holds' does not depend on any axioms -/
+#guard_msgs in #print axioms filter_holds
+
+theorem mem_filter_intro {A : Type u} {q : A → Bool} {x : A} :
     ∀ xs : List A, x ∈ xs → q x = true → x ∈ xs.filter q
   | [], h, _ => nomatch h
   | a :: xs, h, hx => by
@@ -1293,7 +1553,10 @@ theorem mem_filter_intro {A : Type} {q : A → Bool} {x : A} :
               rw [List.filter_cons_of_neg (ne_true_of_eq_false hq)]
               exact mem_filter_intro xs h' hx
 
-theorem apart_filter {A : Type} {q : A → Bool} :
+/-- info: 'Seed.mem_filter_intro' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_filter_intro
+
+theorem apart_filter {A : Type u} {q : A → Bool} :
     ∀ {xs : List A}, Apart xs → Apart (xs.filter q)
   | [], _ => Apart.nil
   | a :: xs, Apart.cons ha hxs => by
@@ -1307,19 +1570,20 @@ theorem apart_filter {A : Type} {q : A → Bool} :
           rw [List.filter_cons_of_neg (ne_true_of_eq_false hq)]
           exact apart_filter hxs
 
+/-- info: 'Seed.apart_filter' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_filter
+
 theorem the_census_is_exact (k : Nat) :
-    Apart ((allPlans k).filter
-        (fun p => Nat.beq (fold (fun a b => a + b) 1 p) (k + 1)))
+    Apart ((allPlans k).filter (fun p => Nat.beq (reading p) (k + 1)))
       ∧ ∀ p : Plan,
-          p ∈ (allPlans k).filter
-              (fun p => Nat.beq (fold (fun a b => a + b) 1 p) (k + 1))
-            ↔ fold (fun a b => a + b) 1 p = k + 1 :=
+          p ∈ (allPlans k).filter (fun p => Nat.beq (reading p) (k + 1))
+            ↔ reading p = k + 1 :=
   ⟨apart_filter (the_room_repeats_no_plan k),
    fun p =>
      ⟨fun h =>
         have hq :=
           filter_holds (A := Plan)
-            (q := fun p => Nat.beq (fold (fun a b => a + b) 1 p) (k + 1))
+            (q := fun p => Nat.beq (reading p) (k + 1))
             (x := p) (allPlans k) h
         eq_of_beq _ _ hq,
       fun h =>
@@ -1328,7570 +1592,17 @@ theorem the_census_is_exact (k : Nat) :
             (by rw [h]; exact ble_refl (k + 1)))
           (by rw [h]; exact beq_self (k + 1))⟩⟩
 
-def ride {W : Type} {t : Plan} (s : build W t) :
-    (δ : Plan) → build W (graft t δ)
-  | .ground => s
-  | .board p q => atTheDoor (ride s p) (ride s q)
+/-- info: 'Seed.the_census_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_census_is_exact
 
-theorem the_ground_revision_keeps_the_passenger {W : Type} {t : Plan}
-    (s : build W t) : ride s .ground = s := rfl
-
-theorem the_mirror_is_a_ride {W : Type} (t : Plan) (s : build W t) :
-    ride s (.board .ground .ground) = mirror W t s := rfl
-
-theorem the_passenger_keeps_the_face {W : Type} {t : Plan} (s : build W t) :
-    ∀ δ : Plan, spine W (graft t δ) (ride s δ) = spine W t s
-  | .ground => rfl
-  | .board p _ => the_passenger_keeps_the_face s p
-
-theorem the_passenger_multiplies_the_manifest {W : Type} {t : Plan}
-    (s : build W t) :
-    ∀ δ : Plan, pour (graft t δ) (ride s δ)
-      = fold (fun a b => a ++ b) (pour t s) δ
-  | .ground => rfl
-  | .board p q => by
-      show pour (graft t p) (ride s p) ++ pour (graft t q) (ride s q)
-          = fold (fun a b => a ++ b) (pour t s) p
-            ++ fold (fun a b => a ++ b) (pour t s) q
-      rw [the_passenger_multiplies_the_manifest s p,
-          the_passenger_multiplies_the_manifest s q]
-
-theorem the_rides_compose_at_the_manifest {W : Type} {t : Plan}
-    (s : build W t) (δ₁ δ₂ : Plan) :
-    pour (graft (graft t δ₁) δ₂) (ride (ride s δ₁) δ₂)
-      = pour (graft t (graft δ₁ δ₂)) (ride s (graft δ₁ δ₂)) :=
-  ((the_passenger_multiplies_the_manifest (ride s δ₁) δ₂).trans
-    (congrArg (fun l => fold (fun a b => a ++ b) l δ₂)
-      (the_passenger_multiplies_the_manifest s δ₁))).trans
-    ((the_passenger_multiplies_the_manifest s (graft δ₁ δ₂)).trans
-      (the_parent_folds_into_the_ground (fun a b => a ++ b)
-        (pour t s) δ₁ δ₂)).symm
-
-theorem the_door_carries_the_heq {H H' V V' : Type}
-    (hH : H = H') (hV : V = V') {a : H} {a' : H'} {b : V} {b' : V'}
-    (ha : HEq a a') (hb : HEq b b') :
-    HEq (atTheDoor a b) (atTheDoor a' b') := by
-  cases hH; cases hV; cases ha; cases hb; rfl
-
-theorem the_rides_compose {W : Type} {t : Plan} (s : build W t) :
-    ∀ (δ₂ δ₁ : Plan), HEq (ride (ride s δ₁) δ₂) (ride s (graft δ₁ δ₂))
-  | .ground, δ₁ => HEq.refl (ride s δ₁)
-  | .board p q, δ₁ =>
-      the_door_carries_the_heq
-        (congrArg (build W) (lineages_compose t δ₁ p).symm)
-        (congrArg (build W) (lineages_compose t δ₁ q).symm)
-        (the_rides_compose s p δ₁) (the_rides_compose s q δ₁)
-
-theorem the_lineage_law_settles_the_carrier {W : Type} {t : Plan}
-    (s : build W t) (δ₁ δ₂ : Plan) :
-    cast (congrArg (build W) (lineages_compose t δ₁ δ₂).symm)
-      (ride (ride s δ₁) δ₂)
-      = ride s (graft δ₁ δ₂) :=
-  eq_of_heq ((cast_heq _ _).trans (the_rides_compose s δ₂ δ₁))
-
-theorem two_routes_one_rider {W : Type} {t : Plan} (s : build W t)
-    (δ₁ δ₂ : Plan) :
-    cast (congrArg (build W) (lineages_compose t δ₁ δ₂).symm)
-        (ride (ride s δ₁) δ₂) = ride s (graft δ₁ δ₂)
-      ∧ spine W (graft (graft t δ₁) δ₂) (ride (ride s δ₁) δ₂)
-          = spine W (graft t (graft δ₁ δ₂)) (ride s (graft δ₁ δ₂))
-      ∧ pour (graft (graft t δ₁) δ₂) (ride (ride s δ₁) δ₂)
-          = pour (graft t (graft δ₁ δ₂)) (ride s (graft δ₁ δ₂)) :=
-  ⟨the_lineage_law_settles_the_carrier s δ₁ δ₂,
-   ((the_passenger_keeps_the_face (ride s δ₁) δ₂).trans
-      (the_passenger_keeps_the_face s δ₁)).trans
-     (the_passenger_keeps_the_face s (graft δ₁ δ₂)).symm,
-   the_rides_compose_at_the_manifest s δ₁ δ₂⟩
-
-theorem the_transport_sheds_its_route {A B : Type u} (h h' : A = B)
-    (x : A) : cast h x = cast h' x :=
-  congrArg (fun p => cast p x) (the_route_leaves_no_mark h h')
-
-theorem any_lineage_proof_settles_the_carrier {W : Type} {t : Plan}
-    (s : build W t) (δ₁ δ₂ : Plan)
-    (h : build W (graft (graft t δ₁) δ₂)
-      = build W (graft t (graft δ₁ δ₂))) :
-    cast h (ride (ride s δ₁) δ₂) = ride s (graft δ₁ δ₂) :=
-  (the_transport_sheds_its_route h
-      (congrArg (build W) (lineages_compose t δ₁ δ₂).symm)
-      (ride (ride s δ₁) δ₂)).trans
-    (the_lineage_law_settles_the_carrier s δ₁ δ₂)
-
-theorem the_customs_ride_along {W W' : Type} (f : W → W') {t : Plan}
-    (s : build W t) :
-    ∀ δ : Plan,
-      reground f (graft t δ) (ride s δ) = ride (reground f t s) δ
-  | .ground => rfl
-  | .board p q => by
-      show atTheDoor (reground f (graft t p) (ride s p))
-            (reground f (graft t q) (ride s q))
-          = atTheDoor (ride (reground f t s) p) (ride (reground f t s) q)
-      rw [the_customs_ride_along f s p, the_customs_ride_along f s q]
-
-def journey {W : Type} {t : Plan} (s : build W t) :
-    (qs : List Plan) → build W (worldline t qs)
-  | [] => s
-  | q :: qs => journey (ride s q) qs
-
-theorem the_worldline_resumes (qs qs' : List Plan) (t : Plan) :
-    worldline t (qs ++ qs') = worldline (worldline t qs) qs' :=
-  (((the_worldline_is_a_walk (qs ++ qs') t).trans
-      (the_walk_resumes graft qs qs' t)).trans
-    (congrArg (fun x => walk graft x qs')
-      (the_worldline_is_a_walk qs t)).symm).trans
-    (the_worldline_is_a_walk qs' (worldline t qs)).symm
-
-theorem the_face_survives_the_journey {W : Type} :
-    ∀ (qs : List Plan) {t : Plan} (s : build W t),
-      spine W (worldline t qs) (journey s qs) = spine W t s
-  | [], _, _ => rfl
-  | q :: qs, _, s =>
-      (the_face_survives_the_journey qs (ride s q)).trans
-        (the_passenger_keeps_the_face s q)
-
-theorem the_journey_manifest_settles {W : Type} :
-    ∀ (qs : List Plan) {t : Plan} (s : build W t),
-      pour (worldline t qs) (journey s qs)
-        = epochs (fun a b => a ++ b) (pour t s) qs
-  | [], _, _ => rfl
-  | q :: qs, _, s =>
-      (the_journey_manifest_settles qs (ride s q)).trans
-        (congrArg (fun l => epochs (fun a b => a ++ b) l qs)
-          (the_passenger_multiplies_the_manifest s q))
-
-theorem the_journeys_compose {W : Type} :
-    ∀ (qs qs' : List Plan) {t : Plan} (s : build W t),
-      HEq (journey s (qs ++ qs')) (journey (journey s qs) qs')
-  | [], _, _, s => HEq.refl (journey s _)
-  | q :: qs, qs', _, s => the_journeys_compose qs qs' (ride s q)
-
-theorem the_life_resumes_from_the_parked_rider {W : Type}
-    (qs qs' : List Plan) {t : Plan} (s : build W t) :
-    cast (congrArg (build W) (the_worldline_resumes qs qs' t))
-      (journey s (qs ++ qs'))
-      = journey (journey s qs) qs' :=
-  eq_of_heq ((cast_heq _ _).trans (the_journeys_compose qs qs' s))
-
-theorem the_customs_survive_the_journey {W W' : Type} (f : W → W') :
-    ∀ (qs : List Plan) {t : Plan} (s : build W t),
-      reground f (worldline t qs) (journey s qs)
-        = journey (reground f t s) qs
-  | [], _, _ => rfl
-  | q :: qs, _, s =>
-      (the_customs_survive_the_journey f qs (ride s q)).trans
-        (congrArg (fun x => journey x qs) (the_customs_ride_along f s q))
-
-theorem the_worldline_carries_its_rider {W W' : Type} (f : W → W')
-    (qs qs' : List Plan) {t : Plan} (s : build W t) :
-    spine W (worldline t qs) (journey s qs) = spine W t s
-      ∧ pour (worldline t qs) (journey s qs)
-          = epochs (fun a b => a ++ b) (pour t s) qs
-      ∧ cast (congrArg (build W) (the_worldline_resumes qs qs' t))
-          (journey s (qs ++ qs'))
-          = journey (journey s qs) qs'
-      ∧ reground f (worldline t qs) (journey s qs)
-          = journey (reground f t s) qs :=
-  ⟨the_face_survives_the_journey qs s,
-   the_journey_manifest_settles qs s,
-   the_life_resumes_from_the_parked_rider qs qs' s,
-   the_customs_survive_the_journey f qs s⟩
-
-theorem the_ground_rides_in_every_graft (t : Plan) :
-    ∀ δ : Plan, Nat.ble (fold (fun a b => a + b) 1 t)
-      (fold (fun a b => a + b) 1 (graft t δ)) = true
-  | .ground => ble_refl _
-  | .board p _ =>
-      ble_trans _ _ _ (the_ground_rides_in_every_graft t p) (ble_le_add _ _)
-
-theorem a_true_tick_grows_the_reading (t : Plan) :
-    ∀ {δ : Plan}, δ ≠ Plan.ground →
-      Nat.ble (fold (fun a b => a + b) 1 t + 1)
-        (fold (fun a b => a + b) 1 (graft t δ)) = true
-  | .ground, h => absurd rfl h
-  | .board p q, _ =>
-      match the_reading_is_positive (graft t q) with
-      | ⟨m, hm⟩ =>
-          show Nat.ble (fold (fun a b => a + b) 1 t + 1)
-              (fold (fun a b => a + b) 1 (graft t p)
-                + fold (fun a b => a + b) 1 (graft t q)) = true
-            from ble_add_both (the_ground_rides_in_every_graft t p)
-              (by rw [hm]; exact rfl)
-
-theorem the_worldline_never_comes_home (t : Plan) {δ : Plan}
-    (hδ : δ ≠ Plan.ground) : graft t δ ≠ t :=
-  fun he =>
-    nomatch (ble_gain_false (fold (fun a b => a + b) 1 t) 0).symm.trans
-      ((congrArg
-          (fun x => Nat.ble (fold (fun a b => a + b) 1 t + 1)
-            (fold (fun a b => a + b) 1 x)) he).symm.trans
-        (a_true_tick_grows_the_reading t hδ))
-
-theorem the_arrow_counts_the_ticks (t : Plan) :
-    ∀ qs : List Plan, (∀ q, q ∈ qs → q ≠ Plan.ground) →
-      Nat.ble (fold (fun a b => a + b) 1 t + qs.length)
-        (fold (fun a b => a + b) 1 (worldline t qs)) = true
-  | [], _ => ble_refl _
-  | q :: qs, hng => by
-      show Nat.ble (fold (fun a b => a + b) 1 t + (qs.length + 1))
-          (fold (fun a b => a + b) 1 (worldline (graft t q) qs)) = true
-      rw [show fold (fun a b => a + b) 1 t + (qs.length + 1)
-            = (fold (fun a b => a + b) 1 t + 1) + qs.length from
-          (succ_adds (fold (fun a b => a + b) 1 t) qs.length).symm]
-      exact ble_trans _ _ _
-        (ble_add_right qs.length
-          (a_true_tick_grows_the_reading t (hng q (List.Mem.head _))))
-        (the_arrow_counts_the_ticks (graft t q) qs
-          (fun x hx => hng x (List.Mem.tail _ hx)))
-
-theorem time_wears_no_wheel (t : Plan) (q : Plan) (qs : List Plan)
-    (hq : q ≠ Plan.ground) (hqs : ∀ x, x ∈ q :: qs → x ≠ Plan.ground) :
-    Nat.ble (fold (fun a b => a + b) 1 t + 1)
-        (fold (fun a b => a + b) 1 (graft t q)) = true
-      ∧ graft t q ≠ t
-      ∧ Nat.ble (fold (fun a b => a + b) 1 t + (q :: qs).length)
-          (fold (fun a b => a + b) 1 (worldline t (q :: qs))) = true
-      ∧ worldline t (q :: qs) ≠ t :=
-  ⟨a_true_tick_grows_the_reading t hq,
-   the_worldline_never_comes_home t hq,
-   the_arrow_counts_the_ticks t (q :: qs) hqs,
-   fun he =>
-     nomatch (ble_gain_false (fold (fun a b => a + b) 1 t)
-         qs.length).symm.trans
-       ((congrArg
-           (fun x => Nat.ble
-             (fold (fun a b => a + b) 1 t + (qs.length + 1))
-             (fold (fun a b => a + b) 1 x)) he).symm.trans
-         (the_arrow_counts_the_ticks t (q :: qs) hqs))⟩
-
-def flip : Machine Unit Bool := ⟨Bool, false, fun b _ => !b, fun b => b⟩
-
-theorem the_flip_wheels : ∀ b : Bool, park flip b [(), ()] = b
-  | true => rfl
-  | false => rfl
-
-theorem the_pace_parks_at_its_count :
-    ∀ (w : List Unit) (s : Nat), park paceOne s w = s + w.length
-  | [], _ => rfl
-  | _ :: w, s =>
-      (the_pace_parks_at_its_count w (s + 1)).trans (succ_adds s w.length)
-
-theorem no_gain_is_zero : ∀ a b : Nat, a + (b + 1) = a → False
-  | 0, _, h => nomatch h
-  | a + 1, b, h =>
-      no_gain_is_zero a b (Nat.succ.inj ((succ_adds a (b + 1)).symm.trans h))
-
-theorem the_pace_reads_as_the_flip (w : List Unit) (a : Nat) (b : Bool)
-    (h : oddNat a = b) : drive paceOne a w = drive flip b w :=
-  two_machines_in_step_agree paceOne flip
-    (fun (a : Nat) (b : Bool) => oddNat a = b)
-    (fun _ _ _ h => congrArg (! ·) h)
-    (fun _ _ h => h) w a b h
-
-theorem the_wheel_and_the_arrow_share_a_face (w : List Unit) :
-    behavior paceOne w = behavior flip w
-      ∧ (∀ b : Bool, park flip b [(), ()] = b)
-      ∧ ∀ (v : List Unit) (s : Nat), park paceOne s (() :: v) ≠ s :=
-  ⟨the_pace_reads_as_the_flip w 0 false rfl,
-   the_flip_wheels,
-   fun v s he =>
-     no_gain_is_zero s v.length
-       ((the_pace_parks_at_its_count (() :: v) s).symm.trans he)⟩
-
-theorem seats_forget_stages_remember (t : Plan) {δ : Plan}
-    (hδ : δ ≠ Plan.ground) :
-    (([true, false] ≠ [false, true])
-        ∧ park pulse (0 : Nat) [true, false]
-            = park pulse (0 : Nat) [false, true])
-      ∧ graft t δ ≠ t :=
-  ⟨two_routes_one_seat, the_worldline_never_comes_home t hδ⟩
-
-theorem time_outgrows_every_room (d : Nat) (qs : List Plan)
-    (hng : ∀ q, q ∈ qs → q ≠ Plan.ground)
-    (hlen : Nat.ble (roomCap d) qs.length = true) :
-    ¬ worldline Plan.ground qs ∈ allPlans d := by
-  intro hmem
-  have hcap := the_room_reads_within_its_cap d hmem
-  have harrow : Nat.ble (qs.length + 1)
-      (fold (fun a b => a + b) 1 (worldline Plan.ground qs)) = true := by
-    rw [Nat.add_comm qs.length 1]
-    exact the_arrow_counts_the_ticks Plan.ground qs hng
-  have hcontra : false = true :=
-    (ble_gain_false (roomCap d) 0).symm.trans
-      (ble_trans _ _ _
-        (ble_trans _ _ _ (ble_add_right 1 hlen) harrow) hcap)
-  exact nomatch hcontra
-
-theorem the_learner_never_leaves_its_first_window {I : Type}
-    (m : Machine I Measured)
-    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
-    (s : m.S) (w : List I) {r : Measured}
-    (hr : tighter r (m.out s) = false) : drive m s w ≠ r :=
-  fun he =>
-    ne_true_of_eq_false hr
-      ((congrArg (fun x => tighter x (m.out s)) he).symm.trans
-        (the_learner_only_tightens m hlearn w s))
-
-theorem a_window_may_loosen :
-    tighter (⟨0, 1⟩ : Measured) (⟨0, 0⟩ : Measured) = false := rfl
-
-theorem the_revision_is_not_a_refinement {I : Type} (m : Machine I Measured)
-    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
-    (s : m.S) (w : List I) (t : Plan) {δ : Plan} (hδ : δ ≠ Plan.ground) :
-    (∀ r : Measured, tighter r (m.out s) = false → drive m s w ≠ r)
-      ∧ tighter (⟨0, 1⟩ : Measured) (⟨0, 0⟩ : Measured) = false
-      ∧ Nat.ble (fold (fun a b => a + b) 1 t + 1)
-          (fold (fun a b => a + b) 1 (graft t δ)) = true
-      ∧ graft t δ ≠ t :=
-  ⟨fun _ hr => the_learner_never_leaves_its_first_window m hlearn s w hr,
-   rfl,
-   a_true_tick_grows_the_reading t hδ,
-   the_worldline_never_comes_home t hδ⟩
-
-theorem and_false : ∀ b : Bool, (b && false) = false
-  | true => rfl
-  | false => rfl
-
-theorem the_excluded_stays_excluded {fine coarse : Measured} {x : Nat}
-    (ht : tighter fine coarse = true) (hx : within coarse x = false) :
-    within fine x = false := by
-  cases h : within fine x with
-  | false => rfl
-  | true =>
-      exact absurd (the_refined_reading_still_lands ht h)
-        (ne_true_of_eq_false hx)
-
-theorem the_learner_never_admits_the_excluded {I : Type}
-    (m : Machine I Measured)
-    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
-    (s : m.S) (w : List I) {x : Nat}
-    (hx : within (m.out s) x = false) : within (drive m s w) x = false :=
-  the_excluded_stays_excluded (the_learner_only_tightens m hlearn w s) hx
-
-theorem every_admission_names_its_loosening {I : Type}
-    (m : Machine I Measured) :
-    ∀ (w : List I) (s : m.S) (x : Nat),
-      within (m.out s) x = false → within (drive m s w) x = true →
-      ∃ (w₁ : List I) (i : I) (w₂ : List I),
-        w = w₁ ++ i :: w₂
-          ∧ tighter (m.out (m.step (park m s w₁) i))
-              (m.out (park m s w₁)) = false
-  | [], _, _, hx, hadm => absurd hadm (ne_true_of_eq_false hx)
-  | i :: w, s, x, hx, hadm => by
-      cases ht : tighter (m.out (m.step s i)) (m.out s) with
-      | false => exact ⟨[], i, w, rfl, ht⟩
-      | true =>
-          obtain ⟨w₁, j, w₂, he, hl⟩ :=
-            every_admission_names_its_loosening m w (m.step s i) x
-              (the_excluded_stays_excluded ht hx) hadm
-          exact ⟨i :: w₁, j, w₂, congrArg (i :: ·) he, hl⟩
-
-theorem time_outgrows_every_window (t : Plan) (d : Nat) (qs : List Plan)
-    (hng : ∀ q, q ∈ qs → q ≠ Plan.ground)
-    (hlen : Nat.ble (d + 1) qs.length = true) :
-    within
-      ⟨fold (fun a b => a + b) 1 t, fold (fun a b => a + b) 1 t + d⟩
-      (fold (fun a b => a + b) 1 (worldline t qs)) = false := by
-  have hstep : Nat.ble (fold (fun a b => a + b) 1 t + (d + 1))
-      (fold (fun a b => a + b) 1 t + qs.length) = true :=
-    ble_add_both (ble_refl (fold (fun a b => a + b) 1 t)) hlen
-  have hbig : Nat.ble (fold (fun a b => a + b) 1 t + (d + 1))
-      (fold (fun a b => a + b) 1 (worldline t qs)) = true :=
-    ble_trans _ _ _ hstep (the_arrow_counts_the_ticks t qs hng)
-  show (Nat.ble (fold (fun a b => a + b) 1 t)
-          (fold (fun a b => a + b) 1 (worldline t qs))
-      && Nat.ble (fold (fun a b => a + b) 1 (worldline t qs))
-          (fold (fun a b => a + b) 1 t + d)) = false
-  cases hR : Nat.ble (fold (fun a b => a + b) 1 (worldline t qs))
-      (fold (fun a b => a + b) 1 t + d) with
-  | false => exact and_false _
-  | true =>
-      exact absurd (ble_trans _ _ _ hbig hR)
-        (ne_true_of_eq_false
-          (ble_gain_false (fold (fun a b => a + b) 1 t + d) 0))
-
-theorem the_near_pace_lands_in_the_window (a g e : Nat) :
-    within ⟨a, a + ((g + 1) + e)⟩ (a + (g + 1)) = true :=
-  and_glue (ble_le_add a (g + 1))
-    (by rw [← Nat.add_assoc a (g + 1) e]; exact ble_le_add (a + (g + 1)) e)
-
-theorem the_gap_outruns_every_window (a g d : Nat) :
-    within ⟨(d + 1) * a, (d + 1) * a + d⟩ ((d + 1) * (a + (g + 1))) = false := by
-  have h1 : d + ((d + 1) * g + 1) = (d + 1) * g + (d + 1) :=
-    show (d + (d + 1) * g) + 1 = ((d + 1) * g + d) + 1 from
-      congrArg (· + 1) (Nat.add_comm d ((d + 1) * g))
-  have hsplit : (d + 1) * (a + (g + 1))
-      = ((d + 1) * a + d) + ((d + 1) * g + 1) := by
-    rw [Nat.left_distrib]
-    show (d + 1) * a + ((d + 1) * g + (d + 1))
-        = ((d + 1) * a + d) + ((d + 1) * g + 1)
-    rw [← h1, ← Nat.add_assoc ((d + 1) * a) d ((d + 1) * g + 1)]
-  show (Nat.ble ((d + 1) * a) ((d + 1) * (a + (g + 1)))
-      && Nat.ble ((d + 1) * (a + (g + 1))) ((d + 1) * a + d)) = false
-  rw [hsplit, ble_gain_false ((d + 1) * a + d) ((d + 1) * g)]
-  exact and_false _
-
-theorem the_run_reads_the_gap_the_window_cannot (a g e d : Nat) :
-    within ⟨a, a + ((g + 1) + e)⟩ (a + (g + 1)) = true
-      ∧ within ⟨(d + 1) * a, (d + 1) * a + d⟩
-          ((d + 1) * (a + (g + 1))) = false :=
-  ⟨the_near_pace_lands_in_the_window a g e, the_gap_outruns_every_window a g d⟩
-
-theorem one_tick_two_doors {W : Type} {t : Plan} (s : build W t)
-    {δ : Plan} (hδ : δ ≠ Plan.ground) :
-    spine W (graft t δ) (ride s δ) = spine W t s
-      ∧ face (specView (graft t δ) (ride s δ)) ≠ face (specView t s)
-      ∧ met (specView (graft t δ) (ride s δ)) = ride s δ :=
-  ⟨the_passenger_keeps_the_face s δ,
-   fun he => the_worldline_never_comes_home t hδ he,
-   rfl⟩
-
-theorem ble_succ_false : ∀ n : Nat, Nat.ble (n + 1) n = false :=
-  fun n => ble_gain_false n 0
-
-theorem the_window_misses_its_own_successor (m : Measured) :
-    within m (m.hi + 1) = false := by
-  show (Nat.ble m.lo (m.hi + 1) && Nat.ble (m.hi + 1) m.hi) = false
-  rw [ble_succ_false m.hi]
-  exact and_false _
-
-theorem the_learner_exhibits_its_own_invisible {I : Type}
-    (m : Machine I Measured)
-    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
-    (s : m.S) (w : List I) :
-    within (drive m s w) ((m.out s).hi + 1) = false :=
-  the_learner_never_admits_the_excluded m hlearn s w
-    (the_window_misses_its_own_successor (m.out s))
-
-theorem every_room_builds_its_own_escapee {I A : Type}
-    (m : Machine I Measured)
-    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
-    (s : m.S) (w : List I) (g : A → (A → Bool)) :
-    within (m.out s) ((m.out s).hi + 1) = false
-      ∧ within (drive m s w) ((m.out s).hi + 1) = false
-      ∧ ∃ f : A → Bool, ∀ a, g a ≠ f :=
-  ⟨the_window_misses_its_own_successor (m.out s),
-   the_learner_exhibits_its_own_invisible m hlearn s w,
-   the_readings_outrun_the_room g⟩
-
-theorem three_blindnesses_three_channels {H W X : Type} (h : H)
-    (w w' : W) (g : H → X) (a p e d : Nat) :
-    (g (face (atTheDoor h w)) = g (face (atTheDoor h w'))
-        ∧ met (atTheDoor h w) = w)
-      ∧ (within (⟨0, 1⟩ : Measured) 0 = true
-          ∧ within (⟨0, 1⟩ : Measured) 1 = true
-          ∧ (0 : Nat) ≠ 1
-          ∧ within (⟨0, 0⟩ : Measured) 0 = true
-          ∧ within (⟨0, 0⟩ : Measured) 1 = false)
-      ∧ (within ⟨a, a + ((p + 1) + e)⟩ (a + (p + 1)) = true
-          ∧ within ⟨(d + 1) * a, (d + 1) * a + d⟩
-              ((d + 1) * (a + (p + 1))) = false) :=
-  ⟨⟨rfl, rfl⟩,
-   ⟨rfl, rfl, (fun hn => nomatch hn), rfl, rfl⟩,
-   ⟨the_near_pace_lands_in_the_window a p e,
-    the_gap_outruns_every_window a p d⟩⟩
-
-theorem no_revision_is_the_last_revision (m : Measured) :
-    within m (m.hi + 1) = false
-      ∧ tighter ⟨m.hi + 1, m.hi + 1⟩ m = false
-      ∧ within ⟨m.hi + 1, m.hi + 1⟩ (m.hi + 1) = true
-      ∧ within ⟨m.hi + 1, m.hi + 1⟩ (m.hi + 1 + 1) = false :=
-  ⟨the_window_misses_its_own_successor m,
-   by
-     show (Nat.ble m.lo (m.hi + 1) && Nat.ble (m.hi + 1) m.hi) = false
-     rw [ble_succ_false m.hi]
-     exact and_false _,
-   and_glue (ble_refl (m.hi + 1)) (ble_refl (m.hi + 1)),
-   the_window_misses_its_own_successor ⟨m.hi + 1, m.hi + 1⟩⟩
-
-theorem the_world_outgrows_every_learner {I : Type} (m : Machine I Measured)
-    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
-    (s : m.S) (qs : List Plan)
-    (hng : ∀ q, q ∈ qs → q ≠ Plan.ground)
-    (hlen : Nat.ble ((m.out s).hi + 1) qs.length = true) :
-    ∀ w : List I,
-      within (drive m s w)
-        (fold (fun a b => a + b) 1 (worldline Plan.ground qs)) = false := by
-  intro w
-  apply the_learner_never_admits_the_excluded m hlearn s w
-  have harrow : Nat.ble (1 + qs.length)
-      (fold (fun a b => a + b) 1 (worldline Plan.ground qs)) = true :=
-    the_arrow_counts_the_ticks Plan.ground qs hng
-  have hbig : Nat.ble (1 + ((m.out s).hi + 1))
-      (fold (fun a b => a + b) 1 (worldline Plan.ground qs)) = true :=
-    ble_trans _ _ _ (ble_add_both (ble_refl 1) hlen) harrow
-  show (Nat.ble (m.out s).lo
-          (fold (fun a b => a + b) 1 (worldline Plan.ground qs))
-      && Nat.ble (fold (fun a b => a + b) 1 (worldline Plan.ground qs))
-          (m.out s).hi) = false
-  cases hR : Nat.ble (fold (fun a b => a + b) 1 (worldline Plan.ground qs))
-      (m.out s).hi with
-  | false => exact and_false _
-  | true =>
-      have hconv : (1 : Nat) + ((m.out s).hi + 1)
-          = (m.out s).hi + (1 + 1) :=
-        congrArg (· + 1) (Nat.add_comm 1 (m.out s).hi)
-      have hbad := ble_trans _ _ _ hbig hR
-      rw [hconv] at hbad
-      exact absurd hbad
-        (ne_true_of_eq_false (ble_gain_false (m.out s).hi 1))
-
-theorem many_guests_ride_one_face {H V W X : Type} (h : H)
-    (v v' : V) (w w' : W) (g : H → X) :
-    g (face (atTheDoor h (v, w))) = g (face (atTheDoor h (v', w')))
-      ∧ (v ≠ v' → atTheDoor h (v, w) ≠ atTheDoor h (v', w'))
-      ∧ (w ≠ w' → atTheDoor h (v, w) ≠ atTheDoor h (v, w'))
-      ∧ met (atTheDoor h (v, w)) = (v, w)
-      ∧ (∀ d : door (door H V) W, shallow (deepen d) = d) :=
-  ⟨rfl,
-   fun hv he => hv (congrArg (fun d => (met d).1) he),
-   fun hw he => hw (congrArg (fun d => (met d).2) he),
-   rfl,
-   (hosting_associates (H := H) (W := V) (V := W)).1⟩
-
-theorem the_doors_theorem {H W : Type} (h : H) {w w' : W} (hw : w ≠ w')
-    (m : door H W → door H W) :
-    ((∀ d, face (m d) = face d)
-        ↔ ∃ σ : H → W → W, ∀ d, m d = vertical σ d)
-      ∧ atTheDoor h w ≠ atTheDoor h w'
-      ∧ (∀ (X : Type) (g : H → X),
-          g (face (atTheDoor h w)) = g (face (atTheDoor h w')))
-      ∧ met (atTheDoor h w) ≠ met (atTheDoor h w') :=
-  ⟨an_unheard_move_moves_only_the_guest m, the_threshold h hw⟩
-
-theorem fold_scale : ∀ (x₀ : Nat) (p : Plan),
-    fold (fun a b => a + b) x₀ p = x₀ * fold (fun a b => a + b) 1 p
-  | x₀, .ground => (zero_plus x₀).symm
-  | x₀, .board p q => by
-      show fold (fun a b => a + b) x₀ p + fold (fun a b => a + b) x₀ q
-          = x₀ * (fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q)
-      rw [fold_scale x₀ p, fold_scale x₀ q, Nat.left_distrib]
-
-theorem the_revision_multiplies_the_reading (t δ : Plan) :
-    fold (fun a b => a + b) 1 (graft t δ)
-      = fold (fun a b => a + b) 1 t * fold (fun a b => a + b) 1 δ :=
-  (the_parent_folds_into_the_ground (fun a b => a + b) 1 t δ).trans
-    (fold_scale (fold (fun a b => a + b) 1 t) δ)
-
-theorem the_bloom_is_a_doubling_tick (d : Nat) :
-    bloom (d + 1) = graft (bloom d) (.board .ground .ground) := rfl
-
-theorem mul_regroups : ∀ a b c : Nat, (a * b) * c = a * (b * c)
-  | _, _, 0 => rfl
-  | a, b, c + 1 => by
-      show (a * b) * c + a * b = a * (b * c + b)
-      rw [Nat.left_distrib, mul_regroups a b c]
-
-theorem linear_fold_scale (α β : Nat) : ∀ (x₀ : Nat) (p : Plan),
-    fold (fun a b => α * a + β * b) x₀ p
-      = x₀ * fold (fun a b => α * a + β * b) 1 p
-  | x₀, .ground => (zero_plus x₀).symm
-  | x₀, .board p q => by
-      show α * fold (fun a b => α * a + β * b) x₀ p
-            + β * fold (fun a b => α * a + β * b) x₀ q
-          = x₀ * (α * fold (fun a b => α * a + β * b) 1 p
-            + β * fold (fun a b => α * a + β * b) 1 q)
-      rw [linear_fold_scale α β x₀ p, linear_fold_scale α β x₀ q,
-          Nat.left_distrib,
-          ← mul_regroups α x₀ (fold (fun a b => α * a + β * b) 1 p),
-          ← mul_regroups β x₀ (fold (fun a b => α * a + β * b) 1 q),
-          Nat.mul_comm α x₀, Nat.mul_comm β x₀,
-          mul_regroups x₀ α (fold (fun a b => α * a + β * b) 1 p),
-          mul_regroups x₀ β (fold (fun a b => α * a + β * b) 1 q)]
-
-theorem every_linear_reading_is_deaf_to_the_revision_order
-    (α β : Nat) (t δ : Plan) :
-    fold (fun a b => α * a + β * b) 1 (graft t δ)
-      = fold (fun a b => α * a + β * b) 1 (graft δ t) :=
-  ((the_parent_folds_into_the_ground (fun a b => α * a + β * b) 1 t δ).trans
-      ((linear_fold_scale α β
-          (fold (fun a b => α * a + β * b) 1 t) δ).trans
-        (Nat.mul_comm _ _))).trans
-    ((linear_fold_scale α β
-        (fold (fun a b => α * a + β * b) 1 δ) t).symm.trans
-      (the_parent_folds_into_the_ground
-        (fun a b => α * a + β * b) 1 δ t).symm)
-
-theorem two_lineages_one_reading (t δ : Plan) :
-    (fold (fun a b => a + b) 1 (graft t δ)
-        = fold (fun a b => a + b) 1 (graft δ t))
-      ∧ fold (fun a b => a + b * b) 1
-            (graft (.board .ground .ground)
-              (.board .ground (.board .ground .ground)))
-          ≠ fold (fun a b => a + b * b) 1
-            (graft (.board .ground (.board .ground .ground))
-              (.board .ground .ground))
-      ∧ graft (.board .ground .ground)
-            (.board .ground (.board .ground .ground))
-          ≠ graft (.board .ground (.board .ground .ground))
-            (.board .ground .ground) :=
-  ⟨(the_revision_multiplies_the_reading t δ).trans
-     ((Nat.mul_comm _ _).trans
-       (the_revision_multiplies_the_reading δ t).symm),
-   (fun h =>
-     nomatch (congrArg (Nat.beq 38) h).symm.trans (beq_self 38)),
-   (fun h => nomatch (Plan.board.inj (Plan.board.inj h).1).2)⟩
-
-theorem the_revision_order_hides_past_linearity :
-    (∀ (α β : Nat) (t δ : Plan),
-        fold (fun a b => α * a + β * b) 1 (graft t δ)
-          = fold (fun a b => α * a + β * b) 1 (graft δ t))
-      ∧ fold (fun a b => a + b * b) 1
-            (graft (.board .ground .ground)
-              (.board .ground (.board .ground .ground)))
-          ≠ fold (fun a b => a + b * b) 1
-            (graft (.board .ground (.board .ground .ground))
-              (.board .ground .ground))
-      ∧ graft (.board .ground .ground)
-            (.board .ground (.board .ground .ground))
-          ≠ graft (.board .ground (.board .ground .ground))
-            (.board .ground .ground) :=
-  ⟨every_linear_reading_is_deaf_to_the_revision_order,
-   (two_lineages_one_reading .ground .ground).2.1,
-   (two_lineages_one_reading .ground .ground).2.2⟩
-
-def airGap (I O : Type) : Face :=
-  ⟨Machine I O, List I, O, behavior⟩
-
-def audition {I O : Type} (m : Machine I O) :
-    Interview (List I) O → List O :=
-  sound (airGap I O) m
-
-theorem the_audition_sounds_the_air_gap {I O : Type} (m : Machine I O)
-    (t : Interview (List I) O) :
-    audition m t = sound (airGap I O) m t := rfl
-
-def windowFace : Face :=
-  ⟨Measured, Nat, Bool, within⟩
-
-theorem an_audition_hears_only_the_conduct {I O : Type} (m n : Machine I O)
-    (h : ∀ w, behavior m w = behavior n w) (t : Interview (List I) O) :
-    audition m t = audition n t :=
-  no_interview_parts_the_alike (airGap I O) m n h t
-
-theorem the_organs_share_one_face {H W X I O : Type} (hh : H)
-    (w w' : W) (m : Machine I O) (t : Interview (List I) O)
-    (q : Quiz H X) (d : door H W) :
-    audition m t = sound (airGap I O) m t
-      ∧ interrogate q d = sound (doorFace H W X) d (posed q)
-      ∧ alike (doorFace H W X) (atTheDoor hh w) (atTheDoor hh w')
-      ∧ windowFace.obs = within :=
-  ⟨rfl, the_quiz_was_an_interview d q,
-   the_guests_are_alike_at_the_door hh w w', rfl⟩
-
-theorem the_ground_is_the_only_unit :
-    ∀ p : Plan, fold (fun a b => a + b) 1 p = 1 → p = .ground
-  | .ground, _ => rfl
-  | .board l r, h => by
-      obtain ⟨a, ha⟩ := the_reading_is_positive l
-      obtain ⟨b, hb⟩ := the_reading_is_positive r
-      rw [show fold (fun a b => a + b) 1 (.board l r)
-            = fold (fun a b => a + b) 1 l + fold (fun a b => a + b) 1 r
-          from rfl, ha, hb] at h
-      exact nomatch (succ_adds a b).symm.trans (Nat.succ.inj h)
-
-theorem no_split_grounds (a : Plan) :
-    ∀ p : Plan, graft a p = .ground → a = .ground ∧ p = .ground
-  | .ground, h => ⟨h, rfl⟩
-  | .board _ _, h => nomatch h
-
-theorem a_prime_reading_admits_no_split (p : Plan)
-    (hp : ∀ a b : Nat, a * b = fold (fun x y => x + y) 1 p →
-      a = 1 ∨ b = 1) :
-    ∀ t δ : Plan, graft t δ = p → t = .ground ∨ δ = .ground :=
-  fun t δ he =>
-    match hp (fold (fun x y => x + y) 1 t) (fold (fun x y => x + y) 1 δ)
-        ((the_revision_multiplies_the_reading t δ).symm.trans
-          (congrArg (fold (fun x y => x + y) 1) he)) with
-    | .inl h1 => .inl (the_ground_is_the_only_unit t h1)
-    | .inr h1 => .inr (the_ground_is_the_only_unit δ h1)
-
-theorem an_unsplit_lineage_may_read_composite :
-    (∀ t δ : Plan,
-        graft t δ
-            = .board .ground (.board .ground (.board .ground .ground)) →
-          t = .ground ∨ δ = .ground)
-      ∧ fold (fun a b => a + b) 1
-            (.board .ground (.board .ground (.board .ground .ground)))
-          = 2 * 2 :=
-  ⟨fun t δ he =>
-     match δ, he with
-     | .ground, _ => .inr rfl
-     | .board p _, he =>
-         .inl (no_split_grounds t p (Plan.board.inj he).1).1,
-   rfl⟩
-
-def host (F : Face) (W : Type) : Face :=
-  ⟨F.State × W, F.Probe, F.Ans, fun s p => F.obs s.1 p⟩
-
-def widen (F : Face) (W : Type) : Face :=
-  ⟨F.State × W, fork F.Probe Unit, fork F.Ans W,
-   fun s => greet (fun p => viaLeft (F.obs s.1 p)) (fun _ => viaRight s.2)⟩
-
-theorem every_face_opens_as_a_door (F : Face) {W : Type} (s : F.State)
-    {w w' : W} (hw : w ≠ w') :
-    alike (host F W) (s, w) (s, w')
-      ∧ (∀ q : Interview F.Probe F.Ans,
-          sound (host F W) (s, w) q = sound (host F W) (s, w') q)
-      ∧ (s, w) ≠ (s, w')
-      ∧ (widen F W).obs (s, w) (viaRight ())
-          ≠ (widen F W).obs (s, w') (viaRight ()) :=
-  ⟨fun _ => rfl,
-   fun q =>
-     no_interview_parts_the_alike (host F W) (s, w) (s, w')
-       (fun _ => rfl) q,
-   (fun he => hw (congrArg Prod.snd he)),
-   (fun he => hw (Sum.inr.inj he))⟩
-
-theorem the_widened_face_reads_the_remainder (F : Face) {W : Type} :
-    (∀ s t : F.State × W, alike (widen F W) s t → alike (host F W) s t)
-      ∧ (∀ (s : F.State) (w w' : W), alike (host F W) (s, w) (s, w'))
-      ∧ ∀ (s : F.State) (w w' : W), w ≠ w' →
-          ¬ alike (widen F W) (s, w) (s, w') :=
-  ⟨fun _ _ hal p => Sum.inl.inj (hal (viaLeft p)),
-   fun _ _ _ _ => rfl,
-   fun _ _ _ hw hal => hw (Sum.inr.inj (hal (viaRight ())))⟩
-
-def sharpen (F : Face) {X : Type} (r : F.State → X) : Face :=
-  ⟨F.State, fork F.Probe Unit, fork F.Ans X,
-   fun s => greet (fun p => viaLeft (F.obs s p)) (fun _ => viaRight (r s))⟩
-
-theorem every_reading_sharpens_the_face (F : Face) {X : Type}
-    (r : F.State → X) (s t : F.State) :
-    (alike (sharpen F r) s t → alike F s t)
-      ∧ (sharpen F r).obs s (viaRight ()) = viaRight (r s)
-      ∧ (r s ≠ r t → ¬ alike (sharpen F r) s t)
-      ∧ ∀ (G : Face) (W : Type),
-          widen G W = sharpen (host G W) (fun x => x.2) :=
-  ⟨fun hal p => Sum.inl.inj (hal (viaLeft p)),
-   rfl,
-   (fun hr hal => hr (Sum.inr.inj (hal (viaRight ())))),
-   fun _ _ => rfl⟩
-
-def appFace (A B : Type) : Face :=
-  ⟨A → B, A, B, fun f a => f a⟩
-
-theorem pointwise_is_the_application_faces_alike {A B : Type}
-    (f g : A → B) : alike (appFace A B) f g ↔ ∀ a, f a = g a :=
-  Iff.rfl
-
-theorem the_pointwise_license {A B : Type} (f g : A → B)
-    (h : ∀ a, f a = g a) {W : Type} (w w' : W) :
-    (∀ q : Interview A B,
-        sound (appFace A B) f q = sound (appFace A B) g q)
-      ∧ alike (host (appFace A B) W) (f, w) (g, w')
-      ∧ (w ≠ w' → (f, w) ≠ (g, w'))
-      ∧ (widen (appFace A B) W).obs (f, w) (viaRight ()) = viaRight w :=
-  ⟨fun q => no_interview_parts_the_alike (appFace A B) f g h q,
-   fun p => h p,
-   (fun hw he => hw (congrArg Prod.snd he)),
-   rfl⟩
-
-def grower : Machine Plan Nat :=
-  ⟨Plan, .ground, graft, fold (fun a b => a + b) 1⟩
-
-def teller : Machine Plan Nat :=
-  ⟨Nat, 1, fun n δ => n * fold (fun a b => a + b) 1 δ, fun n => n⟩
-
-theorem the_teller_walks_in_step (w : List Plan) (t : Plan) (n : Nat)
-    (h : fold (fun a b => a + b) 1 t = n) :
-    drive grower t w = drive teller n w :=
-  two_machines_in_step_agree grower teller
-    (fun (t : Plan) (n : Nat) => fold (fun a b => a + b) 1 t = n)
-    (fun s _ δ hs =>
-      (the_revision_multiplies_the_reading s δ).trans
-        (congrArg (· * fold (fun a b => a + b) 1 δ) hs))
-    (fun _ _ hs => hs) w t n h
-
-theorem the_audition_cannot_tell_the_tree_from_its_count :
-    alike (airGap Plan Nat) grower teller
-      ∧ (∀ q : Interview (List Plan) Nat,
-          audition grower q = audition teller q)
-      ∧ (∀ w : List Plan,
-          (fold (fun a b => a + b) 1 (park grower (Plan.ground) w) : Nat)
-            = park teller ((1 : Nat)) w)
-      ∧ park grower (Plan.ground)
-            [.board .ground .ground,
-             .board .ground (.board .ground .ground)]
-          ≠ park grower (Plan.ground)
-            [.board .ground (.board .ground .ground),
-             .board .ground .ground]
-      ∧ park teller ((1 : Nat))
-            [.board .ground .ground,
-             .board .ground (.board .ground .ground)]
-          = park teller ((1 : Nat))
-            [.board .ground (.board .ground .ground),
-             .board .ground .ground] :=
-  ⟨fun w => the_teller_walks_in_step w .ground 1 rfl,
-   fun q =>
-     an_audition_hears_only_the_conduct grower teller
-       (fun w => the_teller_walks_in_step w .ground 1 rfl) q,
-   fun w =>
-     ((congrArg (fold (fun a b => a + b) 1)
-         (the_park_is_a_walk grower w (Plan.ground))).trans
-       (a_reading_in_step_carries_the_walk (T := Nat) graft teller.step
-         (fold (fun a b => a + b) 1)
-         (fun s δ => the_revision_multiplies_the_reading s δ)
-         w .ground)).trans
-     (the_park_is_a_walk teller w ((1 : Nat))).symm,
-   (two_lineages_one_reading .ground .ground).2.2,
-   rfl⟩
-
-theorem the_handshake :
-    (∀ (F : Face) (s t : F.State), alike F s t →
-        ∀ q : Interview F.Probe F.Ans, sound F s q = sound F t q)
-      ∧ (∀ (H W X : Type) (h : H) (w w' : W), w ≠ w' →
-          alike (doorFace H W X) (atTheDoor h w) (atTheDoor h w')
-            ∧ atTheDoor h w ≠ atTheDoor h w'
-            ∧ met (atTheDoor h w) ≠ met (atTheDoor h w'))
-      ∧ (alike (airGap Unit Bool) paceOne paceThree
-          ∧ paceOne.step (0 : Nat) () ≠ paceThree.step (0 : Nat) ()) :=
-  ⟨fun F s t h q => no_interview_parts_the_alike F s t h q,
-   fun _ _ _ h _ _ hw =>
-     ⟨the_guests_are_alike_at_the_door h _ _,
-      the_guest_is_real h hw, hw⟩,
-   ⟨fun w => the_paces_agree w 0 0 rfl,
-    fun h => nomatch Nat.succ.inj h⟩⟩
-
-theorem the_audition_is_blind :
-    (∀ (I O : Type) (m n : Machine I O),
-        (∀ w, behavior m w = behavior n w) →
-        ∀ t : Interview (List I) O, audition m t = audition n t)
-      ∧ (∀ t : Interview (List Unit) Bool,
-          audition paceOne t = audition paceThree t)
-      ∧ paceOne.step (0 : Nat) () ≠ paceThree.step (0 : Nat) ()
-      ∧ audition flip (.ask [] (fun _ => .rest))
-          ≠ audition restingCounter (.ask [] (fun _ => .rest)) :=
-  ⟨fun _ _ m n h t => an_audition_hears_only_the_conduct m n h t,
-   fun t =>
-     an_audition_hears_only_the_conduct paceOne paceThree
-       (fun w => the_paces_agree w 0 0 rfl) t,
-   (fun h => nomatch Nat.succ.inj h),
-   (fun h => nomatch (List.cons.inj h).1)⟩
-
-theorem the_interview_never_leaves_the_first_window {I : Type}
-    (m : Machine I Measured)
-    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true) :
-    ∀ (t : Interview (List I) Measured) (r : Measured), r ∈ audition m t →
-      tighter r (m.out m.s0) = true
-  | .rest, _, hr => by cases hr
-  | .ask w k, r, hr => by
-      cases hr with
-      | head => exact the_learner_only_tightens m hlearn w m.s0
-      | tail _ hr' =>
-          exact the_interview_never_leaves_the_first_window m hlearn
-            (k (behavior m w)) r hr'
-
-theorem no_interview_hears_the_excluded {I : Type}
-    (m : Machine I Measured)
-    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
-    (t : Interview (List I) Measured) (r : Measured)
-    (hr : r ∈ audition m t)
-    {x : Nat} (hx : within (m.out m.s0) x = false) :
-    within r x = false :=
-  the_excluded_stays_excluded
-    (the_interview_never_leaves_the_first_window m hlearn t r hr) hx
-
-theorem the_cage_is_audible_through_the_curtain {I : Type}
-    (m : Machine I Measured)
-    (hlearn : ∀ s i, tighter (m.out (m.step s i)) (m.out s) = true)
-    (t : Interview (List I) Measured) (r : Measured)
-    (hr : r ∈ audition m t) :
-    tighter r (m.out m.s0) = true
-      ∧ (∀ x : Nat, within (m.out m.s0) x = false → within r x = false)
-      ∧ within r ((m.out m.s0).hi + 1) = false :=
-  ⟨the_interview_never_leaves_the_first_window m hlearn t r hr,
-   fun _ hx => no_interview_hears_the_excluded m hlearn t r hr hx,
-   no_interview_hears_the_excluded m hlearn t r hr
-     (the_window_misses_its_own_successor (m.out m.s0))⟩
-
-theorem take_append {A : Type} :
-    ∀ (xs ys : List A), (xs ++ ys).take xs.length = xs
-  | [], _ => rfl
-  | x :: xs, ys => congrArg (x :: ·) (take_append xs ys)
-
-theorem drop_append {A : Type} :
-    ∀ (xs ys : List A), (xs ++ ys).drop xs.length = ys
-  | [], _ => rfl
-  | _ :: xs, ys => drop_append xs ys
-
-theorem take_drop {A : Type} :
-    ∀ (n : Nat) (l : List A), l.take n ++ l.drop n = l
-  | 0, _ => rfl
-  | _ + 1, [] => rfl
-  | n + 1, a :: l => congrArg (a :: ·) (take_drop n l)
-
-theorem take_length {A : Type} :
-    ∀ (n : Nat) (l : List A) {m : Nat},
-      l.length = n + m → (l.take n).length = n
-  | 0, _, _, _ => rfl
-  | n + 1, [], _, h => by
-      rw [succ_adds] at h
-      exact nomatch h
-  | n + 1, _ :: l, _, h => by
-      rw [succ_adds] at h
-      exact congrArg (· + 1) (take_length n l (Nat.succ.inj h))
-
-theorem drop_length {A : Type} :
-    ∀ (n : Nat) (l : List A) {m : Nat},
-      l.length = n + m → (l.drop n).length = m
-  | 0, _, m, h => h.trans (zero_plus m)
-  | n + 1, [], _, h => by
-      rw [succ_adds] at h
-      exact nomatch h
-  | n + 1, _ :: l, _, h => by
-      rw [succ_adds] at h
-      exact drop_length n l (Nat.succ.inj h)
-
-def reboard {W : Type} (w0 : W) : (p : Plan) → List W → build W p
-  | .ground, [] => w0
-  | .ground, x :: _ => x
-  | .board p q, l =>
-      atTheDoor (reboard w0 p (l.take (fold (fun a b => a + b) 1 p)))
-        (reboard w0 q (l.drop (fold (fun a b => a + b) 1 p)))
-
-theorem the_manifest_rebuilds_the_carrier {W : Type} (w0 : W) :
-    ∀ (p : Plan) (s : build W p), reboard w0 p (pour p s) = s
-  | .ground, _ => rfl
-  | .board p q, d => by
-      show atTheDoor
-          (reboard w0 p ((pour p (face d) ++ pour q (met d)).take
-            (fold (fun a b => a + b) 1 p)))
-          (reboard w0 q ((pour p (face d) ++ pour q (met d)).drop
-            (fold (fun a b => a + b) 1 p)))
-        = d
-      rw [← the_manifest_counts_the_guests p (face d),
-          take_append, drop_append,
-          the_manifest_rebuilds_the_carrier w0 p (face d),
-          the_manifest_rebuilds_the_carrier w0 q (met d)]
-      exact rfl
-
-theorem one_manifest_one_carrier {W : Type} {p : Plan} {s t : build W p}
-    (h : pour p s = pour p t) : s = t :=
-  (the_manifest_rebuilds_the_carrier (spine W p s) p s).symm.trans
-    ((congrArg (reboard (spine W p s) p) h).trans
-      (the_manifest_rebuilds_the_carrier (spine W p s) p t))
-
-theorem the_carrier_rebuilds_the_manifest {W : Type} (w0 : W) :
-    ∀ (p : Plan) (l : List W),
-      l.length = fold (fun a b => a + b) 1 p →
-        pour p (reboard w0 p l) = l
-  | .ground, [], h => nomatch h
-  | .ground, _ :: [], _ => rfl
-  | .ground, _ :: _ :: _, h => nomatch (Nat.succ.inj h)
-  | .board p q, l, h => by
-      show pour p (reboard w0 p (l.take (fold (fun a b => a + b) 1 p)))
-            ++ pour q (reboard w0 q (l.drop (fold (fun a b => a + b) 1 p)))
-          = l
-      rw [the_carrier_rebuilds_the_manifest w0 p
-            (l.take (fold (fun a b => a + b) 1 p))
-            (take_length (fold (fun a b => a + b) 1 p) l
-              (m := fold (fun a b => a + b) 1 q) h),
-          the_carrier_rebuilds_the_manifest w0 q
-            (l.drop (fold (fun a b => a + b) 1 p))
-            (drop_length (fold (fun a b => a + b) 1 p) l
-              (m := fold (fun a b => a + b) 1 q) h),
-          take_drop]
-
-theorem the_carrier_is_its_manifest {W : Type} (w0 : W) (p : Plan)
-    (s t : build W p) (l : List W)
-    (hl : l.length = fold (fun a b => a + b) 1 p) :
-    (pour p s).length = fold (fun a b => a + b) 1 p
-      ∧ reboard w0 p (pour p s) = s
-      ∧ (pour p s = pour p t → s = t)
-      ∧ pour p (reboard w0 p l) = l :=
-  ⟨the_manifest_counts_the_guests p s,
-   the_manifest_rebuilds_the_carrier w0 p s,
-   fun h => one_manifest_one_carrier h,
-   the_carrier_rebuilds_the_manifest w0 p l hl⟩
-
-theorem the_transport_moves_no_guest {W : Type} {p p' : Plan} (h : p = p')
-    (s : build W p) :
-    pour p' (cast (congrArg (build W) h) s) = pour p s := by
-  cases h
-  rfl
-
-theorem any_transport_moves_no_guest {W : Type} {p p' : Plan} (h : p = p')
-    (e : build W p = build W p') (s : build W p) :
-    pour p' (cast e s) = pour p s :=
-  (congrArg (pour p')
-      (the_transport_sheds_its_route e (congrArg (build W) h) s)).trans
-    (the_transport_moves_no_guest h s)
-
-theorem the_border_reads_only_the_manifest {W : Type} {p p' : Plan}
-    (h : p = p') (s : build W p) (t : build W p') :
-    cast (congrArg (build W) h) s = t ↔ pour p s = pour p' t :=
-  ⟨fun he =>
-     (the_transport_moves_no_guest h s).symm.trans (congrArg (pour p') he),
-   fun hm =>
-     one_manifest_one_carrier
-       ((the_transport_moves_no_guest h s).trans hm)⟩
-
-theorem transport_is_gauge_at_the_manifest {W : Type} {p p' : Plan}
-    (h : p = p') (e : build W p = build W p') (s : build W p)
-    (t : build W p') {t0 : Plan} (s0 : build W t0) (δ₁ δ₂ : Plan) :
-    pour p' (cast (congrArg (build W) h) s) = pour p s
-      ∧ pour p' (cast e s) = pour p s
-      ∧ (cast (congrArg (build W) h) s = t ↔ pour p s = pour p' t)
-      ∧ cast (congrArg (build W) (lineages_compose t0 δ₁ δ₂).symm)
-            (ride (ride s0 δ₁) δ₂)
-          = ride s0 (graft δ₁ δ₂) :=
-  ⟨the_transport_moves_no_guest h s,
-   any_transport_moves_no_guest h e s,
-   the_border_reads_only_the_manifest h s t,
-   (the_border_reads_only_the_manifest (lineages_compose t0 δ₁ δ₂).symm
-       (ride (ride s0 δ₁) δ₂) (ride s0 (graft δ₁ δ₂))).mpr
-     (the_rides_compose_at_the_manifest s0 δ₁ δ₂)⟩
-
-theorem len_map {A B : Type} (f : A → B) :
-    ∀ l : List A, (l.map f).length = l.length
-  | [] => rfl
-  | _ :: l => congrArg (· + 1) (len_map f l)
-
-theorem the_default_goes_unused {W : Type} (w0 w1 : W) (p : Plan)
-    (l : List W) (h : l.length = fold (fun a b => a + b) 1 p) :
-    reboard w0 p l = reboard w1 p l :=
-  one_manifest_one_carrier
-    ((the_carrier_rebuilds_the_manifest w0 p l h).trans
-      (the_carrier_rebuilds_the_manifest w1 p l h).symm)
-
-theorem the_spine_boards_first {W : Type} :
-    ∀ (p : Plan) (s : build W p),
-      ∃ rest : List W, pour p s = spine W p s :: rest
-  | .ground, _ => ⟨[], rfl⟩
-  | .board p q, d =>
-      match the_spine_boards_first p (face d) with
-      | ⟨rest, hr⟩ =>
-          ⟨rest ++ pour q (met d), by
-            show pour p (face d) ++ pour q (met d)
-                = spine W p (face d) :: (rest ++ pour q (met d))
-            rw [hr]
-            exact rfl⟩
-
-theorem the_customs_are_a_conjugated_map {W W' : Type} (f : W → W')
-    (w0 : W') (p : Plan) (s : build W p) :
-    reground f p s = reboard w0 p ((pour p s).map f) :=
-  one_manifest_one_carrier
-    ((the_customs_thread_the_manifest f p s).trans
-      (the_carrier_rebuilds_the_manifest w0 p ((pour p s).map f)
-        ((len_map f (pour p s)).trans
-          (the_manifest_counts_the_guests p s))).symm)
-
-theorem the_hands_conjugate_the_customs {W W' : Type} (f : W → W')
-    (w0 : W') (v0 v1 : W) (p : Plan) (s : build W p) (l : List W)
-    (hl : l.length = fold (fun a b => a + b) 1 p) :
-    (∃ rest : List W, pour p s = spine W p s :: rest)
-      ∧ reboard v0 p l = reboard v1 p l
-      ∧ pour p (reground f p s) = (pour p s).map f
-      ∧ reground f p s = reboard w0 p ((pour p s).map f) :=
-  ⟨the_spine_boards_first p s,
-   the_default_goes_unused v0 v1 p l hl,
-   the_customs_thread_the_manifest f p s,
-   the_customs_are_a_conjugated_map f w0 p s⟩
-
-theorem the_manifest_settles_the_carrier {W : Type} (w0 : W)
-    {p : Plan} {s : build W p} {l : List W} (h : pour p s = l) :
-    s = reboard w0 p l :=
-  (the_manifest_rebuilds_the_carrier w0 p s).symm.trans
-    (congrArg (reboard w0 p) h)
-
-theorem the_ride_is_a_conjugated_fold {W : Type} (w0 : W) {t : Plan}
-    (s : build W t) (δ : Plan) :
-    ride s δ = reboard w0 (graft t δ)
-        (fold (fun a b => a ++ b) (pour t s) δ) :=
-  the_manifest_settles_the_carrier w0
-    (the_passenger_multiplies_the_manifest s δ)
-
-theorem the_journey_is_a_conjugated_epoch {W : Type} (w0 : W)
-    (qs : List Plan) {t : Plan} (s : build W t) :
-    journey s qs = reboard w0 (worldline t qs)
-        (epochs (fun a b => a ++ b) (pour t s) qs) :=
-  the_manifest_settles_the_carrier w0 (the_journey_manifest_settles qs s)
-
-theorem the_mirror_is_a_conjugated_doubling {W : Type} (w0 : W) (p : Plan)
-    (s : build W p) :
-    mirror W p s = reboard w0 (.board p p) (pour p s ++ pour p s) :=
-  the_manifest_settles_the_carrier w0 (the_mirror_doubles_the_manifest p s)
-
-theorem the_calculus_rides_the_hands {W W' : Type} (f : W → W')
-    (w0 : W) (w0' : W') {p : Plan} (s : build W p) (δ : Plan)
-    (qs : List Plan) {l : List W} (h : pour p s = l) :
-    s = reboard w0 p l
-      ∧ reground f p s = reboard w0' p ((pour p s).map f)
-      ∧ ride s δ = reboard w0 (graft p δ)
-          (fold (fun a b => a ++ b) (pour p s) δ)
-      ∧ journey s qs = reboard w0 (worldline p qs)
-          (epochs (fun a b => a ++ b) (pour p s) qs)
-      ∧ mirror W p s = reboard w0 (.board p p) (pour p s ++ pour p s) :=
-  ⟨the_manifest_settles_the_carrier w0 h,
-   the_customs_are_a_conjugated_map f w0' p s,
-   the_ride_is_a_conjugated_fold w0 s δ,
-   the_journey_is_a_conjugated_epoch w0 qs s,
-   the_mirror_is_a_conjugated_doubling w0 p s⟩
-
-def comb : Nat → Plan
-  | 0 => .ground
-  | n + 1 => .board .ground (comb n)
-
-theorem the_comb_reads_its_length :
-    ∀ n : Nat, fold (fun a b => a + b) 1 (comb n) = n + 1
-  | 0 => rfl
-  | n + 1 => by
-      show 1 + fold (fun a b => a + b) 1 (comb n) = (n + 1) + 1
-      rw [the_comb_reads_its_length n]
-      exact Nat.add_comm 1 (n + 1)
-
-theorem the_comb_is_a_corridor_of_doors (W : Type) (n : Nat) :
-    build W (comb (n + 1)) = door W (build W (comb n)) := rfl
-
-theorem the_cons_was_a_door {W : Type} (w : W) (n : Nat)
-    (s : build W (comb n)) :
-    pour (comb (n + 1)) (atTheDoor w s) = w :: pour (comb n) s := rfl
-
-def replan {W : Type} (w0 : W) (p q : Plan) (s : build W p) : build W q :=
-  reboard w0 q (pour p s)
-
-theorem the_replanning_moves_no_guest {W : Type} (w0 : W) {p q : Plan}
-    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
-    (s : build W p) :
-    pour q (replan w0 p q s) = pour p s :=
-  the_carrier_rebuilds_the_manifest w0 q (pour p s)
-    ((the_manifest_counts_the_guests p s).trans h.symm)
-
-theorem the_replanning_returns {W : Type} (w0 : W) {p q : Plan}
-    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
-    (s : build W p) :
-    replan w0 q p (replan w0 p q s) = s :=
-  (congrArg (reboard w0 p) (the_replanning_moves_no_guest w0 h s)).trans
-    (the_manifest_rebuilds_the_carrier w0 p s)
-
-theorem the_word_is_a_corridor_of_doors {W : Type} (w0 w1 : W) (n : Nat)
-    {p : Plan} (hp : fold (fun a b => a + b) 1 p = n + 1)
-    (s : build W p) (t : build W (comb n)) :
-    fold (fun a b => a + b) 1 (comb n) = n + 1
-      ∧ build W (comb (n + 1)) = door W (build W (comb n))
-      ∧ pour (comb (n + 1)) (atTheDoor w1 t) = w1 :: pour (comb n) t
-      ∧ pour (comb n) (replan w0 p (comb n) s) = pour p s
-      ∧ replan w0 (comb n) p (replan w0 p (comb n) s) = s :=
-  ⟨the_comb_reads_its_length n,
-   the_comb_is_a_corridor_of_doors W n,
-   the_cons_was_a_door w1 n t,
-   the_replanning_moves_no_guest w0
-     ((the_comb_reads_its_length n).trans hp.symm) s,
-   the_replanning_returns w0
-     ((the_comb_reads_its_length n).trans hp.symm) s⟩
-
-theorem the_shape_is_the_remainder_of_the_cargo {W : Type} (w0 : W)
-    {p q : Plan}
-    (hr : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
-    (hpq : p ≠ q) (s : build W p) :
-    pour q (replan w0 p q s) = pour p s
-      ∧ face (specView p s) ≠ face (specView q (replan w0 p q s))
-      ∧ met (specView q (replan w0 p q s)) = replan w0 p q s :=
-  ⟨the_replanning_moves_no_guest w0 hr s,
-   fun he => hpq he,
-   rfl⟩
-
-theorem the_replanning_runs_the_handshake {W : Type} (w0 : W)
-    (s : build W (.board (.board .ground .ground) .ground)) :
-    (Plan.board (.board .ground .ground) .ground ≠ comb 2)
-      ∧ fold (fun a b => a + b) 1 (.board (.board .ground .ground) .ground)
-          = fold (fun a b => a + b) 1 (comb 2)
-      ∧ pour (comb 2)
-            (replan w0 (.board (.board .ground .ground) .ground) (comb 2) s)
-          = pour (.board (.board .ground .ground) .ground) s
-      ∧ face (specView (.board (.board .ground .ground) .ground) s)
-          ≠ face (specView (comb 2)
-              (replan w0 (.board (.board .ground .ground) .ground)
-                (comb 2) s)) :=
-  ⟨(fun h => nomatch (Plan.board.inj h).1),
-   rfl,
-   the_replanning_moves_no_guest w0 rfl s,
-   (fun h => nomatch (Plan.board.inj h).1)⟩
-
-def onPlan {W I O : Type} (p : Plan) (s0 : build W p)
-    (step : build W p → I → build W p) (out : build W p → O) :
-    Machine I O :=
-  ⟨build W p, s0, step, out⟩
-
-def onWords {W I O : Type} (w0 : W) (p : Plan)
-    (step : build W p → I → build W p) (out : build W p → O)
-    (s0 : build W p) : Machine I O :=
-  ⟨List W, pour p s0,
-   fun l i => pour p (step (reboard w0 p l) i),
-   fun l => out (reboard w0 p l)⟩
-
-theorem the_words_walk_in_step {W I O : Type} (w0 : W) (p : Plan)
-    (s0 : build W p) (step : build W p → I → build W p)
-    (out : build W p → O) (w : List I) :
-    behavior (onPlan p s0 step out)
-      w = behavior (onWords w0 p step out s0) w :=
-  two_machines_in_step_agree (onPlan p s0 step out)
-    (onWords w0 p step out s0)
-    (fun (s : build W p) (l : List W) => l = pour p s)
-    (fun s l i hl => by
-      show pour p (step (reboard w0 p l) i) = pour p (step s i)
-      rw [hl, the_manifest_rebuilds_the_carrier])
-    (fun s l hl => by
-      show out s = out (reboard w0 p l)
-      rw [hl, the_manifest_rebuilds_the_carrier])
-    w s0 (pour p s0) rfl
-
-theorem the_pour_is_never_empty {W : Type} (p : Plan) (s : build W p) :
-    pour p s ≠ [] :=
-  fun h =>
-    match the_reading_is_positive p with
-    | ⟨_, hm⟩ =>
-        nomatch ((congrArg List.length h).symm.trans
-          ((the_manifest_counts_the_guests p s).trans hm))
-
-theorem the_audition_cannot_tell_the_carrier_from_its_word
-    {W I O : Type} (w0 : W) (p : Plan) (s0 : build W p)
-    (step : build W p → I → build W p) (out : build W p → O)
-    (s : build W p) :
-    (∀ w : List I,
-        behavior (onPlan p s0 step out) w
-          = behavior (onWords w0 p step out s0) w)
-      ∧ (∀ t : Interview (List I) O,
-          audition (onPlan p s0 step out) t
-            = audition (onWords w0 p step out s0) t)
-      ∧ pour p s ≠ ([] : List W) :=
-  ⟨fun w => the_words_walk_in_step w0 p s0 step out w,
-   fun t =>
-     an_audition_hears_only_the_conduct (onPlan p s0 step out)
-       (onWords w0 p step out s0)
-       (fun w => the_words_walk_in_step w0 p s0 step out w) t,
-   the_pour_is_never_empty p s⟩
-
-theorem the_vestibule_drains_in_one_click {W I O : Type} (w0 : W)
-    (p : Plan) (s0 : build W p) (step : build W p → I → build W p)
-    (out : build W p → O) (l : List W) (i : I) (s : build W p) :
-    (onWords w0 p step out s0).step l i
-        = pour p (step (reboard w0 p l) i)
-      ∧ ((onWords w0 p step out s0).step l i).length
-          = fold (fun a b => a + b) 1 p
-      ∧ (onWords w0 p step out s0).step (pour p s) i
-          = pour p (step s i) :=
-  ⟨rfl,
-   the_manifest_counts_the_guests p (step (reboard w0 p l) i),
-   congrArg (fun x => pour p (step x i))
-     (the_manifest_rebuilds_the_carrier w0 p s)⟩
-
-def holdOpen {H W X : Type} (f : door H W → X) (h : H) : W → X :=
-  fun w => f (atTheDoor h w)
-
-def walkIn {H W X : Type} (g : H → W → X) (d : door H W) : X :=
-  g (face d) (met d)
-
-def handlers {H W X : Type} (f : fork H W → X) : door (H → X) (W → X) :=
-  atTheDoor (fun h => f (viaLeft h)) (fun w => f (viaRight w))
-
-theorem the_held_door_answers_every_guest {H W X : Type}
-    (f : door H W → X) (h : H) (w : W) :
-    holdOpen f h w = f (atTheDoor h w) := rfl
-
-theorem the_two_strokes_read_one_meeting {H W X : Type}
-    (g : H → W → X) (d : door H W) :
-    walkIn g d = g (face d) (met d) := rfl
-
-theorem the_deferral_is_free {H W X : Type}
-    (f : door H W → X) (g : H → W → X) :
-    walkIn (holdOpen f) = f ∧ holdOpen (walkIn g) = g :=
-  ⟨rfl, rfl⟩
-
-theorem the_guest_mover_was_a_held_reading {H W : Type}
-    (σ : H → W → W) (d : door H W) :
-    vertical σ d = atTheDoor (face d) (walkIn σ d) := rfl
-
-theorem the_readings_trade_the_entrances {H W X : Type}
-    (f : fork H W → X) (gl : H → X) (gr : W → X) :
-    (∀ x, greet (face (handlers f)) (met (handlers f)) x = f x)
-      ∧ handlers (greet gl gr) = atTheDoor gl gr :=
-  ⟨a_greeter_is_a_door_of_handlers f, rfl⟩
-
-theorem the_door_is_known_by_its_readings {H W X : Type}
-    (f : door H W → X) (g : H → W → X) (σ : H → W → W)
-    (h : H) (w : W) (d : door H W) (fk : fork H W → X) :
-    holdOpen f h w = f (atTheDoor h w)
-      ∧ walkIn (holdOpen f) = f
-      ∧ holdOpen (walkIn g) = g
-      ∧ vertical σ d = atTheDoor (face d) (walkIn σ d)
-      ∧ handlers (greet (face (handlers fk)) (met (handlers fk)))
-          = handlers fk :=
-  ⟨rfl, rfl, rfl, rfl, rfl⟩
-
-theorem the_turned_door_flips_the_promise {H W X : Type}
-    (f : door H W → X) (h : H) (w : W) :
-    holdOpen (fun d => f (turnAbout d)) w h = holdOpen f h w := rfl
-
-def strokes (W X : Type) : Nat → Type
-  | 0 => W → X
-  | n + 1 => W → strokes W X n
-
-def strokesAlike {W X : Type} :
-    (n : Nat) → strokes W X n → strokes W X n → Prop
-  | 0, g, g' => ∀ w, g w = g' w
-  | n + 1, g, g' => ∀ w, strokesAlike n (g w) (g' w)
-
-def oneAtATime {W X : Type} :
-    (n : Nat) → (build W (comb n) → X) → strokes W X n
-  | 0, f => f
-  | n + 1, f => fun w => oneAtATime n (holdOpen f w)
-
-def allAtOnce {W X : Type} :
-    (n : Nat) → strokes W X n → build W (comb n) → X
-  | 0, g => g
-  | n + 1, g => walkIn (fun w => allAtOnce n (g w))
-
-theorem the_guests_enter_one_at_a_time {W X : Type} :
-    ∀ (n : Nat) (f : build W (comb n) → X) (s : build W (comb n)),
-      allAtOnce n (oneAtATime n f) s = f s
-  | 0, _, _ => rfl
-  | n + 1, f, s =>
-      the_guests_enter_one_at_a_time n (holdOpen f (face s)) (met s)
-
-theorem the_tower_holds_nothing_back {W X : Type} :
-    ∀ (n : Nat) (g : strokes W X n),
-      strokesAlike n (oneAtATime n (allAtOnce n g)) g
-  | 0, _ => fun _ => rfl
-  | n + 1, g => fun w => the_tower_holds_nothing_back n (g w)
-
-theorem the_door_receives_the_world_one_guest_at_a_time {H W X : Type}
-    (n : Nat) (f : build W (comb n) → X) (s : build W (comb n))
-    (g : strokes W X n) (f' : door H W → X) (h : H) (w : W) :
-    build W (comb (n + 1)) = door W (build W (comb n))
-      ∧ allAtOnce n (oneAtATime n f) s = f s
-      ∧ strokesAlike n (oneAtATime n (allAtOnce n g)) g
-      ∧ holdOpen (fun d => f' (turnAbout d)) w h = holdOpen f' h w :=
-  ⟨the_comb_is_a_corridor_of_doors W n,
-   the_guests_enter_one_at_a_time n f s,
-   the_tower_holds_nothing_back n g,
-   the_turned_door_flips_the_promise f' h w⟩
-
-def faceOf {S P A : Type} (g : door S P → A) : Face :=
-  ⟨S, P, A, holdOpen g⟩
-
-theorem the_measurement_is_a_meeting (F : Face.{0}) (s : F.State)
-    (p : F.Probe) : F.obs s p = walkIn F.obs (atTheDoor s p) := rfl
-
-theorem the_face_was_a_held_door (F : Face.{0}) :
-    F.obs = holdOpen (walkIn F.obs) ∧ faceOf (walkIn F.obs) = F :=
-  ⟨rfl, rfl⟩
-
-theorem every_door_reading_is_a_face {S P A : Type} (g : door S P → A)
-    (d : door S P) :
-    (faceOf g).obs (face d) (met d) = g d ∧ walkIn (faceOf g).obs = g :=
-  ⟨rfl, rfl⟩
-
-theorem the_agreeing_held_doors_sound_alike {S P A : Type}
-    (g : door S P → A) (s t : S)
-    (h : ∀ p, g (atTheDoor s p) = g (atTheDoor t p))
-    (q : Interview P A) :
-    sound (faceOf g) s q = sound (faceOf g) t q :=
-  no_interview_parts_the_alike (faceOf g) s t h q
-
-theorem the_face_is_the_doors_transpose {S P A : Type}
-    (g : door S P → A) (F : Face.{0}) (s : F.State) (p : F.Probe)
-    (d : door S P) :
-    F.obs s p = walkIn F.obs (atTheDoor s p)
-      ∧ F.obs = holdOpen (walkIn F.obs)
-      ∧ faceOf (walkIn F.obs) = F
-      ∧ (faceOf g).obs (face d) (met d) = g d
-      ∧ walkIn (faceOf g).obs = g :=
-  ⟨rfl, rfl, rfl, rfl, rfl⟩
-
-theorem the_hosted_meeting_deepens_past_the_guest (F : Face.{0}) (W : Type)
-    (d : door (door F.State W) F.Probe) :
-    walkIn (host F W).obs d
-      = walkIn F.obs
-          (atTheDoor (face (deepen d)) (met (met (deepen d)))) := rfl
-
-theorem the_sharpened_meeting_splits_at_the_fork {X : Type} (F : Face.{0})
-    (r : F.State → X) :
-    ∀ e : door F.State (fork F.Probe Unit),
-      walkIn (sharpen F r).obs e
-        = greet (fun x => viaLeft (walkIn F.obs x))
-            (fun x => viaRight (r (face x))) (distribute e)
-  | (_, .inl _) => rfl
-  | (_, .inr _) => rfl
-
-theorem the_operator_calculus_rides_the_meetings {X : Type} (F : Face.{0})
-    (W : Type) (r : F.State → X)
-    (d : door (door F.State W) F.Probe)
-    (e : door F.State (fork F.Probe Unit)) :
-    walkIn (host F W).obs d
-        = walkIn F.obs
-            (atTheDoor (face (deepen d)) (met (met (deepen d))))
-      ∧ walkIn (sharpen F r).obs e
-          = greet (fun x => viaLeft (walkIn F.obs x))
-              (fun x => viaRight (r (face x))) (distribute e)
-      ∧ widen F W = sharpen (host F W) (fun x => x.2) :=
-  ⟨the_hosted_meeting_deepens_past_the_guest F W d,
-   the_sharpened_meeting_splits_at_the_fork F r e,
-   rfl⟩
-
-inductive Reception (W X : Type) : Type where
-  | close : X → Reception W X
-  | receive : (W → Reception W X) → Reception W X
-
-def receiveFrom {W X : Type} : Reception W X → (Nat → W) → X
-  | .close x, _ => x
-  | .receive k, α => receiveFrom (k (α 0)) (fun n => α (n + 1))
-
-def doorsOpened {W X : Type} : Reception W X → (Nat → W) → Nat
-  | .close _, _ => 0
-  | .receive k, α => doorsOpened (k (α 0)) (fun n => α (n + 1)) + 1
-
-def strokesReception {W X : Type} :
-    (n : Nat) → strokes W X n → Reception W X
-  | 0, g => .receive (fun w => .close (g w))
-  | n + 1, g => .receive (fun w => strokesReception n (g w))
-
-def twoGuests (a b : Nat) : Nat → Nat
-  | 0 => a
-  | _ + 1 => b
-
-def doorman : Reception Nat Nat :=
-  .receive (fun w =>
-    match w with
-    | 0 => .close 0
-    | _ + 1 => .receive (fun v => .close v))
-
-def doormanTower : strokes Nat Nat 1 :=
-  fun a b =>
-    match a with
-    | 0 => 0
-    | _ + 1 => b
-
-theorem the_reception_reads_only_the_arrived {W X : Type} :
-    ∀ (r : Reception W X) (α β : Nat → W),
-      (∀ k, k < doorsOpened r α → α k = β k) →
-      receiveFrom r α = receiveFrom r β
-  | .close _, _, _, _ => rfl
-  | .receive k, α, β, h => by
-      have h0 : α 0 = β 0 :=
-        h 0 (Nat.succ_le_succ (Nat.zero_le _))
-      show receiveFrom (k (α 0)) (fun n => α (n + 1))
-          = receiveFrom (k (β 0)) (fun n => β (n + 1))
-      rw [← h0]
-      exact the_reception_reads_only_the_arrived (k (α 0))
-        (fun n => α (n + 1)) (fun n => β (n + 1))
-        (fun j hj => h (j + 1) (Nat.succ_le_succ hj))
-
-theorem the_straight_host_opens_every_door {W X : Type} :
-    ∀ (n : Nat) (g : strokes W X n) (α : Nat → W),
-      doorsOpened (strokesReception n g) α = n + 1
-  | 0, _, _ => rfl
-  | n + 1, g, α =>
-      congrArg (· + 1)
-        (the_straight_host_opens_every_door n (g (α 0))
-          (fun j => α (j + 1)))
-
-theorem the_patient_and_the_eager_host_read_alike :
-    ∀ a b : Nat,
-      receiveFrom doorman (twoGuests a b)
-        = receiveFrom (strokesReception 1 doormanTower) (twoGuests a b)
-  | 0, _ => rfl
-  | _ + 1, _ => rfl
-
-theorem the_door_ledger_parts_the_hosts :
-    doorsOpened doorman (twoGuests 0 0) = 1
-      ∧ doorsOpened (strokesReception 1 doormanTower) (twoGuests 0 0) = 2 :=
-  ⟨rfl, rfl⟩
-
-theorem the_hosts_patience_is_the_remainder {W X : Type}
-    (n : Nat) (g : strokes W X n) (α β : Nat → W)
-    (r : Reception W X) (γ δ : Nat → W)
-    (h : ∀ k, k < doorsOpened r γ → γ k = δ k) (a b : Nat) :
-    receiveFrom doorman (twoGuests a b)
-        = receiveFrom (strokesReception 1 doormanTower) (twoGuests a b)
-      ∧ doorsOpened doorman (twoGuests 0 0) = 1
-      ∧ doorsOpened (strokesReception 1 doormanTower) (twoGuests 0 0) = 2
-      ∧ doorsOpened (strokesReception n g) α
-          = doorsOpened (strokesReception n g) β
-      ∧ receiveFrom r γ = receiveFrom r δ :=
-  ⟨the_patient_and_the_eager_host_read_alike a b,
-   the_door_ledger_parts_the_hosts.1,
-   the_door_ledger_parts_the_hosts.2,
-   (the_straight_host_opens_every_door n g α).trans
-     (the_straight_host_opens_every_door n g β).symm,
-   the_reception_reads_only_the_arrived r γ δ h⟩
-
-def handOff {W X Y : Type} :
-    Reception W X → (X → Reception W Y) → Reception W Y
-  | .close x, k => k x
-  | .receive f, k => .receive (fun w => handOff (f w) k)
-
-theorem the_fulfilled_reception_hands_off_whole {W X Y : Type}
-    (x : X) (k : X → Reception W Y) :
-    handOff (Reception.close x) k = k x := rfl
-
-theorem the_reception_resumes {W X Y : Type} :
-    ∀ (r : Reception W X) (k : X → Reception W Y) (α : Nat → W),
-      receiveFrom (handOff r k) α
-        = receiveFrom (k (receiveFrom r α))
-            (fun j => α (j + doorsOpened r α))
-  | .close _, _, _ => rfl
-  | .receive f, k, α =>
-      the_reception_resumes (f (α 0)) k (fun n => α (n + 1))
-
-theorem the_ledger_sums_the_handoff {W X Y : Type} :
-    ∀ (r : Reception W X) (k : X → Reception W Y) (α : Nat → W),
-      doorsOpened (handOff r k) α
-        = doorsOpened r α
-          + doorsOpened (k (receiveFrom r α))
-              (fun j => α (j + doorsOpened r α))
-  | .close x, k, α => (zero_plus (doorsOpened (k x) α)).symm
-  | .receive f, k, α =>
-      (congrArg (· + 1)
-          (the_ledger_sums_the_handoff (f (α 0)) k
-            (fun n => α (n + 1)))).trans
-        (succ_adds
-          (doorsOpened (f (α 0)) (fun n => α (n + 1)))
-          (doorsOpened
-            (k (receiveFrom (f (α 0)) (fun n => α (n + 1))))
-            (fun j =>
-              α (j + (doorsOpened (f (α 0)) (fun n => α (n + 1)) + 1))))).symm
-
-theorem the_reception_grafts_at_the_close {W X Y : Type}
-    (x : X) (k : X → Reception W Y) (r : Reception W X) (α : Nat → W) :
-    handOff (Reception.close x) k = k x
-      ∧ receiveFrom (handOff r k) α
-          = receiveFrom (k (receiveFrom r α))
-              (fun j => α (j + doorsOpened r α))
-      ∧ doorsOpened (handOff r k) α
-          = doorsOpened r α
-            + doorsOpened (k (receiveFrom r α))
-                (fun j => α (j + doorsOpened r α)) :=
-  ⟨rfl, the_reception_resumes r k α, the_ledger_sums_the_handoff r k α⟩
-
-def firstGuests {W : Type} : Nat → (Nat → W) → List W
-  | 0, _ => []
-  | n + 1, α => α 0 :: firstGuests n (fun j => α (j + 1))
-
-theorem the_first_guests_count {W : Type} :
-    ∀ (n : Nat) (α : Nat → W), (firstGuests n α).length = n
-  | 0, _ => rfl
-  | n + 1, α =>
-      congrArg (· + 1) (the_first_guests_count n (fun j => α (j + 1)))
-
-theorem the_host_reboards_the_stream {W X : Type} :
-    ∀ (n : Nat) (f : build W (comb n) → X) (α : Nat → W),
-      receiveFrom (strokesReception n (oneAtATime n f)) α
-        = f (reboard (α 0) (comb n) (firstGuests (n + 1) α))
-  | 0, _, _ => rfl
-  | n + 1, f, α =>
-      (the_host_reboards_the_stream n (holdOpen f (α 0))
-          (fun j => α (j + 1))).trans
-        (congrArg
-          (fun t => f (atTheDoor (α 0) t))
-          (the_default_goes_unused (α 1) (α 0) (comb n)
-            (firstGuests (n + 1) (fun j => α (j + 1)))
-            ((the_first_guests_count (n + 1) (fun j => α (j + 1))).trans
-              (the_comb_reads_its_length n).symm)))
-
-theorem the_handoff_is_the_board_at_the_ledger {W X Y : Type}
-    (n m : Nat) (g : strokes W X n) (h : X → strokes W Y m) (α : Nat → W) :
-    doorsOpened
-        (handOff (strokesReception n g)
-          (fun x => strokesReception m (h x))) α
-      = fold (fun a b => a + b) 1 (Plan.board (comb n) (comb m)) :=
-  (the_ledger_sums_the_handoff (strokesReception n g)
-      (fun x => strokesReception m (h x)) α).trans
-    ((congr
-        (congrArg (· + ·) (the_straight_host_opens_every_door n g α))
-        (the_straight_host_opens_every_door m
-          (h (receiveFrom (strokesReception n g) α))
-          (fun j => α (j + doorsOpened (strokesReception n g) α)))).trans
-      (congr
-        (congrArg (· + ·) (the_comb_reads_its_length n).symm)
-        (the_comb_reads_its_length m).symm))
-
-theorem the_carrier_checks_in_one_guest_at_a_time {W X Y : Type}
-    (n m : Nat) (f : build W (comb n) → X) (g : strokes W X n)
-    (h : X → strokes W Y m) (α : Nat → W) :
-    receiveFrom (strokesReception n (oneAtATime n f)) α
-        = f (reboard (α 0) (comb n) (firstGuests (n + 1) α))
-      ∧ doorsOpened (strokesReception n g) α
-          = fold (fun a b => a + b) 1 (comb n)
-      ∧ doorsOpened
-            (handOff (strokesReception n g)
-              (fun x => strokesReception m (h x))) α
-          = fold (fun a b => a + b) 1 (Plan.board (comb n) (comb m)) :=
-  ⟨the_host_reboards_the_stream n f α,
-   (the_straight_host_opens_every_door n g α).trans
-     (the_comb_reads_its_length n).symm,
-   the_handoff_is_the_board_at_the_ledger n m g h α⟩
-
-def strokesFace (W X : Type) (n : Nat) : Face :=
-  ⟨strokes W X n, build W (comb n), X, fun g s => allAtOnce n g s⟩
-
-theorem the_tower_alike_reads_at_the_face {W X : Type} :
-    ∀ (n : Nat) (g g' : strokes W X n),
-      strokesAlike n g g' ↔ alike (strokesFace W X n) g g'
-  | 0, _, _ => Iff.rfl
-  | n + 1, g, g' =>
-      ⟨fun h s =>
-         ((the_tower_alike_reads_at_the_face n (g (face s))
-             (g' (face s))).mp (h (face s))) (met s),
-       fun h w =>
-         (the_tower_alike_reads_at_the_face n (g w) (g' w)).mpr
-           (fun s' => h (atTheDoor w s'))⟩
-
-theorem the_crossed_readings_turn_about {H W X : Type}
-    (f : fork W H → X) :
-    handlers (fun k : fork H W => f (crossOver k))
-      = turnAbout (handlers f) := rfl
-
-theorem the_pointwise_license_is_a_face_license {W X H Y : Type}
-    (n : Nat) (g g' : strokes W X n) (h : strokesAlike n g g')
-    (q : Interview (build W (comb n)) X) (f : fork Y H → X) :
-    alike (strokesFace W X n) g g'
-      ∧ sound (strokesFace W X n) g q = sound (strokesFace W X n) g' q
-      ∧ handlers (fun k : fork H Y => f (crossOver k))
-          = turnAbout (handlers f) :=
-  ⟨(the_tower_alike_reads_at_the_face n g g').mp h,
-   no_interview_parts_the_alike (strokesFace W X n) g g'
-     ((the_tower_alike_reads_at_the_face n g g').mp h) q,
-   rfl⟩
-
-theorem the_lock_survives_every_lap (a d n : Nat) :
-    within ⟨n * a, n * a + d⟩ (n * a) = true :=
-  and_glue (ble_refl (n * a)) (ble_le_add (n * a) d)
-
-theorem the_revision_multiplies_the_patience {W X : Type} (t δ : Plan)
-    (n : Nat) (h : fold (fun a b => a + b) 1 (graft t δ) = n + 1)
-    (g : strokes W X n) (α : Nat → W) :
-    doorsOpened (strokesReception n g) α
-      = fold (fun a b => a + b) 1 t * fold (fun a b => a + b) 1 δ :=
-  ((the_straight_host_opens_every_door n g α).trans h.symm).trans
-    (the_revision_multiplies_the_reading t δ)
-
-theorem the_wheels_signature_is_gap_zero (a d n g p : Nat) :
-    within ⟨n * a, n * a + d⟩ (n * a) = true
-      ∧ within ⟨(d + 1) * p, (d + 1) * p + d⟩
-          ((d + 1) * (p + (g + 1))) = false :=
-  ⟨the_lock_survives_every_lap a d n,
-   the_gap_outruns_every_window p g d⟩
-
-def receptionFace (W X : Type) : Face :=
-  ⟨Reception W X, Nat → W, X, receiveFrom⟩
-
-def patienceFace (W X : Type) : Face :=
-  ⟨Reception W X, Nat → W, X × Nat,
-   fun r α => (receiveFrom r α, doorsOpened r α)⟩
-
-theorem no_stream_parts_the_hosts (α : Nat → Nat) :
-    receiveFrom doorman α
-      = receiveFrom (strokesReception 1 doormanTower) α := by
-  show receiveFrom
-      (match α 0 with
-       | 0 => Reception.close 0
-       | _ + 1 => Reception.receive fun v => Reception.close v)
-      (fun n => α (n + 1))
-    = doormanTower (α 0) (α 1)
-  cases α 0 with
-  | zero => exact rfl
-  | succ m => exact rfl
-
-theorem the_hosts_are_alike_at_the_reception_face :
-    alike (receptionFace Nat Nat) doorman
-      (strokesReception 1 doormanTower) :=
-  no_stream_parts_the_hosts
-
-theorem no_interview_parts_the_hosts
-    (q : Interview (Nat → Nat) Nat) :
-    sound (receptionFace Nat Nat) doorman q
-      = sound (receptionFace Nat Nat) (strokesReception 1 doormanTower) q :=
-  no_interview_parts_the_alike (receptionFace Nat Nat) doorman
-    (strokesReception 1 doormanTower)
-    the_hosts_are_alike_at_the_reception_face q
-
-theorem the_hosts_are_two :
-    doorman ≠ strokesReception 1 doormanTower :=
-  fun h =>
-    nomatch Nat.succ.inj
-      (congrArg (fun r => doorsOpened r (twoGuests 0 0)) h)
-
-theorem the_patience_face_parts_the_hosts :
-    (patienceFace Nat Nat).obs doorman (twoGuests 0 0)
-      ≠ (patienceFace Nat Nat).obs (strokesReception 1 doormanTower)
-          (twoGuests 0 0) :=
-  fun h => nomatch Nat.succ.inj (congrArg Prod.snd h)
-
-def machineReception {I O : Type} (m : Machine I O) :
-    Nat → m.S → Reception I O
-  | 0, s => .close (m.out s)
-  | n + 1, s => .receive (fun i => machineReception m n (m.step s i))
-
-theorem the_machine_receives_its_word {I O : Type} (m : Machine I O) :
-    ∀ (n : Nat) (s : m.S) (α : Nat → I),
-      receiveFrom (machineReception m n s) α = drive m s (firstGuests n α)
-  | 0, _, _ => rfl
-  | n + 1, s, α =>
-      the_machine_receives_its_word m n (m.step s (α 0))
-        (fun j => α (j + 1))
-
-theorem the_machines_patience_is_fixed {I O : Type} (m : Machine I O) :
-    ∀ (n : Nat) (s : m.S) (α : Nat → I),
-      doorsOpened (machineReception m n s) α = n
-  | 0, _, _ => rfl
-  | n + 1, s, α =>
-      congrArg (· + 1)
-        (the_machines_patience_is_fixed m n (m.step s (α 0))
-          (fun j => α (j + 1)))
-
-theorem the_air_gap_crosses_into_the_reception {I O : Type}
-    (m n : Machine I O) (h : ∀ w, behavior m w = behavior n w)
-    (k : Nat) (α : Nat → I) :
-    receiveFrom (machineReception m k m.s0) α
-      = receiveFrom (machineReception n k n.s0) α :=
-  (the_machine_receives_its_word m k m.s0 α).trans
-    ((h (firstGuests k α)).trans
-      (the_machine_receives_its_word n k n.s0 α).symm)
-
-theorem the_machine_is_an_eager_host {I O : Type} (m n : Machine I O)
-    (h : ∀ w, behavior m w = behavior n w) (k : Nat) (s : m.S)
-    (α : Nat → I) :
-    receiveFrom (machineReception m k s) α = drive m s (firstGuests k α)
-      ∧ doorsOpened (machineReception m k s) α = k
-      ∧ receiveFrom (machineReception m k m.s0) α
-          = receiveFrom (machineReception n k n.s0) α :=
-  ⟨the_machine_receives_its_word m k s α,
-   the_machines_patience_is_fixed m k s α,
-   the_air_gap_crosses_into_the_reception m n h k α⟩
-
-def machineTower {I O : Type} (m : Machine I O) :
-    (n : Nat) → m.S → strokes I O n
-  | 0, s => fun i => m.out (m.step s i)
-  | n + 1, s => fun i => machineTower m n (m.step s i)
-
-theorem the_machine_wears_a_tower {I O : Type} (m : Machine I O) :
-    ∀ (n : Nat) (s : m.S) (α : Nat → I),
-      receiveFrom (machineReception m (n + 1) s) α
-        = receiveFrom (strokesReception n (machineTower m n s)) α
-  | 0, _, _ => rfl
-  | n + 1, s, α =>
-      the_machine_wears_a_tower m n (m.step s (α 0)) (fun j => α (j + 1))
-
-theorem the_registers_reduce_at_conduct {I O W X : Type} (m : Machine I O)
-    (n : Nat) (s : m.S) (α : Nat → I) (f : build W (comb n) → X)
-    (β : Nat → W) (w0 : W) {p q : Plan}
-    (hr : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
-    (c : build W p) :
-    receiveFrom (machineReception m (n + 1) s) α
-        = receiveFrom (strokesReception n (machineTower m n s)) α
-      ∧ receiveFrom (strokesReception n (oneAtATime n f)) β
-          = f (reboard (β 0) (comb n) (firstGuests (n + 1) β))
-      ∧ pour q (replan w0 p q c) = pour p c :=
-  ⟨the_machine_wears_a_tower m n s α,
-   the_host_reboards_the_stream n f β,
-   the_replanning_moves_no_guest w0 hr c⟩
-
-def boards : Plan → Nat
-  | .ground => 0
-  | .board p q => (boards p + boards q) + 1
-
-theorem every_meeting_is_one_move :
-    ∀ p : Plan, boards p + 1 = fold (fun a b => a + b) 1 p
-  | .ground => rfl
-  | .board p q => by
-      show ((boards p + boards q) + 1) + 1
-          = fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q
-      rw [← every_meeting_is_one_move p, ← every_meeting_is_one_move q,
-          succ_adds (boards p) (boards q + 1)]
-      exact rfl
-
-theorem the_hanoi_recurrence (d : Nat) :
-    boards (bloom (d + 1))
-      = (boards (bloom d) + boards (bloom d)) + 1 := rfl
-
-theorem the_hanoi_count_fills_the_cap (d : Nat) :
-    boards (bloom d) + 1 = roomCap d :=
-  (every_meeting_is_one_move (bloom d)).trans (the_bloom_fills_its_cap d)
-
-theorem the_tower_of_hanoi_is_the_blooms_meetings (d : Nat) (p : Plan) :
-    boards (bloom (d + 1))
-        = (boards (bloom d) + boards (bloom d)) + 1
-      ∧ boards (bloom d) + 1 = roomCap d
-      ∧ boards p + 1 = fold (fun a b => a + b) 1 p :=
-  ⟨rfl, the_hanoi_count_fills_the_cap d, every_meeting_is_one_move p⟩
-
-theorem the_remainders_wear_the_blindnesses {W X : Type} (F : Face)
-    (s : F.State) {w w' : W} (hw : w ≠ w') (w0 : X) {p q : Plan}
-    (hr : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
-    (hpq : p ≠ q) (c : build X p) :
-    (alike (host F W) (s, w) (s, w')
-        ∧ (widen F W).obs (s, w) (viaRight ())
-            ≠ (widen F W).obs (s, w') (viaRight ()))
-      ∧ (pour q (replan w0 p q c) = pour p c
-          ∧ face (specView p c) ≠ face (specView q (replan w0 p q c)))
-      ∧ (alike (receptionFace Nat Nat) doorman
-            (strokesReception 1 doormanTower)
-          ∧ (patienceFace Nat Nat).obs doorman (twoGuests 0 0)
-              ≠ (patienceFace Nat Nat).obs
-                  (strokesReception 1 doormanTower) (twoGuests 0 0)) :=
-  ⟨⟨(every_face_opens_as_a_door F s hw).1,
-    (every_face_opens_as_a_door F s hw).2.2.2⟩,
-   ⟨(the_shape_is_the_remainder_of_the_cargo w0 hr hpq c).1,
-    (the_shape_is_the_remainder_of_the_cargo w0 hr hpq c).2.1⟩,
-   ⟨the_hosts_are_alike_at_the_reception_face,
-    the_patience_face_parts_the_hosts⟩⟩
-
-theorem the_hosts_run_the_handshake (q : Interview (Nat → Nat) Nat) :
-    alike (receptionFace Nat Nat) doorman
-        (strokesReception 1 doormanTower)
-      ∧ sound (receptionFace Nat Nat) doorman q
-          = sound (receptionFace Nat Nat)
-              (strokesReception 1 doormanTower) q
-      ∧ doorman ≠ strokesReception 1 doormanTower
-      ∧ (patienceFace Nat Nat).obs doorman (twoGuests 0 0)
-          ≠ (patienceFace Nat Nat).obs
-              (strokesReception 1 doormanTower) (twoGuests 0 0) :=
-  ⟨the_hosts_are_alike_at_the_reception_face,
-   no_interview_parts_the_hosts q,
-   the_hosts_are_two,
-   the_patience_face_parts_the_hosts⟩
-
-theorem the_tower_meets_the_mirror {A X : Type} (g : strokes A X 1)
-    (f : build A (comb 1) → X) (a : A) :
-    allAtOnce 1 g (mirror A .ground a) = g a a
-      ∧ oneAtATime 1 f a a = f (mirror A .ground a) :=
-  ⟨rfl, rfl⟩
-
-theorem the_mirror_checks_in_twice {A X : Type} (g : strokes A X 1) (a : A) :
-    receiveFrom (strokesReception 1 g) (fun _ => a)
-        = allAtOnce 1 g (mirror A .ground a)
-      ∧ doorsOpened (strokesReception 1 g) (fun _ => a) = 2
-      ∧ pour (.board .ground .ground) (mirror A .ground a) = [a, a] :=
-  ⟨rfl, rfl, rfl⟩
-
-theorem the_escapee_negates_the_mirror {A : Type} (g : strokes A Bool 1) :
-    ∀ a, g a ≠ fun b => !(allAtOnce 1 g (mirror A .ground b)) :=
-  fun a he => bool_escapes (g a a) (congrFun he a)
-
-theorem the_fixed_point_sits_at_the_mirror {A Y : Type} (g : A → A → Y)
-    (t : Y → Y) (hsur : ∀ f : A → Y, ∃ a, g a = f) :
-    ∃ a, t (allAtOnce 1 g (mirror A .ground a))
-      = allAtOnce 1 g (mirror A .ground a) :=
-  (hsur (fun a => t (g a a))).elim fun a₀ ha => ⟨a₀, (congrFun ha a₀).symm⟩
-
-theorem the_diagonal_was_a_mirror {A Y : Type} (g : strokes A Bool 1)
-    (h : A → A → Y) (t : Y → Y) (hsur : ∀ f : A → Y, ∃ b, h b = f) (a : A) :
-    allAtOnce 1 g (mirror A .ground a) = g a a
-      ∧ pour (.board .ground .ground) (mirror A .ground a) = [a, a]
-      ∧ doorsOpened (strokesReception 1 g) (fun _ => a) = 2
-      ∧ (∀ b, g b ≠ fun c => !(allAtOnce 1 g (mirror A .ground c)))
-      ∧ ∃ b, t (allAtOnce 1 h (mirror A .ground b))
-          = allAtOnce 1 h (mirror A .ground b) :=
-  ⟨rfl, rfl, rfl,
-   the_escapee_negates_the_mirror g,
-   the_fixed_point_sits_at_the_mirror h t hsur⟩
-
-theorem the_mirror_revises_every_life {W : Type} (t : Plan) (s : build W t) :
-    graft t (.board .ground .ground) = .board t t
-      ∧ ride s (.board .ground .ground) = mirror W t s :=
-  ⟨rfl, rfl⟩
-
-theorem the_blooms_add : ∀ i j : Nat, graft (bloom i) (bloom j) = bloom (i + j)
-  | _, 0 => rfl
-  | i, j + 1 =>
-      show Plan.board (graft (bloom i) (bloom j)) (graft (bloom i) (bloom j))
-          = Plan.board (bloom (i + j)) (bloom (i + j))
-      from congr (congrArg Plan.board (the_blooms_add i j)) (the_blooms_add i j)
-
-theorem the_bloom_hears_no_order (i j : Nat) :
-    graft (bloom i) (bloom j) = graft (bloom j) (bloom i) :=
-  (the_blooms_add i j).trans
-    ((congrArg bloom (Nat.add_comm i j)).trans (the_blooms_add j i).symm)
-
-theorem the_caps_multiply (i j : Nat) :
-    roomCap (i + j) = roomCap i * roomCap j :=
-  ((the_bloom_fills_its_cap (i + j)).symm.trans
-    ((congrArg (fold (fun a b => a + b) 1) (the_blooms_add i j)).symm.trans
-      (the_revision_multiplies_the_reading (bloom i) (bloom j)))).trans
-    (congr (congrArg (· * ·) (the_bloom_fills_its_cap i))
-      (the_bloom_fills_its_cap j))
-
-theorem the_order_vanishes_on_the_diagonal {W : Type} (i j : Nat) (t : Plan)
-    (s : build W t) :
-    (graft t (.board .ground .ground) = .board t t
-        ∧ ride s (.board .ground .ground) = mirror W t s)
-      ∧ graft (bloom i) (bloom j) = graft (bloom j) (bloom i)
-      ∧ roomCap (i + j) = roomCap i * roomCap j
-      ∧ graft (.board .ground .ground) (.board .ground (.board .ground .ground))
-          ≠ graft (.board .ground (.board .ground .ground))
-              (.board .ground .ground) :=
-  ⟨the_mirror_revises_every_life t s,
-   the_bloom_hears_no_order i j,
-   the_caps_multiply i j,
-   (two_lineages_one_reading .ground .ground).2.2⟩
-
-def selfMeet (F : Face) (r : F.State → F.Probe) (s : F.State) : F.Ans :=
-  F.obs s (r s)
-
-theorem the_self_meeting_walks_the_graph (F : Face.{0})
-    (r : F.State → F.Probe) (s : F.State) :
-    selfMeet F r s = walkIn F.obs (turnAbout (graphDoor r s)) := rfl
-
-theorem the_mirror_was_a_graph {A : Type} (a : A) :
-    graphDoor (fun x : A => x) a = mirror A .ground a := rfl
-
-theorem the_held_door_meets_itself_at_the_mirror {A X : Type}
-    (g : strokes A X 1) (a : A) :
-    selfMeet (faceOf (walkIn g)) (fun x => x) a
-      = allAtOnce 1 g (mirror A .ground a) := rfl
-
-theorem the_window_never_meets_its_successor (m : Measured) :
-    selfMeet windowFace (fun w => w.hi + 1) m = false :=
-  the_window_misses_its_own_successor m
-
-theorem the_diagonal_mints_the_probe (F : Face.{0}) {A X : Type}
-    (g : strokes A X 1) (r : F.State → F.Probe) (s : F.State)
-    (a : A) (m : Measured) :
-    selfMeet F r s = walkIn F.obs (turnAbout (graphDoor r s))
-      ∧ graphDoor (fun x : A => x) a = mirror A .ground a
-      ∧ selfMeet (faceOf (walkIn g)) (fun x => x) a
-          = allAtOnce 1 g (mirror A .ground a)
-      ∧ selfMeet windowFace (fun w => w.hi + 1) m = false :=
-  ⟨rfl, rfl, rfl, the_window_misses_its_own_successor m⟩
-
-theorem the_self_meeting_reads_the_guest (F : Face) {W : Type}
-    (r : W → F.Probe) (s : F.State) (w : W) :
-    selfMeet (host F W) (fun x => r x.2) (s, w) = F.obs s (r w) := rfl
-
-theorem the_self_meeting_parts_the_alike :
-    alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
-      ∧ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
-            (⟨0, 0⟩, true)
-          ≠ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
-              (⟨0, 0⟩, false) :=
-  ⟨fun _ => rfl, fun h => nomatch h⟩
-
-theorem the_sharpened_window_exhibits_the_escapee (m : Measured) :
-    (sharpen windowFace (fun w => w.hi + 1)).obs m (viaRight ())
-        = viaRight (m.hi + 1)
-      ∧ within m (m.hi + 1) = false :=
-  ⟨rfl, the_window_misses_its_own_successor m⟩
-
-theorem the_curtain_follows_the_minting (m : Measured)
-    (q : Interview Nat Bool) :
-    (alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
-        ∧ sound (host windowFace Bool) (⟨0, 0⟩, true) q
-            = sound (host windowFace Bool) (⟨0, 0⟩, false) q)
-      ∧ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
-            (⟨0, 0⟩, true)
-          ≠ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
-              (⟨0, 0⟩, false)
-      ∧ (widen windowFace Bool).obs (⟨0, 0⟩, true) (viaRight ())
-          ≠ (widen windowFace Bool).obs (⟨0, 0⟩, false) (viaRight ())
-      ∧ ((sharpen windowFace (fun w => w.hi + 1)).obs m (viaRight ())
-            = viaRight (m.hi + 1)
-          ∧ within m (m.hi + 1) = false) :=
-  ⟨⟨the_self_meeting_parts_the_alike.1,
-    no_interview_parts_the_alike (host windowFace Bool) _ _
-      the_self_meeting_parts_the_alike.1 q⟩,
-   the_self_meeting_parts_the_alike.2,
-   (fun h => nomatch Sum.inr.inj h),
-   the_sharpened_window_exhibits_the_escapee m⟩
-
-theorem the_guest_written_from_the_whole_door {H W : Type}
-    (g : door H W → W) (d : door H W) :
-    vertical (holdOpen g) d = atTheDoor (face d) (g d) := rfl
-
-theorem the_reading_writes_unheard (F : Face) {W : Type}
-    (g : F.State × W → W) (s : F.State) (w : W) :
-    alike (host F W) (s, w) (s, g (s, w)) :=
-  fun _ => rfl
-
-theorem no_interview_hears_the_written_guest (F : Face) {W : Type}
-    (g : F.State × W → W) (s : F.State) (w : W)
-    (q : Interview F.Probe F.Ans) :
-    sound (host F W) (s, w) q = sound (host F W) (s, g (s, w)) q :=
-  no_interview_parts_the_alike (host F W) _ _
-    (the_reading_writes_unheard F g s w) q
-
-theorem one_reading_two_entrances (F : Face) {W : Type}
-    (g : F.State × W → W) (s : F.State) (w : W)
-    (q : Interview F.Probe F.Ans) (q' : Interview Nat Bool) :
-    alike (host F W) (s, w) (s, g (s, w))
-      ∧ sound (host F W) (s, w) q = sound (host F W) (s, g (s, w)) q
-      ∧ sound (host windowFace Bool) (⟨0, 0⟩, true) q'
-          = sound (host windowFace Bool) (⟨0, 0⟩, false) q'
-      ∧ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
-            (⟨0, 0⟩, true)
-          ≠ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
-              (⟨0, 0⟩, false) :=
-  ⟨the_reading_writes_unheard F g s w,
-   no_interview_hears_the_written_guest F g s w q,
-   no_interview_parts_the_alike (host windowFace Bool) _ _
-     the_self_meeting_parts_the_alike.1 q',
-   the_self_meeting_parts_the_alike.2⟩
-
-theorem the_probe_boards_as_the_guest (F : Face) (s : F.State)
-    (p : F.Probe) :
-    selfMeet (host F F.Probe) (fun x => x.2) (s, p) = F.obs s p := rfl
-
-theorem the_meeting_was_a_self_meeting {S P A : Type} (g : door S P → A)
-    (d : door S P) :
-    g d = selfMeet (host (faceOf g) P) (fun x => x.2) d := rfl
-
-theorem the_written_question_is_the_asked_question (F : Face.{0})
-    (s : F.State) (p q₀ : F.Probe) :
-    selfMeet (host F F.Probe) (fun x => x.2)
-        (vertical (fun _ _ => q₀) (atTheDoor s p))
-      = F.obs s q₀ := rfl
-
-theorem the_escapee_rides_refused (m : Measured) :
-    selfMeet (host windowFace Nat) (fun x => x.2) (m, m.hi + 1) = false :=
-  the_window_misses_its_own_successor m
-
-theorem every_reading_is_a_self_meeting {S P A : Type} (g : door S P → A)
-    (d : door S P) (F : Face) (s : F.State) (p : F.Probe)
-    {I O : Type} (mach : Machine I O) (w : List I) (m : Measured) :
-    g d = selfMeet (host (faceOf g) P) (fun x => x.2) d
-      ∧ selfMeet (host F F.Probe) (fun x => x.2) (s, p) = F.obs s p
-      ∧ selfMeet (host (airGap I O) (List I)) (fun x => x.2) (mach, w)
-          = behavior mach w
-      ∧ selfMeet (host windowFace Nat) (fun x => x.2) (m, m.hi + 1)
-          = false :=
-  ⟨rfl, rfl, rfl, the_window_misses_its_own_successor m⟩
-
-theorem no_tick_is_smaller_than_the_mirror {δ : Plan}
-    (hδ : δ ≠ .ground) :
-    Nat.ble 2 (fold (fun a b => a + b) 1 δ) = true := by
-  have h := a_true_tick_grows_the_reading (t := .ground) hδ
-  rw [the_trivial_revision_changes_nothing δ] at h
-  exact h
-
-theorem the_least_tick_is_the_mirror :
-    ∀ δ : Plan, fold (fun a b => a + b) 1 δ = 2 →
-      δ = .board .ground .ground
-  | .ground, h => nomatch Nat.succ.inj h
-  | .board l r, h => by
-      obtain ⟨a, ha⟩ := the_reading_is_positive l
-      obtain ⟨b, hb⟩ := the_reading_is_positive r
-      have h2 : (a + 1) + (b + 1) = 2 := by
-        have hlr : fold (fun a b => a + b) 1 l
-            + fold (fun a b => a + b) 1 r = 2 := h
-        rw [ha, hb] at hlr
-        exact hlr
-      have hab : a + b = 0 := by
-        rw [succ_adds a (b + 1)] at h2
-        exact Nat.succ.inj (Nat.succ.inj h2)
-      have hb0 : b = 0 := by
-        cases b with
-        | zero => rfl
-        | succ b' => exact nomatch hab
-      have ha0 : a = 0 := by
-        rw [hb0] at hab
-        exact hab
-      have hl : l = .ground :=
-        the_ground_is_the_only_unit l
-          ((ha.trans (congrArg (· + 1) ha0)).trans (zero_plus 1))
-      have hr : r = .ground :=
-        the_ground_is_the_only_unit r
-          ((hb.trans (congrArg (· + 1) hb0)).trans (zero_plus 1))
-      rw [hl, hr]
-
-theorem the_tick_was_a_mirror (d : Nat) {δ : Plan} (hδ : δ ≠ .ground) :
-    fold (fun a b => a + b) 1 (.board .ground .ground) = 2
-      ∧ Nat.ble 2 (fold (fun a b => a + b) 1 δ) = true
-      ∧ (∀ γ : Plan, fold (fun a b => a + b) 1 γ = 2 →
-          γ = .board .ground .ground)
-      ∧ bloom (d + 1) = graft (bloom d) (.board .ground .ground)
-      ∧ ¬ bloom (d + 1) ∈ allPlans d :=
-  ⟨rfl, no_tick_is_smaller_than_the_mirror hδ,
-   the_least_tick_is_the_mirror, rfl, the_bloom_outgrows_the_room d⟩
-
-theorem no_meeting_no_revision (δ : Plan) (h : boards δ = 0) :
-    δ = .ground :=
-  the_ground_is_the_only_unit δ
-    ((every_meeting_is_one_move δ).symm.trans (congrArg (· + 1) h))
-
-theorem one_meeting_is_the_mirror (δ : Plan) (h : boards δ = 1) :
-    δ = .board .ground .ground :=
-  the_least_tick_is_the_mirror δ
-    ((every_meeting_is_one_move δ).symm.trans (congrArg (· + 1) h))
-
-theorem every_quantum_is_the_mirror (δ γ : Plan) (h1 : boards δ = 1)
-    (h0 : boards γ = 0) (d : Nat) :
-    δ = .board .ground .ground
-      ∧ γ = .ground
-      ∧ boards (.board .ground .ground) = 1
-      ∧ fold (fun a b => a + b) 1 (.board .ground .ground) = 2
-      ∧ bloom (d + 1) = graft (bloom d) (.board .ground .ground) :=
-  ⟨one_meeting_is_the_mirror δ h1, no_meeting_no_revision γ h0,
-   rfl, rfl, rfl⟩
-
-def pairFace {S : Type u} (F G : Face) (f : S → F.State)
-    (g : S → G.State) : Face :=
-  ⟨S, F.Probe × G.Probe, F.Ans × G.Ans,
-   fun s pq => (F.obs (f s) pq.1, G.obs (g s) pq.2)⟩
-
-theorem the_pair_refines_the_first_look {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) (q₀ : G.Probe) (s t : S)
-    (h : alike (pairFace F G f g) s t) (p : F.Probe) :
-    F.obs (f s) p = F.obs (f t) p :=
-  congrArg Prod.fst (h (p, q₀))
-
-theorem the_pair_refines_the_second_look {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) (p₀ : F.Probe) (s t : S)
-    (h : alike (pairFace F G f g) s t) (q : G.Probe) :
-    G.obs (g s) q = G.obs (g t) q :=
-  congrArg Prod.snd (h (p₀, q))
-
-theorem the_pair_parts_what_the_look_merges :
-    alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
-      ∧ ¬ alike
-          (pairFace (host windowFace Bool)
-            ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
-          (⟨0, 0⟩, true) (⟨0, 0⟩, false) :=
-  ⟨fun _ => rfl,
-   (fun h => nomatch congrArg Prod.snd (h ((0 : Nat), ())))⟩
-
-theorem the_patience_face_was_a_pair (W X : Type) (r : Reception W X)
-    (α : Nat → W) :
-    (patienceFace W X).obs r α
-      = (pairFace (receptionFace W X)
-          ⟨Reception W X, Nat → W, Nat, doorsOpened⟩
-          (fun x => x) (fun x => x)).obs r (α, α) := rfl
-
-theorem the_comparison_mints_a_face {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) {R : Type}
-    (c : F.Ans → G.Ans → R) (s : S) (p : F.Probe) (q : G.Probe)
-    (W X : Type) (r : Reception W X) (α : Nat → W) :
-    c (F.obs (f s) p) (G.obs (g s) q)
-        = (fun a : F.Ans × G.Ans => c a.1 a.2)
-            ((pairFace F G f g).obs s (p, q))
-      ∧ (patienceFace W X).obs r α
-          = (pairFace (receptionFace W X)
-              ⟨Reception W X, Nat → W, Nat, doorsOpened⟩
-              (fun x => x) (fun x => x)).obs r (α, α)
-      ∧ alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
-      ∧ ¬ alike
-          (pairFace (host windowFace Bool)
-            ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
-          (⟨0, 0⟩, true) (⟨0, 0⟩, false) :=
-  ⟨rfl, rfl,
-   the_pair_parts_what_the_look_merges.1,
-   the_pair_parts_what_the_look_merges.2⟩
-
-def Derived (F : Face) (P : F.State → Prop) : Prop :=
-  ∀ s t, alike F s t → (P s ↔ P t)
-
-theorem a_role_read_at_a_probe_is_derived (F : Face) (p : F.Probe)
-    (Q : F.Ans → Prop) : Derived F (fun s => Q (F.obs s p)) :=
-  fun s t h => by
-    show Q (F.obs s p) ↔ Q (F.obs t p)
-    rw [h p]
-
-theorem the_guest_is_not_a_derived_role :
-    ¬ Derived (host windowFace Bool) (fun x => x.2 = true) :=
-  fun h =>
-    nomatch ((h (⟨0, 0⟩, true) (⟨0, 0⟩, false) (fun _ => rfl)).mp rfl)
-
-theorem a_look_role_lifts_to_the_pair {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) (q₀ : G.Probe) (P : S → Prop)
-    (hP : ∀ s t, (∀ p, F.obs (f s) p = F.obs (f t) p) → (P s ↔ P t)) :
-    Derived (pairFace F G f g) P :=
-  fun s t h => hP s t (the_pair_refines_the_first_look F G f g q₀ s t h)
-
-theorem the_pair_provokes_the_agreement :
-    Derived (pairFace (host windowFace Bool)
-        ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
-      (fun s => (host windowFace Bool).obs s (0 : Nat) = s.2)
-      ∧ ¬ Derived (host windowFace Bool)
-          (fun s => (host windowFace Bool).obs s (0 : Nat) = s.2) :=
-  ⟨a_role_read_at_a_probe_is_derived
-     (pairFace (host windowFace Bool)
-       ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
-     ((0 : Nat), ()) (fun a => a.1 = a.2),
-   (fun hD => nomatch
-     ((hD (⟨0, 0⟩, true) (⟨0, 0⟩, false) (fun _ => rfl)).mp rfl))⟩
-
-theorem the_pair_provokes_what_no_look_affords {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) (q₀ : G.Probe) (P : S → Prop)
-    (hP : ∀ s t, (∀ p, F.obs (f s) p = F.obs (f t) p) → (P s ↔ P t)) :
-    Derived (pairFace F G f g) P
-      ∧ Derived (pairFace (host windowFace Bool)
-            ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
-          (fun s => (host windowFace Bool).obs s (0 : Nat) = s.2)
-      ∧ ¬ Derived (host windowFace Bool)
-          (fun s => (host windowFace Bool).obs s (0 : Nat) = s.2)
-      ∧ ¬ Derived (host windowFace Bool) (fun x => x.2 = true) :=
-  ⟨a_look_role_lifts_to_the_pair F G f g q₀ P hP,
-   the_pair_provokes_the_agreement.1,
-   the_pair_provokes_the_agreement.2,
-   the_guest_is_not_a_derived_role⟩
-
-theorem the_derived_look_widens_nothing (F : Face) {P2 A2 : Type}
-    (obs2 : F.State → P2 → A2) (q₀ : P2)
-    (hder : ∀ s t, alike F s t → ∀ q, obs2 s q = obs2 t q)
-    (s t : F.State) :
-    alike (pairFace F ⟨F.State, P2, A2, obs2⟩ (fun x => x) (fun x => x)) s t
-      ↔ alike F s t :=
-  ⟨fun h p =>
-     the_pair_refines_the_first_look F ⟨F.State, P2, A2, obs2⟩
-       (fun x => x) (fun x => x) q₀ s t h p,
-   fun h pq => by
-     show (F.obs s pq.1, obs2 s pq.2) = (F.obs t pq.1, obs2 t pq.2)
-     rw [h pq.1, hder s t h pq.2]⟩
-
-theorem the_pair_widens_only_past_the_conduct (F : Face) {P2 A2 : Type}
-    (obs2 : F.State → P2 → A2) (q₀ : P2)
-    (hder : ∀ s t, alike F s t → ∀ q, obs2 s q = obs2 t q)
-    (s t : F.State) :
-    (alike (pairFace F ⟨F.State, P2, A2, obs2⟩ (fun x => x) (fun x => x)) s t
-        ↔ alike F s t)
-      ∧ alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
-      ∧ ¬ alike
-          (pairFace (host windowFace Bool)
-            ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
-          (⟨0, 0⟩, true) (⟨0, 0⟩, false) :=
-  ⟨the_derived_look_widens_nothing F obs2 q₀ hder s t,
-   the_pair_parts_what_the_look_merges.1,
-   the_pair_parts_what_the_look_merges.2⟩
-
-theorem the_hallway_is_too_small :
-    ¬ ∃ f : Bool × Bool → Bool, ∀ a b : Bool × Bool, f a = f b → a = b := by
-  intro ⟨f, hf⟩
-  have k12 : f (true, true) ≠ f (true, false) := fun h =>
-    nomatch (congrArg Prod.snd (hf _ _ h) : true = false)
-  have k13 : f (true, true) ≠ f (false, true) := fun h =>
-    nomatch (congrArg Prod.fst (hf _ _ h) : true = false)
-  have k23 : f (true, false) ≠ f (false, true) := fun h =>
-    nomatch (congrArg Prod.fst (hf _ _ h) : true = false)
-  cases hb1 : f (true, true) <;> cases hb2 : f (true, false) <;>
-    cases hb3 : f (false, true)
-  all_goals first
-    | exact k12 (hb1.trans hb2.symm)
-    | exact k13 (hb1.trans hb3.symm)
-    | exact k23 (hb2.trans hb3.symm)
-
-theorem every_widening_is_one_pairing {S : Type u} (F G H : Face)
-    (f : S → F.State) (g : S → G.State) (h : S → H.State)
-    (s : S) (p : F.Probe) (q : G.Probe) (r : H.Probe) :
-    (pairFace F (pairFace G H g h) f (fun x => x)).obs s (p, (q, r))
-        = (F.obs (f s) p, (G.obs (g s) q, H.obs (h s) r))
-      ∧ (pairFace (pairFace F G f g) H (fun x => x) h).obs s ((p, q), r)
-          = ((F.obs (f s) p, G.obs (g s) q), H.obs (h s) r)
-      ∧ deepen ((pairFace (pairFace F G f g) H (fun x => x) h).obs
-            s ((p, q), r))
-          = (pairFace F (pairFace G H g h) f (fun x => x)).obs
-              s (p, (q, r)) :=
-  ⟨rfl, rfl, rfl⟩
-
-theorem three_is_the_width_of_contact {S : Type u} (F G H : Face)
-    (f : S → F.State) (g : S → G.State) (h : S → H.State) {R : Type}
-    (c : F.Ans → G.Ans → R) (s : S) (p : F.Probe) (q : G.Probe)
-    (r : H.Probe) :
-    (¬ ∃ f' : Bool × Bool → Bool,
-        ∀ a b : Bool × Bool, f' a = f' b → a = b)
-      ∧ c (F.obs (f s) p) (G.obs (g s) q)
-          = (fun a : F.Ans × G.Ans => c a.1 a.2)
-              ((pairFace F G f g).obs s (p, q))
-      ∧ deepen ((pairFace (pairFace F G f g) H (fun x => x) h).obs
-            s ((p, q), r))
-          = (pairFace F (pairFace G H g h) f (fun x => x)).obs
-              s (p, (q, r)) :=
-  ⟨the_hallway_is_too_small, rfl, rfl⟩
-
-theorem the_serving_suggestion {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) {R : Type}
-    (c : F.Ans → G.Ans → R) (s : S) (p : F.Probe) (q : G.Probe)
-    (q₀ : G.Probe) (t : S) (h : alike (pairFace F G f g) s t) :
-    (pairFace F G f g).obs s (p, q) = (F.obs (f s) p, G.obs (g s) q)
-      ∧ c (F.obs (f s) p) (G.obs (g s) q)
-          = (fun a : F.Ans × G.Ans => c a.1 a.2)
-              ((pairFace F G f g).obs s (p, q))
-      ∧ (∀ p', F.obs (f s) p' = F.obs (f t) p')
-      ∧ alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
-      ∧ ¬ alike (pairFace (host windowFace Bool)
-            ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
-          (⟨0, 0⟩, true) (⟨0, 0⟩, false)
-      ∧ (∀ (F' : Face) (s' t' : F'.State), alike F' s' t' →
-          ∀ q' : Interview F'.Probe F'.Ans,
-            sound F' s' q' = sound F' t' q') :=
-  ⟨rfl, rfl,
-   the_pair_refines_the_first_look F G f g q₀ s t h,
-   the_pair_parts_what_the_look_merges.1,
-   the_pair_parts_what_the_look_merges.2,
-   fun F' s' t' h' q' => no_interview_parts_the_alike F' s' t' h' q'⟩
-
-def censusFace : Face :=
-  ⟨Plan, Unit, Nat, fun p _ => fold (fun a b => a + b) 1 p⟩
-
-theorem the_split_is_not_a_derived_role :
-    ¬ Derived censusFace
-        (fun p => ∃ t δ : Plan, t ≠ Plan.ground ∧ δ ≠ Plan.ground
-          ∧ graft t δ = p) :=
-  fun hD =>
-    have hsplit : ∃ t δ : Plan, t ≠ Plan.ground ∧ δ ≠ Plan.ground
-        ∧ graft t δ = bloom 2 :=
-      ⟨.board .ground .ground, .board .ground .ground,
-       (fun h => nomatch h), (fun h => nomatch h),
-       the_blooms_add 1 1⟩
-    match (hD (bloom 2)
-        (.board .ground (.board .ground (.board .ground .ground)))
-        (fun _ => rfl)).mp hsplit with
-    | ⟨t, δ, ht, hδ, he⟩ =>
-        match an_unsplit_lineage_may_read_composite.1 t δ he with
-        | .inl h => ht h
-        | .inr h => hδ h
-
-theorem the_census_reads_the_split_only_at_the_primes (Q : Nat → Prop) :
-    (∀ p : Plan,
-        (∀ a b : Nat, a * b = fold (fun x y => x + y) 1 p →
-          a = 1 ∨ b = 1) →
-        ∀ t δ : Plan, graft t δ = p → t = .ground ∨ δ = .ground)
-      ∧ Derived censusFace (fun p => Q (fold (fun a b => a + b) 1 p))
-      ∧ ¬ Derived censusFace
-          (fun p => ∃ t δ : Plan, t ≠ Plan.ground ∧ δ ≠ Plan.ground
-            ∧ graft t δ = p) :=
-  ⟨fun p hp => a_prime_reading_admits_no_split p hp,
-   a_role_read_at_a_probe_is_derived censusFace () Q,
-   the_split_is_not_a_derived_role⟩
-
-theorem the_revision_also_rides (t δ : Plan) :
-    Nat.ble (fold (fun a b => a + b) 1 δ)
-      (fold (fun a b => a + b) 1 (graft t δ)) = true := by
-  rw [the_revision_multiplies_the_reading]
-  obtain ⟨a, ha⟩ := the_reading_is_positive t
-  rw [ha, Nat.succ_mul]
-  exact ble_le_add_left _ _
-
-theorem every_factor_lives_below_the_horizon {m : Nat} (t δ p : Plan)
-    (he : graft t δ = p) (hm : fold (fun a b => a + b) 1 p = m + 1) :
-    t ∈ allPlans m ∧ δ ∈ allPlans m :=
-  ⟨the_horizon_holds_every_reading m t (by
-      rw [← hm, ← he]; exact the_ground_rides_in_every_graft t δ),
-   the_horizon_holds_every_reading m δ (by
-      rw [← hm, ← he]; exact the_revision_also_rides t δ)⟩
-
-theorem the_split_is_searchable_in_the_room {m : Nat} (t δ p : Plan)
-    (he : graft t δ = p) (hm : fold (fun a b => a + b) 1 p = m + 1) :
-    (t ∈ allPlans m ∧ δ ∈ allPlans m)
-      ∧ ¬ Derived censusFace
-          (fun q => ∃ t' δ' : Plan, t' ≠ Plan.ground ∧ δ' ≠ Plan.ground
-            ∧ graft t' δ' = q) :=
-  ⟨every_factor_lives_below_the_horizon t δ p he hm,
-   the_split_is_not_a_derived_role⟩
-
-def selfSteered {I O : Type} (m : Machine I O) (r : m.S → I) :
-    Machine Unit O :=
-  ⟨m.S, m.s0, fun s _ => m.step s (r s), m.out⟩
-
-def orbit {I O : Type} (m : Machine I O) (r : m.S → I) : m.S → Nat → m.S
-  | s, 0 => s
-  | s, n + 1 => orbit m r (m.step s (r s)) n
-
-theorem the_self_steered_machine_is_a_clock {I O : Type} (m : Machine I O)
-    (r : m.S → I) :
-    ∀ (w : List Unit) (s : m.S),
-      drive (selfSteered m r) s w = m.out (orbit m r s w.length)
-  | [], _ => rfl
-  | _ :: w, s => the_self_steered_machine_is_a_clock m r w (m.step s (r s))
-
-def echoM : Machine Bool Bool := ⟨Bool, false, fun _ i => i, fun b => b⟩
-
-theorem the_channel_hears_the_guest :
-    behavior echoM [true] ≠ behavior echoM [false]
-      ∧ ([true] : List Bool).length = ([false] : List Bool).length :=
-  ⟨(fun h => nomatch h), rfl⟩
-
-theorem the_clock_and_the_channel {I O : Type} (m : Machine I O)
-    (r : m.S → I) (w w' : List Unit) (h : w.length = w'.length) :
-    behavior (selfSteered m r) w = behavior (selfSteered m r) w'
-      ∧ behavior echoM [true] ≠ behavior echoM [false]
-      ∧ ([true] : List Bool).length = ([false] : List Bool).length :=
-  ⟨(the_self_steered_machine_is_a_clock m r w m.s0).trans
-     ((congrArg (fun n => m.out (orbit m r m.s0 n)) h).trans
-       (the_self_steered_machine_is_a_clock m r w' m.s0).symm),
-   (fun hh => nomatch hh), rfl⟩
-
-theorem the_clock_of_mirrors_parks_at_the_bloom :
-    ∀ (n : Nat) (t : Plan),
-      orbit grower (fun _ => .board .ground .ground) t n
-        = graft t (bloom n)
-  | 0, _ => rfl
-  | n + 1, t => by
-      show orbit grower (fun _ => .board .ground .ground)
-          (graft t (.board .ground .ground)) n = graft t (bloom (n + 1))
-      rw [the_clock_of_mirrors_parks_at_the_bloom n
-            (graft t (.board .ground .ground)),
-          ← lineages_compose t (.board .ground .ground) (bloom n),
-          show graft (.board .ground .ground) (bloom n) = bloom (n + 1) from
-            (the_blooms_add 1 n).trans (congrArg bloom (Nat.add_comm 1 n))]
-
-theorem the_bloom_is_the_clocks_orbit (n : Nat) :
-    orbit grower (fun _ => .board .ground .ground) .ground n = bloom n :=
-  (the_clock_of_mirrors_parks_at_the_bloom n .ground).trans
-    (the_trivial_revision_changes_nothing (bloom n))
-
-theorem the_mirror_clock_reads_the_caps (w : List Unit) :
-    behavior (selfSteered grower (fun _ => .board .ground .ground)) w
-      = roomCap w.length :=
-  (the_self_steered_machine_is_a_clock grower
-      (fun _ => .board .ground .ground) w .ground).trans
-    ((congrArg (fold (fun a b => a + b) 1)
-        (the_bloom_is_the_clocks_orbit w.length)).trans
-      (the_bloom_fills_its_cap w.length))
-
-theorem the_mirror_clock_never_comes_home (n : Nat) :
-    Nat.ble (roomCap n + 1) (roomCap (n + 1)) = true := by
-  obtain ⟨m, hm⟩ := the_cap_is_positive n
-  show Nat.ble (roomCap n + 1) (roomCap n + roomCap n) = true
-  rw [hm]
-  exact ble_add_both (ble_refl (m + 1)) (ble_le_add_left m 1)
-
-theorem the_stage_is_a_kept_clock (n : Nat) (w : List Unit) :
-    orbit grower (fun _ => .board .ground .ground) .ground n = bloom n
-      ∧ behavior (selfSteered grower (fun _ => .board .ground .ground)) w
-          = roomCap w.length
-      ∧ Nat.ble (roomCap n + 1) (roomCap (n + 1)) = true :=
-  ⟨the_bloom_is_the_clocks_orbit n, the_mirror_clock_reads_the_caps w,
-   the_mirror_clock_never_comes_home n⟩
-
-def selfWord {I O : Type} (m : Machine I O) (r : m.S → I) :
-    m.S → Nat → List I
-  | _, 0 => []
-  | s, n + 1 => r s :: selfWord m r (m.step s (r s)) n
-
-theorem the_instinct_replays_its_word {I O : Type} (m : Machine I O)
-    (r : m.S → I) :
-    ∀ (w : List Unit) (s : m.S),
-      drive (selfSteered m r) s w = drive m s (selfWord m r s w.length)
-  | [], _ => rfl
-  | _ :: w, s => the_instinct_replays_its_word m r w (m.step s (r s))
-
-theorem internalization_is_self_steering {I O : Type} (m : Machine I O)
-    (r : m.S → I) (w w' : List Unit) (h : w.length = w'.length)
-    (n : Nat) :
-    (∀ (v : List Unit) (s : m.S),
-        drive (selfSteered m r) s v = drive m s (selfWord m r s v.length))
-      ∧ behavior (selfSteered m r) w = behavior (selfSteered m r) w'
-      ∧ orbit grower (fun _ => .board .ground .ground) .ground n
-          = bloom n :=
-  ⟨the_instinct_replays_its_word m r,
-   (the_clock_and_the_channel m r w w' h).1,
-   the_bloom_is_the_clocks_orbit n⟩
-
-def spiral (a d b : Nat) : Machine Unit Bool :=
-  ⟨Nat, 0, fun n _ => n + 1, fun n => within ⟨n * a, n * a + d⟩ (n * b)⟩
-
-theorem the_spiral_parks_at_its_count (a d b : Nat) :
-    ∀ (w : List Unit) (s : Nat), park (spiral a d b) s w = s + w.length
-  | [], _ => rfl
-  | _ :: w, s =>
-      (the_spiral_parks_at_its_count a d b w (s + 1)).trans
-        (succ_adds s w.length)
-
-theorem the_spiral_reads_at_its_count (a d b : Nat) (w : List Unit)
-    (s : Nat) :
-    drive (spiral a d b) s w
-      = within ⟨(s + w.length) * a, (s + w.length) * a + d⟩
-          ((s + w.length) * b) :=
-  (the_drive_reads_the_walk (spiral a d b) w s).trans
-    (congrArg (spiral a d b).out
-      ((the_park_is_a_walk (spiral a d b) w s).symm.trans
-        (the_spiral_parks_at_its_count a d b w s)))
-
-theorem the_wheel_reads_itself_unworn (a d : Nat) (w : List Unit) (s : Nat) :
-    drive (spiral a d a) s w = true :=
-  (the_spiral_reads_at_its_count a d a w s).trans
-    (the_lock_survives_every_lap a d (s + w.length))
-
-theorem the_spiral_holds_the_first_lap (a g e : Nat) (w : List Unit)
-    (hw : w.length = 1) :
-    behavior (spiral a ((g + 1) + e) (a + (g + 1))) w = true := by
-  show drive (spiral a ((g + 1) + e) (a + (g + 1))) (0 : Nat) w = true
-  rw [the_spiral_reads_at_its_count, zero_plus, hw,
-      one_times a, one_times (a + (g + 1))]
-  exact the_near_pace_lands_in_the_window a g e
-
-theorem the_spiral_flips_at_the_witness (a g e : Nat) (w : List Unit)
-    (hw : w.length = ((g + 1) + e) + 1) :
-    behavior (spiral a ((g + 1) + e) (a + (g + 1))) w = false := by
-  show drive (spiral a ((g + 1) + e) (a + (g + 1))) (0 : Nat) w = false
-  rw [the_spiral_reads_at_its_count, zero_plus, hw]
-  exact the_gap_outruns_every_window a g ((g + 1) + e)
-
-theorem the_kept_lap_reads_the_gap (a g e s : Nat) (w v u : List Unit)
-    (hv : v.length = 1) (hu : u.length = ((g + 1) + e) + 1) :
-    drive (spiral a ((g + 1) + e) a) s w = true
-      ∧ behavior (spiral a ((g + 1) + e) (a + (g + 1))) v = true
-      ∧ behavior (spiral a ((g + 1) + e) (a + (g + 1))) u = false
-      ∧ park (spiral a ((g + 1) + e) (a + (g + 1))) (0 : Nat) u = u.length :=
-  ⟨the_wheel_reads_itself_unworn a ((g + 1) + e) w s,
-   the_spiral_holds_the_first_lap a g e v hv,
-   the_spiral_flips_at_the_witness a g e u hu,
-   (the_spiral_parks_at_its_count a ((g + 1) + e) (a + (g + 1)) u 0).trans
-     (zero_plus u.length)⟩
-
-def originFace (S : Type u) : Face :=
-  ⟨S, Unit, Unit, fun _ _ => ()⟩
-
-theorem the_origin_merges_every_seat {S : Type u} (s t : S) :
-    alike (originFace S) s t :=
-  fun _ => rfl
-
-theorem no_interview_parts_the_origin {S : Type u} (s t : S)
-    (q : Interview Unit Unit) :
-    sound (originFace S) s q = sound (originFace S) t q :=
-  no_interview_parts_the_alike (originFace S) s t
-    (the_origin_merges_every_seat s t) q
-
-theorem the_origin_is_the_pairs_unit (F : Face) (s t : F.State) :
-    alike (pairFace F (originFace F.State) (fun x => x) (fun x => x)) s t
-      ↔ alike F s t :=
-  the_derived_look_widens_nothing F (fun _ _ => ()) ()
-    (fun _ _ _ _ => rfl) s t
-
-theorem the_constant_look_attributes_the_parting {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) (p₀ : F.Probe)
-    (hmerge : ∀ x y : F.State, alike F x y) (s t : S) :
-    alike (pairFace F G f g) s t
-      ↔ ∀ q, G.obs (g s) q = G.obs (g t) q :=
-  ⟨fun h => the_pair_refines_the_second_look F G f g p₀ s t h,
-   fun h pq => by
-     show (F.obs (f s) pq.1, G.obs (g s) pq.2)
-         = (F.obs (f t) pq.1, G.obs (g t) pq.2)
-     rw [hmerge (f s) (f t) pq.1, h pq.2]⟩
-
-theorem the_meeting_has_a_unit {S : Type u} (F G : Face) (f : S → F.State)
-    (g : S → G.State) (p₀ : F.Probe)
-    (hmerge : ∀ x y : F.State, alike F x y) (s t : S)
-    (F' : Face) (s' t' : F'.State) :
-    alike (originFace F'.State) s' t'
-      ∧ (alike (pairFace F' (originFace F'.State) (fun x => x) (fun x => x))
-            s' t'
-          ↔ alike F' s' t')
-      ∧ (alike (pairFace F G f g) s t
-          ↔ ∀ q, G.obs (g s) q = G.obs (g t) q)
-      ∧ (alike (host windowFace Bool) (⟨0, 0⟩, true) (⟨0, 0⟩, false)
-          ∧ ¬ alike
-              (pairFace (host windowFace Bool)
-                ⟨Bool, Unit, Bool, fun b _ => b⟩ (fun x => x) Prod.snd)
-              (⟨0, 0⟩, true) (⟨0, 0⟩, false)) :=
-  ⟨the_origin_merges_every_seat s' t',
-   the_origin_is_the_pairs_unit F' s' t',
-   the_constant_look_attributes_the_parting F G f g p₀ hmerge s t,
-   the_pair_parts_what_the_look_merges⟩
-
-def recite {P A : Type} : List P → Interview P A
-  | [] => .rest
-  | p :: ps => .ask p (fun _ => recite ps)
-
-theorem the_recital_is_the_transcript (F : Face) (s : F.State) :
-    ∀ ps : List F.Probe, sound F s (recite ps) = ps.map (F.obs s)
-  | [] => rfl
-  | p :: ps =>
-      congrArg (F.obs s p :: ·) (the_recital_is_the_transcript F s ps)
-
-theorem the_window_agrees_or_names_the_gap (F : Face)
-    (beq : F.Ans → F.Ans → Bool) (s t : F.State) :
-    ∀ ps : List F.Probe,
-      (∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true)
-        ∨ ∃ p, p ∈ ps ∧ beq (F.obs s p) (F.obs t p) = false
-  | [] => Or.inl (fun _ hp => nomatch hp)
-  | p :: ps => by
-      cases hb : beq (F.obs s p) (F.obs t p) with
-      | false => exact Or.inr ⟨p, List.Mem.head ps, hb⟩
-      | true =>
-          cases the_window_agrees_or_names_the_gap F beq s t ps with
-          | inl hall =>
-              refine Or.inl (fun q hq => ?_)
-              cases hq with
-              | head => exact hb
-              | tail _ hq' => exact hall q hq'
-          | inr hw =>
-              obtain ⟨q, hq, hbq⟩ := hw
-              exact Or.inr ⟨q, List.Mem.tail p hq, hbq⟩
-
-theorem the_agreed_window_sounds_as_one (F : Face) (s t : F.State) :
-    ∀ ps : List F.Probe, (∀ p, p ∈ ps → F.obs s p = F.obs t p) →
-      sound F s (recite ps) = sound F t (recite ps)
-  | [], _ => rfl
-  | p :: ps, h => by
-      show F.obs s p :: sound F s (recite ps)
-          = F.obs t p :: sound F t (recite ps)
-      rw [h p (List.Mem.head ps),
-          the_agreed_window_sounds_as_one F s t ps
-            (fun q hq => h q (List.Mem.tail p hq))]
-
-theorem the_beholders_run_out_of_disagreement (F : Face)
-    (beq : F.Ans → F.Ans → Bool)
-    (hs : ∀ a b : F.Ans, beq a b = true → a = b)
-    (s t : F.State) (ps : List F.Probe)
-    {S : Type u} (x y : S) (qs : List Unit) :
-    ((∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true)
-        ∨ ∃ p, p ∈ ps ∧ beq (F.obs s p) (F.obs t p) = false)
-      ∧ ((∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true) →
-          sound F s (recite ps) = sound F t (recite ps))
-      ∧ sound F s (recite ps) = ps.map (F.obs s)
-      ∧ sound (originFace S) x (recite qs)
-          = sound (originFace S) y (recite qs) :=
-  ⟨the_window_agrees_or_names_the_gap F beq s t ps,
-   fun h =>
-     the_agreed_window_sounds_as_one F s t ps
-       (fun p hp => hs _ _ (h p hp)),
-   the_recital_is_the_transcript F s ps,
-   no_interview_parts_the_origin x y (recite qs)⟩
-
-theorem the_guest_is_never_a_derived_role (F : Face) {W : Type}
-    (s : F.State) {w w' : W} (hw : w ≠ w') :
-    ¬ Derived (host F W) (fun x => x.2 = w) :=
-  fun hD => hw ((hD (s, w) (s, w') (fun _ => rfl)).mp rfl).symm
-
-theorem the_roles_run_the_handshake (F : Face) {W : Type}
-    (s : F.State) {w w' : W} (hw : w ≠ w') (p : F.Probe)
-    (Q : F.Ans → Prop) (r : W → F.Probe) :
-    Derived (host F W) (fun x => Q ((host F W).obs x p))
-      ∧ ¬ Derived (host F W) (fun x => x.2 = w)
-      ∧ ((s, w) ≠ (s, w') ∧ alike (host F W) (s, w) (s, w'))
-      ∧ selfMeet (host F W) (fun x => r x.2) (s, w) = F.obs s (r w) :=
-  ⟨a_role_read_at_a_probe_is_derived (host F W) p Q,
-   the_guest_is_never_a_derived_role F s hw,
-   ⟨(fun he => hw (congrArg Prod.snd he)), fun _ => rfl⟩,
-   the_self_meeting_reads_the_guest F r s w⟩
-
-theorem the_sounding_reads_the_alike (F : Face) (s t : F.State)
-    (h : ∀ q : Interview F.Probe F.Ans, sound F s q = sound F t q) :
-    alike F s t :=
-  fun p => (List.cons.inj (h (.ask p (fun _ => .rest)))).1
-
-theorem the_recital_reads_the_alike (F : Face) (s t : F.State)
-    (h : ∀ ps : List F.Probe,
-      sound F s (recite ps) = sound F t (recite ps)) :
-    alike F s t :=
-  fun p => (List.cons.inj (h [p])).1
-
-theorem the_curtain_is_exact (F : Face) (s t : F.State)
-    {I O : Type} (m n : Machine I O) :
-    (alike F s t
-        ↔ ∀ q : Interview F.Probe F.Ans, sound F s q = sound F t q)
-      ∧ (alike F s t
-          ↔ ∀ ps : List F.Probe,
-              sound F s (recite ps) = sound F t (recite ps))
-      ∧ ((∀ w, behavior m w = behavior n w)
-          ↔ ∀ q : Interview (List I) O, audition m q = audition n q) :=
-  ⟨⟨fun h q => no_interview_parts_the_alike F s t h q,
-    the_sounding_reads_the_alike F s t⟩,
-   ⟨fun h ps => no_interview_parts_the_alike F s t h (recite ps),
-    the_recital_reads_the_alike F s t⟩,
-   ⟨fun h q => an_audition_hears_only_the_conduct m n h q,
-    fun h => the_sounding_reads_the_alike (airGap I O) m n h⟩⟩
-
-def halve : Nat → Nat
-  | 0 => 0
-  | 1 => 0
-  | n + 2 => halve n + 1
-
-def collatzStep (n : Nat) : Nat :=
-  cond (oddNat n) (3 * n + 1) (halve n)
-
-def collatz : Machine Unit Nat :=
-  ⟨Nat, 1, fun n _ => collatzStep n, fun n => n⟩
-
-theorem the_home_wheel_turns :
-    park collatz (1 : Nat) [(), (), ()] = (1 : Nat)
-      ∧ park collatz (4 : Nat) [(), (), ()] = (4 : Nat)
-      ∧ park collatz (2 : Nat) [(), (), ()] = (2 : Nat) :=
-  ⟨rfl, rfl, rfl⟩
-
-theorem the_homecoming_is_conduct :
-    (park collatz (1 : Nat) [(), (), ()] = (1 : Nat)
-        ∧ park collatz (4 : Nat) [(), (), ()] = (4 : Nat)
-        ∧ park collatz (2 : Nat) [(), (), ()] = (2 : Nat))
-      ∧ (∀ (v : List Unit) (s : Nat), park paceOne s (() :: v) ≠ s)
-      ∧ ∀ b : Bool, park flip b [(), ()] = b :=
-  ⟨the_home_wheel_turns,
-   fun v s he =>
-     no_gain_is_zero s v.length
-       ((the_pace_parks_at_its_count (() :: v) s).symm.trans he),
-   the_flip_wheels⟩
-
-def exchange {W : Type} (σ : W → W → W) (d : door W W) : door W W :=
-  turnAbout (vertical σ d)
-
-def still {W : Type} : W → W → W := fun _ w => w
-
-def dialogue {W : Type} (d : door W W) (σs : List (W → W → W)) :
-    door W W :=
-  walk (fun e σ => exchange σ e) d σs
-
-theorem the_spoken_arrives_at_the_face {W : Type} (σ : W → W → W)
-    (d : door W W) :
-    face (exchange σ d) = σ (face d) (met d)
-      ∧ met (exchange σ d) = face d :=
-  ⟨rfl, rfl⟩
-
-theorem the_listening_turn_is_the_yield {W : Type} (d : door W W) :
-    exchange still d = turnAbout d := rfl
-
-theorem the_two_listeners_restore_the_table {W : Type} (d : door W W) :
-    exchange still (exchange still d) = d := rfl
-
-theorem the_dialogue_resumes {W : Type} (d : door W W)
-    (σs τs : List (W → W → W)) :
-    dialogue d (σs ++ τs) = dialogue (dialogue d σs) τs :=
-  the_walk_resumes (fun e σ => exchange σ e) σs τs d
-
-theorem the_conversation_is_a_walk {W X : Type} (σ : W → W → W)
-    (d : door W W) (σs τs : List (W → W → W)) (g : W → X) :
-    (face (exchange σ d) = σ (face d) (met d)
-        ∧ met (exchange σ d) = face d)
-      ∧ exchange still (exchange still d) = d
-      ∧ dialogue d (σs ++ τs) = dialogue (dialogue d σs) τs
-      ∧ g (face (vertical σ d)) = g (face d) :=
-  ⟨the_spoken_arrives_at_the_face σ d,
-   the_two_listeners_restore_the_table d,
-   the_dialogue_resumes d σs τs,
-   a_guest_mover_is_unheard σ g d⟩
-
-theorem the_deaf_turn_merges {W : Type} (f : W → W) (h : W) (w w' : W) :
-    exchange (fun x _ => f x) (atTheDoor h w)
-      = exchange (fun x _ => f x) (atTheDoor h w') := rfl
-
-theorem no_move_unsays_the_deaf_turn {W : Type} (f : W → W) (h : W)
-    {w w' : W} (hw : w ≠ w') :
-    ¬ ∃ g : door W W → door W W,
-      ∀ d, g (exchange (fun x _ => f x) d) = d :=
-  fun he =>
-    he.elim fun g hg =>
-      hw (congrArg met
-        ((hg (atTheDoor h w)).symm.trans
-          ((congrArg g (the_deaf_turn_merges f h w w')).trans
-            (hg (atTheDoor h w')))))
-
-theorem the_turn_keeps_only_what_it_hears {W : Type} (f : W → W)
-    (d : door W W) (h : W) {w w' : W} (hw : w ≠ w') :
-    exchange still (exchange still d) = d
-      ∧ face (exchange still d) = met d
-      ∧ (exchange (fun x _ => f x) (atTheDoor h w)
-            = exchange (fun x _ => f x) (atTheDoor h w')
-          ∧ atTheDoor h w ≠ atTheDoor h w')
-      ∧ ¬ ∃ g : door W W → door W W,
-          ∀ e, g (exchange (fun x _ => f x) e) = e :=
-  ⟨the_two_listeners_restore_the_table d,
-   rfl,
-   ⟨the_deaf_turn_merges f h w w', the_guest_is_real h hw⟩,
-   no_move_unsays_the_deaf_turn f h hw⟩
-
-theorem the_repeated_ask_hears_one_answer (F : Face) (s : F.State)
-    (p : F.Probe) :
-    ∀ n : Nat,
-      sound F s (recite (List.replicate n p))
-        = List.replicate n (F.obs s p)
-  | 0 => rfl
-  | n + 1 =>
-      congrArg (F.obs s p :: ·)
-        (the_repeated_ask_hears_one_answer F s p n)
-
-theorem the_worn_word_spends_no_object {W X : Type} (p p' : Plan)
-    (s : build W p) (g : build W p → X) (a d : Nat) (w : List Unit)
-    (n k : Nat) {I O : Type} (m : Machine I O)
-    (hstill : ∀ st i, m.out (m.step st i) = m.out st) (ws : List I)
-    (st : m.S) (F : Face) (t : F.State) (q : F.Probe) :
-    sound F t (recite (List.replicate k q))
-        = List.replicate k (F.obs t q)
-      ∧ drive (spiral a d a) n w = true
-      ∧ g (face (label W p s)) = g (face (atTheDoor s p'))
-      ∧ met (label W p s) = p
-      ∧ drive m st ws = m.out st :=
-  ⟨the_repeated_ask_hears_one_answer F t q k,
-   the_wheel_reads_itself_unworn a d w n,
-   the_label_rides_unread p p' s g,
-   the_meeting_reads_the_label W p s,
-   stillness_hides_the_ticking m hstill ws st⟩
-
-theorem the_park_resumes {I O : Type} (m : Machine I O) (w v : List I)
-    (s : m.S) :
-    park m s (w ++ v) = park m (park m s w) v :=
-  ((the_park_is_a_walk m (w ++ v) s).trans
-    ((the_walk_resumes m.step w v s).trans
-      (congrArg (fun x => walk m.step x v)
-        (the_park_is_a_walk m w s).symm))).trans
-    (the_park_is_a_walk m v (park m s w)).symm
-
-theorem the_rep_lands_where_it_is_fed {I O : Type} (m : Machine I O)
-    (w v : List I) (n : Nat) (s : m.S) (u : List Unit) (t : Nat)
-    (r : m.S → I) (vs : List Unit) :
-    audition m (recite (List.replicate n w))
-        = List.replicate n (behavior m w)
-      ∧ park m s (w ++ v) = park m (park m s w) v
-      ∧ park paceOne (park paceOne t u) u = (t + u.length) + u.length
-      ∧ drive (selfSteered m r) s vs
-          = drive m s (selfWord m r s vs.length) :=
-  ⟨the_repeated_ask_hears_one_answer (airGap I O) m w n,
-   the_park_resumes m w v s,
-   by rw [the_pace_parks_at_its_count, the_pace_parks_at_its_count],
-   the_instinct_replays_its_word m r vs s⟩
-
-theorem the_yield_fixes_the_agreed {W : Type} (d : door W W) :
-    turnAbout d = d ↔ met d = face d :=
-  ⟨fun h => congrArg face h,
-   fun h =>
-     (congrArg (atTheDoor · (face d)) h).trans
-       (congrArg (atTheDoor (face d) ·) h).symm⟩
-
-theorem the_quiescence_signature {W : Type} (d : door W W)
-    (σ : W → W → W) (w : W) (V : Type) (p : Plan) (s : build V p) :
-    (turnAbout d = d ↔ met d = face d)
-      ∧ (exchange still d = d ↔ met d = face d)
-      ∧ met (mirror V p s) = face (mirror V p s)
-      ∧ face (exchange σ (atTheDoor w w)) = σ w w :=
-  ⟨the_yield_fixes_the_agreed d,
-   the_yield_fixes_the_agreed d,
-   rfl,
-   rfl⟩
-
-def buffered {I O : Type} (m : Machine I O) : Machine I O :=
-  ⟨m.S × List I, (m.s0, []), fun st i => (st.1, st.2 ++ [i]),
-   fun st => drive m st.1 st.2⟩
-
-def settleHeld {I O : Type} (m : Machine I O) (st : m.S × List I) :
-    m.S × List I :=
-  (park m st.1 st.2, [])
-
-theorem the_hold_walks_beside_the_work {I O : Type} (m : Machine I O)
-    (w : List I) (s : m.S) (held : List I) :
-    drive (buffered m) (s, held) w = drive m (park m s held) w :=
-  two_machines_in_step_agree (buffered m) m
-    (fun st t => park m st.1 st.2 = t)
-    (fun st _t i ht =>
-      (the_park_resumes m st.2 [i] st.1).trans
-        (congrArg (fun x => park m x [i]) ht))
-    (fun st _t ht =>
-      (the_drive_reads_the_walk m st.2 st.1).trans
-        (congrArg m.out ((the_park_is_a_walk m st.2 st.1).symm.trans ht)))
-    w (s, held) (park m s held) rfl
-
-theorem the_buffer_is_invisible {I O : Type} (m : Machine I O)
-    (w : List I) :
-    behavior (buffered m) w = behavior m w :=
-  the_hold_walks_beside_the_work m w m.s0 []
-
-theorem the_settle_is_unheard {I O : Type} (m : Machine I O)
-    (st : m.S × List I) (w : List I) :
-    drive (buffered m) (settleHeld m st) w = drive (buffered m) st w :=
-  (the_hold_walks_beside_the_work m w (park m st.1 st.2) []).trans
-    (the_hold_walks_beside_the_work m w st.1 st.2).symm
-
-theorem the_held_and_the_worked_read_alike {I O : Type} (m : Machine I O)
-    (s : m.S) (i : I) (held w : List I) :
-    drive (buffered m) (settleHeld m (s, i :: held)) w
-        = drive (buffered m) (s, i :: held) w
-      ∧ (settleHeld m (s, i :: held)).2
-          ≠ ((s, i :: held) : m.S × List I).2 :=
-  ⟨the_settle_is_unheard m (s, i :: held) w,
-   fun h => nomatch h⟩
-
-theorem the_decomposition_is_the_remainder {I O : Type} (m : Machine I O)
-    (w v : List I) (s : m.S) (held : List I) (i : I) :
-    drive (buffered m) (s, held) w = drive m (park m s held) w
-      ∧ behavior (buffered m) v = behavior m v
-      ∧ drive (buffered m) (settleHeld m (s, held)) w
-          = drive (buffered m) (s, held) w
-      ∧ (drive (buffered m) (settleHeld m (s, i :: held)) w
-            = drive (buffered m) (s, i :: held) w
-          ∧ (settleHeld m (s, i :: held)).2
-              ≠ ((s, i :: held) : m.S × List I).2) :=
-  ⟨the_hold_walks_beside_the_work m w s held,
-   the_buffer_is_invisible m v,
-   the_settle_is_unheard m (s, held) w,
-   the_held_and_the_worked_read_alike m s i held w⟩
-
-theorem the_wider_parting_lands_at_the_ground (F : Face) {W : Type}
-    (s : F.State) (w w' : W)
-    (h : (widen F W).obs (s, w) (viaRight ())
-      ≠ (widen F W).obs (s, w') (viaRight ())) :
-    w ≠ w' :=
-  fun he =>
-    h (congrArg (fun x => (widen F W).obs (s, x) (viaRight ())) he)
-
-theorem the_premise_meets_its_witness (F : Face) {W : Type}
-    (s : F.State) {w w' : W} (hw : w ≠ w')
-    (q : Interview F.Probe F.Ans) :
-    alike (host F W) (s, w) (s, w')
-      ∧ sound (host F W) (s, w) q = sound (host F W) (s, w') q
-      ∧ (widen F W).obs (s, w) (viaRight ())
-          ≠ (widen F W).obs (s, w') (viaRight ())
-      ∧ ((widen F W).obs (s, w) (viaRight ())
-            ≠ (widen F W).obs (s, w') (viaRight ()) → w ≠ w') :=
-  ⟨fun _ => rfl,
-   no_interview_parts_the_alike (host F W) (s, w) (s, w')
-     (fun _ => rfl) q,
-   (fun he => hw (Sum.inr.inj he)),
-   the_wider_parting_lands_at_the_ground F s w w'⟩
-
-inductive Hand where
-  | rock : Hand
-  | paper : Hand
-  | scissors : Hand
-
-def beats : Hand → Hand → Bool
-  | .rock, .rock => false
-  | .rock, .paper => false
-  | .rock, .scissors => true
-  | .paper, .rock => true
-  | .paper, .paper => false
-  | .paper, .scissors => false
-  | .scissors, .rock => false
-  | .scissors, .paper => true
-  | .scissors, .scissors => false
-
-theorem no_hand_beats_itself : ∀ x : Hand, beats x x = false
-  | .rock => rfl
-  | .paper => rfl
-  | .scissors => rfl
-
-theorem every_hand_meets_its_match :
-    ∀ x : Hand, ∃ y z : Hand, beats y x = true ∧ beats x z = true
-  | .rock => ⟨.paper, .scissors, rfl, rfl⟩
-  | .paper => ⟨.scissors, .rock, rfl, rfl⟩
-  | .scissors => ⟨.rock, .paper, rfl, rfl⟩
-
-theorem the_interlock_refuses_the_ladder :
-    ¬ ∃ rank : Hand → Nat,
-      ∀ x y : Hand, beats x y = true →
-        Nat.ble (rank y + 1) (rank x) = true :=
-  fun he =>
-    he.elim fun rank h =>
-      have h1 := h .rock .scissors rfl
-      have h2 := h .scissors .paper rfl
-      have h3 := h .paper .rock rfl
-      have c1 : Nat.ble (rank .rock + 1) (rank .scissors) = true :=
-        ble_trans _ _ _ h3
-          (ble_trans _ _ _ (ble_le_succ (rank .paper)) h2)
-      have c2 : Nat.ble (rank .rock + 1) (rank .rock) = true :=
-        ble_trans _ _ _ c1
-          (ble_trans _ _ _ (ble_le_succ (rank .scissors)) h1)
-      nomatch (ble_succ_false (rank .rock)).symm.trans c2
-
-theorem the_trio_interlocks :
-    (∀ x : Hand, beats x x = false)
-      ∧ (∀ x : Hand, ∃ y z : Hand, beats y x = true ∧ beats x z = true)
-      ∧ (¬ ∃ rank : Hand → Nat,
-          ∀ x y : Hand, beats x y = true →
-            Nat.ble (rank y + 1) (rank x) = true)
-      ∧ ¬ ∃ f : Bool × Bool → Bool,
-          ∀ a b : Bool × Bool, f a = f b → a = b :=
-  ⟨no_hand_beats_itself,
-   every_hand_meets_its_match,
-   the_interlock_refuses_the_ladder,
-   the_hallway_is_too_small⟩
-
-theorem ble_antisymm : ∀ a b : Nat,
-    Nat.ble a b = true → Nat.ble b a = true → a = b
-  | 0, 0, _, _ => rfl
-  | 0, _ + 1, _, h2 => nomatch h2
-  | _ + 1, 0, h1, _ => nomatch h1
-  | a + 1, b + 1, h1, h2 => congrArg (· + 1) (ble_antisymm a b h1 h2)
-
-theorem no_rank_descends_the_flip :
-    ¬ ∃ rank : Bool → Nat,
-      ∀ b : Bool, Nat.ble (rank (!b) + 1) (rank b) = true :=
-  fun he =>
-    he.elim fun rank h =>
-      have c : Nat.ble (rank true + 1) (rank true) = true :=
-        ble_trans _ _ _ (h false)
-          (ble_trans _ _ _ (ble_le_succ (rank false)) (h true))
-      nomatch (ble_succ_false (rank true)).symm.trans c
-
-theorem no_rank_descends_the_home_wheel :
-    ¬ ∃ rank : Nat → Nat,
-      ∀ n : Nat, Nat.ble (rank (collatzStep n) + 1) (rank n) = true :=
-  fun he =>
-    he.elim fun rank h =>
-      have c1 : Nat.ble (rank 1 + 1) (rank 4) = true :=
-        ble_trans _ _ _ (h 2)
-          (ble_trans _ _ _ (ble_le_succ (rank 2)) (h 4))
-      have c2 : Nat.ble (rank 1 + 1) (rank 1) = true :=
-        ble_trans _ _ _ c1
-          (ble_trans _ _ _ (ble_le_succ (rank 4)) (h 1))
-      nomatch (ble_succ_false (rank 1)).symm.trans c2
-
-theorem the_wheel_flattens_the_monotone (rank : Nat → Nat)
-    (h : ∀ n : Nat, Nat.ble (rank (collatzStep n)) (rank n) = true) :
-    rank 4 = rank 1 ∧ rank 2 = rank 4 ∧ rank 1 = rank 2 :=
-  ⟨ble_antisymm _ _ (h 1) (ble_trans _ _ _ (h 2) (h 4)),
-   ble_antisymm _ _ (h 4) (ble_trans _ _ _ (h 1) (h 2)),
-   ble_antisymm _ _ (h 2) (ble_trans _ _ _ (h 4) (h 1))⟩
-
-theorem the_wheel_refuses_the_ladder :
-    (¬ ∃ rank : Hand → Nat,
-        ∀ x y : Hand, beats x y = true →
-          Nat.ble (rank y + 1) (rank x) = true)
-      ∧ (¬ ∃ rank : Bool → Nat,
-          ∀ b : Bool, Nat.ble (rank (!b) + 1) (rank b) = true)
-      ∧ (¬ ∃ rank : Nat → Nat,
-          ∀ n : Nat, Nat.ble (rank (collatzStep n) + 1) (rank n) = true)
-      ∧ (∀ rank : Nat → Nat,
-          (∀ n : Nat, Nat.ble (rank (collatzStep n)) (rank n) = true) →
-            rank 4 = rank 1 ∧ rank 2 = rank 4 ∧ rank 1 = rank 2)
-      ∧ park collatz (1 : Nat) [(), (), ()] = (1 : Nat) :=
-  ⟨the_interlock_refuses_the_ladder,
-   no_rank_descends_the_flip,
-   no_rank_descends_the_home_wheel,
-   the_wheel_flattens_the_monotone,
-   the_home_wheel_turns.1⟩
-
-theorem no_inverse_unsteps_the_collatz :
-    ¬ ∃ g : Nat → Nat, ∀ n : Nat, g (collatzStep n) = n :=
-  fun he =>
-    he.elim fun _ h =>
-      nomatch Nat.succ.inj ((h 1).symm.trans (h 8))
-
-theorem the_wheel_counters_forward {I O : Type} (m : Machine I O)
-    (s : m.S) (w v : List I) (h : park m s (w ++ v) = s) :
-    park m (park m s w) v = s :=
-  (the_park_resumes m w v s).symm.trans h
-
-theorem the_wheel_is_its_own_countermove :
-    (¬ ∃ g : Nat → Nat, ∀ n : Nat, g (collatzStep n) = n)
-      ∧ collatzStep 1 = collatzStep 8
-      ∧ (1 : Nat) ≠ 8
-      ∧ (∀ {I O : Type} (m : Machine I O) (s : m.S) (w v : List I),
-          park m s (w ++ v) = s → park m (park m s w) v = s)
-      ∧ park collatz (4 : Nat) [(), ()] = (1 : Nat)
-      ∧ ∀ b : Bool, park flip b [(), ()] = b :=
-  ⟨no_inverse_unsteps_the_collatz,
-   rfl,
-   (fun h => nomatch Nat.succ.inj h),
-   fun m s w v h => the_wheel_counters_forward m s w v h,
-   rfl,
-   the_flip_wheels⟩
-
-def hollowShell : Machine Unit Bool :=
-  ⟨Unit, (), fun _ _ => (), fun _ => true⟩
-
-theorem the_muffled_tally_is_the_resting_counter :
-    revoice (fun _ => true) (tally Unit) = restingCounter := rfl
-
-theorem the_revoice_moves_no_seat {I O O' : Type} (g : O → O')
-    (m : Machine I O) :
-    ∀ (w : List I) (s : m.S), park (revoice g m) s w = park m s w
-  | [], _ => rfl
-  | i :: w, s => the_revoice_moves_no_seat g m w (m.step s i)
-
-theorem the_shell_sounds_still (w : List Unit) :
-    behavior hollowShell w = true :=
-  stillness_hides_the_ticking hollowShell (fun _ _ => rfl) w ()
-
-theorem the_flywheel_and_the_shell_sound_alike
-    (q : Interview (List Unit) Bool) :
-    audition restingCounter q = audition hollowShell q :=
-  an_audition_hears_only_the_conduct restingCounter hollowShell
-    (fun w =>
-      (the_still_face_is_not_a_dead_machine.1 w).trans
-        (the_shell_sounds_still w).symm)
-    q
-
-theorem the_muffler_banks_the_run :
-    ∀ (w : List Unit) (s : Nat), park restingCounter s w = s + w.length
-  | [], _ => rfl
-  | _ :: w, s =>
-      (the_muffler_banks_the_run w (s + 1)).trans (succ_adds s w.length)
-
-theorem the_wider_voice_releases_the_bank (w : List Unit) :
-    behavior (tally Unit) w = w.length :=
-  (drive_counts w 0).trans (zero_plus w.length)
-
-theorem the_still_face_banks_the_run {I O O' : Type} (g : O → O')
-    (m : Machine I O) (v : List I) (t : m.S)
-    (w : List Unit) (s : Nat) (q : Interview (List Unit) Bool) :
-    revoice (fun _ => true) (tally Unit) = restingCounter
-      ∧ audition restingCounter q = audition hollowShell q
-      ∧ park restingCounter s w = s + w.length
-      ∧ behavior (tally Unit) w = w.length
-      ∧ park (revoice g m) t v = park m t v :=
-  ⟨rfl,
-   the_flywheel_and_the_shell_sound_alike q,
-   the_muffler_banks_the_run w s,
-   the_wider_voice_releases_the_bank w,
-   the_revoice_moves_no_seat g m v t⟩
-
-theorem the_retuned_seat_walks_the_translated_word {I I' O : Type}
-    (f : I' → I) (m : Machine I O) :
-    ∀ (w : List I') (s : m.S), park (retune f m) s w = park m s (w.map f)
-  | [], _ => rfl
-  | i :: w, s => the_retuned_seat_walks_the_translated_word f m w
-      (m.step s (f i))
-
-theorem the_pulse_wears_a_deaf_ear :
-    retune (fun _ : Bool => ()) paceOne = pulse := rfl
-
-theorem the_deaf_ear_reads_only_the_count (w : List Bool) (s : Nat) :
-    park pulse s w = s + w.length :=
-  ((the_retuned_seat_walks_the_translated_word (fun _ : Bool => ())
-      paceOne w s).trans
-    (the_pace_parks_at_its_count (w.map (fun _ => ())) s)).trans
-    (congrArg (s + ·) (len_map (fun _ : Bool => ()) w))
-
-theorem the_ear_the_seat_and_the_voice {I I' O O' : Type} (f : I' → I)
-    (g : O → O') (m : Machine I O) (w : List I') (v : List I)
-    (s : m.S) (t : Nat) (u : List Bool) :
-    park (retune f m) s w = park m s (w.map f)
-      ∧ park (revoice g m) s v = park m s v
-      ∧ revoice g (retune f m) = retune f (revoice g m)
-      ∧ retune (fun _ : Bool => ()) paceOne = pulse
-      ∧ park pulse t u = t + u.length :=
-  ⟨the_retuned_seat_walks_the_translated_word f m w s,
-   the_revoice_moves_no_seat g m v s,
-   the_ear_and_the_voice_commute f g m,
-   rfl,
-   the_deaf_ear_reads_only_the_count u t⟩
-
-theorem the_full_exchange_is_a_guest_move {W : Type} (σ : W → W → W)
-    (d : door W W) :
-    exchange still (exchange σ d) = vertical σ d := rfl
-
-theorem the_ode_comes_home {W X : Type} (σ : W → W → W) (d : door W W)
-    (g : W → X) :
-    exchange still (exchange σ d) = vertical σ d
-      ∧ g (face (exchange still (exchange σ d))) = g (face d)
-      ∧ met (exchange still (exchange σ d)) = σ (face d) (met d)
-      ∧ exchange still (exchange still d) = d :=
-  ⟨rfl,
-   a_guest_mover_is_unheard σ g d,
-   rfl,
-   the_two_listeners_restore_the_table d⟩
-
-theorem one_clock_many_voices (a d b : Nat) (w : List Unit) (s : Nat) :
-    revoice oddNat (tally Unit) = paceOne
-      ∧ revoice (fun n => (⟨n, 10⟩ : Measured)) (tally Unit) = homingIn
-      ∧ revoice (fun n => within ⟨n * a, n * a + d⟩ (n * b)) (tally Unit)
-          = spiral a d b
-      ∧ park paceOne s w = park (tally Unit) s w
-      ∧ park homingIn s w = park (tally Unit) s w
-      ∧ park (spiral a d b) s w = park (tally Unit) s w
-      ∧ tighter (behavior homingIn w) ⟨0, 10⟩ = true
-      ∧ park paceOne s w = s + w.length :=
-  ⟨rfl, rfl, rfl,
-   the_revoice_moves_no_seat oddNat (tally Unit) w s,
-   the_revoice_moves_no_seat (fun n => (⟨n, 10⟩ : Measured))
-     (tally Unit) w s,
-   the_revoice_moves_no_seat
-     (fun n => within ⟨n * a, n * a + d⟩ (n * b)) (tally Unit) w s,
-   the_homing_reading_tightens w,
-   the_pace_parks_at_its_count w s⟩
-
-theorem the_deaf_turn_speaks_the_graph {W : Type} (f : W → W)
-    (d : door W W) :
-    exchange (fun x _ => f x) d = graphDoor f (face d) := rfl
-
-theorem the_monologue_echoes_its_last_word {W : Type} (f : W → W)
-    (d : door W W) :
-    met (exchange (fun x _ => f x) d) = face d := rfl
-
-theorem the_monologue_merges_at_the_first_turn {W : Type} (f : W → W)
-    (fs : List (W → W)) (h w w' : W) :
-    dialogue (atTheDoor h w) ((f :: fs).map (fun k x _ => k x))
-      = dialogue (atTheDoor h w') ((f :: fs).map (fun k x _ => k x)) := rfl
-
-theorem the_monologue_walks_the_face {W : Type} :
-    ∀ (fs : List (W → W)) (d : door W W),
-      face (dialogue d (fs.map (fun k x _ => k x)))
-        = walk (fun x k => k x) (face d) fs
-  | [], _ => rfl
-  | f :: fs, d =>
-      the_monologue_walks_the_face fs (exchange (fun x _ => f x) d)
-
-theorem the_read_monologue_is_a_self_meeting {W X : Type} (f : W → W)
-    (g : W → W → X) (d : door W W) :
-    walkIn g (exchange still (exchange (fun x _ => f x) d))
-      = g (face d) (f (face d)) := rfl
-
-theorem the_monologue_is_its_own_audience {W X : Type} (f : W → W)
-    (fs : List (W → W)) (h w w' : W) (d : door W W) (g : W → W → X) :
-    exchange (fun x _ => f x) d = graphDoor f (face d)
-      ∧ met (exchange (fun x _ => f x) d) = face d
-      ∧ dialogue (atTheDoor h w) ((f :: fs).map (fun k x _ => k x))
-          = dialogue (atTheDoor h w') ((f :: fs).map (fun k x _ => k x))
-      ∧ face (dialogue d (fs.map (fun k x _ => k x)))
-          = walk (fun x k => k x) (face d) fs
-      ∧ walkIn g (exchange still (exchange (fun x _ => f x) d))
-          = g (face d) (f (face d)) :=
-  ⟨rfl, rfl, rfl, the_monologue_walks_the_face fs d, rfl⟩
-
-def rehear (F : Face) {P' : Type} (f : P' → F.Probe) : Face :=
-  ⟨F.State, P', F.Ans, fun s p => F.obs s (f p)⟩
-
-def retell (F : Face) {A' : Type} (g : F.Ans → A') : Face :=
-  ⟨F.State, F.Probe, A', fun s p => g (F.obs s p)⟩
-
-theorem the_translated_ear_hears_no_more (F : Face) {P' : Type}
-    (f : P' → F.Probe) (s t : F.State) (h : alike F s t) :
-    alike (rehear F f) s t :=
-  fun p => h (f p)
-
-theorem the_sectioned_ear_loses_nothing (F : Face) {P' : Type}
-    (f : P' → F.Probe) (h : F.Probe → P') (hs : ∀ p, f (h p) = p)
-    (s t : F.State) (hal : alike (rehear F f) s t) :
-    alike F s t :=
-  fun p =>
-    (congrArg (F.obs s) (hs p)).symm.trans
-      ((hal (h p)).trans (congrArg (F.obs t) (hs p)))
-
-theorem the_faithful_voice_keeps_the_curtain (F : Face) {A' : Type}
-    (g : F.Ans → A') (s t : F.State) :
-    (alike F s t → alike (retell F g) s t)
-      ∧ ∀ r : A' → F.Ans, (∀ a, r (g a) = a) →
-          alike (retell F g) s t → alike F s t :=
-  ⟨fun h p => congrArg g (h p),
-   fun r hr hal p =>
-     (hr (F.obs s p)).symm.trans
-       ((congrArg r (hal p)).trans (hr (F.obs t p)))⟩
-
-def recast {P P' A : Type} (f : P' → P) : Interview P' A → Interview P A
-  | .rest => .rest
-  | .ask p k => .ask (f p) (fun a => recast f (k a))
-
-def pullback {P A A' : Type} (g : A → A') : Interview P A' → Interview P A
-  | .rest => .rest
-  | .ask p k => .ask p (fun a => pullback g (k (g a)))
-
-theorem the_interview_crosses_the_ear (F : Face) {P' : Type}
-    (f : P' → F.Probe) (s : F.State) :
-    ∀ q : Interview P' F.Ans,
-      sound (rehear F f) s q = sound F s (recast f q)
-  | .rest => rfl
-  | .ask p k =>
-      congrArg (F.obs s (f p) :: ·)
-        (the_interview_crosses_the_ear F f s (k (F.obs s (f p))))
-
-theorem the_interview_crosses_the_voice (F : Face) {A' : Type}
-    (g : F.Ans → A') (s : F.State) :
-    ∀ q : Interview F.Probe A',
-      sound (retell F g) s q = (sound F s (pullback g q)).map g
-  | .rest => rfl
-  | .ask p k =>
-      congrArg (g (F.obs s p) :: ·)
-        (the_interview_crosses_the_voice F g s (k (g (F.obs s p))))
-
-theorem the_ears_stack_backward (F : Face) {P' P'' : Type}
-    (f : P' → F.Probe) (f' : P'' → P') :
-    rehear (rehear F f) f' = rehear F (fun p => f (f' p)) := rfl
-
-theorem the_voices_stack_forward (F : Face) {A' A'' : Type}
-    (g : F.Ans → A') (g' : A' → A'') :
-    retell (retell F g) g' = retell F (fun a => g' (g a)) := rfl
-
-theorem the_machines_ear_is_the_faces_ear {I I' O : Type} (f : I' → I)
-    (m : Machine I O) (w : List I') :
-    (airGap I' O).obs (retune f m) w
-      = (rehear (airGap I O) (fun u : List I' => u.map f)).obs m w :=
-  hearing_through_a_translator f m w m.s0
-
-theorem the_machines_voice_is_the_faces_voice {I O O' : Type} (g : O → O')
-    (m : Machine I O) (v : List I) :
-    (airGap I O').obs (revoice g m) v
-      = (retell (airGap I O) g).obs m v :=
-  speaking_through_a_translator g m v m.s0
-
-theorem every_face_wears_an_ear_and_a_voice (F : Face) {P' A' : Type}
-    (f : P' → F.Probe) (g : F.Ans → A') (s t : F.State)
-    (h : alike F s t) (q : Interview P' F.Ans)
-    (q' : Interview F.Probe A')
-    {I I' O O' : Type} (f0 : I' → I) (g0 : O → O')
-    (m : Machine I O) (w : List I') (v : List I) :
-    alike (rehear F f) s t
-      ∧ alike (retell F g) s t
-      ∧ sound (rehear F f) s q = sound F s (recast f q)
-      ∧ sound (retell F g) s q' = (sound F s (pullback g q')).map g
-      ∧ (airGap I' O).obs (retune f0 m) w
-          = (rehear (airGap I O) (fun u : List I' => u.map f0)).obs m w
-      ∧ (airGap I O').obs (revoice g0 m) v
-          = (retell (airGap I O) g0).obs m v
-      ∧ retell (rehear F f) g = rehear (retell F g) f :=
-  ⟨the_translated_ear_hears_no_more F f s t h,
-   (the_faithful_voice_keeps_the_curtain F g s t).1 h,
-   the_interview_crosses_the_ear F f s q,
-   the_interview_crosses_the_voice F g s q',
-   the_machines_ear_is_the_faces_ear f0 m w,
-   the_machines_voice_is_the_faces_voice g0 m v,
-   rfl⟩
-
-def unheard (F : Face) (m : F.State → F.State) : Prop :=
-  ∀ s, alike F (m s) s
-
-theorem the_still_hand_is_unheard (F : Face) :
-    unheard F (fun s => s) :=
-  fun _ _ => rfl
-
-theorem the_unheard_hands_compose (F : Face) (m n : F.State → F.State)
-    (hm : unheard F m) (hn : unheard F n) :
-    unheard F (fun s => m (n s)) :=
-  fun s p => (hm (n s) p).trans (hn s p)
-
-theorem no_interview_hears_the_unheard (F : Face) (m : F.State → F.State)
-    (hm : unheard F m) (s : F.State) (q : Interview F.Probe F.Ans) :
-    sound F (m s) q = sound F s q :=
-  no_interview_parts_the_alike F (m s) s (hm s) q
-
-theorem correct_maintenance_has_no_signature (F : Face)
-    (m m' : F.State → F.State) (hm : unheard F m) (hm' : unheard F m')
-    (s : F.State) (q : Interview F.Probe F.Ans) :
-    sound F (m s) q = sound F (m' s) q :=
-  (no_interview_hears_the_unheard F m hm s q).trans
-    (no_interview_hears_the_unheard F m' hm' s q).symm
-
-theorem a_chain_of_the_unheard_is_unheard (F : Face) :
-    ∀ ms : List (F.State → F.State),
-      (∀ m, m ∈ ms → unheard F m) →
-      unheard F (fun s => walk (fun t k => k t) s ms)
-  | [], _ => fun _ _ => rfl
-  | m :: ms, h => fun s p =>
-      (a_chain_of_the_unheard_is_unheard F ms
-          (fun k hk => h k (List.Mem.tail m hk)) (m s) p).trans
-        (h m (List.Mem.head ms) s p)
-
-theorem only_the_unheard_survives_the_sounding (F : Face)
-    (m : F.State → F.State) :
-    (∀ (s : F.State) (q : Interview F.Probe F.Ans),
-        sound F (m s) q = sound F s q)
-      ↔ unheard F m :=
-  ⟨fun h s => the_sounding_reads_the_alike F (m s) s (h s),
-   fun hm s q => no_interview_parts_the_alike F (m s) s (hm s) q⟩
-
-def seatFace {I O : Type} (m : Machine I O) : Face :=
-  ⟨m.S, List I, O, drive m⟩
-
-theorem the_guest_mover_is_a_still_hand {H W X : Type} (σ : H → W → W) :
-    unheard (doorFace H W X) (vertical σ) :=
-  fun _ _ => rfl
-
-theorem the_guest_write_is_a_still_hand (F : Face) {W : Type}
-    (g : F.State × W → W) :
-    unheard (host F W) (fun x => (x.1, g x)) :=
-  fun x p => (the_reading_writes_unheard F g x.1 x.2 p).symm
-
-theorem the_settle_is_a_still_hand {I O : Type} (m : Machine I O) :
-    unheard (seatFace (buffered m)) (settleHeld m) :=
-  fun st w => the_settle_is_unheard m st w
-
-theorem the_yield_is_no_still_hand :
-    ¬ unheard (doorFace Nat Nat Nat) turnAbout :=
-  fun h => nomatch h (atTheDoor (0 : Nat) (1 : Nat)) (fun n => n)
-
-theorem the_unheard_keep_the_house (F : Face) (m m' : F.State → F.State)
-    (hm : unheard F m) (hm' : unheard F m') (s : F.State)
-    (q : Interview F.Probe F.Ans) (ms : List (F.State → F.State))
-    (hms : ∀ k, k ∈ ms → unheard F k) {H W X : Type} (σ : H → W → W)
-    {I O : Type} (mach : Machine I O) :
-    unheard F (fun t => t)
-      ∧ unheard F (fun t => m (m' t))
-      ∧ sound F (m s) q = sound F s q
-      ∧ sound F (m s) q = sound F (m' s) q
-      ∧ unheard F (fun t => walk (fun u k => k u) t ms)
-      ∧ ((∀ (t : F.State) (q' : Interview F.Probe F.Ans),
-            sound F (m t) q' = sound F t q')
-          ↔ unheard F m)
-      ∧ unheard (doorFace H W X) (vertical σ)
-      ∧ unheard (seatFace (buffered mach)) (settleHeld mach)
-      ∧ ¬ unheard (doorFace Nat Nat Nat) turnAbout :=
-  ⟨the_still_hand_is_unheard F,
-   the_unheard_hands_compose F m m' hm hm',
-   no_interview_hears_the_unheard F m hm s q,
-   correct_maintenance_has_no_signature F m m' hm hm' s q,
-   a_chain_of_the_unheard_is_unheard F ms hms,
-   only_the_unheard_survives_the_sounding F m,
-   the_guest_mover_is_a_still_hand σ,
-   the_settle_is_a_still_hand mach,
-   the_yield_is_no_still_hand⟩
-
-def duet {I O O' : Type} (m : Machine I O) (n : Machine I O') :
-    Machine I (O × O') :=
-  ⟨m.S × n.S, (m.s0, n.s0), fun s i => (m.step s.1 i, n.step s.2 i),
-   fun s => (m.out s.1, n.out s.2)⟩
-
-theorem the_duet_walks_in_step {I O O' : Type} (m : Machine I O)
-    (n : Machine I O') :
-    ∀ (w : List I) (s : m.S) (t : n.S),
-      drive (duet m n) (s, t) w = (drive m s w, drive n t w)
-  | [], _, _ => rfl
-  | i :: w, s, t => the_duet_walks_in_step m n w (m.step s i) (n.step t i)
-
-theorem the_duet_parks_in_step {I O O' : Type} (m : Machine I O)
-    (n : Machine I O') :
-    ∀ (w : List I) (s : m.S) (t : n.S),
-      park (duet m n) (s, t) w = (park m s w, park n t w)
-  | [], _, _ => rfl
-  | i :: w, s, t => the_duet_parks_in_step m n w (m.step s i) (n.step t i)
-
-theorem the_duet_sounds_both {I O O' : Type} (m : Machine I O)
-    (n : Machine I O') (w : List I) :
-    behavior (duet m n) w = (behavior m w, behavior n w) :=
-  the_duet_walks_in_step m n w m.s0 n.s0
-
-theorem the_duet_reads_at_the_mirror_probe {I O O' : Type}
-    (m : Machine I O) (n : Machine I O') (s : m.S) (t : n.S)
-    (w : List I) :
-    (seatFace (duet m n)).obs (s, t) w
-      = (pairFace (seatFace m) (seatFace n) Prod.fst Prod.snd).obs
-          (s, t) (w, w) :=
-  the_duet_walks_in_step m n w s t
-
-theorem the_shell_is_the_duets_silent_partner {O : Type}
-    (m : Machine Unit O) (w : List Unit) :
-    behavior (duet m hollowShell) w = (behavior m w, true) :=
-  (the_duet_sounds_both m hollowShell w).trans
-    (congrArg (fun b => (behavior m w, b)) (the_shell_sounds_still w))
-
-theorem the_shell_signs_no_parting {O : Type} (m : Machine Unit O)
-    (w v : List Unit) :
-    behavior (duet hollowShell m) w = behavior (duet hollowShell m) v
-      ↔ behavior m w = behavior m v :=
-  ⟨fun h =>
-     congrArg Prod.snd
-       (((the_duet_sounds_both hollowShell m w).symm.trans h).trans
-         (the_duet_sounds_both hollowShell m v)),
-   fun h =>
-     (the_duet_sounds_both hollowShell m w).trans
-       ((congr
-           (congrArg Prod.mk
-             ((the_shell_sounds_still w).trans
-               (the_shell_sounds_still v).symm))
-           h).trans
-         (the_duet_sounds_both hollowShell m v).symm)⟩
-
-theorem two_voices_of_one_clock_share_one_seat {P Q : Type}
-    (g : Nat → P) (g' : Nat → Q) (u : List Unit) :
-    behavior (duet (revoice g (tally Unit)) (revoice g' (tally Unit))) u
-      = behavior (revoice (fun k => (g k, g' k)) (tally Unit)) u :=
-  (the_duet_sounds_both (revoice g (tally Unit))
-      (revoice g' (tally Unit)) u).trans
-    ((congr
-        (congrArg Prod.mk
-          (speaking_through_a_translator g (tally Unit) u (0 : Nat)))
-        (speaking_through_a_translator g' (tally Unit) u (0 : Nat))).trans
-      (speaking_through_a_translator (fun k => (g k, g' k))
-        (tally Unit) u (0 : Nat)).symm)
-
-theorem the_duet_hears_one_word {I O O' O'' : Type} (m : Machine I O)
-    (n : Machine I O') (w : List I) (s : m.S) (t : n.S)
-    (mach : Machine Unit O'') (v v' : List Unit)
-    {P Q : Type} (g : Nat → P) (g' : Nat → Q) (u : List Unit) :
-    drive (duet m n) (s, t) w = (drive m s w, drive n t w)
-      ∧ park (duet m n) (s, t) w = (park m s w, park n t w)
-      ∧ behavior (duet m n) w = (behavior m w, behavior n w)
-      ∧ (seatFace (duet m n)).obs (s, t) w
-          = (pairFace (seatFace m) (seatFace n) Prod.fst Prod.snd).obs
-              (s, t) (w, w)
-      ∧ behavior (duet mach hollowShell) v = (behavior mach v, true)
-      ∧ (behavior (duet hollowShell mach) v
-            = behavior (duet hollowShell mach) v'
-          ↔ behavior mach v = behavior mach v')
-      ∧ behavior (duet (revoice g (tally Unit)) (revoice g' (tally Unit))) u
-          = behavior (revoice (fun k => (g k, g' k)) (tally Unit)) u :=
-  ⟨the_duet_walks_in_step m n w s t,
-   the_duet_parks_in_step m n w s t,
-   the_duet_sounds_both m n w,
-   the_duet_reads_at_the_mirror_probe m n s t w,
-   the_shell_is_the_duets_silent_partner mach v,
-   the_shell_signs_no_parting mach v v',
-   two_voices_of_one_clock_share_one_seat g g' u⟩
-
-def scribe {B W : Type} (next : List B → W → B) : Machine W (List B) :=
-  ⟨List B, [], fun out w => next out w :: out, fun out => out⟩
-
-theorem snoc_append {A : Type} (x : A) :
-    ∀ (a b : List A), (a ++ [x]) ++ b = a ++ (x :: b)
-  | [], _ => rfl
-  | y :: a, b => congrArg (y :: ·) (snoc_append x a b)
-
-theorem the_scribes_record_only_grows {B W : Type}
-    (next : List B → W → B) :
-    ∀ (ws : List W) (out : List B),
-      ∃ new : List B, park (scribe next) out ws = new ++ out
-  | [], _ => ⟨[], rfl⟩
-  | w :: ws, out =>
-      match the_scribes_record_only_grows next ws (next out w :: out) with
-      | ⟨new, h⟩ =>
-          ⟨new ++ [next out w],
-           h.trans (snoc_append (next out w) new out).symm⟩
-
-theorem one_wind_one_mark {B W : Type} (next : List B → W → B) :
-    ∀ (ws : List W) (out : List B),
-      (park (scribe next) out ws).length = out.length + ws.length
-  | [], _ => rfl
-  | w :: ws, out =>
-      (one_wind_one_mark next ws (next out w :: out)).trans
-        (succ_adds out.length ws.length)
-
-theorem the_scribe_resumes {B W : Type} (next : List B → W → B)
-    (xs ys : List W) (out : List B) :
-    park (scribe next) out (xs ++ ys)
-      = park (scribe next) (park (scribe next) out xs) ys :=
-  the_park_resumes (scribe next) xs ys out
-
-theorem the_scribe_wears_the_tally {B W : Type} (next : List B → W → B)
-    (ws : List W) (out : List B) :
-    (park (scribe next) out ws).length = drive (tally W) out.length ws :=
-  (one_wind_one_mark next ws out).trans (drive_counts ws out.length).symm
-
-def utterance {B C W : Type} (sample : C → W → B) (select : List B → C)
-    (out : List B) (w : W) : B :=
-  walkIn sample (atTheDoor (select out) w)
-
-theorem the_utterance_is_a_door {B C W : Type} (sample : C → W → B)
-    (select : List B → C) (out : List B) (w : W) :
-    utterance sample select out w = sample (select out) w := rfl
-
-theorem the_selection_reads_no_wind {B C W X : Type}
-    (select : List B → C) (g : C → X) (out : List B) (w w' : W) :
-    g (face (atTheDoor (select out) w))
-      = g (face (atTheDoor (select out) w')) := rfl
-
-theorem the_selection_reads_only_the_record {B C W : Type}
-    (sample : C → W → B) (select select' : List B → C) (out : List B)
-    (w : W) (h : select out = select' out) :
-    utterance sample select out w = utterance sample select' out w :=
-  congrArg (fun c => sample c w) h
-
-theorem the_wind_rides_the_utterance {B C W : Type}
-    (select : List B → C) (out : List B) {w w' : W} (hw : w ≠ w') :
-    atTheDoor (select out) w ≠ atTheDoor (select out) w' :=
-  the_guest_is_real (select out) hw
-
-theorem generation_originates_nothing {B C W X : Type}
-    (next : List B → W → B) (sample : C → W → B)
-    (select select' : List B → C) (ws xs ys : List W) (out : List B)
-    (w : W) {w' : W} (hw : w ≠ w') (g : C → X)
-    (h : select out = select' out) :
-    (∃ new : List B, park (scribe next) out ws = new ++ out)
-      ∧ (park (scribe next) out ws).length = out.length + ws.length
-      ∧ park (scribe next) out (xs ++ ys)
-          = park (scribe next) (park (scribe next) out xs) ys
-      ∧ (park (scribe next) out ws).length = drive (tally W) out.length ws
-      ∧ utterance sample select out w = sample (select out) w
-      ∧ g (face (atTheDoor (select out) w))
-          = g (face (atTheDoor (select out) w'))
-      ∧ atTheDoor (select out) w ≠ atTheDoor (select out) w'
-      ∧ utterance sample select out w = utterance sample select' out w :=
-  ⟨the_scribes_record_only_grows next ws out,
-   one_wind_one_mark next ws out,
-   the_scribe_resumes next xs ys out,
-   the_scribe_wears_the_tally next ws out,
-   rfl,
-   rfl,
-   the_wind_rides_the_utterance select out hw,
-   the_selection_reads_only_the_record sample select select' out w h⟩
-
-theorem the_commuting_seat_shrugs_the_shuffle {I O : Type}
-    (m : Machine I O)
-    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
-    (xs : List I) (i j : I) (ys : List I) (s : m.S) :
-    park m s (xs ++ i :: j :: ys) = park m s (xs ++ j :: i :: ys) :=
-  (the_park_resumes m xs (i :: j :: ys) s).trans
-    ((congrArg (fun t => park m t ys)
-        (hcomm (park m s xs) i j)).trans
-      (the_park_resumes m xs (j :: i :: ys) s).symm)
-
-def heap : Machine Nat Nat := ⟨Nat, 0, fun s i => s + i, fun s => s⟩
-
-theorem the_heap_steps_commute (s i j : Nat) :
-    heap.step (heap.step s i) j = heap.step (heap.step s j) i := by
-  show (s + i) + j = (s + j) + i
-  rw [Nat.add_assoc, Nat.add_comm i j, ← Nat.add_assoc]
-
-theorem the_heap_shrugs_the_shuffle (xs : List Nat) (i j : Nat)
-    (ys : List Nat) (s : Nat) :
-    park heap s (xs ++ i :: j :: ys) = park heap s (xs ++ j :: i :: ys) :=
-  the_commuting_seat_shrugs_the_shuffle heap the_heap_steps_commute
-    xs i j ys s
-
-theorem the_heap_hears_the_guest (u v : Nat) (huv : u ≠ v) :
-    behavior heap [u] ≠ behavior heap [v] :=
-  fun h => huv ((zero_plus u).symm.trans (h.trans (zero_plus v)))
-
-theorem the_scribe_keeps_the_order {A : Type} {a b : A} (hab : a ≠ b) :
-    park (scribe (fun _ w => w)) ([] : List A) [a, b]
-      ≠ park (scribe (fun _ w => w)) ([] : List A) [b, a] :=
-  fun h => hab ((List.cons.inj h).1).symm
-
-theorem a_seat_reads_the_order_the_census_cannot {I O A : Type}
-    (m : Machine I O)
-    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
-    (xs : List I) (i j : I) (ys : List I) (s : m.S)
-    (bs cs : List Bool) (x y : Bool) (t : Nat)
-    (u v : Nat) (huv : u ≠ v) {a b : A} (hab : a ≠ b) :
-    park m s (xs ++ i :: j :: ys) = park m s (xs ++ j :: i :: ys)
-      ∧ park pulse t (bs ++ x :: y :: cs) = park pulse t (bs ++ y :: x :: cs)
-      ∧ park heap (0 : Nat) [u, v] = park heap (0 : Nat) [v, u]
-      ∧ behavior heap [u] ≠ behavior heap [v]
-      ∧ park (scribe (fun _ w => w)) ([] : List A) [a, b]
-          ≠ park (scribe (fun _ w => w)) ([] : List A) [b, a] :=
-  ⟨the_commuting_seat_shrugs_the_shuffle m hcomm xs i j ys s,
-   the_commuting_seat_shrugs_the_shuffle pulse (fun _ _ _ => rfl)
-     bs x y cs t,
-   the_heap_shrugs_the_shuffle [] u v [] (0 : Nat),
-   the_heap_hears_the_guest u v huv,
-   the_scribe_keeps_the_order hab⟩
-
-def search (F : Face) (s : F.State) (ps : List F.Probe) : List F.Ans :=
-  sound F s (recite ps)
-
-def research (F : Face) {X : Type} (r : F.State → X) (s : F.State)
-    (ps : List F.Probe) : List (fork F.Ans X) :=
-  sound (sharpen F r) s (recite (ps.map viaLeft))
-
-theorem the_research_wears_the_old_ear (F : Face) {X : Type}
-    (r : F.State → X) :
-    rehear (sharpen F r) (viaLeft : F.Probe → fork F.Probe Unit)
-      = retell F (viaLeft : F.Ans → fork F.Ans X) := rfl
-
-theorem the_research_resounds_the_search (F : Face) {X : Type}
-    (r : F.State → X) (s : F.State) :
-    ∀ ps : List F.Probe,
-      research F r s ps = (search F s ps).map viaLeft
-  | [] => rfl
-  | p :: ps =>
-      congrArg (viaLeft (F.obs s p) :: ·)
-        (the_research_resounds_the_search F r s ps)
-
-theorem only_the_minted_ask_hears_the_mint (F : Face) {X : Type}
-    (r : F.State → X) (s : F.State) :
-    sound (sharpen F r) s (recite [viaRight ()]) = [viaRight (r s)] := rfl
-
-theorem the_research_finds_only_the_mint (F : Face) {X : Type}
-    (r : F.State → X) (s : F.State) (ps : List F.Probe) (m : Measured) :
-    research F r s ps = (search F s ps).map viaLeft
-      ∧ sound (sharpen F r) s (recite [viaRight ()]) = [viaRight (r s)]
-      ∧ rehear (sharpen F r) (viaLeft : F.Probe → fork F.Probe Unit)
-          = retell F (viaLeft : F.Ans → fork F.Ans X)
-      ∧ (sharpen windowFace (fun w => w.hi + 1)).obs m (viaRight ())
-          = viaRight (m.hi + 1)
-      ∧ within m (m.hi + 1) = false :=
-  ⟨the_research_resounds_the_search F r s ps,
-   rfl,
-   rfl,
-   (the_sharpened_window_exhibits_the_escapee m).1,
-   (the_sharpened_window_exhibits_the_escapee m).2⟩
-
-theorem append_nil {A : Type} : ∀ l : List A, l ++ [] = l
-  | [] => rfl
-  | a :: l => congrArg (a :: ·) (append_nil l)
-
-def ledger (I : Type) : Machine I (List I) :=
-  ⟨List I, [], fun out i => out ++ [i], fun out => out⟩
-
-theorem the_ledger_parks_the_word {I : Type} :
-    ∀ (ws out : List I), park (ledger I) out ws = out ++ ws
-  | [], out => (append_nil out).symm
-  | w :: ws, out =>
-      (the_ledger_parks_the_word ws (out ++ [w])).trans
-        (snoc_append w out ws)
-
-def replayer {I O : Type} (m : Machine I O) : Machine I O :=
-  ⟨List I, [], fun rec i => rec ++ [i],
-   fun rec => m.out (park m m.s0 rec)⟩
-
-theorem the_replayer_walks_in_step {I O : Type} (m : Machine I O) :
-    ∀ (w : List I) (rec : List I) (s : m.S), park m m.s0 rec = s →
-      drive (replayer m) rec w = drive m s w :=
-  two_machines_in_step_agree (replayer m) m
-    (fun rec s => park m m.s0 rec = s)
-    (fun rec _ i h =>
-      (the_park_resumes m rec [i] m.s0).trans
-        (congrArg (fun t => m.step t i) h))
-    (fun _ _ h => congrArg m.out h)
-
-theorem the_replay_is_the_machine {I O : Type} (m : Machine I O)
-    (w : List I) :
-    behavior (replayer m) w = behavior m w :=
-  the_replayer_walks_in_step m w [] m.s0 rfl
-
-theorem every_seat_is_a_reading_of_the_record {I O : Type}
-    (m : Machine I O) (out ws : List I) :
-    park m m.s0 (park (ledger I) out ws) = park m (park m m.s0 out) ws :=
-  (congrArg (park m m.s0) (the_ledger_parks_the_word ws out)).trans
-    (the_park_resumes m out ws m.s0)
-
-theorem the_audition_cannot_tell_the_seat_from_its_record {I O : Type}
-    (m : Machine I O) (w : List I) (q : Interview (List I) O)
-    (out ws : List I) :
-    behavior (replayer m) w = behavior m w
-      ∧ audition (replayer m) q = audition m q
-      ∧ park m m.s0 (park (ledger I) out ws)
-          = park m (park m m.s0 out) ws
-      ∧ park (ledger Bool) ([] : List Bool) [true, false]
-          ≠ park (ledger Bool) ([] : List Bool) [false, true]
-      ∧ park pulse (0 : Nat) [true, false]
-          = park pulse (0 : Nat) [false, true] :=
-  ⟨the_replay_is_the_machine m w,
-   an_audition_hears_only_the_conduct (replayer m) m
-     (fun v => the_replay_is_the_machine m v) q,
-   every_seat_is_a_reading_of_the_record m out ws,
-   (fun h =>
-     nomatch (List.cons.inj
-       (show [true, false] = ([false, true] : List Bool) from h)).1),
-   two_routes_one_seat.2⟩
-
-theorem the_record_never_unwrites {A : Type} :
-    ∀ (h a : List A), h ++ a = h → a = []
-  | [], _, e => e
-  | _ :: t, a, e => the_record_never_unwrites t a (List.cons.inj e).2
-
-theorem the_holonomy_is_the_word {I O : Type} (m : Machine I O) (s : m.S)
-    (w : List I) (hloop : park m s w = s) (out : List I) (hw : w ≠ [])
-    (b : Bool) :
-    (park m s w = s
-        ∧ park (ledger I) out w = out ++ w
-        ∧ park (ledger I) out w ≠ out)
-      ∧ park flip b [(), ()] = b
-      ∧ park (ledger Unit) ([] : List Unit) [(), ()] = [(), ()] :=
-  ⟨⟨hloop,
-    the_ledger_parks_the_word w out,
-    fun h =>
-      hw (the_record_never_unwrites out w
-        ((the_ledger_parks_the_word w out).symm.trans h))⟩,
-   the_flip_wheels b,
-   the_ledger_parks_the_word [(), ()] []⟩
-
-def storeys (S : Type u) (W : Type) : Nat → Type u
-  | 0 => S
-  | n + 1 => storeys S W n × W
-
-def cellar {S : Type u} {W : Type} : (n : Nat) → storeys S W n → S
-  | 0, s => s
-  | n + 1, s => cellar n s.1
-
-def towerFace (F : Face) (W : Type) (n : Nat) : Face :=
-  ⟨storeys F.State W n, F.Probe, F.Ans, fun s p => F.obs (cellar n s) p⟩
-
-theorem the_ground_floor_is_the_face (F : Face) (W : Type) :
-    towerFace F W 0 = F := rfl
-
-theorem the_tower_climbs_by_hosting (F : Face) (W : Type) (n : Nat) :
-    towerFace F W (n + 1) = host (towerFace F W n) W := rfl
-
-theorem every_floor_reads_the_cellar (F : Face) (W : Type) (n : Nat)
-    (s : storeys F.State W n) (p : F.Probe) :
-    (towerFace F W n).obs s p = F.obs (cellar n s) p := rfl
-
-theorem the_tower_reads_only_the_ground (F : Face) (W : Type) (n : Nat)
-    (x y : storeys F.State W n) (h : cellar n x = cellar n y) :
-    alike (towerFace F W n) x y :=
-  fun p => congrArg (F.obs · p) h
-
-theorem every_floor_merges_its_guests (F : Face) (W : Type) (n : Nat)
-    (s : storeys F.State W n) (w w' : W) :
-    alike (towerFace F W (n + 1)) (s, w) (s, w') :=
-  fun _ => rfl
-
-theorem the_maintenance_climbs_the_tower (F : Face) (W : Type) (n : Nat)
-    (g : storeys F.State W n × W → W) :
-    unheard (towerFace F W (n + 1)) (fun x => (x.1, g x)) :=
-  the_guest_write_is_a_still_hand (towerFace F W n) g
-
-theorem no_seat_is_the_last_seat (F : Face) (W : Type) (n : Nat)
-    (s : storeys F.State W n) {w w' : W} (hw : w ≠ w')
-    (q : Interview F.Probe F.Ans) :
-    towerFace F W (n + 1) = host (towerFace F W n) W
-      ∧ alike (towerFace F W (n + 1)) (s, w) (s, w')
-      ∧ sound (towerFace F W (n + 1)) (s, w) q
-          = sound (towerFace F W (n + 1)) (s, w') q
-      ∧ ((s, w) : storeys F.State W (n + 1)) ≠ (s, w')
-      ∧ (widen (towerFace F W n) W).obs (s, w) (viaRight ())
-          ≠ (widen (towerFace F W n) W).obs (s, w') (viaRight ()) :=
-  ⟨rfl,
-   every_floor_merges_its_guests F W n s w w',
-   no_interview_parts_the_alike (towerFace F W (n + 1)) (s, w) (s, w')
-     (every_floor_merges_its_guests F W n s w w') q,
-   (fun he => hw (congrArg Prod.snd he)),
-   (fun he => hw (Sum.inr.inj he))⟩
-
-def again {α : Sort u} (Φ : α → α) : Nat → α → α
-  | 0, a => a
-  | n + 1, a => Φ (again Φ n a)
-
-theorem the_again_resumes {α : Sort u} (Φ : α → α) :
-    ∀ (m n : Nat) (a : α), again Φ (n + m) a = again Φ m (again Φ n a)
-  | 0, _, _ => rfl
-  | m + 1, n, a => congrArg Φ (the_again_resumes Φ m n a)
-
-theorem the_again_steps_first {α : Sort u} (Φ : α → α) :
-    ∀ (n : Nat) (a : α), again Φ n (Φ a) = Φ (again Φ n a)
-  | 0, _ => rfl
-  | n + 1, a => congrArg Φ (the_again_steps_first Φ n a)
-
-theorem the_tower_is_the_hosts_again (F : Face) (W : Type) :
-    ∀ n : Nat, again (fun G => host G W) n F = towerFace F W n
-  | 0 => rfl
-  | n + 1 =>
-      congrArg (fun G => host G W) (the_tower_is_the_hosts_again F W n)
-
-theorem the_bloom_is_the_mirrors_again :
-    ∀ n : Nat, again (fun p => Plan.board p p) n .ground = bloom n
-  | 0 => rfl
-  | n + 1 =>
-      congrArg (fun p => Plan.board p p) (the_bloom_is_the_mirrors_again n)
-
-theorem the_orbit_is_the_steps_again {I O : Type} (m : Machine I O)
-    (r : m.S → I) :
-    ∀ (n : Nat) (s : m.S),
-      orbit m r s n = again (fun t => m.step t (r t)) n s
-  | 0, _ => rfl
-  | n + 1, s =>
-      (the_orbit_is_the_steps_again m r n (m.step s (r s))).trans
-        (the_again_steps_first (fun t => m.step t (r t)) n s)
-
-theorem the_storeys_add (F : Face) (W : Type) (m n : Nat) :
-    towerFace F W (n + m) = towerFace (towerFace F W n) W m :=
-  (the_tower_is_the_hosts_again F W (n + m)).symm.trans
-    ((the_again_resumes (fun G => host G W) m n F).trans
-      ((congrArg (again (fun G => host G W) m)
-          (the_tower_is_the_hosts_again F W n)).trans
-        (the_tower_is_the_hosts_again (towerFace F W n) W m)))
-
-theorem one_again_three_orbits (F : Face) (W : Type) (m n : Nat)
-    {I O : Type} (mach : Machine I O) (r : mach.S → I) (s : mach.S)
-    (i j : Nat) :
-    again (fun G => host G W) n F = towerFace F W n
-      ∧ again (fun p => Plan.board p p) n .ground = bloom n
-      ∧ orbit mach r s n = again (fun t => mach.step t (r t)) n s
-      ∧ towerFace F W (n + m) = towerFace (towerFace F W n) W m
-      ∧ graft (bloom i) (bloom j) = bloom (i + j) :=
-  ⟨the_tower_is_the_hosts_again F W n,
-   the_bloom_is_the_mirrors_again n,
-   the_orbit_is_the_steps_again mach r n s,
-   the_storeys_add F W m n,
-   the_blooms_add i j⟩
-
-def unsign {H A : Type} (d : door H A) : door H Unit :=
-  atTheDoor (face d) ()
-
-theorem the_unsigning_is_the_unit_guest {H A : Type} (h : H) (a : A)
-    (u : door H Unit) :
-    unsign (atTheDoor h a) = atTheDoor h () ∧ unsign u = u :=
-  ⟨rfl, rfl⟩
-
-theorem the_unsigned_work_reads_the_same {H A X : Type} (g : H → X)
-    (d : door H A) : g (face (unsign d)) = g (face d) := rfl
-
-theorem an_author_blind_reading_is_an_unsigned_reading {H A X : Type}
-    (a₀ : A) (f : door H A → X) :
-    (∀ (h : H) (a a' : A), f (atTheDoor h a) = f (atTheDoor h a'))
-      ↔ ∃ g : door H Unit → X, ∀ d, f d = g (unsign d) :=
-  ⟨fun hb => ⟨fun u => f (atTheDoor (face u) a₀),
-     fun d => hb (face d) (met d) a₀⟩,
-   fun he h a a' =>
-     he.elim fun _ hg =>
-       (hg (atTheDoor h a)).trans (hg (atTheDoor h a')).symm⟩
-
-theorem the_quiet_author_leaves_the_table_as_found {W : Type} (d : door W W) :
-    ∀ n : Nat, dialogue d (List.replicate (2 * n) still) = d
-  | 0 => rfl
-  | n + 1 =>
-      show dialogue (exchange still (exchange still d))
-          (List.replicate (2 * n) still) = d from
-        the_quiet_author_leaves_the_table_as_found d n
-
-theorem the_author_was_the_guest {H A X : Type} (a₀ : A) (g : H → X)
-    (d : door H A) (h : H) {a a' : A} (ha : a ≠ a')
-    (f : door H A → X) (F : Face) (s : F.State)
-    {W : Type} (e : door W W) (n : Nat) :
-    g (face (unsign d)) = g (face d)
-      ∧ ((∀ (h' : H) (x x' : A), f (atTheDoor h' x) = f (atTheDoor h' x'))
-          ↔ ∃ g' : door H Unit → X, ∀ d', f d' = g' (unsign d'))
-      ∧ (atTheDoor h a ≠ atTheDoor h a'
-          ∧ ∀ (Y : Type) (r : H → Y),
-              r (face (atTheDoor h a)) = r (face (atTheDoor h a')))
-      ∧ ¬ Derived (host F A) (fun x => x.2 = a)
-      ∧ (∀ (P : Prop) (p1 p2 : P), p1 = p2)
-      ∧ (widen F A).obs (s, a) (viaRight ())
-          ≠ (widen F A).obs (s, a') (viaRight ())
-      ∧ dialogue e (List.replicate (2 * n) still) = e :=
-  ⟨rfl,
-   an_author_blind_reading_is_an_unsigned_reading a₀ f,
-   ⟨the_guest_is_real h ha, fun _ _ => rfl⟩,
-   the_guest_is_never_a_derived_role F s ha,
-   fun _ p1 p2 => the_route_leaves_no_mark p1 p2,
-   (fun he => ha (Sum.inr.inj he)),
-   the_quiet_author_leaves_the_table_as_found e n⟩
-
-def enrolled (room : List Nat) (x : Nat) : Bool := room.any (Nat.beq x)
-
-def backed (room need : List Nat) : Bool := need.all (enrolled room)
-
-def welcome (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat) :
-    List Nat × List (Nat × List Nat) :=
-  cond (backed s.1 m.2) (m.1 :: s.1, s.2) (s.1, m :: s.2)
-
-theorem the_backed_are_seated {s : List Nat × List (Nat × List Nat)}
-    {m : Nat × List Nat} (h : backed s.1 m.2 = true) :
-    welcome s m = (m.1 :: s.1, s.2) := by
-  unfold welcome; rw [h]; rfl
-
-theorem the_unbacked_are_held {s : List Nat × List (Nat × List Nat)}
-    {m : Nat × List Nat} (h : backed s.1 m.2 = false) :
-    welcome s m = (s.1, m :: s.2) := by
-  unfold welcome; rw [h]; rfl
-
-theorem or_lights_right : ∀ b : Bool, (b || true) = true
-  | true => rfl
-  | false => rfl
-
-theorem the_seat_is_load_bearing_in_the_same_click
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (h : backed s.1 m.2 = true) :
-    enrolled (welcome s m).1 m.1 = true := by
-  rw [the_backed_are_seated h]
-  show (Nat.beq m.1 m.1 || s.1.any (Nat.beq m.1)) = true
-  rw [beq_self]
-  rfl
-
-theorem the_enrolled_stay_enrolled (r : List Nat) (y x : Nat)
-    (h : enrolled r x = true) : enrolled (y :: r) x = true := by
-  show (Nat.beq x y || enrolled r x) = true
-  rw [h]
-  exact or_lights_right (Nat.beq x y)
-
-theorem the_backing_never_lapses (r : List Nat) (y : Nat) :
-    ∀ need : List Nat, backed r need = true → backed (y :: r) need = true
-  | [], _ => rfl
-  | x :: need, h => by
-      obtain ⟨h1, h2⟩ :=
-        and_split (show (enrolled r x && backed r need) = true from h)
-      show (enrolled (y :: r) x && backed (y :: r) need) = true
-      exact and_glue (the_enrolled_stay_enrolled r y x h1)
-        (the_backing_never_lapses r y need h2)
-
-theorem the_backing_survives_the_door
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (need : List Nat) (h : backed s.1 need = true) :
-    backed (welcome s m).1 need = true := by
-  cases hb : backed s.1 m.2 with
-  | true =>
-      rw [the_backed_are_seated hb]
-      exact the_backing_never_lapses s.1 m.1 need h
-  | false =>
-      rw [the_unbacked_are_held hb]
-      exact h
-
-theorem the_hall_hears_no_join_order (a b x : Nat) :
-    enrolled [a, b] x = enrolled [b, a] x := by
-  show (Nat.beq x a || (Nat.beq x b || false))
-      = (Nat.beq x b || (Nat.beq x a || false))
-  cases Nat.beq x a <;> cases Nat.beq x b <;> rfl
-
-theorem the_room_reads_no_waiting (r : List Nat)
-    (v v' : List (Nat × List Nat)) (m : Nat × List Nat)
-    (h : backed r m.2 = true) :
-    (welcome (r, v) m).1 = (welcome (r, v') m).1 := by
-  rw [the_backed_are_seated (s := (r, v)) h,
-      the_backed_are_seated (s := (r, v')) h]
-
-theorem the_guest_becomes_the_ground
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (h : backed s.1 m.2 = true) (need : List Nat)
-    (hn : backed s.1 need = true) (a b x : Nat) (hab : a ≠ b)
-    (r : List Nat) (v v' : List (Nat × List Nat))
-    (hr : backed r m.2 = true) :
-    enrolled (welcome s m).1 m.1 = true
-      ∧ backed (welcome s m).1 need = true
-      ∧ enrolled [a, b] x = enrolled [b, a] x
-      ∧ ([a, b] : List Nat) ≠ [b, a]
-      ∧ (welcome (r, v) m).1 = (welcome (r, v') m).1 :=
-  ⟨the_seat_is_load_bearing_in_the_same_click s m h,
-   the_backing_survives_the_door s m need hn,
-   the_hall_hears_no_join_order a b x,
-   (fun he => hab (List.cons.inj he).1),
-   the_room_reads_no_waiting r v v' m hr⟩
-
-theorem beq_of_ne {a b : Nat} (h : a ≠ b) : Nat.beq a b = false := by
-  cases hb : Nat.beq a b with
-  | false => rfl
-  | true => exact absurd (eq_of_beq a b hb) h
-
-def depthTo : List Nat → Nat → Nat
-  | [], _ => 0
-  | y :: r, x => cond (Nat.beq x y) 0 (depthTo r x + 1)
-
-theorem the_seated_arrive_shallowest (r : List Nat) (x : Nat) :
-    depthTo (x :: r) x = 0 := by
-  show cond (Nat.beq x x) 0 (depthTo r x + 1) = 0
-  rw [beq_self]
-  rfl
-
-theorem every_later_admission_deepens (r : List Nat) {y x : Nat}
-    (h : x ≠ y) : depthTo (y :: r) x = depthTo r x + 1 := by
-  show cond (Nat.beq x y) 0 (depthTo r x + 1) = depthTo r x + 1
-  rw [beq_of_ne h]
-  rfl
-
-theorem the_depth_counts_the_clicks_since (x : Nat) :
-    ∀ (ys r : List Nat), (∀ y, y ∈ ys → x ≠ y) →
-      depthTo (ys ++ r) x = depthTo r x + ys.length
-  | [], _, _ => rfl
-  | y :: ys, r, h => by
-      show depthTo (y :: (ys ++ r)) x = depthTo r x + (ys.length + 1)
-      rw [every_later_admission_deepens (ys ++ r) (h y (List.Mem.head ys)),
-          the_depth_counts_the_clicks_since x ys r
-            (fun z hz => h z (List.Mem.tail y hz))]
-      exact rfl
-
-def hallFace : Face := ⟨List Nat, Nat, Bool, enrolled⟩
-
-def costFace : Face := ⟨List Nat, Nat, Nat, depthTo⟩
-
-theorem no_ask_parts_the_warmed_hall (a b : Nat)
-    (q : Interview Nat Bool) :
-    sound hallFace [a, b] q = sound hallFace [b, a] q :=
-  no_interview_parts_the_alike hallFace [a, b] [b, a]
-    (fun x => the_hall_hears_no_join_order a b x) q
-
-theorem the_cost_face_parts_the_warmed (a b : Nat) (hab : a ≠ b) :
-    ¬ alike costFace [a, b] [b, a] :=
-  fun h =>
-    nomatch
-      (((the_seated_arrive_shallowest [b] a).symm.trans (h a)).trans
-        ((every_later_admission_deepens [a] hab).trans
-          (congrArg (· + 1) (the_seated_arrive_shallowest [] a))))
-
-def lacking (room : List Nat) : List Nat → Nat
-  | [] => 0
-  | x :: need =>
-      cond (enrolled room x) (lacking room need) (lacking room need + 1)
-
-theorem the_weight_is_zero_at_the_door (room : List Nat) :
-    ∀ need : List Nat, backed room need = true ↔ lacking room need = 0
-  | [] => ⟨fun _ => rfl, fun _ => rfl⟩
-  | x :: need => by
-      have hrec := the_weight_is_zero_at_the_door room need
-      cases he : enrolled room x with
-      | true =>
-          constructor
-          · intro h
-            show cond (enrolled room x) (lacking room need)
-                (lacking room need + 1) = 0
-            rw [he]
-            exact hrec.mp
-              ((and_split
-                (show (enrolled room x && backed room need) = true
-                  from h)).2)
-          · intro h
-            have h0 : lacking room need = 0 := by
-              have h' : cond (enrolled room x) (lacking room need)
-                  (lacking room need + 1) = 0 := h
-              rw [he] at h'
-              exact h'
-            show (enrolled room x && backed room need) = true
-            rw [he, hrec.mpr h0]
-            rfl
-      | false =>
-          constructor
-          · intro h
-            exact absurd
-              (and_split
-                (show (enrolled room x && backed room need) = true
-                  from h)).1
-              (ne_true_of_eq_false he)
-          · intro h
-            have h' : cond (enrolled room x) (lacking room need)
-                (lacking room need + 1) = 0 := h
-            rw [he] at h'
-            exact nomatch h'
-
-theorem the_removed_date_returns_as_a_weight (a b : Nat) (hab : a ≠ b)
-    (q : Interview Nat Bool) (room need : List Nat) (x : Nat)
-    (ys r : List Nat) (hy : ∀ y, y ∈ ys → x ≠ y) :
-    (∀ z, enrolled [a, b] z = enrolled [b, a] z)
-      ∧ sound hallFace [a, b] q = sound hallFace [b, a] q
-      ∧ ¬ alike costFace [a, b] [b, a]
-      ∧ depthTo (ys ++ r) x = depthTo r x + ys.length
-      ∧ (backed room need = true ↔ lacking room need = 0)
-      ∧ ∀ (rm : List Nat) (w z : Nat), enrolled rm z = true →
-          enrolled (w :: rm) z = true :=
-  ⟨the_hall_hears_no_join_order a b,
-   no_ask_parts_the_warmed_hall a b q,
-   the_cost_face_parts_the_warmed a b hab,
-   the_depth_counts_the_clicks_since x ys r hy,
-   the_weight_is_zero_at_the_door room need,
-   fun rm w z hz => the_enrolled_stay_enrolled rm w z hz⟩
-
-theorem the_backing_reaches_each_need (room : List Nat) :
-    ∀ need : List Nat, backed room need = true →
-      ∀ x, x ∈ need → enrolled room x = true
-  | [], _, _, hx => nomatch hx
-  | y :: need, h, x, hx => by
-      obtain ⟨h1, h2⟩ :=
-        and_split
-          (show (enrolled room y && backed room need) = true from h)
-      cases hx with
-      | head => exact h1
-      | tail _ hx' => exact the_backing_reaches_each_need room need h2 x hx'
-
-theorem the_support_precedes_the_seating
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (h : backed s.1 m.2 = true) (x : Nat) (hx : x ∈ m.2) :
-    enrolled s.1 x = true :=
-  the_backing_reaches_each_need s.1 m.2 h x hx
-
-theorem the_citer_arrives_above_the_cited
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (h : backed s.1 m.2 = true) (x : Nat) (hx : x ∈ m.2)
-    (hne : x ≠ m.1) :
-    enrolled s.1 x = true
-      ∧ depthTo (welcome s m).1 m.1 = 0
-      ∧ Nat.ble 1 (depthTo (welcome s m).1 x) = true :=
-  ⟨the_support_precedes_the_seating s m h x hx,
-   by
-     rw [the_backed_are_seated h]
-     exact the_seated_arrive_shallowest s.1 m.1,
-   by
-     rw [the_backed_are_seated h]
-     show Nat.ble 1 (depthTo (m.1 :: s.1) x) = true
-     rw [every_later_admission_deepens s.1 hne]
-     exact rfl⟩
-
-theorem the_elders_keep_their_order (r : List Nat) {z x y : Nat}
-    (hx : x ≠ z) (hy : y ≠ z)
-    (h : Nat.ble (depthTo r x) (depthTo r y) = true) :
-    Nat.ble (depthTo (z :: r) x) (depthTo (z :: r) y) = true := by
-  rw [every_later_admission_deepens r hx,
-      every_later_admission_deepens r hy]
-  exact h
-
-theorem the_cited_are_the_elders
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (h : backed s.1 m.2 = true) (x : Nat) (hx : x ∈ m.2) (hne : x ≠ m.1)
-    (r : List Nat) {z u v : Nat} (hu : u ≠ z) (hv : v ≠ z)
-    (hb : Nat.ble (depthTo r u) (depthTo r v) = true) (a b w : Nat) :
-    (enrolled s.1 x = true
-        ∧ depthTo (welcome s m).1 m.1 = 0
-        ∧ Nat.ble 1 (depthTo (welcome s m).1 x) = true)
-      ∧ Nat.ble (depthTo (z :: r) u) (depthTo (z :: r) v) = true
-      ∧ enrolled [a, b] w = enrolled [b, a] w
-      ∧ enrolled (welcome s m).1 m.1 = true :=
-  ⟨the_citer_arrives_above_the_cited s m h x hx hne,
-   the_elders_keep_their_order r hu hv hb,
-   the_hall_hears_no_join_order a b w,
-   the_seat_is_load_bearing_in_the_same_click s m h⟩
-
-def doorM : Machine (Nat × List Nat) Nat :=
-  ⟨List Nat × List (Nat × List Nat), ([], []), welcome,
-   fun s => s.2.length⟩
-
-def ordered : List Nat → List (Nat × List Nat) → Prop
-  | _, [] => True
-  | r, m :: w => backed r m.2 = true ∧ ordered (m.1 :: r) w
-
-theorem the_unencumbered_are_welcome_everywhere (r : List Nat) :
-    backed r [] = true := rfl
-
-theorem the_enrolled_survive_the_door
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (x : Nat) (h : enrolled s.1 x = true) :
-    enrolled (welcome s m).1 x = true := by
-  cases hb : backed s.1 m.2 with
-  | true =>
-      rw [the_backed_are_seated hb]
-      exact the_enrolled_stay_enrolled s.1 m.1 x h
-  | false =>
-      rw [the_unbacked_are_held hb]
-      exact h
-
-theorem the_enrolled_survive_the_run (x : Nat) :
-    ∀ (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat)),
-      enrolled s.1 x = true → enrolled (park doorM s w).1 x = true
-  | [], _, h => h
-  | m :: w, s, h =>
-      the_enrolled_survive_the_run x w (welcome s m)
-        (the_enrolled_survive_the_door s m x h)
-
-theorem the_ordered_arrivals_never_wait :
-    ∀ (w : List (Nat × List Nat)) (r : List Nat)
-      (v : List (Nat × List Nat)),
-      ordered r w → (park doorM (r, v) w).2 = v
-  | [], _, _, _ => rfl
-  | m :: w, r, v, h => by
-      obtain ⟨h1, h2⟩ := h
-      show (park doorM (welcome (r, v) m) w).2 = v
-      rw [the_backed_are_seated (s := (r, v)) h1]
-      exact the_ordered_arrivals_never_wait w (m.1 :: r) v h2
-
-theorem the_ordered_arrivals_all_seat :
-    ∀ (w : List (Nat × List Nat)) (r : List Nat)
-      (v : List (Nat × List Nat)),
-      ordered r w → ∀ m, m ∈ w →
-        enrolled (park doorM (r, v) w).1 m.1 = true
-  | [], _, _, _, _, hm => nomatch hm
-  | m :: w, r, v, h, m', hm => by
-      obtain ⟨h1, h2⟩ := h
-      show enrolled (park doorM (welcome (r, v) m) w).1 m'.1 = true
-      rw [the_backed_are_seated (s := (r, v)) h1]
-      cases hm with
-      | head =>
-          refine the_enrolled_survive_the_run m.1 w (m.1 :: r, v) ?_
-          show (Nat.beq m.1 m.1 || r.any (Nat.beq m.1)) = true
-          rw [beq_self]
-          rfl
-      | tail _ hm' =>
-          exact the_ordered_arrivals_all_seat w (m.1 :: r) v h2 m' hm'
-
-theorem the_tree_admits_itself (w : List (Nat × List Nat))
-    (h : ordered [] w) (r : List Nat) :
-    (park doorM (([] : List Nat), ([] : List (Nat × List Nat))) w).2 = []
-      ∧ (∀ m, m ∈ w →
-          enrolled (park doorM (([] : List Nat),
-            ([] : List (Nat × List Nat))) w).1 m.1 = true)
-      ∧ backed r [] = true
-      ∧ behavior doorM w = 0 :=
-  ⟨the_ordered_arrivals_never_wait w [] [] h,
-   fun m hm => the_ordered_arrivals_all_seat w [] [] h m hm,
-   the_unencumbered_are_welcome_everywhere r,
-   ((the_drive_reads_the_walk doorM w ([], [])).trans
-     (congrArg doorM.out (the_park_is_a_walk doorM w ([], [])).symm)).trans
-     (congrArg (fun v : List (Nat × List Nat) => v.length)
-       (the_ordered_arrivals_never_wait w [] [] h))⟩
-
-theorem no_memory_meters_the_cost {X : Type} (f : List Bool → X)
-    (a b : Nat) (hab : a ≠ b) (q : Interview Nat Bool) :
-    f (sound hallFace [a, b] q) = f (sound hallFace [b, a] q)
-      ∧ ¬ alike costFace [a, b] [b, a] :=
-  ⟨congrArg f (no_ask_parts_the_warmed_hall a b q),
-   the_cost_face_parts_the_warmed a b hab⟩
-
-theorem the_stranger_leaves_the_hall_dark (r : List Nat) (y x : Nat)
-    (hne : x ≠ y) (h : enrolled r x = false) :
-    enrolled (y :: r) x = false := by
-  show (Nat.beq x y || enrolled r x) = false
-  rw [beq_of_ne hne, h]
-  rfl
-
-theorem no_mark_lights_itself (x : Nat) :
-    ∀ (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat)),
-      (∀ m, m ∈ w → m.1 = x → x ∈ m.2) →
-      enrolled s.1 x = false →
-      enrolled (park doorM s w).1 x = false
-  | [], _, _, h => h
-  | m :: w, s, hw, h => by
-      have hstep : enrolled (welcome s m).1 x = false := by
-        cases hb : backed s.1 m.2 with
-        | false =>
-            rw [the_unbacked_are_held hb]
-            exact h
-        | true =>
-            rw [the_backed_are_seated hb]
-            refine the_stranger_leaves_the_hall_dark s.1 m.1 x
-              (fun hxm => ?_) h
-            exact absurd
-              (the_backing_reaches_each_need s.1 m.2 hb x
-                (hw m (List.Mem.head w) hxm.symm))
-              (ne_true_of_eq_false h)
-      show enrolled (park doorM (welcome s m) w).1 x = false
-      exact no_mark_lights_itself x w (welcome s m)
-        (fun m' hm' => hw m' (List.Mem.tail m hm')) hstep
-
-theorem the_first_light_comes_from_outside (x : Nat)
-    (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat))
-    (hw : ∀ m, m ∈ w → m.1 = x → x ∈ m.2)
-    (hx : enrolled s.1 x = false) (r : List Nat)
-    (m : Nat × List Nat) (hb : backed s.1 m.2 = true)
-    {I O : Type} (mach : Machine I O) (rd : mach.S → I)
-    (u : List Unit) (t : mach.S) (p : Plan) :
-    enrolled (park doorM s w).1 x = false
-      ∧ backed r [] = true
-      ∧ enrolled (welcome s m).1 m.1 = true
-      ∧ graft p (.board .ground .ground) = .board p p
-      ∧ drive (selfSteered mach rd) t u
-          = mach.out (orbit mach rd t u.length) :=
-  ⟨no_mark_lights_itself x w s hw hx,
-   the_unencumbered_are_welcome_everywhere r,
-   the_seat_is_load_bearing_in_the_same_click s m hb,
-   rfl,
-   the_self_steered_machine_is_a_clock mach rd u t⟩
-
-def sweep (s : List Nat × List (Nat × List Nat)) :
-    List Nat × List (Nat × List Nat) :=
-  park doorM (s.1, []) s.2
-
-theorem the_backing_survives_the_run (need : List Nat) :
-    ∀ (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat)),
-      backed s.1 need = true → backed (park doorM s w).1 need = true
-  | [], _, h => h
-  | m :: w, s, h =>
-      the_backing_survives_the_run need w (welcome s m)
-        (the_backing_survives_the_door s m need h)
-
-theorem the_ready_seat_in_one_sweep
-    (r : List Nat) (m : Nat × List Nat) (h : backed r m.2 = true)
-    (v₁ v₂ : List (Nat × List Nat)) :
-    enrolled (park doorM (r, ([] : List (Nat × List Nat)))
-      (v₁ ++ m :: v₂)).1 m.1 = true := by
-  rw [the_park_resumes doorM v₁ (m :: v₂) (r, [])]
-  show enrolled
-      (park doorM (welcome (park doorM (r, []) v₁) m) v₂).1 m.1 = true
-  exact the_enrolled_survive_the_run m.1 v₂
-    (welcome (park doorM (r, []) v₁) m)
-    (the_seat_is_load_bearing_in_the_same_click
-      (park doorM (r, []) v₁) m
-      (the_backing_survives_the_run m.2 v₁ (r, []) h))
-
-theorem the_sweep_seats_the_ready
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (h : backed s.1 m.2 = true) (v₁ v₂ : List (Nat × List Nat))
-    (hv : s.2 = v₁ ++ m :: v₂) :
-    enrolled (sweep s).1 m.1 = true := by
-  show enrolled (park doorM (s.1, []) s.2).1 m.1 = true
-  rw [hv]
-  exact the_ready_seat_in_one_sweep s.1 m h v₁ v₂
-
-theorem the_vestibule_drains_by_storeys
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (h : backed s.1 m.2 = true) (v₁ v₂ : List (Nat × List Nat))
-    (hv : s.2 = v₁ ++ m :: v₂) (need : List Nat)
-    (w : List (Nat × List Nat)) (hn : backed s.1 need = true)
-    (tw : List (Nat × List Nat)) (ht : ordered [] tw) :
-    enrolled (sweep s).1 m.1 = true
-      ∧ backed (park doorM s w).1 need = true
-      ∧ (park doorM (([] : List Nat), ([] : List (Nat × List Nat))) tw).2
-          = [] :=
-  ⟨the_sweep_seats_the_ready s m h v₁ v₂ hv,
-   the_backing_survives_the_run need w s hn,
-   the_ordered_arrivals_never_wait tw [] [] ht⟩
-
-theorem the_held_name_their_darkness (r : List Nat) :
-    ∀ need : List Nat, backed r need = false →
-      ∃ x, x ∈ need ∧ enrolled r x = false
-  | [], h => nomatch h
-  | y :: need, h => by
-      cases he : enrolled r y with
-      | false => exact ⟨y, List.Mem.head need, he⟩
-      | true =>
-          have hb : backed r need = false := by
-            have h' : (enrolled r y && backed r need) = false := h
-            rw [he] at h'
-            exact h'
-          obtain ⟨x, hx, hex⟩ := the_held_name_their_darkness r need hb
-          exact ⟨x, List.Mem.tail y hx, hex⟩
-
-theorem the_round_seats_or_certifies (r : List Nat) :
-    ∀ v : List (Nat × List Nat),
-      (∃ m, m ∈ v ∧ backed r m.2 = true)
-        ∨ ∀ m, m ∈ v → backed r m.2 = false
-  | [] => Or.inr (fun _ hm => nomatch hm)
-  | m :: v => by
-      cases hb : backed r m.2 with
-      | true => exact Or.inl ⟨m, List.Mem.head v, hb⟩
-      | false =>
-          cases the_round_seats_or_certifies r v with
-          | inl h =>
-              obtain ⟨m', hm', hb'⟩ := h
-              exact Or.inl ⟨m', List.Mem.tail m hm', hb'⟩
-          | inr h =>
-              refine Or.inr (fun m' hm' => ?_)
-              cases hm' with
-              | head => exact hb
-              | tail _ hm'' => exact h m' hm''
-
-theorem the_stuck_round_moves_nothing :
-    ∀ (w : List (Nat × List Nat)) (r : List Nat)
-      (acc : List (Nat × List Nat)),
-      (∀ m, m ∈ w → backed r m.2 = false) →
-      (park doorM (r, acc) w).1 = r
-        ∧ (park doorM (r, acc) w).2.length = w.length + acc.length
-        ∧ ∀ m, m ∈ (park doorM (r, acc) w).2 → m ∈ w ∨ m ∈ acc
-  | [], _, acc, _ =>
-      ⟨rfl, (zero_plus acc.length).symm, fun _ hm => Or.inr hm⟩
-  | m :: w, r, acc, hw => by
-      have hstep : welcome (r, acc) m = (r, m :: acc) :=
-        the_unbacked_are_held (hw m (List.Mem.head w))
-      obtain ⟨h1, h2, h3⟩ :=
-        the_stuck_round_moves_nothing w r (m :: acc)
-          (fun k hk => hw k (List.Mem.tail m hk))
-      show (park doorM (welcome (r, acc) m) w).1 = r
-          ∧ (park doorM (welcome (r, acc) m) w).2.length
-              = (w.length + 1) + acc.length
-          ∧ ∀ k, k ∈ (park doorM (welcome (r, acc) m) w).2 →
-              k ∈ m :: w ∨ k ∈ acc
-      rw [hstep]
-      refine ⟨h1, ?_, ?_⟩
-      · rw [h2]
-        show w.length + (acc.length + 1) = (w.length + 1) + acc.length
-        rw [succ_adds]
-        exact rfl
-      · intro k hk
-        cases h3 k hk with
-        | inl hkw => exact Or.inl (List.Mem.tail m hkw)
-        | inr hka =>
-            cases hka with
-            | head => exact Or.inl (List.Mem.head w)
-            | tail _ hka' => exact Or.inr hka'
-
-theorem the_deadlock_wheels (r : List Nat) :
-    ∀ (n : Nat) (held : List (Nat × List Nat)),
-      (∀ m, m ∈ held → backed r m.2 = false) →
-      (again sweep n (r, held)).1 = r
-        ∧ (again sweep n (r, held)).2.length = held.length
-        ∧ ∀ m, m ∈ (again sweep n (r, held)).2 → backed r m.2 = false
-  | 0, _, hs => ⟨rfl, rfl, hs⟩
-  | n + 1, held, hs => by
-      obtain ⟨h1, h2, h3⟩ := the_deadlock_wheels r n held hs
-      have hstuck : ∀ m, m ∈ (again sweep n (r, held)).2 →
-          backed (again sweep n (r, held)).1 m.2 = false := by
-        intro m hm
-        rw [h1]
-        exact h3 m hm
-      obtain ⟨g1, g2, g3⟩ :=
-        the_stuck_round_moves_nothing (again sweep n (r, held)).2
-          (again sweep n (r, held)).1 [] hstuck
-      show (sweep (again sweep n (r, held))).1 = r
-          ∧ (sweep (again sweep n (r, held))).2.length = held.length
-          ∧ ∀ m, m ∈ (sweep (again sweep n (r, held))).2 →
-              backed r m.2 = false
-      refine ⟨g1.trans h1, g2.trans h2, ?_⟩
-      intro m hm
-      cases g3 m hm with
-      | inl hmw => exact h3 m hmw
-      | inr hma => exact nomatch hma
-
-theorem the_deadlock_is_a_wheel (r : List Nat)
-    (held : List (Nat × List Nat))
-    (hs : ∀ m, m ∈ held → backed r m.2 = false) (n : Nat)
-    (v : List (Nat × List Nat))
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (hm : backed s.1 m.2 = true) (v₁ v₂ : List (Nat × List Nat))
-    (hv : s.2 = v₁ ++ m :: v₂) (need : List Nat)
-    (hneed : backed r need = false) :
-    ((∃ k, k ∈ v ∧ backed r k.2 = true)
-        ∨ ∀ k, k ∈ v → backed r k.2 = false)
-      ∧ (again sweep n (r, held)).1 = r
-      ∧ (again sweep n (r, held)).2.length = held.length
-      ∧ enrolled (sweep s).1 m.1 = true
-      ∧ ∃ x, x ∈ need ∧ enrolled r x = false :=
-  ⟨the_round_seats_or_certifies r v,
-   (the_deadlock_wheels r n held hs).1,
-   (the_deadlock_wheels r n held hs).2.1,
-   the_sweep_seats_the_ready s m hm v₁ v₂ hv,
-   the_held_name_their_darkness r need hneed⟩
-
-theorem mem_splits {A : Type} {x : A} :
-    ∀ {l : List A}, x ∈ l → ∃ v₁ v₂ : List A, l = v₁ ++ x :: v₂
-  | _ :: t, List.Mem.head _ => ⟨[], t, rfl⟩
-  | a :: _, List.Mem.tail _ h =>
-      match mem_splits h with
-      | ⟨v₁, v₂, he⟩ => ⟨a :: v₁, v₂, congrArg (a :: ·) he⟩
-
-theorem the_load_never_climbs :
-    ∀ (w : List (Nat × List Nat)) (r : List Nat)
-      (acc : List (Nat × List Nat)),
-      Nat.ble (park doorM (r, acc) w).2.length (w.length + acc.length)
-        = true
-  | [], _, acc => by
-      show Nat.ble acc.length
-        (([] : List (Nat × List Nat)).length + acc.length) = true
-      rw [show ([] : List (Nat × List Nat)).length + acc.length
-            = acc.length from zero_plus acc.length]
-      exact ble_refl acc.length
-  | m :: w, r, acc => by
-      cases hb : backed r m.2 with
-      | true =>
-          show Nat.ble (park doorM (welcome (r, acc) m) w).2.length
-              ((w.length + 1) + acc.length) = true
-          rw [the_backed_are_seated hb, succ_adds]
-          exact ble_trans _ _ _ (the_load_never_climbs w (m.1 :: r) acc)
-            (ble_le_succ (w.length + acc.length))
-      | false =>
-          show Nat.ble (park doorM (welcome (r, acc) m) w).2.length
-              ((w.length + 1) + acc.length) = true
-          rw [the_unbacked_are_held hb, succ_adds]
-          exact the_load_never_climbs w r (m :: acc)
-
-theorem the_ready_drop_the_load (r : List Nat)
-    (m : Nat × List Nat) (h : backed r m.2 = true)
-    (v₁ v₂ acc : List (Nat × List Nat)) :
-    Nat.ble ((park doorM (r, acc) (v₁ ++ m :: v₂)).2.length + 1)
-      ((v₁ ++ m :: v₂).length + acc.length) = true := by
-  have e2 : v₂.length + (v₁.length + acc.length)
-      = (v₁.length + v₂.length) + acc.length := by
-    rw [← Nat.add_assoc v₂.length v₁.length acc.length,
-        Nat.add_comm v₂.length v₁.length]
-  have e : (v₁ ++ m :: v₂).length + acc.length
-      = (v₂.length + (v₁.length + acc.length)) + 1 := by
-    rw [len_append v₁ (m :: v₂)]
-    show ((v₁.length + v₂.length) + 1) + acc.length
-        = (v₂.length + (v₁.length + acc.length)) + 1
-    rw [succ_adds (v₁.length + v₂.length) acc.length]
-    exact congrArg (· + 1) e2.symm
-  rw [the_park_resumes doorM v₁ (m :: v₂) (r, acc)]
-  show Nat.ble
-      ((park doorM (welcome (park doorM (r, acc) v₁) m) v₂).2.length + 1)
-      ((v₁ ++ m :: v₂).length + acc.length) = true
-  rw [the_backed_are_seated
-      (the_backing_survives_the_run m.2 v₁ (r, acc) h), e]
-  exact ble_add_right 1
-    (ble_trans _ _ _
-      (the_load_never_climbs v₂
-        (m.1 :: (park doorM (r, acc) v₁).1)
-        (park doorM (r, acc) v₁).2)
-      (ble_add_both (ble_refl v₂.length)
-        (the_load_never_climbs v₁ r acc)))
-
-theorem the_gauge_is_exact (s : List Nat × List (Nat × List Nat)) :
-    (sweep s).2.length = s.2.length
-      ↔ ∀ m, m ∈ s.2 → backed s.1 m.2 = false := by
-  constructor
-  · intro h
-    cases the_round_seats_or_certifies s.1 s.2 with
-    | inr hall => exact hall
-    | inl hex =>
-        obtain ⟨m, hm, hb⟩ := hex
-        obtain ⟨v₁, v₂, hv⟩ := mem_splits hm
-        have hdrop := the_ready_drop_the_load s.1 m hb v₁ v₂ []
-        rw [← hv] at hdrop
-        have hdrop' : Nat.ble ((sweep s).2.length + 1) s.2.length = true :=
-          hdrop
-        rw [h] at hdrop'
-        exact absurd hdrop'
-          (ne_true_of_eq_false (ble_succ_false s.2.length))
-  · intro hall
-    exact (the_stuck_round_moves_nothing s.2 s.1 [] hall).2.1
-
-theorem the_detector_reads_one_number
-    (s : List Nat × List (Nat × List Nat)) (n : Nat)
-    (r : List Nat) (held : List (Nat × List Nat))
-    (hs : ∀ m, m ∈ held → backed r m.2 = false) :
-    ((sweep s).2.length = s.2.length
-        ↔ ∀ m, m ∈ s.2 → backed s.1 m.2 = false)
-      ∧ ((∃ k, k ∈ s.2 ∧ backed s.1 k.2 = true)
-          ∨ ∀ k, k ∈ s.2 → backed s.1 k.2 = false)
-      ∧ (again sweep n (r, held)).2.length = held.length :=
-  ⟨the_gauge_is_exact s,
-   the_round_seats_or_certifies s.1 s.2,
-   (the_deadlock_wheels r n held hs).2.1⟩
-
-theorem the_revision_is_a_reading (base : Plan) (q : Plan) :
-    graft base q = fold Plan.board base q :=
-  any_two_readings_agree Plan.board base (graft base) rfl
-    (fun _ _ => rfl) q
-
-theorem every_writer_is_a_reader (base a b q : Plan) (W : Type)
-    (F : Face) (s : F.State) (ps : List F.Probe) :
-    graft base q = fold Plan.board base q
-      ∧ fold Plan.board Plan.ground q = q
-      ∧ build W q = fold door W q
-      ∧ graft a (graft b q) = fold Plan.board (fold Plan.board a b) q
-      ∧ sound F s (recite ps) = ps.map (F.obs s) :=
-  ⟨the_revision_is_a_reading base q,
-   the_self_reading_is_the_identity q,
-   build_is_a_reading W q,
-   (the_revision_is_a_reading a (graft b q)).trans
-     (the_parent_folds_into_the_ground Plan.board a b q),
-   the_recital_is_the_transcript F s ps⟩
-
-inductive Braid {I : Type} : List I → List I → List I → Prop
-  | nil : Braid [] [] []
-  | left {u v w : List I} (i : I) : Braid u v w → Braid (i :: u) v (i :: w)
-  | right {u v w : List I} (j : I) : Braid u v w → Braid u (j :: v) (j :: w)
-
-theorem braid_of_left {I : Type} : ∀ u : List I, Braid u [] u
-  | [] => .nil
-  | i :: u => .left i (braid_of_left u)
-
-theorem braid_of_right {I : Type} : ∀ v : List I, Braid [] v v
-  | [] => .nil
-  | j :: v => .right j (braid_of_right v)
-
-theorem braid_append {I : Type} : ∀ u v : List I, Braid u v (u ++ v)
-  | [], v => braid_of_right v
-  | i :: u, v => .left i (braid_append u v)
-
-theorem braid_prepend {I : Type} : ∀ u v : List I, Braid u v (v ++ u)
-  | u, [] => braid_of_left u
-  | u, j :: v => .right j (braid_prepend u v)
-
-theorem the_step_crosses_the_walk {I O : Type} (m : Machine I O)
-    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i) :
-    ∀ (u : List I) (s : m.S) (j : I),
-      park m (m.step s j) u = m.step (park m s u) j
-  | [], _, _ => rfl
-  | i :: u, s, j => by
-      show park m (m.step (m.step s j) i) u
-          = m.step (park m (m.step s i) u) j
-      rw [hcomm s j i]
-      exact the_step_crosses_the_walk m hcomm u (m.step s i) j
-
-theorem the_weave_parks_one_seat {I O : Type} (m : Machine I O)
-    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i) :
-    ∀ {u v w : List I}, Braid u v w →
-      ∀ s : m.S, park m s w = park m (park m s u) v
-  | _, _, _, .nil, _ => rfl
-  | _, _, _, .left i hb, s =>
-      the_weave_parks_one_seat m hcomm hb (m.step s i)
-  | _, _, _, @Braid.right _ u v w j hb, s =>
-      (the_weave_parks_one_seat m hcomm hb (m.step s j)).trans
-        (congrArg (fun t => park m t v)
-          (the_step_crosses_the_walk m hcomm u s j))
-
-theorem the_contributors_may_arrive_in_either_order {I O : Type}
-    (m : Machine I O)
-    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
-    (u v : List I) (s : m.S) :
-    park m s (u ++ v) = park m s (v ++ u) :=
-  (the_weave_parks_one_seat m hcomm (braid_append u v) s).trans
-    (the_weave_parks_one_seat m hcomm (braid_prepend u v) s).symm
-
-theorem the_shared_fold_needs_no_scheduler {I O : Type} (m : Machine I O)
-    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
-    {u v w : List I} (hb : Braid u v w) (s : m.S)
-    (x y : List Nat) (t : Nat) {A : Type} {a b : A} (hab : a ≠ b) :
-    park m s w = park m (park m s u) v
-      ∧ park m s (u ++ v) = park m s (v ++ u)
-      ∧ park heap t (x ++ y) = park heap t (y ++ x)
-      ∧ park (scribe (fun _ k => k)) ([] : List A) [a, b]
-          ≠ park (scribe (fun _ k => k)) ([] : List A) [b, a] :=
-  ⟨the_weave_parks_one_seat m hcomm hb s,
-   the_contributors_may_arrive_in_either_order m hcomm u v s,
-   the_contributors_may_arrive_in_either_order heap
-     the_heap_steps_commute x y t,
-   the_scribe_keeps_the_order hab⟩
-
-theorem the_tellers_steps_commute (n : Nat) (a b : Plan) :
-    teller.step (teller.step n a) b = teller.step (teller.step n b) a :=
-  (mul_regroups n (fold (fun x y => x + y) 1 a)
-      (fold (fun x y => x + y) 1 b)).trans
-    ((congrArg (n * ·)
-        (Nat.mul_comm (fold (fun x y => x + y) 1 a)
-          (fold (fun x y => x + y) 1 b))).trans
-      (mul_regroups n (fold (fun x y => x + y) 1 b)
-        (fold (fun x y => x + y) 1 a)).symm)
-
-theorem the_braided_life_draws_one_count {u v w : List Plan}
-    (hb : Braid u v w) :
-    (fold (fun a b => a + b) 1 (park grower Plan.ground w) : Nat)
-      = park teller (park teller (1 : Nat) u) v :=
-  ((the_audition_cannot_tell_the_tree_from_its_count).2.2.1 w).trans
-    (the_weave_parks_one_seat teller the_tellers_steps_commute hb (1 : Nat))
-
-theorem the_braided_lives_part :
-    park grower Plan.ground
-        [Plan.board .ground .ground,
-         Plan.board .ground (.board .ground .ground)]
-      ≠ park grower Plan.ground
-        [Plan.board .ground (.board .ground .ground),
-         Plan.board .ground .ground] := by
-  intro h
-  have e1 : park grower Plan.ground
-      [Plan.board .ground .ground,
-       Plan.board .ground (.board .ground .ground)]
-      = graft (.board .ground .ground)
-          (.board .ground (.board .ground .ground)) :=
-    congrArg (fun t => graft t (.board .ground (.board .ground .ground)))
-      (the_trivial_revision_changes_nothing (.board .ground .ground))
-  have e2 : park grower Plan.ground
-      [Plan.board .ground (.board .ground .ground),
-       Plan.board .ground .ground]
-      = graft (.board .ground (.board .ground .ground))
-          (.board .ground .ground) :=
-    congrArg (fun t => graft t (.board .ground .ground))
-      (the_trivial_revision_changes_nothing
-        (.board .ground (.board .ground .ground)))
-  exact (two_lineages_one_reading .ground .ground).2.2
-    ((e1.symm.trans h).trans e2)
-
-theorem every_braid_draws_one_count {u v w : List Plan} (hb : Braid u v w)
-    (n : Nat) (a b : Plan) :
-    teller.step (teller.step n a) b = teller.step (teller.step n b) a
-      ∧ (fold (fun x y => x + y) 1 (park grower Plan.ground w) : Nat)
-          = park teller (park teller (1 : Nat) u) v
-      ∧ park grower Plan.ground
-            [Plan.board .ground .ground,
-             Plan.board .ground (.board .ground .ground)]
-          ≠ park grower Plan.ground
-            [Plan.board .ground (.board .ground .ground),
-             Plan.board .ground .ground]
-      ∧ fold (fun x y => x + y * y) 1
-            (graft (.board .ground .ground)
-              (.board .ground (.board .ground .ground)))
-          ≠ fold (fun x y => x + y * y) 1
-            (graft (.board .ground (.board .ground .ground))
-              (.board .ground .ground)) :=
-  ⟨the_tellers_steps_commute n a b,
-   the_braided_life_draws_one_count hb,
-   the_braided_lives_part,
-   (two_lineages_one_reading .ground .ground).2.1⟩
-
-theorem ne_of_beq_false {a b : Nat} (h : Nat.beq a b = false) : a ≠ b := by
-  intro he
-  rw [he] at h
-  exact nomatch (beq_self b).symm.trans h
-
-theorem the_mutual_need_stays_dark (x y : Nat) :
-    ∀ (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat)),
-      (∀ m, m ∈ w → m.1 = x → y ∈ m.2) →
-      (∀ m, m ∈ w → m.1 = y → x ∈ m.2) →
-      enrolled s.1 x = false → enrolled s.1 y = false →
-      enrolled (park doorM s w).1 x = false
-        ∧ enrolled (park doorM s w).1 y = false
-  | [], _, _, _, hx, hy => ⟨hx, hy⟩
-  | m :: w, s, hwx, hwy, hx, hy => by
-      have hnext : enrolled (welcome s m).1 x = false
-          ∧ enrolled (welcome s m).1 y = false := by
-        cases hb : backed s.1 m.2 with
-        | false =>
-            rw [the_unbacked_are_held hb]
-            exact ⟨hx, hy⟩
-        | true =>
-            rw [the_backed_are_seated hb]
-            cases hbx : Nat.beq m.1 x with
-            | true =>
-                exact absurd
-                  (the_backing_reaches_each_need s.1 m.2 hb y
-                    (hwx m (List.Mem.head w) (eq_of_beq m.1 x hbx)))
-                  (ne_true_of_eq_false hy)
-            | false =>
-                cases hby : Nat.beq m.1 y with
-                | true =>
-                    exact absurd
-                      (the_backing_reaches_each_need s.1 m.2 hb x
-                        (hwy m (List.Mem.head w) (eq_of_beq m.1 y hby)))
-                      (ne_true_of_eq_false hx)
-                | false =>
-                    exact ⟨the_stranger_leaves_the_hall_dark s.1 m.1 x
-                        (fun he => ne_of_beq_false hbx he.symm) hx,
-                      the_stranger_leaves_the_hall_dark s.1 m.1 y
-                        (fun he => ne_of_beq_false hby he.symm) hy⟩
-      show enrolled (park doorM (welcome s m) w).1 x = false
-          ∧ enrolled (park doorM (welcome s m) w).1 y = false
-      exact the_mutual_need_stays_dark x y w (welcome s m)
-        (fun k hk => hwx k (List.Mem.tail m hk))
-        (fun k hk => hwy k (List.Mem.tail m hk))
-        hnext.1 hnext.2
-
-theorem the_circle_admits_nobody (x y : Nat)
-    (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat))
-    (hwx : ∀ m, m ∈ w → m.1 = x → y ∈ m.2)
-    (hwy : ∀ m, m ∈ w → m.1 = y → x ∈ m.2)
-    (hx : enrolled s.1 x = false) (hy : enrolled s.1 y = false)
-    (z : Nat) (w' : List (Nat × List Nat))
-    (s' : List Nat × List (Nat × List Nat))
-    (hw' : ∀ m, m ∈ w' → m.1 = z → z ∈ m.2)
-    (hz : enrolled s'.1 z = false) (r : List Nat)
-    (n : Nat) (held : List (Nat × List Nat))
-    (hs : ∀ m, m ∈ held → backed r m.2 = false) :
-    (enrolled (park doorM s w).1 x = false
-        ∧ enrolled (park doorM s w).1 y = false)
-      ∧ enrolled (park doorM s' w').1 z = false
-      ∧ backed r [] = true
-      ∧ (again sweep n (r, held)).2.length = held.length :=
-  ⟨the_mutual_need_stays_dark x y w s hwx hwy hx hy,
-   no_mark_lights_itself z w' s' hw' hz,
-   the_unencumbered_are_welcome_everywhere r,
-   (the_deadlock_wheels r n held hs).2.1⟩
-
-def turnQueue {A : Type} : List A → List A → List A
-  | [], acc => acc
-  | x :: w, acc => turnQueue w (x :: acc)
-
-theorem the_turned_queue_turns_home {A : Type} :
-    ∀ (w acc b : List A),
-      turnQueue (turnQueue w acc) b = turnQueue acc (w ++ b)
-  | [], _, _ => rfl
-  | x :: w, acc, b => the_turned_queue_turns_home w (x :: acc) b
-
-theorem the_double_turn_comes_home {A : Type} (w : List A) :
-    turnQueue (turnQueue w []) [] = w :=
-  (the_turned_queue_turns_home w [] []).trans (append_nil w)
-
-theorem mem_turnQueue {A : Type} {x : A} :
-    ∀ (w acc : List A), x ∈ turnQueue w acc → x ∈ w ∨ x ∈ acc
-  | [], _, h => Or.inr h
-  | m :: w, acc, h => by
-      cases mem_turnQueue w (m :: acc) h with
-      | inl hw => exact Or.inl (List.Mem.tail m hw)
-      | inr ha =>
-          cases ha with
-          | head => exact Or.inl (List.Mem.head w)
-          | tail _ ha' => exact Or.inr ha'
-
-theorem the_stuck_round_turns_the_queue :
-    ∀ (w : List (Nat × List Nat)) (r : List Nat)
-      (acc : List (Nat × List Nat)),
-      (∀ m, m ∈ w → backed r m.2 = false) →
-      park doorM (r, acc) w = (r, turnQueue w acc)
-  | [], _, _, _ => rfl
-  | m :: w, r, acc, hw => by
-      show park doorM (welcome (r, acc) m) w = (r, turnQueue w (m :: acc))
-      rw [the_unbacked_are_held (hw m (List.Mem.head w))]
-      exact the_stuck_round_turns_the_queue w r (m :: acc)
-        (fun k hk => hw k (List.Mem.tail m hk))
-
-theorem the_deadlock_comes_home_in_two (r : List Nat)
-    (held : List (Nat × List Nat))
-    (hs : ∀ m, m ∈ held → backed r m.2 = false) :
-    sweep (sweep (r, held)) = (r, held) := by
-  have h1 : sweep (r, held) = (r, turnQueue held []) :=
-    the_stuck_round_turns_the_queue held r [] hs
-  have hs2 : ∀ m, m ∈ turnQueue held [] → backed r m.2 = false := by
-    intro m hm
-    cases mem_turnQueue held [] hm with
-    | inl hw => exact hs m hw
-    | inr ha => exact nomatch ha
-  rw [h1]
-  have h2 : sweep (r, turnQueue held [])
-      = (r, turnQueue (turnQueue held []) []) :=
-    the_stuck_round_turns_the_queue (turnQueue held []) r [] hs2
-  rw [h2, the_double_turn_comes_home held]
-
-theorem one_sweep_two_wearings (r : List Nat)
-    (held : List (Nat × List Nat))
-    (hs : ∀ m, m ∈ held → backed r m.2 = false) (b : Bool)
-    (rr : List Nat) (m : Nat × List Nat) (hm : backed rr m.2 = true)
-    (v₁ v₂ : List (Nat × List Nat))
-    (s : List Nat × List (Nat × List Nat))
-    (a d : Nat) (u : List Unit) (t : Nat)
-    (g e : Nat) (uw : List Unit) (hu : uw.length = ((g + 1) + e) + 1) :
-    sweep (sweep (r, held)) = (r, held)
-      ∧ park flip b [(), ()] = b
-      ∧ Nat.ble ((park doorM (rr, ([] : List (Nat × List Nat)))
-            (v₁ ++ m :: v₂)).2.length + 1)
-          ((v₁ ++ m :: v₂).length + ([] : List (Nat × List Nat)).length)
-          = true
-      ∧ ((sweep s).2.length = s.2.length
-          ↔ ∀ k, k ∈ s.2 → backed s.1 k.2 = false)
-      ∧ drive (spiral a d a) t u = true
-      ∧ behavior (spiral a ((g + 1) + e) (a + (g + 1))) uw = false :=
-  ⟨the_deadlock_comes_home_in_two r held hs,
-   the_flip_wheels b,
-   the_ready_drop_the_load rr m hm v₁ v₂ [],
-   the_gauge_is_exact s,
-   the_wheel_reads_itself_unworn a d u t,
-   the_spiral_flips_at_the_witness a g e uw hu⟩
-
-theorem the_empty_load_is_the_empty_queue :
-    ∀ v : List (Nat × List Nat), Nat.ble v.length 0 = true → v = []
-  | [], _ => rfl
-  | _ :: _, h => nomatch h
-
-theorem the_drained_room_rests (r : List Nat) :
-    sweep (r, ([] : List (Nat × List Nat))) = (r, []) := rfl
-
-theorem the_cascade_grounds_or_wheels :
-    ∀ (L : Nat) (s : List Nat × List (Nat × List Nat)),
-      Nat.ble s.2.length L = true →
-      ∃ n : Nat, Nat.ble n L = true
-        ∧ ((again sweep n s).2 = []
-            ∨ ∀ m, m ∈ (again sweep n s).2 →
-                backed (again sweep n s).1 m.2 = false)
-  | 0, s, h =>
-      ⟨0, rfl, Or.inl (the_empty_load_is_the_empty_queue s.2 h)⟩
-  | L + 1, s, h => by
-      cases the_round_seats_or_certifies s.1 s.2 with
-      | inr hall =>
-          exact ⟨0, rfl, Or.inr hall⟩
-      | inl hex =>
-          obtain ⟨m, hm, hb⟩ := hex
-          obtain ⟨v₁, v₂, hv⟩ := mem_splits hm
-          have hdrop := the_ready_drop_the_load s.1 m hb v₁ v₂ []
-          rw [← hv] at hdrop
-          have hdrop' : Nat.ble ((sweep s).2.length + 1) s.2.length = true :=
-            hdrop
-          have hle : Nat.ble ((sweep s).2.length + 1) (L + 1) = true :=
-            ble_trans ((sweep s).2.length + 1) s.2.length (L + 1) hdrop' h
-          obtain ⟨n, hn, hprop⟩ :=
-            the_cascade_grounds_or_wheels L (sweep s) hle
-          refine ⟨n + 1, hn, ?_⟩
-          rw [show again sweep n (sweep s) = again sweep (n + 1) s from
-              the_again_steps_first sweep n s] at hprop
-          exact hprop
-
-theorem no_third_fate (L : Nat) (s : List Nat × List (Nat × List Nat))
-    (h : Nat.ble s.2.length L = true) (r : List Nat)
-    (r' : List Nat) (held : List (Nat × List Nat))
-    (hs : ∀ m, m ∈ held → backed r' m.2 = false) :
-    (∃ n : Nat, Nat.ble n L = true
-        ∧ ((again sweep n s).2 = []
-            ∨ ∀ m, m ∈ (again sweep n s).2 →
-                backed (again sweep n s).1 m.2 = false))
-      ∧ sweep (r, ([] : List (Nat × List Nat))) = (r, [])
-      ∧ sweep (sweep (r', held)) = (r', held) :=
-  ⟨the_cascade_grounds_or_wheels L s h,
-   the_drained_room_rests r,
-   the_deadlock_comes_home_in_two r' held hs⟩
-
-theorem the_hall_runs_the_handshake (a b : Nat) (hab : a ≠ b)
-    (q : Interview Nat Bool) :
-    alike hallFace [a, b] [b, a]
-      ∧ sound hallFace [a, b] q = sound hallFace [b, a] q
-      ∧ ([a, b] : List Nat) ≠ [b, a]
-      ∧ ¬ alike costFace [a, b] [b, a] :=
-  ⟨fun x => the_hall_hears_no_join_order a b x,
-   no_ask_parts_the_warmed_hall a b q,
-   (fun he => hab (List.cons.inj he).1),
-   the_cost_face_parts_the_warmed a b hab⟩
-
-def reseat (F : Face) {S' : Type u} (f : S' → F.State) : Face :=
-  ⟨S', F.Probe, F.Ans, fun s p => F.obs (f s) p⟩
-
-theorem the_reseated_face_reads_the_ground (F : Face) {S' : Type u}
-    (f : S' → F.State) (s t : S') :
-    alike (reseat F f) s t ↔ alike F (f s) (f t) := Iff.rfl
-
-theorem the_seats_stack_backward (F : Face) {S' S'' : Type u}
-    (f : S' → F.State) (g : S'' → S') :
-    reseat (reseat F f) g = reseat F (fun s => f (g s)) := rfl
-
-theorem the_plain_seat_sits_plainly (F : Face) :
-    reseat F (fun s => s) = F := rfl
-
-theorem the_seat_commutes_with_the_ear (F : Face) {S' : Type u} {P' : Type}
-    (f : S' → F.State) (fp : P' → F.Probe) :
-    reseat (rehear F fp) f = rehear (reseat F f) fp := rfl
-
-theorem the_seat_commutes_with_the_voice (F : Face) {S' : Type u} {A' : Type}
-    (f : S' → F.State) (ga : F.Ans → A') :
-    reseat (retell F ga) f = retell (reseat F f) ga := rfl
-
-theorem the_interview_crosses_the_seat (F : Face.{v}) {S' : Type u}
-    (f : S' → F.State) (s : S') :
-    ∀ q : Interview F.Probe F.Ans,
-      sound (reseat F f) s q = sound F (f s) q
-  | .rest => rfl
-  | .ask p k =>
-      congrArg (F.obs (f s) p :: ·)
-        (the_interview_crosses_the_seat F f s (k (F.obs (f s) p)))
-
-theorem the_host_was_a_reseat (F : Face) (W : Type) :
-    host F W = reseat F (fun x : F.State × W => x.1) := rfl
-
-theorem the_tower_was_a_reseat (F : Face) (W : Type) (n : Nat) :
-    towerFace F W n = reseat F (cellar (S := F.State) (W := W) n) := rfl
-
-theorem the_pair_is_two_reseats {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) :
-    pairFace F G f g
-      = pairFace (reseat F f) (reseat G g) (fun x => x) (fun x => x) := rfl
-
-theorem every_face_wears_a_seat (F : Face) (W : Type) (n : Nat)
-    {S : Type u} (G : Face) (f2 : S → F.State) (g2 : S → G.State)
-    {S' : Type u} (f : S' → F.State) (s t : S')
-    {P' A' : Type} (fp : P' → F.Probe) (ga : F.Ans → A')
-    (q : Interview F.Probe F.Ans) :
-    (alike (reseat F f) s t ↔ alike F (f s) (f t))
-      ∧ host F W = reseat F (fun x : F.State × W => x.1)
-      ∧ towerFace F W n = reseat F (cellar (S := F.State) (W := W) n)
-      ∧ pairFace F G f2 g2
-          = pairFace (reseat F f2) (reseat G g2) (fun x => x) (fun x => x)
-      ∧ reseat (rehear F fp) f = rehear (reseat F f) fp
-      ∧ reseat (retell F ga) f = retell (reseat F f) ga
-      ∧ sound (reseat F f) s q = sound F (f s) q :=
-  ⟨Iff.rfl, rfl, rfl, rfl, rfl, rfl,
-   the_interview_crosses_the_seat F f s q⟩
-
-def reface {H H' W : Type} (f : H → H') (d : door H W) : door H' W :=
-  atTheDoor (f (face d)) (met d)
-
-def carry {H W W' : Type} (g : W → W') (d : door H W) : door H W' :=
-  atTheDoor (face d) (g (met d))
-
-theorem the_renovation_moves_no_guest {H H' W : Type} (f : H → H')
-    (d : door H W) : met (reface f d) = met d := rfl
-
-theorem the_carriage_keeps_the_face {H W W' : Type} (g : W → W')
-    (d : door H W) : face (carry g d) = face d := rfl
-
-theorem the_two_channels_commute {H H' W W' : Type} (f : H → H')
-    (g : W → W') (d : door H W) :
-    reface f (carry g d) = carry g (reface f d) := rfl
-
-theorem the_still_channels_hold_the_door {H W : Type} (d : door H W) :
-    reface (fun h => h) d = d ∧ carry (fun w => w) d = d :=
-  ⟨rfl, rfl⟩
-
-theorem the_renovations_compose {H H' H'' W : Type} (f : H → H')
-    (f' : H' → H'') (d : door H W) :
-    reface f' (reface f d) = reface (fun h => f' (f h)) d := rfl
-
-theorem the_carriages_compose {H W W' W'' : Type} (g : W → W')
-    (g' : W' → W'') (d : door H W) :
-    carry g' (carry g d) = carry (fun w => g' (g w)) d := rfl
-
-theorem the_guest_mover_is_a_carriage {H W : Type} (g : W → W)
-    (d : door H W) :
-    carry g d = vertical (fun _ w => g w) d := rfl
-
-theorem the_renovated_meeting_reads_past_the_crew {H H' W X : Type}
-    (f : H → H') (g : H' → W → X) (d : door H W) :
-    walkIn g (reface f d) = walkIn (fun h w => g (f h) w) d := rfl
-
-theorem the_renovation_is_a_reseat {S' S P A : Type} (g : door S P → A)
-    (f : S' → S) :
-    reseat (faceOf g) f = faceOf (fun d => g (reface f d)) := rfl
-
-theorem the_customs_split_at_the_cell {W W' : Type} (f : W → W') (n : Nat)
-    (d : build W (comb (n + 1))) :
-    reground f (comb (n + 1)) d
-      = carry (reground f (comb n)) (reface f d) := rfl
-
-theorem one_cell_two_channels {H H' W W' X : Type} (f : H → H')
-    (g : W → W') (d : door H W) (g0 : W → W) (r : H' → W → X)
-    {V V' : Type} (fc : V → V') (m : Nat) (c : build V (comb (m + 1))) :
-    met (reface f d) = met d
-      ∧ face (carry g d) = face d
-      ∧ reface f (carry g d) = carry g (reface f d)
-      ∧ carry g0 d = vertical (fun _ w => g0 w) d
-      ∧ walkIn r (reface f d) = walkIn (fun h w => r (f h) w) d
-      ∧ reground fc (comb (m + 1)) c
-          = carry (reground fc (comb m)) (reface fc c) :=
-  ⟨the_renovation_moves_no_guest f d,
-   the_carriage_keeps_the_face g d,
-   the_two_channels_commute f g d,
-   the_guest_mover_is_a_carriage g0 d,
-   the_renovated_meeting_reads_past_the_crew f r d,
-   the_customs_split_at_the_cell fc m c⟩
-
-theorem the_drained_room_rests_forever (r : List Nat) :
-    ∀ n : Nat, again sweep n (r, ([] : List (Nat × List Nat))) = (r, [])
-  | 0 => rfl
-  | n + 1 =>
-      (congrArg sweep (the_drained_room_rests_forever r n)).trans
-        (the_drained_room_rests r)
-
-def drainFace : Face :=
-  ⟨List Nat × List (Nat × List Nat), Nat, Nat,
-   fun s n => (again sweep n s).2.length⟩
-
-theorem the_drain_face_reads_no_room (r r' : List Nat) :
-    alike drainFace (r, ([] : List (Nat × List Nat))) (r', []) :=
-  fun n =>
-    (congrArg (fun t : List Nat × List (Nat × List Nat) => t.2.length)
-        (the_drained_room_rests_forever r n)).trans
-      (congrArg (fun t : List Nat × List (Nat × List Nat) => t.2.length)
-        (the_drained_room_rests_forever r' n)).symm
-
-theorem the_stuck_load_reads_flat (r : List Nat) (m : Nat × List Nat)
-    (held : List (Nat × List Nat))
-    (hs : ∀ k, k ∈ m :: held → backed r k.2 = false) (n : Nat) :
-    drainFace.obs (r, m :: held) n = (m :: held).length :=
-  (the_deadlock_wheels r n (m :: held) hs).2.1
-
-def drainClock : Nat → List Nat × List (Nat × List Nat) → Nat
-  | 0, _ => 0
-  | _ + 1, (_, []) => 0
-  | fuel + 1, (r, m :: v) => drainClock fuel (sweep (r, m :: v)) + 1
-
-theorem the_clock_reads_zero_at_rest (r : List Nat) :
-    ∀ fuel : Nat, drainClock fuel (r, ([] : List (Nat × List Nat))) = 0
-  | 0 => rfl
-  | _ + 1 => rfl
-
-theorem the_clock_finds_the_drain :
-    ∀ (fuel n : Nat) (s : List Nat × List (Nat × List Nat)),
-      Nat.ble n fuel = true → (again sweep n s).2 = [] →
-      (again sweep (drainClock fuel s) s).2 = []
-        ∧ Nat.ble (drainClock fuel s) n = true
-  | 0, 0, _, _, hdr => ⟨hdr, rfl⟩
-  | 0, _ + 1, _, hle, _ => nomatch hle
-  | _ + 1, _, (_, []), _, _ => ⟨rfl, rfl⟩
-  | _ + 1, 0, (_, _ :: _), _, hdr => nomatch hdr
-  | fuel + 1, n + 1, (r, m :: v), hle, hdr =>
-      have hdr' : (again sweep n (sweep (r, m :: v))).2 = [] :=
-        (congrArg (fun t : List Nat × List (Nat × List Nat) => t.2)
-            (the_again_steps_first sweep n (r, m :: v))).trans hdr
-      have ih := the_clock_finds_the_drain fuel n (sweep (r, m :: v)) hle hdr'
-      ⟨(congrArg (fun t : List Nat × List (Nat × List Nat) => t.2)
-          (the_again_steps_first sweep
-            (drainClock fuel (sweep (r, m :: v))) (r, m :: v))).symm.trans
-         ih.1,
-       ih.2⟩
-
-theorem the_stuck_vestibule_never_drains (r : List Nat)
-    (m : Nat × List Nat) (held : List (Nat × List Nat))
-    (hs : ∀ k, k ∈ m :: held → backed r k.2 = false) :
-    ∀ n : Nat, (again sweep n (r, m :: held)).2 ≠ [] :=
-  fun n he =>
-    nomatch (congrArg List.length he).symm.trans
-      ((the_deadlock_wheels r n (m :: held) hs).2.1)
-
-theorem the_rewrite_is_the_remainder (r r' : List Nat) (hrr : r ≠ r')
-    (x : Nat) (hx : enrolled r x ≠ enrolled r' x)
-    (q : Interview Nat Nat) :
-    alike drainFace (r, ([] : List (Nat × List Nat))) (r', [])
-      ∧ sound drainFace (r, ([] : List (Nat × List Nat))) q
-          = sound drainFace (r', []) q
-      ∧ ((r, ([] : List (Nat × List Nat)))
-          : List Nat × List (Nat × List Nat)) ≠ (r', [])
-      ∧ (reseat hallFace
-            (fun s : List Nat × List (Nat × List Nat) => s.1)).obs
-            (r, ([] : List (Nat × List Nat))) x
-          ≠ (reseat hallFace
-              (fun s : List Nat × List (Nat × List Nat) => s.1)).obs
-              (r', []) x :=
-  ⟨the_drain_face_reads_no_room r r',
-   no_interview_parts_the_alike drainFace _ _
-     (the_drain_face_reads_no_room r r') q,
-   (fun he => hrr (congrArg Prod.fst he)),
-   hx⟩
-
-theorem the_weight_names_the_price (r : List Nat) :
-    ∀ need : List Nat, lacking r need = 1 →
-      ∃ x, x ∈ need ∧ enrolled r x = false ∧ backed (x :: r) need = true
-  | [], h => nomatch h
-  | y :: need, h => by
-      cases he : enrolled r y with
-      | true =>
-          have h' : lacking r need = 1 := by
-            have h0 : cond (enrolled r y) (lacking r need)
-                (lacking r need + 1) = 1 := h
-            rw [he] at h0
-            exact h0
-          obtain ⟨x, hx, hex, hb⟩ := the_weight_names_the_price r need h'
-          refine ⟨x, List.Mem.tail y hx, hex, ?_⟩
-          show (enrolled (x :: r) y && backed (x :: r) need) = true
-          exact and_glue (the_enrolled_stay_enrolled r x y he) hb
-      | false =>
-          have h0 : lacking r need + 1 = 1 := by
-            have h1 : cond (enrolled r y) (lacking r need)
-                (lacking r need + 1) = 1 := h
-            rw [he] at h1
-            exact h1
-          have hz : lacking r need = 0 := Nat.succ.inj h0
-          refine ⟨y, List.Mem.head need, he, ?_⟩
-          show (enrolled (y :: r) y && backed (y :: r) need) = true
-          have hy : enrolled (y :: r) y = true := by
-            show (Nat.beq y y || enrolled r y) = true
-            rw [beq_self]
-            rfl
-          exact and_glue hy
-            (the_backing_never_lapses r y need
-              ((the_weight_is_zero_at_the_door r need).mpr hz))
-
-theorem the_key_is_cut_from_the_room (r : List Nat)
-    (m : Nat × List Nat) (held : List (Nat × List Nat))
-    (hw : lacking r m.2 = 1) :
-    ∃ x : Nat, x ∈ m.2 ∧ enrolled r x = false
-      ∧ welcome (r, m :: held) (x, ([] : List Nat)) = (x :: r, m :: held)
-      ∧ backed (x :: r) m.2 = true
-      ∧ enrolled (sweep (x :: r, m :: held)).1 m.1 = true
-      ∧ Nat.ble ((sweep (x :: r, m :: held)).2.length + 1)
-          (m :: held).length = true :=
-  match the_weight_names_the_price r m.2 hw with
-  | ⟨x, hx, hex, hb⟩ =>
-      ⟨x, hx, hex,
-       the_backed_are_seated (s := (r, m :: held))
-         (m := (x, ([] : List Nat))) rfl,
-       hb,
-       the_sweep_seats_the_ready (x :: r, m :: held) m hb [] held rfl,
-       the_ready_drop_the_load (x :: r) m hb [] held []⟩
-
-theorem every_face_wears_the_one_face (F : Face.{u}) :
-    reseat (appFace F.Probe F.Ans) F.obs = F := rfl
-
-theorem the_reading_face_wears_it_too {S P A : Type} (g : door S P → A) :
-    faceOf g = reseat (appFace P A) (holdOpen g) := rfl
-
-theorem the_air_gap_wears_the_one_face (I O : Type) :
-    airGap I O = reseat (appFace (List I) O) behavior := rfl
-
-theorem the_seat_map_carries_the_conduct (F : Face.{u}) (s t : F.State) :
-    alike F s t
-      ↔ alike (appFace F.Probe F.Ans) (F.obs s) (F.obs t) :=
-  the_reseated_face_reads_the_ground (appFace F.Probe F.Ans) F.obs s t
-
-theorem the_interview_meets_the_one_face (F : Face.{u}) (s : F.State)
-    (q : Interview F.Probe F.Ans) :
-    sound F s q = sound (appFace F.Probe F.Ans) (F.obs s) q :=
-  show sound (reseat (appFace F.Probe F.Ans) F.obs) s q
-      = sound (appFace F.Probe F.Ans) (F.obs s) q from
-    the_interview_crosses_the_seat (appFace F.Probe F.Ans) F.obs s q
-
-theorem the_curtain_hangs_on_one_face (F : Face.{u}) (s t : F.State)
-    (h : ∀ p, F.obs s p = F.obs t p) (q : Interview F.Probe F.Ans) :
-    sound F s q = sound F t q :=
-  (the_interview_meets_the_one_face F s q).trans
-    ((no_interview_parts_the_alike (appFace F.Probe F.Ans)
-        (F.obs s) (F.obs t) h q).trans
-      (the_interview_meets_the_one_face F t q).symm)
-
-theorem one_face_many_seats (F : Face.{u}) (s t : F.State)
-    (h : ∀ p, F.obs s p = F.obs t p) (q : Interview F.Probe F.Ans)
-    (I O : Type) :
-    reseat (appFace F.Probe F.Ans) F.obs = F
-      ∧ airGap I O = reseat (appFace (List I) O) behavior
-      ∧ (alike F s t
-          ↔ alike (appFace F.Probe F.Ans) (F.obs s) (F.obs t))
-      ∧ sound F s q = sound (appFace F.Probe F.Ans) (F.obs s) q
-      ∧ sound F s q = sound F t q
-      ∧ revoice oddNat (tally Unit) = paceOne :=
-  ⟨rfl,
-   rfl,
-   the_seat_map_carries_the_conduct F s t,
-   the_interview_meets_the_one_face F s q,
-   the_curtain_hangs_on_one_face F s t h q,
-   rfl⟩
-
-def carries {P A : Type} {S : Type u} {S' : Type v}
-    (f : S → P → A) (g : S' → P → A) (h : S → S') : Prop :=
-  ∀ s p, g (h s) p = f s p
-
-theorem the_still_map_carries {P A : Type} {S : Type u} (f : S → P → A) :
-    carries f f (fun s => s) :=
-  fun _ _ => rfl
-
-theorem the_carriers_compose {P A : Type} {S : Type u} {S' : Type v}
-    {S'' : Type w} {f : S → P → A} {g : S' → P → A} {k : S'' → P → A}
-    {h : S → S'} {h' : S' → S''}
-    (hc : carries f g h) (hc' : carries g k h') :
-    carries f k (fun s => h' (h s)) :=
-  fun s p => (hc' (h s) p).trans (hc s p)
-
-theorem the_seat_map_carries_home (G : Face.{v}) {S' : Type u}
-    (f : S' → G.State) :
-    carries (reseat G f).obs G.obs f :=
-  fun _ _ => rfl
-
-theorem the_obs_carries_to_the_one_face (F : Face.{u}) :
-    carries F.obs (appFace F.Probe F.Ans).obs F.obs :=
-  fun _ _ => rfl
-
-theorem the_terminus_takes_every_carrier (F : Face.{u})
-    (h : F.State → (F.Probe → F.Ans))
-    (hc : carries F.obs (appFace F.Probe F.Ans).obs h) (s : F.State) :
-    alike (appFace F.Probe F.Ans) (h s) (F.obs s) :=
-  fun p => hc s p
-
-theorem the_carrier_carries_the_alike {P A : Type} {S : Type u}
-    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
-    (hc : carries f g h) (s t : S) :
-    alike ⟨S', P, A, g⟩ (h s) (h t) ↔ alike ⟨S, P, A, f⟩ s t :=
-  ⟨fun hal p => (hc s p).symm.trans ((hal p).trans (hc t p)),
-   fun hal p => (hc s p).trans ((hal p).trans (hc t p).symm)⟩
-
-theorem the_interview_crosses_every_carrier {P A : Type} {S : Type u}
-    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
-    (hc : carries f g h) (s : S) :
-    ∀ q : Interview P A,
-      sound ⟨S, P, A, f⟩ s q = sound ⟨S', P, A, g⟩ (h s) q
-  | .rest => rfl
-  | .ask p k => by
-      show f s p :: sound ⟨S, P, A, f⟩ s (k (f s p))
-          = g (h s) p :: sound ⟨S', P, A, g⟩ (h s) (k (g (h s) p))
-      rw [hc s p]
-      exact congrArg (f s p :: ·)
-        (the_interview_crosses_every_carrier hc s (k (f s p)))
-
-theorem the_seat_crossing_was_a_carrier_crossing (F : Face.{v})
-    {S' : Type u} (f : S' → F.State) (s : S')
-    (q : Interview F.Probe F.Ans) :
-    sound (reseat F f) s q = sound F (f s) q :=
-  the_interview_crosses_every_carrier (the_seat_map_carries_home F f) s q
-
-theorem the_intertwiner_carries_the_seat_face {I O : Type}
-    (m n : Machine I O) (r : m.S → n.S)
-    (hstep : ∀ s i, r (m.step s i) = n.step (r s) i)
-    (hout : ∀ s, n.out (r s) = m.out s) :
-    carries (drive m) (drive n) r :=
-  fun s w =>
-    ((the_drive_reads_the_walk n w (r s)).trans
-      ((congrArg n.out
-          (a_reading_in_step_carries_the_walk m.step n.step r hstep
-            w s).symm).trans
-        (hout (walk m.step s w)))).trans
-      (the_drive_reads_the_walk m w s).symm
-
-theorem the_pace_is_carried_onto_the_flip :
-    carries (drive paceOne) (drive flip) oddNat :=
-  the_intertwiner_carries_the_seat_face paceOne flip oddNat
-    (fun _ _ => rfl) (fun _ => rfl)
-
-theorem the_one_face_is_the_terminus (F : Face.{u})
-    (h : F.State → (F.Probe → F.Ans))
-    (hc : carries F.obs (appFace F.Probe F.Ans).obs h) (s : F.State)
-    {P A : Type} {S : Type u} {S' : Type v}
-    {f : S → P → A} {g : S' → P → A} {h' : S → S'}
-    (hc' : carries f g h') (s' : S) (q : Interview P A) :
-    carries F.obs (appFace F.Probe F.Ans).obs F.obs
-      ∧ alike (appFace F.Probe F.Ans) (h s) (F.obs s)
-      ∧ carries f f (fun x => x)
-      ∧ sound ⟨S, P, A, f⟩ s' q = sound ⟨S', P, A, g⟩ (h' s') q
-      ∧ carries (drive paceOne) (drive flip) oddNat :=
-  ⟨the_obs_carries_to_the_one_face F,
-   the_terminus_takes_every_carrier F h hc s,
-   the_still_map_carries f,
-   the_interview_crosses_every_carrier hc' s' q,
-   the_pace_is_carried_onto_the_flip⟩
-
-theorem the_count_carries_the_life :
-    carries (drive grower) (drive teller) ((fold (fun a b : Nat => a + b) 1 : Plan → Nat)) :=
-  the_intertwiner_carries_the_seat_face grower teller
-    ((fold (fun a b : Nat => a + b) 1 : Plan → Nat))
-    (fun s δ => the_revision_multiplies_the_reading s δ)
-    (fun _ => rfl)
-
-theorem the_manifest_carries_the_simulation {W I O : Type} (w0 : W)
-    (p : Plan) (s0 : build W p) (step : build W p → I → build W p)
-    (out : build W p → O) :
-    carries (drive (onPlan p s0 step out))
-      (drive (onWords w0 p step out s0)) (pour p) :=
-  the_intertwiner_carries_the_seat_face (onPlan p s0 step out)
-    (onWords w0 p step out s0) (pour p)
-    (fun s i =>
-      (congrArg (fun x => pour p (step x i))
-        (the_manifest_rebuilds_the_carrier w0 p s)).symm)
-    (fun s => congrArg out (the_manifest_rebuilds_the_carrier w0 p s))
-
-theorem the_park_carries_the_record {I O : Type} (m : Machine I O) :
-    carries (drive (replayer m)) (drive m) (park m m.s0) :=
-  the_intertwiner_carries_the_seat_face (replayer m) m (park m m.s0)
-    (fun rec i => the_park_resumes m rec [i] m.s0)
-    (fun _ => rfl)
-
-theorem every_simulation_was_a_carrier {W I O I' O' : Type} (w0 : W)
-    (p : Plan) (s0 : build W p) (step : build W p → I → build W p)
-    (out : build W p → O) (m : Machine I' O') (t : Plan)
-    (q : Interview (List Plan) Nat) :
-    carries (drive grower) (drive teller) ((fold (fun a b : Nat => a + b) 1 : Plan → Nat))
-      ∧ carries (drive (onPlan p s0 step out))
-          (drive (onWords w0 p step out s0)) (pour p)
-      ∧ carries (drive (replayer m)) (drive m) (park m m.s0)
-      ∧ carries (drive paceOne) (drive flip) oddNat
-      ∧ sound ⟨Plan, List Plan, Nat, drive grower⟩ t q
-          = sound ⟨Nat, List Plan, Nat, drive teller⟩
-              ((fold (fun a b : Nat => a + b) 1 : Plan → Nat) t) q :=
-  ⟨the_count_carries_the_life,
-   the_manifest_carries_the_simulation w0 p s0 step out,
-   the_park_carries_the_record m,
-   the_pace_is_carried_onto_the_flip,
-   the_interview_crosses_every_carrier the_count_carries_the_life t q⟩
-
-theorem the_still_hands_are_the_endo_carriers (F : Face.{u})
-    (m : F.State → F.State) :
-    unheard F m ↔ carries F.obs F.obs m := Iff.rfl
-
-theorem the_maintenance_is_the_identitys_hom (F : Face.{u})
-    (m m' : F.State → F.State) (hm : unheard F m) (hm' : unheard F m') :
-    carries F.obs F.obs (fun s => s)
-      ∧ carries F.obs F.obs (fun s => m (m' s)) :=
-  ⟨the_still_map_carries F.obs,
-   the_carriers_compose hm' hm⟩
-
-theorem the_carrier_merges_only_the_alike {P A : Type} {S : Type u}
-    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
-    (hc : carries f g h) {s t : S} (he : h s = h t) :
-    alike ⟨S, P, A, f⟩ s t :=
-  fun p =>
-    (hc s p).symm.trans
-      ((congrArg (fun x => g x p) he).trans (hc t p))
-
-theorem the_two_routes_merge_at_the_carrier :
-    park pulse (0 : Nat) [true, false] = park pulse (0 : Nat) [false, true]
-      ∧ alike ⟨List Bool, List Bool, Bool, drive (replayer pulse)⟩
-          [true, false] [false, true]
-      ∧ ([true, false] : List Bool) ≠ [false, true] :=
-  ⟨two_routes_one_seat.2,
-   the_carrier_merges_only_the_alike (the_park_carries_the_record pulse)
-     two_routes_one_seat.2,
-   two_routes_one_seat.1⟩
-
-theorem the_carrier_runs_the_handshake (F : Face.{u})
-    (m m' : F.State → F.State) (hm : unheard F m) (hm' : unheard F m')
-    {P A : Type} {S : Type u} {S' : Type v}
-    {f : S → P → A} {g : S' → P → A} {h : S → S'}
-    (hc : carries f g h) {x y : S} (he : h x = h y) :
-    (unheard F m ↔ carries F.obs F.obs m)
-      ∧ carries F.obs F.obs (fun s => m (m' s))
-      ∧ alike ⟨S, P, A, f⟩ x y
-      ∧ (park pulse (0 : Nat) [true, false]
-            = park pulse (0 : Nat) [false, true]
-          ∧ alike ⟨List Bool, List Bool, Bool, drive (replayer pulse)⟩
-              [true, false] [false, true]
-          ∧ ([true, false] : List Bool) ≠ [false, true]) :=
-  ⟨Iff.rfl,
-   (the_maintenance_is_the_identitys_hom F m m' hm hm').2,
-   the_carrier_merges_only_the_alike hc he,
-   the_two_routes_merge_at_the_carrier⟩
-
-theorem the_carrier_was_a_seating {P A : Type} {S : Type u} {S' : Type v}
-    (f : S → P → A) (g : S' → P → A) (h : S → S') :
-    carries f g h
-      ↔ ∀ s p, (reseat ⟨S', P, A, g⟩ h).obs s p = f s p :=
-  Iff.rfl
-
-theorem the_ear_crosses_the_carrier {P P' A : Type} {S : Type u}
-    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
-    (hc : carries f g h) (fp : P' → P) :
-    carries (fun s p' => f s (fp p')) (fun t p' => g t (fp p')) h :=
-  fun s p' => hc s (fp p')
-
-theorem the_voice_crosses_the_carrier {P A A' : Type} {S : Type u}
-    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
-    (hc : carries f g h) (ga : A → A') :
-    carries (fun s p => ga (f s p)) (fun t p => ga (g t p)) h :=
-  fun s p => congrArg ga (hc s p)
-
-theorem the_host_crosses_the_carrier {P A W : Type} {S : Type u}
-    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
-    (hc : carries f g h) :
-    carries (host ⟨S, P, A, f⟩ W).obs (host ⟨S', P, A, g⟩ W).obs
-      (fun x => (h x.1, x.2)) :=
-  fun x p => hc x.1 p
-
-theorem every_crossing_is_a_seating {P P' A A' W : Type} {S : Type u}
-    {S' : Type v} (f : S → P → A) (g : S' → P → A) (h : S → S')
-    (hc : carries f g h) (fp : P' → P) (ga : A → A')
-    (G : Face.{v}) {S₀ : Type u} (f₀ : S₀ → G.State) :
-    (carries f g h
-        ↔ ∀ s p, (reseat ⟨S', P, A, g⟩ h).obs s p = f s p)
-      ∧ carries (fun s p' => f s (fp p')) (fun t p' => g t (fp p')) h
-      ∧ carries (fun s p => ga (f s p)) (fun t p => ga (g t p)) h
-      ∧ carries (host ⟨S, P, A, f⟩ W).obs (host ⟨S', P, A, g⟩ W).obs
-          (fun x => (h x.1, x.2))
-      ∧ carries (reseat G f₀).obs G.obs f₀ :=
-  ⟨Iff.rfl,
-   the_ear_crosses_the_carrier hc fp,
-   the_voice_crosses_the_carrier hc ga,
-   the_host_crosses_the_carrier hc,
-   the_seat_map_carries_home G f₀⟩
-
-theorem the_reboard_carries_the_words {W I O : Type} (w0 : W) (p : Plan)
-    (s0 : build W p) (step : build W p → I → build W p)
-    (out : build W p → O) :
-    carries (drive (onWords w0 p step out s0))
-      (drive (onPlan p s0 step out)) (reboard w0 p) :=
-  fun l w =>
-    match w with
-    | [] => rfl
-    | i :: w' =>
-        (the_manifest_carries_the_simulation w0 p s0 step out
-          (step (reboard w0 p l) i) w').symm
-
-theorem the_two_carriers_round_trip {W : Type} (w0 : W) (p : Plan)
-    (s : build W p) (l : List W) :
-    reboard w0 p (pour p s) = s
-      ∧ pour p (reboard w0 p (pour p (reboard w0 p l)))
-          = pour p (reboard w0 p l) :=
-  ⟨the_manifest_rebuilds_the_carrier w0 p s,
-   congrArg (pour p)
-     (the_manifest_rebuilds_the_carrier w0 p (reboard w0 p l))⟩
-
-theorem the_simulation_is_a_retract {W I O : Type} (w0 : W) (p : Plan)
-    (s0 : build W p) (step : build W p → I → build W p)
-    (out : build W p → O) (s : build W p) (l : List W) :
-    carries (drive (onPlan p s0 step out))
-        (drive (onWords w0 p step out s0)) (pour p)
-      ∧ carries (drive (onWords w0 p step out s0))
-          (drive (onPlan p s0 step out)) (reboard w0 p)
-      ∧ reboard w0 p (pour p s) = s
-      ∧ pour p (reboard w0 p (pour p (reboard w0 p l)))
-          = pour p (reboard w0 p l)
-      ∧ (pour p (reboard w0 p l)).length = fold (fun a b => a + b) 1 p :=
-  ⟨the_manifest_carries_the_simulation w0 p s0 step out,
-   the_reboard_carries_the_words w0 p s0 step out,
-   (the_two_carriers_round_trip w0 p s l).1,
-   (the_two_carriers_round_trip w0 p s l).2,
-   the_manifest_counts_the_guests p (reboard w0 p l)⟩
-
-theorem the_work_carries_the_margin {I O : Type} (m : Machine I O) :
-    carries (drive (buffered m)) (drive m)
-      (fun st => park m st.1 st.2) :=
-  fun st w => (the_hold_walks_beside_the_work m w st.1 st.2).symm
-
-theorem the_hold_carries_the_machine {I O : Type} (m : Machine I O) :
-    carries (drive m) (drive (buffered m)) (fun s => (s, [])) :=
-  fun s w => the_hold_walks_beside_the_work m w s []
-
-theorem the_settle_is_the_idempotent {I O : Type} (m : Machine I O)
-    (st : m.S × List I) :
-    (park m st.1 st.2, ([] : List I)) = settleHeld m st
-      ∧ settleHeld m (settleHeld m st) = settleHeld m st
-      ∧ (settleHeld m st).2 = ([] : List I) :=
-  ⟨rfl, rfl, rfl⟩
-
-theorem the_settles_stillness_is_the_composite {I O : Type}
-    (m : Machine I O) :
-    unheard (seatFace (buffered m)) (settleHeld m) :=
-  fun st w =>
-    (the_carriers_compose (the_work_carries_the_margin m)
-      (the_hold_carries_the_machine m)) st w
-
-theorem the_settle_splits_like_the_drain {I O W' I' O' : Type}
-    (m : Machine I O) (st : m.S × List I) (s : m.S)
-    (w0 : W') (p : Plan) (s0 : build W' p)
-    (step : build W' p → I' → build W' p) (out : build W' p → O')
-    (l : List W') :
-    carries (drive (buffered m)) (drive m) (fun x => park m x.1 x.2)
-      ∧ carries (drive m) (drive (buffered m)) (fun x => (x, []))
-      ∧ park m s ([] : List I) = s
-      ∧ settleHeld m (settleHeld m st) = settleHeld m st
-      ∧ unheard (seatFace (buffered m)) (settleHeld m)
-      ∧ (carries (drive (onPlan p s0 step out))
-            (drive (onWords w0 p step out s0)) (pour p)
-          ∧ pour p (reboard w0 p (pour p (reboard w0 p l)))
-              = pour p (reboard w0 p l)) :=
-  ⟨the_work_carries_the_margin m,
-   the_hold_carries_the_machine m,
-   rfl,
-   (the_settle_is_the_idempotent m st).2.1,
-   the_settles_stillness_is_the_composite m,
-   ⟨the_manifest_carries_the_simulation w0 p s0 step out,
-    (the_two_carriers_round_trip w0 p s0 l).2⟩⟩
-
-theorem the_customs_keep_the_still_world {W : Type} (p : Plan)
-    (s : build W p) : reground (fun w => w) p s = s :=
-  remeasurement_moves_only_the_ground p s
-
-theorem the_customs_stack_forward {W W' W'' : Type} (f : W → W')
-    (g : W' → W'') (p : Plan) (s : build W p) :
-    reground g p (reground f p s) = reground (fun w => g (f w)) p s :=
-  imports_compose f g p s
-
-theorem the_manifest_is_natural {W W' : Type} (f : W → W') (p : Plan)
-    (s : build W p) :
-    pour p (reground f p s) = (pour p s).map f :=
-  the_customs_thread_the_manifest f p s
-
-theorem the_spine_is_natural {W W' : Type} (f : W → W') (p : Plan)
-    (s : build W p) :
-    spine W' p (reground f p s) = f (spine W p s) :=
-  the_import_threads_the_spine f p s
-
-theorem the_ride_is_natural {W W' : Type} (f : W → W') {t : Plan}
-    (s : build W t) (δ : Plan) :
-    reground f (graft t δ) (ride s δ) = ride (reground f t s) δ :=
-  the_customs_ride_along f s δ
-
-theorem the_customs_are_a_functor {W W' W'' : Type} (f : W → W')
-    (g : W' → W'') (p : Plan) (s : build W p) {t : Plan}
-    (u : build W t) (δ : Plan) (qs : List Plan) :
-    reground (fun w => w) p s = s
-      ∧ reground g p (reground f p s) = reground (fun w => g (f w)) p s
-      ∧ pour p (reground f p s) = (pour p s).map f
-      ∧ spine W' p (reground f p s) = f (spine W p s)
-      ∧ reground f (graft t δ) (ride u δ) = ride (reground f t u) δ
-      ∧ reground f (worldline t qs) (journey u qs)
-          = journey (reground f t u) qs :=
-  ⟨the_customs_keep_the_still_world p s,
-   the_customs_stack_forward f g p s,
-   the_manifest_is_natural f p s,
-   the_spine_is_natural f p s,
-   the_ride_is_natural f u δ,
-   the_customs_survive_the_journey f qs u⟩
-
-theorem the_revision_keeps_the_still_life (q : Plan) :
-    graft .ground q = q :=
-  the_trivial_revision_changes_nothing q
-
-theorem the_revisions_stack_forward (a b q : Plan) :
-    graft a (graft b q) = graft (graft a b) q :=
-  lineages_compose a b q
-
-theorem the_reading_is_natural_over_time {X : Type u} (mul : X → X → X)
-    (x₀ : X) (base q : Plan) :
-    fold mul x₀ (graft base q) = fold mul (fold mul x₀ base) q :=
-  the_parent_folds_into_the_ground mul x₀ base q
-
-theorem the_rider_is_the_revisions_action {W : Type} {t : Plan}
-    (s : build W t) (δ : Plan) :
-    spine W (graft t δ) (ride s δ) = spine W t s :=
-  the_passenger_keeps_the_face s δ
-
-theorem the_two_axes_commute {W W' : Type} (f : W → W') {t : Plan}
-    (s : build W t) (δ : Plan) :
-    reground f (graft t δ) (ride s δ) = ride (reground f t s) δ :=
-  the_customs_ride_along f s δ
-
-theorem both_channels_are_functors {W W' : Type} (f : W → W')
-    {t : Plan} (s : build W t) (δ δ' : Plan) (q : Plan)
-    {X : Type u} (mul : X → X → X) (x₀ : X) (p : Plan)
-    (c : build W p) :
-    graft .ground q = q
-      ∧ graft δ (graft δ' q) = graft (graft δ δ') q
-      ∧ fold mul x₀ (graft δ q) = fold mul (fold mul x₀ δ) q
-      ∧ spine W (graft t δ) (ride s δ) = spine W t s
-      ∧ reground f (graft t δ) (ride s δ) = ride (reground f t s) δ
-      ∧ reground (fun w => w) p c = c
-      ∧ pour p (reground f p c) = (pour p c).map f
-      ∧ fold (fun a b => a + b) 1 (graft t δ)
-          = fold (fun a b => a + b) 1 t * fold (fun a b => a + b) 1 δ :=
-  ⟨the_revision_keeps_the_still_life q,
-   the_revisions_stack_forward δ δ' q,
-   the_reading_is_natural_over_time mul x₀ δ q,
-   the_rider_is_the_revisions_action s δ,
-   the_two_axes_commute f s δ,
-   the_customs_keep_the_still_world p c,
-   the_manifest_is_natural f p c,
-   the_revision_multiplies_the_reading t δ⟩
-
-theorem the_replanning_is_an_iso {W : Type} (w0 : W) {p q : Plan}
-    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
-    (h' : fold (fun a b => a + b) 1 p = fold (fun a b => a + b) 1 q)
-    (s : build W p) (t : build W q) :
-    replan w0 q p (replan w0 p q s) = s
-      ∧ replan w0 p q (replan w0 q p t) = t :=
-  ⟨the_replanning_returns w0 h s, the_replanning_returns w0 h' t⟩
-
-theorem the_replanning_is_natural {W W' : Type} (f : W → W') (w0 : W)
-    (w0' : W') {p q : Plan}
-    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
-    (s : build W p) :
-    pour q (replan w0' p q (reground f p s))
-      = pour q (reground f q (replan w0 p q s)) :=
-  ((the_replanning_moves_no_guest w0' h (reground f p s)).trans
-    (the_customs_thread_the_manifest f p s)).trans
-    ((the_customs_thread_the_manifest f q (replan w0 p q s)).trans
-      (congrArg (fun l => l.map f)
-        (the_replanning_moves_no_guest w0 h s))).symm
-
-theorem the_shape_is_the_obstruction {W : Type} (w0 : W) {p q : Plan}
-    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
-    (hpq : p ≠ q) (s : build W p) :
-    pour q (replan w0 p q s) = pour p s
-      ∧ face (specView p s) ≠ face (specView q (replan w0 p q s)) :=
-  ⟨the_replanning_moves_no_guest w0 h s, fun he => hpq he⟩
-
-theorem the_mediating_map_is_gauge {W W' : Type} (f : W → W') (w0 : W)
-    (w0' : W') {p q : Plan}
-    (h : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
-    (h' : fold (fun a b => a + b) 1 p = fold (fun a b => a + b) 1 q)
-    (hpq : p ≠ q) (s : build W p) (t : build W q) :
-    (replan w0 q p (replan w0 p q s) = s
-        ∧ replan w0 p q (replan w0 q p t) = t)
-      ∧ pour q (replan w0' p q (reground f p s))
-          = pour q (reground f q (replan w0 p q s))
-      ∧ pour q (replan w0 p q s) = pour p s
-      ∧ face (specView p s) ≠ face (specView q (replan w0 p q s)) :=
-  ⟨the_replanning_is_an_iso w0 h h' s t,
-   the_replanning_is_natural f w0 w0' h s,
-   (the_shape_is_the_obstruction w0 h hpq s).1,
-   (the_shape_is_the_obstruction w0 h hpq s).2⟩
-
-theorem an_iso_merges_nothing {S : Type u} {S' : Type v}
-    {h : S → S'} {k : S' → S}
-    (hk : ∀ s, k (h s) = s) {s t : S} (he : h s = h t) : s = t :=
-  (hk s).symm.trans ((congrArg k he).trans (hk t))
-
-theorem the_transposition_is_an_iso {H W X : Type}
-    (fd : door H W → X) (g : H → W → X) :
-    walkIn (holdOpen fd) = fd ∧ holdOpen (walkIn g) = g :=
-  the_deferral_is_free fd g
-
-theorem the_swap_is_its_own_inverse {H W : Type} (d : door H W) :
-    turnAbout (turnAbout d) = d :=
-  the_return_restores_the_seating d
-
-theorem the_iso_test_is_the_two_sided_carrier {P A : Type} {S : Type u}
-    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
-    {k : S' → S} (hc : carries f g h) (hc' : carries g f k)
-    (hk : ∀ s, k (h s) = s) (hk' : ∀ t, h (k t) = t) (s : S) (t : S') :
-    carries f f (fun x => k (h x))
-      ∧ carries g g (fun y => h (k y))
-      ∧ k (h s) = s
-      ∧ h (k t) = t :=
-  ⟨the_carriers_compose hc hc', the_carriers_compose hc' hc, hk s, hk' t⟩
-
-theorem the_house_holds_three_isos {W H X : Type} (w0 : W) {p q : Plan}
-    (hpq : fold (fun a b => a + b) 1 q = fold (fun a b => a + b) 1 p)
-    (hqp : fold (fun a b => a + b) 1 p = fold (fun a b => a + b) 1 q)
-    (s : build W p) (t : build W q) (fd : door H W → X) (g : H → W → X)
-    (d : door H W) {S : Type u} {S' : Type v}
-    {h : S → S'} {k : S' → S}
-    (hk : ∀ x, k (h x) = x) {x y : S} (he : h x = h y) :
-    (replan w0 q p (replan w0 p q s) = s
-        ∧ replan w0 p q (replan w0 q p t) = t)
-      ∧ (walkIn (holdOpen fd) = fd ∧ holdOpen (walkIn g) = g)
-      ∧ turnAbout (turnAbout d) = d
-      ∧ x = y :=
-  ⟨the_replanning_is_an_iso w0 hpq hqp s t,
-   the_transposition_is_an_iso fd g,
-   the_swap_is_its_own_inverse d,
-   an_iso_merges_nothing hk he⟩
-
-theorem a_merging_map_has_no_section {S : Type u} {S' : Type v}
-    {h : S → S'} {s t : S} (hst : s ≠ t) (he : h s = h t) :
-    ¬ ∃ j : S' → S, ∀ x, j (h x) = x :=
-  fun hk => hk.elim fun _ hk' => hst (an_iso_merges_nothing hk' he)
-
-theorem the_face_has_no_section {H W : Type} (h : H) {w w' : W}
-    (hw : w ≠ w') :
-    ¬ ∃ k : H → door H W, ∀ d : door H W, k (face d) = d :=
-  a_merging_map_has_no_section (the_guest_is_real h hw) rfl
-
-theorem the_census_has_no_section :
-    ¬ ∃ k : Nat → List Bool, ∀ l : List Bool, k (park pulse (0 : Nat) l) = l :=
-  a_merging_map_has_no_section
-    two_routes_one_seat.1 two_routes_one_seat.2
-
-theorem the_deaf_ear_has_no_section :
-    ¬ ∃ k : List Unit → List Bool,
-      ∀ w : List Bool, k (w.map (fun _ => ())) = w :=
-  a_merging_map_has_no_section (h := fun w : List Bool => w.map (fun _ => ()))
-    two_routes_one_seat.1 rfl
-
-theorem the_blindnesses_are_the_non_sections {H W : Type} (h : H)
-    {w w' : W} (hw : w ≠ w') {P A : Type} {S : Type u} {S' : Type v}
-    {f : S → P → A} {g : S' → P → A} {k : S → S'}
-    (hc : carries f g k) (j : S' → S) (hj : ∀ y, j (k y) = y) (s : S) :
-    (¬ ∃ j : H → door H W, ∀ d : door H W, j (face d) = d)
-      ∧ (¬ ∃ j : Nat → List Bool,
-          ∀ l : List Bool, j (park pulse (0 : Nat) l) = l)
-      ∧ (¬ ∃ j : List Unit → List Bool,
-          ∀ w : List Bool, j (w.map (fun _ => ())) = w)
-      ∧ (∀ p, g (k s) p = f s p)
-      ∧ j (k s) = s :=
-  ⟨the_face_has_no_section h hw,
-   the_census_has_no_section,
-   the_deaf_ear_has_no_section,
-   hc s,
-   hj s⟩
-
-theorem the_positive_subscription_is_the_ear (F : Face.{u}) {P' : Type}
-    (fp : P' → F.Probe) (s t : F.State) (h : alike F s t) :
-    alike (rehear F fp) s t :=
-  the_translated_ear_hears_no_more F fp s t h
-
-theorem the_negative_subscription_is_the_merge (F : Face.{u}) {W : Type}
-    (s : F.State) {w w' : W} (hw : w ≠ w') :
-    alike (host F W) (s, w) (s, w')
-      ∧ ¬ ∃ j : F.State → F.State × W,
-          ∀ x : F.State × W, j x.1 = x :=
-  ⟨fun _ => rfl,
-   a_merging_map_has_no_section
-     (h := fun x : F.State × W => x.1)
-     (s := (s, w)) (t := (s, w'))
-     (fun he => hw (congrArg Prod.snd he)) rfl⟩
-
-theorem the_record_writes_where_the_face_is_blind (F : Face.{u})
-    {W : Type} (keep : F.State × W → W) :
-    unheard (host F W) (fun x => (x.1, keep x)) :=
-  the_guest_write_is_a_still_hand F keep
-
-theorem recording_the_recording_grounds (F : Face.{u}) {W : Type}
-    (keep : F.State × W → W) (x : F.State × W)
-    (q : Interview F.Probe F.Ans) :
-    sound (host F W) (x.1, keep x) q = sound (host F W) x q
-      ∧ sound (host F W) (x.1, keep (x.1, keep x)) q
-          = sound (host F W) x q :=
-  ⟨no_interview_hears_the_unheard (host F W)
-     (fun y => (y.1, keep y))
-     (the_record_writes_where_the_face_is_blind F keep) x q,
-   (no_interview_hears_the_unheard (host F W)
-       (fun y => (y.1, keep y))
-       (the_record_writes_where_the_face_is_blind F keep)
-       (x.1, keep x) q).trans
-     (no_interview_hears_the_unheard (host F W)
-       (fun y => (y.1, keep y))
-       (the_record_writes_where_the_face_is_blind F keep) x q)⟩
-
-theorem the_modeling_loop_grounds (F : Face.{u}) {W P' : Type}
-    (fp : P' → F.Probe) (keep : F.State × W → W) (s t : F.State)
-    (h : alike F s t) {w w' : W} (hw : w ≠ w') (x : F.State × W)
-    (q : Interview F.Probe F.Ans) :
-    alike (rehear F fp) s t
-      ∧ (alike (host F W) (s, w) (s, w')
-          ∧ ¬ ∃ j : F.State → F.State × W,
-              ∀ y : F.State × W, j y.1 = y)
-      ∧ unheard (host F W) (fun y => (y.1, keep y))
-      ∧ sound (host F W) (x.1, keep (x.1, keep x)) q
-          = sound (host F W) x q
-      ∧ (∀ (S : Face.{u}) (P : S.State → S.State),
-          (∀ v, P (P v) = P v) → ∀ y p, S.obs (P (P y)) p = S.obs (P y) p) :=
-  ⟨the_positive_subscription_is_the_ear F fp s t h,
-   the_negative_subscription_is_the_merge F s hw,
-   the_record_writes_where_the_face_is_blind F keep,
-   (recording_the_recording_grounds F keep x q).2,
-   fun S _ hP y p => congrArg (S.obs · p) (hP y)⟩
-
-theorem the_mutual_records_ride_together (F : Face.{u}) {V W : Type}
-    (mine : F.State × V × W → V) (yours : F.State × V × W → W) :
-    unheard (host F (V × W)) (fun x => (x.1, (mine x, x.2.2)))
-      ∧ unheard (host F (V × W)) (fun x => (x.1, (x.2.1, yours x)))
-      ∧ unheard (host F (V × W))
-          (fun x => (x.1, (mine x, yours x))) :=
-  ⟨fun _ _ => rfl, fun _ _ => rfl, fun _ _ => rfl⟩
-
-theorem the_mutual_recording_is_unheard (F : Face.{u}) {V W : Type}
-    (mine : F.State × V × W → V) (yours : F.State × V × W → W)
-    (x : F.State × V × W) (q : Interview F.Probe F.Ans) :
-    sound (host F (V × W)) (x.1, (mine x, yours x)) q
-      = sound (host F (V × W)) x q :=
-  no_interview_hears_the_unheard (host F (V × W))
-    (fun y => (y.1, (mine y, yours y)))
-    (the_mutual_records_ride_together F mine yours).2.2 x q
-
-theorem the_records_part_the_seats (F : Face.{u}) {V W : Type}
-    (s : F.State) {v v' : V} (hv : v ≠ v') (w : W) :
-    alike (host F (V × W)) (s, (v, w)) (s, (v', w))
-      ∧ (s, (v, w)) ≠ (s, (v', w))
-      ∧ (widen F (V × W)).obs (s, (v, w)) (viaRight ())
-          ≠ (widen F (V × W)).obs (s, (v', w)) (viaRight ()) :=
-  ⟨fun _ => rfl,
-   (fun he => hv (congrArg (fun y => y.2.1) he)),
-   (fun he => hv (congrArg Prod.fst (Sum.inr.inj he)))⟩
-
-theorem two_seats_record_each_other (F : Face.{u}) {V W : Type}
-    (mine : F.State × V × W → V) (yours : F.State × V × W → W)
-    (x : F.State × V × W) (q : Interview F.Probe F.Ans)
-    (s : F.State) {v v' : V} (hv : v ≠ v') (w : W) :
-    unheard (host F (V × W)) (fun y => (y.1, (mine y, yours y)))
-      ∧ sound (host F (V × W)) (x.1, (mine x, yours x)) q
-          = sound (host F (V × W)) x q
-      ∧ alike (host F (V × W)) (s, (v, w)) (s, (v', w))
-      ∧ (s, (v, w)) ≠ (s, (v', w))
-      ∧ (widen F (V × W)).obs (s, (v, w)) (viaRight ())
-          ≠ (widen F (V × W)).obs (s, (v', w)) (viaRight ()) :=
-  ⟨(the_mutual_records_ride_together F mine yours).2.2,
-   the_mutual_recording_is_unheard F mine yours x q,
-   (the_records_part_the_seats F s hv w).1,
-   (the_records_part_the_seats F s hv w).2.1,
-   (the_records_part_the_seats F s hv w).2.2⟩
-
-def concordFace (F : Face.{u}) (V : Type) : Face :=
-  pairFace (host F V) ⟨F.State × V, Unit, V, fun x _ => x.2⟩
-    (fun x => x) (fun x => x)
-
-theorem the_concord_reads_both_models (F : Face.{u}) {V : Type}
-    (x : F.State × V) (p : F.Probe) :
-    (concordFace F V).obs x (p, ()) = (F.obs x.1 p, x.2) := rfl
-
-theorem no_seat_reads_the_concord_alone (F : Face.{u}) {V : Type}
-    (p₀ : F.Probe) (s : F.State) {v v' : V} (hv : v ≠ v') :
-    alike (host F V) (s, v) (s, v')
-      ∧ ¬ alike (concordFace F V) (s, v) (s, v') :=
-  ⟨fun _ => rfl,
-   fun hal => hv (congrArg Prod.snd (hal (p₀, ())) : v = v')⟩
-
-theorem the_meeting_mints_the_concord (F : Face.{u}) {V : Type}
-    (agree : F.Ans → V → Prop) (p : F.Probe) :
-    Derived (concordFace F V)
-      (fun x => agree ((concordFace F V).obs x (p, ())).1
-        ((concordFace F V).obs x (p, ())).2) :=
-  a_role_read_at_a_probe_is_derived (concordFace F V) (p, ())
-    (fun a => agree a.1 a.2)
-
-theorem the_concord_is_the_meetings_own (F : Face.{u}) {V : Type}
-    (agree : F.Ans → V → Prop) (p : F.Probe) (s : F.State)
-    {v v' : V} (hv : v ≠ v')
-    (mine : F.State × V → V) (q : Interview F.Probe F.Ans)
-    (x : F.State × V) :
-    Derived (concordFace F V)
-        (fun y => agree ((concordFace F V).obs y (p, ())).1
-          ((concordFace F V).obs y (p, ())).2)
-      ∧ alike (host F V) (s, v) (s, v')
-      ∧ ¬ alike (concordFace F V) (s, v) (s, v')
-      ∧ sound (host F V) (x.1, mine x) q = sound (host F V) x q
-      ∧ (concordFace F V).obs x (p, ()) = (F.obs x.1 p, x.2) :=
-  ⟨the_meeting_mints_the_concord F agree p,
-   (no_seat_reads_the_concord_alone F p s hv).1,
-   (no_seat_reads_the_concord_alone F p s hv).2,
-   no_interview_hears_the_unheard (host F V) (fun y => (y.1, mine y))
-     (the_record_writes_where_the_face_is_blind F mine) x q,
-   rfl⟩
-
-theorem the_concord_agrees_or_names_the_gap (F : Face.{u}) {V : Type}
-    (beq : F.Ans → V → Bool) (x : F.State × V) :
-    ∀ ps : List F.Probe,
-      (∀ p, p ∈ ps → beq (F.obs x.1 p) x.2 = true)
-        ∨ ∃ p, p ∈ ps ∧ beq (F.obs x.1 p) x.2 = false
-  | [] => Or.inl (fun _ hp => nomatch hp)
-  | p :: ps => by
-      cases hb : beq (F.obs x.1 p) x.2 with
-      | false => exact Or.inr ⟨p, List.Mem.head ps, hb⟩
-      | true =>
-          cases the_concord_agrees_or_names_the_gap F beq x ps with
-          | inl hall =>
-              refine Or.inl (fun r hr => ?_)
-              cases hr with
-              | head => exact hb
-              | tail _ hr' => exact hall r hr'
-          | inr hw =>
-              obtain ⟨r, hr, hbr⟩ := hw
-              exact Or.inr ⟨r, List.Mem.tail p hr, hbr⟩
-
-theorem the_gap_is_minted_at_the_meeting (F : Face.{u}) {V : Type}
-    (p₀ : F.Probe) (s : F.State) {v v' : V} (hv : v ≠ v') :
-    alike (host F V) (s, v) (s, v')
-      ∧ ((concordFace F V).obs (s, v) (p₀, ())).2
-          ≠ ((concordFace F V).obs (s, v') (p₀, ())).2 :=
-  ⟨fun _ => rfl, hv⟩
-
-theorem the_settled_gap_moves_the_model (F : Face.{u}) {V : Type}
-    (fix : F.State × V → V) (x : F.State × V)
-    (q : Interview F.Probe F.Ans) (p : F.Probe) :
-    sound (host F V) (x.1, fix x) q = sound (host F V) x q
-      ∧ (concordFace F V).obs (x.1, fix x) (p, ())
-          = (F.obs x.1 p, fix x) :=
-  ⟨no_interview_hears_the_unheard (host F V) (fun y => (y.1, fix y))
-     (the_record_writes_where_the_face_is_blind F fix) x q,
-   rfl⟩
-
-theorem the_disagreement_is_addressable (F : Face.{u}) {V : Type}
-    (beq : F.Ans → V → Bool) (x : F.State × V) (ps : List F.Probe)
-    (p₀ : F.Probe) (s : F.State) {v v' : V} (hv : v ≠ v')
-    (fix : F.State × V → V) (q : Interview F.Probe F.Ans) :
-    ((∀ p, p ∈ ps → beq (F.obs x.1 p) x.2 = true)
-        ∨ ∃ p, p ∈ ps ∧ beq (F.obs x.1 p) x.2 = false)
-      ∧ (alike (host F V) (s, v) (s, v')
-          ∧ ((concordFace F V).obs (s, v) (p₀, ())).2
-              ≠ ((concordFace F V).obs (s, v') (p₀, ())).2)
-      ∧ sound (host F V) (x.1, fix x) q = sound (host F V) x q
-      ∧ (concordFace F V).obs (x.1, fix x) (p₀, ())
-          = (F.obs x.1 p₀, fix x) :=
-  ⟨the_concord_agrees_or_names_the_gap F beq x ps,
-   the_gap_is_minted_at_the_meeting F p₀ s hv,
-   (the_settled_gap_moves_the_model F fix x q p₀).1,
-   (the_settled_gap_moves_the_model F fix x q p₀).2⟩
-
-theorem the_model_is_the_others_readings (F : Face.{u}) (t : F.State)
-    (s : F.State) (ps : List F.Probe) :
-    (∀ p, p ∈ ps → F.obs s p = F.obs t p)
-      → sound F s (recite ps) = sound F t (recite ps) :=
-  the_agreed_window_sounds_as_one F s t ps
-
-theorem the_two_disagreements_are_one (F : Face.{0})
-    (beq : F.Ans → F.Ans → Bool) (s t : F.State) (ps : List F.Probe) :
-    ((∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true)
-        ∨ ∃ p, p ∈ ps ∧ beq (F.obs s p) (F.obs t p) = false)
-      ∧ ((∀ p, p ∈ ps → beq ((concordFace F F.State).obs (s, t) (p, ())).1
-              (F.obs ((concordFace F F.State).obs (s, t) (p, ())).2 p)
-            = true)
-          ∨ ∃ p, p ∈ ps
-              ∧ beq ((concordFace F F.State).obs (s, t) (p, ())).1
-                  (F.obs ((concordFace F F.State).obs (s, t) (p, ())).2 p)
-                = false) :=
-  ⟨the_window_agrees_or_names_the_gap F beq s t ps,
-   the_window_agrees_or_names_the_gap F beq s t ps⟩
-
-theorem the_origin_has_no_disagreement {S : Type u} (x y : S)
-    (qs : List Unit) (v v' : S) :
-    (∀ p, p ∈ qs → (originFace S).obs x p = (originFace S).obs y p)
-      ∧ sound (originFace S) x (recite qs)
-          = sound (originFace S) y (recite qs)
-      ∧ alike (originFace S) v v' :=
-  ⟨fun _ _ => rfl,
-   no_interview_parts_the_origin x y (recite qs),
-   the_origin_merges_every_seat v v'⟩
-
-theorem the_contact_and_the_modeling_are_one (F : Face.{0})
-    (beq : F.Ans → F.Ans → Bool)
-    (hs : ∀ a b : F.Ans, beq a b = true → a = b)
-    (s t : F.State) (ps : List F.Probe) (p₀ : F.Probe)
-    {S : Type u} (x y : S) (qs : List Unit) :
-    ((∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true)
-        ∨ ∃ p, p ∈ ps ∧ beq (F.obs s p) (F.obs t p) = false)
-      ∧ ((∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true) →
-          sound F s (recite ps) = sound F t (recite ps))
-      ∧ ((concordFace F F.State).obs (s, t) (p₀, ())).2 = t
-      ∧ sound (originFace S) x (recite qs)
-          = sound (originFace S) y (recite qs) :=
-  ⟨the_window_agrees_or_names_the_gap F beq s t ps,
-   (fun h => the_model_is_the_others_readings F t s ps
-     (fun p hp => hs _ _ (h p hp))),
-   rfl,
-   (the_origin_has_no_disagreement x y qs x y).2.1⟩
-
-theorem the_guest_level_is_parametric (F : Face.{u}) {W : Type v}
-    (s : F.State) (w w' : W) (p : F.Probe) :
-    (reseat F (fun x : F.State × W => x.1)).obs (s, w) p
-      = (reseat F (fun x : F.State × W => x.1)).obs (s, w') p := rfl
-
-theorem the_seat_level_is_pinned_only_at_the_host (F : Face.{u})
-    {W : Type} (s : F.State) (w : W) (p : F.Probe) :
-    (host F W).obs (s, w) p
-      = (reseat F (fun x : F.State × W => x.1)).obs (s, w) p := rfl
-
-theorem the_level_is_gauge_at_the_reading (F : Face.{u}) {W : Type v}
-    (s : F.State) (w : W) (q : Interview F.Probe F.Ans) :
-    sound (reseat F (fun x : F.State × W => x.1)) (s, w) q
-      = sound F s q :=
-  the_interview_crosses_the_seat F (fun x : F.State × W => x.1) (s, w) q
-
-theorem the_level_never_parts_the_alike (F : Face.{u}) {W : Type v}
-    (s t : F.State) (h : alike F s t) (w w' : W)
-    (q : Interview F.Probe F.Ans) :
-    sound (reseat F (fun x : F.State × W => x.1)) (s, w) q
-      = sound (reseat F (fun x : F.State × W => x.1)) (t, w') q :=
-  (the_level_is_gauge_at_the_reading F s w q).trans
-    ((no_interview_parts_the_alike F s t h q).trans
-      (the_level_is_gauge_at_the_reading F t w' q).symm)
-
-theorem the_universe_is_pinned_gauge_or_parametric (F : Face.{u})
-    {W : Type v} (s t : F.State) (h : alike F s t) (w w' : W)
-    (p : F.Probe) (q : Interview F.Probe F.Ans) {V : Type}
-    (v : V) :
-    (reseat F (fun x : F.State × W => x.1)).obs (s, w) p
-        = (reseat F (fun x : F.State × W => x.1)).obs (s, w') p
-      ∧ (host F V).obs (s, v) p
-          = (reseat F (fun x : F.State × V => x.1)).obs (s, v) p
-      ∧ sound (reseat F (fun x : F.State × W => x.1)) (s, w) q
-          = sound F s q
-      ∧ sound (reseat F (fun x : F.State × W => x.1)) (s, w) q
-          = sound (reseat F (fun x : F.State × W => x.1)) (t, w') q :=
-  ⟨rfl,
-   rfl,
-   the_level_is_gauge_at_the_reading F s w q,
-   the_level_never_parts_the_alike F s t h w w' q⟩
-
-theorem the_transit_certifies_the_blindness (F : Face.{u}) {W : Type v}
-    (s : F.State) (w w' : W) (q : Interview F.Probe F.Ans) :
-    sound (reseat F (fun x : F.State × W => x.1)) (s, w) q
-      = sound (reseat F (fun x : F.State × W => x.1)) (s, w') q :=
-  (the_level_is_gauge_at_the_reading F s w q).trans
-    (the_level_is_gauge_at_the_reading F s w' q).symm
-
-theorem a_structure_travels_by_its_carrier {P A : Type} {S : Type u}
-    {S' : Type v} {f : S → P → A} {g : S' → P → A} {h : S → S'}
-    (hc : carries f g h) (s : S) (q : Interview P A) :
-    sound ⟨S, P, A, f⟩ s q = sound ⟨S', P, A, g⟩ (h s) q :=
-  the_interview_crosses_every_carrier hc s q
-
-theorem the_certified_links_compose {P A : Type} {S : Type u}
-    {S' : Type v} {S'' : Type w} {f : S → P → A} {g : S' → P → A}
-    {k : S'' → P → A} {h : S → S'} {h' : S' → S''}
-    (hc : carries f g h) (hc' : carries g k h') (s : S)
-    (q : Interview P A) :
-    carries f k (fun x => h' (h x))
-      ∧ sound ⟨S, P, A, f⟩ s q
-          = sound ⟨S'', P, A, k⟩ (h' (h s)) q :=
-  ⟨the_carriers_compose hc hc',
-   the_interview_crosses_every_carrier (the_carriers_compose hc hc') s q⟩
-
-theorem no_seat_certifies_its_own_portability (F : Face.{u}) {W : Type}
-    (s : F.State) {w w' : W} (hw : w ≠ w') :
-    (∀ q : Interview F.Probe F.Ans,
-        sound (host F W) (s, w) q = sound (host F W) (s, w') q)
-      ∧ (widen F W).obs (s, w) (viaRight ())
-          ≠ (widen F W).obs (s, w') (viaRight ()) :=
-  ⟨fun q => no_interview_parts_the_alike (host F W) (s, w) (s, w')
-     (fun _ => rfl) q,
-   fun he => hw (Sum.inr.inj he)⟩
-
-theorem portability_is_certified_by_transit (F : Face.{u}) {W : Type v}
-    (s : F.State) (w w' : W) (q : Interview F.Probe F.Ans)
-    {P A : Type} {S : Type u} {S' : Type v} {S'' : Type w}
-    {f : S → P → A} {g : S' → P → A} {k : S'' → P → A}
-    {h : S → S'} {h' : S' → S''}
-    (hc : carries f g h) (hc' : carries g k h') (x : S)
-    (r : Interview P A) {V : Type} (t : F.State) {v v' : V}
-    (hv : v ≠ v') :
-    sound (reseat F (fun y : F.State × W => y.1)) (s, w) q
-        = sound (reseat F (fun y : F.State × W => y.1)) (s, w') q
-      ∧ sound ⟨S, P, A, f⟩ x r = sound ⟨S', P, A, g⟩ (h x) r
-      ∧ (carries f k (fun y => h' (h y))
-          ∧ sound ⟨S, P, A, f⟩ x r
-              = sound ⟨S'', P, A, k⟩ (h' (h x)) r)
-      ∧ (widen F V).obs (t, v) (viaRight ())
-          ≠ (widen F V).obs (t, v') (viaRight ()) :=
-  ⟨the_transit_certifies_the_blindness F s w w' q,
-   a_structure_travels_by_its_carrier hc x r,
-   the_certified_links_compose hc hc' x r,
-   (no_seat_certifies_its_own_portability F t hv).2⟩
-
-theorem the_pairing_is_unique {X H W : Type} (f : X → H) (g : X → W)
-    (k : X → door H W) (hf : ∀ x, face (k x) = f x)
-    (hg : ∀ x, met (k x) = g x) (x : X) :
-    k x = atTheDoor (f x) (g x) :=
-  congr (congrArg atTheDoor (hf x)) (hg x)
-
-theorem the_door_is_the_product {X H W : Type} (f : X → H) (g : X → W)
-    (k : X → door H W) (hf : ∀ x, face (k x) = f x)
-    (hg : ∀ x, met (k x) = g x) (x : X) (h : H) (w : W) :
-    face (atTheDoor h w) = h
-      ∧ met (atTheDoor h w) = w
-      ∧ face (atTheDoor (f x) (g x)) = f x
-      ∧ met (atTheDoor (f x) (g x)) = g x
-      ∧ k x = atTheDoor (f x) (g x) :=
-  ⟨rfl, rfl, rfl, rfl, the_pairing_is_unique f g k hf hg x⟩
-
-theorem the_fork_is_the_coproduct {H W X : Type} (gl : H → X) (gr : W → X)
-    (k : fork H W → X) (hl : ∀ h, k (viaLeft h) = gl h)
-    (hr : ∀ w, k (viaRight w) = gr w) (h : H) (w : W) :
-    greet gl gr (viaLeft h) = gl h
-      ∧ greet gl gr (viaRight w) = gr w
-      ∧ ∀ d, k d = greet gl gr d :=
-  ⟨rfl, rfl, any_ready_greeter_is_the_greeter gl gr k hl hr⟩
-
-theorem the_projection_forgets_the_guest {H W X : Type} (g : H → X)
-    (h : H) (w w' : W) :
-    g (face (atTheDoor h w)) = g (face (atTheDoor h w'))
-      ∧ met (atTheDoor h w) = w :=
-  ⟨rfl, rfl⟩
-
-theorem the_universal_properties_were_the_hospitality {X H W V : Type}
-    (f : X → H) (g : X → W) (k : X → door H W)
-    (hf : ∀ x, face (k x) = f x) (hg : ∀ x, met (k x) = g x) (x : X)
-    (gl : H → X) (gr : W → X) (kf : fork H W → X)
-    (hl : ∀ y, kf (viaLeft y) = gl y) (hr : ∀ y, kf (viaRight y) = gr y)
-    (h : H) (w w' : W) (r : H → X) :
-    k x = atTheDoor (f x) (g x)
-      ∧ (∀ d, kf d = greet gl gr d)
-      ∧ (r (face (atTheDoor h w)) = r (face (atTheDoor h w'))
-          ∧ met (atTheDoor h w) = w)
-      ∧ (∀ d : door (door H W) V, shallow (deepen d) = d)
-      ∧ ∀ d : door H (fork W V), collect (distribute d) = d :=
-  ⟨the_pairing_is_unique f g k hf hg x,
-   any_ready_greeter_is_the_greeter gl gr kf hl hr,
-   the_projection_forgets_the_guest r h w w',
-   (hosting_associates (H := H) (W := W) (V := V)).1,
-   the_host_serves_both_branches⟩
-
-theorem the_seated_mark_adds_no_reading (r : List Nat) (x : Nat)
-    (hx : enrolled r x = true) (z : Nat) :
-    enrolled (x :: r) z = enrolled r z := by
-  show (Nat.beq z x || enrolled r z) = enrolled r z
-  cases hb : Nat.beq z x with
-  | false => rfl
-  | true =>
-      have hz : z = x := eq_of_beq z x hb
-      rw [hz]
-      exact hx.symm
-
-theorem the_hall_reads_only_membership (a b : List Nat)
-    (h : ∀ z, enrolled a z = enrolled b z) : alike hallFace a b := h
-
-theorem the_scaffold_sheds_at_the_hall (r : List Nat) (x : Nat)
-    (hx : enrolled r x = true) :
-    alike hallFace (x :: r) r :=
-  the_hall_reads_only_membership (x :: r) r
-    (the_seated_mark_adds_no_reading r x hx)
-
-theorem the_ladder_is_read_one_seat_wider (r : List Nat) (x : Nat)
-    (hx : enrolled r x = true) (hne : depthTo r x ≠ 0) :
-    alike hallFace (x :: r) r
-      ∧ depthTo (x :: r) x ≠ depthTo r x :=
-  ⟨the_scaffold_sheds_at_the_hall r x hx,
-   fun he => hne ((the_seated_arrive_shallowest r x).symm.trans he).symm⟩
-
-theorem the_cycle_lights_and_forgets_its_ladder (x y : Nat)
-    (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat))
-    (hwx : ∀ m, m ∈ w → m.1 = x → y ∈ m.2)
-    (hwy : ∀ m, m ∈ w → m.1 = y → x ∈ m.2)
-    (hx : enrolled s.1 x = false) (hy : enrolled s.1 y = false)
-    (r : List Nat) (k : Nat) (hk : enrolled r k = true)
-    (m : Nat × List Nat) (held : List (Nat × List Nat))
-    (hw : lacking r m.2 = 1) :
-    (enrolled (park doorM s w).1 x = false
-        ∧ enrolled (park doorM s w).1 y = false)
-      ∧ (∃ key : Nat, key ∈ m.2 ∧ enrolled r key = false
-          ∧ welcome (r, m :: held) (key, ([] : List Nat))
-              = (key :: r, m :: held)
-          ∧ backed (key :: r) m.2 = true)
-      ∧ alike hallFace (k :: r) r
-      ∧ (depthTo r k ≠ 0 → depthTo (k :: r) k ≠ depthTo r k) :=
-  ⟨the_mutual_need_stays_dark x y w s hwx hwy hx hy,
-   (match the_key_is_cut_from_the_room r m held hw with
-    | ⟨key, hmem, hdark, hseat, hback, _, _⟩ =>
-        ⟨key, hmem, hdark, hseat, hback⟩),
-   the_scaffold_sheds_at_the_hall r k hk,
-   fun hne => (the_ladder_is_read_one_seat_wider r k hk hne).2⟩
-
-theorem the_fixed_are_the_landed {A : Sort u} (e : A → A)
-    (he : ∀ v, e (e v) = e v) (s : A) :
-    e s = s ↔ ∃ t, e t = s :=
-  ⟨fun h => ⟨s, h⟩,
-   fun hex => hex.elim fun t ht =>
-     (congrArg e ht).symm.trans ((he t).trans ht)⟩
-
-theorem the_settled_are_the_landed {I O : Type} (m : Machine I O)
-    (st : m.S × List I) :
-    settleHeld m st = st ↔ ∃ t, settleHeld m t = st :=
-  the_fixed_are_the_landed (settleHeld m) (fun _ => rfl) st
-
-theorem the_on_spec_are_the_landed {W : Type} (w0 : W) (p : Plan)
-    (l : List W) :
-    pour p (reboard w0 p l) = l ↔ ∃ t, pour p (reboard w0 p t) = l :=
-  the_fixed_are_the_landed (fun x => pour p (reboard w0 p x))
-    (fun v => congrArg (pour p)
-      (the_manifest_rebuilds_the_carrier w0 p (reboard w0 p v))) l
-
-theorem the_drained_room_is_its_own_normal_form (r : List Nat) :
-    sweep (r, ([] : List (Nat × List Nat))) = (r, [])
-      ∧ ∃ t : List Nat × List (Nat × List Nat),
-          sweep t = (r, ([] : List (Nat × List Nat))) :=
-  ⟨rfl, ⟨(r, []), rfl⟩⟩
-
-theorem the_normal_form_is_the_image {I O W : Type} (m : Machine I O)
-    (st : m.S × List I) (w0 : W) (p : Plan) (l : List W)
-    (r : List Nat) (x : Nat) (hx : enrolled r x = true) :
-    (settleHeld m st = st ↔ ∃ t, settleHeld m t = st)
-      ∧ (pour p (reboard w0 p l) = l ↔ ∃ t, pour p (reboard w0 p t) = l)
-      ∧ (sweep (r, ([] : List (Nat × List Nat))) = (r, [])
-          ∧ ∃ t : List Nat × List (Nat × List Nat),
-              sweep t = (r, ([] : List (Nat × List Nat))))
-      ∧ alike hallFace (x :: r) r :=
-  ⟨the_settled_are_the_landed m st,
-   the_on_spec_are_the_landed w0 p l,
-   the_drained_room_is_its_own_normal_form r,
-   the_scaffold_sheds_at_the_hall r x hx⟩
-
-theorem the_scaffold_shifts_every_elder (r : List Nat) {k x : Nat}
-    (hx : x ≠ k) : depthTo (k :: r) x = depthTo r x + 1 :=
-  every_later_admission_deepens r hx
-
-theorem the_shift_conserves_every_gap (r : List Nat) {k x y : Nat}
-    (hx : x ≠ k) (hy : y ≠ k) :
-    depthTo (k :: r) x = depthTo r x + 1
-      ∧ depthTo (k :: r) y = depthTo r y + 1 :=
-  ⟨the_scaffold_shifts_every_elder r hx,
-   the_scaffold_shifts_every_elder r hy⟩
-
-theorem the_shift_conserves_the_order (r : List Nat) {k x y : Nat}
-    (hx : x ≠ k) (hy : y ≠ k)
-    (h : Nat.ble (depthTo r x) (depthTo r y) = true) :
-    Nat.ble (depthTo (k :: r) x) (depthTo (k :: r) y) = true :=
-  the_elders_keep_their_order r hx hy h
-
-theorem the_origin_shows_as_a_uniform_shift (r : List Nat) {k x y : Nat}
-    (hk : enrolled r k = true) (hx : x ≠ k) (hy : y ≠ k)
-    (h : Nat.ble (depthTo r x) (depthTo r y) = true) :
-    alike hallFace (k :: r) r
-      ∧ (depthTo (k :: r) x = depthTo r x + 1
-          ∧ depthTo (k :: r) y = depthTo r y + 1)
-      ∧ Nat.ble (depthTo (k :: r) x) (depthTo (k :: r) y) = true
-      ∧ depthTo (k :: r) k = 0 :=
-  ⟨the_scaffold_sheds_at_the_hall r k hk,
-   the_shift_conserves_every_gap r hx hy,
-   the_shift_conserves_the_order r hx hy h,
-   the_seated_arrive_shallowest r k⟩
-
-theorem the_shift_commutes_with_the_walk (s d : Nat) (w : List Unit) :
-    park paceOne s w = s + w.length
-      ∧ park paceOne (s + d) w = (s + w.length) + d :=
-  ⟨the_pace_parks_at_its_count w s,
-   (the_pace_parks_at_its_count w (s + d)).trans
-     (Nat.add_right_comm s d w.length)⟩
-
-theorem the_ground_is_a_uniform_scale (x₀ : Nat) (p : Plan) :
-    fold (fun a b => a + b) x₀ p
-      = x₀ * fold (fun a b => a + b) 1 p :=
-  fold_scale x₀ p
-
-theorem the_pace_conserves_the_ratio (pace a b : Nat) :
-    readAcross a pace * b = readAcross b pace * a :=
-  (mul_regroups pace a b).trans
-    ((congrArg (pace * ·) (Nat.mul_comm a b)).trans
-      (mul_regroups pace b a).symm)
-
-theorem the_home_pace_is_the_still_gauge (vote : Nat) :
-    readAcross vote paceAtHome = vote :=
-  any_vote_reads_itself vote
-
-theorem the_gauges_follow_the_two_times (s d : Nat) (w : List Unit)
-    (x₀ : Nat) (p : Plan) (pace a b vote : Nat) (t δ : Plan) :
-    (park paceOne s w = s + w.length
-        ∧ park paceOne (s + d) w = (s + w.length) + d)
-      ∧ fold (fun x y => x + y) x₀ p
-          = x₀ * fold (fun x y => x + y) 1 p
-      ∧ readAcross a pace * b = readAcross b pace * a
-      ∧ readAcross vote paceAtHome = vote
-      ∧ fold (fun x y => x + y) 1 (graft t δ)
-          = fold (fun x y => x + y) 1 t * fold (fun x y => x + y) 1 δ :=
-  ⟨the_shift_commutes_with_the_walk s d w,
-   the_ground_is_a_uniform_scale x₀ p,
-   the_pace_conserves_the_ratio pace a b,
-   the_home_pace_is_the_still_gauge vote,
-   the_revision_multiplies_the_reading t δ⟩
-
-theorem the_sharper_face_hears_more {S : Type u} {P A P' A' : Type}
-    (f : S → P → A) (g : S → P' → A')
-    (href : ∀ s t, (∀ p, g s p = g t p) → ∀ p, f s p = f t p)
-    (m : S → S) (hm : ∀ s p, g (m s) p = g s p) :
-    ∀ s p, f (m s) p = f s p :=
-  fun s => href (m s) s (hm s)
-
-theorem the_still_hand_is_gauge_at_every_face {S : Type u} {P A : Type}
-    (f : S → P → A) (s : S) (p : P) :
-    f ((fun x => x) s) p = f s p := rfl
-
-theorem the_guest_flip_is_gauge_at_the_host :
-    unheard (host windowFace Bool) (fun x => (x.1, !x.2)) :=
-  fun _ _ => rfl
-
-theorem the_guest_flip_is_heard_one_widening_up :
-    ¬ unheard (widen windowFace Bool) (fun x => (x.1, !x.2)) :=
-  fun h =>
-    bool_escapes true
-      (Sum.inr.inj (h ((⟨0, 0⟩ : Measured), true) (viaRight ()))).symm
-
-theorem the_resolution_ladder_is_the_gauge_ladder {S : Type u}
-    {P A P' A' : Type} (f : S → P → A) (g : S → P' → A')
-    (href : ∀ s t, (∀ p, g s p = g t p) → ∀ p, f s p = f t p)
-    (m : S → S) (hm : ∀ s p, g (m s) p = g s p) (s : S) (p : P)
-    (x : S) (q : P) :
-    f (m s) p = f s p
-      ∧ f ((fun y => y) x) q = f x q
-      ∧ unheard (host windowFace Bool) (fun y => (y.1, !y.2))
-      ∧ ¬ unheard (widen windowFace Bool) (fun y => (y.1, !y.2)) :=
-  ⟨the_sharper_face_hears_more f g href m hm s p,
-   rfl,
-   the_guest_flip_is_gauge_at_the_host,
-   the_guest_flip_is_heard_one_widening_up⟩
-
-theorem the_type_is_a_reading_of_the_plan (W : Type) (p : Plan) :
-    build W p = fold door W p :=
-  build_is_a_reading W p
-
-theorem every_built_type_is_named_below_the_horizon (W : Type) (n : Nat)
-    (p : Plan)
-    (hp : Nat.ble (fold (fun a b => a + b) 1 p) (n + 1) = true) :
-    p ∈ allPlans n ∧ build W p = fold door W p :=
-  ⟨the_horizon_holds_every_reading n p hp, build_is_a_reading W p⟩
-
-theorem a_built_type_grounds_the_next_tower (W : Type) (base q : Plan) :
-    build W (graft base q) = build (build W base) q :=
-  a_stage_may_ground_a_stage W base q
-
-theorem the_plan_rides_as_data {W : Type} (p : Plan) (s : build W p) :
-    met (label W p s) = p ∧ fold Plan.board Plan.ground p = p :=
-  ⟨the_meeting_reads_the_label W p s, the_self_reading_is_the_identity p⟩
-
-theorem the_ground_is_the_only_dark_type (W : Type) (n : Nat) (p : Plan)
-    (hp : Nat.ble (fold (fun a b => a + b) 1 p) (n + 1) = true)
-    (base q : Plan) (s : build W p) {X : Type} (g : W → X)
-    (w w' : W) (hw : w ≠ w') :
-    (p ∈ allPlans n ∧ build W p = fold door W p)
-      ∧ build W (graft base q) = build (build W base) q
-      ∧ (met (label W p s) = p ∧ fold Plan.board Plan.ground p = p)
-      ∧ build W Plan.ground = W
-      ∧ (g (face (atTheDoor w w')) = g (face (atTheDoor w w))
-          ∧ atTheDoor w w' ≠ atTheDoor w w) :=
-  ⟨every_built_type_is_named_below_the_horizon W n p hp,
-   a_built_type_grounds_the_next_tower W base q,
-   the_plan_rides_as_data p s,
-   rfl,
-   ⟨rfl, fun he => hw (congrArg met he).symm⟩⟩
-
-theorem every_guest_move_is_unheard {H W X : Type} (g : H → X) :
-    ∀ (σ : H → W → W) (d : door H W),
-      g (face (vertical σ d)) = g (face d) :=
-  fun σ d => a_guest_mover_is_unheard σ g d
-
-theorem the_whole_repertoire_is_gauge {H W X : Type} (g : H → X)
-    (σ τ : H → W → W) (d : door H W) :
-    vertical σ (vertical τ d) = vertical (fun h w => σ h (τ h w)) d
-      ∧ g (face (vertical σ (vertical τ d))) = g (face d)
-      ∧ vertical (fun _ w => w) d = d :=
-  ⟨guest_movers_compose σ τ d,
-   (a_guest_mover_is_unheard σ g (vertical τ d)).trans
-     (a_guest_mover_is_unheard τ g d),
-   the_still_door_moves_no_guest d⟩
-
-theorem the_minted_reading_hears_the_move :
-    selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
-        (⟨0, 0⟩, true)
-      ≠ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
-          (⟨0, 0⟩, false) :=
-  the_self_meeting_parts_the_alike.2
-
-theorem the_gauge_sector_never_wears (a d : Nat) (w : List Unit)
-    (s : Nat) : drive (spiral a d a) s w = true :=
-  the_wheel_reads_itself_unworn a d w s
-
-theorem the_wear_lands_at_the_minted_reading {H W X : Type} (g : H → X)
-    (σ τ : H → W → W) (d : door H W) (a dd : Nat) (w : List Unit)
-    (s : Nat) (t : Plan) {δ : Plan} (hδ : δ ≠ Plan.ground) :
-    (∀ (ρ : H → W → W) (e : door H W),
-        g (face (vertical ρ e)) = g (face e))
-      ∧ (vertical σ (vertical τ d) = vertical (fun h x => σ h (τ h x)) d
-          ∧ g (face (vertical σ (vertical τ d))) = g (face d))
-      ∧ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
-            (⟨0, 0⟩, true)
-          ≠ selfMeet (host windowFace Bool) (fun x => (cond x.2 0 1 : Nat))
-              (⟨0, 0⟩, false)
-      ∧ drive (spiral a dd a) s w = true
-      ∧ graft t δ ≠ t :=
-  ⟨every_guest_move_is_unheard g,
-   ⟨(the_whole_repertoire_is_gauge g σ τ d).1,
-    (the_whole_repertoire_is_gauge g σ τ d).2.1⟩,
-   the_minted_reading_hears_the_move,
-   the_gauge_sector_never_wears a dd w s,
-   the_worldline_never_comes_home t hδ⟩
-
-theorem both_are_guests_of_the_vestibule {V H W X : Type} (v : V)
-    (h h' : H) (w w' : W) (g : V → X) :
-    g (face (atTheDoor v (h, w))) = g (face (atTheDoor v (h', w')))
-      ∧ met (atTheDoor v (h, w)) = (h, w) :=
-  ⟨rfl, rfl⟩
-
-theorem the_innkeepers_moves_are_gauge_at_the_vestibule {V H W X : Type}
-    (σ : V → H → H) (g : V → X) (d : door V (H × W)) :
-    g (face (vertical (fun v x => (σ v x.1, x.2)) d)) = g (face d) :=
-  a_guest_mover_is_unheard (fun v x => (σ v x.1, x.2)) g d
-
-theorem the_extrusion_retracts (F : Face.{u}) {W : Type} (w₀ : W)
-    (s : F.State) (x : F.State × W) :
-    ((s, w₀) : F.State × W).1 = s
-      ∧ ((((x.1, w₀) : F.State × W).1, w₀) : F.State × W)
-          = ((x.1, w₀) : F.State × W) :=
-  ⟨rfl, rfl⟩
-
-theorem the_churn_is_unheard (F : Face.{u}) {W : Type} (w₀ : W) :
-    unheard (host F W) (fun x => (x.1, w₀)) :=
-  fun _ _ => rfl
-
-theorem the_ground_survives_every_cycle (F : Face.{u}) {W : Type}
-    (w₀ : W) (x : F.State × W) (q : Interview F.Probe F.Ans) :
-    sound (host F W) (x.1, w₀) q = sound (host F W) x q :=
-  no_interview_hears_the_unheard (host F W) (fun y => (y.1, w₀))
-    (the_churn_is_unheard F w₀) x q
-
-theorem the_vestibule_seats_them_alike {V H W X : Type} (v : V)
-    (h h' : H) (w w' : W) (g : V → X) (σ : V → H → H)
-    (d : door V (H × W)) (F : Face.{u}) {U : Type} (u₀ : U)
-    (x : F.State × U) (q : Interview F.Probe F.Ans) :
-    (g (face (atTheDoor v (h, w))) = g (face (atTheDoor v (h', w')))
-        ∧ met (atTheDoor v (h, w)) = (h, w))
-      ∧ g (face (vertical (fun y z => (σ y z.1, z.2)) d)) = g (face d)
-      ∧ (((x.1, u₀) : F.State × U).1 = x.1
-          ∧ unheard (host F U) (fun y => (y.1, u₀)))
-      ∧ sound (host F U) (x.1, u₀) q = sound (host F U) x q :=
-  ⟨both_are_guests_of_the_vestibule v h h' w w' g,
-   the_innkeepers_moves_are_gauge_at_the_vestibule σ g d,
-   ⟨rfl, the_churn_is_unheard F u₀⟩,
-   the_ground_survives_every_cycle F u₀ x q⟩
-
-theorem the_comparison_reads_both_units {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) {R : Type}
-    (c : F.Ans → G.Ans → R) (s : S) (p : F.Probe) (q : G.Probe) :
-    c (F.obs (f s) p) (G.obs (g s) q)
-      = (fun x : F.Ans × G.Ans => c x.1 x.2)
-          ((pairFace F G f g).obs s (p, q)) := rfl
-
-theorem every_pace_agrees_on_the_ratio (paceA paceB a b : Nat) :
-    readAcross a paceA * b = readAcross b paceA * a
-      ∧ readAcross a paceB * b = readAcross b paceB * a
-      ∧ readAcross a paceAtHome = a :=
-  ⟨the_pace_conserves_the_ratio paceA a b,
-   the_pace_conserves_the_ratio paceB a b,
-   the_home_pace_is_the_still_gauge a⟩
-
-theorem the_arrived_agreement_sounds_as_one {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) (s t : S) :
-    ∀ ps : List (F.Probe × G.Probe),
-      (∀ pq, pq ∈ ps →
-          (pairFace F G f g).obs s pq = (pairFace F G f g).obs t pq) →
-        sound (pairFace F G f g) s (recite ps)
-          = sound (pairFace F G f g) t (recite ps) :=
-  the_agreed_window_sounds_as_one (pairFace F G f g) s t
-
-theorem the_units_compare_at_the_minted_seat {S : Type u} (F G : Face)
-    (f : S → F.State) (g : S → G.State) {R : Type}
-    (c : F.Ans → G.Ans → R) (s t : S) (p : F.Probe) (q : G.Probe)
-    (ps : List (F.Probe × G.Probe))
-    (hagree : ∀ pq, pq ∈ ps →
-      (pairFace F G f g).obs s pq = (pairFace F G f g).obs t pq)
-    (paceA paceB a b : Nat) {V H W X : Type} (v : V) (h h' : H)
-    (w w' : W) (gv : V → X) :
-    c (F.obs (f s) p) (G.obs (g s) q)
-        = (fun x : F.Ans × G.Ans => c x.1 x.2)
-            ((pairFace F G f g).obs s (p, q))
-      ∧ (readAcross a paceA * b = readAcross b paceA * a
-          ∧ readAcross a paceB * b = readAcross b paceB * a
-          ∧ readAcross a paceAtHome = a)
-      ∧ sound (pairFace F G f g) s (recite ps)
-          = sound (pairFace F G f g) t (recite ps)
-      ∧ gv (face (atTheDoor v (h, w))) = gv (face (atTheDoor v (h', w'))) :=
-  ⟨the_comparison_reads_both_units F G f g c s p q,
-   every_pace_agrees_on_the_ratio paceA paceB a b,
-   the_arrived_agreement_sounds_as_one F G f g s t ps hagree,
-   (both_are_guests_of_the_vestibule v h h' w w' gv).1⟩
-
-theorem the_measure_sums_at_the_board (p q : Plan) :
-    fold (fun a b => a + b) 1 (.board p q)
-      = fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q := rfl
-
-theorem the_measure_multiplies_at_the_graft (t δ : Plan) :
-    fold (fun a b => a + b) 1 (graft t δ)
-      = fold (fun a b => a + b) 1 t * fold (fun a b => a + b) 1 δ :=
-  the_revision_multiplies_the_reading t δ
-
-theorem the_bank_adds_along_the_run (s : Nat) (w v : List Unit) :
-    park restingCounter s w = s + w.length
-      ∧ park restingCounter (s + w.length) v = (s + w.length) + v.length :=
-  ⟨the_muffler_banks_the_run w s,
-   the_muffler_banks_the_run v (s + w.length)⟩
-
-theorem the_manifest_counts_the_compound {W : Type} (p q : Plan)
-    (d : build W (.board p q)) :
-    (pour (.board p q) d).length
-      = fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q :=
-  the_manifest_counts_the_guests (.board p q) d
-
-theorem the_measure_composes_by_the_semiring {W : Type} (p q t δ : Plan)
-    (d : build W (.board p q)) (s : Nat) (w v : List Unit)
-    (paceA paceB a b : Nat) :
-    fold (fun x y => x + y) 1 (.board p q)
-        = fold (fun x y => x + y) 1 p + fold (fun x y => x + y) 1 q
-      ∧ fold (fun x y => x + y) 1 (graft t δ)
-          = fold (fun x y => x + y) 1 t * fold (fun x y => x + y) 1 δ
-      ∧ (park restingCounter s w = s + w.length
-          ∧ park restingCounter (s + w.length) v
-              = (s + w.length) + v.length)
-      ∧ (pour (.board p q) d).length
-          = fold (fun x y => x + y) 1 p + fold (fun x y => x + y) 1 q
-      ∧ readAcross a paceA * b = readAcross b paceA * a
-      ∧ readAcross a paceB * b = readAcross b paceB * a :=
-  ⟨rfl,
-   the_measure_multiplies_at_the_graft t δ,
-   the_bank_adds_along_the_run s w v,
-   the_manifest_counts_the_compound p q d,
-   the_pace_conserves_the_ratio paceA a b,
-   the_pace_conserves_the_ratio paceB a b⟩
-
-theorem the_patience_is_the_boards_reading {W X Y : Type} (n m : Nat)
-    (g : strokes W X n) (h : X → strokes W Y m) (α : Nat → W) :
-    doorsOpened
-        (handOff (strokesReception n g)
-          (fun x => strokesReception m (h x))) α
-      = fold (fun a b => a + b) 1 (Plan.board (comb n) (comb m)) :=
-  the_handoff_is_the_board_at_the_ledger n m g h α
-
-theorem the_patience_multiplies_at_the_revision {W X : Type} (t δ : Plan)
-    (n : Nat) (hn : fold (fun a b => a + b) 1 (graft t δ) = n + 1)
-    (g : strokes W X n) (α : Nat → W) :
-    doorsOpened (strokesReception n g) α
-      = fold (fun a b => a + b) 1 t * fold (fun a b => a + b) 1 δ :=
-  the_revision_multiplies_the_patience t δ n hn g α
-
-theorem the_magnitudes_share_one_law {W X Y V : Type} (p q t δ : Plan)
-    (n m : Nat) (g : strokes W X n) (h : X → strokes W Y m)
-    (α : Nat → W) (hn : fold (fun a b => a + b) 1 (graft t δ) = n + 1)
-    (d : build V (.board p q)) (s : Nat) (w v : List Unit) :
-    (fold (fun x y => x + y) 1 (.board p q)
-        = fold (fun x y => x + y) 1 p + fold (fun x y => x + y) 1 q
-      ∧ fold (fun x y => x + y) 1 (graft t δ)
-          = fold (fun x y => x + y) 1 t * fold (fun x y => x + y) 1 δ)
-      ∧ (doorsOpened
-            (handOff (strokesReception n g)
-              (fun x => strokesReception m (h x))) α
-            = fold (fun x y => x + y) 1 (Plan.board (comb n) (comb m))
-          ∧ doorsOpened (strokesReception n g) α
-              = fold (fun x y => x + y) 1 t
-                * fold (fun x y => x + y) 1 δ)
-      ∧ (pour (.board p q) d).length
-          = fold (fun x y => x + y) 1 p + fold (fun x y => x + y) 1 q
-      ∧ park restingCounter s w = s + w.length
-      ∧ park restingCounter (s + w.length) v = (s + w.length) + v.length :=
-  ⟨⟨rfl, the_measure_multiplies_at_the_graft t δ⟩,
-   ⟨the_patience_is_the_boards_reading n m g h α,
-    the_patience_multiplies_at_the_revision t δ n hn g α⟩,
-   the_manifest_counts_the_compound p q d,
-   (the_bank_adds_along_the_run s w v).1,
-   (the_bank_adds_along_the_run s w v).2⟩
-
-theorem the_joins_add_with_the_join (p q : Plan) :
-    boards (.board p q) = (boards p + boards q) + 1 := rfl
-
-theorem the_two_counts_are_one_measure_shifted (p : Plan) :
-    boards p + 1 = fold (fun a b => a + b) 1 p :=
-  every_meeting_is_one_move p
-
-theorem the_cap_carries_the_sum_to_the_product (i j : Nat) :
-    roomCap (i + j) = roomCap i * roomCap j :=
-  the_caps_multiply i j
-
-theorem the_bloom_reads_its_own_cap (d : Nat) :
-    fold (fun a b => a + b) 1 (bloom d) = roomCap d :=
-  the_bloom_fills_its_cap d
-
-theorem two_charts_one_measure (p q : Plan) (i j d : Nat) :
-    boards (.board p q) = (boards p + boards q) + 1
-      ∧ boards p + 1 = fold (fun x y => x + y) 1 p
-      ∧ fold (fun x y => x + y) 1 (.board p q)
-          = fold (fun x y => x + y) 1 p + fold (fun x y => x + y) 1 q
-      ∧ roomCap (i + j) = roomCap i * roomCap j
-      ∧ fold (fun x y => x + y) 1 (bloom d) = roomCap d :=
-  ⟨rfl,
-   the_two_counts_are_one_measure_shifted p,
-   rfl,
-   the_cap_carries_the_sum_to_the_product i j,
-   the_bloom_reads_its_own_cap d⟩
-
-theorem no_measure_parts_the_home_wheel (rank : Nat → Nat)
-    (h : ∀ n : Nat, Nat.ble (rank (collatzStep n)) (rank n) = true) :
-    rank 1 = rank 2 ∧ rank 2 = rank 4 ∧ rank 4 = rank 1 :=
-  ⟨(the_wheel_flattens_the_monotone rank h).2.2,
-   (the_wheel_flattens_the_monotone rank h).2.1,
-   (the_wheel_flattens_the_monotone rank h).1⟩
-
-theorem the_arrow_grows_its_measure (t : Plan) {δ : Plan}
-    (hδ : δ ≠ Plan.ground) :
-    Nat.ble (fold (fun a b => a + b) 1 t + 1)
-      (fold (fun a b => a + b) 1 (graft t δ)) = true :=
-  a_true_tick_grows_the_reading t hδ
-
-theorem the_meter_flattens_on_the_dead_vestibule (r : List Nat)
-    (m : Nat × List Nat) (held : List (Nat × List Nat))
-    (hs : ∀ k, k ∈ m :: held → backed r k.2 = false) (n : Nat) :
-    drainFace.obs (r, m :: held) n = (m :: held).length :=
-  the_stuck_load_reads_flat r m held hs n
-
-theorem the_measure_rules_the_arrow_and_flattens_the_wheel
-    (rank : Nat → Nat)
-    (h : ∀ n : Nat, Nat.ble (rank (collatzStep n)) (rank n) = true)
-    (t : Plan) {δ : Plan} (hδ : δ ≠ Plan.ground) (r : List Nat)
-    (m : Nat × List Nat) (held : List (Nat × List Nat))
-    (hs : ∀ k, k ∈ m :: held → backed r k.2 = false) (n : Nat)
-    (a dd s : Nat) (w : List Unit) :
-    (rank 1 = rank 2 ∧ rank 2 = rank 4 ∧ rank 4 = rank 1)
-      ∧ Nat.ble (fold (fun x y => x + y) 1 t + 1)
-          (fold (fun x y => x + y) 1 (graft t δ)) = true
-      ∧ drainFace.obs (r, m :: held) n = (m :: held).length
-      ∧ drive (spiral a dd a) s w = true :=
-  ⟨no_measure_parts_the_home_wheel rank h,
-   the_arrow_grows_its_measure t hδ,
-   the_meter_flattens_on_the_dead_vestibule r m held hs n,
-   the_gauge_sector_never_wears a dd w s⟩
-
-theorem the_unit_guest_is_the_products_unit {H : Type} (d : door H Unit)
-    (h : H) :
-    atTheDoor (face d) () = d ∧ face (atTheDoor h ()) = h :=
-  ⟨the_anonymous_guest_is_free d, rfl⟩
-
-theorem the_sealed_entrance_is_the_coproducts_unit {H : Type} :
-    (∀ h : H, noEntrance (viaLeft h) = h)
-      ∧ ∀ f : fork H Empty, viaLeft (noEntrance f) = f :=
-  a_sealed_entrance_adds_nothing
-
-theorem the_impossible_guest_annihilates {H : Type} :
-    ∀ _ : door H Empty, False :=
-  fun d => no_world_hosts_the_impossible d
-
-theorem the_measure_selects_at_the_fork {H W : Type}
-    (mh : H → Nat) (mw : W → Nat) (h : H) (w : W) :
-    greet mh mw (viaLeft h) = mh h ∧ greet mh mw (viaRight w) = mw w :=
-  the_two_entrances_share_one_lobby mh mw h w
-
-theorem the_door_and_the_fork_are_a_semiring {H W V : Type}
-    (d : door H Unit) (mh : H → Nat)
-    (mw : W → Nat) (h : H) (w : W) (dv : door H (fork W V))
-    (dd : door (door H W) V) :
-    (atTheDoor (face d) () = d
-        ∧ ((∀ x : H, noEntrance (viaLeft x) = x)
-            ∧ ∀ f : fork H Empty, viaLeft (noEntrance f) = f))
-      ∧ (∀ _ : door H Empty, False)
-      ∧ (greet mh mw (viaLeft h) = mh h
-          ∧ greet mh mw (viaRight w) = mw w)
-      ∧ shallow (deepen dd) = dd
-      ∧ collect (distribute dv) = dv :=
-  ⟨⟨the_anonymous_guest_is_free d,
-    the_sealed_entrance_is_the_coproducts_unit⟩,
-   fun q => the_impossible_guest_annihilates (H := H) q,
-   the_measure_selects_at_the_fork mh mw h w,
-   (hosting_associates (H := H) (W := W) (V := V)).1 dd,
-   the_host_serves_both_branches dv⟩
-
-theorem the_sharpening_is_exact (F : Face) {X : Type} (r : F.State → X)
-    (s t : F.State) :
-    alike (sharpen F r) s t ↔ (alike F s t ∧ r s = r t) :=
-  ⟨fun h =>
-     ⟨fun p => Sum.inl.inj (h (viaLeft p)),
-      Sum.inr.inj (h (viaRight ()))⟩,
-   fun h q =>
-     match q with
-     | .inl p => congrArg viaLeft (h.1 p)
-     | .inr _ => congrArg viaRight h.2⟩
-
-theorem the_widening_is_exact (F : Face) {W : Type} (s t : F.State)
-    (w w' : W) :
-    alike (widen F W) (s, w) (t, w') ↔ (alike F s t ∧ w = w') :=
-  ⟨fun h =>
-     ⟨fun p => Sum.inl.inj (h (viaLeft p)),
-      Sum.inr.inj (h (viaRight ()))⟩,
-   fun h q =>
-     match q with
-     | .inl p => congrArg viaLeft (h.1 p)
-     | .inr _ => congrArg viaRight h.2⟩
-
-theorem the_pairing_is_exact {S : Type u} (F G : Face) (f : S → F.State)
-    (g : S → G.State) (p₀ : F.Probe) (q₀ : G.Probe) (s t : S) :
-    alike (pairFace F G f g) s t
-      ↔ ((∀ p, F.obs (f s) p = F.obs (f t) p)
-          ∧ ∀ q, G.obs (g s) q = G.obs (g t) q) :=
-  ⟨fun h =>
-     ⟨the_pair_refines_the_first_look F G f g q₀ s t h,
-      the_pair_refines_the_second_look F G f g p₀ s t h⟩,
-   fun h pq => by
-     show (F.obs (f s) pq.1, G.obs (g s) pq.2)
-         = (F.obs (f t) pq.1, G.obs (g t) pq.2)
-     rw [h.1 pq.1, h.2 pq.2]⟩
-
-theorem the_cures_are_exact (F : Face) {X W : Type} (r : F.State → X)
-    (s t : F.State) (w w' : W) {S : Type u} (G K : Face)
-    (f : S → G.State) (g : S → K.State) (p₀ : G.Probe) (q₀ : K.Probe)
-    (x y : S) (u : F.State) (m : Measured) :
-    (alike (sharpen F r) s t ↔ (alike F s t ∧ r s = r t))
-      ∧ (alike (widen F W) (s, w) (t, w') ↔ (alike F s t ∧ w = w'))
-      ∧ (alike (pairFace G K f g) x y
-          ↔ ((∀ p, G.obs (f x) p = G.obs (f y) p)
-              ∧ ∀ q, K.obs (g x) q = K.obs (g y) q))
-      ∧ alike (host F W) (u, w) (u, w')
-      ∧ ((sharpen windowFace (fun v => v.hi + 1)).obs m (viaRight ())
-            = viaRight (m.hi + 1)
-          ∧ within m (m.hi + 1) = false) :=
-  ⟨the_sharpening_is_exact F r s t,
-   the_widening_is_exact F s t w w',
-   the_pairing_is_exact G K f g p₀ q₀ x y,
-   fun _ => rfl,
-   the_sharpened_window_exhibits_the_escapee m⟩
-
-theorem the_flattening_serves_what_it_keeps {S : Type u} {S' : Type v}
-    {X : Type} (h : S → S') (k : S' → S) (hk : ∀ y, h (k y) = y)
-    (f : S → X) :
-    (∃ g : S' → X, ∀ s, f s = g (h s))
-      ↔ ∀ s t, h s = h t → f s = f t :=
-  ⟨fun he s t hst =>
-     he.elim fun g hg => (hg s).trans ((congrArg g hst).trans (hg t).symm),
-   fun hc => ⟨fun y => f (k y), fun s => hc s (k (h s)) (hk (h s)).symm⟩⟩
-
-theorem the_finer_flattening_serves_fewer {S : Type u} {S₁ : Type v}
-    {S₂ : Type w} {X : Type} (h₁ : S → S₁) (h₂ : S → S₂) (e : S₁ → S₂)
-    (he : ∀ s, h₂ s = e (h₁ s)) (f : S → X)
-    (hs : ∃ g₂ : S₂ → X, ∀ s, f s = g₂ (h₂ s)) :
-    ∃ g₁ : S₁ → X, ∀ s, f s = g₁ (h₁ s) :=
-  hs.elim fun g₂ hg =>
-    ⟨fun y => g₂ (e y), fun s => (hg s).trans (congrArg g₂ (he s))⟩
-
-theorem the_iso_serves_every_reading {S : Type u} {S' : Type v} {X : Type}
-    (h : S → S') (k : S' → S) (hk : ∀ s, k (h s) = s) (f : S → X) :
-    ∃ g : S' → X, ∀ s, f s = g (h s) :=
-  ⟨fun y => f (k y), fun s => (congrArg f (hk s)).symm⟩
-
-theorem the_merged_seat_drops_a_reading :
-    ¬ ∃ g : Nat → Bool,
-      ∀ l : List Bool, l.headD false = g (park pulse (0 : Nat) l) :=
-  fun he =>
-    he.elim fun g hg =>
-      nomatch (hg [true, false]).trans
-        ((congrArg g two_routes_one_seat.2).trans
-          (hg [false, true]).symm)
-
-theorem the_service_shrinks_as_the_merge_grows {S : Type u} {S' : Type v}
-    {S₁ : Type v'} {S₂ : Type w} {X : Type}
-    (h : S → S') (k : S' → S) (hk : ∀ y, h (k y) = y) (f : S → X)
-    (h₁ : S → S₁) (h₂ : S → S₂) (e : S₁ → S₂)
-    (he : ∀ s, h₂ s = e (h₁ s)) (f' : S → X)
-    (hs : ∃ g₂ : S₂ → X, ∀ s, f' s = g₂ (h₂ s))
-    (j : S → S') (jk : S' → S) (hjk : ∀ s, jk (j s) = s) (f'' : S → X) :
-    ((∃ g : S' → X, ∀ s, f s = g (h s)) ↔ ∀ s t, h s = h t → f s = f t)
-      ∧ (∃ g₁ : S₁ → X, ∀ s, f' s = g₁ (h₁ s))
-      ∧ (∃ g : S' → X, ∀ s, f'' s = g (j s))
-      ∧ ¬ ∃ g : Nat → Bool,
-          ∀ l : List Bool, l.headD false = g (park pulse (0 : Nat) l) :=
-  ⟨the_flattening_serves_what_it_keeps h k hk f,
-   the_finer_flattening_serves_fewer h₁ h₂ e he f' hs,
-   the_iso_serves_every_reading j jk hjk f'',
-   the_merged_seat_drops_a_reading⟩
-
-theorem the_surplus_wears_two_signs
-    (q : Interview (List Unit) Bool) (w : List Unit) (s : Nat)
-    (r : List Nat) (m : Nat × List Nat) (held : List (Nat × List Nat))
-    (hs : ∀ k, k ∈ m :: held → backed r k.2 = false) (n : Nat)
-    (rr : List Nat) (mm : Nat × List Nat) (hm : backed rr mm.2 = true)
-    (v₁ v₂ : List (Nat × List Nat)) (r' : List Nat) (n' : Nat) :
-    audition restingCounter q = audition hollowShell q
-      ∧ park restingCounter s w = s + w.length
-      ∧ behavior (tally Unit) w = w.length
-      ∧ drainFace.obs (r, m :: held) n = (m :: held).length
-      ∧ Nat.ble
-          ((park doorM (rr, ([] : List (Nat × List Nat)))
-            (v₁ ++ mm :: v₂)).2.length + 1)
-          ((v₁ ++ mm :: v₂).length
-            + ([] : List (Nat × List Nat)).length) = true
-      ∧ again sweep n' (r', ([] : List (Nat × List Nat))) = (r', []) :=
-  ⟨the_flywheel_and_the_shell_sound_alike q,
-   the_muffler_banks_the_run w s,
-   the_wider_voice_releases_the_bank w,
-   the_stuck_load_reads_flat r m held hs n,
-   the_ready_drop_the_load rr mm hm v₁ v₂ [],
-   the_drained_room_rests_forever r' n'⟩
-
-theorem the_puppeteer_writes_where_the_record_does {H W X : Type}
-    (g : H → X) (F : Face) {V : Type}
-    (keep other : F.State × V → V) (q : Interview F.Probe F.Ans)
-    (x : F.State × V)
-    (G : Face.{0}) (s : G.State) (p q₀ : G.Probe)
-    {W' : Type} (f : W' → W') (h : W') {w w' : W'} (hw : w ≠ w') :
-    (∀ (σ : H → W → W) (d : door H W),
-        g (face (vertical σ d)) = g (face d))
-      ∧ unheard (host F V) (fun y => (y.1, keep y))
-      ∧ sound (host F V) (x.1, keep x) q = sound (host F V) (x.1, other x) q
-      ∧ selfMeet (host G G.Probe) (fun y => y.2)
-          (vertical (fun _ _ => q₀) (atTheDoor s p)) = G.obs s q₀
-      ∧ (selfMeet (host windowFace Bool) (fun y => (cond y.2 0 1 : Nat))
-            (⟨0, 0⟩, true)
-          ≠ selfMeet (host windowFace Bool) (fun y => (cond y.2 0 1 : Nat))
-              (⟨0, 0⟩, false))
-      ∧ ¬ ∃ u : door W' W' → door W' W',
-          ∀ e, u (exchange (fun z _ => f z) e) = e :=
-  ⟨fun σ d => a_guest_mover_is_unheard σ g d,
-   the_record_writes_where_the_face_is_blind F keep,
-   correct_maintenance_has_no_signature (host F V)
-     (fun y => (y.1, keep y)) (fun y => (y.1, other y))
-     (the_record_writes_where_the_face_is_blind F keep)
-     (the_record_writes_where_the_face_is_blind F other) x q,
-   the_written_question_is_the_asked_question G s p q₀,
-   the_minted_reading_hears_the_move,
-   no_move_unsays_the_deaf_turn f h hw⟩
-
-theorem the_sweep_fixes_the_drained_and_the_palindromes
-    (r : List Nat) (held : List (Nat × List Nat)) :
-    sweep (r, held) = (r, held)
-      ↔ (held = []
-          ∨ ((∀ m, m ∈ held → backed r m.2 = false)
-              ∧ turnQueue held [] = held)) := by
-  constructor
-  · intro h
-    cases held with
-    | nil => exact Or.inl rfl
-    | cons m t =>
-        have hlen : (sweep (r, m :: t)).2.length = (m :: t).length :=
-          congrArg
-            (fun s : List Nat × List (Nat × List Nat) => s.2.length) h
-        have hall : ∀ k, k ∈ m :: t → backed r k.2 = false :=
-          (the_gauge_is_exact (r, m :: t)).mp hlen
-        have hturn : sweep (r, m :: t) = (r, turnQueue (m :: t) []) :=
-          the_stuck_round_turns_the_queue (m :: t) r [] hall
-        exact Or.inr ⟨hall, congrArg Prod.snd (hturn.symm.trans h)⟩
-  · intro h
-    cases h with
-    | inl he =>
-        rw [he]
-        exact the_drained_room_rests r
-    | inr hp =>
-        exact (the_stuck_round_turns_the_queue held r [] hp.1).trans
-          (congrArg (fun q => (r, q)) hp.2)
-
-theorem the_stillness_is_drained_or_evenly_worn
-    (r : List Nat) (held : List (Nat × List Nat))
-    (r' : List Nat) (held' : List (Nat × List Nat))
-    (hs' : ∀ m, m ∈ held' → backed r' m.2 = false)
-    (r'' : List Nat) (n : Nat) (a d s : Nat) (w : List Unit) :
-    (sweep (r, held) = (r, held)
-        ↔ (held = []
-            ∨ ((∀ m, m ∈ held → backed r m.2 = false)
-                ∧ turnQueue held [] = held)))
-      ∧ sweep (sweep (r', held')) = (r', held')
-      ∧ again sweep n (r'', ([] : List (Nat × List Nat))) = (r'', [])
-      ∧ drive (spiral a d a) s w = true :=
-  ⟨the_sweep_fixes_the_drained_and_the_palindromes r held,
-   the_deadlock_comes_home_in_two r' held' hs',
-   the_drained_room_rests_forever r'' n,
-   the_wheel_reads_itself_unworn a d w s⟩
-
-theorem the_braid_swaps_its_strands {I : Type} :
-    ∀ {u v w : List I}, Braid u v w → Braid v u w
-  | _, _, _, .nil => .nil
-  | _, _, _, .left i hb => .right i (the_braid_swaps_its_strands hb)
-  | _, _, _, .right j hb => .left j (the_braid_swaps_its_strands hb)
-
-theorem the_braid_counts_both_strands {I : Type} :
-    ∀ {u v w : List I}, Braid u v w → w.length = u.length + v.length
-  | _, _, _, .nil => rfl
-  | _, _, _, .left _ hb =>
-      (congrArg (· + 1) (the_braid_counts_both_strands hb)).trans
-        (succ_adds _ _).symm
-  | _, _, _, .right _ hb =>
-      congrArg (· + 1) (the_braid_counts_both_strands hb)
-
-theorem the_braid_holds_both_strands {I : Type} {u v w : List I}
-    (hb : Braid u v w) : ∀ x : I, x ∈ w ↔ (x ∈ u ∨ x ∈ v) := by
-  induction hb with
-  | nil =>
-      intro x
-      exact ⟨(fun h => nomatch h),
-        (fun h => match h with
-          | Or.inl h' => nomatch h'
-          | Or.inr h' => nomatch h')⟩
-  | left i hb ih =>
-      intro x
-      constructor
-      · intro h
-        cases h with
-        | head => exact Or.inl (List.Mem.head _)
-        | tail _ h' =>
-            cases (ih x).mp h' with
-            | inl hu => exact Or.inl (List.Mem.tail _ hu)
-            | inr hv => exact Or.inr hv
-      · intro h
-        cases h with
-        | inl hu =>
-            cases hu with
-            | head => exact List.Mem.head _
-            | tail _ hu' => exact List.Mem.tail _ ((ih x).mpr (Or.inl hu'))
-        | inr hv => exact List.Mem.tail _ ((ih x).mpr (Or.inr hv))
-  | right j hb ih =>
-      intro x
-      constructor
-      · intro h
-        cases h with
-        | head => exact Or.inr (List.Mem.head _)
-        | tail _ h' =>
-            cases (ih x).mp h' with
-            | inl hu => exact Or.inl hu
-            | inr hv => exact Or.inr (List.Mem.tail _ hv)
-      · intro h
-        cases h with
-        | inl hu => exact List.Mem.tail _ ((ih x).mpr (Or.inl hu))
-        | inr hv =>
-            cases hv with
-            | head => exact List.Mem.head _
-            | tail _ hv' => exact List.Mem.tail _ ((ih x).mpr (Or.inr hv'))
-
-theorem the_weave_starts_with_either_strand {I O : Type} (m : Machine I O)
-    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
-    {u v w : List I} (hb : Braid u v w) (s : m.S) :
-    park m (park m s u) v = park m (park m s v) u :=
-  (the_weave_parks_one_seat m hcomm hb s).symm.trans
-    (the_weave_parks_one_seat m hcomm (the_braid_swaps_its_strands hb) s)
-
-theorem the_braid_hears_no_first_voice {I O : Type} (m : Machine I O)
-    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
-    {u v w : List I} (hb : Braid u v w) (s : m.S) (x : I) :
-    Braid v u w
-      ∧ w.length = u.length + v.length
-      ∧ (x ∈ w ↔ (x ∈ u ∨ x ∈ v))
-      ∧ park m s w = park m (park m s u) v
-      ∧ park m (park m s u) v = park m (park m s v) u :=
-  ⟨the_braid_swaps_its_strands hb,
-   the_braid_counts_both_strands hb,
-   the_braid_holds_both_strands hb x,
-   the_weave_parks_one_seat m hcomm hb s,
-   the_weave_starts_with_either_strand m hcomm hb s⟩
-
-def inc : List Bool → List Bool
-  | [] => []
-  | false :: bs => true :: bs
-  | true :: bs => false :: inc bs
-
-theorem inc_inc : ∀ (b : Bool) (bs : List Bool),
-    inc (inc (b :: bs)) = b :: inc bs
-  | false, _ => rfl
-  | true, _ => rfl
-
-theorem the_flip_is_the_narrowest_odometer :
-    ∀ b : Bool, inc [b] = [!b]
-  | false => rfl
-  | true => rfl
-
-theorem the_doubling_passes_the_tick_inward :
-    ∀ (c : Nat) (b : Bool) (bs : List Bool),
-      again inc (c + c) (b :: bs) = b :: again inc c bs
-  | 0, _, _ => rfl
-  | c + 1, b, bs => by
-      rw [show (c + 1) + (c + 1) = ((c + c) + 1) + 1 from
-            congrArg (· + 1) (succ_adds c c)]
-      show inc (inc (again inc (c + c) (b :: bs)))
-          = b :: again inc (c + 1) bs
-      rw [the_doubling_passes_the_tick_inward c b bs, inc_inc]
-      exact rfl
-
-theorem the_odometer_comes_home_at_the_cap :
-    ∀ s : List Bool, again inc (roomCap s.length) s = s
-  | [] => rfl
-  | b :: bs => by
-      show again inc (roomCap bs.length + roomCap bs.length) (b :: bs)
-          = b :: bs
-      rw [the_doubling_passes_the_tick_inward (roomCap bs.length) b bs,
-          the_odometer_comes_home_at_the_cap bs]
-
-theorem the_odometer_winds_the_room (s : List Bool) (c : Nat)
-    (b bb : Bool) (bs : List Bool) (i j : Nat) :
-    inc [b] = [!b]
-      ∧ again inc (c + c) (b :: bs) = b :: again inc c bs
-      ∧ again inc (roomCap s.length) s = s
-      ∧ park flip bb [(), ()] = bb
-      ∧ roomCap (i + j) = roomCap i * roomCap j :=
-  ⟨the_flip_is_the_narrowest_odometer b,
-   the_doubling_passes_the_tick_inward c b bs,
-   the_odometer_comes_home_at_the_cap s,
-   the_flip_wheels bb,
-   the_caps_multiply i j⟩
-
-theorem any_lights_somewhere {A : Type} (p : A → Bool) :
-    ∀ l : List A, l.any p = true → ∃ x, x ∈ l ∧ p x = true
-  | [], h => nomatch h
-  | a :: l, h => by
-      cases hp : p a with
-      | true => exact ⟨a, List.Mem.head l, hp⟩
-      | false =>
-          have h' : l.any p = true := by
-            have hsplit : (p a || l.any p) = true := h
-            rw [hp] at hsplit
-            exact hsplit
-          obtain ⟨x, hx, hpx⟩ := any_lights_somewhere p l h'
-          exact ⟨x, List.Mem.tail a hx, hpx⟩
-
-theorem every_circle_starves (C : List Nat) :
-    ∀ (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat)),
-      (∀ m, m ∈ w → enrolled C m.1 = true →
-        m.2.any (enrolled C) = true) →
-      (∀ c, enrolled C c = true → enrolled s.1 c = false) →
-      ∀ c, enrolled C c = true → enrolled (park doorM s w).1 c = false
-  | [], _, _, hdark => hdark
-  | m :: w, s, hw, hdark => by
-      have hstep : ∀ c, enrolled C c = true →
-          enrolled (welcome s m).1 c = false := by
-        intro c hc
-        cases hb : backed s.1 m.2 with
-        | false =>
-            rw [the_unbacked_are_held hb]
-            exact hdark c hc
-        | true =>
-            rw [the_backed_are_seated hb]
-            cases hm1 : enrolled C m.1 with
-            | true =>
-                obtain ⟨x, hx, hcx⟩ :=
-                  any_lights_somewhere (enrolled C) m.2
-                    (hw m (List.Mem.head w) hm1)
-                exact absurd
-                  (the_backing_reaches_each_need s.1 m.2 hb x hx)
-                  (ne_true_of_eq_false (hdark x hcx))
-            | false =>
-                refine the_stranger_leaves_the_hall_dark s.1 m.1 c
-                  ?_ (hdark c hc)
-                intro he
-                rw [he] at hc
-                exact nomatch hc.symm.trans hm1
-      show ∀ c, enrolled C c = true →
-          enrolled (park doorM (welcome s m) w).1 c = false
-      exact every_circle_starves C w (welcome s m)
-        (fun k hk => hw k (List.Mem.tail m hk)) hstep
-
-theorem light_enters_a_circle_only_from_outside (C : List Nat)
-    (w : List (Nat × List Nat)) (s : List Nat × List (Nat × List Nat))
-    (hw : ∀ m, m ∈ w → enrolled C m.1 = true →
-      m.2.any (enrolled C) = true)
-    (hdark : ∀ c, enrolled C c = true → enrolled s.1 c = false)
-    (x y : Nat) (w' : List (Nat × List Nat))
-    (s' : List Nat × List (Nat × List Nat))
-    (hwx : ∀ m, m ∈ w' → m.1 = x → y ∈ m.2)
-    (hwy : ∀ m, m ∈ w' → m.1 = y → x ∈ m.2)
-    (hx : enrolled s'.1 x = false) (hy : enrolled s'.1 y = false)
-    (r : List Nat) (n : Nat)
-    (t : List Nat × List (Nat × List Nat)) :
-    (∀ c, enrolled C c = true →
-        enrolled (park doorM s w).1 c = false)
-      ∧ (enrolled (park doorM s' w').1 x = false
-          ∧ enrolled (park doorM s' w').1 y = false)
-      ∧ backed r [] = true
-      ∧ enrolled (welcome t (n, ([] : List Nat))).1 n = true :=
-  ⟨every_circle_starves C w s hw hdark,
-   the_mutual_need_stays_dark x y w' s' hwx hwy hx hy,
-   the_unencumbered_are_welcome_everywhere r,
-   the_seat_is_load_bearing_in_the_same_click t (n, []) rfl⟩
-
-def zeros : Nat → List Bool
-  | 0 => []
-  | n + 1 => false :: zeros n
-
-def full : List Bool → Bool
-  | [] => true
-  | b :: bs => b && full bs
-
-def val : List Bool → Nat
-  | [] => 0
-  | b :: bs => cond b 1 0 + (val bs + val bs)
-
-theorem the_zeros_span_the_width : ∀ n : Nat, (zeros n).length = n
-  | 0 => rfl
-  | n + 1 => congrArg (· + 1) (the_zeros_span_the_width n)
-
-theorem the_tick_keeps_the_width : ∀ s : List Bool, (inc s).length = s.length
-  | [] => rfl
-  | false :: _ => rfl
-  | true :: bs => congrArg (· + 1) (the_tick_keeps_the_width bs)
-
-theorem the_orbit_keeps_the_width :
-    ∀ (t : Nat) (s : List Bool), (again inc t s).length = s.length
-  | 0, _ => rfl
-  | t + 1, s =>
-      (the_tick_keeps_the_width (again inc t s)).trans
-        (the_orbit_keeps_the_width t s)
-
-theorem the_empty_register_reads_zero : ∀ n : Nat, val (zeros n) = 0
-  | 0 => rfl
-  | n + 1 => by
-      show (0 : Nat) + (val (zeros n) + val (zeros n)) = 0
-      rw [the_empty_register_reads_zero n]
-
-theorem the_full_register_fills_the_cap :
-    ∀ s : List Bool, full s = true → val s + 1 = roomCap s.length
-  | [], _ => rfl
-  | true :: bs, h => by
-      have hf : full bs = true := h
-      show (1 + (val bs + val bs)) + 1
-          = roomCap bs.length + roomCap bs.length
-      rw [Nat.add_comm 1 (val bs + val bs),
-          ← the_full_register_fills_the_cap bs hf]
-      exact (succ_adds (val bs) (val bs + 1)).symm
-  | false :: bs, h => nomatch h
-
-theorem the_tick_carries_the_count :
-    ∀ s : List Bool, val (inc s) = cond (full s) 0 (val s + 1)
-  | [] => rfl
-  | false :: bs => by
-      show 1 + (val bs + val bs) = (0 + (val bs + val bs)) + 1
-      rw [zero_plus, Nat.add_comm 1 (val bs + val bs)]
-  | true :: bs => by
-      show (0 : Nat) + (val (inc bs) + val (inc bs))
-          = cond (full bs) 0 ((1 + (val bs + val bs)) + 1)
-      rw [zero_plus, the_tick_carries_the_count bs]
-      cases hf : full bs with
-      | true => rfl
-      | false =>
-          show (val bs + 1) + (val bs + 1)
-              = (1 + (val bs + val bs)) + 1
-          rw [succ_adds (val bs) (val bs + 1),
-              Nat.add_comm 1 (val bs + val bs)]
-          exact rfl
-
-theorem the_clock_reads_its_count (n : Nat) :
-    ∀ t : Nat, Nat.ble (t + 1) (roomCap n) = true →
-      val (again inc t (zeros n)) = t
-  | 0, _ => the_empty_register_reads_zero n
-  | t + 1, h => by
-      have h' : Nat.ble (t + 1) (roomCap n) = true :=
-        ble_trans _ _ _ (ble_le_succ (t + 1)) h
-      have ih := the_clock_reads_its_count n t h'
-      show val (inc (again inc t (zeros n))) = t + 1
-      rw [the_tick_carries_the_count]
-      cases hf : full (again inc t (zeros n)) with
-      | false =>
-          show val (again inc t (zeros n)) + 1 = t + 1
-          rw [ih]
-      | true =>
-          have hcap : val (again inc t (zeros n)) + 1
-              = roomCap (again inc t (zeros n)).length :=
-            the_full_register_fills_the_cap _ hf
-          rw [the_orbit_keeps_the_width, the_zeros_span_the_width, ih]
-            at hcap
-          rw [← hcap] at h
-          exact nomatch (ble_succ_false (t + 1)).symm.trans h
-
-theorem the_odometer_counts_in_binary {W : Type} (n t : Nat)
-    (hle : Nat.ble (t + 1) (roomCap n) = true) (s : List Bool)
-    (w : List W) (k : Nat) :
-    val (again inc t (zeros n)) = t
-      ∧ val (inc s) = cond (full s) 0 (val s + 1)
-      ∧ (full s = true → val s + 1 = roomCap s.length)
-      ∧ again inc (roomCap s.length) s = s
-      ∧ drive (tally W) k w = k + w.length :=
-  ⟨the_clock_reads_its_count n t hle,
-   the_tick_carries_the_count s,
-   the_full_register_fills_the_cap s,
-   the_odometer_comes_home_at_the_cap s,
-   drive_counts w k⟩
-
-theorem add_right_cancel : ∀ {a b : Nat} (k : Nat), a + k = b + k → a = b
-  | _, _, 0, h => h
-  | _, _, k + 1, h => add_right_cancel k (Nat.succ.inj h)
-
-theorem mul_left_cancel :
-    ∀ (k : Nat) {a b : Nat}, (k + 1) * a = (k + 1) * b → a = b
-  | _, 0, 0, _ => rfl
-  | _, 0, _ + 1, h => nomatch h
-  | _, _ + 1, 0, h => nomatch h
-  | k, _ + 1, _ + 1, h =>
-      congrArg (· + 1) (mul_left_cancel k (add_right_cancel (k + 1) h))
-
-theorem mul_right_cancel {x y : Nat} (k : Nat)
-    (h : x * (k + 1) = y * (k + 1)) : x = y :=
-  mul_left_cancel k
-    ((Nat.mul_comm (k + 1) x).trans (h.trans (Nat.mul_comm y (k + 1))))
-
-def sameRatio (a b c d : Nat) : Prop := a * d = c * b
-
-theorem the_ratio_meets_itself (a b : Nat) : sameRatio a b a b := rfl
-
-theorem the_ratio_swaps {a b c d : Nat} (h : sameRatio a b c d) :
-    sameRatio c d a b :=
-  h.symm
-
-theorem the_ratios_chain (a b c e f d₀ : Nat)
-    (h₁ : sameRatio a b c (d₀ + 1)) (h₂ : sameRatio c (d₀ + 1) e f) :
-    sameRatio a b e f := by
-  refine mul_right_cancel d₀ ?_
-  show (a * f) * (d₀ + 1) = (e * b) * (d₀ + 1)
-  rw [mul_regroups a f (d₀ + 1), Nat.mul_comm f (d₀ + 1),
-      ← mul_regroups a (d₀ + 1) f, h₁,
-      mul_regroups c b f, Nat.mul_comm b f,
-      ← mul_regroups c f b, h₂,
-      mul_regroups e (d₀ + 1) b, Nat.mul_comm (d₀ + 1) b,
-      ← mul_regroups e b (d₀ + 1)]
-
-theorem the_pace_is_gauge_for_the_ratio (p a b : Nat) :
-    sameRatio (readAcross a p) (readAcross b p) a b :=
-  (congrArg (· * b) (Nat.mul_comm p a)).trans (mul_regroups a p b)
-
-theorem the_halves_are_two :
-    sameRatio 1 2 2 4 ∧ ((1, 2) : Nat × Nat) ≠ (2, 4) :=
-  ⟨rfl, fun h => nomatch Nat.succ.inj (congrArg Prod.fst h)⟩
-
-theorem the_fraction_is_a_licensed_pair (a b c e f d₀ p x y : Nat)
-    (h₁ : sameRatio a b c (d₀ + 1)) (h₂ : sameRatio c (d₀ + 1) e f) :
-    sameRatio x y x y
-      ∧ (sameRatio a b c (d₀ + 1) → sameRatio c (d₀ + 1) a b)
-      ∧ sameRatio a b e f
-      ∧ sameRatio (readAcross x p) (readAcross y p) x y
-      ∧ (sameRatio 1 2 2 4 ∧ ((1, 2) : Nat × Nat) ≠ (2, 4)) :=
-  ⟨the_ratio_meets_itself x y,
-   fun h => the_ratio_swaps h,
-   the_ratios_chain a b c e f d₀ h₁ h₂,
-   the_pace_is_gauge_for_the_ratio p x y,
-   the_halves_are_two⟩
-
-theorem the_stranger_moves_no_backing (r : List Nat) (y : Nat) :
-    ∀ need : List Nat, (∀ x, x ∈ need → x ≠ y) →
-      backed (y :: r) need = backed r need
-  | [], _ => rfl
-  | x :: need, h => by
-      have he : enrolled (y :: r) x = enrolled r x := by
-        show (Nat.beq x y || enrolled r x) = enrolled r x
-        rw [beq_of_ne (h x (List.Mem.head need))]
-        rfl
-      show (enrolled (y :: r) x && backed (y :: r) need)
-          = (enrolled r x && backed r need)
-      rw [he, the_stranger_moves_no_backing r y need
-            (fun k hk => h k (List.Mem.tail x hk))]
-
-theorem the_prefix_pair_swaps_unheard (x y : Nat) (r : List Nat)
-    (z : Nat) : enrolled (x :: y :: r) z = enrolled (y :: x :: r) z := by
-  show (Nat.beq z x || (Nat.beq z y || enrolled r z))
-      = (Nat.beq z y || (Nat.beq z x || enrolled r z))
-  cases Nat.beq z x <;> cases Nat.beq z y <;> rfl
-
-theorem the_independent_arrivals_swap_unheard
-    (s : List Nat × List (Nat × List Nat)) (m₁ m₂ : Nat × List Nat)
-    (h₁ : ∀ x, x ∈ m₂.2 → x ≠ m₁.1)
-    (h₂ : ∀ x, x ∈ m₁.2 → x ≠ m₂.1) :
-    (∀ z, enrolled (welcome (welcome s m₁) m₂).1 z
-        = enrolled (welcome (welcome s m₂) m₁).1 z)
-      ∧ (welcome (welcome s m₁) m₂).2.length
-          = (welcome (welcome s m₂) m₁).2.length := by
-  have t₁ : backed (m₁.1 :: s.1) m₂.2 = backed s.1 m₂.2 :=
-    the_stranger_moves_no_backing s.1 m₁.1 m₂.2 h₁
-  have t₂ : backed (m₂.1 :: s.1) m₁.2 = backed s.1 m₁.2 :=
-    the_stranger_moves_no_backing s.1 m₂.1 m₁.2 h₂
-  cases hb₁ : backed s.1 m₁.2 with
-  | true =>
-      cases hb₂ : backed s.1 m₂.2 with
-      | true =>
-          rw [the_backed_are_seated hb₁,
-              the_backed_are_seated (s := (m₁.1 :: s.1, s.2))
-                (t₁.trans hb₂),
-              the_backed_are_seated hb₂,
-              the_backed_are_seated (s := (m₂.1 :: s.1, s.2))
-                (t₂.trans hb₁)]
-          exact ⟨fun z => the_prefix_pair_swaps_unheard m₂.1 m₁.1 s.1 z,
-            rfl⟩
-      | false =>
-          rw [the_backed_are_seated hb₁,
-              the_unbacked_are_held (s := (m₁.1 :: s.1, s.2))
-                (t₁.trans hb₂),
-              the_unbacked_are_held hb₂,
-              the_backed_are_seated (s := (s.1, m₂ :: s.2)) hb₁]
-          exact ⟨fun _ => rfl, rfl⟩
-  | false =>
-      cases hb₂ : backed s.1 m₂.2 with
-      | true =>
-          rw [the_unbacked_are_held hb₁,
-              the_backed_are_seated (s := (s.1, m₁ :: s.2)) hb₂,
-              the_backed_are_seated hb₂,
-              the_unbacked_are_held (s := (m₂.1 :: s.1, s.2))
-                (t₂.trans hb₁)]
-          exact ⟨fun _ => rfl, rfl⟩
-      | false =>
-          rw [the_unbacked_are_held hb₁,
-              the_unbacked_are_held (s := (s.1, m₁ :: s.2)) hb₂,
-              the_unbacked_are_held hb₂,
-              the_unbacked_are_held (s := (s.1, m₂ :: s.2)) hb₁]
-          exact ⟨fun _ => rfl, rfl⟩
-
-theorem the_direction_of_the_independent_is_gauge
-    (s : List Nat × List (Nat × List Nat)) (m₁ m₂ : Nat × List Nat)
-    (h₁ : ∀ x, x ∈ m₂.2 → x ≠ m₁.1)
-    (h₂ : ∀ x, x ∈ m₁.2 → x ≠ m₂.1)
-    (a b z : Nat)
-    (t : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (hm : backed t.1 m.2 = true) (x : Nat) (hx : x ∈ m.2)
-    (hne : x ≠ m.1) :
-    (∀ w, enrolled (welcome (welcome s m₁) m₂).1 w
-        = enrolled (welcome (welcome s m₂) m₁).1 w)
-      ∧ enrolled [a, b] z = enrolled [b, a] z
-      ∧ (enrolled t.1 x = true
-          ∧ depthTo (welcome t m).1 m.1 = 0
-          ∧ Nat.ble 1 (depthTo (welcome t m).1 x) = true) :=
-  ⟨(the_independent_arrivals_swap_unheard s m₁ m₂ h₁ h₂).1,
-   the_hall_hears_no_join_order a b z,
-   the_citer_arrives_above_the_cited t m hm x hx hne⟩
-
-def growth : List Plan → Nat
-  | [] => 1
-  | q :: qs => fold (fun a b => a + b) 1 q * growth qs
-
-theorem the_life_compounds :
-    ∀ (qs : List Plan) (t : Plan),
-      fold (fun a b => a + b) 1 (worldline t qs)
-        = fold (fun a b => a + b) 1 t * growth qs
-  | [], t => (zero_plus (fold (fun a b => a + b) 1 t)).symm
-  | q :: qs, t =>
-      (the_life_compounds qs (graft t q)).trans
-        ((congrArg (· * growth qs)
-            (the_revision_multiplies_the_reading t q)).trans
-          (mul_regroups (fold (fun a b => a + b) 1 t)
-            (fold (fun a b => a + b) 1 q) (growth qs)))
-
-theorem the_growth_resumes :
-    ∀ qs rs : List Plan, growth (qs ++ rs) = growth qs * growth rs
-  | [], rs => (one_times (growth rs)).symm
-  | q :: qs, rs =>
-      (congrArg (fold (fun a b => a + b) 1 q * ·)
-          (the_growth_resumes qs rs)).trans
-        (mul_regroups (fold (fun a b => a + b) 1 q)
-          (growth qs) (growth rs)).symm
-
-theorem the_revisions_ratio_is_its_own_reading (t δ : Plan) :
-    sameRatio (fold (fun a b => a + b) 1 (graft t δ))
-      (fold (fun a b => a + b) 1 t)
-      (fold (fun a b => a + b) 1 δ) 1 :=
-  (zero_plus (fold (fun a b => a + b) 1 (graft t δ))).trans
-    ((the_revision_multiplies_the_reading t δ).trans
-      (Nat.mul_comm (fold (fun a b => a + b) 1 t)
-        (fold (fun a b => a + b) 1 δ)))
-
-theorem the_lifes_rate_is_a_licensed_pair (qs : List Plan) (t : Plan) :
-    sameRatio (fold (fun a b => a + b) 1 (worldline t qs))
-      (fold (fun a b => a + b) 1 t) (growth qs) 1 :=
-  (zero_plus (fold (fun a b => a + b) 1 (worldline t qs))).trans
-    ((the_life_compounds qs t).trans
-      (Nat.mul_comm (fold (fun a b => a + b) 1 t) (growth qs)))
-
-theorem the_growth_factorizes_by_epoch (qs rs : List Plan) (t δ : Plan) :
-    fold (fun a b => a + b) 1 (worldline t qs)
-        = fold (fun a b => a + b) 1 t * growth qs
-      ∧ growth (qs ++ rs) = growth qs * growth rs
-      ∧ sameRatio (fold (fun a b => a + b) 1 (graft t δ))
-          (fold (fun a b => a + b) 1 t)
-          (fold (fun a b => a + b) 1 δ) 1
-      ∧ sameRatio (fold (fun a b => a + b) 1 (worldline t qs))
-          (fold (fun a b => a + b) 1 t) (growth qs) 1 :=
-  ⟨the_life_compounds qs t,
-   the_growth_resumes qs rs,
-   the_revisions_ratio_is_its_own_reading t δ,
-   the_lifes_rate_is_a_licensed_pair qs t⟩
-
-def dec : List Bool → List Bool
-  | [] => []
-  | true :: bs => false :: bs
-  | false :: bs => true :: dec bs
-
-theorem the_tick_unwinds : ∀ s : List Bool, dec (inc s) = s
-  | [] => rfl
-  | false :: _ => rfl
-  | true :: bs => congrArg (true :: ·) (the_tick_unwinds bs)
-
-theorem the_unwind_ticks : ∀ s : List Bool, inc (dec s) = s
-  | [] => rfl
-  | true :: _ => rfl
-  | false :: bs => congrArg (false :: ·) (the_unwind_ticks bs)
-
-theorem the_tick_merges_nothing {s t : List Bool} (h : inc s = inc t) :
-    s = t :=
-  an_iso_merges_nothing the_tick_unwinds h
-
-theorem the_two_kinds_of_wheel (s : List Bool) {u v : List Bool}
-    (h : inc u = inc v) :
-    dec (inc s) = s
-      ∧ inc (dec s) = s
-      ∧ u = v
-      ∧ again inc (roomCap s.length) s = s
-      ∧ (¬ ∃ g : Nat → Nat, ∀ n : Nat, g (collatzStep n) = n)
-      ∧ park collatz (1 : Nat) [(), (), ()] = (1 : Nat) :=
-  ⟨the_tick_unwinds s,
-   the_unwind_ticks s,
-   the_tick_merges_nothing h,
-   the_odometer_comes_home_at_the_cap s,
-   no_inverse_unsteps_the_collatz,
-   the_home_wheel_turns.1⟩
-
-theorem ble_total : ∀ a b : Nat, Nat.ble a b = true ∨ Nat.ble b a = true
-  | 0, _ => Or.inl rfl
-  | _ + 1, 0 => Or.inr rfl
-  | a + 1, b + 1 => ble_total a b
-
-theorem ble_mul : ∀ (c : Nat) {a b : Nat},
-    Nat.ble a b = true → Nat.ble (a * c) (b * c) = true
-  | 0, _, _, _ => rfl
-  | c + 1, _, _, h => ble_add_both (ble_mul c h) h
-
-theorem ble_flip : ∀ (a b : Nat),
-    Nat.ble a b = false → Nat.ble (b + 1) a = true
-  | 0, _, h => nomatch h
-  | _ + 1, 0, _ => rfl
-  | a + 1, b + 1, h => ble_flip a b h
-
-theorem succ_mul : ∀ b c : Nat, (b + 1) * c = b * c + c
-  | _, 0 => rfl
-  | b, c + 1 => by
-      show (b + 1) * c + (b + 1) = (b * c + b) + (c + 1)
-      rw [succ_mul b c, Nat.add_assoc (b * c) c (b + 1),
-          Nat.add_assoc (b * c) b (c + 1)]
-      exact congrArg (b * c + ·) (congrArg (· + 1) (Nat.add_comm c b))
-
-theorem ble_mul_cancel (k : Nat) {a b : Nat}
-    (h : Nat.ble (a * (k + 1)) (b * (k + 1)) = true) :
-    Nat.ble a b = true := by
-  cases hab : Nat.ble a b with
-  | true => rfl
-  | false =>
-      have hstep : Nat.ble ((b + 1) * (k + 1)) (a * (k + 1)) = true :=
-        ble_mul (k + 1) (ble_flip a b hab)
-      have hbad : Nat.ble (b * (k + 1) + (k + 1)) (b * (k + 1)) = true := by
-        rw [← succ_mul b (k + 1)]
-        exact ble_trans _ _ _ hstep h
-      exact nomatch (ble_gain_false (b * (k + 1)) k).symm.trans hbad
-
-def ratLe (a b c d : Nat) : Prop := Nat.ble (a * d) (c * b) = true
-
-theorem the_ratio_le_meets_itself (a b : Nat) : ratLe a b a b :=
-  ble_refl (a * b)
-
-theorem the_ratio_le_chains (a b c e f d₀ : Nat)
-    (h₁ : ratLe a b c (d₀ + 1)) (h₂ : ratLe c (d₀ + 1) e f) :
-    ratLe a b e f := by
-  refine ble_mul_cancel d₀ ?_
-  have s₁ : (a * f) * (d₀ + 1) = (a * (d₀ + 1)) * f := by
-    rw [mul_regroups a f (d₀ + 1), Nat.mul_comm f (d₀ + 1),
-        ← mul_regroups a (d₀ + 1) f]
-  have s₂ : (c * b) * f = (c * f) * b := by
-    rw [mul_regroups c b f, Nat.mul_comm b f, ← mul_regroups c f b]
-  have s₃ : (e * (d₀ + 1)) * b = (e * b) * (d₀ + 1) := by
-    rw [mul_regroups e (d₀ + 1) b, Nat.mul_comm (d₀ + 1) b,
-        ← mul_regroups e b (d₀ + 1)]
-  rw [s₁, ← s₃]
-  exact ble_trans _ _ _ (ble_mul f h₁)
-    (by rw [s₂]; exact ble_mul b h₂)
-
-theorem the_orders_are_total (a b c d : Nat) :
-    ratLe a b c d ∨ ratLe c d a b :=
-  ble_total (a * d) (c * b)
-
-theorem the_order_grounds_in_the_license (a b c d : Nat) :
-    (ratLe a b c d ∧ ratLe c d a b) ↔ sameRatio a b c d :=
-  ⟨fun h => ble_antisymm _ _ h.1 h.2,
-   fun h =>
-     ⟨(by
-        show Nat.ble (a * d) (c * b) = true
-        rw [show a * d = c * b from h]
-        exact ble_refl (c * b)),
-      (by
-        show Nat.ble (c * b) (a * d) = true
-        rw [show a * d = c * b from h]
-        exact ble_refl (c * b))⟩⟩
-
-theorem the_fractions_compare (a b c e f d₀ x y u v : Nat)
-    (h₁ : ratLe a b c (d₀ + 1)) (h₂ : ratLe c (d₀ + 1) e f) :
-    ratLe x y x y
-      ∧ ratLe a b e f
-      ∧ (ratLe x y u v ∨ ratLe u v x y)
-      ∧ ((ratLe x y u v ∧ ratLe u v x y) ↔ sameRatio x y u v) :=
-  ⟨the_ratio_le_meets_itself x y,
-   the_ratio_le_chains a b c e f d₀ h₁ h₂,
-   the_orders_are_total x y u v,
-   the_order_grounds_in_the_license x y u v⟩
-
-def joinMap {A B : Type} (f : A → List B) : List A → List B
-  | [] => []
-  | a :: as => f a ++ joinMap f as
-
-def inserts {A : Type} (x : A) : List A → List (List A)
-  | [] => [[x]]
-  | y :: l => (x :: y :: l) :: (inserts x l).map (y :: ·)
-
-def perms {A : Type} : List A → List (List A)
-  | [] => [[]]
-  | x :: l => joinMap (inserts x) (perms l)
-
-def fact : Nat → Nat
-  | 0 => 1
-  | n + 1 => fact n * (n + 1)
-
-theorem the_insertions_count {A : Type} (x : A) :
-    ∀ l : List A, (inserts x l).length = l.length + 1
-  | [] => rfl
-  | y :: l => by
-      show ((inserts x l).map (y :: ·)).length + 1 = (l.length + 1) + 1
-      rw [len_map, the_insertions_count x l]
-
-theorem the_join_counts_evenly {A B : Type} (f : A → List B) (n : Nat) :
-    ∀ as : List A, (∀ a, a ∈ as → (f a).length = n) →
-      (joinMap f as).length = n * as.length
-  | [], _ => rfl
-  | a :: as, h => by
-      show (f a ++ joinMap f as).length = n * (as.length + 1)
-      rw [len_append, h a (List.Mem.head as),
-          the_join_counts_evenly f n as
-            (fun b hb => h b (List.Mem.tail a hb))]
-      exact Nat.add_comm n (n * as.length)
-
-theorem mem_joinMap_back {A B : Type} {f : A → List B} {q : B} :
-    ∀ as : List A, q ∈ joinMap f as → ∃ a, a ∈ as ∧ q ∈ f a
-  | [], h => nomatch h
-  | a :: as, h => by
-      cases mem_append_split (f a) h with
-      | inl hfa => exact ⟨a, List.Mem.head as, hfa⟩
-      | inr hrest =>
-          obtain ⟨b, hb, hq⟩ := mem_joinMap_back as hrest
-          exact ⟨b, List.Mem.tail a hb, hq⟩
-
-theorem the_insertion_grows_one {A : Type} (x : A) :
-    ∀ (p q : List A), q ∈ inserts x p → q.length = p.length + 1
-  | [], q, h => by
-      cases h with
-      | head => rfl
-      | tail _ h' => exact nomatch h'
-  | y :: p, q, h => by
-      cases h with
-      | head => rfl
-      | tail _ h' =>
-          obtain ⟨r, hr, he⟩ := mem_map_back (inserts x p) h'
-          rw [← he]
-          show (r.length + 1) = (p.length + 1) + 1
-          rw [the_insertion_grows_one x p r hr]
-
-theorem the_orders_keep_the_length {A : Type} :
-    ∀ (l p : List A), p ∈ perms l → p.length = l.length
-  | [], p, h => by
-      cases h with
-      | head => rfl
-      | tail _ h' => exact nomatch h'
-  | x :: l, p, h => by
-      have h' : p ∈ joinMap (inserts x) (perms l) := h
-      obtain ⟨r, hr, hp⟩ := mem_joinMap_back (perms l) h'
-      show p.length = l.length + 1
-      rw [the_insertion_grows_one x r p hp,
-          the_orders_keep_the_length l r hr]
-
-theorem the_orders_count_to_the_factorial {A : Type} :
-    ∀ l : List A, (perms l).length = fact l.length
-  | [] => rfl
-  | x :: l => by
-      show (joinMap (inserts x) (perms l)).length = fact (l.length + 1)
-      rw [the_join_counts_evenly (inserts x) (l.length + 1) (perms l)
-            (fun p hp =>
-              (the_insertions_count x p).trans
-                (congrArg (· + 1) (the_orders_keep_the_length l p hp))),
-          the_orders_count_to_the_factorial l]
-      exact Nat.mul_comm (l.length + 1) (fact l.length)
-
-theorem the_census_of_orders {A : Type} (l p : List A) (x : A)
-    (hp : p ∈ perms l) :
-    (inserts x l).length = l.length + 1
-      ∧ p.length = l.length
-      ∧ (perms l).length = fact l.length :=
-  ⟨the_insertions_count x l,
-   the_orders_keep_the_length l p hp,
-   the_orders_count_to_the_factorial l⟩
-
-theorem perm_refl {A : Type} : ∀ l : List A, l.Perm l
+theorem perm_refl {A : Type u} : ∀ l : List A, l.Perm l
   | [] => .nil
   | x :: l => .cons x (perm_refl l)
 
-theorem the_insertion_is_a_shuffle {A : Type} (x : A) :
+/-- info: 'Seed.perm_refl' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_refl
+
+theorem the_insertion_is_a_shuffle {A : Type u} (x : A) :
     ∀ (r q : List A), q ∈ inserts x r → q.Perm (x :: r)
   | [], q, h => by
       cases h with
@@ -8907,7 +1618,10 @@ theorem the_insertion_is_a_shuffle {A : Type} (x : A) :
             (List.Perm.cons y (the_insertion_is_a_shuffle x r q' hq'))
             (List.Perm.swap x y r)
 
-theorem every_order_is_a_shuffle {A : Type} :
+/-- info: 'Seed.the_insertion_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_insertion_is_a_shuffle
+
+theorem every_order_is_a_shuffle {A : Type u} :
     ∀ (l p : List A), p ∈ perms l → p.Perm l
   | [], p, h => by
       cases h with
@@ -8919,37 +1633,10 @@ theorem every_order_is_a_shuffle {A : Type} :
       exact List.Perm.trans (the_insertion_is_a_shuffle x r p hp)
         (List.Perm.cons x (every_order_is_a_shuffle l r hr))
 
-theorem the_commuting_seat_hears_every_shuffle {I O : Type}
-    (m : Machine I O)
-    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i) :
-    ∀ {xs ys : List I}, xs.Perm ys → ∀ s, park m s xs = park m s ys := by
-  intro xs ys h
-  induction h with
-  | nil => intro _; rfl
-  | cons x _ ih => intro s; exact ih (m.step s x)
-  | swap x y l => intro s; exact congrArg (fun t => park m t l) (hcomm s y x)
-  | trans _ _ ih₁ ih₂ => intro s; exact (ih₁ s).trans (ih₂ s)
+/-- info: 'Seed.every_order_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms every_order_is_a_shuffle
 
-theorem the_room_of_orders_is_sound {A I O : Type} (l p : List A)
-    (hp : p ∈ perms l) (m : Machine I O)
-    (hcomm : ∀ s i j, m.step (m.step s i) j = m.step (m.step s j) i)
-    {xs ys : List I} (hperm : xs.Perm ys) (s : m.S)
-    (q : List Nat) (hq : q ∈ perms ([5, 9] : List Nat))
-    {B : Type} {a b : B} (hab : a ≠ b) :
-    p.Perm l
-      ∧ (perms l).length = fact l.length
-      ∧ park m s xs = park m s ys
-      ∧ park heap (0 : Nat) q = park heap (0 : Nat) [5, 9]
-      ∧ park (scribe (fun _ w => w)) ([] : List B) [a, b]
-          ≠ park (scribe (fun _ w => w)) ([] : List B) [b, a] :=
-  ⟨every_order_is_a_shuffle l p hp,
-   the_orders_count_to_the_factorial l,
-   the_commuting_seat_hears_every_shuffle m hcomm hperm s,
-   the_commuting_seat_hears_every_shuffle heap the_heap_steps_commute
-     (every_order_is_a_shuffle [5, 9] q hq) ((0 : Nat)),
-   the_scribe_keeps_the_order hab⟩
-
-theorem perm_mem {A : Type} {xs ys : List A} (h : xs.Perm ys) :
+theorem perm_mem {A : Type u} {xs ys : List A} (h : xs.Perm ys) :
     ∀ a, a ∈ xs → a ∈ ys := by
   induction h with
   | nil => exact fun _ ha => ha
@@ -8968,7 +1655,10 @@ theorem perm_mem {A : Type} {xs ys : List A} (h : xs.Perm ys) :
           | tail _ h'' => exact List.Mem.tail _ (List.Mem.tail _ h'')
   | trans _ _ ih₁ ih₂ => exact fun a ha => ih₂ a (ih₁ a ha)
 
-theorem the_wedgings_stand_apart {A : Type} (x : A) :
+/-- info: 'Seed.perm_mem' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_mem
+
+theorem the_wedgings_stand_apart {A : Type u} (x : A) :
     ∀ p : List A, ¬ x ∈ p → Apart (inserts x p)
   | [], _ => .cons (fun _ hb => nomatch hb) .nil
   | y :: p, hx => by
@@ -8981,7 +1671,10 @@ theorem the_wedgings_stand_apart {A : Type} (x : A) :
       obtain ⟨r, hr, hyr⟩ := mem_map_back (inserts x p) hq
       exact hxy (List.cons.inj (he.trans hyr.symm)).1
 
-theorem the_wedge_remembers_its_word {A : Type} (x : A) :
+/-- info: 'Seed.the_wedgings_stand_apart' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wedgings_stand_apart
+
+theorem the_wedge_remembers_its_word {A : Type u} (x : A) :
     ∀ (p p' q : List A), q ∈ inserts x p → q ∈ inserts x p' →
       ¬ x ∈ p → ¬ x ∈ p' → p = p'
   | [], [], _, _, _, _, _ => rfl
@@ -9035,7 +1728,10 @@ theorem the_wedge_remembers_its_word {A : Type} (x : A) :
                   (fun hm => hx' (List.Mem.tail y' hm))
               rw [hyy, hpp]
 
-theorem apart_joinMap {A B : Type} (f : A → List B) :
+/-- info: 'Seed.the_wedge_remembers_its_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wedge_remembers_its_word
+
+theorem apart_joinMap {A : Type u} {B : Type v} (f : A → List B) :
     ∀ as : List A, Apart as → (∀ a, a ∈ as → Apart (f a)) →
       (∀ a, a ∈ as → ∀ b, b ∈ as → a ≠ b →
         ∀ q, q ∈ f a → ¬ q ∈ f b) →
@@ -9054,7 +1750,10 @@ theorem apart_joinMap {A B : Type} (f : A → List B) :
         exact hdisj a (List.Mem.head as) b (List.Mem.tail a hb)
           (ha b hb) q hq hqfb
 
-theorem the_orders_repeat_never {A : Type} :
+/-- info: 'Seed.apart_joinMap' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_joinMap
+
+theorem the_orders_repeat_never {A : Type u} :
     ∀ l : List A, Apart l → Apart (perms l)
   | [], _ => .cons (fun _ hb => nomatch hb) .nil
   | x :: l, .cons hx hl => by
@@ -9069,16 +1768,20 @@ theorem the_orders_repeat_never {A : Type} :
           hne (the_wedge_remembers_its_word x p p' q hq hq'
             (hxp p hp) (hxp p' hp')))
 
-theorem the_factorial_counts_distinct_orders {A : Type} (l p : List A)
-    (hl : Apart l) (hp : p ∈ perms l) :
-    Apart (perms l)
-      ∧ (perms l).length = fact l.length
-      ∧ p.Perm l :=
-  ⟨the_orders_repeat_never l hl,
-   the_orders_count_to_the_factorial l,
-   every_order_is_a_shuffle l p hp⟩
+/-- info: 'Seed.the_orders_repeat_never' does not depend on any axioms -/
+#guard_msgs in #print axioms the_orders_repeat_never
 
-theorem perm_symm {A : Type} {xs ys : List A} (h : xs.Perm ys) :
+theorem mem_splits {A : Type u} {x : A} :
+    ∀ {l : List A}, x ∈ l → ∃ v₁ v₂ : List A, l = v₁ ++ x :: v₂
+  | _ :: t, List.Mem.head _ => ⟨[], t, rfl⟩
+  | a :: _, List.Mem.tail _ h =>
+      match mem_splits h with
+      | ⟨v₁, v₂, he⟩ => ⟨a :: v₁, v₂, congrArg (a :: ·) he⟩
+
+/-- info: 'Seed.mem_splits' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_splits
+
+theorem perm_symm {A : Type u} {xs ys : List A} (h : xs.Perm ys) :
     ys.Perm xs := by
   induction h with
   | nil => exact .nil
@@ -9086,7 +1789,10 @@ theorem perm_symm {A : Type} {xs ys : List A} (h : xs.Perm ys) :
   | swap x y l => exact .swap y x l
   | trans _ _ ih₁ ih₂ => exact ih₂.trans ih₁
 
-theorem perm_length {A : Type} {xs ys : List A} (h : xs.Perm ys) :
+/-- info: 'Seed.perm_symm' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_symm
+
+theorem perm_length {A : Type u} {xs ys : List A} (h : xs.Perm ys) :
     xs.length = ys.length := by
   induction h with
   | nil => rfl
@@ -9094,14 +1800,20 @@ theorem perm_length {A : Type} {xs ys : List A} (h : xs.Perm ys) :
   | swap => rfl
   | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
 
-theorem perm_middle {A : Type} (x : A) :
+/-- info: 'Seed.perm_length' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_length
+
+theorem perm_middle {A : Type u} (x : A) :
     ∀ (u v : List A), (u ++ x :: v).Perm (x :: (u ++ v))
   | [], v => perm_refl (x :: v)
   | y :: u, v =>
       List.Perm.trans (List.Perm.cons y (perm_middle x u v))
         (List.Perm.swap x y (u ++ v))
 
-theorem two_splits_perm {A : Type} (x : A) :
+/-- info: 'Seed.perm_middle' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_middle
+
+theorem two_splits_perm {A : Type u} (x : A) :
     ∀ (u v w z : List A), u ++ x :: v = w ++ x :: z →
       (u ++ v).Perm (w ++ z)
   | [], v, [], z, h => by
@@ -9119,7 +1831,10 @@ theorem two_splits_perm {A : Type} (x : A) :
       rw [h₁]
       exact List.Perm.cons w₀ (two_splits_perm x u' v w' z h₂)
 
-theorem the_shuffle_cancels_the_mark {A : Type} {L M : List A}
+/-- info: 'Seed.two_splits_perm' does not depend on any axioms -/
+#guard_msgs in #print axioms two_splits_perm
+
+theorem the_shuffle_cancels_the_mark {A : Type u} {L M : List A}
     (h : L.Perm M) :
     ∀ (x : A) (u v w z : List A), L = u ++ x :: v → M = w ++ x :: z →
       (u ++ v).Perm (w ++ z) := by
@@ -9233,13 +1948,19 @@ theorem the_shuffle_cancels_the_mark {A : Type} {L M : List A}
       obtain ⟨u₀, v₀, hmid⟩ := mem_splits hxL
       exact (ih₁ x u v u₀ v₀ hL hmid).trans (ih₂ x u₀ v₀ w z hmid hM)
 
-theorem mem_joinMap_intro {A B : Type} {f : A → List B} {a : A}
+/-- info: 'Seed.the_shuffle_cancels_the_mark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_shuffle_cancels_the_mark
+
+theorem mem_joinMap_intro {A : Type u} {B : Type v} {f : A → List B} {a : A}
     {q : B} : ∀ {as : List A}, a ∈ as → q ∈ f a → q ∈ joinMap f as
   | _ :: as, List.Mem.head _, hq => mem_append_left (joinMap f as) hq
   | b :: _, List.Mem.tail _ h, hq =>
       mem_append_right (f b) (mem_joinMap_intro h hq)
 
-theorem the_wedge_fits_anywhere {A : Type} (x : A) :
+/-- info: 'Seed.mem_joinMap_intro' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_joinMap_intro
+
+theorem the_wedge_fits_anywhere {A : Type u} (x : A) :
     ∀ (u v : List A), (u ++ x :: v) ∈ inserts x (u ++ v)
   | [], v => by
       cases v with
@@ -9249,7 +1970,10 @@ theorem the_wedge_fits_anywhere {A : Type} (x : A) :
       List.Mem.tail _
         (mem_map_intro (y :: ·) (the_wedge_fits_anywhere x u v))
 
-theorem every_shuffle_is_an_order {A : Type} :
+/-- info: 'Seed.the_wedge_fits_anywhere' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wedge_fits_anywhere
+
+theorem every_shuffle_is_an_order {A : Type u} :
     ∀ (l p : List A), p.Perm l → p ∈ perms l
   | [], p, h => by
       have hlen : p.length = 0 := perm_length h
@@ -9269,7 +1993,10 @@ theorem every_shuffle_is_an_order {A : Type} :
       show p ∈ joinMap (inserts x) (perms l)
       exact mem_joinMap_intro h₃ h₄
 
-theorem the_census_of_orders_is_exact {A : Type} (l p : List A)
+/-- info: 'Seed.every_shuffle_is_an_order' does not depend on any axioms -/
+#guard_msgs in #print axioms every_shuffle_is_an_order
+
+theorem the_census_of_orders_is_exact {A : Type u} (l p : List A)
     (hl : Apart l) :
     (p.Perm l ↔ p ∈ perms l)
       ∧ Apart (perms l)
@@ -9278,24 +2005,49 @@ theorem the_census_of_orders_is_exact {A : Type} (l p : List A)
    the_orders_repeat_never l hl,
    the_orders_count_to_the_factorial l⟩
 
-theorem beq_no {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_census_of_orders_is_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms the_census_of_orders_is_exact
+
+theorem not_not : ∀ b : Bool, (!(!b)) = b
+  | true => rfl
+  | false => rfl
+
+/-- info: 'Seed.not_not' does not depend on any axioms -/
+#guard_msgs in #print axioms not_not
+
+theorem one_scales : ∀ n : Nat, 1 * n = n
+  | 0 => rfl
+  | n + 1 => congrArg (· + 1) (one_scales n)
+
+/-- info: 'Seed.one_scales' does not depend on any axioms -/
+#guard_msgs in #print axioms one_scales
+
+def sameRatio (a b c d : Nat) : Prop := a * d = c * b
+
+theorem beq_no {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y) {x y : A} (hxy : x ≠ y) :
     beq x y = false := by
   cases h : beq x y with
   | false => rfl
   | true => exact absurd (hE x y h) hxy
 
-theorem ne_of_beq_no {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.beq_no' does not depend on any axioms -/
+#guard_msgs in #print axioms beq_no
+
+theorem ne_of_beq_no {A : Type u} {beq : A → A → Bool}
     (hR : ∀ x : A, beq x x = true) {x y : A} (h : beq x y = false) :
     x ≠ y :=
   fun he =>
     nomatch (((congrArg (fun z => beq z y) he).symm.trans h).symm.trans
       (hR y))
 
-def trade {A : Type} (beq : A → A → Bool) (a b : A) (x : A) : A :=
+/-- info: 'Seed.ne_of_beq_no' does not depend on any axioms -/
+#guard_msgs in #print axioms ne_of_beq_no
+
+def trade {A : Type u} (beq : A → A → Bool) (a b : A) (x : A) : A :=
   cond (beq x a) b (cond (beq x b) a x)
 
-theorem the_trade_swaps_the_pair {A : Type} {beq : A → A → Bool}
+theorem the_trade_swaps_the_pair {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) :
     trade beq a b a = b ∧ trade beq a b b = a := by
@@ -9307,14 +2059,20 @@ theorem the_trade_swaps_the_pair {A : Type} {beq : A → A → Bool}
     rw [beq_no hE (fun h => hab h.symm), hR b]
     exact rfl
 
-theorem the_trade_spares_the_stranger {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_trade_swaps_the_pair' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_swaps_the_pair
+
+theorem the_trade_spares_the_stranger {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y) {a b x : A}
     (hxa : x ≠ a) (hxb : x ≠ b) : trade beq a b x = x := by
   show cond (beq x a) b (cond (beq x b) a x) = x
   rw [beq_no hE hxa, beq_no hE hxb]
   exact rfl
 
-theorem the_trade_undoes_itself {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_trade_spares_the_stranger' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_spares_the_stranger
+
+theorem the_trade_undoes_itself {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) (x : A) :
     trade beq a b (trade beq a b x) = x := by
@@ -9336,7 +2094,10 @@ theorem the_trade_undoes_itself {A : Type} {beq : A → A → Bool}
             exact rfl
           rw [hfix, hfix]
 
-theorem the_trade_hears_no_order {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_trade_undoes_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_undoes_itself
+
+theorem the_trade_hears_no_order {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) (x : A) :
     trade beq a b x = trade beq b a x := by
@@ -9359,7 +2120,10 @@ theorem the_trade_hears_no_order {A : Type} {beq : A → A → Bool}
           rw [the_trade_spares_the_stranger hE hxa' hxb',
               the_trade_spares_the_stranger hE hxb' hxa']
 
-theorem the_traded_word_trades_home {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_trade_hears_no_order' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_hears_no_order
+
+theorem the_traded_word_trades_home {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) :
     ∀ p : List A, (p.map (trade beq a b)).map (trade beq a b) = p
@@ -9370,7 +2134,10 @@ theorem the_traded_word_trades_home {A : Type} {beq : A → A → Bool}
       rw [the_trade_undoes_itself hE hR hab x,
           the_traded_word_trades_home hE hR hab p]
 
-theorem the_trade_spares_the_word {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_traded_word_trades_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_traded_word_trades_home
+
+theorem the_trade_spares_the_word {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y) {a b : A} :
     ∀ w : List A, (∀ x, x ∈ w → x ≠ a) → (∀ x, x ∈ w → x ≠ b) →
       w.map (trade beq a b) = w
@@ -9383,7 +2150,10 @@ theorem the_trade_spares_the_word {A : Type} {beq : A → A → Bool}
             (fun y hy => hA y (List.Mem.tail x hy))
             (fun y hy => hB y (List.Mem.tail x hy))]
 
-theorem map_congr_mem {A B : Type} (f g : A → B) :
+/-- info: 'Seed.the_trade_spares_the_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_spares_the_word
+
+theorem map_congr_mem {A : Type u} {B : Type v} (f g : A → B) :
     ∀ w : List A, (∀ x, x ∈ w → f x = g x) → w.map f = w.map g
   | [], _ => rfl
   | x :: w, h => by
@@ -9391,17 +2161,18 @@ theorem map_congr_mem {A B : Type} (f g : A → B) :
       rw [h x (List.Mem.head w),
           map_congr_mem f g w (fun y hy => h y (List.Mem.tail x hy))]
 
-theorem append_regroups {A : Type} :
-    ∀ (x y z : List A), (x ++ y) ++ z = x ++ (y ++ z)
-  | [], _, _ => rfl
-  | a :: x, y, z => congrArg (a :: ·) (append_regroups x y z)
+/-- info: 'Seed.map_congr_mem' does not depend on any axioms -/
+#guard_msgs in #print axioms map_congr_mem
 
-theorem perm_append_left {A : Type} {v w : List A} (h : v.Perm w) :
+theorem perm_append_left {A : Type u} {v w : List A} (h : v.Perm w) :
     ∀ u : List A, (u ++ v).Perm (u ++ w)
   | [] => h
   | x :: u => List.Perm.cons x (perm_append_left h u)
 
-theorem perm_map {A B : Type} (f : A → B) {xs ys : List A}
+/-- info: 'Seed.perm_append_left' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_append_left
+
+theorem perm_map {A : Type u} {B : Type v} (f : A → B) {xs ys : List A}
     (h : xs.Perm ys) : (xs.map f).Perm (ys.map f) := by
   induction h with
   | nil => exact .nil
@@ -9409,7 +2180,10 @@ theorem perm_map {A B : Type} (f : A → B) {xs ys : List A}
   | swap x y l => exact .swap (f x) (f y) (l.map f)
   | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
 
-theorem apart_across {A : Type} :
+/-- info: 'Seed.perm_map' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_map
+
+theorem apart_across {A : Type u} :
     ∀ (u w : List A), Apart (u ++ w) →
       ∀ x, x ∈ u → ∀ y, y ∈ w → x ≠ y
   | [], _, _, _, hx, _, _ => nomatch hx
@@ -9420,14 +2194,20 @@ theorem apart_across {A : Type} :
           | head => exact hz y (mem_append_right u hy)
           | tail _ hx' => exact apart_across u w hrest x hx' y hy
 
-theorem apart_drop {A : Type} :
+/-- info: 'Seed.apart_across' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_across
+
+theorem apart_drop {A : Type u} :
     ∀ (u w : List A), Apart (u ++ w) → Apart w
   | [], _, h => h
   | _ :: u, w, h => by
       cases h with
       | cons _ hrest => exact apart_drop u w hrest
 
-theorem the_wedged_trade_is_a_shuffle {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.apart_drop' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_drop
+
+theorem the_wedged_trade_is_a_shuffle {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
     (u v1 v2 : List A)
@@ -9457,13 +2237,13 @@ theorem the_wedged_trade_is_a_shuffle {A : Type} {beq : A → A → Bool}
             hbf x hx he.symm
           have hmap : (u ++ a :: (v1 ++ b :: v2)).map (trade beq a b)
               = u ++ b :: (v1 ++ a :: v2) := by
-            rw [map_append (trade beq a b) u (a :: (v1 ++ b :: v2))]
+            rw [map_crosses_append (trade beq a b) u (a :: (v1 ++ b :: v2))]
             show u.map (trade beq a b)
                 ++ trade beq a b a :: (v1 ++ b :: v2).map (trade beq a b)
               = u ++ b :: (v1 ++ a :: v2)
             rw [the_trade_spares_the_word hE u hua hub,
                 (the_trade_swaps_the_pair hE hR hab).1,
-                map_append (trade beq a b) v1 (b :: v2)]
+                map_crosses_append (trade beq a b) v1 (b :: v2)]
             show u ++ b :: (v1.map (trade beq a b)
                 ++ trade beq a b b :: v2.map (trade beq a b))
               = u ++ b :: (v1 ++ a :: v2)
@@ -9476,7 +2256,10 @@ theorem the_wedged_trade_is_a_shuffle {A : Type} {beq : A → A → Bool}
             (List.Perm.swap a b (v1 ++ v2))).trans
             (List.Perm.cons a (perm_symm (perm_middle b v1 v2)))
 
-theorem the_trade_is_a_shuffle {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_wedged_trade_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wedged_trade_is_a_shuffle
+
+theorem the_trade_is_a_shuffle {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
     {l : List A} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
@@ -9494,7 +2277,7 @@ theorem the_trade_is_a_shuffle {A : Type} {beq : A → A → Bool}
   | inl hbu =>
       obtain ⟨u1, u2, hu⟩ := mem_splits hbu
       subst hu
-      rw [append_regroups u1 (b :: u2) (a :: v)] at hl ⊢
+      rw [the_appends_regroup u1 (b :: u2) (a :: v)] at hl ⊢
       show ((u1 ++ b :: (u2 ++ a :: v)).map (trade beq a b)).Perm
           (u1 ++ b :: (u2 ++ a :: v))
       rw [map_congr_mem (trade beq a b) (trade beq b a)
@@ -9503,7 +2286,10 @@ theorem the_trade_is_a_shuffle {A : Type} {beq : A → A → Bool}
       exact the_wedged_trade_is_a_shuffle hE hR (fun h => hab h.symm)
         u1 u2 v hl
 
-theorem the_trade_keeps_the_room {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_trade_is_a_shuffle' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_is_a_shuffle
+
+theorem the_trade_keeps_the_room {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
     {l : List A} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l)
@@ -9513,7 +2299,10 @@ theorem the_trade_keeps_the_room {A : Type} {beq : A → A → Bool}
     ((perm_map (trade beq a b) (every_order_is_a_shuffle l p hp)).trans
       (the_trade_is_a_shuffle hE hR hab hl ha hb))
 
-theorem mem_insert_middle {A : Type} {y : A} :
+/-- info: 'Seed.the_trade_keeps_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_keeps_the_room
+
+theorem mem_insert_middle {A : Type u} {y : A} :
     ∀ (v1 : List A) {x : A} {v2 : List A}, y ∈ v1 ++ v2 → y ∈ v1 ++ x :: v2
   | [], x, _, h => List.Mem.tail x h
   | z :: v1, _, _, h => by
@@ -9521,7 +2310,10 @@ theorem mem_insert_middle {A : Type} {y : A} :
       | head => exact List.Mem.head _
       | tail _ h' => exact List.Mem.tail z (mem_insert_middle v1 h')
 
-theorem apart_removes_the_mark {A : Type} :
+/-- info: 'Seed.mem_insert_middle' does not depend on any axioms -/
+#guard_msgs in #print axioms mem_insert_middle
+
+theorem apart_removes_the_mark {A : Type u} :
     ∀ (v1 : List A) {x : A} {v2 : List A},
       Apart (v1 ++ x :: v2) → Apart (v1 ++ v2)
   | [], _, _, h => by
@@ -9534,7 +2326,10 @@ theorem apart_removes_the_mark {A : Type} :
             (fun y hy => hz y (mem_insert_middle v1 hy))
             (apart_removes_the_mark v1 hrest)
 
-theorem the_apart_mark_sits_once {A : Type} (v1 : List A) {x : A}
+/-- info: 'Seed.apart_removes_the_mark' does not depend on any axioms -/
+#guard_msgs in #print axioms apart_removes_the_mark
+
+theorem the_apart_mark_sits_once {A : Type u} (v1 : List A) {x : A}
     (v2 : List A) (h : Apart (v1 ++ x :: v2)) : ¬ x ∈ v1 ++ v2 := by
   intro hx
   cases mem_append_split v1 hx with
@@ -9545,7 +2340,10 @@ theorem the_apart_mark_sits_once {A : Type} (v1 : List A) {x : A}
       cases hs with
       | cons hxf _ => exact hxf x h2 rfl
 
-theorem the_matching_rooms_are_shuffles {A : Type} :
+/-- info: 'Seed.the_apart_mark_sits_once' does not depend on any axioms -/
+#guard_msgs in #print axioms the_apart_mark_sits_once
+
+theorem the_matching_rooms_are_shuffles {A : Type u} :
     ∀ (u v : List A), Apart u → Apart v → (∀ x, x ∈ u ↔ x ∈ v) →
       u.Perm v
   | [], [], _, _, _ => .nil
@@ -9580,7 +2378,10 @@ theorem the_matching_rooms_are_shuffles {A : Type} :
               (apart_removes_the_mark v1 hv) hmem')).trans
             (perm_symm (perm_middle x v1 v2))
 
-theorem the_trade_shuffles_the_room {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_matching_rooms_are_shuffles' does not depend on any axioms -/
+#guard_msgs in #print axioms the_matching_rooms_are_shuffles
+
+theorem the_trade_shuffles_the_room {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
     {l : List A} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
@@ -9605,11 +2406,14 @@ theorem the_trade_shuffles_the_room {A : Type} {beq : A → A → Bool}
       rw [the_traded_word_trades_home hE hR hab x] at h2
       exact h2
 
-def firstOf {A : Type} (beq : A → A → Bool) (a b : A) : List A → Bool
+/-- info: 'Seed.the_trade_shuffles_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_trade_shuffles_the_room
+
+def firstOf {A : Type u} (beq : A → A → Bool) (a b : A) : List A → Bool
   | [] => false
   | x :: p => cond (beq x a) true (cond (beq x b) false (firstOf beq a b p))
 
-theorem the_traded_word_reverses_the_verdict {A : Type}
+theorem the_traded_word_reverses_the_verdict {A : Type u}
     {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) :
@@ -9663,7 +2467,10 @@ theorem the_traded_word_reverses_the_verdict {A : Type}
               rw [hxa, hxb,
                   the_traded_word_reverses_the_verdict hE hR hab p]
 
-theorem the_first_voice_decides {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_traded_word_reverses_the_verdict' does not depend on any axioms -/
+#guard_msgs in #print axioms the_traded_word_reverses_the_verdict
+
+theorem the_first_voice_decides {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) :
     ∀ p : List A, a ∈ p →
@@ -9701,7 +2508,10 @@ theorem the_first_voice_decides {A : Type} {beq : A → A → Bool}
               rw [hxa, hxb, the_first_voice_decides hE hR hab p ha']
               exact rfl
 
-theorem filter_congr_mem {A : Type} (q r : A → Bool) :
+/-- info: 'Seed.the_first_voice_decides' does not depend on any axioms -/
+#guard_msgs in #print axioms the_first_voice_decides
+
+theorem filter_congr_mem {A : Type u} (q r : A → Bool) :
     ∀ L : List A, (∀ x, x ∈ L → q x = r x) → L.filter q = L.filter r
   | [], _ => rfl
   | x :: L, h => by
@@ -9718,7 +2528,10 @@ theorem filter_congr_mem {A : Type} (q r : A → Bool) :
                 (ne_true_of_eq_false (hx.symm.trans hq)),
               hrest]
 
-theorem filter_map_commutes {A B : Type} (f : A → B) (q : B → Bool) :
+/-- info: 'Seed.filter_congr_mem' does not depend on any axioms -/
+#guard_msgs in #print axioms filter_congr_mem
+
+theorem filter_map_commutes {A : Type u} {B : Type v} (f : A → B) (q : B → Bool) :
     ∀ L : List A,
       (L.map f).filter q = (L.filter (fun x => q (f x))).map f
   | [] => rfl
@@ -9738,7 +2551,10 @@ theorem filter_map_commutes {A B : Type} (f : A → B) (q : B → Bool) :
                 (ne_true_of_eq_false hq)]
           exact filter_map_commutes f q L
 
-theorem perm_filter {A : Type} (q : A → Bool) {xs ys : List A}
+/-- info: 'Seed.filter_map_commutes' does not depend on any axioms -/
+#guard_msgs in #print axioms filter_map_commutes
+
+theorem perm_filter {A : Type u} (q : A → Bool) {xs ys : List A}
     (h : xs.Perm ys) : (xs.filter q).Perm (ys.filter q) := by
   induction h with
   | nil => exact .nil
@@ -9780,7 +2596,10 @@ theorem perm_filter {A : Type} (q : A → Bool) {xs ys : List A}
                   List.filter_cons_of_neg (ne_true_of_eq_false hqy)]
   | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
 
-theorem the_filter_splits_the_room {A : Type} (q : A → Bool) :
+/-- info: 'Seed.perm_filter' does not depend on any axioms -/
+#guard_msgs in #print axioms perm_filter
+
+theorem the_filter_splits_the_room {A : Type u} (q : A → Bool) :
     ∀ L : List A,
       (L.filter q).length + (L.filter (fun x => !(q x))).length
         = L.length
@@ -9811,7 +2630,10 @@ theorem the_filter_splits_the_room {A : Type} (q : A → Bool) :
             = L.length + 1
           rw [the_filter_splits_the_room q L]
 
-theorem the_two_directions_count_alike {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_filter_splits_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_filter_splits_the_room
+
+theorem the_two_directions_count_alike {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
     {l : List A} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
@@ -9836,7 +2658,10 @@ theorem the_two_directions_count_alike {A : Type} {beq : A → A → Bool}
       (fun p _ => the_traded_word_reverses_the_verdict hE hR hab p)
   rw [← h1, h2, h3, len_map]
 
-theorem the_verdicts_split_the_room {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.the_two_directions_count_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_directions_count_alike
+
+theorem the_verdicts_split_the_room {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
     {l : List A} (ha : a ∈ l) :
@@ -9853,11 +2678,17 @@ theorem the_verdicts_split_the_room {A : Type} {beq : A → A → Bool}
         (fun p => !(firstOf beq a b p)) (perms l) hcompl]
   exact the_filter_splits_the_room (firstOf beq a b) (perms l)
 
+/-- info: 'Seed.the_verdicts_split_the_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_verdicts_split_the_room
+
 theorem mul_two_reads_double (n : Nat) : n * 2 = n + n := by
   show (0 + n) + n = n + n
-  rw [zero_plus]
+  rw [zero_add]
 
-theorem the_direction_is_even_money {A : Type} {beq : A → A → Bool}
+/-- info: 'Seed.mul_two_reads_double' does not depend on any axioms -/
+#guard_msgs in #print axioms mul_two_reads_double
+
+theorem the_direction_is_even_money {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)
     (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b)
     {l : List A} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
@@ -9875,554 +2706,377 @@ theorem the_direction_is_even_money {A : Type} {beq : A → A → Bool}
   refine ⟨hsym, htotal, ?_⟩
   show ((perms l).filter (firstOf beq a b)).length * 2
       = 1 * fact l.length
-  rw [mul_two_reads_double, one_times]
+  rw [mul_two_reads_double, one_scales]
   exact (congrArg (((perms l).filter (firstOf beq a b)).length + ·)
     hsym).trans htotal
 
-theorem perm_apart {A : Type} {xs ys : List A} (h : xs.Perm ys) :
-    Apart xs → Apart ys := by
-  induction h with
-  | nil => exact fun h' => h'
-  | cons x h' ih =>
-      intro hx
-      cases hx with
-      | cons hhead hrest =>
-          exact Apart.cons
-            (fun b hb => hhead b (perm_mem (perm_symm h') b hb))
-            (ih hrest)
-  | swap x y l =>
-      intro hx
-      cases hx with
-      | cons hy hrest =>
-          cases hrest with
-          | cons hx' hl =>
-              exact Apart.cons
-                (fun b hb => by
-                  cases hb with
-                  | head => exact fun he => hy x (List.Mem.head l) he.symm
-                  | tail _ hb' => exact hx' b hb')
-                (Apart.cons (fun b hb => hy b (List.Mem.tail x hb)) hl)
-  | trans _ _ ih₁ ih₂ => exact fun h' => ih₂ (ih₁ h')
+/-- info: 'Seed.the_direction_is_even_money' does not depend on any axioms -/
+#guard_msgs in #print axioms the_direction_is_even_money
 
-theorem the_reordered_ground_keeps_the_room {A : Type} {l l' : List A}
-    (hll' : l.Perm l') (hl : Apart l) :
-    (perms l).Perm (perms l') :=
-  the_matching_rooms_are_shuffles (perms l) (perms l')
-    (the_orders_repeat_never l hl)
-    (the_orders_repeat_never l' (perm_apart hll' hl))
-    (fun p =>
-      ⟨fun hp => every_shuffle_is_an_order l' p
-         ((every_order_is_a_shuffle l p hp).trans hll'),
-       fun hp => every_shuffle_is_an_order l p
-         ((every_order_is_a_shuffle l' p hp).trans (perm_symm hll'))⟩)
+def recite {P : Type v} {A : Type w} : List P → Interview P A
+  | [] => .rest
+  | p :: ps => .ask p (fun _ => recite ps)
 
-theorem an_exact_enumerator_is_the_room {A : Type} {R L : List A}
-    (hR : Apart R) (hL : Apart L) (hmem : ∀ x, x ∈ R ↔ x ∈ L) :
-    R.Perm L ∧ R.length = L.length :=
-  ⟨the_matching_rooms_are_shuffles R L hR hL hmem,
-   perm_length (the_matching_rooms_are_shuffles R L hR hL hmem)⟩
+theorem the_repeated_ask_hears_one_answer (F : Face) (s : F.State) (p : F.Probe) :
+    ∀ n : Nat,
+      sound F s (recite (List.replicate n p)) = List.replicate n (F.obs s p)
+  | 0 => rfl
+  | n + 1 =>
+      congrArg (F.obs s p :: ·) (the_repeated_ask_hears_one_answer F s p n)
 
-theorem one_room_up_to_shuffle {A : Type} {l l' : List A}
-    (hll' : l.Perm l') (hl : Apart l) {R : List (List A)} (hR : Apart R)
-    (hmem : ∀ p, p ∈ R ↔ p ∈ perms l) (d : Nat) :
-    Apart l'
-      ∧ (perms l).Perm (perms l')
-      ∧ (perms l').length = fact l.length
-      ∧ R.Perm (perms l)
-      ∧ R.length = fact l.length
-      ∧ Apart (allPlans d) :=
-  ⟨perm_apart hll' hl,
-   the_reordered_ground_keeps_the_room hll' hl,
-   (perm_length (the_reordered_ground_keeps_the_room hll' hl)).symm.trans
-     (the_orders_count_to_the_factorial l),
-   (an_exact_enumerator_is_the_room hR
-     (the_orders_repeat_never l hl) hmem).1,
-   ((an_exact_enumerator_is_the_room hR
-     (the_orders_repeat_never l hl) hmem).2).trans
-     (the_orders_count_to_the_factorial l),
-   the_room_repeats_no_plan d⟩
+/-- info: 'Seed.the_repeated_ask_hears_one_answer' does not depend on any axioms -/
+#guard_msgs in #print axioms the_repeated_ask_hears_one_answer
 
-theorem the_flipping_involution_prices_even_money {A : Type}
-    (F : A → A) (q : A → Bool) (hFF : ∀ x, F (F x) = x)
-    (hflip : ∀ x, q (F x) = !(q x)) {L : List A} (hL : Apart L)
-    (hclosed : ∀ x, x ∈ L → F x ∈ L) :
-    (L.filter q).length * 2 = L.length := by
-  have hperm : (L.map F).Perm L :=
-    the_matching_rooms_are_shuffles (L.map F) L
-      (apart_map (fun x y hxy =>
-        (hFF x).symm.trans ((congrArg F hxy).trans (hFF y))) hL)
-      hL
-      (fun x =>
-        ⟨fun hx => by
-           obtain ⟨p, hp, he⟩ := mem_map_back L hx
-           rw [← he]
-           exact hclosed p hp,
-         fun hx => by
-           have h2 := mem_map_intro F (hclosed x hx)
-           rw [hFF x] at h2
-           exact h2⟩)
-  have h3 : L.filter (fun x => !(q x)) = L.filter (fun x => q (F x)) :=
-    filter_congr_mem _ _ L (fun x _ => (hflip x).symm)
-  have h4 : (L.map F).filter q = (L.filter (fun x => q (F x))).map F :=
-    filter_map_commutes F q L
-  have h5 : ((L.map F).filter q).length = (L.filter q).length :=
-    perm_length (perm_filter q hperm)
-  have hcount : (L.filter (fun x => !(q x))).length
-      = (L.filter q).length :=
-    (congrArg List.length h3).trans
-      ((len_map F (L.filter (fun x => q (F x)))).symm.trans
-        ((congrArg List.length h4.symm).trans h5))
-  rw [mul_two_reads_double]
-  exact (congrArg ((L.filter q).length + ·) hcount.symm).trans
-    (the_filter_splits_the_room q L)
+def restingCounter : Machine Unit Bool :=
+  ⟨Nat, 0, fun n _ => n + 1, fun _ => true⟩
 
-theorem the_coin_is_a_flipping_involution {A : Type}
-    (F : A → A) (q : A → Bool) (hFF : ∀ x, F (F x) = x)
-    (hflip : ∀ x, q (F x) = !(q x)) {L : List A} (hL : Apart L)
-    (hclosed : ∀ x, x ∈ L → F x ∈ L)
-    {B : Type} {beq : B → B → Bool}
-    (hE : ∀ x y : B, beq x y = true → x = y)
-    (hR : ∀ x : B, beq x x = true) {a b : B} (hab : a ≠ b)
-    {l : List B} (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
-    (L.filter q).length * 2 = L.length
-      ∧ sameRatio ((perms l).filter (firstOf beq a b)).length
-          (fact l.length) 1 2 :=
-  ⟨the_flipping_involution_prices_even_money F q hFF hflip hL hclosed,
-   (the_direction_is_even_money hE hR hab hl ha hb).2.2⟩
+def hollowShell : Machine Unit Bool :=
+  ⟨Unit, (), fun _ _ => (), fun _ => true⟩
 
-theorem a_flipping_involution_never_rests {A : Type} (F : A → A)
-    (q : A → Bool) (hflip : ∀ x, q (F x) = !(q x)) (x : A) :
-    F x ≠ x :=
-  fun he => bool_escapes (q x) ((congrArg q he).symm.trans (hflip x))
+theorem the_muffled_tally_is_the_resting_counter :
+    revoice (fun _ => true) tally = restingCounter := rfl
 
-theorem the_first_wheel_was_a_coin :
-    ((([false, true] : List Bool).filter (fun x => x)).length) * 2
-      = ([false, true] : List Bool).length :=
-  the_flipping_involution_prices_even_money (fun b => !b) (fun x => x)
-    not_not (fun _ => rfl)
-    (Apart.cons
-      (fun b hb => by
-        cases hb with
-        | head => exact fun h => nomatch h
-        | tail _ h' => exact nomatch h')
-      (Apart.cons (fun b hb => nomatch hb) Apart.nil))
-    (fun x hx => by
-      cases hx with
-      | head => exact List.Mem.tail false (List.Mem.head [])
-      | tail _ h' =>
-          cases h' with
-          | head => exact List.Mem.head [true]
-          | tail _ h'' => exact nomatch h'')
+/-- info: 'Seed.the_muffled_tally_is_the_resting_counter' does not depend on any axioms -/
+#guard_msgs in #print axioms the_muffled_tally_is_the_resting_counter
 
-theorem the_fair_coin_never_rests {A : Type} (F : A → A) (q : A → Bool)
-    (hFF : ∀ x, F (F x) = x) (hflip : ∀ x, q (F x) = !(q x))
-    {L : List A} (hL : Apart L) (hclosed : ∀ x, x ∈ L → F x ∈ L)
-    (x : A) (b : Bool) :
-    F x ≠ x
-      ∧ (L.filter q).length * 2 = L.length
-      ∧ (!(!b)) = b
-      ∧ park flip b [(), ()] = b
-      ∧ ((([false, true] : List Bool).filter (fun y => y)).length) * 2
-          = ([false, true] : List Bool).length :=
-  ⟨a_flipping_involution_never_rests F q hflip x,
-   the_flipping_involution_prices_even_money F q hFF hflip hL hclosed,
-   not_not b,
-   the_flip_wheels b,
-   the_first_wheel_was_a_coin⟩
-
-def headIs {A : Type} (beq : A → A → Bool) (a : A) : List A → Bool
-  | [] => false
-  | x :: _ => beq x a
-
-theorem filter_append_splits {A : Type} (q : A → Bool) :
-    ∀ (xs ys : List A), (xs ++ ys).filter q = xs.filter q ++ ys.filter q
+theorem the_tally_parks_at_its_count :
+    ∀ (w : List Unit) (s : Nat), park tally s w = s + w.length
   | [], _ => rfl
-  | x :: xs, ys => by
-      show (x :: (xs ++ ys)).filter q = (x :: xs).filter q ++ ys.filter q
-      cases hq : q x with
-      | true =>
-          rw [List.filter_cons_of_pos hq, List.filter_cons_of_pos hq,
-              filter_append_splits q xs ys]
-          exact rfl
-      | false =>
-          rw [List.filter_cons_of_neg (ne_true_of_eq_false hq),
-              List.filter_cons_of_neg (ne_true_of_eq_false hq),
-              filter_append_splits q xs ys]
+  | _ :: w, s => (the_tally_parks_at_its_count w (s + 1)).trans (succ_adds s w.length)
 
-theorem the_foreign_heads_filter_away {A : Type} {beq : A → A → Bool}
-    {a y : A} (hya : beq y a = false) :
-    ∀ L : List (List A),
-      (L.map (y :: ·)).filter (headIs beq a) = []
-  | [] => rfl
-  | w :: L => by
-      show ((y :: w) :: L.map (y :: ·)).filter (headIs beq a) = []
-      have hh : headIs beq a (y :: w) = false := hya
-      rw [List.filter_cons_of_neg (ne_true_of_eq_false hh),
-          the_foreign_heads_filter_away hya L]
+/-- info: 'Seed.the_tally_parks_at_its_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tally_parks_at_its_count
 
-theorem the_wedge_heads_once {A : Type} {beq : A → A → Bool}
-    (hE : ∀ x y : A, beq x y = true → x = y)
-    (hR : ∀ x : A, beq x x = true) {a : A} :
-    ∀ p : List A, ¬ a ∈ p →
-      (inserts a p).filter (headIs beq a) = [a :: p]
-  | [], _ => by
-      show ([[a]] : List (List A)).filter (headIs beq a) = [[a]]
-      have hh : headIs beq a [a] = true := hR a
-      rw [List.filter_cons_of_pos hh]
-      exact rfl
-  | y :: p, ha => by
-      have hay : a ≠ y := fun he => ha (by rw [he]; exact List.Mem.head p)
-      have hya : beq y a = false := beq_no hE (fun he => hay he.symm)
-      have hh : headIs beq a (a :: y :: p) = true := hR a
-      show ((a :: y :: p) :: (inserts a p).map (y :: ·)).filter
-          (headIs beq a) = [a :: y :: p]
-      rw [List.filter_cons_of_pos hh,
-          the_foreign_heads_filter_away hya (inserts a p)]
+theorem the_muffler_banks_the_run (w : List Unit) (s : Nat) :
+    park restingCounter s w = s + w.length :=
+  (the_revoice_moves_no_seat (fun _ => true) tally w s).trans
+    (the_tally_parks_at_its_count w s)
 
-theorem the_join_filters_fiberwise {A B : Type} (f : A → List B)
-    (q : B → Bool) :
-    ∀ as : List A,
-      (joinMap f as).filter q = joinMap (fun x => (f x).filter q) as
-  | [] => rfl
-  | x :: as => by
-      show (f x ++ joinMap f as).filter q
-          = (f x).filter q ++ joinMap (fun y => (f y).filter q) as
-      rw [filter_append_splits q (f x) (joinMap f as),
-          the_join_filters_fiberwise f q as]
+/-- info: 'Seed.the_muffler_banks_the_run' does not depend on any axioms -/
+#guard_msgs in #print axioms the_muffler_banks_the_run
 
-theorem the_head_wedge_counts {A : Type} {beq : A → A → Bool}
-    (hE : ∀ x y : A, beq x y = true → x = y)
-    (hR : ∀ x : A, beq x x = true) {a : A} {m : List A}
-    (ham : ¬ a ∈ m) :
-    ((perms (a :: m)).filter (headIs beq a)).length = fact m.length := by
-  have hfib : ∀ p, p ∈ perms m →
-      ((inserts a p).filter (headIs beq a)).length = 1 := by
-    intro p hp
-    rw [the_wedge_heads_once hE hR p
-      (fun hmem => ham (perm_mem (every_order_is_a_shuffle m p hp) a hmem))]
-    exact rfl
-  show ((joinMap (inserts a) (perms m)).filter (headIs beq a)).length
-      = fact m.length
-  rw [the_join_filters_fiberwise (inserts a) (headIs beq a) (perms m),
-      the_join_counts_evenly (fun p => (inserts a p).filter (headIs beq a))
-        1 (perms m) hfib,
-      one_times, the_orders_count_to_the_factorial m]
+theorem the_wider_voice_releases_the_bank (w : List Unit) :
+    behavior tally w = w.length :=
+  (the_tally_parks_at_its_count w 0).trans (zero_add w.length)
 
-theorem the_occupied_room_counts_past_zero {A : Type} {a : A} :
-    ∀ l : List A, a ∈ l → ∃ k, l.length = k + 1
-  | _ :: t, _ => ⟨t.length, rfl⟩
+/-- info: 'Seed.the_wider_voice_releases_the_bank' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wider_voice_releases_the_bank
 
-theorem the_head_pays_the_factorial {A : Type} {beq : A → A → Bool}
-    (hE : ∀ x y : A, beq x y = true → x = y)
-    (hR : ∀ x : A, beq x x = true) {a : A} {l : List A}
-    (hl : Apart l) (ha : a ∈ l) :
-    ((perms l).filter (headIs beq a)).length * l.length
-      = fact l.length := by
-  obtain ⟨u, v, huv⟩ := mem_splits ha
-  subst huv
-  have hcount : ((perms (u ++ a :: v)).filter (headIs beq a)).length
-      = fact (u ++ v).length := by
-    rw [perm_length (perm_filter (headIs beq a)
-          (the_reordered_ground_keeps_the_room (perm_middle a u v) hl))]
-    exact the_head_wedge_counts hE hR (the_apart_mark_sits_once u v hl)
-  have hlen : (u ++ a :: v).length = (u ++ v).length + 1 := by
-    rw [len_append u (a :: v), len_append u v]
-    exact rfl
-  rw [hcount, hlen]
-  exact rfl
+theorem the_flywheel_and_the_shell_sound_alike (q : Interview (List Unit) Bool) :
+    sound (airGap Unit Bool) restingCounter q = sound (airGap Unit Bool) hollowShell q :=
+  an_audition_hears_only_the_conduct restingCounter hollowShell (fun _ => rfl) q
 
-theorem the_room_has_no_favorite {A : Type} {beq : A → A → Bool}
-    (hE : ∀ x y : A, beq x y = true → x = y)
-    (hR : ∀ x : A, beq x x = true) {a b : A} {l : List A}
-    (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) :
-    ((perms l).filter (headIs beq a)).length * l.length = fact l.length
-      ∧ sameRatio ((perms l).filter (headIs beq a)).length
-          (fact l.length) 1 l.length
-      ∧ ((perms l).filter (headIs beq a)).length
-          = ((perms l).filter (headIs beq b)).length := by
-  have hA := the_head_pays_the_factorial hE hR hl ha
-  have hB := the_head_pays_the_factorial hE hR hl hb
-  obtain ⟨k, hk⟩ := the_occupied_room_counts_past_zero l ha
-  have hA' : ((perms l).filter (headIs beq a)).length * (k + 1)
-      = fact l.length := by
-    rw [← hk]
-    exact hA
-  have hB' : ((perms l).filter (headIs beq b)).length * (k + 1)
-      = fact l.length := by
-    rw [← hk]
-    exact hB
-  refine ⟨hA, ?_, mul_right_cancel k (hA'.trans hB'.symm)⟩
-  show ((perms l).filter (headIs beq a)).length * l.length
-      = 1 * fact l.length
-  rw [one_times]
-  exact hA
+/-- info: 'Seed.the_flywheel_and_the_shell_sound_alike' does not depend on any axioms -/
+#guard_msgs in #print axioms the_flywheel_and_the_shell_sound_alike
 
-def freeDoor : Machine Nat Nat :=
-  retune (fun n => (n, ([] : List Nat))) doorM
+def selfSteered {I : Type u} {O : Type v} (m : Machine I O) (r : m.S → I) :
+    Machine Unit O :=
+  ⟨m.S, m.s0, fun s _ => m.step s (r s), m.out⟩
 
-theorem the_free_word_stacks :
-    ∀ (w : List Nat) (r : List Nat) (v : List (Nat × List Nat)),
-      park freeDoor (r, v) w = (turnQueue w r, v)
-  | [], _, _ => rfl
-  | n :: w, r, v => by
-      show park freeDoor (welcome (r, v) (n, [])) w
-          = (turnQueue w (n :: r), v)
-      rw [the_backed_are_seated (s := (r, v))
-            (m := (n, ([] : List Nat))) rfl]
-      exact the_free_word_stacks w (n :: r) v
+def orbit {I : Type u} {O : Type v} (m : Machine I O) (r : m.S → I) :
+    m.S → Nat → m.S
+  | s, 0 => s
+  | s, n + 1 => orbit m r (m.step s (r s)) n
 
-theorem the_halls_sort_direction_is_even_money
-    (w : List Nat) (r : List Nat) (v : List (Nat × List Nat))
-    {a b : Nat} (hab : a ≠ b) {l : List Nat} (hl : Apart l)
-    (ha : a ∈ l) (hb : b ∈ l)
-    (s : List Nat × List (Nat × List Nat)) (m : Nat × List Nat)
-    (hm : backed s.1 m.2 = true) (x : Nat) (hx : x ∈ m.2)
-    (hne : x ≠ m.1) :
-    park freeDoor (r, v) w = (turnQueue w r, v)
-      ∧ ((perms l).filter (firstOf Nat.beq a b)).length
-          = ((perms l).filter (firstOf Nat.beq b a)).length
-      ∧ sameRatio ((perms l).filter (firstOf Nat.beq a b)).length
-          (fact l.length) 1 2
-      ∧ (enrolled s.1 x = true
-          ∧ depthTo (welcome s m).1 m.1 = 0
-          ∧ Nat.ble 1 (depthTo (welcome s m).1 x) = true) :=
-  ⟨the_free_word_stacks w r v,
-   (the_direction_is_even_money eq_of_beq beq_self hab hl ha hb).1,
-   (the_direction_is_even_money eq_of_beq beq_self hab hl ha hb).2.2,
-   the_citer_arrives_above_the_cited s m hm x hx hne⟩
-
-theorem turnQueue_append {A : Type} :
-    ∀ (w acc : List A), turnQueue w acc = turnQueue w [] ++ acc
+theorem the_self_steered_machine_is_a_clock {I : Type u} {O : Type v}
+    (m : Machine I O) (r : m.S → I) :
+    ∀ (w : List Unit) (s : m.S),
+      drive (selfSteered m r) s w = m.out (orbit m r s w.length)
   | [], _ => rfl
-  | x :: w, acc => by
-      show turnQueue w (x :: acc) = turnQueue (x :: w) [] ++ acc
-      rw [turnQueue_append w (x :: acc),
-          show turnQueue (x :: w) [] = turnQueue w [x] from rfl,
-          turnQueue_append w [x], snoc_append]
+  | _ :: w, s => the_self_steered_machine_is_a_clock m r w (m.step s (r s))
 
-theorem mem_turnQueue_acc {A : Type} {x : A} :
-    ∀ (w acc : List A), x ∈ acc → x ∈ turnQueue w acc
-  | [], _, h => h
-  | y :: w, acc, h => mem_turnQueue_acc w (y :: acc) (List.Mem.tail y h)
+/-- info: 'Seed.the_self_steered_machine_is_a_clock' does not depend on any axioms -/
+#guard_msgs in #print axioms the_self_steered_machine_is_a_clock
 
-theorem mem_turnQueue_intro {A : Type} {x : A} :
-    ∀ (w : List A), x ∈ w → ∀ acc, x ∈ turnQueue w acc
-  | y :: w, hx, acc => by
-      cases hx with
-      | head => exact mem_turnQueue_acc w (x :: acc) (List.Mem.head acc)
-      | tail _ h' => exact mem_turnQueue_intro w h' (y :: acc)
+def selfWord {I : Type u} {O : Type v} (m : Machine I O) (r : m.S → I) :
+    m.S → Nat → List I
+  | _, 0 => []
+  | s, n + 1 => r s :: selfWord m r (m.step s (r s)) n
 
-theorem the_lone_mark_decides_against {A : Type} {beq : A → A → Bool}
-    (hE : ∀ x y : A, beq x y = true → x = y)
-    (hR : ∀ x : A, beq x x = true) {a b : A} :
-    ∀ u : List A, ¬ a ∈ u → b ∈ u → ∀ acc : List A,
-      firstOf beq a b (u ++ acc) = false
-  | [], _, hb, _ => nomatch hb
-  | y :: u, ha, hb, acc => by
-      have hya : beq y a = false :=
-        beq_no hE (fun he => ha (by rw [← he]; exact List.Mem.head u))
-      show cond (beq y a) true
-          (cond (beq y b) false (firstOf beq a b (u ++ acc))) = false
-      rw [hya]
-      cases hyb : beq y b with
-      | true => exact rfl
-      | false =>
-          have hb' : b ∈ u := by
-            cases hb with
-            | head => exact absurd (hR _) (ne_true_of_eq_false hyb)
-            | tail _ h' => exact h'
-          rw [the_lone_mark_decides_against hE hR u
-                (fun h => ha (List.Mem.tail y h)) hb' acc]
-          exact rfl
+theorem the_instinct_replays_its_word {I : Type u} {O : Type v}
+    (m : Machine I O) (r : m.S → I) :
+    ∀ (w : List Unit) (s : m.S),
+      drive (selfSteered m r) s w = drive m s (selfWord m r s w.length)
+  | [], _ => rfl
+  | _ :: w, s => the_instinct_replays_its_word m r w (m.step s (r s))
 
-theorem the_decided_scan_stops {A : Type} {beq : A → A → Bool}
-    (hR : ∀ x : A, beq x x = true) {a b : A} :
-    ∀ u : List A, (a ∈ u ∨ b ∈ u) → ∀ acc : List A,
-      firstOf beq a b (u ++ acc) = firstOf beq a b u
-  | [], h, _ => by
-      cases h with
-      | inl h' => exact nomatch h'
-      | inr h' => exact nomatch h'
-  | y :: u, h, acc => by
-      show cond (beq y a) true
-          (cond (beq y b) false (firstOf beq a b (u ++ acc)))
-        = cond (beq y a) true
-          (cond (beq y b) false (firstOf beq a b u))
-      cases hya : beq y a with
-      | true => rfl
-      | false =>
-          cases hyb : beq y b with
-          | true => rfl
-          | false =>
-              have h' : a ∈ u ∨ b ∈ u := by
-                cases h with
-                | inl hh =>
-                    cases hh with
-                    | head => exact absurd (hR _) (ne_true_of_eq_false hya)
-                    | tail _ ht => exact Or.inl ht
-                | inr hh =>
-                    cases hh with
-                    | head => exact absurd (hR _) (ne_true_of_eq_false hyb)
-                    | tail _ ht => exact Or.inr ht
-              rw [the_decided_scan_stops hR u h' acc]
+/-- info: 'Seed.the_instinct_replays_its_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_instinct_replays_its_word
 
-theorem the_turned_word_reverses_the_verdict {A : Type}
-    {beq : A → A → Bool}
-    (hE : ∀ x y : A, beq x y = true → x = y)
-    (hR : ∀ x : A, beq x x = true) {a b : A} (hab : a ≠ b) :
-    ∀ w : List A, Apart w → a ∈ w → b ∈ w →
-      firstOf beq a b (turnQueue w []) = firstOf beq b a w
-  | [], _, ha, _ => nomatch ha
-  | x :: w, hl, ha, hb => by
-      cases hl with
-      | cons hx hrest =>
-          have htq : turnQueue (x :: w) [] = turnQueue w [] ++ [x] := by
-            show turnQueue w [x] = turnQueue w [] ++ [x]
-            exact turnQueue_append w [x]
-          rw [htq]
-          cases hxa : beq x a with
-          | true =>
-              have hxe : x = a := hE x a hxa
-              have hbx : b ≠ x := fun he =>
-                hab (hE b a
-                  ((congrArg (fun z => beq z a) he).trans hxa)).symm
-              have hat : ¬ a ∈ w := fun h => hx a h hxe
-              have hbt : b ∈ w := by
-                cases hb with
-                | head => exact absurd rfl hbx
-                | tail _ h' => exact h'
-              have hau : ¬ a ∈ turnQueue w [] := fun h => by
-                cases mem_turnQueue w [] h with
-                | inl h' => exact hat h'
-                | inr h' => exact nomatch h'
-              have hbu : b ∈ turnQueue w [] := mem_turnQueue_intro w hbt []
-              rw [the_lone_mark_decides_against hE hR
-                    (turnQueue w []) hau hbu [x]]
-              show (false : Bool)
-                  = cond (beq x b) true
-                      (cond (beq x a) false (firstOf beq b a w))
-              rw [hxe, beq_no hE hab, hR a]
-              exact rfl
-          | false =>
-              have hax : a ≠ x := fun he =>
-                (ne_of_beq_no hR hxa) he.symm
-              cases hxb : beq x b with
-              | true =>
-                  have hxe : x = b := hE x b hxb
-                  have hbt : ¬ b ∈ w := fun h => hx b h hxe
-                  have hat : a ∈ w := by
-                    cases ha with
-                    | head => exact absurd rfl hax
-                    | tail _ h' => exact h'
-                  have hbu : ¬ b ∈ turnQueue w [] := fun h => by
-                    cases mem_turnQueue w [] h with
-                    | inl h' => exact hbt h'
-                    | inr h' => exact nomatch h'
-                  have hau : a ∈ turnQueue w [] :=
-                    mem_turnQueue_intro w hat []
-                  have hvoice := the_first_voice_decides hE hR hab
-                    (turnQueue w [] ++ [x])
-                    (mem_append_left [x] hau)
-                  rw [hvoice,
-                      the_lone_mark_decides_against hE hR
-                        (turnQueue w []) hbu hau [x]]
-                  show (true : Bool)
-                      = cond (beq x b) true
-                          (cond (beq x a) false (firstOf beq b a w))
-                  rw [hxb]
-                  exact rfl
-              | false =>
-                  have hbx : b ≠ x := fun he =>
-                    (ne_of_beq_no hR hxb) he.symm
-                  have hat : a ∈ w := by
-                    cases ha with
-                    | head => exact absurd rfl hax
-                    | tail _ h' => exact h'
-                  have hbt : b ∈ w := by
-                    cases hb with
-                    | head => exact absurd rfl hbx
-                    | tail _ h' => exact h'
-                  rw [the_decided_scan_stops hR (turnQueue w [])
-                        (Or.inl (mem_turnQueue_intro w hat [])) [x],
-                      the_turned_word_reverses_the_verdict hE hR hab
-                        w hrest hat hbt]
-                  show firstOf beq b a w
-                      = cond (beq x b) true
-                          (cond (beq x a) false (firstOf beq b a w))
-                  rw [hxa, hxb]
-                  exact rfl
+def buffered {I : Type u} {O : Type v} (m : Machine I O) : Machine I O :=
+  ⟨m.S × List I, (m.s0, []), fun st i => (st.1, st.2 ++ [i]),
+   fun st => drive m st.1 st.2⟩
 
-theorem the_scan_reads_the_depth {a b : Nat} (hab : a ≠ b) :
-    ∀ r : List Nat, a ∈ r → b ∈ r →
-      firstOf Nat.beq a b r
-        = Nat.ble (depthTo r a + 1) (depthTo r b)
-  | [], ha, _ => nomatch ha
-  | y :: r, ha, hb => by
-      cases hya : Nat.beq y a with
-      | true =>
-          have hye : y = a := eq_of_beq y a hya
-          have hba : b ≠ a := fun h => hab h.symm
-          show cond (Nat.beq y a) true
-              (cond (Nat.beq y b) false (firstOf Nat.beq a b r))
-            = Nat.ble (depthTo (y :: r) a + 1) (depthTo (y :: r) b)
-          rw [hya, hye, the_seated_arrive_shallowest r a,
-              every_later_admission_deepens r hba]
-          exact rfl
-      | false =>
-          have hay : a ≠ y := fun h => (ne_of_beq_false hya) h.symm
-          cases hyb : Nat.beq y b with
-          | true =>
-              have hye : y = b := eq_of_beq y b hyb
-              show cond (Nat.beq y a) true
-                  (cond (Nat.beq y b) false (firstOf Nat.beq a b r))
-                = Nat.ble (depthTo (y :: r) a + 1) (depthTo (y :: r) b)
-              rw [hya, hyb, hye, the_seated_arrive_shallowest r b,
-                  every_later_admission_deepens r hab]
-              exact rfl
-          | false =>
-              have hby : b ≠ y := fun h => (ne_of_beq_false hyb) h.symm
-              have hat : a ∈ r := by
-                cases ha with
-                | head => exact absurd rfl (fun h => hay h.symm)
-                | tail _ h' => exact h'
-              have hbt : b ∈ r := by
-                cases hb with
-                | head => exact absurd rfl (fun h => hby h.symm)
-                | tail _ h' => exact h'
-              show cond (Nat.beq y a) true
-                  (cond (Nat.beq y b) false (firstOf Nat.beq a b r))
-                = Nat.ble (depthTo (y :: r) a + 1) (depthTo (y :: r) b)
-              rw [hya, hyb, every_later_admission_deepens r hay,
-                  every_later_admission_deepens r hby,
-                  the_scan_reads_the_depth hab r hat hbt]
-              exact rfl
+theorem the_hold_walks_beside_the_work {I : Type u} {O : Type v}
+    (m : Machine I O) (w : List I) (s : m.S) (held : List I) :
+    drive (buffered m) (s, held) w = drive m (park m s held) w :=
+  (congrArg m.out
+    (the_intertwined_walks_agree (buffered m) m
+      (fun st => park m st.1 st.2)
+      (fun st i => (the_park_resumes m st.2 st.1 [i]).symm)
+      w (s, held))).symm
 
-theorem the_earlier_arrival_lies_deeper {a b : Nat} (hab : a ≠ b)
-    {w : List Nat} (hl : Apart w) (ha : a ∈ w) (hb : b ∈ w) :
-    Nat.ble (depthTo (turnQueue w []) a + 1) (depthTo (turnQueue w []) b)
-        = firstOf Nat.beq b a w
-      ∧ park freeDoor (([] : List Nat), ([] : List (Nat × List Nat))) w
-          = (turnQueue w [], [])
-      ∧ sameRatio ((perms w).filter (firstOf Nat.beq b a)).length
-          (fact w.length) 1 2 :=
-  ⟨(the_scan_reads_the_depth hab (turnQueue w [])
-      (mem_turnQueue_intro w ha []) (mem_turnQueue_intro w hb [])).symm.trans
-    (the_turned_word_reverses_the_verdict eq_of_beq beq_self hab w hl ha hb),
-   the_free_word_stacks w [] [],
-   (the_direction_is_even_money eq_of_beq beq_self
-     (fun h => hab h.symm) hl hb ha).2.2⟩
+/-- info: 'Seed.the_hold_walks_beside_the_work' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hold_walks_beside_the_work
+
+theorem the_buffer_is_invisible {I : Type u} {O : Type v} (m : Machine I O)
+    (w : List I) :
+    behavior (buffered m) w = behavior m w :=
+  the_hold_walks_beside_the_work m w m.s0 []
+
+/-- info: 'Seed.the_buffer_is_invisible' does not depend on any axioms -/
+#guard_msgs in #print axioms the_buffer_is_invisible
+
+def settleHeld {I : Type u} {O : Type v} (m : Machine I O)
+    (st : m.S × List I) : m.S × List I :=
+  (park m st.1 st.2, [])
+
+theorem the_settle_is_unheard {I : Type u} {O : Type v} (m : Machine I O)
+    (st : m.S × List I) (w : List I) :
+    drive (buffered m) (settleHeld m st) w = drive (buffered m) st w :=
+  (the_hold_walks_beside_the_work m w (park m st.1 st.2) []).trans
+    (the_hold_walks_beside_the_work m w st.1 st.2).symm
+
+/-- info: 'Seed.the_settle_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms the_settle_is_unheard
+
+def ledger (I : Type u) : Machine I (List I) :=
+  ⟨List I, [], fun rec i => rec ++ [i], fun rec => rec⟩
+
+theorem the_ledger_parks_the_word {I : Type u} :
+    ∀ (ws rec : List I), park (ledger I) rec ws = rec ++ ws
+  | [], rec => (the_append_rests rec).symm
+  | w :: ws, rec =>
+      (the_ledger_parks_the_word ws (rec ++ [w])).trans
+        (the_appends_regroup rec [w] ws)
+
+/-- info: 'Seed.the_ledger_parks_the_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_ledger_parks_the_word
+
+theorem every_seat_is_a_reading_of_the_record {I : Type u} {O : Type v}
+    (m : Machine I O) (rec ws : List I) :
+    park m m.s0 (park (ledger I) rec ws) = park m (park m m.s0 rec) ws :=
+  (congrArg (park m m.s0) (the_ledger_parks_the_word ws rec)).trans
+    (the_park_resumes m rec m.s0 ws)
+
+/-- info: 'Seed.every_seat_is_a_reading_of_the_record' does not depend on any axioms -/
+#guard_msgs in #print axioms every_seat_is_a_reading_of_the_record
+
+theorem the_rep_lands_where_it_is_fed {I : Type u} {O : Type v}
+    (m : Machine I O) (w v : List I) (n : Nat) (s : m.S)
+    (u : List Unit) (t : Nat) (r : m.S → I) (vs : List Unit) :
+    sound (airGap I O) m (recite (List.replicate n w))
+        = List.replicate n (behavior m w)
+      ∧ park m s (w ++ v) = park m (park m s w) v
+      ∧ park tally (park tally t u) u = (t + u.length) + u.length
+      ∧ drive (selfSteered m r) s vs = drive m s (selfWord m r s vs.length) :=
+  ⟨the_repeated_ask_hears_one_answer (airGap I O) m w n,
+   the_park_resumes m w s v,
+   (the_tally_parks_at_its_count u (park tally t u)).trans
+     (congrArg (· + u.length) (the_tally_parks_at_its_count u t)),
+   the_instinct_replays_its_word m r vs s⟩
+
+/-- info: 'Seed.the_rep_lands_where_it_is_fed' does not depend on any axioms -/
+#guard_msgs in #print axioms the_rep_lands_where_it_is_fed
+
+theorem the_clock_is_a_room {I : Type u} {O : Type v}
+    (m : Machine I O) (r : m.S → I) (w : List Unit) (s : m.S)
+    (st : m.S × List I) (v : List I) (u : List Unit) :
+    drive (selfSteered m r) s w = m.out (orbit m r s w.length)
+      ∧ selfSteered tally (fun _ => ()) = tally
+      ∧ orbit tally (fun _ => ()) (0 : Nat) u.length = u.length
+      ∧ (∀ b : Bool, park flip b [(), ()] = b)
+      ∧ drive (buffered m) (settleHeld m st) v = drive (buffered m) st v
+      ∧ behavior tally u = u.length :=
+  ⟨the_self_steered_machine_is_a_clock m r w s,
+   rfl,
+   (the_self_steered_machine_is_a_clock tally (fun _ => ()) u (0 : Nat)).symm.trans
+     (the_wider_voice_releases_the_bank u),
+   (fun b => match b with | true => rfl | false => rfl),
+   the_settle_is_unheard m st v,
+   the_wider_voice_releases_the_bank u⟩
+
+/-- info: 'Seed.the_clock_is_a_room' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_is_a_room
+
+def replayer {I : Type u} {O : Type v} (m : Machine I O) : Machine I O :=
+  ⟨List I, [], fun rec i => rec ++ [i], fun rec => m.out (park m m.s0 rec)⟩
+
+theorem the_replay_is_the_machine {I : Type u} {O : Type v} (m : Machine I O)
+    (w : List I) :
+    behavior (replayer m) w = behavior m w :=
+  (congrArg m.out
+    (the_intertwined_walks_agree (replayer m) m
+      (fun rec => park m m.s0 rec)
+      (fun rec i => (the_park_resumes m rec m.s0 [i]).symm)
+      w [])).symm
+
+/-- info: 'Seed.the_replay_is_the_machine' does not depend on any axioms -/
+#guard_msgs in #print axioms the_replay_is_the_machine
+
+inductive reassoc : Plan → Plan → Prop
+  | here (a b c : Plan) :
+      reassoc (.board (.board a b) c) (.board a (.board b c))
+  | left {p q : Plan} (r : Plan) :
+      reassoc p q → reassoc (.board p r) (.board q r)
+  | right (r : Plan) {p q : Plan} :
+      reassoc p q → reassoc (.board r p) (.board r q)
+
+theorem no_move_at_the_ground : ∀ {q : Plan}, ¬ reassoc .ground q :=
+  fun h => nomatch h
+
+/-- info: 'Seed.no_move_at_the_ground' does not depend on any axioms -/
+#guard_msgs in #print axioms no_move_at_the_ground
+
+theorem no_move_at_the_mirror :
+    ∀ {q : Plan}, ¬ reassoc (.board .ground .ground) q := by
+  intro q h
+  cases h with
+  | left r h' => exact no_move_at_the_ground h'
+  | right r h' => exact no_move_at_the_ground h'
+
+/-- info: 'Seed.no_move_at_the_mirror' does not depend on any axioms -/
+#guard_msgs in #print axioms no_move_at_the_mirror
+
+theorem the_two_shapes_of_three :
+    reassoc (.board (.board .ground .ground) .ground)
+        (.board .ground (.board .ground .ground))
+      ∧ reading (.board (.board .ground .ground) .ground)
+          = reading (.board .ground (.board .ground .ground))
+      ∧ (.board (.board .ground .ground) .ground : Plan)
+          ≠ .board .ground (.board .ground .ground)
+      ∧ census 3 = 2 :=
+  ⟨.here .ground .ground .ground,
+   rfl,
+   (fun h => nomatch (Plan.board.inj h).1),
+   rfl⟩
+
+/-- info: 'Seed.the_two_shapes_of_three' does not depend on any axioms -/
+#guard_msgs in #print axioms the_two_shapes_of_three
+
+inductive chain : Nat → Plan → Plan → Prop
+  | rest (p : Plan) : chain 0 p p
+  | step {n : Nat} {p q r : Plan} :
+      reassoc p q → chain n q r → chain (n + 1) p r
+
+theorem no_move_past_the_right_comb :
+    ∀ {q : Plan}, ¬ reassoc (.board .ground (.board .ground .ground)) q := by
+  intro q h
+  cases h with
+  | left r h' => exact no_move_at_the_ground h'
+  | right r h' => exact no_move_at_the_mirror h'
+
+/-- info: 'Seed.no_move_past_the_right_comb' does not depend on any axioms -/
+#guard_msgs in #print axioms no_move_past_the_right_comb
+
+theorem the_left_comb_moves_once :
+    ∀ {q : Plan}, reassoc (.board (.board .ground .ground) .ground) q
+      → q = .board .ground (.board .ground .ground) := by
+  intro q h
+  cases h with
+  | here a b c => rfl
+  | left r h' => exact absurd h' no_move_at_the_mirror
+  | right r h' => exact absurd h' no_move_at_the_ground
+
+/-- info: 'Seed.the_left_comb_moves_once' does not depend on any axioms -/
+#guard_msgs in #print axioms the_left_comb_moves_once
+
+theorem the_right_comb_rests :
+    ∀ {n : Nat} {q : Plan},
+      chain n (.board .ground (.board .ground .ground)) q
+        → q = .board .ground (.board .ground .ground) := by
+  intro n q h
+  cases h with
+  | rest => rfl
+  | step h1 h2 => exact absurd h1 no_move_past_the_right_comb
+
+/-- info: 'Seed.the_right_comb_rests' does not depend on any axioms -/
+#guard_msgs in #print axioms the_right_comb_rests
+
+theorem the_left_loop_reads_zero :
+    ∀ {k : Nat}, chain k (.board (.board .ground .ground) .ground)
+        (.board (.board .ground .ground) .ground) → k = 0 := by
+  intro k h
+  cases h with
+  | rest => rfl
+  | @step m p q r h1 h2 =>
+    have he : q = .board .ground (.board .ground .ground) :=
+      the_left_comb_moves_once h1
+    have h2' : chain m (.board .ground (.board .ground .ground))
+        (.board (.board .ground .ground) .ground) := he ▸ h2
+    exact nomatch (Plan.board.inj (the_right_comb_rests h2').symm).1
+
+/-- info: 'Seed.the_left_loop_reads_zero' does not depend on any axioms -/
+#guard_msgs in #print axioms the_left_loop_reads_zero
+
+theorem the_right_loop_reads_zero :
+    ∀ {k : Nat}, chain k (.board .ground (.board .ground .ground))
+        (.board .ground (.board .ground .ground)) → k = 0 := by
+  intro k h
+  cases h with
+  | rest => rfl
+  | step h1 h2 => exact absurd h1 no_move_past_the_right_comb
+
+/-- info: 'Seed.the_right_loop_reads_zero' does not depend on any axioms -/
+#guard_msgs in #print axioms the_right_loop_reads_zero
+
+theorem three_has_no_loop (n : Nat) :
+    ¬ chain (n + 1) (.board (.board .ground .ground) .ground)
+        (.board (.board .ground .ground) .ground)
+      ∧ ¬ chain (n + 1) (.board .ground (.board .ground .ground))
+          (.board .ground (.board .ground .ground)) :=
+  ⟨(fun h => nomatch (the_left_loop_reads_zero h)),
+   (fun h => nomatch (the_right_loop_reads_zero h))⟩
+
+/-- info: 'Seed.three_has_no_loop' does not depend on any axioms -/
+#guard_msgs in #print axioms three_has_no_loop
+
+theorem the_pentagon_turns_at_four :
+    chain 2 (.board (.board (.board .ground .ground) .ground) .ground)
+        (.board .ground (.board .ground (.board .ground .ground)))
+      ∧ chain 3 (.board (.board (.board .ground .ground) .ground) .ground)
+          (.board .ground (.board .ground (.board .ground .ground))) :=
+  ⟨.step (.here (.board .ground .ground) .ground .ground)
+     (.step (.here .ground .ground (.board .ground .ground)) (.rest _)),
+   .step (.left .ground (.here .ground .ground .ground))
+     (.step (.here .ground (.board .ground .ground) .ground)
+       (.step (.right .ground (.here .ground .ground .ground)) (.rest _)))⟩
+
+/-- info: 'Seed.the_pentagon_turns_at_four' does not depend on any axioms -/
+#guard_msgs in #print axioms the_pentagon_turns_at_four
+
+theorem entanglement_is_the_loop (n : Nat) :
+    (reassoc (.board (.board .ground .ground) .ground)
+        (.board .ground (.board .ground .ground))
+      ∧ census 3 = 2)
+      ∧ (¬ chain (n + 1) (.board (.board .ground .ground) .ground)
+            (.board (.board .ground .ground) .ground))
+      ∧ chain 2 (.board (.board (.board .ground .ground) .ground) .ground)
+          (.board .ground (.board .ground (.board .ground .ground)))
+      ∧ chain 3 (.board (.board (.board .ground .ground) .ground) .ground)
+          (.board .ground (.board .ground (.board .ground .ground)))
+      ∧ (2 : Nat) ≠ 3
+      ∧ reading (.board (.board (.board .ground .ground) .ground) .ground)
+          = reading (.board .ground (.board .ground (.board .ground .ground)))
+      ∧ census 4 = 5 :=
+  ⟨⟨the_two_shapes_of_three.1, the_two_shapes_of_three.2.2.2⟩,
+   (three_has_no_loop n).1,
+   the_pentagon_turns_at_four.1,
+   the_pentagon_turns_at_four.2,
+   (fun h => nomatch (Nat.succ.inj (Nat.succ.inj h))),
+   rfl,
+   rfl⟩
+
+/-- info: 'Seed.entanglement_is_the_loop' does not depend on any axioms -/
+#guard_msgs in #print axioms entanglement_is_the_loop
+
+def roomCap : Nat → Nat
+  | 0 => 1
+  | d + 1 => roomCap d + roomCap d
 
 def words : Nat → List (List Bool)
   | 0 => [[]]
   | n + 1 => (words n).map (true :: ·) ++ (words n).map (false :: ·)
-
-def leads : List Bool → Bool
-  | [] => false
-  | b :: _ => b
-
-def crest : List Bool → List Bool
-  | [] => []
-  | b :: w => (!b) :: w
 
 theorem the_book_counts_the_cap :
     ∀ n : Nat, (words n).length = roomCap n
@@ -10430,26 +3084,32 @@ theorem the_book_counts_the_cap :
   | n + 1 => by
       show ((words n).map (true :: ·) ++ (words n).map (false :: ·)).length
           = roomCap n + roomCap n
-      rw [len_append, len_map, len_map, the_book_counts_the_cap n]
+      rw [lengths_add, len_map, len_map, the_book_counts_the_cap n]
+
+/-- info: 'Seed.the_book_counts_the_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_book_counts_the_cap
 
 theorem every_word_fits :
     ∀ (n : Nat) (w : List Bool), w ∈ words n → w.length = n
-  | 0, w, hw => by
+  | 0, _, hw => by
       cases hw with
       | head => rfl
       | tail _ h' => exact nomatch h'
   | n + 1, w, hw => by
       cases mem_append_split ((words n).map (true :: ·)) hw with
       | inl h1 =>
-          obtain ⟨u, hu, he⟩ := mem_map_back ((words n)) h1
+          obtain ⟨u, hu, he⟩ := mem_map_back (words n) h1
           rw [← he]
           show u.length + 1 = n + 1
           rw [every_word_fits n u hu]
       | inr h2 =>
-          obtain ⟨u, hu, he⟩ := mem_map_back ((words n)) h2
+          obtain ⟨u, hu, he⟩ := mem_map_back (words n) h2
           rw [← he]
           show u.length + 1 = n + 1
           rw [every_word_fits n u hu]
+
+/-- info: 'Seed.every_word_fits' does not depend on any axioms -/
+#guard_msgs in #print axioms every_word_fits
 
 theorem the_book_repeats_no_word : ∀ n : Nat, Apart (words n)
   | 0 => Apart.cons (fun _ hb => nomatch hb) Apart.nil
@@ -10464,76 +3124,8 @@ theorem the_book_repeats_no_word : ∀ n : Nat, Apart (words n)
           | ⟨_, _, hex⟩, ⟨_, _, hey⟩ =>
               nomatch (List.cons.inj ((hex.trans he).trans hey.symm)).1)
 
-theorem the_crest_returns : ∀ w : List Bool, crest (crest w) = w
-  | [] => rfl
-  | b :: w => by
-      show (!(!b)) :: w = b :: w
-      rw [not_not]
-
-theorem the_crest_flips_the_lead (n : Nat) :
-    ∀ w : List Bool, w ∈ words (n + 1) →
-      leads (crest w) = !(leads w)
-  | [], hw => nomatch every_word_fits (n + 1) [] hw
-  | _ :: _, _ => rfl
-
-theorem the_crest_keeps_the_book (n : Nat) :
-    ∀ w : List Bool, w ∈ words (n + 1) → crest w ∈ words (n + 1) := by
-  intro w hw
-  cases mem_append_split ((words n).map (true :: ·)) hw with
-  | inl h1 =>
-      obtain ⟨u, hu, he⟩ := mem_map_back (words n) h1
-      rw [← he]
-      exact mem_append_right ((words n).map (true :: ·))
-        (mem_map_intro (false :: ·) hu)
-  | inr h2 =>
-      obtain ⟨u, hu, he⟩ := mem_map_back (words n) h2
-      rw [← he]
-      exact mem_append_left ((words n).map (false :: ·))
-        (mem_map_intro (true :: ·) hu)
-
-theorem the_rooms_flip_prices_even_money {A : Type}
-    (F : A → A) (q : A → Bool) (hFF : ∀ x, F (F x) = x)
-    {L : List A} (hflip : ∀ x, x ∈ L → q (F x) = !(q x))
-    (hL : Apart L) (hclosed : ∀ x, x ∈ L → F x ∈ L) :
-    (L.filter q).length * 2 = L.length := by
-  have hperm : (L.map F).Perm L :=
-    the_matching_rooms_are_shuffles (L.map F) L
-      (apart_map (fun x y hxy =>
-        (hFF x).symm.trans ((congrArg F hxy).trans (hFF y))) hL)
-      hL
-      (fun x =>
-        ⟨fun hx => by
-           obtain ⟨p, hp, he⟩ := mem_map_back L hx
-           rw [← he]
-           exact hclosed p hp,
-         fun hx => by
-           have h2 := mem_map_intro F (hclosed x hx)
-           rw [hFF x] at h2
-           exact h2⟩)
-  have h3 : L.filter (fun x => !(q x)) = L.filter (fun x => q (F x)) :=
-    filter_congr_mem _ _ L (fun x hx => (hflip x hx).symm)
-  have h4 : (L.map F).filter q = (L.filter (fun x => q (F x))).map F :=
-    filter_map_commutes F q L
-  have h5 : ((L.map F).filter q).length = (L.filter q).length :=
-    perm_length (perm_filter q hperm)
-  have hcount : (L.filter (fun x => !(q x))).length
-      = (L.filter q).length :=
-    (congrArg List.length h3).trans
-      ((len_map F (L.filter (fun x => q (F x)))).symm.trans
-        ((congrArg List.length h4.symm).trans h5))
-  rw [mul_two_reads_double]
-  exact (congrArg ((L.filter q).length + ·) hcount.symm).trans
-    (the_filter_splits_the_room q L)
-
-theorem the_books_lead_is_even_money (n : Nat) :
-    ((words (n + 1)).filter leads).length * 2 = (words (n + 1)).length
-      ∧ (words (n + 1)).length = roomCap (n + 1)
-      ∧ Apart (words (n + 1)) :=
-  ⟨the_rooms_flip_prices_even_money crest leads the_crest_returns
-     (the_crest_flips_the_lead n) (the_book_repeats_no_word (n + 1))
-     (the_crest_keeps_the_book n),
-   the_book_counts_the_cap (n + 1),
-   the_book_repeats_no_word (n + 1)⟩
+/-- info: 'Seed.the_book_repeats_no_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_book_repeats_no_word
 
 theorem the_book_holds_every_word :
     ∀ w : List Bool, w ∈ words w.length
@@ -10545,16 +3137,118 @@ theorem the_book_holds_every_word :
       mem_append_right ((words t.length).map (true :: ·))
         (mem_map_intro (false :: ·) (the_book_holds_every_word t))
 
+/-- info: 'Seed.the_book_holds_every_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_book_holds_every_word
+
+theorem the_book_is_the_answer_space (n : Nat) :
+    (words n).length = roomCap n
+      ∧ Apart (words n)
+      ∧ (∀ w : List Bool, w ∈ words n → w.length = n)
+      ∧ (∀ w : List Bool, w ∈ words w.length)
+      ∧ (words 3).length = 8 :=
+  ⟨the_book_counts_the_cap n,
+   the_book_repeats_no_word n,
+   every_word_fits n,
+   the_book_holds_every_word,
+   rfl⟩
+
+/-- info: 'Seed.the_book_is_the_answer_space' does not depend on any axioms -/
+#guard_msgs in #print axioms the_book_is_the_answer_space
+
+def again {α : Sort u} (Φ : α → α) : Nat → α → α
+  | 0, a => a
+  | n + 1, a => Φ (again Φ n a)
+
+def inc : List Bool → List Bool
+  | [] => []
+  | false :: bs => true :: bs
+  | true :: bs => false :: inc bs
+
+theorem inc_inc : ∀ (b : Bool) (bs : List Bool),
+    inc (inc (b :: bs)) = b :: inc bs
+  | false, _ => rfl
+  | true, _ => rfl
+
+/-- info: 'Seed.inc_inc' does not depend on any axioms -/
+#guard_msgs in #print axioms inc_inc
+
+def dec : List Bool → List Bool
+  | [] => []
+  | true :: bs => false :: bs
+  | false :: bs => true :: dec bs
+
+theorem the_tick_unwinds : ∀ s : List Bool, dec (inc s) = s
+  | [] => rfl
+  | false :: _ => rfl
+  | true :: bs => congrArg (true :: ·) (the_tick_unwinds bs)
+
+/-- info: 'Seed.the_tick_unwinds' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tick_unwinds
+
+theorem the_unwind_ticks : ∀ s : List Bool, inc (dec s) = s
+  | [] => rfl
+  | true :: _ => rfl
+  | false :: bs => congrArg (false :: ·) (the_unwind_ticks bs)
+
+/-- info: 'Seed.the_unwind_ticks' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unwind_ticks
+
+def zeros : Nat → List Bool
+  | 0 => []
+  | n + 1 => false :: zeros n
+
+def val : List Bool → Nat
+  | [] => 0
+  | b :: bs => cond b 1 0 + (val bs + val bs)
+
+theorem the_zeros_span_the_width : ∀ n : Nat, (zeros n).length = n
+  | 0 => rfl
+  | n + 1 => congrArg (· + 1) (the_zeros_span_the_width n)
+
+/-- info: 'Seed.the_zeros_span_the_width' does not depend on any axioms -/
+#guard_msgs in #print axioms the_zeros_span_the_width
+
+theorem the_doubling_passes_the_tick_inward :
+    ∀ (c : Nat) (b : Bool) (bs : List Bool),
+      again inc (c + c) (b :: bs) = b :: again inc c bs
+  | 0, _, _ => rfl
+  | c + 1, b, bs => by
+      rw [show (c + 1) + (c + 1) = ((c + c) + 1) + 1 from
+            congrArg (· + 1) (succ_adds c c)]
+      show inc (inc (again inc (c + c) (b :: bs)))
+          = b :: again inc (c + 1) bs
+      rw [the_doubling_passes_the_tick_inward c b bs, inc_inc]
+      exact rfl
+
+/-- info: 'Seed.the_doubling_passes_the_tick_inward' does not depend on any axioms -/
+#guard_msgs in #print axioms the_doubling_passes_the_tick_inward
+
+theorem the_odometer_comes_home_at_the_cap :
+    ∀ s : List Bool, again inc (roomCap s.length) s = s
+  | [] => rfl
+  | b :: bs => by
+      show again inc (roomCap bs.length + roomCap bs.length) (b :: bs)
+          = b :: bs
+      rw [the_doubling_passes_the_tick_inward (roomCap bs.length) b bs,
+          the_odometer_comes_home_at_the_cap bs]
+
+/-- info: 'Seed.the_odometer_comes_home_at_the_cap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_odometer_comes_home_at_the_cap
+
+def clockAt (n t : Nat) : List Bool :=
+  again inc t (zeros n)
+
 theorem the_clock_reaches_every_word :
-    ∀ w : List Bool, again inc (val w) (zeros w.length) = w
+    ∀ w : List Bool, clockAt w.length (val w) = w
   | [] => rfl
   | false :: t => by
       show again inc ((0 : Nat) + (val t + val t))
           (false :: zeros t.length) = false :: t
-      rw [zero_plus,
+      rw [zero_add,
           the_doubling_passes_the_tick_inward (val t) false
-            (zeros t.length),
-          the_clock_reaches_every_word t]
+            (zeros t.length)]
+      show false :: clockAt t.length (val t) = false :: t
+      rw [the_clock_reaches_every_word t]
   | true :: t => by
       show again inc ((1 : Nat) + (val t + val t))
           (false :: zeros t.length) = true :: t
@@ -10562,938 +3256,13 @@ theorem the_clock_reaches_every_word :
       show inc (again inc (val t + val t) (false :: zeros t.length))
           = true :: t
       rw [the_doubling_passes_the_tick_inward (val t) false
-            (zeros t.length),
-          the_clock_reaches_every_word t]
+            (zeros t.length)]
+      show inc (false :: clockAt t.length (val t)) = true :: t
+      rw [the_clock_reaches_every_word t]
       exact rfl
 
-theorem the_clock_never_repeats_below_the_cap (n : Nat) {t t' : Nat}
-    (ht : Nat.ble (t + 1) (roomCap n) = true)
-    (ht' : Nat.ble (t' + 1) (roomCap n) = true) (hne : t ≠ t') :
-    again inc t (zeros n) ≠ again inc t' (zeros n) :=
-  fun he => hne ((the_clock_reads_its_count n t ht).symm.trans
-    ((congrArg val he).trans (the_clock_reads_its_count n t' ht')))
-
-theorem the_odometer_reads_the_whole_book (n : Nat) (w : List Bool)
-    (hw : w ∈ words n) {t t' : Nat}
-    (ht : Nat.ble (t + 1) (roomCap n) = true)
-    (ht' : Nat.ble (t' + 1) (roomCap n) = true) (hne : t ≠ t') :
-    again inc (val w) (zeros n) = w
-      ∧ (∀ v : List Bool, v ∈ words v.length)
-      ∧ again inc t (zeros n) ≠ again inc t' (zeros n)
-      ∧ again inc (roomCap n) (zeros n) = zeros n
-      ∧ (words n).length = roomCap n :=
-  ⟨by
-     rw [← every_word_fits n w hw]
-     exact the_clock_reaches_every_word w,
-   the_book_holds_every_word,
-   the_clock_never_repeats_below_the_cap n ht ht' hne,
-   by
-     rw [show roomCap n = roomCap (zeros n).length from
-       (congrArg roomCap (the_zeros_span_the_width n)).symm]
-     exact the_odometer_comes_home_at_the_cap (zeros n),
-   the_book_counts_the_cap n⟩
-
-theorem the_three_rooms_stand_exact (k : Nat) {A : Type}
-    (l p : List A) (hl : Apart l) (v : List Bool) :
-    (Apart ((allPlans k).filter
-          (fun q => Nat.beq (fold (fun a b => a + b) 1 q) (k + 1)))
-        ∧ ∀ q : Plan,
-            q ∈ (allPlans k).filter
-                (fun q => Nat.beq (fold (fun a b => a + b) 1 q) (k + 1))
-              ↔ fold (fun a b => a + b) 1 q = k + 1)
-      ∧ ((p.Perm l ↔ p ∈ perms l)
-          ∧ Apart (perms l)
-          ∧ (perms l).length = fact l.length)
-      ∧ (Apart (words v.length)
-          ∧ v ∈ words v.length
-          ∧ (words v.length).length = roomCap v.length
-          ∧ again inc (val v) (zeros v.length) = v) :=
-  ⟨the_census_is_exact k,
-   the_census_of_orders_is_exact l p hl,
-   ⟨the_book_repeats_no_word v.length,
-    the_book_holds_every_word v,
-    the_book_counts_the_cap v.length,
-    the_clock_reaches_every_word v⟩⟩
-
-def rotate {A : Type} (k : Nat) (p : List A) : List A :=
-  p.drop k ++ p.take k
-
-theorem the_turn_keeps_the_length {A : Type} (k : Nat) (p : List A) :
-    (rotate k p).length = p.length := by
-  show (p.drop k ++ p.take k).length = p.length
-  rw [len_append, Nat.add_comm, ← len_append, take_drop]
-
-theorem ble_gives_the_gap : ∀ k n : Nat, Nat.ble k n = true → ∃ m, k + m = n
-  | 0, n, _ => ⟨n, zero_plus n⟩
-  | k + 1, n + 1, h =>
-      match ble_gives_the_gap k n h with
-      | ⟨m, hm⟩ => ⟨m, (succ_adds k m).trans (congrArg (· + 1) hm)⟩
-
-theorem the_short_word_takes_itself {A : Type} :
-    ∀ (p : List A) (k : Nat), Nat.ble p.length k = true →
-      p.take k = p ∧ p.drop k = []
-  | [], 0, _ => ⟨rfl, rfl⟩
-  | [], _ + 1, _ => ⟨rfl, rfl⟩
-  | _ :: _, 0, h => nomatch h
-  | a :: p, k + 1, h =>
-      ⟨congrArg (a :: ·) (the_short_word_takes_itself p k h).1,
-       (the_short_word_takes_itself p k h).2⟩
-
-theorem the_short_word_turns_home {A : Type} (p : List A) (k : Nat)
-    (h : Nat.ble p.length k = true) : rotate k p = p := by
-  show p.drop k ++ p.take k = p
-  rw [(the_short_word_takes_itself p k h).2,
-      (the_short_word_takes_itself p k h).1]
-  exact rfl
-
-theorem the_turns_undo {A : Type} (k m : Nat) (p : List A)
-    (h : p.length = k + m) : rotate m (rotate k p) = p := by
-  have hd : (p.drop k).length = m := drop_length k p h
-  show (p.drop k ++ p.take k).drop m ++ (p.drop k ++ p.take k).take m = p
-  rw [← hd, drop_append, take_append, take_drop]
-
-theorem the_turn_merges_nothing {A : Type} (k : Nat) :
-    ∀ p q : List A, rotate k p = rotate k q → p = q := by
-  intro p q he
-  have hl : p.length = q.length :=
-    (the_turn_keeps_the_length k p).symm.trans
-      ((congrArg List.length he).trans (the_turn_keeps_the_length k q))
-  cases hble : Nat.ble k p.length with
-  | true =>
-      obtain ⟨m, hm⟩ := ble_gives_the_gap k p.length hble
-      have hp : rotate m (rotate k p) = p := the_turns_undo k m p hm.symm
-      have hq : rotate m (rotate k q) = q :=
-        the_turns_undo k m q (hl.symm.trans hm.symm)
-      exact hp.symm.trans ((congrArg (rotate m) he).trans hq)
-  | false =>
-      have hpk : Nat.ble p.length k = true :=
-        ble_trans _ _ _ (ble_le_succ p.length) (ble_flip k p.length hble)
-      have hqk : Nat.ble q.length k = true := by
-        rw [← hl]
-        exact hpk
-      exact (the_short_word_turns_home p k hpk).symm.trans
-        (he.trans (the_short_word_turns_home q k hqk))
-
-theorem perm_append_comm {A : Type} : ∀ u v : List A, (u ++ v).Perm (v ++ u)
-  | [], v => by
-      rw [append_nil v]
-      exact perm_refl v
-  | x :: u, v =>
-      List.Perm.trans (List.Perm.cons x (perm_append_comm u v))
-        (perm_symm (perm_middle x v u))
-
-theorem the_turned_word_is_a_shuffle {A : Type} (k : Nat) (p : List A) :
-    (rotate k p).Perm p := by
-  show (p.drop k ++ p.take k).Perm p
-  exact List.Perm.trans (perm_append_comm (p.drop k) (p.take k))
-    (by rw [take_drop])
-
-theorem the_turn_keeps_the_room {A : Type} {l : List A} (k : Nat)
-    {p : List A} (hp : p ∈ perms l) : rotate k p ∈ perms l :=
-  every_shuffle_is_an_order l (rotate k p)
-    ((the_turned_word_is_a_shuffle k p).trans
-      (every_order_is_a_shuffle l p hp))
-
-theorem the_turn_covers_the_room {A : Type} {l : List A} (k : Nat)
-    {x : List A} (hx : x ∈ perms l) :
-    ∃ y, y ∈ perms l ∧ rotate k y = x := by
-  cases hble : Nat.ble k x.length with
-  | true =>
-      obtain ⟨m, hm⟩ := ble_gives_the_gap k x.length hble
-      exact ⟨rotate m x, the_turn_keeps_the_room m hx,
-        the_turns_undo m k x (hm.symm.trans (Nat.add_comm k m))⟩
-  | false =>
-      have hxk : Nat.ble x.length k = true :=
-        ble_trans _ _ _ (ble_le_succ x.length) (ble_flip k x.length hble)
-      exact ⟨x, hx, the_short_word_turns_home x k hxk⟩
-
-theorem the_turned_room_is_the_room {A : Type} {l : List A} (hl : Apart l)
-    (k : Nat) : ((perms l).map (rotate k)).Perm (perms l) :=
-  the_matching_rooms_are_shuffles _ _
-    (apart_map (fun p q h => the_turn_merges_nothing k p q h)
-      (the_orders_repeat_never l hl))
-    (the_orders_repeat_never l hl)
-    (fun _x =>
-      ⟨fun hx =>
-         match mem_map_back (perms l) hx with
-         | ⟨_, hp, he⟩ => he ▸ the_turn_keeps_the_room k hp,
-       fun hx =>
-         match the_turn_covers_the_room k hx with
-         | ⟨_, hy, he⟩ => he ▸ mem_map_intro (rotate k) hy⟩)
-
-theorem the_positive_word_leads {A : Type} :
-    ∀ (w : List A) (m : Nat), w.length = m + 1 → ∃ x t, w = x :: t
-  | [], _, h => nomatch h
-  | x :: t, _, _ => ⟨x, t, rfl⟩
-
-theorem the_seat_reads_at_the_turned_head {A : Type} (beq : A → A → Bool)
-    (a : A) (k m : Nat) (p : List A) (h : p.length = k + (m + 1)) :
-    headIs beq a (rotate k p) = headIs beq a (p.drop k) := by
-  obtain ⟨x, t, he⟩ :=
-    the_positive_word_leads (p.drop k) m (drop_length k p h)
-  show headIs beq a (p.drop k ++ p.take k) = headIs beq a (p.drop k)
-  rw [he]
-  exact rfl
-
-theorem the_seat_count_is_the_head_count {A : Type} (beq : A → A → Bool)
-    (a : A) {l : List A} (hl : Apart l) (k m : Nat)
-    (hlen : l.length = k + (m + 1)) :
-    ((perms l).filter (fun p => headIs beq a (p.drop k))).length
-      = ((perms l).filter (headIs beq a)).length := by
-  have h1 : (perms l).filter (fun p => headIs beq a (p.drop k))
-      = (perms l).filter (fun p => headIs beq a (rotate k p)) :=
-    filter_congr_mem (fun p => headIs beq a (p.drop k))
-      (fun p => headIs beq a (rotate k p)) (perms l)
-      (fun p hp =>
-        (the_seat_reads_at_the_turned_head beq a k m p
-          ((the_orders_keep_the_length l p hp).trans hlen)).symm)
-  have h2 : ((perms l).map (rotate k)).filter (headIs beq a)
-      = ((perms l).filter
-          (fun p => headIs beq a (rotate k p))).map (rotate k) :=
-    filter_map_commutes (rotate k) (headIs beq a) (perms l)
-  have h3 : (((perms l).map (rotate k)).filter (headIs beq a)).length
-      = ((perms l).filter (headIs beq a)).length :=
-    perm_length (perm_filter (headIs beq a) (the_turned_room_is_the_room hl k))
-  rw [h1, ← len_map (rotate k)
-        ((perms l).filter (fun p => headIs beq a (rotate k p))),
-      ← h2]
-  exact h3
-
-theorem every_seat_pays_the_factorial {A : Type} {beq : A → A → Bool}
-    (hE : ∀ x y : A, beq x y = true → x = y)
-    (hR : ∀ x : A, beq x x = true) {a : A} {l : List A}
-    (hl : Apart l) (ha : a ∈ l) (k m : Nat)
-    (hlen : l.length = k + (m + 1)) :
-    ((perms l).filter (fun p => headIs beq a (p.drop k))).length * l.length
-      = fact l.length :=
-  (congrArg (· * l.length)
-      (the_seat_count_is_the_head_count beq a hl k m hlen)).trans
-    (the_head_pays_the_factorial hE hR hl ha)
-
-theorem no_seat_has_a_favorite {A : Type} {beq : A → A → Bool}
-    (hE : ∀ x y : A, beq x y = true → x = y)
-    (hR : ∀ x : A, beq x x = true) {a b : A} {l : List A}
-    (hl : Apart l) (ha : a ∈ l) (hb : b ∈ l) (k m : Nat)
-    (hlen : l.length = k + (m + 1)) :
-    ((perms l).filter (fun p => headIs beq a (p.drop k))).length
-        = ((perms l).filter (fun p => headIs beq b (p.drop k))).length
-      ∧ ((perms l).filter (fun p => headIs beq a (p.drop k))).length
-          * l.length = fact l.length
-      ∧ sameRatio
-          ((perms l).filter (fun p => headIs beq a (p.drop k))).length
-          (fact l.length) 1 l.length :=
-  ⟨(the_seat_count_is_the_head_count beq a hl k m hlen).trans
-     (((the_room_has_no_favorite hE hR hl ha hb).2.2).trans
-       (the_seat_count_is_the_head_count beq b hl k m hlen).symm),
-   every_seat_pays_the_factorial hE hR hl ha k m hlen,
-   (every_seat_pays_the_factorial hE hR hl ha k m hlen).trans
-     (one_times (fact l.length)).symm⟩
-
-theorem mem_of_mem_drop {A : Type} :
-    ∀ (k : Nat) (l : List A) {x : A}, x ∈ l.drop k → x ∈ l
-  | 0, _, _, h => h
-  | _ + 1, [], _, h => nomatch h
-  | k + 1, _ :: l, _, h => List.Mem.tail _ (mem_of_mem_drop k l h)
-
-theorem the_head_is_a_member {a : Nat} :
-    ∀ w : List Nat, headIs Nat.beq a w = true → a ∈ w
-  | [], h => nomatch h
-  | x :: w, h => by
-      have h' : Nat.beq x a = true := h
-      rw [← eq_of_beq x a h']
-      exact List.Mem.head w
-
-theorem the_seat_names_the_depth (a : Nat) :
-    ∀ (p : List Nat) (k : Nat), Apart p →
-      headIs Nat.beq a (p.drop k) = true → depthTo p a = k
-  | [], 0, _, h => nomatch h
-  | [], _ + 1, _, h => nomatch h
-  | y :: t, 0, _, h => by
-      have h' : Nat.beq y a = true := h
-      rw [← eq_of_beq y a h']
-      exact the_seated_arrive_shallowest t y
-  | y :: t, k + 1, .cons hy ht, h => by
-      have hmem : a ∈ t :=
-        mem_of_mem_drop k t (the_head_is_a_member (t.drop k) h)
-      have hay : a ≠ y := fun he => hy a hmem he.symm
-      rw [every_later_admission_deepens t hay,
-          the_seat_names_the_depth a t k ht h]
-
-theorem the_depth_takes_its_seat (a : Nat) :
-    ∀ (p : List Nat) (k : Nat), a ∈ p → depthTo p a = k →
-      headIs Nat.beq a (p.drop k) = true
-  | [], _, ha, _ => nomatch ha
-  | y :: t, k, ha, hd => by
-      cases hay : Nat.beq a y with
-      | true =>
-          have h0 : depthTo (y :: t) a = 0 := by
-            show cond (Nat.beq a y) 0 (depthTo t a + 1) = 0
-            rw [hay]
-            rfl
-          have hk : k = 0 := hd.symm.trans h0
-          rw [hk]
-          show Nat.beq y a = true
-          rw [← eq_of_beq a y hay]
-          exact beq_self a
-      | false =>
-          have hay' : a ≠ y := ne_of_beq_false hay
-          have hd' : depthTo t a + 1 = k := by
-            rw [← every_later_admission_deepens t hay']
-            exact hd
-          have ha' : a ∈ t := by
-            cases ha with
-            | head => exact absurd rfl hay'
-            | tail _ h' => exact h'
-          cases k with
-          | zero => exact nomatch hd'
-          | succ m =>
-              have hm : depthTo t a = m := Nat.succ.inj hd'
-              exact the_depth_takes_its_seat a t m ha' hm
-
-theorem the_two_verdicts_agree (a : Nat) (p : List Nat) (k : Nat)
-    (hap : Apart p) (ha : a ∈ p) :
-    Nat.beq (depthTo p a) k = headIs Nat.beq a (p.drop k) := by
-  cases hs : headIs Nat.beq a (p.drop k) with
-  | true =>
-      rw [the_seat_names_the_depth a p k hap hs]
-      exact beq_self k
-  | false =>
-      cases hb : Nat.beq (depthTo p a) k with
-      | false => rfl
-      | true =>
-          exact absurd (the_depth_takes_its_seat a p k ha (eq_of_beq _ _ hb))
-            (ne_true_of_eq_false hs)
-
-theorem the_age_count_is_the_seat_count (a : Nat) {l : List Nat}
-    (hl : Apart l) (ha : a ∈ l) (k : Nat) :
-    ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
-      = ((perms l).filter (fun p => headIs Nat.beq a (p.drop k))).length :=
-  congrArg List.length
-    (filter_congr_mem (fun p => Nat.beq (depthTo p a) k)
-      (fun p => headIs Nat.beq a (p.drop k)) (perms l)
-      (fun p hp =>
-        the_two_verdicts_agree a p k
-          (perm_apart (perm_symm (every_order_is_a_shuffle l p hp)) hl)
-          (perm_mem (perm_symm (every_order_is_a_shuffle l p hp)) a ha)))
-
-theorem every_age_counts_alike {l : List Nat} (hl : Apart l)
-    {a b : Nat} (ha : a ∈ l) (hb : b ∈ l) (k j m m' : Nat)
-    (hk : l.length = k + (m + 1)) (hj : l.length = j + (m' + 1)) :
-    ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
-        = ((perms l).filter (fun p => Nat.beq (depthTo p a) j)).length
-      ∧ ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
-          = ((perms l).filter (fun p => Nat.beq (depthTo p b) k)).length
-      ∧ ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
-          * l.length = fact l.length
-      ∧ sameRatio
-          ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
-          (fact l.length) 1 l.length := by
-  have hak := the_age_count_is_the_seat_count a hl ha k
-  have haj := the_age_count_is_the_seat_count a hl ha j
-  have hbk := the_age_count_is_the_seat_count b hl hb k
-  have hsk := the_seat_count_is_the_head_count Nat.beq a hl k m hk
-  have hsj := the_seat_count_is_the_head_count Nat.beq a hl j m' hj
-  have hpay :
-      ((perms l).filter (fun p => Nat.beq (depthTo p a) k)).length
-        * l.length = fact l.length :=
-    (congrArg (· * l.length) hak).trans
-      (every_seat_pays_the_factorial eq_of_beq beq_self hl ha k m hk)
-  exact ⟨hak.trans (hsk.trans (hsj.symm.trans haj.symm)),
-    hak.trans
-      (((no_seat_has_a_favorite eq_of_beq beq_self hl ha hb k m hk).1).trans
-        hbk.symm),
-    hpay,
-    hpay.trans (one_times (fact l.length)).symm⟩
-
-def natSum : List Nat → Nat
-  | [] => 0
-  | x :: w => x + natSum w
-
-theorem the_sum_is_a_heap_reading :
-    ∀ (w : List Nat) (s : Nat), park heap s w = s + natSum w
-  | [], _ => rfl
-  | x :: w, s => by
-      show park heap (s + x) w = s + (x + natSum w)
-      rw [the_sum_is_a_heap_reading w (s + x)]
-      exact Nat.add_assoc s x (natSum w)
-
-theorem the_sum_hears_no_shuffle {xs ys : List Nat} (h : xs.Perm ys) :
-    natSum xs = natSum ys :=
-  ((zero_plus (natSum xs)).symm.trans
-    ((the_sum_is_a_heap_reading xs 0).symm.trans
-      ((the_commuting_seat_hears_every_shuffle heap
-          the_heap_steps_commute h ((0 : Nat))).trans
-        (the_sum_is_a_heap_reading ys 0)))).trans
-    (zero_plus (natSum ys))
-
-theorem add_swap_mid (a b c d : Nat) :
-    (a + b) + (c + d) = (a + c) + (b + d) := by
-  rw [Nat.add_assoc a b (c + d), ← Nat.add_assoc b c d,
-      Nat.add_comm b c, Nat.add_assoc c b d,
-      ← Nat.add_assoc a c (b + d)]
-
-theorem the_sums_add {A : Type} (f g : A → Nat) :
-    ∀ L : List A,
-      natSum (L.map (fun x => f x + g x))
-        = natSum (L.map f) + natSum (L.map g)
-  | [] => rfl
-  | x :: L => by
-      show (f x + g x) + natSum (L.map (fun y => f y + g y))
-          = (f x + natSum (L.map f)) + (g x + natSum (L.map g))
-      rw [the_sums_add f g L]
-      exact add_swap_mid (f x) (g x) (natSum (L.map f)) (natSum (L.map g))
-
-theorem the_ones_count_the_room {A : Type} :
-    ∀ L : List A, natSum (L.map (fun _ => 1)) = L.length
-  | [] => rfl
-  | _ :: L => by
-      show 1 + natSum (L.map (fun _ => 1)) = L.length + 1
-      rw [the_ones_count_the_room L]
-      exact Nat.add_comm 1 L.length
-
-theorem a_level_reading_sums_by_count {A : Type} (f : A → Nat) (c : Nat) :
-    ∀ L : List A, (∀ x, x ∈ L → f x = c) →
-      natSum (L.map f) = c * L.length
-  | [], _ => rfl
-  | x :: L, h => by
-      show f x + natSum (L.map f) = c * (L.length + 1)
-      rw [h x (List.Mem.head L),
-          a_level_reading_sums_by_count f c L
-            (fun y hy => h y (List.Mem.tail x hy))]
-      exact Nat.add_comm c (c * L.length)
-
-theorem map_map {A B C : Type} (f : A → B) (g : B → C) :
-    ∀ L : List A, (L.map f).map g = L.map (fun x => g (f x))
-  | [] => rfl
-  | x :: L => congrArg (g (f x) :: ·) (map_map f g L)
-
-theorem turnQueue_of_append {A : Type} :
-    ∀ x y : List A, turnQueue (x ++ y) [] = turnQueue y [] ++ turnQueue x []
-  | [], y => (append_nil (turnQueue y [])).symm
-  | c :: x, y => by
-      show turnQueue (x ++ y) [c] = turnQueue y [] ++ turnQueue (c :: x) []
-      rw [turnQueue_append (x ++ y) [c], turnQueue_of_append x y,
-          show turnQueue (c :: x) [] = turnQueue x [] ++ [c] from
-            turnQueue_append x [c],
-          append_regroups]
-
-theorem the_turned_queue_counts {A : Type} :
-    ∀ (w acc : List A), (turnQueue w acc).length = w.length + acc.length
-  | [], acc => (zero_plus acc.length).symm
-  | x :: w, acc => by
-      show (turnQueue w (x :: acc)).length = (w.length + 1) + acc.length
-      rw [the_turned_queue_counts w (x :: acc), succ_adds]
-      exact rfl
-
-theorem the_turned_queue_is_a_shuffle {A : Type} :
-    ∀ w : List A, (turnQueue w []).Perm w
-  | [] => .nil
-  | x :: w => by
-      show (turnQueue w [x]).Perm (x :: w)
-      rw [turnQueue_append w [x]]
-      exact List.Perm.trans (perm_append_comm (turnQueue w []) [x])
-        (List.Perm.cons x (the_turned_queue_is_a_shuffle w))
-
-theorem the_turned_queue_keeps_the_room {A : Type} {l : List A}
-    {p : List A} (hp : p ∈ perms l) : turnQueue p [] ∈ perms l :=
-  every_shuffle_is_an_order l (turnQueue p [])
-    ((the_turned_queue_is_a_shuffle p).trans
-      (every_order_is_a_shuffle l p hp))
-
-theorem the_reversed_room_is_the_room {A : Type} {l : List A}
-    (hl : Apart l) :
-    ((perms l).map (fun p => turnQueue p [])).Perm (perms l) :=
-  the_matching_rooms_are_shuffles _ _
-    (apart_map
-      (fun p q h =>
-        (the_double_turn_comes_home p).symm.trans
-          ((congrArg (fun w => turnQueue w []) h).trans
-            (the_double_turn_comes_home q)))
-      (the_orders_repeat_never l hl))
-    (the_orders_repeat_never l hl)
-    (fun x =>
-      ⟨fun hx =>
-         match mem_map_back (perms l) hx with
-         | ⟨_, hp, he⟩ => he ▸ the_turned_queue_keeps_the_room hp,
-       fun hx =>
-         (the_double_turn_comes_home x) ▸
-           mem_map_intro (fun p => turnQueue p [])
-             (the_turned_queue_keeps_the_room hx)⟩)
-
-theorem the_split_reads_its_depth (a : Nat) (u v : List Nat)
-    (hfresh : ∀ y, y ∈ u → a ≠ y) :
-    depthTo (u ++ a :: v) a = u.length := by
-  rw [the_depth_counts_the_clicks_since a u (a :: v) hfresh,
-      the_seated_arrive_shallowest v a]
-  exact zero_plus u.length
-
-theorem the_ages_face_each_other {a : Nat} {p : List Nat}
-    (hap : Apart p) (ha : a ∈ p) :
-    (depthTo p a + depthTo (turnQueue p []) a) + 1 = p.length := by
-  obtain ⟨u, v, he⟩ := mem_splits ha
-  subst he
-  have hfu : ∀ y, y ∈ u → a ≠ y := fun y hy hea =>
-    apart_across u (a :: v) hap y hy a (List.Mem.head v) hea.symm
-  have hav : ∀ y, y ∈ v → a ≠ y := by
-    have htail : Apart (a :: v) := apart_drop u (a :: v) hap
-    cases htail with
-    | cons hhead _ => exact fun y hy => hhead y hy
-  have hrev : turnQueue (u ++ a :: v) []
-      = turnQueue v [] ++ (a :: turnQueue u []) := by
-    rw [turnQueue_of_append u (a :: v),
-        show turnQueue (a :: v) [] = turnQueue v [] ++ [a] from
-          turnQueue_append v [a],
-        snoc_append]
-  have hfr : ∀ y, y ∈ turnQueue v [] → a ≠ y := fun y hy =>
-    hav y (match mem_turnQueue v [] hy with
-      | Or.inl h => h
-      | Or.inr h => nomatch h)
-  have hlen : (turnQueue v []).length = v.length :=
-    the_turned_queue_counts v []
-  rw [the_split_reads_its_depth a u v hfu, hrev,
-      the_depth_counts_the_clicks_since a (turnQueue v [])
-        (a :: turnQueue u []) hfr,
-      the_seated_arrive_shallowest (turnQueue u []) a,
-      hlen, zero_plus, len_append u (a :: v)]
-  exact Nat.add_assoc u.length v.length 1
-
-theorem the_turned_ages_sum_alike (a : Nat) {l : List Nat}
-    (hl : Apart l) :
-    natSum ((perms l).map (fun p => depthTo (turnQueue p []) a))
-      = natSum ((perms l).map (fun p => depthTo p a)) := by
-  rw [show (perms l).map (fun p => depthTo (turnQueue p []) a)
-        = ((perms l).map (fun p => turnQueue p [])).map
-            (fun p => depthTo p a)
-      from (map_map (fun p => turnQueue p [])
-        (fun p => depthTo p a) (perms l)).symm]
-  exact the_sum_hears_no_shuffle
-    (perm_map (fun p => depthTo p a) (the_reversed_room_is_the_room hl))
-
-theorem the_ages_pay_the_room (a : Nat) {l : List Nat} (hl : Apart l)
-    (ha : a ∈ l) :
-    natSum ((perms l).map
-        (fun p => (depthTo p a + depthTo (turnQueue p []) a) + 1))
-      = l.length * (perms l).length :=
-  a_level_reading_sums_by_count
-    (fun p => (depthTo p a + depthTo (turnQueue p []) a) + 1) l.length
-    (perms l)
-    (fun p hp =>
-      (the_ages_face_each_other
-        (perm_apart (perm_symm (every_order_is_a_shuffle l p hp)) hl)
-        (perm_mem (perm_symm (every_order_is_a_shuffle l p hp)) a ha)).trans
-        (the_orders_keep_the_length l p hp))
-
-theorem the_average_age_is_the_middle {l : List Nat} (hl : Apart l)
-    {a : Nat} (ha : a ∈ l) (n : Nat) (hn : l.length = n + 1) :
-    sameRatio (natSum ((perms l).map (fun p => depthTo p a)))
-        (fact l.length) n 2
-      ∧ natSum ((perms l).map (fun p => depthTo (turnQueue p []) a))
-          = natSum ((perms l).map (fun p => depthTo p a))
-      ∧ ∀ p, p ∈ perms l →
-          (depthTo p a + depthTo (turnQueue p []) a) + 1 = l.length := by
-  have hface : ∀ p, p ∈ perms l →
-      (depthTo p a + depthTo (turnQueue p []) a) + 1 = l.length :=
-    fun p hp =>
-      (the_ages_face_each_other
-        (perm_apart (perm_symm (every_order_is_a_shuffle l p hp)) hl)
-        (perm_mem (perm_symm (every_order_is_a_shuffle l p hp)) a ha)).trans
-        (the_orders_keep_the_length l p hp)
-  have hrev := the_turned_ages_sum_alike a hl
-  refine ⟨?_, hrev, hface⟩
-  have hsplit :
-      natSum ((perms l).map
-          (fun p => (depthTo p a + depthTo (turnQueue p []) a) + 1))
-        = (natSum ((perms l).map (fun p => depthTo p a))
-            + natSum ((perms l).map (fun p => depthTo (turnQueue p []) a)))
-          + (perms l).length :=
-    (the_sums_add (fun p => depthTo p a + depthTo (turnQueue p []) a)
-        (fun _ => 1) (perms l)).trans
-      (congr
-        (congrArg (· + ·)
-          (the_sums_add (fun p => depthTo p a)
-            (fun p => depthTo (turnQueue p []) a) (perms l)))
-        (the_ones_count_the_room (perms l)))
-  have h1 := hsplit.symm.trans (the_ages_pay_the_room a hl ha)
-  rw [hrev, the_orders_count_to_the_factorial l] at h1
-  have h2 : l.length * fact l.length
-      = n * fact l.length + fact l.length :=
-    (congrArg (· * fact l.length) hn).trans (succ_mul n (fact l.length))
-  have hSS : natSum ((perms l).map (fun p => depthTo p a))
-        + natSum ((perms l).map (fun p => depthTo p a))
-      = n * fact l.length :=
-    add_right_cancel (fact l.length) (h1.trans h2)
-  show natSum ((perms l).map (fun p => depthTo p a)) * 2
-      = n * fact l.length
-  rw [mul_two_reads_double]
-  exact hSS
-
-theorem the_sum_resumes (x y : List Nat) :
-    natSum (x ++ y) = natSum x + natSum y :=
-  ((zero_plus (natSum (x ++ y))).symm.trans
-    ((the_sum_is_a_heap_reading (x ++ y) 0).symm.trans
-      ((the_park_resumes heap x y ((0 : Nat))).trans
-        ((congrArg (fun s => park heap s y)
-            ((the_sum_is_a_heap_reading x 0).trans
-              (zero_plus (natSum x)))).trans
-          (the_sum_is_a_heap_reading y (natSum x))))))
-
-theorem the_sum_scales {A : Type} (c : Nat) (f : A → Nat) :
-    ∀ L : List A,
-      natSum (L.map (fun x => c * f x)) = c * natSum (L.map f)
-  | [] => rfl
-  | x :: L => by
-      show c * f x + natSum (L.map (fun y => c * f y))
-          = c * (f x + natSum (L.map f))
-      rw [the_sum_scales c f L, Nat.left_distrib]
-
-def weigh (t f : Nat) : List Bool → Nat
-  | [] => 1
-  | true :: w => t * weigh t f w
-  | false :: w => f * weigh t f w
-
-def stack (b : Nat) : Nat → Nat
-  | 0 => 1
-  | n + 1 => b * stack b n
-
-theorem mul_one_reads : ∀ n : Nat, n * 1 = n := fun n => zero_plus n
-
-theorem the_stacks_add (b i : Nat) :
-    ∀ j : Nat, stack b (i + j) = stack b i * stack b j
-  | 0 => (mul_one_reads (stack b i)).symm
-  | j + 1 => by
-      show b * stack b (i + j) = stack b i * (b * stack b j)
-      rw [the_stacks_add b i j, ← mul_regroups b (stack b i) (stack b j),
-          Nat.mul_comm b (stack b i), mul_regroups]
-
-theorem the_weighted_book_sums_whole (t f : Nat) :
-    ∀ n : Nat, natSum ((words n).map (weigh t f)) = stack (t + f) n
-  | 0 => rfl
-  | n + 1 => by
-      show natSum
-          (((words n).map (true :: ·) ++ (words n).map (false :: ·)).map
-            (weigh t f))
-        = stack (t + f) (n + 1)
-      rw [map_append (weigh t f) ((words n).map (true :: ·))
-            ((words n).map (false :: ·)),
-          the_sum_resumes,
-          map_map (true :: ·) (weigh t f) (words n),
-          map_map (false :: ·) (weigh t f) (words n),
-          map_congr_mem (fun w => weigh t f (true :: w))
-            (fun w => t * weigh t f w) (words n) (fun _ _ => rfl),
-          map_congr_mem (fun w => weigh t f (false :: w))
-            (fun w => f * weigh t f w) (words n) (fun _ _ => rfl),
-          the_sum_scales t (weigh t f) (words n),
-          the_sum_scales f (weigh t f) (words n),
-          the_weighted_book_sums_whole t f n]
-      show t * stack (t + f) n + f * stack (t + f) n
-          = (t + f) * stack (t + f) n
-      rw [Nat.mul_comm (t + f) (stack (t + f) n), Nat.left_distrib,
-          Nat.mul_comm (stack (t + f) n) t,
-          Nat.mul_comm (stack (t + f) n) f]
-
-theorem the_even_weight_is_one :
-    ∀ w : List Bool, weigh 1 1 w = 1
-  | [] => rfl
-  | true :: w => by
-      show 1 * weigh 1 1 w = 1
-      rw [one_times, the_even_weight_is_one w]
-  | false :: w => by
-      show 1 * weigh 1 1 w = 1
-      rw [one_times, the_even_weight_is_one w]
-
-theorem the_doubling_stack_is_the_cap :
-    ∀ n : Nat, stack 2 n = roomCap n
-  | 0 => rfl
-  | n + 1 => by
-      show 2 * stack 2 n = roomCap n + roomCap n
-      rw [the_doubling_stack_is_the_cap n, Nat.mul_comm 2 (roomCap n),
-          mul_two_reads_double]
-
-theorem the_even_bias_recovers_the_census (n : Nat) :
-    natSum ((words n).map (weigh 1 1)) = roomCap n := by
-  rw [map_congr_mem (weigh 1 1) (fun _ => 1) (words n)
-        (fun w _ => the_even_weight_is_one w),
-      the_ones_count_the_room (words n),
-      the_book_counts_the_cap n]
-
-theorem the_book_holds_every_bias (t f n i j : Nat) :
-    natSum ((words n).map (weigh t f)) = stack (t + f) n
-      ∧ natSum ((words n).map (weigh 1 1)) = roomCap n
-      ∧ stack 2 n = roomCap n
-      ∧ stack (t + f) (i + j) = stack (t + f) i * stack (t + f) j
-      ∧ roomCap (i + j) = roomCap i * roomCap j :=
-  ⟨the_weighted_book_sums_whole t f n,
-   the_even_bias_recovers_the_census n,
-   the_doubling_stack_is_the_cap n,
-   the_stacks_add (t + f) i j,
-   the_caps_multiply i j⟩
-
-def ink : List Bool → Nat
-  | [] => 0
-  | true :: w => ink w + 1
-  | false :: w => ink w
-
-def negative (w : List Bool) : List Bool := w.map (fun b => !b)
-
-theorem the_negative_returns : ∀ w : List Bool, negative (negative w) = w
-  | [] => rfl
-  | b :: w => by
-      show (!(!b)) :: negative (negative w) = b :: w
-      rw [not_not, the_negative_returns w]
-
-theorem the_ink_faces_its_negative :
-    ∀ w : List Bool, ink w + ink (negative w) = w.length
-  | [] => rfl
-  | true :: w => by
-      show (ink w + 1) + ink (negative w) = w.length + 1
-      rw [succ_adds, the_ink_faces_its_negative w]
-  | false :: w => by
-      show (ink w + ink (negative w)) + 1 = w.length + 1
-      exact congrArg (· + 1) (the_ink_faces_its_negative w)
-
-theorem the_negative_keeps_the_book {n : Nat} {w : List Bool}
-    (hw : w ∈ words n) : negative w ∈ words n := by
-  have hlen : (negative w).length = n :=
-    (len_map (fun b => !b) w).trans (every_word_fits n w hw)
-  have h := the_book_holds_every_word (negative w)
-  rw [hlen] at h
-  exact h
-
-theorem the_negative_book_is_the_book (n : Nat) :
-    ((words n).map negative).Perm (words n) :=
-  the_matching_rooms_are_shuffles _ _
-    (apart_map
-      (fun p q h =>
-        (the_negative_returns p).symm.trans
-          ((congrArg negative h).trans (the_negative_returns q)))
-      (the_book_repeats_no_word n))
-    (the_book_repeats_no_word n)
-    (fun x =>
-      ⟨fun hx =>
-         match mem_map_back (words n) hx with
-         | ⟨_, hp, he⟩ => he ▸ the_negative_keeps_the_book hp,
-       fun hx =>
-         (the_negative_returns x) ▸
-           mem_map_intro negative (the_negative_keeps_the_book hx)⟩)
-
-theorem the_negative_inks_sum_alike (n : Nat) :
-    natSum ((words n).map (fun w => ink (negative w)))
-      = natSum ((words n).map ink) := by
-  rw [show (words n).map (fun w => ink (negative w))
-        = ((words n).map negative).map ink
-      from (map_map negative ink (words n)).symm]
-  exact the_sum_hears_no_shuffle
-    (perm_map ink (the_negative_book_is_the_book n))
-
-theorem the_average_ink_is_the_middle (n : Nat) :
-    sameRatio (natSum ((words n).map ink)) (roomCap n) n 2
-      ∧ natSum ((words n).map (fun w => ink (negative w)))
-          = natSum ((words n).map ink)
-      ∧ (∀ w, w ∈ words n → ink w + ink (negative w) = n)
-      ∧ ∀ w : List Bool, negative (negative w) = w := by
-  have hface : ∀ w, w ∈ words n → ink w + ink (negative w) = n :=
-    fun w hw =>
-      (the_ink_faces_its_negative w).trans (every_word_fits n w hw)
-  have hrev := the_negative_inks_sum_alike n
-  refine ⟨?_, hrev, hface, the_negative_returns⟩
-  have hsplit :
-      natSum ((words n).map (fun w => ink w + ink (negative w)))
-        = natSum ((words n).map ink)
-          + natSum ((words n).map (fun w => ink (negative w))) :=
-    the_sums_add ink (fun w => ink (negative w)) (words n)
-  have hlevel :
-      natSum ((words n).map (fun w => ink w + ink (negative w)))
-        = n * (words n).length :=
-    a_level_reading_sums_by_count (fun w => ink w + ink (negative w)) n
-      (words n) hface
-  have hkey : natSum ((words n).map ink) + natSum ((words n).map ink)
-      = n * roomCap n := by
-    have h1 := hsplit.symm.trans hlevel
-    rw [hrev, the_book_counts_the_cap n] at h1
-    exact h1
-  show natSum ((words n).map ink) * 2 = n * roomCap n
-  rw [mul_two_reads_double]
-  exact hkey
-
-theorem the_sum_multiplies (a b c : Nat) :
-    (a + b) * c = a * c + b * c := by
-  rw [Nat.mul_comm (a + b) c, Nat.left_distrib,
-      Nat.mul_comm c a, Nat.mul_comm c b]
-
-theorem mul_four_reads_quadruple (x : Nat) : x * 4 = ((x + x) + x) + x := by
-  show (((0 + x) + x) + x) + x = ((x + x) + x) + x
-  rw [zero_plus]
-
-theorem mul_swap_mid (a b c d : Nat) :
-    (a * b) * (c * d) = (a * c) * (b * d) := by
-  rw [mul_regroups a b (c * d), ← mul_regroups b c d,
-      Nat.mul_comm b c, mul_regroups c b d,
-      ← mul_regroups a c (b * d)]
-
-theorem band_shuffle (p q c : Nat) :
-    ((p + (q + q)) + ((q + q) + (((c + c) + c) + c))) + p
-      = (p + p) + (((q + q) + (c + c)) + ((q + q) + (c + c))) := by
-  rw [Nat.add_assoc (c + c) c c,
-      add_swap_mid (q + q) (c + c) (q + q) (c + c),
-      ← Nat.add_assoc (p + (q + q)) (q + q) ((c + c) + (c + c)),
-      Nat.add_assoc p (q + q) (q + q),
-      Nat.add_comm ((p + ((q + q) + (q + q))) + ((c + c) + (c + c))) p,
-      ← Nat.add_assoc p (p + ((q + q) + (q + q))) ((c + c) + (c + c)),
-      ← Nat.add_assoc p p ((q + q) + (q + q)),
-      Nat.add_assoc (p + p) ((q + q) + (q + q)) ((c + c) + (c + c))]
-
-theorem the_inked_branch_squares (n : Nat) :
-    natSum ((words n).map (fun w => ink (true :: w) * ink (true :: w)))
-      = ((natSum ((words n).map (fun w => ink w * ink w))
-            + natSum ((words n).map ink))
-          + (natSum ((words n).map ink) + (words n).length)) := by
-  rw [map_congr_mem (fun w => ink (true :: w) * ink (true :: w))
-        (fun w => (ink w * ink w + ink w) + (ink w + 1)) (words n)
-        (fun w _ =>
-          show ink (true :: w) * ink (true :: w)
-              = (ink w * ink w + ink w) + (ink w + 1) from
-            congrArg (· + (ink w + 1)) (succ_mul (ink w) (ink w)))]
-  have h1 :
-      natSum ((words n).map
-          (fun w => (ink w * ink w + ink w) + (ink w + 1)))
-        = natSum ((words n).map (fun w => ink w * ink w + ink w))
-          + natSum ((words n).map (fun w => ink w + 1)) :=
-    the_sums_add (fun w => ink w * ink w + ink w) (fun w => ink w + 1)
-      (words n)
-  have h2 :
-      natSum ((words n).map (fun w => ink w * ink w + ink w))
-        = natSum ((words n).map (fun w => ink w * ink w))
-          + natSum ((words n).map ink) :=
-    the_sums_add (fun w => ink w * ink w) ink (words n)
-  have h3 :
-      natSum ((words n).map (fun w => ink w + 1))
-        = natSum ((words n).map ink) + (words n).length := by
-    have h4 :
-        natSum ((words n).map (fun w => ink w + 1))
-          = natSum ((words n).map ink)
-            + natSum ((words n).map (fun _ => 1)) :=
-      the_sums_add ink (fun _ => 1) (words n)
-    rw [h4, the_ones_count_the_room (words n)]
-  rw [h1, h2, h3]
-
-theorem the_blank_branch_squares (n : Nat) :
-    natSum ((words n).map (fun w => ink (false :: w) * ink (false :: w)))
-      = natSum ((words n).map (fun w => ink w * ink w)) :=
-  congrArg natSum
-    (map_congr_mem (fun w => ink (false :: w) * ink (false :: w))
-      (fun w => ink w * ink w) (words n) (fun _ _ => rfl))
-
-theorem the_squares_split_at_the_growth (n : Nat) :
-    natSum ((words (n + 1)).map (fun w => ink w * ink w))
-      = (((natSum ((words n).map (fun w => ink w * ink w))
-              + natSum ((words n).map ink))
-            + (natSum ((words n).map ink) + (words n).length))
-          + natSum ((words n).map (fun w => ink w * ink w))) := by
-  have hsplit :
-      natSum ((words (n + 1)).map (fun w => ink w * ink w))
-        = natSum ((words n).map
-            (fun w => ink (true :: w) * ink (true :: w)))
-          + natSum ((words n).map
-            (fun w => ink (false :: w) * ink (false :: w))) := by
-    show natSum
-        ((((words n).map (true :: ·) ++ (words n).map (false :: ·)).map
-          (fun w => ink w * ink w)))
-      = _
-    rw [map_append (fun w => ink w * ink w) ((words n).map (true :: ·))
-          ((words n).map (false :: ·)),
-        the_sum_resumes]
-    exact congr
-      (congrArg (· + ·)
-        (congrArg natSum
-          (map_map (true :: ·) (fun w => ink w * ink w) (words n))))
-      (congrArg natSum
-        (map_map (false :: ·) (fun w => ink w * ink w) (words n)))
-  rw [hsplit, the_inked_branch_squares n, the_blank_branch_squares n]
-
-theorem the_band_recursion (A B C n : Nat)
-    (hA : A * 4 = (n * (n + 1)) * C)
-    (hB : B * 2 = n * C) :
-    (((A + B) + (B + C)) + A) * 4
-      = ((n + 1) * (n + 2)) * (C + C) := by
-  have hB4 : B * 4 = n * C + n * C :=
-    ((show B * 4 = (B * 2) * 2 from (mul_regroups B 2 2).symm).trans
-      (congrArg (· * 2) hB)).trans (mul_two_reads_double (n * C))
-  rw [the_sum_multiplies ((A + B) + (B + C)) A 4,
-      the_sum_multiplies (A + B) (B + C) 4,
-      the_sum_multiplies A B 4,
-      the_sum_multiplies B C 4,
-      hA, hB4, mul_four_reads_quadruple C,
-      show (n + 1) * (n + 2) = n * (n + 1) + ((n + 1) + (n + 1)) from
-        (congrArg (· + (n + 1)) (succ_mul n (n + 1))).trans
-          (Nat.add_assoc (n * (n + 1)) (n + 1) (n + 1)),
-      the_sum_multiplies (n * (n + 1)) ((n + 1) + (n + 1)) (C + C),
-      Nat.left_distrib (n * (n + 1)) C C,
-      the_sum_multiplies (n + 1) (n + 1) (C + C),
-      succ_mul n (C + C),
-      Nat.left_distrib n C C]
-  exact band_shuffle ((n * (n + 1)) * C) (n * C) C
-
-theorem the_squares_pool_to_the_width :
-    ∀ n : Nat,
-      natSum ((words n).map (fun w => ink w * ink w)) * 4
-        = (n * (n + 1)) * roomCap n
-  | 0 => rfl
-  | n + 1 => by
-      rw [the_squares_split_at_the_growth n, the_book_counts_the_cap n]
-      exact the_band_recursion _ _ _ n
-        (the_squares_pool_to_the_width n)
-        ((the_average_ink_is_the_middle n).1)
-
-theorem the_ink_scatters_a_quarter_per_mark (n : Nat) :
-    natSum ((words n).map (fun w => ink w * ink w)) * 4
-        = (n * (n + 1)) * roomCap n
-      ∧ (natSum ((words n).map (fun w => ink w * ink w)) * 4) * roomCap n
-          = (natSum ((words n).map ink) * 2)
-              * (natSum ((words n).map ink) * 2)
-            + n * (roomCap n * roomCap n) := by
-  refine ⟨the_squares_pool_to_the_width n, ?_⟩
-  rw [the_squares_pool_to_the_width n,
-      show natSum ((words n).map ink) * 2 = n * roomCap n from
-        (the_average_ink_is_the_middle n).1,
-      mul_regroups (n * (n + 1)) (roomCap n) (roomCap n),
-      mul_swap_mid n (roomCap n) n (roomCap n)]
-  exact the_sum_multiplies (n * n) n (roomCap n * roomCap n)
-
-theorem facing_shuffle (a b c : Nat) (h : (a + b) + 1 = c) :
-    ((1 + (a + a)) + (0 + (b + b))) + 1 = c + c := by
-  rw [← h, zero_plus,
-      Nat.add_comm 1 (a + a),
-      Nat.add_assoc (a + a) 1 (b + b),
-      Nat.add_comm 1 (b + b),
-      ← Nat.add_assoc (a + a) (b + b) 1,
-      Nat.add_assoc ((a + a) + (b + b)) 1 1,
-      add_swap_mid a a b b,
-      add_swap_mid (a + b) 1 (a + b) 1]
-
-theorem facing_shuffle_blank (a b c : Nat) (h : (a + b) + 1 = c) :
-    ((0 + (a + a)) + (1 + (b + b))) + 1 = c + c := by
-  rw [← h, zero_plus,
-      Nat.add_comm 1 (b + b),
-      ← Nat.add_assoc (a + a) (b + b) 1,
-      Nat.add_assoc ((a + a) + (b + b)) 1 1,
-      add_swap_mid a a b b,
-      add_swap_mid (a + b) 1 (a + b) 1]
-
-theorem the_values_face_each_other :
-    ∀ w : List Bool, (val w + val (negative w)) + 1 = roomCap w.length
-  | [] => rfl
-  | true :: w => by
-      show ((1 + (val w + val w))
-            + (0 + (val (negative w) + val (negative w)))) + 1
-          = roomCap w.length + roomCap w.length
-      exact facing_shuffle (val w) (val (negative w)) (roomCap w.length)
-        (the_values_face_each_other w)
-  | false :: w => by
-      show ((0 + (val w + val w))
-            + (1 + (val (negative w) + val (negative w)))) + 1
-          = roomCap w.length + roomCap w.length
-      exact facing_shuffle_blank (val w) (val (negative w))
-        (roomCap w.length) (the_values_face_each_other w)
+/-- info: 'Seed.the_clock_reaches_every_word' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_reaches_every_word
 
 theorem the_value_tells_the_words_apart {n : Nat} {p q : List Bool}
     (hp : p ∈ words n) (hq : q ∈ words n) (he : val p = val q) :
@@ -11506,3930 +3275,580 @@ theorem the_value_tells_the_words_apart {n : Nat} {p q : List Bool}
     exact the_clock_reaches_every_word q
   rw [← h1, ← h2, he]
 
-theorem the_negative_values_sum_alike (n : Nat) :
-    natSum ((words n).map (fun w => val (negative w)))
-      = natSum ((words n).map val) := by
-  rw [show (words n).map (fun w => val (negative w))
-        = ((words n).map negative).map val
-      from (map_map negative val (words n)).symm]
-  exact the_sum_hears_no_shuffle
-    (perm_map val (the_negative_book_is_the_book n))
-
-theorem the_odometer_logs_the_triangle (n : Nat) :
-    (natSum ((words n).map val) + natSum ((words n).map val))
-        + roomCap n
-      = roomCap n * roomCap n
-      ∧ (∀ w, w ∈ words n → (val w + val (negative w)) + 1 = roomCap n)
-      ∧ natSum ((words n).map (fun w => val (negative w)))
-          = natSum ((words n).map val)
-      ∧ ∀ p q : List Bool, p ∈ words n → q ∈ words n →
-          val p = val q → p = q := by
-  have hface : ∀ w, w ∈ words n →
-      (val w + val (negative w)) + 1 = roomCap n :=
-    fun w hw =>
-      (the_values_face_each_other w).trans
-        (congrArg roomCap (every_word_fits n w hw))
-  have hrev := the_negative_values_sum_alike n
-  refine ⟨?_, hface, hrev,
-    fun p q hp hq he => the_value_tells_the_words_apart hp hq he⟩
-  have hsplit :
-      natSum ((words n).map (fun w => (val w + val (negative w)) + 1))
-        = (natSum ((words n).map val)
-            + natSum ((words n).map (fun w => val (negative w))))
-          + (words n).length :=
-    (the_sums_add (fun w => val w + val (negative w)) (fun _ => 1)
-        (words n)).trans
-      (congr
-        (congrArg (· + ·)
-          (the_sums_add val (fun w => val (negative w)) (words n)))
-        (the_ones_count_the_room (words n)))
-  have hlevel :
-      natSum ((words n).map (fun w => (val w + val (negative w)) + 1))
-        = roomCap n * (words n).length :=
-    a_level_reading_sums_by_count
-      (fun w => (val w + val (negative w)) + 1) (roomCap n) (words n)
-      hface
-  have h1 := hsplit.symm.trans hlevel
-  rw [hrev, the_book_counts_the_cap n] at h1
-  exact h1
-
-theorem the_inked_lead_weighs (t f n : Nat) :
-    natSum (((words n).map (true :: ·)).map (weigh t f))
-      = t * natSum ((words n).map (weigh t f)) := by
-  have h1 : ((words n).map (true :: ·)).map (weigh t f)
-      = (words n).map (fun w => weigh t f (true :: w)) :=
-    map_map (true :: ·) (weigh t f) (words n)
-  have h2 : (words n).map (fun w => weigh t f (true :: w))
-      = (words n).map (fun w => t * weigh t f w) :=
-    map_congr_mem (fun w => weigh t f (true :: w))
-      (fun w => t * weigh t f w) (words n) (fun _ _ => rfl)
-  rw [h1, h2]
-  exact the_sum_scales t (weigh t f) (words n)
-
-theorem the_blank_lead_weighs (t f n : Nat) :
-    natSum (((words n).map (false :: ·)).map (weigh t f))
-      = f * natSum ((words n).map (weigh t f)) := by
-  have h1 : ((words n).map (false :: ·)).map (weigh t f)
-      = (words n).map (fun w => weigh t f (false :: w)) :=
-    map_map (false :: ·) (weigh t f) (words n)
-  have h2 : (words n).map (fun w => weigh t f (false :: w))
-      = (words n).map (fun w => f * weigh t f w) :=
-    map_congr_mem (fun w => weigh t f (false :: w))
-      (fun w => f * weigh t f w) (words n) (fun _ _ => rfl)
-  rw [h1, h2]
-  exact the_sum_scales f (weigh t f) (words n)
-
-theorem the_lead_splits_the_weight (t f n : Nat) :
-    natSum ((words (n + 1)).map (weigh t f))
-      = t * natSum ((words n).map (weigh t f))
-        + f * natSum ((words n).map (weigh t f)) := by
-  show natSum
-      ((((words n).map (true :: ·) ++ (words n).map (false :: ·)).map
-        (weigh t f)))
-    = _
-  rw [map_append (weigh t f) ((words n).map (true :: ·))
-        ((words n).map (false :: ·)),
-      the_sum_resumes,
-      the_inked_lead_weighs t f n, the_blank_lead_weighs t f n]
-
-theorem the_lead_weighs_its_bias (t f n : Nat) :
-    sameRatio (natSum (((words n).map (true :: ·)).map (weigh t f)))
-        (natSum ((words (n + 1)).map (weigh t f))) t (t + f)
-      ∧ sameRatio (natSum (((words n).map (false :: ·)).map (weigh t f)))
-          (natSum ((words (n + 1)).map (weigh t f))) f (t + f)
-      ∧ natSum (((words n).map (true :: ·)).map (weigh t f))
-          + natSum (((words n).map (false :: ·)).map (weigh t f))
-        = natSum ((words (n + 1)).map (weigh t f))
-      ∧ natSum ((words (n + 1)).map (weigh t f)) = stack (t + f) (n + 1) := by
-  refine ⟨?_, ?_, ?_, the_weighted_book_sums_whole t f (n + 1)⟩
-  · show (natSum (((words n).map (true :: ·)).map (weigh t f))) * (t + f)
-        = t * natSum ((words (n + 1)).map (weigh t f))
-    rw [the_inked_lead_weighs t f n, the_lead_splits_the_weight t f n,
-        ← the_sum_multiplies t f (natSum ((words n).map (weigh t f))),
-        mul_regroups t (natSum ((words n).map (weigh t f))) (t + f)]
-    exact congrArg (t * ·)
-      (Nat.mul_comm (natSum ((words n).map (weigh t f))) (t + f))
-  · show (natSum (((words n).map (false :: ·)).map (weigh t f))) * (t + f)
-        = f * natSum ((words (n + 1)).map (weigh t f))
-    rw [the_blank_lead_weighs t f n, the_lead_splits_the_weight t f n,
-        ← the_sum_multiplies t f (natSum ((words n).map (weigh t f))),
-        mul_regroups f (natSum ((words n).map (weigh t f))) (t + f)]
-    exact congrArg (f * ·)
-      (Nat.mul_comm (natSum ((words n).map (weigh t f))) (t + f))
-  · rw [the_inked_lead_weighs t f n, the_blank_lead_weighs t f n,
-        the_lead_splits_the_weight t f n]
-
-theorem mul_left_comm (a b c : Nat) : a * (b * c) = b * (a * c) := by
-  rw [← mul_regroups a b c, Nat.mul_comm a b, mul_regroups b a c]
-
-theorem weigh_hears_no_shuffle (t f : Nat) {p q : List Bool}
-    (h : p.Perm q) : weigh t f p = weigh t f q := by
-  induction h with
-  | nil => rfl
-  | cons x _ ih =>
-      cases x with
-      | true => exact congrArg (t * ·) ih
-      | false => exact congrArg (f * ·) ih
-  | swap x y l =>
-      cases x with
-      | true =>
-          cases y with
-          | true => rfl
-          | false => exact mul_left_comm f t (weigh t f l)
-      | false =>
-          cases y with
-          | true => exact mul_left_comm t f (weigh t f l)
-          | false => rfl
-  | trans _ _ ih1 ih2 => exact ih1.trans ih2
-
-theorem the_turn_keeps_the_book {n : Nat} (k : Nat) {w : List Bool}
-    (hw : w ∈ words n) : rotate k w ∈ words n := by
-  have hlen : (rotate k w).length = n :=
-    (the_turn_keeps_the_length k w).trans (every_word_fits n w hw)
-  have h := the_book_holds_every_word (rotate k w)
-  rw [hlen] at h
-  exact h
-
-theorem the_turn_covers_the_book {n : Nat} (k : Nat) {x : List Bool}
-    (hx : x ∈ words n) : ∃ y, y ∈ words n ∧ rotate k y = x := by
-  cases hble : Nat.ble k x.length with
-  | true =>
-      obtain ⟨m, hm⟩ := ble_gives_the_gap k x.length hble
-      exact ⟨rotate m x, the_turn_keeps_the_book m hx,
-        the_turns_undo m k x (hm.symm.trans (Nat.add_comm k m))⟩
-  | false =>
-      have hxk : Nat.ble x.length k = true :=
-        ble_trans _ _ _ (ble_le_succ x.length) (ble_flip k x.length hble)
-      exact ⟨x, hx, the_short_word_turns_home x k hxk⟩
-
-theorem the_turned_book_is_the_book (n k : Nat) :
-    ((words n).map (rotate k)).Perm (words n) :=
-  the_matching_rooms_are_shuffles _ _
-    (apart_map (fun p q h => the_turn_merges_nothing k p q h)
-      (the_book_repeats_no_word n))
-    (the_book_repeats_no_word n)
-    (fun _x =>
-      ⟨fun hx =>
-         match mem_map_back (words n) hx with
-         | ⟨_, hp, he⟩ => he ▸ the_turn_keeps_the_book k hp,
-       fun hx =>
-         match the_turn_covers_the_book k hx with
-         | ⟨_, hy, he⟩ => he ▸ mem_map_intro (rotate k) hy⟩)
-
-theorem the_seat_leads_through_the_turn (k m : Nat) (w : List Bool)
-    (h : w.length = k + (m + 1)) :
-    leads (rotate k w) = leads (w.drop k) := by
-  obtain ⟨x, t, he⟩ :=
-    the_positive_word_leads (w.drop k) m (drop_length k w h)
-  show leads (w.drop k ++ w.take k) = leads (w.drop k)
-  rw [he]
-  exact rfl
-
-theorem filter_keeps_the_passing {A : Type} (q : A → Bool) :
-    ∀ L : List A, (∀ x, x ∈ L → q x = true) → L.filter q = L
-  | [], _ => rfl
-  | x :: L, h => by
-      rw [List.filter_cons_of_pos (h x (List.Mem.head L)),
-          filter_keeps_the_passing q L
-            (fun y hy => h y (List.Mem.tail x hy))]
-
-theorem filter_drops_the_failing {A : Type} (q : A → Bool) :
-    ∀ L : List A, (∀ x, x ∈ L → q x = false) → L.filter q = []
-  | [], _ => rfl
-  | x :: L, h => by
-      rw [List.filter_cons_of_neg
-            (ne_true_of_eq_false (h x (List.Mem.head L))),
-          filter_drops_the_failing q L
-            (fun y hy => h y (List.Mem.tail x hy))]
-
-theorem the_lead_filter_is_the_branch (n : Nat) :
-    (words (n + 1)).filter leads = (words n).map (true :: ·) := by
-  show ((words n).map (true :: ·) ++ (words n).map (false :: ·)).filter
-      leads
-    = (words n).map (true :: ·)
-  rw [filter_append_splits leads ((words n).map (true :: ·))
-        ((words n).map (false :: ·)),
-      filter_keeps_the_passing leads ((words n).map (true :: ·))
-        (fun x hx =>
-          match mem_map_back (words n) hx with
-          | ⟨_, _, he⟩ => by rw [← he]; exact rfl),
-      filter_drops_the_failing leads ((words n).map (false :: ·))
-        (fun x hx =>
-          match mem_map_back (words n) hx with
-          | ⟨_, _, he⟩ => by rw [← he]; exact rfl),
-      append_nil]
-
-theorem the_seat_marginal_is_the_lead_marginal (t f k m n : Nat)
-    (hn : n = k + (m + 1)) :
-    natSum (((words n).filter (fun w => leads (w.drop k))).map
-        (weigh t f))
-      = natSum (((words n).filter leads).map (weigh t f)) := by
-  have hcongr :
-      (words n).filter (fun w => leads (w.drop k))
-        = (words n).filter (fun w => leads (rotate k w)) :=
-    filter_congr_mem (fun w => leads (w.drop k))
-      (fun w => leads (rotate k w)) (words n)
-      (fun w hw =>
-        (the_seat_leads_through_the_turn k m w
-          ((every_word_fits n w hw).trans hn)).symm)
-  have hweigh :
-      ((words n).filter (fun w => leads (rotate k w))).map (weigh t f)
-        = ((words n).filter (fun w => leads (rotate k w))).map
-            (fun w => weigh t f (rotate k w)) :=
-    map_congr_mem (weigh t f) (fun w => weigh t f (rotate k w))
-      ((words n).filter (fun w => leads (rotate k w)))
-      (fun w _ =>
-        weigh_hears_no_shuffle t f
-          (perm_symm (the_turned_word_is_a_shuffle k w)))
-  have hmapmap :
-      (((words n).filter (fun w => leads (rotate k w))).map
-          (rotate k)).map (weigh t f)
-        = ((words n).filter (fun w => leads (rotate k w))).map
-            (fun w => weigh t f (rotate k w)) :=
-    map_map (rotate k) (weigh t f)
-      ((words n).filter (fun w => leads (rotate k w)))
-  have hcomm :
-      ((words n).map (rotate k)).filter leads
-        = ((words n).filter (fun w => leads (rotate k w))).map
-            (rotate k) :=
-    filter_map_commutes (rotate k) leads (words n)
-  have hperm :
-      natSum ((((words n).map (rotate k)).filter leads).map (weigh t f))
-        = natSum (((words n).filter leads).map (weigh t f)) :=
-    the_sum_hears_no_shuffle
-      (perm_map (weigh t f)
-        (perm_filter leads (the_turned_book_is_the_book n k)))
-  rw [hcongr, hweigh, ← hmapmap, ← hcomm]
-  exact hperm
-
-theorem every_seat_weighs_the_bias (t f k m n : Nat)
-    (hn : n + 1 = k + (m + 1)) :
-    natSum (((words (n + 1)).filter (fun w => leads (w.drop k))).map
-        (weigh t f))
-        = t * natSum ((words n).map (weigh t f))
-      ∧ (words (n + 1)).filter leads = (words n).map (true :: ·)
-      ∧ sameRatio
-          (natSum (((words (n + 1)).filter
-            (fun w => leads (w.drop k))).map (weigh t f)))
-          (natSum ((words (n + 1)).map (weigh t f))) t (t + f) := by
-  have hmarg :
-      natSum (((words (n + 1)).filter (fun w => leads (w.drop k))).map
-          (weigh t f))
-        = t * natSum ((words n).map (weigh t f)) := by
-    rw [the_seat_marginal_is_the_lead_marginal t f k m (n + 1) hn,
-        the_lead_filter_is_the_branch n]
-    exact the_inked_lead_weighs t f n
-  refine ⟨hmarg, the_lead_filter_is_the_branch n, ?_⟩
-  show natSum (((words (n + 1)).filter (fun w => leads (w.drop k))).map
-        (weigh t f)) * (t + f)
-      = t * natSum ((words (n + 1)).map (weigh t f))
-  rw [hmarg, the_lead_splits_the_weight t f n,
-      ← the_sum_multiplies t f (natSum ((words n).map (weigh t f))),
-      mul_regroups t (natSum ((words n).map (weigh t f))) (t + f)]
-  exact congrArg (t * ·)
-    (Nat.mul_comm (natSum ((words n).map (weigh t f))) (t + f))
-
-def reflect : Plan → Plan
-  | .ground => .ground
-  | .board p q => .board (reflect q) (reflect p)
-
-theorem the_reflection_returns : ∀ p : Plan, reflect (reflect p) = p
-  | .ground => rfl
-  | .board p q => by
-      show Plan.board (reflect (reflect p)) (reflect (reflect q))
-          = Plan.board p q
-      rw [the_reflection_returns p, the_reflection_returns q]
-
-theorem the_reflection_keeps_the_reading :
-    ∀ p : Plan,
-      fold (fun a b => a + b) 1 (reflect p)
-        = fold (fun a b => a + b) 1 p
-  | .ground => rfl
-  | .board p q => by
-      show fold (fun a b => a + b) 1 (reflect q)
-            + fold (fun a b => a + b) 1 (reflect p)
-          = fold (fun a b => a + b) 1 p + fold (fun a b => a + b) 1 q
-      rw [the_reflection_keeps_the_reading p,
-          the_reflection_keeps_the_reading q]
-      exact Nat.add_comm _ _
-
-theorem the_reflection_keeps_the_room :
-    ∀ (d : Nat) {p : Plan}, p ∈ allPlans d → reflect p ∈ allPlans d
-  | 0, _, h => by
-      cases h with
-      | head => exact List.Mem.head _
-      | tail _ h' => exact nomatch h'
-  | d + 1, _, h => by
-      cases h with
-      | head => exact List.Mem.head _
-      | tail _ hc =>
-          obtain ⟨l, r, rfl, hl, hr⟩ := mem_cross_split (allPlans d) hc
-          exact List.Mem.tail _
-            (mem_cross (the_reflection_keeps_the_room d hl)
-              (the_reflection_keeps_the_room d hr))
-
-theorem the_reflected_room_is_the_room (d : Nat) :
-    ((allPlans d).map reflect).Perm (allPlans d) :=
-  the_matching_rooms_are_shuffles _ _
-    (apart_map
-      (fun p q h =>
-        (the_reflection_returns p).symm.trans
-          ((congrArg reflect h).trans (the_reflection_returns q)))
-      (the_room_repeats_no_plan d))
-    (the_room_repeats_no_plan d)
-    (fun _x =>
-      ⟨fun hx =>
-         match mem_map_back (allPlans d) hx with
-         | ⟨_, hp, he⟩ => he ▸ the_reflection_keeps_the_room d hp,
-       fun hx =>
-         (the_reflection_returns _x) ▸
-           mem_map_intro reflect (the_reflection_keeps_the_room d hx)⟩)
-
-theorem the_bloom_is_a_palindrome :
-    ∀ d : Nat, reflect (bloom d) = bloom d
-  | 0 => rfl
-  | d + 1 => by
-      show Plan.board (reflect (bloom d)) (reflect (bloom d))
-          = Plan.board (bloom d) (bloom d)
-      rw [the_bloom_is_a_palindrome d]
-
-theorem the_comb_is_no_palindrome : reflect (comb 2) ≠ comb 2 :=
-  fun h => nomatch (Plan.board.inj h).1
-
-theorem the_lean_reading_hears_the_mirror :
-    fold (fun a b => 2 * a + 3 * b) 1
-        (reflect (.board .ground (.board .ground .ground)))
-      ≠ fold (fun a b => 2 * a + 3 * b) 1
-        (.board .ground (.board .ground .ground)) :=
-  fun h =>
-    nomatch (congrArg (Nat.beq 13) h).symm.trans (beq_self 13)
-
-theorem the_clock_walks_the_palindromes (d : Nat) (p : Plan)
-    (hp : p ∈ allPlans d) :
-    reflect (reflect p) = p
-      ∧ fold (fun a b => a + b) 1 (reflect p)
-          = fold (fun a b => a + b) 1 p
-      ∧ reflect p ∈ allPlans d
-      ∧ ((allPlans d).map reflect).Perm (allPlans d)
-      ∧ reflect (bloom d) = bloom d
-      ∧ reflect (comb 2) ≠ comb 2
-      ∧ fold (fun a b => 2 * a + 3 * b) 1
-            (reflect (.board .ground (.board .ground .ground)))
-          ≠ fold (fun a b => 2 * a + 3 * b) 1
-            (.board .ground (.board .ground .ground)) :=
-  ⟨the_reflection_returns p,
-   the_reflection_keeps_the_reading p,
-   the_reflection_keeps_the_room d hp,
-   the_reflected_room_is_the_room d,
-   the_bloom_is_a_palindrome d,
-   the_comb_is_no_palindrome,
-   the_lean_reading_hears_the_mirror⟩
-
-theorem the_inked_branch_leans (t f n : Nat) :
-    natSum ((words n).map (fun w => weigh t f (true :: w) * ink (true :: w)))
-      = t * natSum ((words n).map (fun w => weigh t f w * ink w))
-        + t * natSum ((words n).map (weigh t f)) := by
-  rw [map_congr_mem (fun w => weigh t f (true :: w) * ink (true :: w))
-        (fun w => t * (weigh t f w * ink w) + t * weigh t f w) (words n)
-        (fun w _ =>
-          congrArg (· + t * weigh t f w)
-            (mul_regroups t (weigh t f w) (ink w))),
-      the_sums_add (fun w => t * (weigh t f w * ink w))
-        (fun w => t * weigh t f w) (words n),
-      the_sum_scales t (fun w => weigh t f w * ink w) (words n),
-      the_sum_scales t (weigh t f) (words n)]
-
-theorem the_blank_branch_leans (t f n : Nat) :
-    natSum ((words n).map (fun w => weigh t f (false :: w) * ink (false :: w)))
-      = f * natSum ((words n).map (fun w => weigh t f w * ink w)) := by
-  rw [map_congr_mem (fun w => weigh t f (false :: w) * ink (false :: w))
-        (fun w => f * (weigh t f w * ink w)) (words n)
-        (fun w _ => mul_regroups f (weigh t f w) (ink w)),
-      the_sum_scales f (fun w => weigh t f w * ink w) (words n)]
-
-theorem the_leans_split_at_the_growth (t f n : Nat) :
-    natSum ((words (n + 1)).map (fun w => weigh t f w * ink w))
-      = (t * natSum ((words n).map (fun w => weigh t f w * ink w))
-            + t * natSum ((words n).map (weigh t f)))
-        + f * natSum ((words n).map (fun w => weigh t f w * ink w)) := by
-  have hsplit :
-      natSum ((words (n + 1)).map (fun w => weigh t f w * ink w))
-        = natSum ((words n).map
-            (fun w => weigh t f (true :: w) * ink (true :: w)))
-          + natSum ((words n).map
-            (fun w => weigh t f (false :: w) * ink (false :: w))) := by
-    show natSum
-        ((((words n).map (true :: ·) ++ (words n).map (false :: ·)).map
-          (fun w => weigh t f w * ink w)))
-      = _
-    rw [map_append (fun w => weigh t f w * ink w)
-          ((words n).map (true :: ·)) ((words n).map (false :: ·)),
-        the_sum_resumes]
-    exact congr
-      (congrArg (· + ·)
-        (congrArg natSum
-          (map_map (true :: ·) (fun w => weigh t f w * ink w) (words n))))
-      (congrArg natSum
-        (map_map (false :: ·) (fun w => weigh t f w * ink w) (words n)))
-  rw [hsplit, the_inked_branch_leans t f n, the_blank_branch_leans t f n]
-
-theorem the_weighted_inks_pool_to_the_lean (t f : Nat) :
-    ∀ n : Nat,
-      (t + f) * natSum ((words n).map (fun w => weigh t f w * ink w))
-        = (t * n) * stack (t + f) n
-  | 0 => rfl
-  | n + 1 => by
-      have hM := the_weighted_inks_pool_to_the_lean t f n
-      rw [the_leans_split_at_the_growth t f n]
-      have hshuffle :
-          (t * natSum ((words n).map (fun w => weigh t f w * ink w))
-              + t * natSum ((words n).map (weigh t f)))
-            + f * natSum ((words n).map (fun w => weigh t f w * ink w))
-          = (t + f)
-              * natSum ((words n).map (fun w => weigh t f w * ink w))
-            + t * natSum ((words n).map (weigh t f)) := by
-        rw [Nat.add_assoc,
-            Nat.add_comm (t * natSum ((words n).map (weigh t f)))
-              (f * natSum ((words n).map (fun w => weigh t f w * ink w))),
-            ← Nat.add_assoc,
-            ← the_sum_multiplies t f
-              (natSum ((words n).map (fun w => weigh t f w * ink w)))]
-      rw [hshuffle, the_weighted_book_sums_whole t f n, Nat.left_distrib,
-          hM, mul_left_comm (t + f) (t * n) (stack (t + f) n),
-          mul_left_comm (t + f) t (stack (t + f) n),
-          ← the_sum_multiplies (t * n) t ((t + f) * stack (t + f) n)]
-      exact rfl
-
-theorem the_even_bias_recovers_the_ink (n : Nat) :
-    natSum ((words n).map (fun w => weigh 1 1 w * ink w))
-      = natSum ((words n).map ink) :=
-  congrArg natSum
-    (map_congr_mem (fun w => weigh 1 1 w * ink w) ink (words n)
-      (fun w _ => by
-        rw [the_even_weight_is_one w]
-        exact one_times (ink w)))
-
-theorem the_average_ink_is_the_lean (t f n : Nat) :
-    (t + f) * natSum ((words n).map (fun w => weigh t f w * ink w))
-        = (t * n) * stack (t + f) n
-      ∧ sameRatio (natSum ((words n).map (fun w => weigh t f w * ink w)))
-          (stack (t + f) n) (t * n) (t + f)
-      ∧ natSum ((words n).map (fun w => weigh 1 1 w * ink w))
-          = natSum ((words n).map ink)
-      ∧ sameRatio (natSum ((words n).map ink)) (roomCap n) n 2 :=
-  ⟨the_weighted_inks_pool_to_the_lean t f n,
-   (Nat.mul_comm (natSum ((words n).map (fun w => weigh t f w * ink w)))
-       (t + f)).trans
-     (the_weighted_inks_pool_to_the_lean t f n),
-   the_even_bias_recovers_the_ink n,
-   (the_average_ink_is_the_middle n).1⟩
-
-theorem the_inked_branch_squares_the_lean (t f n : Nat) :
-    natSum ((words n).map
-        (fun w => weigh t f (true :: w) * (ink (true :: w) * ink (true :: w))))
-      = (t * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w)))
-            + t * natSum ((words n).map (fun w => weigh t f w * ink w)))
-        + (t * natSum ((words n).map (fun w => weigh t f w * ink w))
-            + t * natSum ((words n).map (weigh t f))) := by
-  rw [map_congr_mem
-        (fun w => weigh t f (true :: w) * (ink (true :: w) * ink (true :: w)))
-        (fun w => (t * (weigh t f w * (ink w * ink w))
-              + t * (weigh t f w * ink w))
-            + (t * (weigh t f w * ink w) + t * weigh t f w))
-        (words n)
-        (fun w _ => by
-          show (t * weigh t f w) * ((ink w + 1) * ink w + (ink w + 1))
-              = (t * (weigh t f w * (ink w * ink w))
-                  + t * (weigh t f w * ink w))
-                + (t * (weigh t f w * ink w) + t * weigh t f w)
-          rw [succ_mul (ink w) (ink w),
-              Nat.left_distrib (t * weigh t f w)
-                (ink w * ink w + ink w) (ink w + 1),
-              Nat.left_distrib (t * weigh t f w) (ink w * ink w) (ink w),
-              show (t * weigh t f w) * (ink w + 1)
-                  = (t * weigh t f w) * ink w + t * weigh t f w from rfl,
-              mul_regroups t (weigh t f w) (ink w * ink w),
-              mul_regroups t (weigh t f w) (ink w)]),
-      the_sums_add
-        (fun w => t * (weigh t f w * (ink w * ink w))
-          + t * (weigh t f w * ink w))
-        (fun w => t * (weigh t f w * ink w) + t * weigh t f w) (words n),
-      the_sums_add (fun w => t * (weigh t f w * (ink w * ink w)))
-        (fun w => t * (weigh t f w * ink w)) (words n),
-      the_sums_add (fun w => t * (weigh t f w * ink w))
-        (fun w => t * weigh t f w) (words n),
-      the_sum_scales t (fun w => weigh t f w * (ink w * ink w)) (words n),
-      the_sum_scales t (fun w => weigh t f w * ink w) (words n),
-      the_sum_scales t (weigh t f) (words n)]
-
-theorem the_blank_branch_squares_the_lean (t f n : Nat) :
-    natSum ((words n).map
-        (fun w => weigh t f (false :: w) * (ink (false :: w) * ink (false :: w))))
-      = f * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w))) := by
-  rw [map_congr_mem
-        (fun w => weigh t f (false :: w) * (ink (false :: w) * ink (false :: w)))
-        (fun w => f * (weigh t f w * (ink w * ink w))) (words n)
-        (fun w _ => mul_regroups f (weigh t f w) (ink w * ink w)),
-      the_sum_scales f (fun w => weigh t f w * (ink w * ink w)) (words n)]
-
-theorem the_weighted_squares_split_at_the_growth (t f n : Nat) :
-    natSum ((words (n + 1)).map (fun w => weigh t f w * (ink w * ink w)))
-      = (((t * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w)))
-              + t * natSum ((words n).map (fun w => weigh t f w * ink w)))
-            + (t * natSum ((words n).map (fun w => weigh t f w * ink w))
-                + t * natSum ((words n).map (weigh t f))))
-          + f * natSum ((words n).map
-              (fun w => weigh t f w * (ink w * ink w)))) := by
-  have hsplit :
-      natSum ((words (n + 1)).map (fun w => weigh t f w * (ink w * ink w)))
-        = natSum ((words n).map
-            (fun w => weigh t f (true :: w)
-              * (ink (true :: w) * ink (true :: w))))
-          + natSum ((words n).map
-            (fun w => weigh t f (false :: w)
-              * (ink (false :: w) * ink (false :: w)))) := by
-    show natSum
-        ((((words n).map (true :: ·) ++ (words n).map (false :: ·)).map
-          (fun w => weigh t f w * (ink w * ink w))))
-      = _
-    rw [map_append (fun w => weigh t f w * (ink w * ink w))
-          ((words n).map (true :: ·)) ((words n).map (false :: ·)),
-        the_sum_resumes]
-    exact congr
-      (congrArg (· + ·)
-        (congrArg natSum
-          (map_map (true :: ·)
-            (fun w => weigh t f w * (ink w * ink w)) (words n))))
-      (congrArg natSum
-        (map_map (false :: ·)
-          (fun w => weigh t f w * (ink w * ink w)) (words n)))
-  rw [hsplit, the_inked_branch_squares_the_lean t f n,
-      the_blank_branch_squares_the_lean t f n]
-
-theorem the_lean_atom_shuffle (a b c e g : Nat) :
-    (a + b) + ((c + c) + (e + g)) = (a + g) + ((b + c) + (c + e)) := by
-  rw [Nat.add_comm e g, add_swap_mid c c g e,
-      ← Nat.add_assoc (a + b) (c + g) (c + e),
-      Nat.add_comm c g, add_swap_mid a b g c,
-      Nat.add_assoc (a + g) (b + c) (c + e)]
-
-theorem the_lean_square_expands (t f n : Nat) :
-    ((t * f) * n + (t * n) * (t * n))
-        + ((t * (t * n) + t * (t * n)) + t * (t + f))
-      = (t * f) * (n + 1) + (t * (n + 1)) * (t * (n + 1)) := by
-  rw [Nat.left_distrib t t f,
-      the_lean_atom_shuffle ((t * f) * n) ((t * n) * (t * n)) (t * (t * n))
-        (t * t) (t * f),
-      show (t * f) * (n + 1) = (t * f) * n + t * f from rfl,
-      show t * (n + 1) = t * n + t from rfl,
-      the_sum_multiplies (t * n) t (t * n + t),
-      Nat.left_distrib (t * n) (t * n) t,
-      Nat.left_distrib t (t * n) t,
-      Nat.mul_comm (t * n) t]
-
-theorem the_lean_band_recursion (t f n A B S : Nat)
-    (hA : (t + f) * ((t + f) * A) = ((t * f) * n + (t * n) * (t * n)) * S)
-    (hB : (t + f) * B = (t * n) * S) :
-    (t + f) * ((t + f) * (((t * A + t * B) + (t * B + t * S)) + f * A))
-      = ((t * f) * (n + 1) + (t * (n + 1)) * (t * (n + 1)))
-        * ((t + f) * S) := by
-  have hshuffle : ((t * A + t * B) + (t * B + t * S)) + f * A
-      = (t + f) * A + ((t * B + t * B) + t * S) := by
-    rw [Nat.add_comm ((t * A + t * B) + (t * B + t * S)) (f * A),
-        ← Nat.add_assoc (f * A) (t * A + t * B) (t * B + t * S),
-        ← Nat.add_assoc (f * A) (t * A) (t * B),
-        Nat.add_comm (f * A) (t * A),
-        ← the_sum_multiplies t f A,
-        Nat.add_assoc ((t + f) * A) (t * B) (t * B + t * S),
-        ← Nat.add_assoc (t * B) (t * B) (t * S)]
-  rw [hshuffle,
-      Nat.left_distrib (t + f) ((t + f) * A) ((t * B + t * B) + t * S),
-      Nat.left_distrib (t + f) ((t + f) * ((t + f) * A))
-        ((t + f) * ((t * B + t * B) + t * S)),
-      hA,
-      Nat.left_distrib (t + f) (t * B + t * B) (t * S),
-      Nat.left_distrib (t + f) (t * B) (t * B),
-      mul_left_comm (t + f) t B,
-      hB,
-      mul_left_comm (t + f) t S,
-      Nat.left_distrib (t + f)
-        (t * ((t * n) * S) + t * ((t * n) * S)) (t * ((t + f) * S)),
-      Nat.left_distrib (t + f) (t * ((t * n) * S)) (t * ((t * n) * S)),
-      mul_left_comm (t + f) t ((t * n) * S),
-      mul_left_comm (t + f) (t * n) S,
-      mul_left_comm (t + f) t ((t + f) * S),
-      mul_left_comm (t + f) ((t * f) * n + (t * n) * (t * n)) S,
-      ← mul_regroups t (t * n) ((t + f) * S),
-      ← mul_regroups t (t + f) ((t + f) * S),
-      ← the_sum_multiplies (t * (t * n)) (t * (t * n)) ((t + f) * S),
-      ← the_sum_multiplies (t * (t * n) + t * (t * n)) (t * (t + f))
-        ((t + f) * S),
-      ← the_sum_multiplies ((t * f) * n + (t * n) * (t * n))
-        ((t * (t * n) + t * (t * n)) + t * (t + f)) ((t + f) * S)]
-  exact congrArg (· * ((t + f) * S)) (the_lean_square_expands t f n)
-
-theorem the_weighted_squares_pool_to_the_lean (t f : Nat) :
-    ∀ n : Nat,
-      (t + f) * ((t + f)
-          * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w))))
-        = ((t * f) * n + (t * n) * (t * n)) * stack (t + f) n
-  | 0 => rfl
-  | n + 1 => by
-      rw [the_weighted_squares_split_at_the_growth t f n,
-          the_weighted_book_sums_whole t f n]
-      exact the_lean_band_recursion t f n
-        (natSum ((words n).map (fun w => weigh t f w * (ink w * ink w))))
-        (natSum ((words n).map (fun w => weigh t f w * ink w)))
-        (stack (t + f) n)
-        (the_weighted_squares_pool_to_the_lean t f n)
-        (the_weighted_inks_pool_to_the_lean t f n)
-
-theorem the_even_bias_recovers_the_squares (n : Nat) :
-    natSum ((words n).map (fun w => weigh 1 1 w * (ink w * ink w)))
-      = natSum ((words n).map (fun w => ink w * ink w)) :=
-  congrArg natSum
-    (map_congr_mem (fun w => weigh 1 1 w * (ink w * ink w))
-      (fun w => ink w * ink w) (words n)
-      (fun w _ => by
-        rw [the_even_weight_is_one w]
-        exact one_times (ink w * ink w)))
-
-theorem the_ink_scatters_the_product_of_the_biases (t f n : Nat) :
-    (t + f) * ((t + f)
-          * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w))))
-        = ((t * f) * n + (t * n) * (t * n)) * stack (t + f) n
-      ∧ ((t + f) * ((t + f)
-            * natSum ((words n).map (fun w => weigh t f w * (ink w * ink w)))))
-          * stack (t + f) n
-        = ((t * f) * n) * (stack (t + f) n * stack (t + f) n)
-          + ((t * n) * stack (t + f) n) * ((t * n) * stack (t + f) n)
-      ∧ natSum ((words n).map (fun w => weigh 1 1 w * (ink w * ink w)))
-          = natSum ((words n).map (fun w => ink w * ink w))
-      ∧ natSum ((words n).map (fun w => ink w * ink w)) * 4
-          = (n * (n + 1)) * roomCap n := by
-  refine ⟨the_weighted_squares_pool_to_the_lean t f n, ?_,
-    the_even_bias_recovers_the_squares n,
-    the_squares_pool_to_the_width n⟩
-  rw [the_weighted_squares_pool_to_the_lean t f n,
-      mul_regroups ((t * f) * n + (t * n) * (t * n)) (stack (t + f) n)
-        (stack (t + f) n),
-      the_sum_multiplies ((t * f) * n) ((t * n) * (t * n))
-        (stack (t + f) n * stack (t + f) n),
-      mul_swap_mid (t * n) (t * n) (stack (t + f) n) (stack (t + f) n)]
-
-/-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms no_face_reads_the_guest
-
-/-- info: 'Seed.the_guest_is_real' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_is_real
-
-/-- info: 'Seed.meeting_reads_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms meeting_reads_the_guest
-
-/-- info: 'Seed.a_guest_blind_reading_is_a_face_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms a_guest_blind_reading_is_a_face_reading
-
-/-- info: 'Seed.the_threshold' does not depend on any axioms -/
-#guard_msgs in #print axioms the_threshold
-
-/-- info: 'Seed.the_carrier_is_a_world' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carrier_is_a_world
-
-/-- info: 'Seed.the_manifestation_reads_only_its_spine' does not depend on any axioms -/
-#guard_msgs in #print axioms the_manifestation_reads_only_its_spine
-
-/-- info: 'Seed.the_mirror_rides_real' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mirror_rides_real
-
-/-- info: 'Seed.a_guest_mover_is_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms a_guest_mover_is_unheard
-
-/-- info: 'Seed.an_unheard_move_moves_only_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms an_unheard_move_moves_only_the_guest
-
-/-- info: 'Seed.guest_movers_compose' does not depend on any axioms -/
-#guard_msgs in #print axioms guest_movers_compose
-
-/-- info: 'Seed.the_still_door_moves_no_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_still_door_moves_no_guest
-
-/-- info: 'Seed.the_label_rides_unread' does not depend on any axioms -/
-#guard_msgs in #print axioms the_label_rides_unread
-
-/-- info: 'Seed.a_false_label_is_real' does not depend on any axioms -/
-#guard_msgs in #print axioms a_false_label_is_real
-
-/-- info: 'Seed.the_meeting_reads_the_label' does not depend on any axioms -/
-#guard_msgs in #print axioms the_meeting_reads_the_label
-
-/-- info: 'Seed.honesty_is_invisible_at_the_face' does not depend on any axioms -/
-#guard_msgs in #print axioms honesty_is_invisible_at_the_face
-
-/-- info: 'Seed.the_doors_theorem' does not depend on any axioms -/
-#guard_msgs in #print axioms the_doors_theorem
-
-/-- info: 'Seed.zero_plus' does not depend on any axioms -/
-#guard_msgs in #print axioms zero_plus
-
-/-- info: 'Seed.succ_adds' does not depend on any axioms -/
-#guard_msgs in #print axioms succ_adds
-
-/-- info: 'Seed.len_append' does not depend on any axioms -/
-#guard_msgs in #print axioms len_append
-
-/-- info: 'Seed.map_append' does not depend on any axioms -/
-#guard_msgs in #print axioms map_append
-
-/-- info: 'Seed.the_manifest_counts_the_guests' does not depend on any axioms -/
-#guard_msgs in #print axioms the_manifest_counts_the_guests
-
-/-- info: 'Seed.the_customs_thread_the_manifest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_customs_thread_the_manifest
-
-/-- info: 'Seed.drive_counts' does not depend on any axioms -/
-#guard_msgs in #print axioms drive_counts
-
-/-- info: 'Seed.the_run_agrees_with_the_fold' does not depend on any axioms -/
-#guard_msgs in #print axioms the_run_agrees_with_the_fold
-
-/-- info: 'Seed.ble_refl' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_refl
-
-/-- info: 'Seed.ble_le_succ' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_le_succ
-
-/-- info: 'Seed.tighter_refl' does not depend on any axioms -/
-#guard_msgs in #print axioms tighter_refl
-
-/-- info: 'Seed.tighter_trans' does not depend on any axioms -/
-#guard_msgs in #print axioms tighter_trans
-
-/-- info: 'Seed.the_learner_only_tightens' does not depend on any axioms -/
-#guard_msgs in #print axioms the_learner_only_tightens
-
-/-- info: 'Seed.the_homing_reading_tightens' does not depend on any axioms -/
-#guard_msgs in #print axioms the_homing_reading_tightens
-
-/-- info: 'Seed.the_drive_resumes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_drive_resumes
-
-/-- info: 'Seed.the_session_continues_from_the_parked_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_session_continues_from_the_parked_seat
-
-/-- info: 'Seed.the_future_reads_only_the_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_future_reads_only_the_seat
-
-/-- info: 'Seed.two_routes_one_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms two_routes_one_seat
-
-/-- info: 'Seed.the_special_was_the_general' does not depend on any axioms -/
-#guard_msgs in #print axioms the_special_was_the_general
-
-/-- info: 'Seed.the_spec_hides_the_implementation' does not depend on any axioms -/
-#guard_msgs in #print axioms the_spec_hides_the_implementation
-
-/-- info: 'Seed.no_client_reads_the_implementation' does not depend on any axioms -/
-#guard_msgs in #print axioms no_client_reads_the_implementation
-
-/-- info: 'Seed.hearing_through_a_translator' does not depend on any axioms -/
-#guard_msgs in #print axioms hearing_through_a_translator
-
-/-- info: 'Seed.translators_stack_backward' does not depend on any axioms -/
-#guard_msgs in #print axioms translators_stack_backward
-
-/-- info: 'Seed.the_plain_ear_hears_plainly' does not depend on any axioms -/
-#guard_msgs in #print axioms the_plain_ear_hears_plainly
-
-/-- info: 'Seed.speaking_through_a_translator' does not depend on any axioms -/
-#guard_msgs in #print axioms speaking_through_a_translator
-
-/-- info: 'Seed.voices_stack_forward' does not depend on any axioms -/
-#guard_msgs in #print axioms voices_stack_forward
-
-/-- info: 'Seed.the_ear_and_the_voice_commute' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ear_and_the_voice_commute
-
-/-- info: 'Seed.an_upgrade_ships_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms an_upgrade_ships_unheard
-
-/-- info: 'Seed.the_mirror_doubles_the_manifest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mirror_doubles_the_manifest
-
-/-- info: 'Seed.mem_map_intro' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_map_intro
-
-/-- info: 'Seed.mem_append_left' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_append_left
-
-/-- info: 'Seed.mem_append_right' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_append_right
-
-/-- info: 'Seed.mem_append_split' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_append_split
-
-/-- info: 'Seed.mem_map_back' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_map_back
-
-/-- info: 'Seed.mem_cross' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_cross
-
-/-- info: 'Seed.mem_cross_split' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_cross_split
-
-/-- info: 'Seed.the_reading_is_positive' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reading_is_positive
-
-/-- info: 'Seed.ble_le_add' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_le_add
-
-/-- info: 'Seed.ble_le_add_left' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_le_add_left
-
-/-- info: 'Seed.ble_add_right' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_add_right
-
-/-- info: 'Seed.ble_add_both' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_add_both
-
-/-- info: 'Seed.ble_gain_false' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_gain_false
-
-/-- info: 'Seed.the_cap_is_positive' does not depend on any axioms -/
-#guard_msgs in #print axioms the_cap_is_positive
-
-/-- info: 'Seed.the_horizon_holds_every_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_horizon_holds_every_reading
-
-/-- info: 'Seed.the_room_only_grows' does not depend on any axioms -/
-#guard_msgs in #print axioms the_room_only_grows
-
-/-- info: 'Seed.the_room_reads_within_its_cap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_room_reads_within_its_cap
-
-/-- info: 'Seed.the_bloom_fills_its_cap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_bloom_fills_its_cap
-
-/-- info: 'Seed.the_bloom_resides' does not depend on any axioms -/
-#guard_msgs in #print axioms the_bloom_resides
-
-/-- info: 'Seed.the_bloom_outgrows_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_bloom_outgrows_the_room
-
-/-- info: 'Seed.no_bound_is_the_last_bound' does not depend on any axioms -/
-#guard_msgs in #print axioms no_bound_is_the_last_bound
-
-/-- info: 'Seed.time_outgrows_every_room' does not depend on any axioms -/
-#guard_msgs in #print axioms time_outgrows_every_room
-
-/-- info: 'Seed.the_flip_wheels' does not depend on any axioms -/
-#guard_msgs in #print axioms the_flip_wheels
-
-/-- info: 'Seed.the_pace_parks_at_its_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pace_parks_at_its_count
-
-/-- info: 'Seed.no_gain_is_zero' does not depend on any axioms -/
-#guard_msgs in #print axioms no_gain_is_zero
-
-/-- info: 'Seed.the_pace_reads_as_the_flip' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pace_reads_as_the_flip
-
-/-- info: 'Seed.the_wheel_and_the_arrow_share_a_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wheel_and_the_arrow_share_a_face
-
-/-- info: 'Seed.seats_forget_stages_remember' does not depend on any axioms -/
-#guard_msgs in #print axioms seats_forget_stages_remember
-
-/-- info: 'Seed.the_ground_rides_in_every_graft' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ground_rides_in_every_graft
-
-/-- info: 'Seed.a_true_tick_grows_the_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms a_true_tick_grows_the_reading
-
-/-- info: 'Seed.the_worldline_never_comes_home' does not depend on any axioms -/
-#guard_msgs in #print axioms the_worldline_never_comes_home
-
-/-- info: 'Seed.the_arrow_counts_the_ticks' does not depend on any axioms -/
-#guard_msgs in #print axioms the_arrow_counts_the_ticks
-
-/-- info: 'Seed.time_wears_no_wheel' does not depend on any axioms -/
-#guard_msgs in #print axioms time_wears_no_wheel
-
-/-- info: 'Seed.apart_map' does not depend on any axioms -/
-#guard_msgs in #print axioms apart_map
-
-/-- info: 'Seed.apart_append' does not depend on any axioms -/
-#guard_msgs in #print axioms apart_append
-
-/-- info: 'Seed.the_cross_keeps_apart' does not depend on any axioms -/
-#guard_msgs in #print axioms the_cross_keeps_apart
-
-/-- info: 'Seed.the_room_repeats_no_plan' does not depend on any axioms -/
-#guard_msgs in #print axioms the_room_repeats_no_plan
-
-/-- info: 'Seed.eq_of_beq' does not depend on any axioms -/
-#guard_msgs in #print axioms eq_of_beq
-
-/-- info: 'Seed.beq_self' does not depend on any axioms -/
-#guard_msgs in #print axioms beq_self
-
-/-- info: 'Seed.ne_true_of_eq_false' does not depend on any axioms -/
-#guard_msgs in #print axioms ne_true_of_eq_false
-
-/-- info: 'Seed.mem_of_mem_filter' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_of_mem_filter
-
-/-- info: 'Seed.filter_holds' does not depend on any axioms -/
-#guard_msgs in #print axioms filter_holds
-
-/-- info: 'Seed.mem_filter_intro' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_filter_intro
-
-/-- info: 'Seed.apart_filter' does not depend on any axioms -/
-#guard_msgs in #print axioms apart_filter
-
-/-- info: 'Seed.the_census_is_exact' does not depend on any axioms -/
-#guard_msgs in #print axioms the_census_is_exact
-
-/-- info: 'Seed.the_ground_revision_keeps_the_passenger' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ground_revision_keeps_the_passenger
-
-/-- info: 'Seed.the_mirror_is_a_ride' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mirror_is_a_ride
-
-/-- info: 'Seed.the_passenger_keeps_the_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_passenger_keeps_the_face
-
-/-- info: 'Seed.the_passenger_multiplies_the_manifest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_passenger_multiplies_the_manifest
-
-/-- info: 'Seed.the_rides_compose_at_the_manifest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_rides_compose_at_the_manifest
-
-/-- info: 'Seed.the_walk_resumes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_walk_resumes
-
-/-- info: 'Seed.the_transport_sheds_its_route' does not depend on any axioms -/
-#guard_msgs in #print axioms the_transport_sheds_its_route
-
-/-- info: 'Seed.any_lineage_proof_settles_the_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms any_lineage_proof_settles_the_carrier
-
-/-- info: 'Seed.the_worldline_resumes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_worldline_resumes
-
-/-- info: 'Seed.the_face_survives_the_journey' does not depend on any axioms -/
-#guard_msgs in #print axioms the_face_survives_the_journey
-
-/-- info: 'Seed.the_journey_manifest_settles' does not depend on any axioms -/
-#guard_msgs in #print axioms the_journey_manifest_settles
-
-/-- info: 'Seed.the_journeys_compose' does not depend on any axioms -/
-#guard_msgs in #print axioms the_journeys_compose
-
-/-- info: 'Seed.the_life_resumes_from_the_parked_rider' does not depend on any axioms -/
-#guard_msgs in #print axioms the_life_resumes_from_the_parked_rider
-
-/-- info: 'Seed.the_customs_survive_the_journey' does not depend on any axioms -/
-#guard_msgs in #print axioms the_customs_survive_the_journey
-
-/-- info: 'Seed.the_worldline_carries_its_rider' does not depend on any axioms -/
-#guard_msgs in #print axioms the_worldline_carries_its_rider
-
-/-- info: 'Seed.the_door_carries_the_heq' does not depend on any axioms -/
-#guard_msgs in #print axioms the_door_carries_the_heq
-
-/-- info: 'Seed.the_rides_compose' does not depend on any axioms -/
-#guard_msgs in #print axioms the_rides_compose
-
-/-- info: 'Seed.the_lineage_law_settles_the_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lineage_law_settles_the_carrier
-
-/-- info: 'Seed.two_routes_one_rider' does not depend on any axioms -/
-#guard_msgs in #print axioms two_routes_one_rider
-
-/-- info: 'Seed.the_customs_ride_along' does not depend on any axioms -/
-#guard_msgs in #print axioms the_customs_ride_along
-
-/-- info: 'Seed.a_reading_in_step_carries_the_walk' does not depend on any axioms -/
-#guard_msgs in #print axioms a_reading_in_step_carries_the_walk
-
-/-- info: 'Seed.two_machines_in_step_agree' does not depend on any axioms -/
-#guard_msgs in #print axioms two_machines_in_step_agree
-
-/-- info: 'Seed.the_park_is_a_walk' does not depend on any axioms -/
-#guard_msgs in #print axioms the_park_is_a_walk
-
-/-- info: 'Seed.the_drive_reads_the_walk' does not depend on any axioms -/
-#guard_msgs in #print axioms the_drive_reads_the_walk
-
-/-- info: 'Seed.the_worldline_is_a_walk' does not depend on any axioms -/
-#guard_msgs in #print axioms the_worldline_is_a_walk
-
-/-- info: 'Seed.the_epochs_are_a_walk' does not depend on any axioms -/
-#guard_msgs in #print axioms the_epochs_are_a_walk
-
-/-- info: 'Seed.the_three_roads_are_one_walk' does not depend on any axioms -/
-#guard_msgs in #print axioms the_three_roads_are_one_walk
-
-/-- info: 'Seed.the_worldline_settles' does not depend on any axioms -/
-#guard_msgs in #print axioms the_worldline_settles
-
-/-- info: 'Seed.no_world_is_refused' does not depend on any axioms -/
-#guard_msgs in #print axioms no_world_is_refused
-
-/-- info: 'Seed.any_two_readings_agree' does not depend on any axioms -/
-#guard_msgs in #print axioms any_two_readings_agree
-
-/-- info: 'Seed.the_self_reading_is_the_identity' does not depend on any axioms -/
-#guard_msgs in #print axioms the_self_reading_is_the_identity
-
-/-- info: 'Seed.build_is_a_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms build_is_a_reading
-
-/-- info: 'Seed.a_reading_may_forget_what_the_record_keeps' does not depend on any axioms -/
-#guard_msgs in #print axioms a_reading_may_forget_what_the_record_keeps
-
-/-- info: 'Seed.no_face_answers_for_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms no_face_answers_for_the_guest
-
-/-- info: 'Seed.one_reading_merges_what_another_parts' does not depend on any axioms -/
-#guard_msgs in #print axioms one_reading_merges_what_another_parts
-
-/-- info: 'Seed.the_reading_is_the_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reading_is_the_face
-
-/-- info: 'Seed.the_meeting_returns_the_world' does not depend on any axioms -/
-#guard_msgs in #print axioms the_meeting_returns_the_world
-
-/-- info: 'Seed.classmates_board_as_guests' does not depend on any axioms -/
-#guard_msgs in #print axioms classmates_board_as_guests
-
-/-- info: 'Seed.every_reading_is_a_door' does not depend on any axioms -/
-#guard_msgs in #print axioms every_reading_is_a_door
-
-/-- info: 'Seed.the_class_is_a_guest_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_class_is_a_guest_room
-
-/-- info: 'Seed.checking_papers_unpersons' does not depend on any axioms -/
-#guard_msgs in #print axioms checking_papers_unpersons
-
-/-- info: 'Seed.hospitality_is_structural' does not depend on any axioms -/
-#guard_msgs in #print axioms hospitality_is_structural
-
-/-- info: 'Seed.the_meeting_is_a_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_meeting_is_a_reading
-
-/-- info: 'Seed.two_readings_part_what_one_merges' does not depend on any axioms -/
-#guard_msgs in #print axioms two_readings_part_what_one_merges
-
-/-- info: 'Seed.a_strategy_hears_no_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms a_strategy_hears_no_guest
-
-/-- info: 'Seed.the_whole_interview_reads_no_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_whole_interview_reads_no_guest
-
-/-- info: 'Seed.not_not' does not depend on any axioms -/
-#guard_msgs in #print axioms not_not
-
-/-- info: 'Seed.the_paces_agree' does not depend on any axioms -/
-#guard_msgs in #print axioms the_paces_agree
-
-/-- info: 'Seed.stillness_hides_the_ticking' does not depend on any axioms -/
-#guard_msgs in #print axioms stillness_hides_the_ticking
-
-/-- info: 'Seed.the_still_face_is_not_a_dead_machine' does not depend on any axioms -/
-#guard_msgs in #print axioms the_still_face_is_not_a_dead_machine
-
-/-- info: 'Seed.the_air_gap_reads_no_interior' does not depend on any axioms -/
-#guard_msgs in #print axioms the_air_gap_reads_no_interior
-
-/-- info: 'Seed.the_guest_becomes_the_host' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_becomes_the_host
-
-/-- info: 'Seed.the_return_restores_the_seating' does not depend on any axioms -/
-#guard_msgs in #print axioms the_return_restores_the_seating
-
-/-- info: 'Seed.the_census_checksums_with_the_polygon_cutters' does not depend on any axioms -/
-#guard_msgs in #print axioms the_census_checksums_with_the_polygon_cutters
-
-/-- info: 'Seed.the_import_threads_the_spine' does not depend on any axioms -/
-#guard_msgs in #print axioms the_import_threads_the_spine
-
-/-- info: 'Seed.remeasurement_moves_only_the_ground' does not depend on any axioms -/
-#guard_msgs in #print axioms remeasurement_moves_only_the_ground
-
-/-- info: 'Seed.imports_compose' does not depend on any axioms -/
-#guard_msgs in #print axioms imports_compose
-
-/-- info: 'Seed.one_times' does not depend on any axioms -/
-#guard_msgs in #print axioms one_times
-
-/-- info: 'Seed.the_pace_reads_one_at_home' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pace_reads_one_at_home
-
-/-- info: 'Seed.any_vote_reads_itself' does not depend on any axioms -/
-#guard_msgs in #print axioms any_vote_reads_itself
-
-/-- info: 'Seed.a_stage_may_ground_a_stage' does not depend on any axioms -/
-#guard_msgs in #print axioms a_stage_may_ground_a_stage
-
-/-- info: 'Seed.the_oldest_ground_still_answers' does not depend on any axioms -/
-#guard_msgs in #print axioms the_oldest_ground_still_answers
-
-/-- info: 'Seed.lineages_compose' does not depend on any axioms -/
-#guard_msgs in #print axioms lineages_compose
-
-/-- info: 'Seed.the_trivial_revision_changes_nothing' does not depend on any axioms -/
-#guard_msgs in #print axioms the_trivial_revision_changes_nothing
-
-/-- info: 'Seed.the_parent_folds_into_the_ground' does not depend on any axioms -/
-#guard_msgs in #print axioms the_parent_folds_into_the_ground
-
-/-- info: 'Seed.the_ancestor_rides_unread' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ancestor_rides_unread
-
-/-- info: 'Seed.the_route_leaves_no_mark' does not depend on any axioms -/
-#guard_msgs in #print axioms the_route_leaves_no_mark
-
-/-- info: 'Seed.the_two_entrances_share_one_lobby' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_entrances_share_one_lobby
-
-/-- info: 'Seed.the_entrance_is_real' does not depend on any axioms -/
-#guard_msgs in #print axioms the_entrance_is_real
-
-/-- info: 'Seed.a_greeter_is_a_door_of_handlers' does not depend on any axioms -/
-#guard_msgs in #print axioms a_greeter_is_a_door_of_handlers
-
-/-- info: 'Seed.any_ready_greeter_is_the_greeter' does not depend on any axioms -/
-#guard_msgs in #print axioms any_ready_greeter_is_the_greeter
-
-/-- info: 'Seed.the_anonymous_guest_is_free' does not depend on any axioms -/
-#guard_msgs in #print axioms the_anonymous_guest_is_free
-
-/-- info: 'Seed.no_world_hosts_the_impossible' does not depend on any axioms -/
-#guard_msgs in #print axioms no_world_hosts_the_impossible
-
-/-- info: 'Seed.a_sealed_entrance_adds_nothing' does not depend on any axioms -/
-#guard_msgs in #print axioms a_sealed_entrance_adds_nothing
-
-/-- info: 'Seed.the_swap_trades_maintenance_for_motion' does not depend on any axioms -/
-#guard_msgs in #print axioms the_swap_trades_maintenance_for_motion
-
-/-- info: 'Seed.what_one_seat_maintains_the_other_watches' does not depend on any axioms -/
-#guard_msgs in #print axioms what_one_seat_maintains_the_other_watches
-
-/-- info: 'Seed.the_maintenance_is_audible_across_the_swap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_maintenance_is_audible_across_the_swap
-
-/-- info: 'Seed.the_crossing_returns' does not depend on any axioms -/
-#guard_msgs in #print axioms the_crossing_returns
-
-/-- info: 'Seed.hosting_associates' does not depend on any axioms -/
-#guard_msgs in #print axioms hosting_associates
-
-/-- info: 'Seed.arrival_associates' does not depend on any axioms -/
-#guard_msgs in #print axioms arrival_associates
-
-/-- info: 'Seed.the_host_serves_both_branches' does not depend on any axioms -/
-#guard_msgs in #print axioms the_host_serves_both_branches
-
-/-- info: 'Seed.the_branches_share_the_host' does not depend on any axioms -/
-#guard_msgs in #print axioms the_branches_share_the_host
-
-/-- info: 'Seed.the_host_survives_the_split' does not depend on any axioms -/
-#guard_msgs in #print axioms the_host_survives_the_split
-
-/-- info: 'Seed.the_mirror_finds_the_fixed_point' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mirror_finds_the_fixed_point
-
-/-- info: 'Seed.bool_escapes' does not depend on any axioms -/
-#guard_msgs in #print axioms bool_escapes
-
-/-- info: 'Seed.the_readings_outrun_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_readings_outrun_the_room
-
-/-- info: 'Seed.ble_trans' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_trans
-
-/-- info: 'Seed.and_split' does not depend on any axioms -/
-#guard_msgs in #print axioms and_split
-
-/-- info: 'Seed.and_glue' does not depend on any axioms -/
-#guard_msgs in #print axioms and_glue
-
-/-- info: 'Seed.the_refined_reading_still_lands' does not depend on any axioms -/
-#guard_msgs in #print axioms the_refined_reading_still_lands
-
-/-- info: 'Seed.the_learner_never_leaves_its_first_window' does not depend on any axioms -/
-#guard_msgs in #print axioms the_learner_never_leaves_its_first_window
-
-/-- info: 'Seed.a_window_may_loosen' does not depend on any axioms -/
-#guard_msgs in #print axioms a_window_may_loosen
-
-/-- info: 'Seed.the_revision_is_not_a_refinement' does not depend on any axioms -/
-#guard_msgs in #print axioms the_revision_is_not_a_refinement
-
-/-- info: 'Seed.one_tick_two_doors' does not depend on any axioms -/
-#guard_msgs in #print axioms one_tick_two_doors
-
-/-- info: 'Seed.and_false' does not depend on any axioms -/
-#guard_msgs in #print axioms and_false
-
-/-- info: 'Seed.the_excluded_stays_excluded' does not depend on any axioms -/
-#guard_msgs in #print axioms the_excluded_stays_excluded
-
-/-- info: 'Seed.the_learner_never_admits_the_excluded' does not depend on any axioms -/
-#guard_msgs in #print axioms the_learner_never_admits_the_excluded
-
-/-- info: 'Seed.time_outgrows_every_window' does not depend on any axioms -/
-#guard_msgs in #print axioms time_outgrows_every_window
-
-/-- info: 'Seed.every_admission_names_its_loosening' does not depend on any axioms -/
-#guard_msgs in #print axioms every_admission_names_its_loosening
-
-/-- info: 'Seed.many_guests_ride_one_face' does not depend on any axioms -/
-#guard_msgs in #print axioms many_guests_ride_one_face
-
-/-- info: 'Seed.the_world_outgrows_every_learner' does not depend on any axioms -/
-#guard_msgs in #print axioms the_world_outgrows_every_learner
-
-/-- info: 'Seed.ble_succ_false' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_succ_false
-
-/-- info: 'Seed.the_window_misses_its_own_successor' does not depend on any axioms -/
-#guard_msgs in #print axioms the_window_misses_its_own_successor
-
-/-- info: 'Seed.the_learner_exhibits_its_own_invisible' does not depend on any axioms -/
-#guard_msgs in #print axioms the_learner_exhibits_its_own_invisible
-
-/-- info: 'Seed.every_room_builds_its_own_escapee' does not depend on any axioms -/
-#guard_msgs in #print axioms every_room_builds_its_own_escapee
-
-/-- info: 'Seed.no_revision_is_the_last_revision' does not depend on any axioms -/
-#guard_msgs in #print axioms no_revision_is_the_last_revision
-
-/-- info: 'Seed.three_blindnesses_three_channels' does not depend on any axioms -/
-#guard_msgs in #print axioms three_blindnesses_three_channels
-
-/-- info: 'Seed.the_near_pace_lands_in_the_window' does not depend on any axioms -/
-#guard_msgs in #print axioms the_near_pace_lands_in_the_window
-
-/-- info: 'Seed.the_gap_outruns_every_window' does not depend on any axioms -/
-#guard_msgs in #print axioms the_gap_outruns_every_window
-
-/-- info: 'Seed.the_run_reads_the_gap_the_window_cannot' does not depend on any axioms -/
-#guard_msgs in #print axioms the_run_reads_the_gap_the_window_cannot
-
-/-- info: 'Seed.fold_scale' does not depend on any axioms -/
-#guard_msgs in #print axioms fold_scale
-
-/-- info: 'Seed.the_revision_multiplies_the_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_revision_multiplies_the_reading
-
-/-- info: 'Seed.the_bloom_is_a_doubling_tick' does not depend on any axioms -/
-#guard_msgs in #print axioms the_bloom_is_a_doubling_tick
-
-/-- info: 'Seed.two_lineages_one_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms two_lineages_one_reading
-
-/-- info: 'Seed.mul_regroups' does not depend on any axioms -/
-#guard_msgs in #print axioms mul_regroups
-
-/-- info: 'Seed.linear_fold_scale' does not depend on any axioms -/
-#guard_msgs in #print axioms linear_fold_scale
-
-/-- info: 'Seed.every_linear_reading_is_deaf_to_the_revision_order' does not depend on any axioms -/
-#guard_msgs in #print axioms every_linear_reading_is_deaf_to_the_revision_order
-
-/-- info: 'Seed.the_revision_order_hides_past_linearity' does not depend on any axioms -/
-#guard_msgs in #print axioms the_revision_order_hides_past_linearity
-
-/-- info: 'Seed.an_audition_hears_only_the_conduct' does not depend on any axioms -/
-#guard_msgs in #print axioms an_audition_hears_only_the_conduct
-
-/-- info: 'Seed.no_interview_parts_the_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms no_interview_parts_the_alike
-
-/-- info: 'Seed.the_yield_writes_no_marks' does not depend on any axioms -/
-#guard_msgs in #print axioms the_yield_writes_no_marks
-
-/-- info: 'Seed.the_interviews_resume' does not depend on any axioms -/
-#guard_msgs in #print axioms the_interviews_resume
-
-/-- info: 'Seed.the_quiz_was_an_interview' does not depend on any axioms -/
-#guard_msgs in #print axioms the_quiz_was_an_interview
-
-/-- info: 'Seed.the_guests_are_alike_at_the_door' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guests_are_alike_at_the_door
-
-/-- info: 'Seed.the_audition_sounds_the_air_gap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_audition_sounds_the_air_gap
-
-/-- info: 'Seed.the_organs_share_one_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_organs_share_one_face
-
-/-- info: 'Seed.the_ground_is_the_only_unit' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ground_is_the_only_unit
-
-/-- info: 'Seed.no_split_grounds' does not depend on any axioms -/
-#guard_msgs in #print axioms no_split_grounds
-
-/-- info: 'Seed.a_prime_reading_admits_no_split' does not depend on any axioms -/
-#guard_msgs in #print axioms a_prime_reading_admits_no_split
-
-/-- info: 'Seed.an_unsplit_lineage_may_read_composite' does not depend on any axioms -/
-#guard_msgs in #print axioms an_unsplit_lineage_may_read_composite
-
-/-- info: 'Seed.every_face_opens_as_a_door' does not depend on any axioms -/
-#guard_msgs in #print axioms every_face_opens_as_a_door
-
-/-- info: 'Seed.the_widened_face_reads_the_remainder' does not depend on any axioms -/
-#guard_msgs in #print axioms the_widened_face_reads_the_remainder
-
-/-- info: 'Seed.every_reading_sharpens_the_face' does not depend on any axioms -/
-#guard_msgs in #print axioms every_reading_sharpens_the_face
-
-/-- info: 'Seed.pointwise_is_the_application_faces_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms pointwise_is_the_application_faces_alike
-
-/-- info: 'Seed.the_pointwise_license' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pointwise_license
-
-/-- info: 'Seed.the_teller_walks_in_step' does not depend on any axioms -/
-#guard_msgs in #print axioms the_teller_walks_in_step
-
-/-- info: 'Seed.the_audition_cannot_tell_the_tree_from_its_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_audition_cannot_tell_the_tree_from_its_count
-
-/-- info: 'Seed.the_handshake' does not depend on any axioms -/
-#guard_msgs in #print axioms the_handshake
-
-/-- info: 'Seed.the_audition_is_blind' does not depend on any axioms -/
-#guard_msgs in #print axioms the_audition_is_blind
-
-/-- info: 'Seed.the_interview_never_leaves_the_first_window' does not depend on any axioms -/
-#guard_msgs in #print axioms the_interview_never_leaves_the_first_window
-
-/-- info: 'Seed.no_interview_hears_the_excluded' does not depend on any axioms -/
-#guard_msgs in #print axioms no_interview_hears_the_excluded
-
-/-- info: 'Seed.the_cage_is_audible_through_the_curtain' does not depend on any axioms -/
-#guard_msgs in #print axioms the_cage_is_audible_through_the_curtain
-
-/-- info: 'Seed.take_append' does not depend on any axioms -/
-#guard_msgs in #print axioms take_append
-
-/-- info: 'Seed.drop_append' does not depend on any axioms -/
-#guard_msgs in #print axioms drop_append
-
-/-- info: 'Seed.take_drop' does not depend on any axioms -/
-#guard_msgs in #print axioms take_drop
-
-/-- info: 'Seed.take_length' does not depend on any axioms -/
-#guard_msgs in #print axioms take_length
-
-/-- info: 'Seed.drop_length' does not depend on any axioms -/
-#guard_msgs in #print axioms drop_length
-
-/-- info: 'Seed.the_manifest_rebuilds_the_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms the_manifest_rebuilds_the_carrier
-
-/-- info: 'Seed.one_manifest_one_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms one_manifest_one_carrier
-
-/-- info: 'Seed.the_carrier_rebuilds_the_manifest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carrier_rebuilds_the_manifest
-
-/-- info: 'Seed.the_carrier_is_its_manifest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carrier_is_its_manifest
-
-/-- info: 'Seed.the_transport_moves_no_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_transport_moves_no_guest
-
-/-- info: 'Seed.any_transport_moves_no_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms any_transport_moves_no_guest
-
-/-- info: 'Seed.the_border_reads_only_the_manifest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_border_reads_only_the_manifest
-
-/-- info: 'Seed.transport_is_gauge_at_the_manifest' does not depend on any axioms -/
-#guard_msgs in #print axioms transport_is_gauge_at_the_manifest
-
-/-- info: 'Seed.len_map' does not depend on any axioms -/
-#guard_msgs in #print axioms len_map
-
-/-- info: 'Seed.the_default_goes_unused' does not depend on any axioms -/
-#guard_msgs in #print axioms the_default_goes_unused
-
-/-- info: 'Seed.the_spine_boards_first' does not depend on any axioms -/
-#guard_msgs in #print axioms the_spine_boards_first
-
-/-- info: 'Seed.the_customs_are_a_conjugated_map' does not depend on any axioms -/
-#guard_msgs in #print axioms the_customs_are_a_conjugated_map
-
-/-- info: 'Seed.the_hands_conjugate_the_customs' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hands_conjugate_the_customs
-
-/-- info: 'Seed.the_manifest_settles_the_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms the_manifest_settles_the_carrier
-
-/-- info: 'Seed.the_ride_is_a_conjugated_fold' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ride_is_a_conjugated_fold
-
-/-- info: 'Seed.the_journey_is_a_conjugated_epoch' does not depend on any axioms -/
-#guard_msgs in #print axioms the_journey_is_a_conjugated_epoch
-
-/-- info: 'Seed.the_mirror_is_a_conjugated_doubling' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mirror_is_a_conjugated_doubling
-
-/-- info: 'Seed.the_calculus_rides_the_hands' does not depend on any axioms -/
-#guard_msgs in #print axioms the_calculus_rides_the_hands
-
-/-- info: 'Seed.the_comb_reads_its_length' does not depend on any axioms -/
-#guard_msgs in #print axioms the_comb_reads_its_length
-
-/-- info: 'Seed.the_comb_is_a_corridor_of_doors' does not depend on any axioms -/
-#guard_msgs in #print axioms the_comb_is_a_corridor_of_doors
-
-/-- info: 'Seed.the_cons_was_a_door' does not depend on any axioms -/
-#guard_msgs in #print axioms the_cons_was_a_door
-
-/-- info: 'Seed.the_replanning_moves_no_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_replanning_moves_no_guest
-
-/-- info: 'Seed.the_replanning_returns' does not depend on any axioms -/
-#guard_msgs in #print axioms the_replanning_returns
-
-/-- info: 'Seed.the_word_is_a_corridor_of_doors' does not depend on any axioms -/
-#guard_msgs in #print axioms the_word_is_a_corridor_of_doors
-
-/-- info: 'Seed.the_shape_is_the_remainder_of_the_cargo' does not depend on any axioms -/
-#guard_msgs in #print axioms the_shape_is_the_remainder_of_the_cargo
-
-/-- info: 'Seed.the_replanning_runs_the_handshake' does not depend on any axioms -/
-#guard_msgs in #print axioms the_replanning_runs_the_handshake
-
-/-- info: 'Seed.the_words_walk_in_step' does not depend on any axioms -/
-#guard_msgs in #print axioms the_words_walk_in_step
-
-/-- info: 'Seed.the_pour_is_never_empty' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pour_is_never_empty
-
-/-- info: 'Seed.the_audition_cannot_tell_the_carrier_from_its_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_audition_cannot_tell_the_carrier_from_its_word
-
-/-- info: 'Seed.the_vestibule_drains_in_one_click' does not depend on any axioms -/
-#guard_msgs in #print axioms the_vestibule_drains_in_one_click
-
-/-- info: 'Seed.the_held_door_answers_every_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_held_door_answers_every_guest
-
-/-- info: 'Seed.the_two_strokes_read_one_meeting' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_strokes_read_one_meeting
-
-/-- info: 'Seed.the_deferral_is_free' does not depend on any axioms -/
-#guard_msgs in #print axioms the_deferral_is_free
-
-/-- info: 'Seed.the_guest_mover_was_a_held_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_mover_was_a_held_reading
-
-/-- info: 'Seed.the_readings_trade_the_entrances' does not depend on any axioms -/
-#guard_msgs in #print axioms the_readings_trade_the_entrances
-
-/-- info: 'Seed.the_door_is_known_by_its_readings' does not depend on any axioms -/
-#guard_msgs in #print axioms the_door_is_known_by_its_readings
-
-/-- info: 'Seed.the_turned_door_flips_the_promise' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turned_door_flips_the_promise
-
-/-- info: 'Seed.the_guests_enter_one_at_a_time' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guests_enter_one_at_a_time
-
-/-- info: 'Seed.the_tower_holds_nothing_back' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tower_holds_nothing_back
-
-/-- info: 'Seed.the_door_receives_the_world_one_guest_at_a_time' does not depend on any axioms -/
-#guard_msgs in #print axioms the_door_receives_the_world_one_guest_at_a_time
-
-/-- info: 'Seed.the_measurement_is_a_meeting' does not depend on any axioms -/
-#guard_msgs in #print axioms the_measurement_is_a_meeting
-
-/-- info: 'Seed.the_face_was_a_held_door' does not depend on any axioms -/
-#guard_msgs in #print axioms the_face_was_a_held_door
-
-/-- info: 'Seed.every_door_reading_is_a_face' does not depend on any axioms -/
-#guard_msgs in #print axioms every_door_reading_is_a_face
-
-/-- info: 'Seed.the_agreeing_held_doors_sound_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_agreeing_held_doors_sound_alike
-
-/-- info: 'Seed.the_face_is_the_doors_transpose' does not depend on any axioms -/
-#guard_msgs in #print axioms the_face_is_the_doors_transpose
-
-/-- info: 'Seed.the_hosted_meeting_deepens_past_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hosted_meeting_deepens_past_the_guest
-
-/-- info: 'Seed.the_sharpened_meeting_splits_at_the_fork' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sharpened_meeting_splits_at_the_fork
-
-/-- info: 'Seed.the_operator_calculus_rides_the_meetings' does not depend on any axioms -/
-#guard_msgs in #print axioms the_operator_calculus_rides_the_meetings
-
-/-- info: 'Seed.the_reception_reads_only_the_arrived' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reception_reads_only_the_arrived
-
-/-- info: 'Seed.the_straight_host_opens_every_door' does not depend on any axioms -/
-#guard_msgs in #print axioms the_straight_host_opens_every_door
-
-/-- info: 'Seed.the_patient_and_the_eager_host_read_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_patient_and_the_eager_host_read_alike
-
-/-- info: 'Seed.the_door_ledger_parts_the_hosts' does not depend on any axioms -/
-#guard_msgs in #print axioms the_door_ledger_parts_the_hosts
-
-/-- info: 'Seed.the_hosts_patience_is_the_remainder' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hosts_patience_is_the_remainder
-
-/-- info: 'Seed.the_fulfilled_reception_hands_off_whole' does not depend on any axioms -/
-#guard_msgs in #print axioms the_fulfilled_reception_hands_off_whole
-
-/-- info: 'Seed.the_reception_resumes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reception_resumes
-
-/-- info: 'Seed.the_ledger_sums_the_handoff' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ledger_sums_the_handoff
-
-/-- info: 'Seed.the_reception_grafts_at_the_close' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reception_grafts_at_the_close
-
-/-- info: 'Seed.the_first_guests_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_first_guests_count
-
-/-- info: 'Seed.the_host_reboards_the_stream' does not depend on any axioms -/
-#guard_msgs in #print axioms the_host_reboards_the_stream
-
-/-- info: 'Seed.the_handoff_is_the_board_at_the_ledger' does not depend on any axioms -/
-#guard_msgs in #print axioms the_handoff_is_the_board_at_the_ledger
-
-/-- info: 'Seed.the_carrier_checks_in_one_guest_at_a_time' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carrier_checks_in_one_guest_at_a_time
-
-/-- info: 'Seed.no_stream_parts_the_hosts' does not depend on any axioms -/
-#guard_msgs in #print axioms no_stream_parts_the_hosts
-
-/-- info: 'Seed.the_hosts_are_alike_at_the_reception_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hosts_are_alike_at_the_reception_face
-
-/-- info: 'Seed.no_interview_parts_the_hosts' does not depend on any axioms -/
-#guard_msgs in #print axioms no_interview_parts_the_hosts
-
-/-- info: 'Seed.the_hosts_are_two' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hosts_are_two
-
-/-- info: 'Seed.the_patience_face_parts_the_hosts' does not depend on any axioms -/
-#guard_msgs in #print axioms the_patience_face_parts_the_hosts
-
-/-- info: 'Seed.the_hosts_run_the_handshake' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hosts_run_the_handshake
-
-/-- info: 'Seed.the_machine_receives_its_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_machine_receives_its_word
-
-/-- info: 'Seed.the_machines_patience_is_fixed' does not depend on any axioms -/
-#guard_msgs in #print axioms the_machines_patience_is_fixed
-
-/-- info: 'Seed.the_air_gap_crosses_into_the_reception' does not depend on any axioms -/
-#guard_msgs in #print axioms the_air_gap_crosses_into_the_reception
-
-/-- info: 'Seed.the_machine_is_an_eager_host' does not depend on any axioms -/
-#guard_msgs in #print axioms the_machine_is_an_eager_host
-
-/-- info: 'Seed.the_lock_survives_every_lap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lock_survives_every_lap
-
-/-- info: 'Seed.the_revision_multiplies_the_patience' does not depend on any axioms -/
-#guard_msgs in #print axioms the_revision_multiplies_the_patience
-
-/-- info: 'Seed.the_wheels_signature_is_gap_zero' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wheels_signature_is_gap_zero
-
-/-- info: 'Seed.the_tower_alike_reads_at_the_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tower_alike_reads_at_the_face
-
-/-- info: 'Seed.the_crossed_readings_turn_about' does not depend on any axioms -/
-#guard_msgs in #print axioms the_crossed_readings_turn_about
-
-/-- info: 'Seed.the_pointwise_license_is_a_face_license' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pointwise_license_is_a_face_license
-
-/-- info: 'Seed.the_machine_wears_a_tower' does not depend on any axioms -/
-#guard_msgs in #print axioms the_machine_wears_a_tower
-
-/-- info: 'Seed.the_registers_reduce_at_conduct' does not depend on any axioms -/
-#guard_msgs in #print axioms the_registers_reduce_at_conduct
-
-/-- info: 'Seed.the_remainders_wear_the_blindnesses' does not depend on any axioms -/
-#guard_msgs in #print axioms the_remainders_wear_the_blindnesses
-
-/-- info: 'Seed.every_meeting_is_one_move' does not depend on any axioms -/
-#guard_msgs in #print axioms every_meeting_is_one_move
-
-/-- info: 'Seed.the_hanoi_recurrence' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hanoi_recurrence
-
-/-- info: 'Seed.the_hanoi_count_fills_the_cap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hanoi_count_fills_the_cap
-
-/-- info: 'Seed.the_tower_of_hanoi_is_the_blooms_meetings' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tower_of_hanoi_is_the_blooms_meetings
-
-/-- info: 'Seed.the_tower_meets_the_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tower_meets_the_mirror
-
-/-- info: 'Seed.the_mirror_checks_in_twice' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mirror_checks_in_twice
-
-/-- info: 'Seed.the_escapee_negates_the_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms the_escapee_negates_the_mirror
-
-/-- info: 'Seed.the_fixed_point_sits_at_the_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms the_fixed_point_sits_at_the_mirror
-
-/-- info: 'Seed.the_diagonal_was_a_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms the_diagonal_was_a_mirror
-
-/-- info: 'Seed.the_mirror_revises_every_life' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mirror_revises_every_life
-
-/-- info: 'Seed.the_blooms_add' does not depend on any axioms -/
-#guard_msgs in #print axioms the_blooms_add
-
-/-- info: 'Seed.the_bloom_hears_no_order' does not depend on any axioms -/
-#guard_msgs in #print axioms the_bloom_hears_no_order
-
-/-- info: 'Seed.the_caps_multiply' does not depend on any axioms -/
-#guard_msgs in #print axioms the_caps_multiply
-
-/-- info: 'Seed.the_order_vanishes_on_the_diagonal' does not depend on any axioms -/
-#guard_msgs in #print axioms the_order_vanishes_on_the_diagonal
-
-/-- info: 'Seed.the_self_meeting_walks_the_graph' does not depend on any axioms -/
-#guard_msgs in #print axioms the_self_meeting_walks_the_graph
-
-/-- info: 'Seed.the_mirror_was_a_graph' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mirror_was_a_graph
-
-/-- info: 'Seed.the_held_door_meets_itself_at_the_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms the_held_door_meets_itself_at_the_mirror
-
-/-- info: 'Seed.the_window_never_meets_its_successor' does not depend on any axioms -/
-#guard_msgs in #print axioms the_window_never_meets_its_successor
-
-/-- info: 'Seed.the_diagonal_mints_the_probe' does not depend on any axioms -/
-#guard_msgs in #print axioms the_diagonal_mints_the_probe
-
-/-- info: 'Seed.the_self_meeting_reads_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_self_meeting_reads_the_guest
-
-/-- info: 'Seed.the_self_meeting_parts_the_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_self_meeting_parts_the_alike
-
-/-- info: 'Seed.the_sharpened_window_exhibits_the_escapee' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sharpened_window_exhibits_the_escapee
-
-/-- info: 'Seed.the_curtain_follows_the_minting' does not depend on any axioms -/
-#guard_msgs in #print axioms the_curtain_follows_the_minting
-
-/-- info: 'Seed.the_guest_written_from_the_whole_door' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_written_from_the_whole_door
-
-/-- info: 'Seed.the_reading_writes_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reading_writes_unheard
-
-/-- info: 'Seed.no_interview_hears_the_written_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms no_interview_hears_the_written_guest
-
-/-- info: 'Seed.one_reading_two_entrances' does not depend on any axioms -/
-#guard_msgs in #print axioms one_reading_two_entrances
-
-/-- info: 'Seed.the_probe_boards_as_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_probe_boards_as_the_guest
-
-/-- info: 'Seed.the_meeting_was_a_self_meeting' does not depend on any axioms -/
-#guard_msgs in #print axioms the_meeting_was_a_self_meeting
-
-/-- info: 'Seed.the_written_question_is_the_asked_question' does not depend on any axioms -/
-#guard_msgs in #print axioms the_written_question_is_the_asked_question
-
-/-- info: 'Seed.the_escapee_rides_refused' does not depend on any axioms -/
-#guard_msgs in #print axioms the_escapee_rides_refused
-
-/-- info: 'Seed.every_reading_is_a_self_meeting' does not depend on any axioms -/
-#guard_msgs in #print axioms every_reading_is_a_self_meeting
-
-/-- info: 'Seed.no_tick_is_smaller_than_the_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms no_tick_is_smaller_than_the_mirror
-
-/-- info: 'Seed.the_least_tick_is_the_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms the_least_tick_is_the_mirror
-
-/-- info: 'Seed.the_tick_was_a_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tick_was_a_mirror
-
-/-- info: 'Seed.no_meeting_no_revision' does not depend on any axioms -/
-#guard_msgs in #print axioms no_meeting_no_revision
-
-/-- info: 'Seed.one_meeting_is_the_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms one_meeting_is_the_mirror
-
-/-- info: 'Seed.every_quantum_is_the_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms every_quantum_is_the_mirror
-
-/-- info: 'Seed.the_pair_refines_the_first_look' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pair_refines_the_first_look
-
-/-- info: 'Seed.the_pair_refines_the_second_look' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pair_refines_the_second_look
-
-/-- info: 'Seed.the_pair_parts_what_the_look_merges' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pair_parts_what_the_look_merges
-
-/-- info: 'Seed.the_patience_face_was_a_pair' does not depend on any axioms -/
-#guard_msgs in #print axioms the_patience_face_was_a_pair
-
-/-- info: 'Seed.the_comparison_mints_a_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_comparison_mints_a_face
-
-/-- info: 'Seed.a_role_read_at_a_probe_is_derived' does not depend on any axioms -/
-#guard_msgs in #print axioms a_role_read_at_a_probe_is_derived
-
-/-- info: 'Seed.the_guest_is_not_a_derived_role' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_is_not_a_derived_role
-
-/-- info: 'Seed.a_look_role_lifts_to_the_pair' does not depend on any axioms -/
-#guard_msgs in #print axioms a_look_role_lifts_to_the_pair
-
-/-- info: 'Seed.the_pair_provokes_the_agreement' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pair_provokes_the_agreement
-
-/-- info: 'Seed.the_pair_provokes_what_no_look_affords' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pair_provokes_what_no_look_affords
-
-/-- info: 'Seed.the_derived_look_widens_nothing' does not depend on any axioms -/
-#guard_msgs in #print axioms the_derived_look_widens_nothing
-
-/-- info: 'Seed.the_pair_widens_only_past_the_conduct' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pair_widens_only_past_the_conduct
-
-/-- info: 'Seed.the_hallway_is_too_small' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hallway_is_too_small
-
-/-- info: 'Seed.every_widening_is_one_pairing' does not depend on any axioms -/
-#guard_msgs in #print axioms every_widening_is_one_pairing
-
-/-- info: 'Seed.three_is_the_width_of_contact' does not depend on any axioms -/
-#guard_msgs in #print axioms three_is_the_width_of_contact
-
-/-- info: 'Seed.the_serving_suggestion' does not depend on any axioms -/
-#guard_msgs in #print axioms the_serving_suggestion
-
-/-- info: 'Seed.the_split_is_not_a_derived_role' does not depend on any axioms -/
-#guard_msgs in #print axioms the_split_is_not_a_derived_role
-
-/-- info: 'Seed.the_census_reads_the_split_only_at_the_primes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_census_reads_the_split_only_at_the_primes
-
-/-- info: 'Seed.the_revision_also_rides' does not depend on any axioms -/
-#guard_msgs in #print axioms the_revision_also_rides
-
-/-- info: 'Seed.every_factor_lives_below_the_horizon' does not depend on any axioms -/
-#guard_msgs in #print axioms every_factor_lives_below_the_horizon
-
-/-- info: 'Seed.the_split_is_searchable_in_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_split_is_searchable_in_the_room
-
-/-- info: 'Seed.the_self_steered_machine_is_a_clock' does not depend on any axioms -/
-#guard_msgs in #print axioms the_self_steered_machine_is_a_clock
-
-/-- info: 'Seed.the_channel_hears_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_channel_hears_the_guest
-
-/-- info: 'Seed.the_clock_and_the_channel' does not depend on any axioms -/
-#guard_msgs in #print axioms the_clock_and_the_channel
-
-/-- info: 'Seed.the_clock_of_mirrors_parks_at_the_bloom' does not depend on any axioms -/
-#guard_msgs in #print axioms the_clock_of_mirrors_parks_at_the_bloom
-
-/-- info: 'Seed.the_bloom_is_the_clocks_orbit' does not depend on any axioms -/
-#guard_msgs in #print axioms the_bloom_is_the_clocks_orbit
-
-/-- info: 'Seed.the_mirror_clock_reads_the_caps' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mirror_clock_reads_the_caps
-
-/-- info: 'Seed.the_mirror_clock_never_comes_home' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mirror_clock_never_comes_home
-
-/-- info: 'Seed.the_stage_is_a_kept_clock' does not depend on any axioms -/
-#guard_msgs in #print axioms the_stage_is_a_kept_clock
-
-/-- info: 'Seed.the_instinct_replays_its_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_instinct_replays_its_word
-
-/-- info: 'Seed.internalization_is_self_steering' does not depend on any axioms -/
-#guard_msgs in #print axioms internalization_is_self_steering
-
-/-- info: 'Seed.the_spiral_parks_at_its_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_spiral_parks_at_its_count
-
-/-- info: 'Seed.the_spiral_reads_at_its_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_spiral_reads_at_its_count
-
-/-- info: 'Seed.the_wheel_reads_itself_unworn' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wheel_reads_itself_unworn
-
-/-- info: 'Seed.the_spiral_holds_the_first_lap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_spiral_holds_the_first_lap
-
-/-- info: 'Seed.the_spiral_flips_at_the_witness' does not depend on any axioms -/
-#guard_msgs in #print axioms the_spiral_flips_at_the_witness
-
-/-- info: 'Seed.the_kept_lap_reads_the_gap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_kept_lap_reads_the_gap
-
-/-- info: 'Seed.the_origin_merges_every_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_origin_merges_every_seat
-
-/-- info: 'Seed.no_interview_parts_the_origin' does not depend on any axioms -/
-#guard_msgs in #print axioms no_interview_parts_the_origin
-
-/-- info: 'Seed.the_origin_is_the_pairs_unit' does not depend on any axioms -/
-#guard_msgs in #print axioms the_origin_is_the_pairs_unit
-
-/-- info: 'Seed.the_constant_look_attributes_the_parting' does not depend on any axioms -/
-#guard_msgs in #print axioms the_constant_look_attributes_the_parting
-
-/-- info: 'Seed.the_meeting_has_a_unit' does not depend on any axioms -/
-#guard_msgs in #print axioms the_meeting_has_a_unit
-
-/-- info: 'Seed.the_recital_is_the_transcript' does not depend on any axioms -/
-#guard_msgs in #print axioms the_recital_is_the_transcript
-
-/-- info: 'Seed.the_window_agrees_or_names_the_gap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_window_agrees_or_names_the_gap
-
-/-- info: 'Seed.the_agreed_window_sounds_as_one' does not depend on any axioms -/
-#guard_msgs in #print axioms the_agreed_window_sounds_as_one
-
-/-- info: 'Seed.the_beholders_run_out_of_disagreement' does not depend on any axioms -/
-#guard_msgs in #print axioms the_beholders_run_out_of_disagreement
-
-/-- info: 'Seed.the_guest_is_never_a_derived_role' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_is_never_a_derived_role
-
-/-- info: 'Seed.the_roles_run_the_handshake' does not depend on any axioms -/
-#guard_msgs in #print axioms the_roles_run_the_handshake
-
-/-- info: 'Seed.the_sounding_reads_the_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sounding_reads_the_alike
-
-/-- info: 'Seed.the_recital_reads_the_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_recital_reads_the_alike
-
-/-- info: 'Seed.the_curtain_is_exact' does not depend on any axioms -/
-#guard_msgs in #print axioms the_curtain_is_exact
-
-/-- info: 'Seed.the_home_wheel_turns' does not depend on any axioms -/
-#guard_msgs in #print axioms the_home_wheel_turns
-
-/-- info: 'Seed.the_homecoming_is_conduct' does not depend on any axioms -/
-#guard_msgs in #print axioms the_homecoming_is_conduct
-
-/-- info: 'Seed.the_spoken_arrives_at_the_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_spoken_arrives_at_the_face
-
-/-- info: 'Seed.the_listening_turn_is_the_yield' does not depend on any axioms -/
-#guard_msgs in #print axioms the_listening_turn_is_the_yield
-
-/-- info: 'Seed.the_two_listeners_restore_the_table' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_listeners_restore_the_table
-
-/-- info: 'Seed.the_dialogue_resumes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_dialogue_resumes
-
-/-- info: 'Seed.the_conversation_is_a_walk' does not depend on any axioms -/
-#guard_msgs in #print axioms the_conversation_is_a_walk
-
-/-- info: 'Seed.the_deaf_turn_merges' does not depend on any axioms -/
-#guard_msgs in #print axioms the_deaf_turn_merges
-
-/-- info: 'Seed.no_move_unsays_the_deaf_turn' does not depend on any axioms -/
-#guard_msgs in #print axioms no_move_unsays_the_deaf_turn
-
-/-- info: 'Seed.the_turn_keeps_only_what_it_hears' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turn_keeps_only_what_it_hears
-
-/-- info: 'Seed.the_repeated_ask_hears_one_answer' does not depend on any axioms -/
-#guard_msgs in #print axioms the_repeated_ask_hears_one_answer
-
-/-- info: 'Seed.the_worn_word_spends_no_object' does not depend on any axioms -/
-#guard_msgs in #print axioms the_worn_word_spends_no_object
-
-/-- info: 'Seed.the_park_resumes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_park_resumes
-
-/-- info: 'Seed.the_rep_lands_where_it_is_fed' does not depend on any axioms -/
-#guard_msgs in #print axioms the_rep_lands_where_it_is_fed
-
-/-- info: 'Seed.the_yield_fixes_the_agreed' does not depend on any axioms -/
-#guard_msgs in #print axioms the_yield_fixes_the_agreed
-
-/-- info: 'Seed.the_quiescence_signature' does not depend on any axioms -/
-#guard_msgs in #print axioms the_quiescence_signature
-
-/-- info: 'Seed.the_hold_walks_beside_the_work' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hold_walks_beside_the_work
-
-/-- info: 'Seed.the_buffer_is_invisible' does not depend on any axioms -/
-#guard_msgs in #print axioms the_buffer_is_invisible
-
-/-- info: 'Seed.the_settle_is_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms the_settle_is_unheard
-
-/-- info: 'Seed.the_held_and_the_worked_read_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_held_and_the_worked_read_alike
-
-/-- info: 'Seed.the_decomposition_is_the_remainder' does not depend on any axioms -/
-#guard_msgs in #print axioms the_decomposition_is_the_remainder
-
-/-- info: 'Seed.the_wider_parting_lands_at_the_ground' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wider_parting_lands_at_the_ground
-
-/-- info: 'Seed.the_premise_meets_its_witness' does not depend on any axioms -/
-#guard_msgs in #print axioms the_premise_meets_its_witness
-
-/-- info: 'Seed.no_hand_beats_itself' does not depend on any axioms -/
-#guard_msgs in #print axioms no_hand_beats_itself
-
-/-- info: 'Seed.every_hand_meets_its_match' does not depend on any axioms -/
-#guard_msgs in #print axioms every_hand_meets_its_match
-
-/-- info: 'Seed.the_interlock_refuses_the_ladder' does not depend on any axioms -/
-#guard_msgs in #print axioms the_interlock_refuses_the_ladder
-
-/-- info: 'Seed.the_trio_interlocks' does not depend on any axioms -/
-#guard_msgs in #print axioms the_trio_interlocks
-
-/-- info: 'Seed.ble_antisymm' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_antisymm
-
-/-- info: 'Seed.no_rank_descends_the_flip' does not depend on any axioms -/
-#guard_msgs in #print axioms no_rank_descends_the_flip
-
-/-- info: 'Seed.no_rank_descends_the_home_wheel' does not depend on any axioms -/
-#guard_msgs in #print axioms no_rank_descends_the_home_wheel
-
-/-- info: 'Seed.the_wheel_flattens_the_monotone' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wheel_flattens_the_monotone
-
-/-- info: 'Seed.the_wheel_refuses_the_ladder' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wheel_refuses_the_ladder
-
-/-- info: 'Seed.no_inverse_unsteps_the_collatz' does not depend on any axioms -/
-#guard_msgs in #print axioms no_inverse_unsteps_the_collatz
-
-/-- info: 'Seed.the_wheel_counters_forward' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wheel_counters_forward
-
-/-- info: 'Seed.the_wheel_is_its_own_countermove' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wheel_is_its_own_countermove
-
-/-- info: 'Seed.the_muffled_tally_is_the_resting_counter' does not depend on any axioms -/
-#guard_msgs in #print axioms the_muffled_tally_is_the_resting_counter
-
-/-- info: 'Seed.the_revoice_moves_no_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_revoice_moves_no_seat
-
-/-- info: 'Seed.the_shell_sounds_still' does not depend on any axioms -/
-#guard_msgs in #print axioms the_shell_sounds_still
-
-/-- info: 'Seed.the_flywheel_and_the_shell_sound_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_flywheel_and_the_shell_sound_alike
-
-/-- info: 'Seed.the_muffler_banks_the_run' does not depend on any axioms -/
-#guard_msgs in #print axioms the_muffler_banks_the_run
-
-/-- info: 'Seed.the_wider_voice_releases_the_bank' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wider_voice_releases_the_bank
-
-/-- info: 'Seed.the_still_face_banks_the_run' does not depend on any axioms -/
-#guard_msgs in #print axioms the_still_face_banks_the_run
-
-/-- info: 'Seed.one_clock_many_voices' does not depend on any axioms -/
-#guard_msgs in #print axioms one_clock_many_voices
-
-/-- info: 'Seed.the_retuned_seat_walks_the_translated_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_retuned_seat_walks_the_translated_word
-
-/-- info: 'Seed.the_pulse_wears_a_deaf_ear' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pulse_wears_a_deaf_ear
-
-/-- info: 'Seed.the_deaf_ear_reads_only_the_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_deaf_ear_reads_only_the_count
-
-/-- info: 'Seed.the_ear_the_seat_and_the_voice' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ear_the_seat_and_the_voice
-
-/-- info: 'Seed.the_full_exchange_is_a_guest_move' does not depend on any axioms -/
-#guard_msgs in #print axioms the_full_exchange_is_a_guest_move
-
-/-- info: 'Seed.the_ode_comes_home' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ode_comes_home
-
-/-- info: 'Seed.the_deaf_turn_speaks_the_graph' does not depend on any axioms -/
-#guard_msgs in #print axioms the_deaf_turn_speaks_the_graph
-
-/-- info: 'Seed.the_monologue_echoes_its_last_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_monologue_echoes_its_last_word
-
-/-- info: 'Seed.the_monologue_merges_at_the_first_turn' does not depend on any axioms -/
-#guard_msgs in #print axioms the_monologue_merges_at_the_first_turn
-
-/-- info: 'Seed.the_monologue_walks_the_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_monologue_walks_the_face
-
-/-- info: 'Seed.the_read_monologue_is_a_self_meeting' does not depend on any axioms -/
-#guard_msgs in #print axioms the_read_monologue_is_a_self_meeting
-
-/-- info: 'Seed.the_monologue_is_its_own_audience' does not depend on any axioms -/
-#guard_msgs in #print axioms the_monologue_is_its_own_audience
-
-/-- info: 'Seed.the_translated_ear_hears_no_more' does not depend on any axioms -/
-#guard_msgs in #print axioms the_translated_ear_hears_no_more
-
-/-- info: 'Seed.the_sectioned_ear_loses_nothing' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sectioned_ear_loses_nothing
-
-/-- info: 'Seed.the_faithful_voice_keeps_the_curtain' does not depend on any axioms -/
-#guard_msgs in #print axioms the_faithful_voice_keeps_the_curtain
-
-/-- info: 'Seed.the_interview_crosses_the_ear' does not depend on any axioms -/
-#guard_msgs in #print axioms the_interview_crosses_the_ear
-
-/-- info: 'Seed.the_interview_crosses_the_voice' does not depend on any axioms -/
-#guard_msgs in #print axioms the_interview_crosses_the_voice
-
-/-- info: 'Seed.the_ears_stack_backward' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ears_stack_backward
-
-/-- info: 'Seed.the_voices_stack_forward' does not depend on any axioms -/
-#guard_msgs in #print axioms the_voices_stack_forward
-
-/-- info: 'Seed.the_machines_ear_is_the_faces_ear' does not depend on any axioms -/
-#guard_msgs in #print axioms the_machines_ear_is_the_faces_ear
-
-/-- info: 'Seed.the_machines_voice_is_the_faces_voice' does not depend on any axioms -/
-#guard_msgs in #print axioms the_machines_voice_is_the_faces_voice
-
-/-- info: 'Seed.every_face_wears_an_ear_and_a_voice' does not depend on any axioms -/
-#guard_msgs in #print axioms every_face_wears_an_ear_and_a_voice
-
-/-- info: 'Seed.the_still_hand_is_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms the_still_hand_is_unheard
-
-/-- info: 'Seed.the_unheard_hands_compose' does not depend on any axioms -/
-#guard_msgs in #print axioms the_unheard_hands_compose
-
-/-- info: 'Seed.no_interview_hears_the_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms no_interview_hears_the_unheard
-
-/-- info: 'Seed.correct_maintenance_has_no_signature' does not depend on any axioms -/
-#guard_msgs in #print axioms correct_maintenance_has_no_signature
-
-/-- info: 'Seed.a_chain_of_the_unheard_is_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms a_chain_of_the_unheard_is_unheard
-
-/-- info: 'Seed.only_the_unheard_survives_the_sounding' does not depend on any axioms -/
-#guard_msgs in #print axioms only_the_unheard_survives_the_sounding
-
-/-- info: 'Seed.the_guest_mover_is_a_still_hand' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_mover_is_a_still_hand
-
-/-- info: 'Seed.the_guest_write_is_a_still_hand' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_write_is_a_still_hand
-
-/-- info: 'Seed.the_settle_is_a_still_hand' does not depend on any axioms -/
-#guard_msgs in #print axioms the_settle_is_a_still_hand
-
-/-- info: 'Seed.the_yield_is_no_still_hand' does not depend on any axioms -/
-#guard_msgs in #print axioms the_yield_is_no_still_hand
-
-/-- info: 'Seed.the_unheard_keep_the_house' does not depend on any axioms -/
-#guard_msgs in #print axioms the_unheard_keep_the_house
-
-/-- info: 'Seed.the_duet_walks_in_step' does not depend on any axioms -/
-#guard_msgs in #print axioms the_duet_walks_in_step
-
-/-- info: 'Seed.the_duet_parks_in_step' does not depend on any axioms -/
-#guard_msgs in #print axioms the_duet_parks_in_step
-
-/-- info: 'Seed.the_duet_sounds_both' does not depend on any axioms -/
-#guard_msgs in #print axioms the_duet_sounds_both
-
-/-- info: 'Seed.the_duet_reads_at_the_mirror_probe' does not depend on any axioms -/
-#guard_msgs in #print axioms the_duet_reads_at_the_mirror_probe
-
-/-- info: 'Seed.the_shell_is_the_duets_silent_partner' does not depend on any axioms -/
-#guard_msgs in #print axioms the_shell_is_the_duets_silent_partner
-
-/-- info: 'Seed.the_shell_signs_no_parting' does not depend on any axioms -/
-#guard_msgs in #print axioms the_shell_signs_no_parting
-
-/-- info: 'Seed.two_voices_of_one_clock_share_one_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms two_voices_of_one_clock_share_one_seat
-
-/-- info: 'Seed.the_duet_hears_one_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_duet_hears_one_word
-
-/-- info: 'Seed.snoc_append' does not depend on any axioms -/
-#guard_msgs in #print axioms snoc_append
-
-/-- info: 'Seed.the_scribes_record_only_grows' does not depend on any axioms -/
-#guard_msgs in #print axioms the_scribes_record_only_grows
-
-/-- info: 'Seed.one_wind_one_mark' does not depend on any axioms -/
-#guard_msgs in #print axioms one_wind_one_mark
-
-/-- info: 'Seed.the_scribe_resumes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_scribe_resumes
-
-/-- info: 'Seed.the_scribe_wears_the_tally' does not depend on any axioms -/
-#guard_msgs in #print axioms the_scribe_wears_the_tally
-
-/-- info: 'Seed.the_utterance_is_a_door' does not depend on any axioms -/
-#guard_msgs in #print axioms the_utterance_is_a_door
-
-/-- info: 'Seed.the_selection_reads_no_wind' does not depend on any axioms -/
-#guard_msgs in #print axioms the_selection_reads_no_wind
-
-/-- info: 'Seed.the_selection_reads_only_the_record' does not depend on any axioms -/
-#guard_msgs in #print axioms the_selection_reads_only_the_record
-
-/-- info: 'Seed.the_wind_rides_the_utterance' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wind_rides_the_utterance
-
-/-- info: 'Seed.generation_originates_nothing' does not depend on any axioms -/
-#guard_msgs in #print axioms generation_originates_nothing
-
-/-- info: 'Seed.the_commuting_seat_shrugs_the_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_commuting_seat_shrugs_the_shuffle
-
-/-- info: 'Seed.the_heap_steps_commute' does not depend on any axioms -/
-#guard_msgs in #print axioms the_heap_steps_commute
-
-/-- info: 'Seed.the_heap_shrugs_the_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_heap_shrugs_the_shuffle
-
-/-- info: 'Seed.the_heap_hears_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_heap_hears_the_guest
-
-/-- info: 'Seed.the_scribe_keeps_the_order' does not depend on any axioms -/
-#guard_msgs in #print axioms the_scribe_keeps_the_order
-
-/-- info: 'Seed.a_seat_reads_the_order_the_census_cannot' does not depend on any axioms -/
-#guard_msgs in #print axioms a_seat_reads_the_order_the_census_cannot
-
-/-- info: 'Seed.the_research_wears_the_old_ear' does not depend on any axioms -/
-#guard_msgs in #print axioms the_research_wears_the_old_ear
-
-/-- info: 'Seed.the_research_resounds_the_search' does not depend on any axioms -/
-#guard_msgs in #print axioms the_research_resounds_the_search
-
-/-- info: 'Seed.only_the_minted_ask_hears_the_mint' does not depend on any axioms -/
-#guard_msgs in #print axioms only_the_minted_ask_hears_the_mint
-
-/-- info: 'Seed.the_research_finds_only_the_mint' does not depend on any axioms -/
-#guard_msgs in #print axioms the_research_finds_only_the_mint
-
-/-- info: 'Seed.append_nil' does not depend on any axioms -/
-#guard_msgs in #print axioms append_nil
-
-/-- info: 'Seed.the_ledger_parks_the_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ledger_parks_the_word
-
-/-- info: 'Seed.the_replayer_walks_in_step' does not depend on any axioms -/
-#guard_msgs in #print axioms the_replayer_walks_in_step
-
-/-- info: 'Seed.the_replay_is_the_machine' does not depend on any axioms -/
-#guard_msgs in #print axioms the_replay_is_the_machine
-
-/-- info: 'Seed.every_seat_is_a_reading_of_the_record' does not depend on any axioms -/
-#guard_msgs in #print axioms every_seat_is_a_reading_of_the_record
-
-/-- info: 'Seed.the_audition_cannot_tell_the_seat_from_its_record' does not depend on any axioms -/
-#guard_msgs in #print axioms the_audition_cannot_tell_the_seat_from_its_record
-
-/-- info: 'Seed.the_record_never_unwrites' does not depend on any axioms -/
-#guard_msgs in #print axioms the_record_never_unwrites
-
-/-- info: 'Seed.the_holonomy_is_the_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_holonomy_is_the_word
-
-/-- info: 'Seed.the_ground_floor_is_the_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ground_floor_is_the_face
-
-/-- info: 'Seed.the_tower_climbs_by_hosting' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tower_climbs_by_hosting
-
-/-- info: 'Seed.every_floor_reads_the_cellar' does not depend on any axioms -/
-#guard_msgs in #print axioms every_floor_reads_the_cellar
-
-/-- info: 'Seed.the_tower_reads_only_the_ground' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tower_reads_only_the_ground
-
-/-- info: 'Seed.every_floor_merges_its_guests' does not depend on any axioms -/
-#guard_msgs in #print axioms every_floor_merges_its_guests
-
-/-- info: 'Seed.the_maintenance_climbs_the_tower' does not depend on any axioms -/
-#guard_msgs in #print axioms the_maintenance_climbs_the_tower
-
-/-- info: 'Seed.no_seat_is_the_last_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms no_seat_is_the_last_seat
-
-/-- info: 'Seed.the_again_resumes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_again_resumes
+/-- info: 'Seed.the_value_tells_the_words_apart' does not depend on any axioms -/
+#guard_msgs in #print axioms the_value_tells_the_words_apart
+
+theorem the_orbit_is_the_book (n : Nat) (w : List Bool) (s : List Bool) :
+    (words n).length = roomCap n
+      ∧ (zeros n).length = n
+      ∧ again inc (roomCap (zeros n).length) (zeros n) = zeros n
+      ∧ (w ∈ words n → again inc (val w) (zeros n) = w)
+      ∧ (∀ p q : List Bool, p ∈ words n → q ∈ words n → val p = val q → p = q)
+      ∧ dec (inc s) = s ∧ inc (dec s) = s :=
+  ⟨the_book_counts_the_cap n,
+   the_zeros_span_the_width n,
+   the_odometer_comes_home_at_the_cap (zeros n),
+   (fun hw => by
+     rw [← every_word_fits n w hw]
+     exact the_clock_reaches_every_word w),
+   (fun _ _ hp hq he => the_value_tells_the_words_apart hp hq he),
+   the_tick_unwinds s,
+   the_unwind_ticks s⟩
+
+/-- info: 'Seed.the_orbit_is_the_book' does not depend on any axioms -/
+#guard_msgs in #print axioms the_orbit_is_the_book
+
+def halve : Nat → Nat
+  | 0 => 0
+  | 1 => 0
+  | n + 2 => halve n + 1
+
+def collatzStep (n : Nat) : Nat :=
+  cond (oddNat n) (3 * n + 1) (halve n)
+
+theorem the_again_steps_first {α : Sort u} (Φ : α → α) :
+    ∀ (n : Nat) (a : α), again Φ (n + 1) a = again Φ n (Φ a)
+  | 0, _ => rfl
+  | n + 1, a => congrArg Φ (the_again_steps_first Φ n a)
 
 /-- info: 'Seed.the_again_steps_first' does not depend on any axioms -/
 #guard_msgs in #print axioms the_again_steps_first
 
-/-- info: 'Seed.the_tower_is_the_hosts_again' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tower_is_the_hosts_again
+theorem the_retrace_comes_home :
+    ∀ (n : Nat) (s : List Bool), again dec n (again inc n s) = s
+  | 0, _ => rfl
+  | n + 1, s => by
+      rw [the_again_steps_first dec n]
+      show again dec n (dec (inc (again inc n s))) = s
+      rw [the_tick_unwinds]
+      exact the_retrace_comes_home n s
 
-/-- info: 'Seed.the_bloom_is_the_mirrors_again' does not depend on any axioms -/
-#guard_msgs in #print axioms the_bloom_is_the_mirrors_again
+/-- info: 'Seed.the_retrace_comes_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_retrace_comes_home
 
-/-- info: 'Seed.the_orbit_is_the_steps_again' does not depend on any axioms -/
-#guard_msgs in #print axioms the_orbit_is_the_steps_again
+theorem the_home_wheel_turns : again collatzStep 3 1 = 1 := rfl
 
-/-- info: 'Seed.the_storeys_add' does not depend on any axioms -/
-#guard_msgs in #print axioms the_storeys_add
+/-- info: 'Seed.the_home_wheel_turns' does not depend on any axioms -/
+#guard_msgs in #print axioms the_home_wheel_turns
 
-/-- info: 'Seed.one_again_three_orbits' does not depend on any axioms -/
-#guard_msgs in #print axioms one_again_three_orbits
+theorem the_step_merges_the_riders :
+    collatzStep 1 = collatzStep 8 ∧ (1 : Nat) ≠ 8 :=
+  ⟨rfl, (fun h => nomatch (Nat.succ.inj h))⟩
 
-/-- info: 'Seed.the_unsigning_is_the_unit_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_unsigning_is_the_unit_guest
+/-- info: 'Seed.the_step_merges_the_riders' does not depend on any axioms -/
+#guard_msgs in #print axioms the_step_merges_the_riders
 
-/-- info: 'Seed.the_unsigned_work_reads_the_same' does not depend on any axioms -/
-#guard_msgs in #print axioms the_unsigned_work_reads_the_same
+theorem no_inverse_unsteps_the_collatz :
+    ¬ ∃ g : Nat → Nat, ∀ n, g (collatzStep n) = n :=
+  fun ⟨_, hg⟩ => nomatch (Nat.succ.inj ((hg 1).symm.trans (hg 8)))
 
-/-- info: 'Seed.an_author_blind_reading_is_an_unsigned_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms an_author_blind_reading_is_an_unsigned_reading
+/-- info: 'Seed.no_inverse_unsteps_the_collatz' does not depend on any axioms -/
+#guard_msgs in #print axioms no_inverse_unsteps_the_collatz
 
-/-- info: 'Seed.the_quiet_author_leaves_the_table_as_found' does not depend on any axioms -/
-#guard_msgs in #print axioms the_quiet_author_leaves_the_table_as_found
+theorem the_wear_is_a_reading (n : Nat) (s : List Bool) :
+    again dec n (again inc n s) = s
+      ∧ (∀ p q : List Bool, inc p = inc q → p = q)
+      ∧ again collatzStep 3 1 = 1
+      ∧ collatzStep 1 = collatzStep 8
+      ∧ (1 : Nat) ≠ 8
+      ∧ ¬ ∃ g : Nat → Nat, ∀ m, g (collatzStep m) = m :=
+  ⟨the_retrace_comes_home n s,
+   (fun p q h =>
+     (the_tick_unwinds p).symm.trans ((congrArg dec h).trans (the_tick_unwinds q))),
+   the_home_wheel_turns,
+   the_step_merges_the_riders.1,
+   the_step_merges_the_riders.2,
+   no_inverse_unsteps_the_collatz⟩
 
-/-- info: 'Seed.the_author_was_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_author_was_the_guest
+/-- info: 'Seed.the_wear_is_a_reading' does not depend on any axioms -/
+#guard_msgs in #print axioms the_wear_is_a_reading
 
-/-- info: 'Seed.the_backed_are_seated' does not depend on any axioms -/
-#guard_msgs in #print axioms the_backed_are_seated
+def intake {A : Type u} (beq : A → A → Bool) :
+    List A × List (A × List A) → List (A × List A) → List A × List (A × List A)
+  | st, [] => st
+  | st, arr :: w => intake beq (welcome beq st arr) w
 
-/-- info: 'Seed.the_unbacked_are_held' does not depend on any axioms -/
-#guard_msgs in #print axioms the_unbacked_are_held
+def lacking {A : Type u} (beq : A → A → Bool) (room : List A) : List A → Nat
+  | [] => 0
+  | n :: needs =>
+      cond (enrolled beq room n) (lacking beq room needs) (lacking beq room needs + 1)
 
-/-- info: 'Seed.or_lights_right' does not depend on any axioms -/
-#guard_msgs in #print axioms or_lights_right
+theorem and_reads : ∀ a b : Bool, (a && b) = true → a = true ∧ b = true
+  | true, true, _ => ⟨rfl, rfl⟩
+  | true, false, h => nomatch h
+  | false, _, h => nomatch h
 
-/-- info: 'Seed.the_seat_is_load_bearing_in_the_same_click' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_is_load_bearing_in_the_same_click
+/-- info: 'Seed.and_reads' does not depend on any axioms -/
+#guard_msgs in #print axioms and_reads
 
-/-- info: 'Seed.the_enrolled_stay_enrolled' does not depend on any axioms -/
-#guard_msgs in #print axioms the_enrolled_stay_enrolled
+theorem enrolled_grows {A : Type u} (beq : A → A → Bool) (room : List A) (y x : A)
+    (h : enrolled beq room x = true) : enrolled beq (y :: room) x = true := by
+  show (beq y x || enrolled beq room x) = true
+  rw [h]
+  exact or_swallows (beq y x)
 
-/-- info: 'Seed.the_backing_never_lapses' does not depend on any axioms -/
-#guard_msgs in #print axioms the_backing_never_lapses
+/-- info: 'Seed.enrolled_grows' does not depend on any axioms -/
+#guard_msgs in #print axioms enrolled_grows
 
-/-- info: 'Seed.the_backing_survives_the_door' does not depend on any axioms -/
-#guard_msgs in #print axioms the_backing_survives_the_door
-
-/-- info: 'Seed.the_hall_hears_no_join_order' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hall_hears_no_join_order
-
-/-- info: 'Seed.the_room_reads_no_waiting' does not depend on any axioms -/
-#guard_msgs in #print axioms the_room_reads_no_waiting
-
-/-- info: 'Seed.the_guest_becomes_the_ground' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_becomes_the_ground
-
-/-- info: 'Seed.beq_of_ne' does not depend on any axioms -/
-#guard_msgs in #print axioms beq_of_ne
-
-/-- info: 'Seed.the_seated_arrive_shallowest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seated_arrive_shallowest
-
-/-- info: 'Seed.every_later_admission_deepens' does not depend on any axioms -/
-#guard_msgs in #print axioms every_later_admission_deepens
-
-/-- info: 'Seed.the_depth_counts_the_clicks_since' does not depend on any axioms -/
-#guard_msgs in #print axioms the_depth_counts_the_clicks_since
-
-/-- info: 'Seed.no_ask_parts_the_warmed_hall' does not depend on any axioms -/
-#guard_msgs in #print axioms no_ask_parts_the_warmed_hall
-
-/-- info: 'Seed.the_cost_face_parts_the_warmed' does not depend on any axioms -/
-#guard_msgs in #print axioms the_cost_face_parts_the_warmed
-
-/-- info: 'Seed.the_weight_is_zero_at_the_door' does not depend on any axioms -/
-#guard_msgs in #print axioms the_weight_is_zero_at_the_door
-
-/-- info: 'Seed.the_removed_date_returns_as_a_weight' does not depend on any axioms -/
-#guard_msgs in #print axioms the_removed_date_returns_as_a_weight
+theorem the_backing_reaches_each_need {A : Type u} (beq : A → A → Bool) (room : List A) :
+    ∀ needs : List A, backed beq room needs = true →
+      ∀ n, n ∈ needs → enrolled beq room n = true := by
+  intro needs
+  induction needs with
+  | nil => intro _ n hn; cases hn
+  | cons n' needs ih =>
+      intro h n hn
+      have hh : (enrolled beq room n' && backed beq room needs) = true := h
+      have hp := and_reads _ _ hh
+      cases hn with
+      | head => exact hp.1
+      | tail _ hm => exact ih hp.2 n hm
 
 /-- info: 'Seed.the_backing_reaches_each_need' does not depend on any axioms -/
 #guard_msgs in #print axioms the_backing_reaches_each_need
 
-/-- info: 'Seed.the_support_precedes_the_seating' does not depend on any axioms -/
-#guard_msgs in #print axioms the_support_precedes_the_seating
+theorem the_backing_survives_the_seating {A : Type u} (beq : A → A → Bool)
+    (room : List A) (y : A) :
+    ∀ needs : List A, backed beq room needs = true →
+      backed beq (y :: room) needs = true := by
+  intro needs
+  induction needs with
+  | nil => intro _; rfl
+  | cons n' needs ih =>
+      intro h
+      have hh : (enrolled beq room n' && backed beq room needs) = true := h
+      have hp := and_reads _ _ hh
+      show (enrolled beq (y :: room) n' && backed beq (y :: room) needs) = true
+      rw [enrolled_grows beq room y n' hp.1, ih hp.2]
+      exact rfl
 
-/-- info: 'Seed.the_citer_arrives_above_the_cited' does not depend on any axioms -/
-#guard_msgs in #print axioms the_citer_arrives_above_the_cited
+/-- info: 'Seed.the_backing_survives_the_seating' does not depend on any axioms -/
+#guard_msgs in #print axioms the_backing_survives_the_seating
 
-/-- info: 'Seed.the_elders_keep_their_order' does not depend on any axioms -/
-#guard_msgs in #print axioms the_elders_keep_their_order
-
-/-- info: 'Seed.the_cited_are_the_elders' does not depend on any axioms -/
-#guard_msgs in #print axioms the_cited_are_the_elders
-
-/-- info: 'Seed.the_unencumbered_are_welcome_everywhere' does not depend on any axioms -/
-#guard_msgs in #print axioms the_unencumbered_are_welcome_everywhere
-
-/-- info: 'Seed.the_enrolled_survive_the_door' does not depend on any axioms -/
-#guard_msgs in #print axioms the_enrolled_survive_the_door
-
-/-- info: 'Seed.the_enrolled_survive_the_run' does not depend on any axioms -/
-#guard_msgs in #print axioms the_enrolled_survive_the_run
-
-/-- info: 'Seed.the_ordered_arrivals_never_wait' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ordered_arrivals_never_wait
-
-/-- info: 'Seed.the_ordered_arrivals_all_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ordered_arrivals_all_seat
-
-/-- info: 'Seed.the_tree_admits_itself' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tree_admits_itself
-
-/-- info: 'Seed.no_memory_meters_the_cost' does not depend on any axioms -/
-#guard_msgs in #print axioms no_memory_meters_the_cost
-
-/-- info: 'Seed.the_stranger_leaves_the_hall_dark' does not depend on any axioms -/
-#guard_msgs in #print axioms the_stranger_leaves_the_hall_dark
-
-/-- info: 'Seed.no_mark_lights_itself' does not depend on any axioms -/
-#guard_msgs in #print axioms no_mark_lights_itself
-
-/-- info: 'Seed.the_first_light_comes_from_outside' does not depend on any axioms -/
-#guard_msgs in #print axioms the_first_light_comes_from_outside
-
-/-- info: 'Seed.the_backing_survives_the_run' does not depend on any axioms -/
-#guard_msgs in #print axioms the_backing_survives_the_run
-
-/-- info: 'Seed.the_ready_seat_in_one_sweep' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ready_seat_in_one_sweep
-
-/-- info: 'Seed.the_sweep_seats_the_ready' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sweep_seats_the_ready
-
-/-- info: 'Seed.the_vestibule_drains_by_storeys' does not depend on any axioms -/
-#guard_msgs in #print axioms the_vestibule_drains_by_storeys
+theorem the_held_name_their_darkness {A : Type u} (beq : A → A → Bool) (room : List A) :
+    ∀ needs : List A, backed beq room needs = false →
+      ∃ n, n ∈ needs ∧ enrolled beq room n = false := by
+  intro needs
+  induction needs with
+  | nil =>
+      intro h
+      have h' : (true : Bool) = false := h
+      exact nomatch h'
+  | cons n' needs ih =>
+      intro h
+      cases he : enrolled beq room n' with
+      | false => exact ⟨n', .head _, he⟩
+      | true =>
+          have hh : (enrolled beq room n' && backed beq room needs) = false := h
+          rw [he] at hh
+          obtain ⟨n, hn, hf⟩ := ih hh
+          exact ⟨n, .tail _ hn, hf⟩
 
 /-- info: 'Seed.the_held_name_their_darkness' does not depend on any axioms -/
 #guard_msgs in #print axioms the_held_name_their_darkness
 
-/-- info: 'Seed.the_round_seats_or_certifies' does not depend on any axioms -/
-#guard_msgs in #print axioms the_round_seats_or_certifies
-
-/-- info: 'Seed.the_stuck_round_moves_nothing' does not depend on any axioms -/
-#guard_msgs in #print axioms the_stuck_round_moves_nothing
-
-/-- info: 'Seed.the_deadlock_wheels' does not depend on any axioms -/
-#guard_msgs in #print axioms the_deadlock_wheels
-
-/-- info: 'Seed.the_deadlock_is_a_wheel' does not depend on any axioms -/
-#guard_msgs in #print axioms the_deadlock_is_a_wheel
-
-/-- info: 'Seed.mem_splits' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_splits
-
-/-- info: 'Seed.the_load_never_climbs' does not depend on any axioms -/
-#guard_msgs in #print axioms the_load_never_climbs
-
-/-- info: 'Seed.the_ready_drop_the_load' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ready_drop_the_load
-
-/-- info: 'Seed.the_gauge_is_exact' does not depend on any axioms -/
-#guard_msgs in #print axioms the_gauge_is_exact
-
-/-- info: 'Seed.the_detector_reads_one_number' does not depend on any axioms -/
-#guard_msgs in #print axioms the_detector_reads_one_number
-
-/-- info: 'Seed.the_revision_is_a_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_revision_is_a_reading
-
-/-- info: 'Seed.every_writer_is_a_reader' does not depend on any axioms -/
-#guard_msgs in #print axioms every_writer_is_a_reader
-
-/-- info: 'Seed.braid_of_left' does not depend on any axioms -/
-#guard_msgs in #print axioms braid_of_left
-
-/-- info: 'Seed.braid_of_right' does not depend on any axioms -/
-#guard_msgs in #print axioms braid_of_right
-
-/-- info: 'Seed.braid_append' does not depend on any axioms -/
-#guard_msgs in #print axioms braid_append
-
-/-- info: 'Seed.braid_prepend' does not depend on any axioms -/
-#guard_msgs in #print axioms braid_prepend
-
-/-- info: 'Seed.the_step_crosses_the_walk' does not depend on any axioms -/
-#guard_msgs in #print axioms the_step_crosses_the_walk
-
-/-- info: 'Seed.the_weave_parks_one_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_weave_parks_one_seat
-
-/-- info: 'Seed.the_contributors_may_arrive_in_either_order' does not depend on any axioms -/
-#guard_msgs in #print axioms the_contributors_may_arrive_in_either_order
-
-/-- info: 'Seed.the_shared_fold_needs_no_scheduler' does not depend on any axioms -/
-#guard_msgs in #print axioms the_shared_fold_needs_no_scheduler
-
-/-- info: 'Seed.the_tellers_steps_commute' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tellers_steps_commute
-
-/-- info: 'Seed.the_braided_life_draws_one_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_braided_life_draws_one_count
-
-/-- info: 'Seed.the_braided_lives_part' does not depend on any axioms -/
-#guard_msgs in #print axioms the_braided_lives_part
-
-/-- info: 'Seed.every_braid_draws_one_count' does not depend on any axioms -/
-#guard_msgs in #print axioms every_braid_draws_one_count
-
-/-- info: 'Seed.ne_of_beq_false' does not depend on any axioms -/
-#guard_msgs in #print axioms ne_of_beq_false
-
-/-- info: 'Seed.the_mutual_need_stays_dark' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mutual_need_stays_dark
-
-/-- info: 'Seed.the_circle_admits_nobody' does not depend on any axioms -/
-#guard_msgs in #print axioms the_circle_admits_nobody
-
-/-- info: 'Seed.the_turned_queue_turns_home' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turned_queue_turns_home
-
-/-- info: 'Seed.the_double_turn_comes_home' does not depend on any axioms -/
-#guard_msgs in #print axioms the_double_turn_comes_home
-
-/-- info: 'Seed.mem_turnQueue' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_turnQueue
-
-/-- info: 'Seed.the_stuck_round_turns_the_queue' does not depend on any axioms -/
-#guard_msgs in #print axioms the_stuck_round_turns_the_queue
-
-/-- info: 'Seed.the_deadlock_comes_home_in_two' does not depend on any axioms -/
-#guard_msgs in #print axioms the_deadlock_comes_home_in_two
-
-/-- info: 'Seed.one_sweep_two_wearings' does not depend on any axioms -/
-#guard_msgs in #print axioms one_sweep_two_wearings
-
-/-- info: 'Seed.the_empty_load_is_the_empty_queue' does not depend on any axioms -/
-#guard_msgs in #print axioms the_empty_load_is_the_empty_queue
-
-/-- info: 'Seed.the_drained_room_rests' does not depend on any axioms -/
-#guard_msgs in #print axioms the_drained_room_rests
-
-/-- info: 'Seed.the_cascade_grounds_or_wheels' does not depend on any axioms -/
-#guard_msgs in #print axioms the_cascade_grounds_or_wheels
-
-/-- info: 'Seed.no_third_fate' does not depend on any axioms -/
-#guard_msgs in #print axioms no_third_fate
-
-/-- info: 'Seed.the_hall_runs_the_handshake' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hall_runs_the_handshake
-
-/-- info: 'Seed.the_reseated_face_reads_the_ground' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reseated_face_reads_the_ground
-
-/-- info: 'Seed.the_seats_stack_backward' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seats_stack_backward
-
-/-- info: 'Seed.the_plain_seat_sits_plainly' does not depend on any axioms -/
-#guard_msgs in #print axioms the_plain_seat_sits_plainly
-
-/-- info: 'Seed.the_seat_commutes_with_the_ear' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_commutes_with_the_ear
-
-/-- info: 'Seed.the_seat_commutes_with_the_voice' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_commutes_with_the_voice
-
-/-- info: 'Seed.the_interview_crosses_the_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_interview_crosses_the_seat
-
-/-- info: 'Seed.the_host_was_a_reseat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_host_was_a_reseat
-
-/-- info: 'Seed.the_tower_was_a_reseat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tower_was_a_reseat
-
-/-- info: 'Seed.the_pair_is_two_reseats' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pair_is_two_reseats
-
-/-- info: 'Seed.every_face_wears_a_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms every_face_wears_a_seat
-
-/-- info: 'Seed.the_renovation_moves_no_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_renovation_moves_no_guest
-
-/-- info: 'Seed.the_carriage_keeps_the_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carriage_keeps_the_face
-
-/-- info: 'Seed.the_two_channels_commute' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_channels_commute
-
-/-- info: 'Seed.the_still_channels_hold_the_door' does not depend on any axioms -/
-#guard_msgs in #print axioms the_still_channels_hold_the_door
-
-/-- info: 'Seed.the_renovations_compose' does not depend on any axioms -/
-#guard_msgs in #print axioms the_renovations_compose
-
-/-- info: 'Seed.the_carriages_compose' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carriages_compose
-
-/-- info: 'Seed.the_guest_mover_is_a_carriage' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_mover_is_a_carriage
-
-/-- info: 'Seed.the_renovated_meeting_reads_past_the_crew' does not depend on any axioms -/
-#guard_msgs in #print axioms the_renovated_meeting_reads_past_the_crew
-
-/-- info: 'Seed.the_renovation_is_a_reseat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_renovation_is_a_reseat
-
-/-- info: 'Seed.the_customs_split_at_the_cell' does not depend on any axioms -/
-#guard_msgs in #print axioms the_customs_split_at_the_cell
-
-/-- info: 'Seed.one_cell_two_channels' does not depend on any axioms -/
-#guard_msgs in #print axioms one_cell_two_channels
-
-/-- info: 'Seed.the_drained_room_rests_forever' does not depend on any axioms -/
-#guard_msgs in #print axioms the_drained_room_rests_forever
-
-/-- info: 'Seed.the_drain_face_reads_no_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_drain_face_reads_no_room
-
-/-- info: 'Seed.the_stuck_load_reads_flat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_stuck_load_reads_flat
-
-/-- info: 'Seed.the_clock_reads_zero_at_rest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_clock_reads_zero_at_rest
-
-/-- info: 'Seed.the_clock_finds_the_drain' does not depend on any axioms -/
-#guard_msgs in #print axioms the_clock_finds_the_drain
-
-/-- info: 'Seed.the_stuck_vestibule_never_drains' does not depend on any axioms -/
-#guard_msgs in #print axioms the_stuck_vestibule_never_drains
-
-/-- info: 'Seed.the_rewrite_is_the_remainder' does not depend on any axioms -/
-#guard_msgs in #print axioms the_rewrite_is_the_remainder
-
-/-- info: 'Seed.the_weight_names_the_price' does not depend on any axioms -/
-#guard_msgs in #print axioms the_weight_names_the_price
+theorem the_weight_is_zero_at_the_door {A : Type u} (beq : A → A → Bool) (room : List A) :
+    ∀ needs : List A, lacking beq room needs = 0 ↔ backed beq room needs = true := by
+  intro needs
+  induction needs with
+  | nil => exact ⟨fun _ => rfl, fun _ => rfl⟩
+  | cons n' needs ih =>
+      cases he : enrolled beq room n' with
+      | true =>
+          constructor
+          · intro h0
+            have hh : cond (enrolled beq room n')
+                (lacking beq room needs) (lacking beq room needs + 1) = 0 := h0
+            rw [he] at hh
+            have hb := ih.mp hh
+            show (enrolled beq room n' && backed beq room needs) = true
+            rw [he, hb]
+            exact rfl
+          · intro hb
+            have hh : (enrolled beq room n' && backed beq room needs) = true := hb
+            rw [he] at hh
+            show cond (enrolled beq room n')
+                (lacking beq room needs) (lacking beq room needs + 1) = 0
+            rw [he]
+            exact ih.mpr hh
+      | false =>
+          constructor
+          · intro h0
+            have hh : cond (enrolled beq room n')
+                (lacking beq room needs) (lacking beq room needs + 1) = 0 := h0
+            rw [he] at hh
+            exact nomatch hh
+          · intro hb
+            have hh : (enrolled beq room n' && backed beq room needs) = true := hb
+            rw [he] at hh
+            exact nomatch hh
+
+/-- info: 'Seed.the_weight_is_zero_at_the_door' does not depend on any axioms -/
+#guard_msgs in #print axioms the_weight_is_zero_at_the_door
+
+theorem the_click_spares_the_dark {A : Type u} (beq : A → A → Bool)
+    (st : List A × List (A × List A)) (arr : A × List A) (x : A)
+    (hdark : enrolled beq st.1 x = false)
+    (hcite : beq arr.1 x = true → ∃ z, z ∈ arr.2 ∧ enrolled beq st.1 z = false) :
+    enrolled beq (welcome beq st arr).1 x = false := by
+  cases hb : backed beq st.1 arr.2 with
+  | false =>
+      rw [the_unbacked_wait beq st arr hb]
+      exact hdark
+  | true =>
+      rw [the_backed_are_seated beq st arr hb]
+      show (beq arr.1 x || enrolled beq st.1 x) = false
+      cases ha : beq arr.1 x with
+      | false => exact hdark
+      | true =>
+          obtain ⟨z, hz, hzd⟩ := hcite ha
+          have hze := the_backing_reaches_each_need beq st.1 arr.2 hb z hz
+          rw [hze] at hzd
+          exact nomatch hzd
+
+/-- info: 'Seed.the_click_spares_the_dark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_click_spares_the_dark
+
+theorem no_mark_lights_itself {A : Type u} (beq : A → A → Bool) (x : A) :
+    ∀ (w : List (A × List A)) (st : List A × List (A × List A)),
+      enrolled beq st.1 x = false →
+      (∀ arr, arr ∈ w → beq arr.1 x = true → x ∈ arr.2) →
+      enrolled beq (intake beq st w).1 x = false := by
+  intro w
+  induction w with
+  | nil => intro st hdark _; exact hdark
+  | cons arr w ih =>
+      intro st hdark hself
+      show enrolled beq (intake beq (welcome beq st arr) w).1 x = false
+      exact ih (welcome beq st arr)
+        (the_click_spares_the_dark beq st arr x hdark
+          (fun ha => ⟨x, hself arr (.head _) ha, hdark⟩))
+        (fun a ha hb => hself a (.tail _ ha) hb)
+
+/-- info: 'Seed.no_mark_lights_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms no_mark_lights_itself
+
+theorem the_circle_stays_dark {A : Type u} (beq : A → A → Bool) (x y : A) :
+    ∀ (w : List (A × List A)) (st : List A × List (A × List A)),
+      enrolled beq st.1 x = false → enrolled beq st.1 y = false →
+      (∀ arr, arr ∈ w → beq arr.1 x = true → y ∈ arr.2) →
+      (∀ arr, arr ∈ w → beq arr.1 y = true → x ∈ arr.2) →
+      enrolled beq (intake beq st w).1 x = false
+        ∧ enrolled beq (intake beq st w).1 y = false := by
+  intro w
+  induction w with
+  | nil => intro st hdx hdy _ _; exact ⟨hdx, hdy⟩
+  | cons arr w ih =>
+      intro st hdx hdy hcx hcy
+      have hdx' := the_click_spares_the_dark beq st arr x hdx
+        (fun ha => ⟨y, hcx arr (.head _) ha, hdy⟩)
+      have hdy' := the_click_spares_the_dark beq st arr y hdy
+        (fun ha => ⟨x, hcy arr (.head _) ha, hdx⟩)
+      show enrolled beq (intake beq (welcome beq st arr) w).1 x = false
+        ∧ enrolled beq (intake beq (welcome beq st arr) w).1 y = false
+      exact ih (welcome beq st arr) hdx' hdy'
+        (fun a ha hb => hcx a (.tail _ ha) hb)
+        (fun a ha hb => hcy a (.tail _ ha) hb)
+
+/-- info: 'Seed.the_circle_stays_dark' does not depend on any axioms -/
+#guard_msgs in #print axioms the_circle_stays_dark
+
+theorem the_key_is_cut_from_the_room {A : Type u} (beq : A → A → Bool)
+    (hrefl : ∀ y : A, beq y y = true) (room : List A) :
+    ∀ needs : List A, lacking beq room needs = 1 →
+      ∃ k, k ∈ needs ∧ enrolled beq room k = false ∧
+        backed beq (k :: room) needs = true := by
+  intro needs
+  induction needs with
+  | nil =>
+      intro h
+      have h' : (0 : Nat) = 1 := h
+      exact nomatch h'
+  | cons n' needs ih =>
+      intro h
+      cases he : enrolled beq room n' with
+      | true =>
+          have hh : cond (enrolled beq room n')
+              (lacking beq room needs) (lacking beq room needs + 1) = 1 := h
+          rw [he] at hh
+          obtain ⟨k, hk, hkd, hkb⟩ := ih hh
+          refine ⟨k, .tail _ hk, hkd, ?_⟩
+          show (enrolled beq (k :: room) n' && backed beq (k :: room) needs) = true
+          rw [enrolled_grows beq room k n' he, hkb]
+          exact rfl
+      | false =>
+          have hh : cond (enrolled beq room n')
+              (lacking beq room needs) (lacking beq room needs + 1) = 1 := h
+          rw [he] at hh
+          have h0 : lacking beq room needs = 0 := Nat.succ.inj hh
+          have hb := (the_weight_is_zero_at_the_door beq room needs).mp h0
+          refine ⟨n', .head _, he, ?_⟩
+          show (enrolled beq (n' :: room) n' && backed beq (n' :: room) needs) = true
+          have h1 : enrolled beq (n' :: room) n' = true := by
+            show (beq n' n' || enrolled beq room n') = true
+            rw [hrefl n']
+            exact rfl
+          rw [h1, the_backing_survives_the_seating beq room n' needs hb]
+          exact rfl
 
 /-- info: 'Seed.the_key_is_cut_from_the_room' does not depend on any axioms -/
 #guard_msgs in #print axioms the_key_is_cut_from_the_room
 
-/-- info: 'Seed.every_face_wears_the_one_face' does not depend on any axioms -/
-#guard_msgs in #print axioms every_face_wears_the_one_face
-
-/-- info: 'Seed.the_reading_face_wears_it_too' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reading_face_wears_it_too
-
-/-- info: 'Seed.the_air_gap_wears_the_one_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_air_gap_wears_the_one_face
-
-/-- info: 'Seed.the_seat_map_carries_the_conduct' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_map_carries_the_conduct
-
-/-- info: 'Seed.the_interview_meets_the_one_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_interview_meets_the_one_face
-
-/-- info: 'Seed.the_curtain_hangs_on_one_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_curtain_hangs_on_one_face
-
-/-- info: 'Seed.one_face_many_seats' does not depend on any axioms -/
-#guard_msgs in #print axioms one_face_many_seats
-
-/-- info: 'Seed.the_still_map_carries' does not depend on any axioms -/
-#guard_msgs in #print axioms the_still_map_carries
-
-/-- info: 'Seed.the_carriers_compose' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carriers_compose
-
-/-- info: 'Seed.the_seat_map_carries_home' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_map_carries_home
-
-/-- info: 'Seed.the_obs_carries_to_the_one_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_obs_carries_to_the_one_face
-
-/-- info: 'Seed.the_terminus_takes_every_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms the_terminus_takes_every_carrier
-
-/-- info: 'Seed.the_carrier_carries_the_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carrier_carries_the_alike
-
-/-- info: 'Seed.the_interview_crosses_every_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms the_interview_crosses_every_carrier
-
-/-- info: 'Seed.the_seat_crossing_was_a_carrier_crossing' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_crossing_was_a_carrier_crossing
-
-/-- info: 'Seed.the_intertwiner_carries_the_seat_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_intertwiner_carries_the_seat_face
-
-/-- info: 'Seed.the_pace_is_carried_onto_the_flip' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pace_is_carried_onto_the_flip
-
-/-- info: 'Seed.the_one_face_is_the_terminus' does not depend on any axioms -/
-#guard_msgs in #print axioms the_one_face_is_the_terminus
-
-/-- info: 'Seed.the_count_carries_the_life' does not depend on any axioms -/
-#guard_msgs in #print axioms the_count_carries_the_life
-
-/-- info: 'Seed.the_manifest_carries_the_simulation' does not depend on any axioms -/
-#guard_msgs in #print axioms the_manifest_carries_the_simulation
-
-/-- info: 'Seed.the_park_carries_the_record' does not depend on any axioms -/
-#guard_msgs in #print axioms the_park_carries_the_record
-
-/-- info: 'Seed.every_simulation_was_a_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms every_simulation_was_a_carrier
-
-/-- info: 'Seed.the_still_hands_are_the_endo_carriers' does not depend on any axioms -/
-#guard_msgs in #print axioms the_still_hands_are_the_endo_carriers
-
-/-- info: 'Seed.the_maintenance_is_the_identitys_hom' does not depend on any axioms -/
-#guard_msgs in #print axioms the_maintenance_is_the_identitys_hom
-
-/-- info: 'Seed.the_carrier_merges_only_the_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carrier_merges_only_the_alike
-
-/-- info: 'Seed.the_two_routes_merge_at_the_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_routes_merge_at_the_carrier
-
-/-- info: 'Seed.the_carrier_runs_the_handshake' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carrier_runs_the_handshake
-
-/-- info: 'Seed.the_carrier_was_a_seating' does not depend on any axioms -/
-#guard_msgs in #print axioms the_carrier_was_a_seating
-
-/-- info: 'Seed.the_ear_crosses_the_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ear_crosses_the_carrier
-
-/-- info: 'Seed.the_voice_crosses_the_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms the_voice_crosses_the_carrier
-
-/-- info: 'Seed.the_host_crosses_the_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms the_host_crosses_the_carrier
-
-/-- info: 'Seed.every_crossing_is_a_seating' does not depend on any axioms -/
-#guard_msgs in #print axioms every_crossing_is_a_seating
-
-/-- info: 'Seed.the_reboard_carries_the_words' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reboard_carries_the_words
-
-/-- info: 'Seed.the_two_carriers_round_trip' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_carriers_round_trip
-
-/-- info: 'Seed.the_simulation_is_a_retract' does not depend on any axioms -/
-#guard_msgs in #print axioms the_simulation_is_a_retract
-
-/-- info: 'Seed.the_work_carries_the_margin' does not depend on any axioms -/
-#guard_msgs in #print axioms the_work_carries_the_margin
-
-/-- info: 'Seed.the_hold_carries_the_machine' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hold_carries_the_machine
-
-/-- info: 'Seed.the_settle_is_the_idempotent' does not depend on any axioms -/
-#guard_msgs in #print axioms the_settle_is_the_idempotent
-
-/-- info: 'Seed.the_settles_stillness_is_the_composite' does not depend on any axioms -/
-#guard_msgs in #print axioms the_settles_stillness_is_the_composite
-
-/-- info: 'Seed.the_settle_splits_like_the_drain' does not depend on any axioms -/
-#guard_msgs in #print axioms the_settle_splits_like_the_drain
-
-/-- info: 'Seed.the_customs_keep_the_still_world' does not depend on any axioms -/
-#guard_msgs in #print axioms the_customs_keep_the_still_world
-
-/-- info: 'Seed.the_customs_stack_forward' does not depend on any axioms -/
-#guard_msgs in #print axioms the_customs_stack_forward
-
-/-- info: 'Seed.the_manifest_is_natural' does not depend on any axioms -/
-#guard_msgs in #print axioms the_manifest_is_natural
-
-/-- info: 'Seed.the_spine_is_natural' does not depend on any axioms -/
-#guard_msgs in #print axioms the_spine_is_natural
-
-/-- info: 'Seed.the_ride_is_natural' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ride_is_natural
-
-/-- info: 'Seed.the_customs_are_a_functor' does not depend on any axioms -/
-#guard_msgs in #print axioms the_customs_are_a_functor
-
-/-- info: 'Seed.the_revision_keeps_the_still_life' does not depend on any axioms -/
-#guard_msgs in #print axioms the_revision_keeps_the_still_life
-
-/-- info: 'Seed.the_revisions_stack_forward' does not depend on any axioms -/
-#guard_msgs in #print axioms the_revisions_stack_forward
-
-/-- info: 'Seed.the_reading_is_natural_over_time' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reading_is_natural_over_time
-
-/-- info: 'Seed.the_rider_is_the_revisions_action' does not depend on any axioms -/
-#guard_msgs in #print axioms the_rider_is_the_revisions_action
-
-/-- info: 'Seed.the_two_axes_commute' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_axes_commute
-
-/-- info: 'Seed.both_channels_are_functors' does not depend on any axioms -/
-#guard_msgs in #print axioms both_channels_are_functors
-
-/-- info: 'Seed.the_replanning_is_an_iso' does not depend on any axioms -/
-#guard_msgs in #print axioms the_replanning_is_an_iso
-
-/-- info: 'Seed.the_replanning_is_natural' does not depend on any axioms -/
-#guard_msgs in #print axioms the_replanning_is_natural
-
-/-- info: 'Seed.the_shape_is_the_obstruction' does not depend on any axioms -/
-#guard_msgs in #print axioms the_shape_is_the_obstruction
-
-/-- info: 'Seed.the_mediating_map_is_gauge' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mediating_map_is_gauge
-
-/-- info: 'Seed.an_iso_merges_nothing' does not depend on any axioms -/
-#guard_msgs in #print axioms an_iso_merges_nothing
-
-/-- info: 'Seed.the_transposition_is_an_iso' does not depend on any axioms -/
-#guard_msgs in #print axioms the_transposition_is_an_iso
-
-/-- info: 'Seed.the_swap_is_its_own_inverse' does not depend on any axioms -/
-#guard_msgs in #print axioms the_swap_is_its_own_inverse
-
-/-- info: 'Seed.the_iso_test_is_the_two_sided_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms the_iso_test_is_the_two_sided_carrier
-
-/-- info: 'Seed.the_house_holds_three_isos' does not depend on any axioms -/
-#guard_msgs in #print axioms the_house_holds_three_isos
-
-/-- info: 'Seed.a_merging_map_has_no_section' does not depend on any axioms -/
-#guard_msgs in #print axioms a_merging_map_has_no_section
-
-/-- info: 'Seed.the_face_has_no_section' does not depend on any axioms -/
-#guard_msgs in #print axioms the_face_has_no_section
-
-/-- info: 'Seed.the_census_has_no_section' does not depend on any axioms -/
-#guard_msgs in #print axioms the_census_has_no_section
-
-/-- info: 'Seed.the_deaf_ear_has_no_section' does not depend on any axioms -/
-#guard_msgs in #print axioms the_deaf_ear_has_no_section
-
-/-- info: 'Seed.the_blindnesses_are_the_non_sections' does not depend on any axioms -/
-#guard_msgs in #print axioms the_blindnesses_are_the_non_sections
-
-/-- info: 'Seed.the_positive_subscription_is_the_ear' does not depend on any axioms -/
-#guard_msgs in #print axioms the_positive_subscription_is_the_ear
-
-/-- info: 'Seed.the_negative_subscription_is_the_merge' does not depend on any axioms -/
-#guard_msgs in #print axioms the_negative_subscription_is_the_merge
-
-/-- info: 'Seed.the_record_writes_where_the_face_is_blind' does not depend on any axioms -/
-#guard_msgs in #print axioms the_record_writes_where_the_face_is_blind
-
-/-- info: 'Seed.recording_the_recording_grounds' does not depend on any axioms -/
-#guard_msgs in #print axioms recording_the_recording_grounds
-
-/-- info: 'Seed.the_modeling_loop_grounds' does not depend on any axioms -/
-#guard_msgs in #print axioms the_modeling_loop_grounds
-
-/-- info: 'Seed.the_mutual_records_ride_together' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mutual_records_ride_together
-
-/-- info: 'Seed.the_mutual_recording_is_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms the_mutual_recording_is_unheard
-
-/-- info: 'Seed.the_records_part_the_seats' does not depend on any axioms -/
-#guard_msgs in #print axioms the_records_part_the_seats
-
-/-- info: 'Seed.two_seats_record_each_other' does not depend on any axioms -/
-#guard_msgs in #print axioms two_seats_record_each_other
-
-/-- info: 'Seed.the_concord_reads_both_models' does not depend on any axioms -/
-#guard_msgs in #print axioms the_concord_reads_both_models
-
-/-- info: 'Seed.no_seat_reads_the_concord_alone' does not depend on any axioms -/
-#guard_msgs in #print axioms no_seat_reads_the_concord_alone
-
-/-- info: 'Seed.the_meeting_mints_the_concord' does not depend on any axioms -/
-#guard_msgs in #print axioms the_meeting_mints_the_concord
-
-/-- info: 'Seed.the_concord_is_the_meetings_own' does not depend on any axioms -/
-#guard_msgs in #print axioms the_concord_is_the_meetings_own
-
-/-- info: 'Seed.the_concord_agrees_or_names_the_gap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_concord_agrees_or_names_the_gap
-
-/-- info: 'Seed.the_gap_is_minted_at_the_meeting' does not depend on any axioms -/
-#guard_msgs in #print axioms the_gap_is_minted_at_the_meeting
-
-/-- info: 'Seed.the_settled_gap_moves_the_model' does not depend on any axioms -/
-#guard_msgs in #print axioms the_settled_gap_moves_the_model
-
-/-- info: 'Seed.the_disagreement_is_addressable' does not depend on any axioms -/
-#guard_msgs in #print axioms the_disagreement_is_addressable
-
-/-- info: 'Seed.the_model_is_the_others_readings' does not depend on any axioms -/
-#guard_msgs in #print axioms the_model_is_the_others_readings
-
-/-- info: 'Seed.the_two_disagreements_are_one' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_disagreements_are_one
-
-/-- info: 'Seed.the_origin_has_no_disagreement' does not depend on any axioms -/
-#guard_msgs in #print axioms the_origin_has_no_disagreement
-
-/-- info: 'Seed.the_contact_and_the_modeling_are_one' does not depend on any axioms -/
-#guard_msgs in #print axioms the_contact_and_the_modeling_are_one
-
-/-- info: 'Seed.the_guest_level_is_parametric' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_level_is_parametric
-
-/-- info: 'Seed.the_seat_level_is_pinned_only_at_the_host' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_level_is_pinned_only_at_the_host
-
-/-- info: 'Seed.the_level_is_gauge_at_the_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_level_is_gauge_at_the_reading
-
-/-- info: 'Seed.the_level_never_parts_the_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_level_never_parts_the_alike
-
-/-- info: 'Seed.the_universe_is_pinned_gauge_or_parametric' does not depend on any axioms -/
-#guard_msgs in #print axioms the_universe_is_pinned_gauge_or_parametric
-
-/-- info: 'Seed.the_transit_certifies_the_blindness' does not depend on any axioms -/
-#guard_msgs in #print axioms the_transit_certifies_the_blindness
-
-/-- info: 'Seed.a_structure_travels_by_its_carrier' does not depend on any axioms -/
-#guard_msgs in #print axioms a_structure_travels_by_its_carrier
-
-/-- info: 'Seed.the_certified_links_compose' does not depend on any axioms -/
-#guard_msgs in #print axioms the_certified_links_compose
-
-/-- info: 'Seed.no_seat_certifies_its_own_portability' does not depend on any axioms -/
-#guard_msgs in #print axioms no_seat_certifies_its_own_portability
-
-/-- info: 'Seed.portability_is_certified_by_transit' does not depend on any axioms -/
-#guard_msgs in #print axioms portability_is_certified_by_transit
-
-/-- info: 'Seed.the_pairing_is_unique' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pairing_is_unique
-
-/-- info: 'Seed.the_door_is_the_product' does not depend on any axioms -/
-#guard_msgs in #print axioms the_door_is_the_product
-
-/-- info: 'Seed.the_fork_is_the_coproduct' does not depend on any axioms -/
-#guard_msgs in #print axioms the_fork_is_the_coproduct
-
-/-- info: 'Seed.the_projection_forgets_the_guest' does not depend on any axioms -/
-#guard_msgs in #print axioms the_projection_forgets_the_guest
-
-/-- info: 'Seed.the_universal_properties_were_the_hospitality' does not depend on any axioms -/
-#guard_msgs in #print axioms the_universal_properties_were_the_hospitality
-
-/-- info: 'Seed.the_seated_mark_adds_no_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seated_mark_adds_no_reading
-
-/-- info: 'Seed.the_hall_reads_only_membership' does not depend on any axioms -/
-#guard_msgs in #print axioms the_hall_reads_only_membership
-
-/-- info: 'Seed.the_scaffold_sheds_at_the_hall' does not depend on any axioms -/
-#guard_msgs in #print axioms the_scaffold_sheds_at_the_hall
-
-/-- info: 'Seed.the_ladder_is_read_one_seat_wider' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ladder_is_read_one_seat_wider
-
-/-- info: 'Seed.the_cycle_lights_and_forgets_its_ladder' does not depend on any axioms -/
-#guard_msgs in #print axioms the_cycle_lights_and_forgets_its_ladder
-
-/-- info: 'Seed.the_fixed_are_the_landed' does not depend on any axioms -/
-#guard_msgs in #print axioms the_fixed_are_the_landed
-
-/-- info: 'Seed.the_settled_are_the_landed' does not depend on any axioms -/
-#guard_msgs in #print axioms the_settled_are_the_landed
-
-/-- info: 'Seed.the_on_spec_are_the_landed' does not depend on any axioms -/
-#guard_msgs in #print axioms the_on_spec_are_the_landed
-
-/-- info: 'Seed.the_drained_room_is_its_own_normal_form' does not depend on any axioms -/
-#guard_msgs in #print axioms the_drained_room_is_its_own_normal_form
-
-/-- info: 'Seed.the_normal_form_is_the_image' does not depend on any axioms -/
-#guard_msgs in #print axioms the_normal_form_is_the_image
-
-/-- info: 'Seed.the_scaffold_shifts_every_elder' does not depend on any axioms -/
-#guard_msgs in #print axioms the_scaffold_shifts_every_elder
-
-/-- info: 'Seed.the_shift_conserves_every_gap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_shift_conserves_every_gap
-
-/-- info: 'Seed.the_shift_conserves_the_order' does not depend on any axioms -/
-#guard_msgs in #print axioms the_shift_conserves_the_order
-
-/-- info: 'Seed.the_origin_shows_as_a_uniform_shift' does not depend on any axioms -/
-#guard_msgs in #print axioms the_origin_shows_as_a_uniform_shift
-
-/-- info: 'Seed.the_shift_commutes_with_the_walk' does not depend on any axioms -/
-#guard_msgs in #print axioms the_shift_commutes_with_the_walk
-
-/-- info: 'Seed.the_ground_is_a_uniform_scale' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ground_is_a_uniform_scale
-
-/-- info: 'Seed.the_pace_conserves_the_ratio' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pace_conserves_the_ratio
-
-/-- info: 'Seed.the_home_pace_is_the_still_gauge' does not depend on any axioms -/
-#guard_msgs in #print axioms the_home_pace_is_the_still_gauge
-
-/-- info: 'Seed.the_gauges_follow_the_two_times' does not depend on any axioms -/
-#guard_msgs in #print axioms the_gauges_follow_the_two_times
-
-/-- info: 'Seed.the_sharper_face_hears_more' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sharper_face_hears_more
-
-/-- info: 'Seed.the_still_hand_is_gauge_at_every_face' does not depend on any axioms -/
-#guard_msgs in #print axioms the_still_hand_is_gauge_at_every_face
-
-/-- info: 'Seed.the_guest_flip_is_gauge_at_the_host' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_flip_is_gauge_at_the_host
-
-/-- info: 'Seed.the_guest_flip_is_heard_one_widening_up' does not depend on any axioms -/
-#guard_msgs in #print axioms the_guest_flip_is_heard_one_widening_up
-
-/-- info: 'Seed.the_resolution_ladder_is_the_gauge_ladder' does not depend on any axioms -/
-#guard_msgs in #print axioms the_resolution_ladder_is_the_gauge_ladder
-
-/-- info: 'Seed.the_type_is_a_reading_of_the_plan' does not depend on any axioms -/
-#guard_msgs in #print axioms the_type_is_a_reading_of_the_plan
-
-/-- info: 'Seed.every_built_type_is_named_below_the_horizon' does not depend on any axioms -/
-#guard_msgs in #print axioms every_built_type_is_named_below_the_horizon
-
-/-- info: 'Seed.a_built_type_grounds_the_next_tower' does not depend on any axioms -/
-#guard_msgs in #print axioms a_built_type_grounds_the_next_tower
-
-/-- info: 'Seed.the_plan_rides_as_data' does not depend on any axioms -/
-#guard_msgs in #print axioms the_plan_rides_as_data
-
-/-- info: 'Seed.the_ground_is_the_only_dark_type' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ground_is_the_only_dark_type
-
-/-- info: 'Seed.every_guest_move_is_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms every_guest_move_is_unheard
-
-/-- info: 'Seed.the_whole_repertoire_is_gauge' does not depend on any axioms -/
-#guard_msgs in #print axioms the_whole_repertoire_is_gauge
-
-/-- info: 'Seed.the_minted_reading_hears_the_move' does not depend on any axioms -/
-#guard_msgs in #print axioms the_minted_reading_hears_the_move
-
-/-- info: 'Seed.the_gauge_sector_never_wears' does not depend on any axioms -/
-#guard_msgs in #print axioms the_gauge_sector_never_wears
-
-/-- info: 'Seed.the_wear_lands_at_the_minted_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wear_lands_at_the_minted_reading
-
-/-- info: 'Seed.both_are_guests_of_the_vestibule' does not depend on any axioms -/
-#guard_msgs in #print axioms both_are_guests_of_the_vestibule
-
-/-- info: 'Seed.the_innkeepers_moves_are_gauge_at_the_vestibule' does not depend on any axioms -/
-#guard_msgs in #print axioms the_innkeepers_moves_are_gauge_at_the_vestibule
-
-/-- info: 'Seed.the_extrusion_retracts' does not depend on any axioms -/
-#guard_msgs in #print axioms the_extrusion_retracts
-
-/-- info: 'Seed.the_churn_is_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms the_churn_is_unheard
-
-/-- info: 'Seed.the_ground_survives_every_cycle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ground_survives_every_cycle
-
-/-- info: 'Seed.the_vestibule_seats_them_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_vestibule_seats_them_alike
-
-/-- info: 'Seed.the_comparison_reads_both_units' does not depend on any axioms -/
-#guard_msgs in #print axioms the_comparison_reads_both_units
-
-/-- info: 'Seed.every_pace_agrees_on_the_ratio' does not depend on any axioms -/
-#guard_msgs in #print axioms every_pace_agrees_on_the_ratio
-
-/-- info: 'Seed.the_arrived_agreement_sounds_as_one' does not depend on any axioms -/
-#guard_msgs in #print axioms the_arrived_agreement_sounds_as_one
-
-/-- info: 'Seed.the_units_compare_at_the_minted_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_units_compare_at_the_minted_seat
-
-/-- info: 'Seed.the_measure_sums_at_the_board' does not depend on any axioms -/
-#guard_msgs in #print axioms the_measure_sums_at_the_board
-
-/-- info: 'Seed.the_measure_multiplies_at_the_graft' does not depend on any axioms -/
-#guard_msgs in #print axioms the_measure_multiplies_at_the_graft
-
-/-- info: 'Seed.the_bank_adds_along_the_run' does not depend on any axioms -/
-#guard_msgs in #print axioms the_bank_adds_along_the_run
-
-/-- info: 'Seed.the_manifest_counts_the_compound' does not depend on any axioms -/
-#guard_msgs in #print axioms the_manifest_counts_the_compound
-
-/-- info: 'Seed.the_measure_composes_by_the_semiring' does not depend on any axioms -/
-#guard_msgs in #print axioms the_measure_composes_by_the_semiring
-
-/-- info: 'Seed.the_patience_is_the_boards_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_patience_is_the_boards_reading
-
-/-- info: 'Seed.the_patience_multiplies_at_the_revision' does not depend on any axioms -/
-#guard_msgs in #print axioms the_patience_multiplies_at_the_revision
-
-/-- info: 'Seed.the_magnitudes_share_one_law' does not depend on any axioms -/
-#guard_msgs in #print axioms the_magnitudes_share_one_law
-
-/-- info: 'Seed.the_joins_add_with_the_join' does not depend on any axioms -/
-#guard_msgs in #print axioms the_joins_add_with_the_join
-
-/-- info: 'Seed.the_two_counts_are_one_measure_shifted' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_counts_are_one_measure_shifted
-
-/-- info: 'Seed.the_cap_carries_the_sum_to_the_product' does not depend on any axioms -/
-#guard_msgs in #print axioms the_cap_carries_the_sum_to_the_product
-
-/-- info: 'Seed.the_bloom_reads_its_own_cap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_bloom_reads_its_own_cap
-
-/-- info: 'Seed.two_charts_one_measure' does not depend on any axioms -/
-#guard_msgs in #print axioms two_charts_one_measure
-
-/-- info: 'Seed.no_measure_parts_the_home_wheel' does not depend on any axioms -/
-#guard_msgs in #print axioms no_measure_parts_the_home_wheel
-
-/-- info: 'Seed.the_arrow_grows_its_measure' does not depend on any axioms -/
-#guard_msgs in #print axioms the_arrow_grows_its_measure
-
-/-- info: 'Seed.the_meter_flattens_on_the_dead_vestibule' does not depend on any axioms -/
-#guard_msgs in #print axioms the_meter_flattens_on_the_dead_vestibule
-
-/-- info: 'Seed.the_measure_rules_the_arrow_and_flattens_the_wheel' does not depend on any axioms -/
-#guard_msgs in #print axioms the_measure_rules_the_arrow_and_flattens_the_wheel
-
-/-- info: 'Seed.the_unit_guest_is_the_products_unit' does not depend on any axioms -/
-#guard_msgs in #print axioms the_unit_guest_is_the_products_unit
-
-/-- info: 'Seed.the_sealed_entrance_is_the_coproducts_unit' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sealed_entrance_is_the_coproducts_unit
-
-/-- info: 'Seed.the_impossible_guest_annihilates' does not depend on any axioms -/
-#guard_msgs in #print axioms the_impossible_guest_annihilates
-
-/-- info: 'Seed.the_measure_selects_at_the_fork' does not depend on any axioms -/
-#guard_msgs in #print axioms the_measure_selects_at_the_fork
-
-/-- info: 'Seed.the_door_and_the_fork_are_a_semiring' does not depend on any axioms -/
-#guard_msgs in #print axioms the_door_and_the_fork_are_a_semiring
-
-/-- info: 'Seed.the_sharpening_is_exact' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sharpening_is_exact
-
-/-- info: 'Seed.the_widening_is_exact' does not depend on any axioms -/
-#guard_msgs in #print axioms the_widening_is_exact
-
-/-- info: 'Seed.the_pairing_is_exact' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pairing_is_exact
-
-/-- info: 'Seed.the_cures_are_exact' does not depend on any axioms -/
-#guard_msgs in #print axioms the_cures_are_exact
-
-/-- info: 'Seed.the_flattening_serves_what_it_keeps' does not depend on any axioms -/
-#guard_msgs in #print axioms the_flattening_serves_what_it_keeps
-
-/-- info: 'Seed.the_finer_flattening_serves_fewer' does not depend on any axioms -/
-#guard_msgs in #print axioms the_finer_flattening_serves_fewer
-
-/-- info: 'Seed.the_iso_serves_every_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_iso_serves_every_reading
-
-/-- info: 'Seed.the_merged_seat_drops_a_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_merged_seat_drops_a_reading
-
-/-- info: 'Seed.the_service_shrinks_as_the_merge_grows' does not depend on any axioms -/
-#guard_msgs in #print axioms the_service_shrinks_as_the_merge_grows
-
-/-- info: 'Seed.the_surplus_wears_two_signs' does not depend on any axioms -/
-#guard_msgs in #print axioms the_surplus_wears_two_signs
-
-/-- info: 'Seed.the_puppeteer_writes_where_the_record_does' does not depend on any axioms -/
-#guard_msgs in #print axioms the_puppeteer_writes_where_the_record_does
-
-/-- info: 'Seed.the_sweep_fixes_the_drained_and_the_palindromes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sweep_fixes_the_drained_and_the_palindromes
-
-/-- info: 'Seed.the_stillness_is_drained_or_evenly_worn' does not depend on any axioms -/
-#guard_msgs in #print axioms the_stillness_is_drained_or_evenly_worn
-
-/-- info: 'Seed.the_braid_swaps_its_strands' does not depend on any axioms -/
-#guard_msgs in #print axioms the_braid_swaps_its_strands
-
-/-- info: 'Seed.the_braid_counts_both_strands' does not depend on any axioms -/
-#guard_msgs in #print axioms the_braid_counts_both_strands
-
-/-- info: 'Seed.the_braid_holds_both_strands' does not depend on any axioms -/
-#guard_msgs in #print axioms the_braid_holds_both_strands
-
-/-- info: 'Seed.the_weave_starts_with_either_strand' does not depend on any axioms -/
-#guard_msgs in #print axioms the_weave_starts_with_either_strand
-
-/-- info: 'Seed.the_braid_hears_no_first_voice' does not depend on any axioms -/
-#guard_msgs in #print axioms the_braid_hears_no_first_voice
-
-/-- info: 'Seed.inc_inc' does not depend on any axioms -/
-#guard_msgs in #print axioms inc_inc
-
-/-- info: 'Seed.the_flip_is_the_narrowest_odometer' does not depend on any axioms -/
-#guard_msgs in #print axioms the_flip_is_the_narrowest_odometer
-
-/-- info: 'Seed.the_doubling_passes_the_tick_inward' does not depend on any axioms -/
-#guard_msgs in #print axioms the_doubling_passes_the_tick_inward
-
-/-- info: 'Seed.the_odometer_comes_home_at_the_cap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_odometer_comes_home_at_the_cap
-
-/-- info: 'Seed.the_odometer_winds_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_odometer_winds_the_room
-
-/-- info: 'Seed.any_lights_somewhere' does not depend on any axioms -/
-#guard_msgs in #print axioms any_lights_somewhere
-
-/-- info: 'Seed.every_circle_starves' does not depend on any axioms -/
-#guard_msgs in #print axioms every_circle_starves
-
-/-- info: 'Seed.light_enters_a_circle_only_from_outside' does not depend on any axioms -/
-#guard_msgs in #print axioms light_enters_a_circle_only_from_outside
-
-/-- info: 'Seed.the_zeros_span_the_width' does not depend on any axioms -/
-#guard_msgs in #print axioms the_zeros_span_the_width
-
-/-- info: 'Seed.the_tick_keeps_the_width' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tick_keeps_the_width
-
-/-- info: 'Seed.the_orbit_keeps_the_width' does not depend on any axioms -/
-#guard_msgs in #print axioms the_orbit_keeps_the_width
-
-/-- info: 'Seed.the_empty_register_reads_zero' does not depend on any axioms -/
-#guard_msgs in #print axioms the_empty_register_reads_zero
-
-/-- info: 'Seed.the_full_register_fills_the_cap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_full_register_fills_the_cap
-
-/-- info: 'Seed.the_tick_carries_the_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tick_carries_the_count
-
-/-- info: 'Seed.the_clock_reads_its_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_clock_reads_its_count
-
-/-- info: 'Seed.the_odometer_counts_in_binary' does not depend on any axioms -/
-#guard_msgs in #print axioms the_odometer_counts_in_binary
-
-/-- info: 'Seed.add_right_cancel' does not depend on any axioms -/
-#guard_msgs in #print axioms add_right_cancel
-
-/-- info: 'Seed.mul_left_cancel' does not depend on any axioms -/
-#guard_msgs in #print axioms mul_left_cancel
-
-/-- info: 'Seed.mul_right_cancel' does not depend on any axioms -/
-#guard_msgs in #print axioms mul_right_cancel
-
-/-- info: 'Seed.the_ratio_meets_itself' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ratio_meets_itself
-
-/-- info: 'Seed.the_ratio_swaps' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ratio_swaps
-
-/-- info: 'Seed.the_ratios_chain' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ratios_chain
-
-/-- info: 'Seed.the_pace_is_gauge_for_the_ratio' does not depend on any axioms -/
-#guard_msgs in #print axioms the_pace_is_gauge_for_the_ratio
-
-/-- info: 'Seed.the_halves_are_two' does not depend on any axioms -/
-#guard_msgs in #print axioms the_halves_are_two
-
-/-- info: 'Seed.the_fraction_is_a_licensed_pair' does not depend on any axioms -/
-#guard_msgs in #print axioms the_fraction_is_a_licensed_pair
-
-/-- info: 'Seed.the_stranger_moves_no_backing' does not depend on any axioms -/
-#guard_msgs in #print axioms the_stranger_moves_no_backing
-
-/-- info: 'Seed.the_prefix_pair_swaps_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms the_prefix_pair_swaps_unheard
-
-/-- info: 'Seed.the_independent_arrivals_swap_unheard' does not depend on any axioms -/
-#guard_msgs in #print axioms the_independent_arrivals_swap_unheard
-
-/-- info: 'Seed.the_direction_of_the_independent_is_gauge' does not depend on any axioms -/
-#guard_msgs in #print axioms the_direction_of_the_independent_is_gauge
-
-/-- info: 'Seed.the_life_compounds' does not depend on any axioms -/
-#guard_msgs in #print axioms the_life_compounds
-
-/-- info: 'Seed.the_growth_resumes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_growth_resumes
-
-/-- info: 'Seed.the_revisions_ratio_is_its_own_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_revisions_ratio_is_its_own_reading
-
-/-- info: 'Seed.the_lifes_rate_is_a_licensed_pair' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lifes_rate_is_a_licensed_pair
-
-/-- info: 'Seed.the_growth_factorizes_by_epoch' does not depend on any axioms -/
-#guard_msgs in #print axioms the_growth_factorizes_by_epoch
-
-/-- info: 'Seed.the_tick_unwinds' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tick_unwinds
-
-/-- info: 'Seed.the_unwind_ticks' does not depend on any axioms -/
-#guard_msgs in #print axioms the_unwind_ticks
-
-/-- info: 'Seed.the_tick_merges_nothing' does not depend on any axioms -/
-#guard_msgs in #print axioms the_tick_merges_nothing
-
-/-- info: 'Seed.the_two_kinds_of_wheel' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_kinds_of_wheel
-
-/-- info: 'Seed.ble_total' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_total
-
-/-- info: 'Seed.ble_mul' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_mul
-
-/-- info: 'Seed.ble_flip' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_flip
-
-/-- info: 'Seed.succ_mul' does not depend on any axioms -/
-#guard_msgs in #print axioms succ_mul
-
-/-- info: 'Seed.ble_mul_cancel' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_mul_cancel
-
-/-- info: 'Seed.the_ratio_le_meets_itself' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ratio_le_meets_itself
-
-/-- info: 'Seed.the_ratio_le_chains' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ratio_le_chains
-
-/-- info: 'Seed.the_orders_are_total' does not depend on any axioms -/
-#guard_msgs in #print axioms the_orders_are_total
-
-/-- info: 'Seed.the_order_grounds_in_the_license' does not depend on any axioms -/
-#guard_msgs in #print axioms the_order_grounds_in_the_license
-
-/-- info: 'Seed.the_fractions_compare' does not depend on any axioms -/
-#guard_msgs in #print axioms the_fractions_compare
-
-/-- info: 'Seed.the_insertions_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_insertions_count
-
-/-- info: 'Seed.the_join_counts_evenly' does not depend on any axioms -/
-#guard_msgs in #print axioms the_join_counts_evenly
-
-/-- info: 'Seed.mem_joinMap_back' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_joinMap_back
-
-/-- info: 'Seed.the_insertion_grows_one' does not depend on any axioms -/
-#guard_msgs in #print axioms the_insertion_grows_one
-
-/-- info: 'Seed.the_orders_keep_the_length' does not depend on any axioms -/
-#guard_msgs in #print axioms the_orders_keep_the_length
-
-/-- info: 'Seed.the_orders_count_to_the_factorial' does not depend on any axioms -/
-#guard_msgs in #print axioms the_orders_count_to_the_factorial
-
-/-- info: 'Seed.the_census_of_orders' does not depend on any axioms -/
-#guard_msgs in #print axioms the_census_of_orders
-
-/-- info: 'Seed.perm_refl' does not depend on any axioms -/
-#guard_msgs in #print axioms perm_refl
-
-/-- info: 'Seed.the_insertion_is_a_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_insertion_is_a_shuffle
-
-/-- info: 'Seed.every_order_is_a_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms every_order_is_a_shuffle
-
-/-- info: 'Seed.the_commuting_seat_hears_every_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_commuting_seat_hears_every_shuffle
-
-/-- info: 'Seed.the_room_of_orders_is_sound' does not depend on any axioms -/
-#guard_msgs in #print axioms the_room_of_orders_is_sound
-
-/-- info: 'Seed.perm_mem' does not depend on any axioms -/
-#guard_msgs in #print axioms perm_mem
-
-/-- info: 'Seed.the_wedgings_stand_apart' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wedgings_stand_apart
-
-/-- info: 'Seed.the_wedge_remembers_its_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wedge_remembers_its_word
-
-/-- info: 'Seed.apart_joinMap' does not depend on any axioms -/
-#guard_msgs in #print axioms apart_joinMap
-
-/-- info: 'Seed.the_orders_repeat_never' does not depend on any axioms -/
-#guard_msgs in #print axioms the_orders_repeat_never
-
-/-- info: 'Seed.the_factorial_counts_distinct_orders' does not depend on any axioms -/
-#guard_msgs in #print axioms the_factorial_counts_distinct_orders
-
-/-- info: 'Seed.perm_symm' does not depend on any axioms -/
-#guard_msgs in #print axioms perm_symm
-
-/-- info: 'Seed.perm_length' does not depend on any axioms -/
-#guard_msgs in #print axioms perm_length
-
-/-- info: 'Seed.perm_middle' does not depend on any axioms -/
-#guard_msgs in #print axioms perm_middle
-
-/-- info: 'Seed.two_splits_perm' does not depend on any axioms -/
-#guard_msgs in #print axioms two_splits_perm
-
-/-- info: 'Seed.the_shuffle_cancels_the_mark' does not depend on any axioms -/
-#guard_msgs in #print axioms the_shuffle_cancels_the_mark
-
-/-- info: 'Seed.mem_joinMap_intro' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_joinMap_intro
-
-/-- info: 'Seed.the_wedge_fits_anywhere' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wedge_fits_anywhere
-
-/-- info: 'Seed.every_shuffle_is_an_order' does not depend on any axioms -/
-#guard_msgs in #print axioms every_shuffle_is_an_order
-
-/-- info: 'Seed.the_census_of_orders_is_exact' does not depend on any axioms -/
-#guard_msgs in #print axioms the_census_of_orders_is_exact
-
-/-- info: 'Seed.beq_no' does not depend on any axioms -/
-#guard_msgs in #print axioms beq_no
-
-/-- info: 'Seed.ne_of_beq_no' does not depend on any axioms -/
-#guard_msgs in #print axioms ne_of_beq_no
-
-/-- info: 'Seed.the_trade_swaps_the_pair' does not depend on any axioms -/
-#guard_msgs in #print axioms the_trade_swaps_the_pair
-
-/-- info: 'Seed.the_trade_spares_the_stranger' does not depend on any axioms -/
-#guard_msgs in #print axioms the_trade_spares_the_stranger
-
-/-- info: 'Seed.the_trade_undoes_itself' does not depend on any axioms -/
-#guard_msgs in #print axioms the_trade_undoes_itself
-
-/-- info: 'Seed.the_trade_hears_no_order' does not depend on any axioms -/
-#guard_msgs in #print axioms the_trade_hears_no_order
-
-/-- info: 'Seed.the_traded_word_trades_home' does not depend on any axioms -/
-#guard_msgs in #print axioms the_traded_word_trades_home
-
-/-- info: 'Seed.the_trade_spares_the_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_trade_spares_the_word
-
-/-- info: 'Seed.map_congr_mem' does not depend on any axioms -/
-#guard_msgs in #print axioms map_congr_mem
-
-/-- info: 'Seed.append_regroups' does not depend on any axioms -/
-#guard_msgs in #print axioms append_regroups
-
-/-- info: 'Seed.perm_append_left' does not depend on any axioms -/
-#guard_msgs in #print axioms perm_append_left
-
-/-- info: 'Seed.perm_map' does not depend on any axioms -/
-#guard_msgs in #print axioms perm_map
-
-/-- info: 'Seed.apart_across' does not depend on any axioms -/
-#guard_msgs in #print axioms apart_across
-
-/-- info: 'Seed.apart_drop' does not depend on any axioms -/
-#guard_msgs in #print axioms apart_drop
-
-/-- info: 'Seed.the_wedged_trade_is_a_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wedged_trade_is_a_shuffle
-
-/-- info: 'Seed.the_trade_is_a_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_trade_is_a_shuffle
-
-/-- info: 'Seed.the_trade_keeps_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_trade_keeps_the_room
-
-/-- info: 'Seed.mem_insert_middle' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_insert_middle
-
-/-- info: 'Seed.apart_removes_the_mark' does not depend on any axioms -/
-#guard_msgs in #print axioms apart_removes_the_mark
-
-/-- info: 'Seed.the_apart_mark_sits_once' does not depend on any axioms -/
-#guard_msgs in #print axioms the_apart_mark_sits_once
-
-/-- info: 'Seed.the_matching_rooms_are_shuffles' does not depend on any axioms -/
-#guard_msgs in #print axioms the_matching_rooms_are_shuffles
-
-/-- info: 'Seed.the_trade_shuffles_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_trade_shuffles_the_room
-
-/-- info: 'Seed.the_traded_word_reverses_the_verdict' does not depend on any axioms -/
-#guard_msgs in #print axioms the_traded_word_reverses_the_verdict
-
-/-- info: 'Seed.the_first_voice_decides' does not depend on any axioms -/
-#guard_msgs in #print axioms the_first_voice_decides
-
-/-- info: 'Seed.filter_congr_mem' does not depend on any axioms -/
-#guard_msgs in #print axioms filter_congr_mem
-
-/-- info: 'Seed.filter_map_commutes' does not depend on any axioms -/
-#guard_msgs in #print axioms filter_map_commutes
-
-/-- info: 'Seed.perm_filter' does not depend on any axioms -/
-#guard_msgs in #print axioms perm_filter
-
-/-- info: 'Seed.the_filter_splits_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_filter_splits_the_room
-
-/-- info: 'Seed.the_two_directions_count_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_directions_count_alike
-
-/-- info: 'Seed.the_verdicts_split_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_verdicts_split_the_room
-
-/-- info: 'Seed.mul_two_reads_double' does not depend on any axioms -/
-#guard_msgs in #print axioms mul_two_reads_double
-
-/-- info: 'Seed.the_direction_is_even_money' does not depend on any axioms -/
-#guard_msgs in #print axioms the_direction_is_even_money
-
-/-- info: 'Seed.perm_apart' does not depend on any axioms -/
-#guard_msgs in #print axioms perm_apart
-
-/-- info: 'Seed.the_reordered_ground_keeps_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reordered_ground_keeps_the_room
-
-/-- info: 'Seed.an_exact_enumerator_is_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms an_exact_enumerator_is_the_room
-
-/-- info: 'Seed.one_room_up_to_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms one_room_up_to_shuffle
-
-/-- info: 'Seed.the_flipping_involution_prices_even_money' does not depend on any axioms -/
-#guard_msgs in #print axioms the_flipping_involution_prices_even_money
-
-/-- info: 'Seed.the_coin_is_a_flipping_involution' does not depend on any axioms -/
-#guard_msgs in #print axioms the_coin_is_a_flipping_involution
-
-/-- info: 'Seed.a_flipping_involution_never_rests' does not depend on any axioms -/
-#guard_msgs in #print axioms a_flipping_involution_never_rests
-
-/-- info: 'Seed.the_first_wheel_was_a_coin' does not depend on any axioms -/
-#guard_msgs in #print axioms the_first_wheel_was_a_coin
-
-/-- info: 'Seed.the_fair_coin_never_rests' does not depend on any axioms -/
-#guard_msgs in #print axioms the_fair_coin_never_rests
-
-/-- info: 'Seed.filter_append_splits' does not depend on any axioms -/
-#guard_msgs in #print axioms filter_append_splits
-
-/-- info: 'Seed.the_foreign_heads_filter_away' does not depend on any axioms -/
-#guard_msgs in #print axioms the_foreign_heads_filter_away
-
-/-- info: 'Seed.the_wedge_heads_once' does not depend on any axioms -/
-#guard_msgs in #print axioms the_wedge_heads_once
-
-/-- info: 'Seed.the_join_filters_fiberwise' does not depend on any axioms -/
-#guard_msgs in #print axioms the_join_filters_fiberwise
-
-/-- info: 'Seed.the_head_wedge_counts' does not depend on any axioms -/
-#guard_msgs in #print axioms the_head_wedge_counts
-
-/-- info: 'Seed.the_occupied_room_counts_past_zero' does not depend on any axioms -/
-#guard_msgs in #print axioms the_occupied_room_counts_past_zero
-
-/-- info: 'Seed.the_head_pays_the_factorial' does not depend on any axioms -/
-#guard_msgs in #print axioms the_head_pays_the_factorial
-
-/-- info: 'Seed.the_room_has_no_favorite' does not depend on any axioms -/
-#guard_msgs in #print axioms the_room_has_no_favorite
-
-/-- info: 'Seed.the_free_word_stacks' does not depend on any axioms -/
-#guard_msgs in #print axioms the_free_word_stacks
-
-/-- info: 'Seed.the_halls_sort_direction_is_even_money' does not depend on any axioms -/
-#guard_msgs in #print axioms the_halls_sort_direction_is_even_money
-
-/-- info: 'Seed.turnQueue_append' does not depend on any axioms -/
-#guard_msgs in #print axioms turnQueue_append
-
-/-- info: 'Seed.mem_turnQueue_acc' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_turnQueue_acc
-
-/-- info: 'Seed.mem_turnQueue_intro' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_turnQueue_intro
-
-/-- info: 'Seed.the_lone_mark_decides_against' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lone_mark_decides_against
-
-/-- info: 'Seed.the_decided_scan_stops' does not depend on any axioms -/
-#guard_msgs in #print axioms the_decided_scan_stops
-
-/-- info: 'Seed.the_turned_word_reverses_the_verdict' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turned_word_reverses_the_verdict
-
-/-- info: 'Seed.the_scan_reads_the_depth' does not depend on any axioms -/
-#guard_msgs in #print axioms the_scan_reads_the_depth
-
-/-- info: 'Seed.the_earlier_arrival_lies_deeper' does not depend on any axioms -/
-#guard_msgs in #print axioms the_earlier_arrival_lies_deeper
-
-/-- info: 'Seed.the_book_counts_the_cap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_book_counts_the_cap
-
-/-- info: 'Seed.every_word_fits' does not depend on any axioms -/
-#guard_msgs in #print axioms every_word_fits
-
-/-- info: 'Seed.the_book_repeats_no_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_book_repeats_no_word
-
-/-- info: 'Seed.the_crest_returns' does not depend on any axioms -/
-#guard_msgs in #print axioms the_crest_returns
-
-/-- info: 'Seed.the_crest_flips_the_lead' does not depend on any axioms -/
-#guard_msgs in #print axioms the_crest_flips_the_lead
-
-/-- info: 'Seed.the_crest_keeps_the_book' does not depend on any axioms -/
-#guard_msgs in #print axioms the_crest_keeps_the_book
-
-/-- info: 'Seed.the_rooms_flip_prices_even_money' does not depend on any axioms -/
-#guard_msgs in #print axioms the_rooms_flip_prices_even_money
-
-/-- info: 'Seed.the_books_lead_is_even_money' does not depend on any axioms -/
-#guard_msgs in #print axioms the_books_lead_is_even_money
-
-/-- info: 'Seed.the_book_holds_every_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_book_holds_every_word
-
-/-- info: 'Seed.the_clock_reaches_every_word' does not depend on any axioms -/
-#guard_msgs in #print axioms the_clock_reaches_every_word
-
-/-- info: 'Seed.the_clock_never_repeats_below_the_cap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_clock_never_repeats_below_the_cap
-
-/-- info: 'Seed.the_odometer_reads_the_whole_book' does not depend on any axioms -/
-#guard_msgs in #print axioms the_odometer_reads_the_whole_book
-
-/-- info: 'Seed.the_three_rooms_stand_exact' does not depend on any axioms -/
-#guard_msgs in #print axioms the_three_rooms_stand_exact
-
-/-- info: 'Seed.the_turn_keeps_the_length' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turn_keeps_the_length
-
-/-- info: 'Seed.ble_gives_the_gap' does not depend on any axioms -/
-#guard_msgs in #print axioms ble_gives_the_gap
-
-/-- info: 'Seed.the_short_word_takes_itself' does not depend on any axioms -/
-#guard_msgs in #print axioms the_short_word_takes_itself
-
-/-- info: 'Seed.the_short_word_turns_home' does not depend on any axioms -/
-#guard_msgs in #print axioms the_short_word_turns_home
-
-/-- info: 'Seed.the_turns_undo' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turns_undo
-
-/-- info: 'Seed.the_turn_merges_nothing' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turn_merges_nothing
-
-/-- info: 'Seed.perm_append_comm' does not depend on any axioms -/
-#guard_msgs in #print axioms perm_append_comm
-
-/-- info: 'Seed.the_turned_word_is_a_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turned_word_is_a_shuffle
-
-/-- info: 'Seed.the_turn_keeps_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turn_keeps_the_room
-
-/-- info: 'Seed.the_turn_covers_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turn_covers_the_room
-
-/-- info: 'Seed.the_turned_room_is_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turned_room_is_the_room
-
-/-- info: 'Seed.the_positive_word_leads' does not depend on any axioms -/
-#guard_msgs in #print axioms the_positive_word_leads
-
-/-- info: 'Seed.the_seat_reads_at_the_turned_head' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_reads_at_the_turned_head
-
-/-- info: 'Seed.the_seat_count_is_the_head_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_count_is_the_head_count
-
-/-- info: 'Seed.every_seat_pays_the_factorial' does not depend on any axioms -/
-#guard_msgs in #print axioms every_seat_pays_the_factorial
-
-/-- info: 'Seed.no_seat_has_a_favorite' does not depend on any axioms -/
-#guard_msgs in #print axioms no_seat_has_a_favorite
-
-/-- info: 'Seed.mem_of_mem_drop' does not depend on any axioms -/
-#guard_msgs in #print axioms mem_of_mem_drop
-
-/-- info: 'Seed.the_head_is_a_member' does not depend on any axioms -/
-#guard_msgs in #print axioms the_head_is_a_member
-
-/-- info: 'Seed.the_seat_names_the_depth' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_names_the_depth
-
-/-- info: 'Seed.the_depth_takes_its_seat' does not depend on any axioms -/
-#guard_msgs in #print axioms the_depth_takes_its_seat
-
-/-- info: 'Seed.the_two_verdicts_agree' does not depend on any axioms -/
-#guard_msgs in #print axioms the_two_verdicts_agree
-
-/-- info: 'Seed.the_age_count_is_the_seat_count' does not depend on any axioms -/
-#guard_msgs in #print axioms the_age_count_is_the_seat_count
-
-/-- info: 'Seed.every_age_counts_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms every_age_counts_alike
-
-/-- info: 'Seed.the_sum_is_a_heap_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sum_is_a_heap_reading
-
-/-- info: 'Seed.the_sum_hears_no_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sum_hears_no_shuffle
-
-/-- info: 'Seed.add_swap_mid' does not depend on any axioms -/
-#guard_msgs in #print axioms add_swap_mid
-
-/-- info: 'Seed.the_sums_add' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sums_add
-
-/-- info: 'Seed.the_ones_count_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ones_count_the_room
-
-/-- info: 'Seed.a_level_reading_sums_by_count' does not depend on any axioms -/
-#guard_msgs in #print axioms a_level_reading_sums_by_count
-
-/-- info: 'Seed.map_map' does not depend on any axioms -/
-#guard_msgs in #print axioms map_map
-
-/-- info: 'Seed.turnQueue_of_append' does not depend on any axioms -/
-#guard_msgs in #print axioms turnQueue_of_append
-
-/-- info: 'Seed.the_turned_queue_counts' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turned_queue_counts
-
-/-- info: 'Seed.the_turned_queue_is_a_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turned_queue_is_a_shuffle
-
-/-- info: 'Seed.the_turned_queue_keeps_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turned_queue_keeps_the_room
-
-/-- info: 'Seed.the_reversed_room_is_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reversed_room_is_the_room
-
-/-- info: 'Seed.the_split_reads_its_depth' does not depend on any axioms -/
-#guard_msgs in #print axioms the_split_reads_its_depth
-
-/-- info: 'Seed.the_ages_face_each_other' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ages_face_each_other
-
-/-- info: 'Seed.the_turned_ages_sum_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turned_ages_sum_alike
-
-/-- info: 'Seed.the_ages_pay_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ages_pay_the_room
-
-/-- info: 'Seed.the_average_age_is_the_middle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_average_age_is_the_middle
-
-/-- info: 'Seed.the_sum_resumes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sum_resumes
-
-/-- info: 'Seed.the_sum_scales' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sum_scales
-
-/-- info: 'Seed.mul_one_reads' does not depend on any axioms -/
-#guard_msgs in #print axioms mul_one_reads
-
-/-- info: 'Seed.the_stacks_add' does not depend on any axioms -/
-#guard_msgs in #print axioms the_stacks_add
-
-/-- info: 'Seed.the_weighted_book_sums_whole' does not depend on any axioms -/
-#guard_msgs in #print axioms the_weighted_book_sums_whole
-
-/-- info: 'Seed.the_even_weight_is_one' does not depend on any axioms -/
-#guard_msgs in #print axioms the_even_weight_is_one
-
-/-- info: 'Seed.the_doubling_stack_is_the_cap' does not depend on any axioms -/
-#guard_msgs in #print axioms the_doubling_stack_is_the_cap
-
-/-- info: 'Seed.the_even_bias_recovers_the_census' does not depend on any axioms -/
-#guard_msgs in #print axioms the_even_bias_recovers_the_census
-
-/-- info: 'Seed.the_book_holds_every_bias' does not depend on any axioms -/
-#guard_msgs in #print axioms the_book_holds_every_bias
-
-/-- info: 'Seed.the_negative_returns' does not depend on any axioms -/
-#guard_msgs in #print axioms the_negative_returns
-
-/-- info: 'Seed.the_ink_faces_its_negative' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ink_faces_its_negative
-
-/-- info: 'Seed.the_negative_keeps_the_book' does not depend on any axioms -/
-#guard_msgs in #print axioms the_negative_keeps_the_book
-
-/-- info: 'Seed.the_negative_book_is_the_book' does not depend on any axioms -/
-#guard_msgs in #print axioms the_negative_book_is_the_book
-
-/-- info: 'Seed.the_negative_inks_sum_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_negative_inks_sum_alike
-
-/-- info: 'Seed.the_average_ink_is_the_middle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_average_ink_is_the_middle
-
-/-- info: 'Seed.the_sum_multiplies' does not depend on any axioms -/
-#guard_msgs in #print axioms the_sum_multiplies
-
-/-- info: 'Seed.mul_four_reads_quadruple' does not depend on any axioms -/
-#guard_msgs in #print axioms mul_four_reads_quadruple
-
-/-- info: 'Seed.mul_swap_mid' does not depend on any axioms -/
-#guard_msgs in #print axioms mul_swap_mid
-
-/-- info: 'Seed.band_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms band_shuffle
-
-/-- info: 'Seed.the_inked_branch_squares' does not depend on any axioms -/
-#guard_msgs in #print axioms the_inked_branch_squares
-
-/-- info: 'Seed.the_blank_branch_squares' does not depend on any axioms -/
-#guard_msgs in #print axioms the_blank_branch_squares
-
-/-- info: 'Seed.the_squares_split_at_the_growth' does not depend on any axioms -/
-#guard_msgs in #print axioms the_squares_split_at_the_growth
-
-/-- info: 'Seed.the_band_recursion' does not depend on any axioms -/
-#guard_msgs in #print axioms the_band_recursion
-
-/-- info: 'Seed.the_squares_pool_to_the_width' does not depend on any axioms -/
-#guard_msgs in #print axioms the_squares_pool_to_the_width
-
-/-- info: 'Seed.the_ink_scatters_a_quarter_per_mark' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ink_scatters_a_quarter_per_mark
-
-/-- info: 'Seed.facing_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms facing_shuffle
-
-/-- info: 'Seed.facing_shuffle_blank' does not depend on any axioms -/
-#guard_msgs in #print axioms facing_shuffle_blank
-
-/-- info: 'Seed.the_values_face_each_other' does not depend on any axioms -/
-#guard_msgs in #print axioms the_values_face_each_other
-
-/-- info: 'Seed.the_value_tells_the_words_apart' does not depend on any axioms -/
-#guard_msgs in #print axioms the_value_tells_the_words_apart
-
-/-- info: 'Seed.the_negative_values_sum_alike' does not depend on any axioms -/
-#guard_msgs in #print axioms the_negative_values_sum_alike
-
-/-- info: 'Seed.the_odometer_logs_the_triangle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_odometer_logs_the_triangle
-
-/-- info: 'Seed.the_inked_lead_weighs' does not depend on any axioms -/
-#guard_msgs in #print axioms the_inked_lead_weighs
-
-/-- info: 'Seed.the_blank_lead_weighs' does not depend on any axioms -/
-#guard_msgs in #print axioms the_blank_lead_weighs
-
-/-- info: 'Seed.the_lead_splits_the_weight' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lead_splits_the_weight
-
-/-- info: 'Seed.the_lead_weighs_its_bias' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lead_weighs_its_bias
-
-/-- info: 'Seed.mul_left_comm' does not depend on any axioms -/
-#guard_msgs in #print axioms mul_left_comm
-
-/-- info: 'Seed.weigh_hears_no_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms weigh_hears_no_shuffle
-
-/-- info: 'Seed.the_turn_keeps_the_book' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turn_keeps_the_book
-
-/-- info: 'Seed.the_turn_covers_the_book' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turn_covers_the_book
-
-/-- info: 'Seed.the_turned_book_is_the_book' does not depend on any axioms -/
-#guard_msgs in #print axioms the_turned_book_is_the_book
-
-/-- info: 'Seed.the_seat_leads_through_the_turn' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_leads_through_the_turn
-
-/-- info: 'Seed.filter_keeps_the_passing' does not depend on any axioms -/
-#guard_msgs in #print axioms filter_keeps_the_passing
-
-/-- info: 'Seed.filter_drops_the_failing' does not depend on any axioms -/
-#guard_msgs in #print axioms filter_drops_the_failing
-
-/-- info: 'Seed.the_lead_filter_is_the_branch' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lead_filter_is_the_branch
-
-/-- info: 'Seed.the_seat_marginal_is_the_lead_marginal' does not depend on any axioms -/
-#guard_msgs in #print axioms the_seat_marginal_is_the_lead_marginal
-
-/-- info: 'Seed.every_seat_weighs_the_bias' does not depend on any axioms -/
-#guard_msgs in #print axioms every_seat_weighs_the_bias
-
-/-- info: 'Seed.the_reflection_returns' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reflection_returns
-
-/-- info: 'Seed.the_reflection_keeps_the_reading' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reflection_keeps_the_reading
-
-/-- info: 'Seed.the_reflection_keeps_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reflection_keeps_the_room
-
-/-- info: 'Seed.the_reflected_room_is_the_room' does not depend on any axioms -/
-#guard_msgs in #print axioms the_reflected_room_is_the_room
-
-/-- info: 'Seed.the_bloom_is_a_palindrome' does not depend on any axioms -/
-#guard_msgs in #print axioms the_bloom_is_a_palindrome
-
-/-- info: 'Seed.the_comb_is_no_palindrome' does not depend on any axioms -/
-#guard_msgs in #print axioms the_comb_is_no_palindrome
-
-/-- info: 'Seed.the_lean_reading_hears_the_mirror' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lean_reading_hears_the_mirror
-
-/-- info: 'Seed.the_clock_walks_the_palindromes' does not depend on any axioms -/
-#guard_msgs in #print axioms the_clock_walks_the_palindromes
-
-/-- info: 'Seed.the_inked_branch_leans' does not depend on any axioms -/
-#guard_msgs in #print axioms the_inked_branch_leans
-
-/-- info: 'Seed.the_blank_branch_leans' does not depend on any axioms -/
-#guard_msgs in #print axioms the_blank_branch_leans
-
-/-- info: 'Seed.the_leans_split_at_the_growth' does not depend on any axioms -/
-#guard_msgs in #print axioms the_leans_split_at_the_growth
-
-/-- info: 'Seed.the_weighted_inks_pool_to_the_lean' does not depend on any axioms -/
-#guard_msgs in #print axioms the_weighted_inks_pool_to_the_lean
-
-/-- info: 'Seed.the_even_bias_recovers_the_ink' does not depend on any axioms -/
-#guard_msgs in #print axioms the_even_bias_recovers_the_ink
-
-/-- info: 'Seed.the_average_ink_is_the_lean' does not depend on any axioms -/
-#guard_msgs in #print axioms the_average_ink_is_the_lean
-
-/-- info: 'Seed.the_inked_branch_squares_the_lean' does not depend on any axioms -/
-#guard_msgs in #print axioms the_inked_branch_squares_the_lean
-
-/-- info: 'Seed.the_blank_branch_squares_the_lean' does not depend on any axioms -/
-#guard_msgs in #print axioms the_blank_branch_squares_the_lean
-
-/-- info: 'Seed.the_weighted_squares_split_at_the_growth' does not depend on any axioms -/
-#guard_msgs in #print axioms the_weighted_squares_split_at_the_growth
-
-/-- info: 'Seed.the_lean_atom_shuffle' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lean_atom_shuffle
-
-/-- info: 'Seed.the_lean_square_expands' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lean_square_expands
-
-/-- info: 'Seed.the_lean_band_recursion' does not depend on any axioms -/
-#guard_msgs in #print axioms the_lean_band_recursion
-
-/-- info: 'Seed.the_weighted_squares_pool_to_the_lean' does not depend on any axioms -/
-#guard_msgs in #print axioms the_weighted_squares_pool_to_the_lean
-
-/-- info: 'Seed.the_even_bias_recovers_the_squares' does not depend on any axioms -/
-#guard_msgs in #print axioms the_even_bias_recovers_the_squares
-
-/-- info: 'Seed.the_ink_scatters_the_product_of_the_biases' does not depend on any axioms -/
-#guard_msgs in #print axioms the_ink_scatters_the_product_of_the_biases
+theorem room_margin_flywheel_door {I : Type u} {O : Type v} {A : Type w}
+    (m : Machine I O) (r : m.S → I) (u : List Unit) (s : m.S)
+    (st : m.S × List I) (v : List I) (q : Interview (List Unit) Bool)
+    (beq : A → A → Bool) (hrefl : ∀ y : A, beq y y = true)
+    (x : A) (st' : List A × List (A × List A)) (word : List (A × List A))
+    (hall needs : List A)
+    (F : Face) {W : Type v'} (g : F.State) {w1 w2 : W} (hw : w1 ≠ w2) :
+    drive (selfSteered m r) s u = m.out (orbit m r s u.length)
+      ∧ drive (buffered m) (settleHeld m st) v = drive (buffered m) st v
+      ∧ sound (airGap Unit Bool) restingCounter q = sound (airGap Unit Bool) hollowShell q
+      ∧ (∀ tw : List Unit, behavior tally tw = tw.length)
+      ∧ (enrolled beq st'.1 x = false →
+          (∀ arr, arr ∈ word → beq arr.1 x = true → x ∈ arr.2) →
+          enrolled beq (intake beq st' word).1 x = false)
+      ∧ (lacking beq hall needs = 1 →
+          ∃ k, k ∈ needs ∧ enrolled beq hall k = false ∧
+            backed beq (k :: hall) needs = true)
+      ∧ ¬ alike (widen F W) (atTheDoor g w1) (atTheDoor g w2) :=
+  ⟨the_self_steered_machine_is_a_clock m r u s,
+   the_settle_is_unheard m st v,
+   the_flywheel_and_the_shell_sound_alike q,
+   the_wider_voice_releases_the_bank,
+   fun hd hs => no_mark_lights_itself beq x word st' hd hs,
+   the_key_is_cut_from_the_room beq hrefl hall needs,
+   a_wider_seat_reads_the_remainder F g hw⟩
+
+/-- info: 'Seed.room_margin_flywheel_door' does not depend on any axioms -/
+#guard_msgs in #print axioms room_margin_flywheel_door
+
+def sheet (I : Type u) (O : Type v) : Type (max u v) :=
+  List I → O
+
+def peek {I : Type u} {O : Type v} (f : sheet I O) : O :=
+  f []
+
+def feed {I : Type u} {O : Type v} (f : sheet I O) (i : I) : sheet I O :=
+  fun w => f (i :: w)
+
+def liftFrom {I : Type u} {O : Type v} (m : Machine I O) (s : m.S) : sheet I O :=
+  fun w => drive m s w
+
+theorem the_lift_peeks_the_out {I : Type u} {O : Type v} (m : Machine I O) (s : m.S) :
+    peek (liftFrom m s) = m.out s :=
+  rfl
+
+/-- info: 'Seed.the_lift_peeks_the_out' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lift_peeks_the_out
+
+theorem the_lift_feeds_the_step {I : Type u} {O : Type v} (m : Machine I O)
+    (s : m.S) (i : I) :
+    feed (liftFrom m s) i = liftFrom m (m.step s i) :=
+  rfl
+
+/-- info: 'Seed.the_lift_feeds_the_step' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lift_feeds_the_step
+
+def inStep {I : Type u} {O : Type v} (m : Machine I O) (h : m.S → sheet I O) : Prop :=
+  (∀ s, peek (h s) = m.out s) ∧ (∀ s i, feed (h s) i = h (m.step s i))
+
+theorem the_lift_is_unique {I : Type u} {O : Type v} (m : Machine I O)
+    (h : m.S → sheet I O) (hf : inStep m h) :
+    ∀ (w : List I) (s : m.S), h s w = liftFrom m s w
+  | [], s => hf.1 s
+  | i :: w, s =>
+      (congrFun (hf.2 s i) w).trans
+        (the_lift_is_unique m h hf w (m.step s i))
+
+/-- info: 'Seed.the_lift_is_unique' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lift_is_unique
+
+theorem the_lift_is_the_conduct {I : Type u} {O : Type v} (m n : Machine I O)
+    (f g : sheet I O) :
+    (∀ s, peek (liftFrom m s) = m.out s)
+      ∧ (∀ s i, feed (liftFrom m s) i = liftFrom m (m.step s i))
+      ∧ (∀ (h : m.S → sheet I O),
+          (∀ s, peek (h s) = m.out s) →
+          (∀ s i, feed (h s) i = h (m.step s i)) →
+          ∀ (w : List I) (s : m.S), h s w = liftFrom m s w)
+      ∧ liftFrom m m.s0 = behavior m
+      ∧ (alike (airGap I O) m n ↔ ∀ q, sound (airGap I O) m q = sound (airGap I O) n q)
+      ∧ (alike (appFace (List I) O) f g ↔ ∀ w, f w = g w) :=
+  ⟨fun _ => rfl,
+   fun _ _ => rfl,
+   fun h hp hf => the_lift_is_unique m h ⟨hp, hf⟩,
+   rfl,
+   the_audition_is_exact m n,
+   the_pointwise_license (List I) O f g⟩
+
+/-- info: 'Seed.the_lift_is_the_conduct' does not depend on any axioms -/
+#guard_msgs in #print axioms the_lift_is_the_conduct
+
+def stream (A : Type u) : Type u :=
+  Nat → A
+
+def toStream {O : Type v} (f : sheet Unit O) : stream O :=
+  fun n => f (List.replicate n ())
+
+def toSheet {O : Type v} (g : stream O) : sheet Unit O :=
+  fun w => g w.length
+
+theorem len_replicate {A : Type u} (a : A) :
+    ∀ n : Nat, (List.replicate n a).length = n
+  | 0 => rfl
+  | n + 1 => congrArg (· + 1) (len_replicate a n)
+
+/-- info: 'Seed.len_replicate' does not depend on any axioms -/
+#guard_msgs in #print axioms len_replicate
+
+theorem the_unit_word_is_its_count :
+    ∀ w : List Unit, List.replicate w.length () = w
+  | [] => rfl
+  | _ :: t => congrArg (List.cons ()) (the_unit_word_is_its_count t)
+
+/-- info: 'Seed.the_unit_word_is_its_count' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unit_word_is_its_count
+
+theorem the_unit_machine_steers_itself {O : Type v} (m : Machine Unit O) :
+    selfSteered m (fun _ => ()) = m :=
+  rfl
+
+/-- info: 'Seed.the_unit_machine_steers_itself' does not depend on any axioms -/
+#guard_msgs in #print axioms the_unit_machine_steers_itself
+
+theorem the_round_trips_come_home {O : Type v} (f : sheet Unit O) (g : stream O)
+    (w : List Unit) (n : Nat) :
+    toSheet (toStream f) w = f w ∧ toStream (toSheet g) n = g n :=
+  ⟨congrArg f (the_unit_word_is_its_count w),
+   congrArg g (len_replicate () n)⟩
+
+/-- info: 'Seed.the_round_trips_come_home' does not depend on any axioms -/
+#guard_msgs in #print axioms the_round_trips_come_home
+
+def streamOf {O : Type v} (m : Machine Unit O) : stream O :=
+  fun n => m.out (orbit m (fun _ => ()) m.s0 n)
+
+theorem the_clocks_lift_is_a_stream {O : Type v} (m : Machine Unit O) (n : Nat) :
+    streamOf m n = toStream (liftFrom m m.s0) n :=
+  ((congrArg (fun k => m.out (orbit m (fun _ => ()) m.s0 k))
+      (len_replicate () n)).symm).trans
+    ((the_self_steered_machine_is_a_clock m (fun _ => ())
+        (List.replicate n ()) m.s0).symm)
+
+/-- info: 'Seed.the_clocks_lift_is_a_stream' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clocks_lift_is_a_stream
+
+theorem the_tallys_stream_counts (n : Nat) :
+    streamOf tally n = n :=
+  (the_clocks_lift_is_a_stream tally n).trans
+    ((the_wider_voice_releases_the_bank (List.replicate n ())).trans
+      (len_replicate () n))
+
+/-- info: 'Seed.the_tallys_stream_counts' does not depend on any axioms -/
+#guard_msgs in #print axioms the_tallys_stream_counts
+
+theorem the_clock_writes_its_sequence {O : Type v} (m m' : Machine Unit O)
+    (f : sheet Unit O) (g : stream O) (w : List Unit) (n : Nat) :
+    streamOf m n = toStream (liftFrom m m.s0) n
+      ∧ toSheet (toStream f) w = f w
+      ∧ toStream (toSheet g) n = g n
+      ∧ streamOf tally n = n
+      ∧ (alike (airGap Unit O) m m' ↔
+          ∀ q, sound (airGap Unit O) m q = sound (airGap Unit O) m' q) :=
+  ⟨the_clocks_lift_is_a_stream m n,
+   (the_round_trips_come_home f g w n).1,
+   (the_round_trips_come_home f g w n).2,
+   the_tallys_stream_counts n,
+   the_audition_is_exact m m'⟩
+
+/-- info: 'Seed.the_clock_writes_its_sequence' does not depend on any axioms -/
+#guard_msgs in #print axioms the_clock_writes_its_sequence
+
+theorem bool_three_collide : ∀ x y z : Bool, x = y ∨ y = z ∨ x = z
+  | true, true, _ => Or.inl rfl
+  | false, false, _ => Or.inl rfl
+  | true, false, true => Or.inr (Or.inr rfl)
+  | true, false, false => Or.inr (Or.inl rfl)
+  | false, true, true => Or.inr (Or.inl rfl)
+  | false, true, false => Or.inr (Or.inr rfl)
+
+/-- info: 'Seed.bool_three_collide' does not depend on any axioms -/
+#guard_msgs in #print axioms bool_three_collide
+
+theorem the_hallway_is_too_small {S : Type u} (r : S → Bool) (a b c : S) :
+    r a = r b ∨ r b = r c ∨ r a = r c :=
+  bool_three_collide (r a) (r b) (r c)
+
+/-- info: 'Seed.the_hallway_is_too_small' does not depend on any axioms -/
+#guard_msgs in #print axioms the_hallway_is_too_small
+
+theorem and_congr_first {a b c : Prop} (h : a ↔ b) : (a ∧ c) ↔ (b ∧ c) :=
+  ⟨fun x => ⟨h.mp x.1, x.2⟩, fun x => ⟨h.mpr x.1, x.2⟩⟩
+
+/-- info: 'Seed.and_congr_first' does not depend on any axioms -/
+#guard_msgs in #print axioms and_congr_first
+
+theorem and_congr_second {a b c : Prop} (h : b ↔ c) : (a ∧ b) ↔ (a ∧ c) :=
+  ⟨fun x => ⟨x.1, h.mp x.2⟩, fun x => ⟨x.1, h.mpr x.2⟩⟩
+
+/-- info: 'Seed.and_congr_second' does not depend on any axioms -/
+#guard_msgs in #print axioms and_congr_second
+
+theorem and_regroups {a b c : Prop} : ((a ∧ b) ∧ c) ↔ (a ∧ (b ∧ c)) :=
+  ⟨fun x => ⟨x.1.1, x.1.2, x.2⟩, fun x => ⟨⟨x.1, x.2.1⟩, x.2.2⟩⟩
+
+/-- info: 'Seed.and_regroups' does not depend on any axioms -/
+#guard_msgs in #print axioms and_regroups
+
+theorem the_comparison_mints_a_face (F G : Face) {S : Type u'}
+    (f : S → F.State) (g : S → G.State) {X : Type w'}
+    (c : F.Ans → G.Ans → X) (s : S) (p : F.Probe) (q : G.Probe) :
+    c (F.obs (f s) p) (G.obs (g s) q)
+      = walkIn c ((pairFace F G f g).obs s (atTheDoor p q)) :=
+  rfl
+
+/-- info: 'Seed.the_comparison_mints_a_face' does not depend on any axioms -/
+#guard_msgs in #print axioms the_comparison_mints_a_face
+
+theorem every_widening_is_one_pairing (F G H : Face) {S : Type u'}
+    (f : S → F.State) (g : S → G.State) (h : S → H.State)
+    (p0 : F.Probe) (q0 : G.Probe) (r0 : H.Probe) (s t : S) :
+    alike (pairFace (pairFace F G f g) H (fun x => x) h) s t
+      ↔ alike (pairFace F (pairFace G H g h) f (fun x => x)) s t :=
+  (the_pairing_is_exact (pairFace F G f g) H (fun x => x) h
+      (atTheDoor p0 q0) r0 s t).trans
+    ((and_congr_first (the_pairing_is_exact F G f g p0 q0 s t)).trans
+      (and_regroups.trans
+        ((and_congr_second (the_pairing_is_exact G H g h q0 r0 s t)).symm.trans
+          (the_pairing_is_exact F (pairFace G H g h) f (fun x => x)
+            p0 (atTheDoor q0 r0) s t).symm)))
+
+/-- info: 'Seed.every_widening_is_one_pairing' does not depend on any axioms -/
+#guard_msgs in #print axioms every_widening_is_one_pairing
+
+theorem three_is_the_width_of_contact (F G H : Face) {S : Type u'}
+    (f : S → F.State) (g : S → G.State) (h : S → H.State)
+    (p0 : F.Probe) (q0 : G.Probe) (r0 : H.Probe) (s t : S)
+    {T : Type u''} (r : T → Bool) (a b c : T) (n : Nat) :
+    (r a = r b ∨ r b = r c ∨ r a = r c)
+      ∧ (alike (pairFace F G f g) s t ↔ (alike F (f s) (f t) ∧ alike G (g s) (g t)))
+      ∧ (alike (pairFace (pairFace F G f g) H (fun x => x) h) s t
+          ↔ alike (pairFace F (pairFace G H g h) f (fun x => x)) s t)
+      ∧ ¬ chain (n + 1) (.board (.board .ground .ground) .ground)
+          (.board (.board .ground .ground) .ground)
+      ∧ chain 2 (.board (.board (.board .ground .ground) .ground) .ground)
+          (.board .ground (.board .ground (.board .ground .ground)))
+      ∧ chain 3 (.board (.board (.board .ground .ground) .ground) .ground)
+          (.board .ground (.board .ground (.board .ground .ground))) :=
+  ⟨the_hallway_is_too_small r a b c,
+   the_pairing_is_exact F G f g p0 q0 s t,
+   every_widening_is_one_pairing F G H f g h p0 q0 r0 s t,
+   (three_has_no_loop n).1,
+   the_pentagon_turns_at_four.1,
+   the_pentagon_turns_at_four.2⟩
+
+/-- info: 'Seed.three_is_the_width_of_contact' does not depend on any axioms -/
+#guard_msgs in #print axioms three_is_the_width_of_contact
 
 end Seed

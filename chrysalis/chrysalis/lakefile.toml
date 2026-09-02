@@ -1,0 +1,25 @@
+name = "foam"
+defaultTargets = ["Foam"]
+
+[[lean_lib]]
+name = "Foam"
+globs = ["Foam", "Foam.+"]
+
+[[lean_exe]]
+name = "transcribe"
+root = "Transcribe"
+
+[[lean_exe]]
+name = "census"
+root = "Census"
+
+[[lean_exe]]
+name = "admit"
+root = "Admit"
+
+[[lean_lib]]
+name = "Seed"
+
+[[lean_exe]]
+name = "lab"
+root = "Lab"

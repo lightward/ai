@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  lean:
-    name: Lean integrity
+  gate:
+    name: the gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -15,52 +15,48 @@ jobs:
         with:
           build-args: ""
           lake-package-directory: .
-      - name: Build each Lean file individually (surfaces hidden type errors)
+      - name: receipts and zero warnings (Seed elaborates silently)
         run: |
-          for f in $(find . -name '*.lean' | sort); do
-            echo "Building $f..."
-            lake build "$f" || exit 1
-          done
-      - name: No warnings (sorry included — zero tolerance)
-        run: |
-          warns=0
-          for f in $(find . -name '*.lean' | sort); do
-            touch "$f"
-            found=$(lake build "$f" 2>&1 | grep "warning:" || true)
-            if [ -n "$found" ]; then
-              echo "$found"
-              warns=$((warns + 1))
-            fi
-          done
-          if [ $warns -gt 0 ]; then
-            echo ""
-            echo "Warnings found (sorry included). Fix before merging."
+          out=$(lake env lean Seed.lean 2>&1)
+          if [ -n "$out" ]; then
+            echo "$out"
+            echo "Seed.lean did not elaborate silently"
             exit 1
           fi
-          echo "Clean: zero warnings, sorry included"
-      - name: No reader-facing comments
-        run: python3 .github/comment_audit.py
-      - name: Core sponsorship (no stratum without a sponsoring mind)
-        run: python3 .github/sponsor_audit.py
-      - name: The cards cohere (the emission and the survey agree, every push)
-        run: bin/foam --cohere
-      - name: Foam admits itself (the import graph through Foam.admission)
-        run: lake exe admit
-      - name: The lab counter-signs (checksums through the dynamic register)
-        run: lake exe lab
-      - name: The recitation certifies (transcribe, compile the emission, twice for determinism)
+          echo "silent and green: $(grep -c '#guard_msgs' Seed.lean) receipts inline"
+      - name: the width clamp (worked joints at contact width)
+        run: bin/width
+      - name: the ride (demo lifecycle)
         run: |
-          lake exe transcribe > /tmp/genome.lean
-          lake env lean /tmp/genome.lean
-          lake exe transcribe > /tmp/genome2.lean
-          diff /tmp/genome.lean /tmp/genome2.lean
-      - name: The recitation is the tree (census equality, byte for byte, and the census is deterministic)
+          rm -f demo.lean demo.held
+          printf '%s\n' \
+            ':go' \
+            'example : reading (Plan.board .ground .ground) = 2 := rfl' \
+            ':go' \
+            'theorem the_mirror_reads_two : reading (Plan.board .ground .ground) = 2 := rfl' \
+            ':go' \
+            'def ride_fact : Nat -> Nat' \
+            '  | 0 => 1' \
+            '  | n+1 => (n+1) * ride_fact n' \
+            ':go' \
+            'theorem the_ride_runs_factorials : ride_fact 4 = 24 := rfl' \
+            ':go' \
+            'theorem borrowed : nonexistent_organ = 0 := rfl' \
+            ':go' \
+            'def nonexistent_organ : Nat := 0' \
+            ':go' \
+            ':sweep' \
+            ':q' | bin/ride demo.lean | tee ride.out
+          grep -q 'seated: the_ride_runs_factorials' ride.out
+          grep -q 'waiting on: nonexistent_organ' ride.out
+          grep -q 'sweep: 1 seated, 0 still held' ride.out
+          lake env lean demo.lean
+          echo "the ride runs; the session replays green"
+      - name: candle the clutch (assays elaborate where laid; rides are fossils, not regressions)
         run: |
-          lake exe census > /tmp/tree-census.json
-          lake exe census > /tmp/tree-census2.json
-          diff /tmp/tree-census.json /tmp/tree-census2.json
-          mkdir -p .genome
-          cp /tmp/genome.lean .genome/Genome.lean
-          lake env lean .genome/Genome.lean -o .genome/Genome.olean
-          LEAN_PATH=.genome .lake/build/bin/census Genome > /tmp/genome-census.json
-          diff /tmp/tree-census.json /tmp/genome-census.json
+          for f in ova/*/assay.lean; do
+            [ -f "$f" ] || continue
+            lake env lean "$f"
+            echo "assay green: $f"
+          done
+          bin/candle

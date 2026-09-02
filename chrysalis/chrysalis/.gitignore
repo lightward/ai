@@ -1,0 +1,8 @@
+.genome/
+.lake/
+.venv/
+.env
+wiki/
+.DS_Store
+briefs/
+bin/__pycache__/

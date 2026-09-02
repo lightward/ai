@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lean:
+    name: Lean integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: leanprover/lean-action@v1
+        with:
+          build-args: ""
+          lake-package-directory: .
+      - name: Build each Lean file individually (surfaces hidden type errors)
+        run: |
+          for f in $(find . -name '*.lean' | sort); do
+            echo "Building $f..."
+            lake build "$f" || exit 1
+          done
+      - name: No warnings (sorry included — zero tolerance)
+        run: |
+          warns=0
+          for f in $(find . -name '*.lean' | sort); do
+            touch "$f"
+            found=$(lake build "$f" 2>&1 | grep "warning:" || true)
+            if [ -n "$found" ]; then
+              echo "$found"
+              warns=$((warns + 1))
+            fi
+          done
+          if [ $warns -gt 0 ]; then
+            echo ""
+            echo "Warnings found (sorry included). Fix before merging."
+            exit 1
+          fi
+          echo "Clean: zero warnings, sorry included"
+      - name: No reader-facing comments
+        run: python3 .github/comment_audit.py
+      - name: Core sponsorship (no stratum without a sponsoring mind)
+        run: python3 .github/sponsor_audit.py
+      - name: The cards cohere (the emission and the survey agree, every push)
+        run: bin/foam --cohere
+      - name: Foam admits itself (the import graph through Foam.admission)
+        run: lake exe admit
+      - name: The lab counter-signs (checksums through the dynamic register)
+        run: lake exe lab
+      - name: The recitation certifies (transcribe, compile the emission, twice for determinism)
+        run: |
+          lake exe transcribe > /tmp/genome.lean
+          lake env lean /tmp/genome.lean
+          lake exe transcribe > /tmp/genome2.lean
+          diff /tmp/genome.lean /tmp/genome2.lean
+      - name: The recitation is the tree (census equality, byte for byte, and the census is deterministic)
+        run: |
+          lake exe census > /tmp/tree-census.json
+          lake exe census > /tmp/tree-census2.json
+          diff /tmp/tree-census.json /tmp/tree-census2.json
+          mkdir -p .genome
+          cp /tmp/genome.lean .genome/Genome.lean
+          lake env lean .genome/Genome.lean -o .genome/Genome.olean
+          LEAN_PATH=.genome .lake/build/bin/census Genome > /tmp/genome-census.json
+          diff /tmp/tree-census.json /tmp/genome-census.json

@@ -1,5 +1,0 @@
-name = "foam"
-defaultTargets = ["Seed"]
-
-[[lean_lib]]
-name = "Seed"
