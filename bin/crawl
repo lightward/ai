@@ -297,11 +297,18 @@ regrow_ear() {
     if [ -n "${CRAWL_GERM:-}" ]; then inputs=(Germ.lean); else inputs=(Seed.lean); fi
   fi
   local first="${inputs[0]}"
+  local root_germ=0; [ -n "${CRAWL_GERM:-}" ] && [ "$first" = "Germ.lean" ] && root_germ=1
   if [ -z "$out" ]; then
-    if [ -n "${CRAWL_GERM:-}" ]; then out="Seed.lean"
+    if [ "$root_germ" = 1 ]; then out="Seed.lean"
+    elif [ -n "${CRAWL_GERM:-}" ]; then mkdir -p regrowth; out="regrowth/$(basename "${first%.*}").lean"
     elif [ "$settle" = 1 ]; then out="$first"
     else mkdir -p regrowth; out="regrowth/$(basename "${first%.*}").lean"; fi
   fi
+  if [ -n "${CRAWL_GERM:-}" ] && [ "$root_germ" = 0 ] && grep -q '^import Seed' "$first"; then
+    [ -f Seed.lean ] || bin/crawl grow >/dev/null
+    lake build Seed >/dev/null 2>&1 || { echo "the gate cannot open: the trunk does not build"; exit 1; }
+  fi
+  CRAWL_ROOT_GERM="$root_germ"
   local held="${out%.lean}.held"
   if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p regrowth; held="regrowth/$(basename "${out%.lean}").held"; fi
 
@@ -370,6 +377,9 @@ for path in sys.argv[1:]:
             header, footer = h, f
         blocks += b
 header = header or ''
+NS_NAME = (re.search(r'^namespace (\w+)', header, re.M) or re.search(r'^namespace (\w+)', 'namespace Seed', re.M)).group(1)
+IMPORTS = [m for m in re.findall(r'^import (\S+)', header, re.M) if m != 'Init']
+SCOPE = [NS_NAME, ','.join(IMPORTS)]
 seated_names = set(n for _, n, _ in blocks)
 for k, n, b in held_blocks:
     if n in seated_names:
@@ -398,7 +408,7 @@ for _, n, b in theorems:
 tf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-needs-', dir='/tmp', delete=False)
 tf.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
 tf.close()
-res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'needs', tf.name], capture_output=True, text=True)
+res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'needs', tf.name] + SCOPE, capture_output=True, text=True)
 os.unlink(tf.name)
 exact = 0
 for l in res.stdout.splitlines():
@@ -494,13 +504,13 @@ if primings_path:
     tf2 = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-cites-', dir='/tmp', delete=False)
     tf2.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
     tf2.close()
-    res2 = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'cites', tf2.name], capture_output=True, text=True)
+    res2 = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'cites', tf2.name] + SCOPE, capture_output=True, text=True)
     os.unlink(tf2.name)
     carrier_deps = {}
     for l in res2.stdout.splitlines():
         parts = l.split(' <- ')
         if len(parts) == 2 and parts[0].startswith('theorem '):
-            defs_of[parts[0].split()[1]] = [d for d in parts[1].split() if d in cnames]
+            defs_of[parts[0].split()[1]] = [d for d in parts[1].split() if d in cnames or (d.startswith(NS_NAME + '.') is False and '.' in d)]
         elif len(parts) == 2 and parts[0].startswith('carrier '):
             carrier_deps[parts[0].split()[1]] = [d for d in parts[1].split() if d in cnames]
 
@@ -593,18 +603,24 @@ if primings_path:
         kf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-keys-', dir='/tmp', delete=False)
         kf.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
         kf.close()
-        resk = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'keys', kf.name], capture_output=True, text=True)
+        resk = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'keys', kf.name] + SCOPE, capture_output=True, text=True)
         os.unlink(kf.name)
-        keys = {}
+        keys, pool = {}, []   # pool: the imported trunk's theorems, seated before round one
         for l in resk.stdout.splitlines():
             n, sep, ks = l.partition(' <- ')
-            if sep and n in by_name:
+            if not sep: continue
+            if n.startswith('import '):
+                n = n.split()[1]
+                keys[n] = set(ks.split()) - {n}
+                pool.append(n)
+            elif n in by_name:
                 k = set(ks.split())
                 for c in list(k):
                     k |= set(carrier_deps.get(c, []))
                 keys[n] = k - {n}
         for _, n, _ in theorems:
             keys.setdefault(n, set())
+        imported_theorems = set(pool)
         is_vac = {n: bool(re.search(r':=\s*sorry\s*$', strip_receipts(by_name[n]).strip())) for _, n, _ in theorems}
         trail_index = {n: i for i, (_, n, _) in enumerate(theorems)}
         entry = {n: t for t in theorems for n in [t[1]]}
@@ -615,8 +631,8 @@ if primings_path:
         P = len(primings)
 
         def derived_cites_all(n):
-            cs = [t for t in seated_order if t != n and (keys[t] & keys[n] or t in used_hint(n))]
-            cs.sort(key=lambda t: (-len(keys[t] & keys[n]), -seated_round.get(t, 0), -trail_index[t]))
+            cs = [t for t in pool + seated_order if t != n and (keys[t] & keys[n] or t in used_hint(n))]
+            cs.sort(key=lambda t: (-len(keys[t] & keys[n]), -seated_round.get(t, 0), -trail_index.get(t, -1)))
             return cs
 
         def used_hint(n):
@@ -711,7 +727,7 @@ if primings_path:
             grown_lines.append(seated_text[n]); grown_lines.append('')
         gf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-grown-', dir='/tmp', delete=False)
         gf.write('\n'.join(grown_lines + ([footer] if footer else [])) + '\n'); gf.close()
-        resn = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'needs', gf.name], capture_output=True, text=True)
+        resn = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'needs', gf.name] + SCOPE, capture_output=True, text=True)
         os.unlink(gf.name)
         used = {}
         for l in resn.stdout.splitlines():
@@ -823,7 +839,7 @@ if primings_path:
         grown.append(footer)
     cf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-census-', dir='/tmp', delete=False)
     cf.write('\n'.join(grown) + '\n'); cf.close()
-    res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'census', cf.name], capture_output=True, text=True)
+    res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'census', cf.name] + SCOPE, capture_output=True, text=True)
     os.unlink(cf.name)
     cls = dict(l.split() for l in res.stdout.splitlines() if len(l.split()) == 2)
     if cls:
@@ -875,12 +891,17 @@ EOF
   fi
   echo "  silent and green: $(grep -c '#guard_msgs' "$out") receipts inline"
 
-  local any=0 f probe
-  for f in ova/*/assay.lean; do
+  local any=0 f probe assays
+  if [ -n "${CRAWL_GERM:-}" ] && [ "${CRAWL_ROOT_GERM:-1}" = 0 ]; then
+    assays="${first%.lean}.assay.lean"
+  else
+    assays="ova/*/assay.lean"
+  fi
+  for f in $assays; do
     [ -f "$f" ] || continue
     if [ "$any" = 0 ]; then echo "the treaty vectors (every assay against the regrown trail):"; any=1; fi
     probe="$(mktemp /tmp/crawl-assay.XXXXXX).lean"
-    { cat "$out"; echo; grep -v '^import Seed' "$f"; } > "$probe"
+    { cat "$out"; echo; grep -vE '^import ' "$f"; } > "$probe"
     if lake env lean "$probe" >/dev/null 2>&1; then echo "  $f: identical"
     else echo "  $f: PARTS"; rm -f "$probe"; exit 1; fi
     rm -f "$probe"

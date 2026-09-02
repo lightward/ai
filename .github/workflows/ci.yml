@@ -20,6 +20,8 @@ jobs:
         run: bin/crawl grow --check
       - name: build the artifact
         run: lake build
+      - name: grow a domain germ against the trunk (domains/toy.lean: signatures only, its own settle)
+        run: bin/crawl grow domains/toy.lean --check
       - name: receipts and zero warnings (the grown Seed elaborates silently)
         run: |
           out=$(lake env lean Seed.lean 2>&1)

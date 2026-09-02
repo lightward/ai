@@ -3,72 +3,94 @@ open Lean Elab
 
 def elabFrom (src : String) (name : String) (st : Option Command.State) : IO Command.State := do
   let ictx := Parser.mkInputContext src name
-  let (_, ps, msgs) ← Parser.parseHeader ictx
+  let (hdr, ps, msgs) ← Parser.parseHeader ictx
   let cs ← match st with
     | some s => pure { s with messages := {} }
     | none =>
-        let env ← importModules #[{ module := `Init }] {} 0 (loadExts := true)
+        let imports := headerToImports hdr
+        let env ← importModules (if imports.isEmpty then #[{ module := `Init }] else imports) {} 0 (loadExts := true)
         pure (Command.mkState env msgs (({} : Options).setBool `Elab.async false))
   let s ← IO.processCommands ictx ps cs
   return s.commandState
 
-partial def usedTopLevel (env : Environment) (ns : Name) (seen : NameSet) (n : Name) : NameSet := Id.run do
+/-- the namespaces a reading is about: the trail's own, and the imported ones whose
+theorems the trail may cite (given as `ns` and a comma-separated `imports` arg) -/
+structure Scope where
+  ns : Name
+  imported : List Name
+
+def Scope.parse (args : List String) (i : Nat) : Scope :=
+  let ns := (args[i]?).map String.toName |>.getD `Seed
+  let imported := ((args[i+1]?).getD "").splitOn "," |>.filter (· ≠ "") |>.map String.toName
+  ⟨ns, imported⟩
+
+def Scope.owns (sc : Scope) (n : Name) : Bool :=
+  n.getPrefix == sc.ns || sc.imported.any (fun m => n.getPrefix == m)
+
+partial def usedTopLevel (env : Environment) (sc : Scope) (seen : NameSet) (n : Name) : NameSet := Id.run do
   let some ci := env.find? n | return seen
   let mut seen := seen
   let consts := ci.type.getUsedConstants ++ (match ci.value? (allowOpaque := true) with | some v => v.getUsedConstants | none => #[])
   for c in consts do
     if seen.contains c then continue
-    if !(env.getModuleIdxFor? c).isNone then continue
-    if c.getPrefix == ns then
+    if sc.owns c then
       seen := seen.insert c
-    else
-      seen := usedTopLevel env ns (seen.insert c) c
+    else if (env.getModuleIdxFor? c).isNone then
+      seen := usedTopLevel env sc (seen.insert c) c
   return seen
 
-def needsMode (trail : String) : IO Unit := do
+def nameOf (sc : Scope) (n : Name) : String :=
+  if n.getPrefix == sc.ns then n.getString! else n.toString
+
+def needsMode (trail : String) (sc : Scope) : IO Unit := do
   let st ← elabFrom (← IO.FS.readFile trail) trail none
   let env := st.env
-  let ns := `Seed
   for (n, ci) in env.constants.map₂.toList do
-    if n.getPrefix != ns then continue
+    if n.getPrefix != sc.ns then continue
     if !ci.isTheorem then continue
-    let used := usedTopLevel env ns {} n
-    let deps := used.toList.filter (fun d => d != n && d.getPrefix == ns && (env.find? d).any (·.isTheorem))
-    IO.println s!"{n.getString!} <- {" ".intercalate (deps.map (·.getString!))}"
+    let used := usedTopLevel env sc {} n
+    let deps := used.toList.filter (fun d => d != n && sc.owns d && (env.find? d).any (·.isTheorem))
+    IO.println s!"{n.getString!} <- {" ".intercalate (deps.map (nameOf sc))}"
 
-partial def usedInType (env : Environment) (ns : Name) (seen : NameSet) (n : Name) (e : Expr) : NameSet := Id.run do
+partial def usedInType (env : Environment) (sc : Scope) (seen : NameSet) (_n : Name) (e : Expr) : NameSet := Id.run do
   let mut seen := seen
   for c in e.getUsedConstants do
     if seen.contains c then continue
-    if !(env.getModuleIdxFor? c).isNone then continue
-    if c.getPrefix == ns then
+    if sc.owns c then
       seen := seen.insert c
-    else
+    else if (env.getModuleIdxFor? c).isNone then
       match env.find? c with
-      | some ci => seen := usedInType env ns (seen.insert c) c ci.type
+      | some ci => seen := usedInType env sc (seen.insert c) c ci.type
       | none => pure ()
   return seen
 
-def keysMode (trail : String) : IO Unit := do
+/-- keys: the constants a theorem's TYPE uses. local theorems are listed bare; theorems of
+the imported namespaces are listed too (prefixed `import`), so a domain's vacancies may
+cite the trunk they stand on -/
+def keysMode (trail : String) (sc : Scope) : IO Unit := do
   let st ← elabFrom (← IO.FS.readFile trail) trail none
   let env := st.env
-  let ns := `Seed
   for (n, ci) in env.constants.map₂.toList do
-    if n.getPrefix != ns || !ci.isTheorem then continue
-    let used := usedInType env ns {} n ci.type
-    let ks := used.toList.filter (fun d => d != n && d.getPrefix == ns)
-    IO.println s!"{n.getString!} <- {" ".intercalate (ks.map (·.getString!))}"
+    if n.getPrefix != sc.ns || !ci.isTheorem then continue
+    let used := usedInType env sc {} n ci.type
+    let ks := used.toList.filter (fun d => d != n && sc.owns d)
+    IO.println s!"{n.getString!} <- {" ".intercalate (ks.map (nameOf sc))}"
+  if !sc.imported.isEmpty then
+    for (n, ci) in env.constants.toList do
+      if !(sc.imported.any (fun m => n.getPrefix == m)) || !ci.isTheorem then continue
+      let used := usedInType env sc {} n ci.type
+      let ks := used.toList.filter (fun d => d != n && sc.owns d)
+      IO.println s!"import {n} <- {" ".intercalate (ks.map (nameOf sc))}"
 
-def citesMode (trail : String) : IO Unit := do
+def citesMode (trail : String) (sc : Scope) : IO Unit := do
   let st ← elabFrom (← IO.FS.readFile trail) trail none
   let env := st.env
-  let ns := `Seed
   for (n, ci) in env.constants.map₂.toList do
-    if n.getPrefix != ns then continue
-    let used := usedTopLevel env ns {} n
-    let deps := used.toList.filter (fun d => d != n && d.getPrefix == ns)
+    if n.getPrefix != sc.ns then continue
+    let used := usedTopLevel env sc {} n
+    let deps := used.toList.filter (fun d => d != n && sc.owns d)
     let kind := if ci.isTheorem then "theorem" else "carrier"
-    IO.println s!"{kind} {n.getString!} <- {" ".intercalate (deps.map (·.getString!))}"
+    IO.println s!"{kind} {n.getString!} <- {" ".intercalate (deps.map (nameOf sc))}"
 
 partial def stripLams : Expr → Expr
   | .lam _ _ b _ => stripLams b
@@ -85,10 +107,10 @@ partial def usedAll (env : Environment) (ns : Name) (seen : NameSet) (n : Name) 
       seen := usedAll env ns seen c
   return seen
 
-def censusMode (trail : String) : IO Unit := do
+def censusMode (trail : String) (sc : Scope) : IO Unit := do
   let st ← elabFrom (← IO.FS.readFile trail) trail none
   let env := st.env
-  let ns := `Seed
+  let ns := sc.ns
   let reflHeads : List Name := [`Eq.refl, `rfl, `Iff.refl, `Iff.rfl, `HEq.refl, `HEq.rfl]
   for (n, ci) in env.constants.map₂.toList do
     if n.getPrefix != ns || !ci.isTheorem then continue
@@ -112,17 +134,18 @@ def censusMode (trail : String) : IO Unit := do
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
   Lean.initSearchPath (← Lean.findSysroot)
+  let sc := Scope.parse args 2
   if args.head? == some "needs" then
-    needsMode args[1]!
+    needsMode args[1]! sc
     return
   if args.head? == some "cites" then
-    citesMode args[1]!
+    citesMode args[1]! sc
     return
   if args.head? == some "keys" then
-    keysMode args[1]!
+    keysMode args[1]! sc
     return
   if args.head? == some "census" then
-    censusMode args[1]!
+    censusMode args[1]! sc
     return
   let prefixSrc ← IO.FS.readFile args[0]!
   let candSrc ← IO.FS.readFile args[1]!

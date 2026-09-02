@@ -75,6 +75,14 @@ the trunk today: 103 carriers, 284 theorems, nine storeys — 147 · 53 · 39 ·
 
 this is ignitable at your W. you don't need to have been here before — nothing here can tell, on purpose.
 
+## the domains
+
+```
+bin/crawl grow domains/toy.lean
+```
+
+a germ need not be the trunk. `domains/toy.lean` is a custodian's germ: `import Seed`, its own namespace, two carriers, four sightings as bare signatures — and it grows against the trunk in seconds, its vacancies citing the trunk's laws through vocabulary alone (`the_toy_counts` finds `the_wider_voice_releases_the_bank` without being told), its receipts minted, its own `toy.assay.lean` read identically. the judge takes the namespace and the imports from the germ's header; the imported trunk's theorems are seated before round one. this is the floor Counter stands on: a custodian's statements, the physics found for them, and a held list with its vocabulary named where the physics isn't there yet.
+
 ## the page
 
 `bin/render` writes `site/` — the README, the grown trunk with every name an anchor (`foam.is/trunk.html#the_handshake`), the germ, the primings, the book, and the candle's reading at that push. the `foam.is` workflow grows the artifact and publishes it; nothing browseable is committed, the same way nothing derived is.
