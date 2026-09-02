@@ -445,15 +445,34 @@ if primings_path:
         return 'first ' + ' '.join(
             f'| (apply {t} <;> (first | assumption | rfl))' for t in ns)
 
-    def instantiate(body, ns):
-        return body.replace('{cite}', cite_macro(ns))
+    cnames = [n for _, n, _ in carriers]
+    defs_of = {}
+    tf2 = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-cites-', dir='/tmp', delete=False)
+    tf2.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
+    tf2.close()
+    res2 = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'cites', tf2.name], capture_output=True, text=True)
+    os.unlink(tf2.name)
+    for l in res2.stdout.splitlines():
+        parts = l.split(' <- ')
+        if len(parts) == 2 and parts[0].startswith('theorem '):
+            defs_of[parts[0].split()[1]] = [d for d in parts[1].split() if d in cnames]
+
+    def defs_macro(n):
+        ds = defs_of.get(n)
+        if ds is None:
+            stmt, _ = split_block(by_name[n])
+            ds = [c for c in cnames if re.search(r'\b' + re.escape(c) + r'\b', stmt)]
+        return ', '.join(ds) if ds else ''
+
+    def instantiate(body, ns, n=None):
+        return body.replace('{cite}', cite_macro(ns)).replace('{defs}', defs_macro(n) if n else '')
 
     tally = {nm: 0 for nm, _ in primings}
     carried = []
 
     def candidate_text(n, k):
         stmt, _ = split_block(by_name[n])
-        body = instantiate(primings[k][1], ordered_needs(n))
+        body = instantiate(primings[k][1], ordered_needs(n), n)
         body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
         fuel = f'set_option maxHeartbeats {budget} in\n' if budget else ''
         return fuel + stmt.replace(f'theorem {n}', f'theorem {n}__p{k}', 1) + ' :=\n' + body
@@ -507,7 +526,7 @@ if primings_path:
             else:
                 pname, pbody = primings[chosen]
                 stmt, receipts = split_block(by_name[n])
-                body = instantiate(pbody, ordered_needs(n))
+                body = instantiate(pbody, ordered_needs(n), n)
                 body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
                 seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipts
                 tally[pname] += 1; per_round[pname] += 1

@@ -5,6 +5,9 @@
 -- trail's own remainder. one macro: {cite} expands to the vacancy's need-list
 -- (the names its trail-proof cites, in trail order) as
 --   first | (apply n1 <;> (first | assumption | rfl)) | (apply n2 <;> …) | …
+-- a second macro: {defs} expands to the carriers (defs) the vacancy's statement
+-- cites, comma-separated, for `dsimp only [{defs}]` — let the goal reduce along
+-- its own definitions before a closer unifies against it.
 -- grammar: a line `-- priming: <name>` opens a priming; the lines until the
 -- next opener are its body. a line `-- budget: <heartbeats>` sets the fuel each
 -- candidate may burn (Lean's own maxHeartbeats); a shape that cannot close within
@@ -53,7 +56,15 @@ by
         | (rw [ih]; {cite})
         | exact (ih _).trans (by {cite})
         | exact (ih _ _).trans (by {cite})
-        | exact (ih _ _ _).trans (by {cite})))
+        | exact (ih _ _ _).trans (by {cite})
+        | (dsimp only [{defs}]; first
+            | exact congrArg _ ih
+            | exact congrArg _ (ih _)
+            | (rw [ih])
+            | (rw [ih]; {cite})
+            | (rw [ih _]; {cite})
+            | exact (ih _).trans (by {cite})
+            | exact (ih _ _).trans (by {cite}))))
 
 -- priming: induction-2nd
 by
@@ -92,3 +103,43 @@ by
         | exact (ih _).trans (by {cite})
         | exact (ih _ _).trans (by {cite})
         | exact (ih _ _ _).trans (by {cite})))
+
+-- priming: induction-two-ih
+by
+  intro x
+  induction x
+  all_goals (first
+    | (intros; first | rfl | assumption | {cite})
+    | (rename_i ih₁ ih₂; intros; first
+        | exact congr (congrArg _ ih₁) ih₂
+        | exact congrArg₂ _ ih₁ ih₂
+        | (rw [ih₁, ih₂])
+        | (rw [ih₁, ih₂]; {cite})
+        | (rw [ih₁ _, ih₂ _])
+        | (rw [ih₁ _, ih₂ _]; {cite})
+        | exact congr (congrArg _ (ih₁ _)) (ih₂ _)
+        | exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by {cite})
+        | exact (by {cite} : _ = _).trans (congr (congrArg _ ih₁) ih₂)
+        | exact (by {cite} : _ = _).trans (congr (congrArg _ (ih₁ _)) (ih₂ _))
+        | (dsimp only [{defs}]; first
+            | exact congr (congrArg _ ih₁) ih₂
+            | exact congr (congrArg _ (ih₁ _)) (ih₂ _)
+            | (rw [ih₁, ih₂])
+            | (rw [ih₁ _, ih₂ _])
+            | (rw [ih₁, ih₂]; {cite})
+            | (rw [ih₁ _, ih₂ _]; {cite})
+            | exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by {cite})
+            | exact (by {cite} : _ = _).trans (congr (congrArg _ ih₁) ih₂))))
+
+-- priming: induction-two-ih-2nd
+by
+  intro _ y
+  induction y
+  all_goals (first
+    | (intros; first | rfl | assumption | {cite})
+    | (rename_i ih₁ ih₂; intros; first
+        | exact congr (congrArg _ ih₁) ih₂
+        | (rw [ih₁, ih₂])
+        | (rw [ih₁ _, ih₂ _])
+        | exact congr (congrArg _ (ih₁ _)) (ih₂ _)
+        | exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by {cite})))
