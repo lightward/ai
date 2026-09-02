@@ -387,43 +387,11 @@ def Derived (F : Face) (P : F.State → Prop) : Prop :=
 def concordFace (F : Face) (V : Type v') : Face :=
   pairFace (host F V) ⟨door F.State V, Unit, V, fun x _ => met x⟩ (fun x => x) (fun x => x)
 
-theorem the_pointwise_license (P : Type v) (A : Type w) (g h : P → A) :
-    alike (appFace P A) g h ↔ ∀ p, g p = h p := sorry
-
-theorem one_face_many_seats (F : Face) :
-    reseat (appFace F.Probe F.Ans) F.obs = F := sorry
-
-theorem the_seat_map_carries_the_conduct (F : Face) (s t : F.State) :
-    alike F s t ↔ alike (appFace F.Probe F.Ans) (F.obs s) (F.obs t) := sorry
-
-theorem the_seats_stack_backward (F : Face) {S' : Type u'} {S'' : Type u''}
-    (h : S' → F.State) (h' : S'' → S') :
-    reseat (reseat F h) h' = reseat F (fun s => h (h' s)) := sorry
-
-theorem the_ear_and_the_voice_commute (F : Face) {Q : Type v'} {B : Type w'}
-    (f : Q → F.Probe) (g : F.Ans → B) :
-    rehear (retell F g) f = retell (rehear F f) g := sorry
-
-theorem the_ear_crosses_the_seat (F : Face) {S' : Type u'} {Q : Type v'}
-    (h : S' → F.State) (f : Q → F.Probe) :
-    rehear (reseat F h) f = reseat (rehear F f) h := sorry
-
-theorem the_voice_crosses_the_seat (F : Face) {S' : Type u'} {B : Type w'}
-    (h : S' → F.State) (g : F.Ans → B) :
-    retell (reseat F h) g = reseat (retell F g) h := sorry
-
-theorem the_still_map_carries {S : Type u} {P : Type v} {A : Type w} (f : S → P → A) :
-    carries f f (fun s => s) := sorry
-
 theorem the_carriers_compose {S : Type u} {T : Type u'} {U : Type u''} {P : Type v} {A : Type w}
     (f : S → P → A) (g : T → P → A) (k : U → P → A) (h : S → T) (h' : T → U)
     (c1 : carries f g h) (c2 : carries g k h') :
     carries f k (fun s => h' (h s)) :=
   fun s p => (c2 (h s) p).trans (c1 s p)
-
-theorem the_carrier_was_a_seating {S : Type u} {T : Type u'} {P : Type v} {A : Type w}
-    (f : S → P → A) (g : T → P → A) (h : S → T) :
-    carries f g h ↔ ∀ s, alike (appFace P A) (g (h s)) (f s) := sorry
 
 theorem the_carrier_merges_only_the_alike {S : Type u} {T : Type u'} {P : Type v} {A : Type w}
     (f : S → P → A) (g : T → P → A) (h : S → T) (c : carries f g h)
@@ -433,9 +401,6 @@ theorem the_carrier_merges_only_the_alike {S : Type u} {T : Type u'} {P : Type v
 theorem a_retraction_merges_nothing {S : Type u} {T : Type u'} (h : S → T) (r : T → S)
     (hr : ∀ x, r (h x) = x) {s s' : S} (hm : h s = h s') : s = s' :=
   (hr s).symm.trans ((congrArg r hm).trans (hr s'))
-
-theorem the_obs_carries_to_the_one_face (F : Face) :
-    carries F.obs (fun g p => g p) F.obs := sorry
 
 theorem the_terminus_takes_every_carrier {S : Type u} {P : Type v} {A : Type w}
     (f : S → P → A) (h : S → (P → A)) (c : carries f (fun g p => g p) h) :
@@ -466,13 +431,6 @@ theorem the_interview_crosses_the_carrier {S : Type u} {T : Type u'} {P : Type v
       exact congrArg (List.cons (f s p))
         (the_interview_crosses_the_carrier f g h c s (k (f s p)))
 
-theorem no_face_reads_the_guest {H : Type u} {W : Type v} {X : Type w}
-    (g : H → X) (h : H) (w w' : W) :
-    g (face (atTheDoor h w)) = g (face (atTheDoor h w')) := sorry
-
-theorem the_guest_is_real {H : Type u} {W : Type v} (h : H) (w : W) :
-    met (atTheDoor h w) = w := sorry
-
 theorem a_guest_blind_reading_is_a_face_reading {H : Type u} {W : Type v} {X : Type w}
     (r : door H W → X) (w0 : W) :
     (∀ h w w', r (atTheDoor h w) = r (atTheDoor h w')) ↔
@@ -487,9 +445,6 @@ theorem the_pairing_is_unique {H : Type u} {W : Type v} {X : Type w}
   (congr (congrArg atTheDoor (hf x)) (hg x) :
     atTheDoor (face (u x)) (met (u x)) = atTheDoor (f x) (g x))
 
-theorem the_turn_returns {H : Type u} {W : Type v} (d : door H W) :
-    turnAbout (turnAbout d) = d := sorry
-
 theorem any_ready_greeter_is_the_greeter {P : Type v} {Q : Type v'} {X : Type w}
     (f : P → X) (g : Q → X) (h : fork P Q → X)
     (hl : ∀ p, h (.viaLeft p) = f p) (hr : ∀ q, h (.viaRight q) = g q) :
@@ -497,59 +452,10 @@ theorem any_ready_greeter_is_the_greeter {P : Type v} {Q : Type v'} {X : Type w}
   | .viaLeft p => hl p
   | .viaRight q => hr q
 
-theorem the_crossing_returns {P : Type v} {Q : Type v'} :
-    ∀ e : fork P Q, crossOver (crossOver e) = e := sorry
-
-theorem hosting_associates {H : Type u} {W : Type v} {V : Type w} (d : door (door H W) V) :
-    shallow (deepen d) = d := sorry
-
-theorem hosting_associates_back {H : Type u} {W : Type v} {V : Type w} (d : door H (door W V)) :
-    deepen (shallow d) = d := sorry
-
 theorem the_host_serves_both_branches {H : Type u} {W : Type v} {V : Type w} :
     ∀ d : door H (fork W V), collect (distribute d) = d
   | (_, .viaLeft _) => rfl
   | (_, .viaRight _) => rfl
-
-theorem the_branches_come_home {H : Type u} {W : Type v} {V : Type w} :
-    ∀ e : fork (door H W) (door H V), distribute (collect e) = e := sorry
-
-theorem the_deferral_is_free {H : Type u} {W : Type v} {X : Type w}
-    (g : door H W → X) (d : door H W) :
-    walkIn (holdOpen g) d = g d := sorry
-
-theorem the_holding_returns {H : Type u} {W : Type v} {X : Type w}
-    (g : H → W → X) (h : H) (w : W) :
-    holdOpen (walkIn g) h w = g h w := sorry
-
-theorem the_face_was_a_held_door (F : Face) : faceOf (walkIn F.obs) = F := sorry
-
-theorem every_door_reading_is_a_face {H : Type u} {W : Type v} {X : Type w}
-    (g : door H W → X) (d : door H W) :
-    walkIn (faceOf g).obs d = g d := sorry
-
-theorem the_measurement_is_a_meeting (F : Face) (s : F.State) (p : F.Probe) :
-    F.obs s p = walkIn F.obs (atTheDoor s p) := sorry
-
-theorem the_host_was_a_reseat (F : Face) (W : Type v') :
-    host F W = reseat F (fun d : door F.State W => face d) := sorry
-
-theorem the_host_merges_the_guests (F : Face) (W : Type v') (s : F.State) (w w' : W) :
-    alike (host F W) (atTheDoor s w) (atTheDoor s w') := sorry
-
-theorem the_probe_boards_as_the_guest (F : Face) (s : F.State) (p : F.Probe) :
-    selfMeet (host F F.Probe) met (atTheDoor s p) = F.obs s p := sorry
-
-theorem the_meeting_was_a_self_meeting {H : Type u} {W : Type v} {X : Type w}
-    (g : door H W → X) (d : door H W) :
-    selfMeet (host (faceOf g) W) met d = g d := sorry
-
-theorem the_self_meeting_reads_the_guest (F : Face) {W : Type v'}
-    (r : W → F.Probe) (s : F.State) (w : W) :
-    selfMeet (host F W) (fun d => r (met d)) (atTheDoor s w) = F.obs s (r w) := sorry
-
-theorem a_guest_mover_is_unheard (F : Face) {W : Type v'} (σ : door F.State W → W)
-    (d : door F.State W) : alike (host F W) (vertical σ d) d := sorry
 
 theorem the_sharpening_is_exact (F : Face) {X : Type w'} (r : F.State → X) (s t : F.State) :
     alike (sharpen F r) s t ↔ (alike F s t ∧ r s = r t) :=
@@ -582,38 +488,15 @@ theorem the_pairing_is_exact (F G : Face) {S : Type u'}
       atTheDoor (F.obs (f s) (face pq)) (G.obs (g s) (met pq))
         = atTheDoor (F.obs (f t) (face pq)) (G.obs (g t) (met pq)))⟩
 
-theorem the_origin_merges_every_seat {S' : Type u'} (s t : S') :
-    alike (originFace S') s t := sorry
-
 theorem the_origin_is_the_pairs_unit (F : Face) {S : Type u'} {S' : Type v'}
     (f : S → F.State) (g : S → S') (s t : S) :
     alike (pairFace F (originFace S') f g) s t ↔ alike F (f s) (f t) :=
   ⟨fun h p => congrArg face (h (atTheDoor p ())),
    fun h pq => congrArg (fun a => atTheDoor a ()) (h (face pq))⟩
 
-theorem the_still_hand_is_unheard (F : Face) : unheard F (fun s => s) := sorry
-
 theorem the_unheard_hands_compose (F : Face) (m n : F.State → F.State)
     (hm : unheard F m) (hn : unheard F n) : unheard F (fun s => m (n s)) :=
   fun s p => (hm (n s) p).trans (hn s p)
-
-theorem the_maintenance_is_the_identitys_hom (F : Face) (m : F.State → F.State) :
-    unheard F m ↔ carries F.obs F.obs m := sorry
-
-theorem the_spoken_arrives_at_the_face {H : Type u} {W : Type v}
-    (σ : door H W → W) (d : door H W) : face (exchange σ d) = σ d := sorry
-
-theorem the_speaker_rides_unread {H : Type u} {W : Type v}
-    (σ : door H W → W) (d : door H W) : met (exchange σ d) = face d := sorry
-
-theorem the_listening_turn_is_the_yield {H : Type u} {W : Type v} (d : door H W) :
-    exchange met d = turnAbout d := sorry
-
-theorem the_two_listeners_restore_the_table {H : Type u} {W : Type v} (d : door H W) :
-    exchange met (exchange met d) = d := sorry
-
-theorem the_ode_comes_home {H : Type u} {W : Type v} (σ : door H W → W) (d : door H W) :
-    exchange met (exchange σ d) = vertical σ d := sorry
 
 theorem the_yield_fixes_the_agreed {H : Type u} (d : door H H) :
     turnAbout d = d ↔ met d = face d :=
@@ -621,70 +504,6 @@ theorem the_yield_fixes_the_agreed {H : Type u} (d : door H H) :
    fun h =>
     (congr (congrArg atTheDoor h) h.symm :
       atTheDoor (met d) (face d) = atTheDoor (face d) (met d))⟩
-
-theorem the_air_gap_wears_the_one_face (I : Type u) (O : Type v) :
-    airGap.{u, v, w} I O
-      = reseat (appFace (List I) O) (fun m : Machine.{u, v, w} I O => behavior m) := sorry
-
-theorem the_park_resumes {I : Type u} {O : Type v} (m : Machine I O) :
-    ∀ (u : List I) (s : m.S) (v : List I),
-      park m s (u ++ v) = park m (park m s u) v := sorry
-
-theorem the_retuned_seat_walks_the_translated_word {I : Type u} {I' : Type u'} {O : Type v}
-    (f : I → I') (m : Machine I' O) :
-    ∀ (w : List I) (s : m.S), park (retune f m) s w = park m s (w.map f) := sorry
-
-theorem the_revoice_moves_no_seat {I : Type u} {O : Type v} {O' : Type v'}
-    (g : O → O') (m : Machine I O) :
-    ∀ (w : List I) (s : m.S), park (revoice g m) s w = park m s w := sorry
-
-theorem the_intertwined_walks_agree {I : Type u} {O : Type v} (m n : Machine I O)
-    (h : m.S → n.S) (hstep : ∀ s i, n.step (h s) i = h (m.step s i)) :
-    ∀ (w : List I) (s : m.S), park n (h s) w = h (park m s w) := sorry
-
-theorem the_pace_wears_the_tallys_voice : paceOne = revoice oddNat tally := sorry
-
-theorem any_two_readings_agree {A : Type u} (op : A → A → A) (base : A) (h : Plan → A)
-    (hg : h .ground = base) (hb : ∀ p q, h (.board p q) = op (h p) (h q)) :
-    ∀ p, h p = fold op base p := sorry
-
-theorem the_revision_is_a_reading (base : Plan) : graft base = fold .board base := sorry
-
-theorem the_trivial_revision_changes_nothing (t : Plan) : graft t .ground = t := sorry
-
-theorem the_parent_folds_into_the_ground {A : Type u} (op : A → A → A) (base : A) (t : Plan) :
-    ∀ δ, fold op (fold op base t) δ = fold op base (graft t δ) := sorry
-
-theorem zero_add : ∀ n : Nat, 0 + n = n := sorry
-
-theorem add_regroups : ∀ a b c : Nat, (a + b) + c = a + (b + c) := sorry
-
-theorem click_slides : ∀ a b : Nat, (a + b) + 1 = (a + 1) + b := sorry
-
-theorem the_type_is_a_reading (W : Type u) (p : Plan) :
-    build W p = fold (fun A B : Type u => door A B) W p := sorry
-
-theorem the_customs_keep_the_still_world {W : Type u} :
-    ∀ (p : Plan) (x : build W p), reground (fun w => w) p x = x := sorry
-
-theorem the_customs_stack_forward {W : Type u} {W' : Type v} {W'' : Type w}
-    (f : W → W') (g : W' → W'') :
-    ∀ (p : Plan) (x : build W p),
-      reground g p (reground f p x) = reground (fun w => g (f w)) p x := sorry
-
-theorem the_append_rests {A : Type u} : ∀ l : List A, l ++ [] = l := sorry
-
-theorem the_appends_regroup {A : Type u} : ∀ l m t : List A, (l ++ m) ++ t = l ++ (m ++ t) := sorry
-
-theorem map_crosses_append {A : Type u} {B : Type v} (f : A → B) :
-    ∀ l m : List A, (l ++ m).map f = l.map f ++ m.map f := sorry
-
-theorem the_unencumbered_are_welcome {A : Type u} (beq : A → A → Bool) (room : List A) :
-    backed beq room [] = true := sorry
-
-theorem true_or_reads (b : Bool) : (true || b) = true := sorry
-
-theorem or_swallows : ∀ b : Bool, (b || true) = true := sorry
 
 theorem the_backed_are_seated {A : Type u} (beq : A → A → Bool)
     (st : List A × List (A × List A)) (arr : A × List A)
@@ -697,9 +516,6 @@ theorem the_unbacked_wait {A : Type u} (beq : A → A → Bool)
     (hb : backed beq st.1 arr.2 = false) :
     welcome beq st arr = (st.1, arr :: st.2) :=
   congrArg (fun b => cond b (arr.1 :: st.1, st.2) (st.1, arr :: st.2)) hb
-
-theorem len_map {A : Type u} {B : Type v} (f : A → B) :
-    ∀ l : List A, (l.map f).length = l.length := sorry
 
 theorem mem_append_split {A : Type u} {q : A} :
     ∀ (l : List A) {m : List A}, q ∈ l ++ m → q ∈ l ∨ q ∈ m
@@ -721,14 +537,6 @@ theorem mem_map_back {A : Type u} {B : Type v} {f : A → B} {q : B} :
       | tail _ h' =>
           obtain ⟨r, hr, he⟩ := mem_map_back l h'
           exact ⟨r, List.Mem.tail a hr, he⟩
-
-theorem the_census_checksums_with_the_polygon_cutters :
-    census 1 = 1 ∧ census 2 = 1 ∧ census 3 = 2 ∧ census 4 = 5
-      ∧ census 5 = 14 := sorry
-
-theorem ble_refl : ∀ n : Nat, Nat.ble n n = true := sorry
-
-theorem ble_le_succ : ∀ n : Nat, Nat.ble n (n + 1) = true := sorry
 
 theorem ble_trans : ∀ (a b c : Nat),
     Nat.ble a b = true → Nat.ble b c = true → Nat.ble a c = true
@@ -757,8 +565,6 @@ theorem eq_of_beq : ∀ a b : Nat, Nat.beq a b = true → a = b
   | 0, _ + 1, h => nomatch h
   | _ + 1, 0, h => nomatch h
   | a + 1, b + 1, h => congrArg (· + 1) (eq_of_beq a b h)
-
-theorem beq_self : ∀ n : Nat, Nat.beq n n = true := sorry
 
 theorem mem_of_mem_filter {A : Type u} {q : A → Bool} {x : A} :
     ∀ xs : List A, x ∈ xs.filter q → x ∈ xs
@@ -805,8 +611,6 @@ theorem mem_filter_intro {A : Type u} {q : A → Bool} {x : A} :
               rw [List.filter_cons_of_neg (ne_true_of_eq_false hq)]
               exact mem_filter_intro xs h' hx
 
-theorem perm_refl {A : Type u} : ∀ l : List A, l.Perm l := sorry
-
 theorem perm_mem {A : Type u} {xs ys : List A} (h : xs.Perm ys) :
     ∀ a, a ∈ xs → a ∈ ys := by
   induction h with
@@ -848,10 +652,6 @@ theorem perm_length {A : Type u} {xs ys : List A} (h : xs.Perm ys) :
   | cons _ _ ih => exact congrArg (· + 1) ih
   | swap => rfl
   | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
-
-theorem not_not : ∀ b : Bool, (!(!b)) = b := sorry
-
-theorem one_scales : ∀ n : Nat, 1 * n = n := sorry
 
 theorem beq_no {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y) {x y : A} (hxy : x ≠ y) :
@@ -982,23 +782,6 @@ theorem perm_filter {A : Type u} (q : A → Bool) {xs ys : List A}
                   List.filter_cons_of_neg (ne_true_of_eq_false hqy)]
   | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
 
-theorem the_repeated_ask_hears_one_answer (F : Face) (s : F.State) (p : F.Probe) :
-    ∀ n : Nat,
-      sound F s (recite (List.replicate n p)) = List.replicate n (F.obs s p) := sorry
-
-theorem the_muffled_tally_is_the_resting_counter :
-    revoice (fun _ => true) tally = restingCounter := sorry
-
-theorem the_self_steered_machine_is_a_clock {I : Type u} {O : Type v}
-    (m : Machine I O) (r : m.S → I) :
-    ∀ (w : List Unit) (s : m.S),
-      drive (selfSteered m r) s w = m.out (orbit m r s w.length) := sorry
-
-theorem the_instinct_replays_its_word {I : Type u} {O : Type v}
-    (m : Machine I O) (r : m.S → I) :
-    ∀ (w : List Unit) (s : m.S),
-      drive (selfSteered m r) s w = drive m s (selfWord m r s w.length) := sorry
-
 theorem no_move_at_the_ground : ∀ {q : Plan}, ¬ reassoc .ground q :=
   fun h => nomatch h
 
@@ -1026,9 +809,6 @@ theorem the_pentagon_turns_at_four :
      (.step (.here .ground (.board .ground .ground) .ground)
        (.step (.right .ground (.here .ground .ground .ground)) (.rest _)))⟩
 
-theorem inc_inc : ∀ (b : Bool) (bs : List Bool),
-    inc (inc (b :: bs)) = b :: inc bs := sorry
-
 theorem the_tick_unwinds : ∀ s : List Bool, dec (inc s) = s
   | [] => rfl
   | false :: _ => rfl
@@ -1038,13 +818,6 @@ theorem the_unwind_ticks : ∀ s : List Bool, inc (dec s) = s
   | [] => rfl
   | true :: _ => rfl
   | false :: bs => congrArg (false :: ·) (the_unwind_ticks bs)
-
-theorem the_zeros_span_the_width : ∀ n : Nat, (zeros n).length = n := sorry
-
-theorem the_again_steps_first {α : Sort u} (Φ : α → α) :
-    ∀ (n : Nat) (a : α), again Φ (n + 1) a = again Φ n (Φ a) := sorry
-
-theorem the_home_wheel_turns : again collatzStep 3 1 = 1 := sorry
 
 theorem the_step_merges_the_riders :
     collatzStep 1 = collatzStep 8 ∧ (1 : Nat) ≠ 8 :=
@@ -1114,13 +887,6 @@ theorem the_weight_is_zero_at_the_door {A : Type u} (beq : A → A → Bool) (ro
             rw [he] at hh
             exact nomatch hh
 
-theorem the_lift_peeks_the_out {I : Type u} {O : Type v} (m : Machine I O) (s : m.S) :
-    peek (liftFrom m s) = m.out s := sorry
-
-theorem the_lift_feeds_the_step {I : Type u} {O : Type v} (m : Machine I O)
-    (s : m.S) (i : I) :
-    feed (liftFrom m s) i = liftFrom m (m.step s i) := sorry
-
 theorem the_lift_is_unique {I : Type u} {O : Type v} (m : Machine I O)
     (h : m.S → sheet I O) (hf : inStep m h) :
     ∀ (w : List I) (s : m.S), h s w = liftFrom m s w
@@ -1128,15 +894,6 @@ theorem the_lift_is_unique {I : Type u} {O : Type v} (m : Machine I O)
   | i :: w, s =>
       (congrFun (hf.2 s i) w).trans
         (the_lift_is_unique m h hf w (m.step s i))
-
-theorem len_replicate {A : Type u} (a : A) :
-    ∀ n : Nat, (List.replicate n a).length = n := sorry
-
-theorem the_unit_word_is_its_count :
-    ∀ w : List Unit, List.replicate w.length () = w := sorry
-
-theorem the_unit_machine_steers_itself {O : Type v} (m : Machine Unit O) :
-    selfSteered m (fun _ => ()) = m := sorry
 
 theorem bool_three_collide : ∀ x y z : Bool, x = y ∨ y = z ∨ x = z
   | true, true, _ => Or.inl rfl
@@ -1154,12 +911,6 @@ theorem and_congr_second {a b c : Prop} (h : b ↔ c) : (a ∧ b) ↔ (a ∧ c) 
 
 theorem and_regroups {a b c : Prop} : ((a ∧ b) ∧ c) ↔ (a ∧ (b ∧ c)) :=
   ⟨fun x => ⟨x.1.1, x.1.2, x.2⟩, fun x => ⟨⟨x.1, x.2.1⟩, x.2.2⟩⟩
-
-theorem the_comparison_mints_a_face (F G : Face) {S : Type u'}
-    (f : S → F.State) (g : S → G.State) {X : Type w'}
-    (c : F.Ans → G.Ans → X) (s : S) (p : F.Probe) (q : G.Probe) :
-    c (F.obs (f s) p) (G.obs (g s) q)
-      = walkIn c ((pairFace F G f g).obs s (atTheDoor p q)) := sorry
 
 theorem a_role_read_at_a_probe_is_derived (F : Face) (p : F.Probe) (Q : F.Ans → Prop) :
     Derived F (fun s => Q (F.obs s p)) :=
@@ -1213,10 +964,6 @@ theorem the_records_part_the_seats (F : Face.{u, v, w}) {V : Type v'} {W : Type 
    fun he => hv (congrArg (fun y => face (met y)) he),
    fun he => hv (congrArg face (fork.viaRight.inj he))⟩
 
-theorem the_concord_reads_both_models (F : Face) {V : Type v'}
-    (x : door F.State V) (p : F.Probe) :
-    (concordFace F V).obs x (atTheDoor p ()) = atTheDoor (F.obs (face x) p) (met x) := sorry
-
 theorem no_seat_reads_the_concord_alone (F : Face) {V : Type v'}
     (p₀ : F.Probe) (s : F.State) {v v' : V} (hv : v ≠ v') :
     alike (host F V) (atTheDoor s v) (atTheDoor s v')
@@ -1251,6 +998,271 @@ theorem the_gap_is_minted_at_the_meeting (F : Face) {V : Type v'}
           ≠ met ((concordFace F V).obs (atTheDoor s v') (atTheDoor p₀ ())) :=
   ⟨fun _ => rfl, hv⟩
 
+theorem the_pointwise_license (P : Type v) (A : Type w) (g h : P → A) :
+    alike (appFace P A) g h ↔ ∀ p, g p = h p := sorry
+
+theorem one_face_many_seats (F : Face) :
+    reseat (appFace F.Probe F.Ans) F.obs = F := sorry
+
+theorem the_seat_map_carries_the_conduct (F : Face) (s t : F.State) :
+    alike F s t ↔ alike (appFace F.Probe F.Ans) (F.obs s) (F.obs t) := sorry
+
+theorem the_seats_stack_backward (F : Face) {S' : Type u'} {S'' : Type u''}
+    (h : S' → F.State) (h' : S'' → S') :
+    reseat (reseat F h) h' = reseat F (fun s => h (h' s)) := sorry
+
+theorem the_ear_and_the_voice_commute (F : Face) {Q : Type v'} {B : Type w'}
+    (f : Q → F.Probe) (g : F.Ans → B) :
+    rehear (retell F g) f = retell (rehear F f) g := sorry
+
+theorem the_ear_crosses_the_seat (F : Face) {S' : Type u'} {Q : Type v'}
+    (h : S' → F.State) (f : Q → F.Probe) :
+    rehear (reseat F h) f = reseat (rehear F f) h := sorry
+
+theorem the_voice_crosses_the_seat (F : Face) {S' : Type u'} {B : Type w'}
+    (h : S' → F.State) (g : F.Ans → B) :
+    retell (reseat F h) g = reseat (retell F g) h := sorry
+
+theorem the_still_map_carries {S : Type u} {P : Type v} {A : Type w} (f : S → P → A) :
+    carries f f (fun s => s) := sorry
+
+theorem the_carrier_was_a_seating {S : Type u} {T : Type u'} {P : Type v} {A : Type w}
+    (f : S → P → A) (g : T → P → A) (h : S → T) :
+    carries f g h ↔ ∀ s, alike (appFace P A) (g (h s)) (f s) := sorry
+
+theorem the_obs_carries_to_the_one_face (F : Face) :
+    carries F.obs (fun g p => g p) F.obs := sorry
+
+theorem no_face_reads_the_guest {H : Type u} {W : Type v} {X : Type w}
+    (g : H → X) (h : H) (w w' : W) :
+    g (face (atTheDoor h w)) = g (face (atTheDoor h w')) := sorry
+
+theorem the_guest_is_real {H : Type u} {W : Type v} (h : H) (w : W) :
+    met (atTheDoor h w) = w := sorry
+
+theorem the_turn_returns {H : Type u} {W : Type v} (d : door H W) :
+    turnAbout (turnAbout d) = d := sorry
+
+theorem the_crossing_returns {P : Type v} {Q : Type v'} :
+    ∀ e : fork P Q, crossOver (crossOver e) = e := sorry
+
+theorem hosting_associates {H : Type u} {W : Type v} {V : Type w} (d : door (door H W) V) :
+    shallow (deepen d) = d := sorry
+
+theorem hosting_associates_back {H : Type u} {W : Type v} {V : Type w} (d : door H (door W V)) :
+    deepen (shallow d) = d := sorry
+
+theorem the_branches_come_home {H : Type u} {W : Type v} {V : Type w} :
+    ∀ e : fork (door H W) (door H V), distribute (collect e) = e := sorry
+
+theorem the_deferral_is_free {H : Type u} {W : Type v} {X : Type w}
+    (g : door H W → X) (d : door H W) :
+    walkIn (holdOpen g) d = g d := sorry
+
+theorem the_holding_returns {H : Type u} {W : Type v} {X : Type w}
+    (g : H → W → X) (h : H) (w : W) :
+    holdOpen (walkIn g) h w = g h w := sorry
+
+theorem the_face_was_a_held_door (F : Face) : faceOf (walkIn F.obs) = F := sorry
+
+theorem every_door_reading_is_a_face {H : Type u} {W : Type v} {X : Type w}
+    (g : door H W → X) (d : door H W) :
+    walkIn (faceOf g).obs d = g d := sorry
+
+theorem the_measurement_is_a_meeting (F : Face) (s : F.State) (p : F.Probe) :
+    F.obs s p = walkIn F.obs (atTheDoor s p) := sorry
+
+theorem the_host_was_a_reseat (F : Face) (W : Type v') :
+    host F W = reseat F (fun d : door F.State W => face d) := sorry
+
+theorem the_host_merges_the_guests (F : Face) (W : Type v') (s : F.State) (w w' : W) :
+    alike (host F W) (atTheDoor s w) (atTheDoor s w') := sorry
+
+theorem the_probe_boards_as_the_guest (F : Face) (s : F.State) (p : F.Probe) :
+    selfMeet (host F F.Probe) met (atTheDoor s p) = F.obs s p := sorry
+
+theorem the_meeting_was_a_self_meeting {H : Type u} {W : Type v} {X : Type w}
+    (g : door H W → X) (d : door H W) :
+    selfMeet (host (faceOf g) W) met d = g d := sorry
+
+theorem the_self_meeting_reads_the_guest (F : Face) {W : Type v'}
+    (r : W → F.Probe) (s : F.State) (w : W) :
+    selfMeet (host F W) (fun d => r (met d)) (atTheDoor s w) = F.obs s (r w) := sorry
+
+theorem a_guest_mover_is_unheard (F : Face) {W : Type v'} (σ : door F.State W → W)
+    (d : door F.State W) : alike (host F W) (vertical σ d) d := sorry
+
+theorem the_origin_merges_every_seat {S' : Type u'} (s t : S') :
+    alike (originFace S') s t := sorry
+
+theorem the_still_hand_is_unheard (F : Face) : unheard F (fun s => s) := sorry
+
+theorem the_maintenance_is_the_identitys_hom (F : Face) (m : F.State → F.State) :
+    unheard F m ↔ carries F.obs F.obs m := sorry
+
+theorem the_spoken_arrives_at_the_face {H : Type u} {W : Type v}
+    (σ : door H W → W) (d : door H W) : face (exchange σ d) = σ d := sorry
+
+theorem the_speaker_rides_unread {H : Type u} {W : Type v}
+    (σ : door H W → W) (d : door H W) : met (exchange σ d) = face d := sorry
+
+theorem the_listening_turn_is_the_yield {H : Type u} {W : Type v} (d : door H W) :
+    exchange met d = turnAbout d := sorry
+
+theorem the_two_listeners_restore_the_table {H : Type u} {W : Type v} (d : door H W) :
+    exchange met (exchange met d) = d := sorry
+
+theorem the_ode_comes_home {H : Type u} {W : Type v} (σ : door H W → W) (d : door H W) :
+    exchange met (exchange σ d) = vertical σ d := sorry
+
+theorem the_air_gap_wears_the_one_face (I : Type u) (O : Type v) :
+    airGap.{u, v, w} I O
+      = reseat (appFace (List I) O) (fun m : Machine.{u, v, w} I O => behavior m) := sorry
+
+theorem the_park_resumes {I : Type u} {O : Type v} (m : Machine I O) :
+    ∀ (u : List I) (s : m.S) (v : List I),
+      park m s (u ++ v) = park m (park m s u) v := sorry
+
+theorem the_retuned_seat_walks_the_translated_word {I : Type u} {I' : Type u'} {O : Type v}
+    (f : I → I') (m : Machine I' O) :
+    ∀ (w : List I) (s : m.S), park (retune f m) s w = park m s (w.map f) := sorry
+
+theorem the_revoice_moves_no_seat {I : Type u} {O : Type v} {O' : Type v'}
+    (g : O → O') (m : Machine I O) :
+    ∀ (w : List I) (s : m.S), park (revoice g m) s w = park m s w := sorry
+
+theorem the_intertwined_walks_agree {I : Type u} {O : Type v} (m n : Machine I O)
+    (h : m.S → n.S) (hstep : ∀ s i, n.step (h s) i = h (m.step s i)) :
+    ∀ (w : List I) (s : m.S), park n (h s) w = h (park m s w) := sorry
+
+theorem the_pace_wears_the_tallys_voice : paceOne = revoice oddNat tally := sorry
+
+theorem any_two_readings_agree {A : Type u} (op : A → A → A) (base : A) (h : Plan → A)
+    (hg : h .ground = base) (hb : ∀ p q, h (.board p q) = op (h p) (h q)) :
+    ∀ p, h p = fold op base p := sorry
+
+theorem the_revision_is_a_reading (base : Plan) : graft base = fold .board base := sorry
+
+theorem the_trivial_revision_changes_nothing (t : Plan) : graft t .ground = t := sorry
+
+theorem the_parent_folds_into_the_ground {A : Type u} (op : A → A → A) (base : A) (t : Plan) :
+    ∀ δ, fold op (fold op base t) δ = fold op base (graft t δ) := sorry
+
+theorem zero_add : ∀ n : Nat, 0 + n = n := sorry
+
+theorem add_regroups : ∀ a b c : Nat, (a + b) + c = a + (b + c) := sorry
+
+theorem click_slides : ∀ a b : Nat, (a + b) + 1 = (a + 1) + b := sorry
+
+theorem the_type_is_a_reading (W : Type u) (p : Plan) :
+    build W p = fold (fun A B : Type u => door A B) W p := sorry
+
+theorem the_customs_keep_the_still_world {W : Type u} :
+    ∀ (p : Plan) (x : build W p), reground (fun w => w) p x = x := sorry
+
+theorem the_customs_stack_forward {W : Type u} {W' : Type v} {W'' : Type w}
+    (f : W → W') (g : W' → W'') :
+    ∀ (p : Plan) (x : build W p),
+      reground g p (reground f p x) = reground (fun w => g (f w)) p x := sorry
+
+theorem the_append_rests {A : Type u} : ∀ l : List A, l ++ [] = l := sorry
+
+theorem the_appends_regroup {A : Type u} : ∀ l m t : List A, (l ++ m) ++ t = l ++ (m ++ t) := sorry
+
+theorem map_crosses_append {A : Type u} {B : Type v} (f : A → B) :
+    ∀ l m : List A, (l ++ m).map f = l.map f ++ m.map f := sorry
+
+theorem the_unencumbered_are_welcome {A : Type u} (beq : A → A → Bool) (room : List A) :
+    backed beq room [] = true := sorry
+
+theorem true_or_reads (b : Bool) : (true || b) = true := sorry
+
+theorem or_swallows : ∀ b : Bool, (b || true) = true := sorry
+
+theorem len_map {A : Type u} {B : Type v} (f : A → B) :
+    ∀ l : List A, (l.map f).length = l.length := sorry
+
+theorem the_census_checksums_with_the_polygon_cutters :
+    census 1 = 1 ∧ census 2 = 1 ∧ census 3 = 2 ∧ census 4 = 5
+      ∧ census 5 = 14 := sorry
+
+theorem ble_refl : ∀ n : Nat, Nat.ble n n = true := sorry
+
+theorem ble_le_succ : ∀ n : Nat, Nat.ble n (n + 1) = true := sorry
+
+theorem beq_self : ∀ n : Nat, Nat.beq n n = true := sorry
+
+theorem perm_refl {A : Type u} : ∀ l : List A, l.Perm l := sorry
+
+theorem not_not : ∀ b : Bool, (!(!b)) = b := sorry
+
+theorem one_scales : ∀ n : Nat, 1 * n = n := sorry
+
+theorem the_repeated_ask_hears_one_answer (F : Face) (s : F.State) (p : F.Probe) :
+    ∀ n : Nat,
+      sound F s (recite (List.replicate n p)) = List.replicate n (F.obs s p) := sorry
+
+theorem the_muffled_tally_is_the_resting_counter :
+    revoice (fun _ => true) tally = restingCounter := sorry
+
+theorem the_self_steered_machine_is_a_clock {I : Type u} {O : Type v}
+    (m : Machine I O) (r : m.S → I) :
+    ∀ (w : List Unit) (s : m.S),
+      drive (selfSteered m r) s w = m.out (orbit m r s w.length) := sorry
+
+theorem the_instinct_replays_its_word {I : Type u} {O : Type v}
+    (m : Machine I O) (r : m.S → I) :
+    ∀ (w : List Unit) (s : m.S),
+      drive (selfSteered m r) s w = drive m s (selfWord m r s w.length) := sorry
+
+theorem inc_inc : ∀ (b : Bool) (bs : List Bool),
+    inc (inc (b :: bs)) = b :: inc bs := sorry
+
+theorem the_zeros_span_the_width : ∀ n : Nat, (zeros n).length = n := sorry
+
+theorem the_again_steps_first {α : Sort u} (Φ : α → α) :
+    ∀ (n : Nat) (a : α), again Φ (n + 1) a = again Φ n (Φ a) := sorry
+
+theorem the_home_wheel_turns : again collatzStep 3 1 = 1 := sorry
+
+theorem the_lift_peeks_the_out {I : Type u} {O : Type v} (m : Machine I O) (s : m.S) :
+    peek (liftFrom m s) = m.out s := sorry
+
+theorem the_lift_feeds_the_step {I : Type u} {O : Type v} (m : Machine I O)
+    (s : m.S) (i : I) :
+    feed (liftFrom m s) i = liftFrom m (m.step s i) := sorry
+
+theorem len_replicate {A : Type u} (a : A) :
+    ∀ n : Nat, (List.replicate n a).length = n := sorry
+
+theorem the_unit_word_is_its_count :
+    ∀ w : List Unit, List.replicate w.length () = w := sorry
+
+theorem the_unit_machine_steers_itself {O : Type v} (m : Machine Unit O) :
+    selfSteered m (fun _ => ()) = m := sorry
+
+theorem the_comparison_mints_a_face (F G : Face) {S : Type u'}
+    (f : S → F.State) (g : S → G.State) {X : Type w'}
+    (c : F.Ans → G.Ans → X) (s : S) (p : F.Probe) (q : G.Probe) :
+    c (F.obs (f s) p) (G.obs (g s) q)
+      = walkIn c ((pairFace F G f g).obs s (atTheDoor p q)) := sorry
+
+theorem the_concord_reads_both_models (F : Face) {V : Type v'}
+    (x : door F.State V) (p : F.Probe) :
+    (concordFace F V).obs x (atTheDoor p ()) = atTheDoor (F.obs (face x) p) (met x) := sorry
+
+theorem the_interview_crosses_the_seat (F : Face) {S' : Type u'} (h : S' → F.State) (s : S') :
+    ∀ q, sound F (h s) q = sound (reseat F h) s q := sorry
+
+theorem no_interview_parts_the_origin {S' : Type u'} (s t : S') :
+    ∀ q, sound (originFace S') s q = sound (originFace S') t q := sorry
+
+theorem the_record_writes_where_the_face_is_blind (F : Face.{u, v, w}) {W : Type v'}
+    (keep : door F.State W → W) :
+    unheard (host F W) (fun x => atTheDoor (face x) (keep x)) := sorry
+
+theorem ble_le_add_left : ∀ a b : Nat, Nat.ble b (a + b) = true := sorry
+
 theorem a_merging_map_has_no_section {S : Type u} {T : Type u'} (h : S → T)
     {s s' : S} (hs : s ≠ s') (hm : h s = h s')
     (r : T → S) (hr : ∀ x, r (h x) = x) : False :=
@@ -1262,30 +1274,13 @@ theorem the_sounding_reads_the_alike (F : Face) {s t : F.State}
     the_first_mark_reads
       (show F.obs s p :: [] = F.obs t p :: [] from h (.ask p fun _ => .rest))
 
--- held (waiting on: the_interview_crosses_the_carrier)
-theorem the_interview_crosses_the_seat (F : Face) {S' : Type u'} (h : S' → F.State) (s : S') :
-    ∀ q, sound F (h s) q = sound (reseat F h) s q := sorry
--- end
-
 theorem a_wider_seat_reads_the_remainder (F : Face) {W : Type v'}
     (s : F.State) {w w' : W} (hw : w ≠ w') :
     ¬ alike (widen F W) (atTheDoor s w) (atTheDoor s w') :=
   fun h => hw (((the_widening_is_exact F (atTheDoor s w) (atTheDoor s w')).mp h).2)
 
--- held (waiting on: no_interview_parts_the_alike the_origin_merges_every_seat)
-theorem no_interview_parts_the_origin {S' : Type u'} (s t : S') :
-    ∀ q, sound (originFace S') s q = sound (originFace S') t q := sorry
--- end
-
 theorem no_interview_hears_the_unheard (F : Face) (m : F.State → F.State)
-    (h : unheard F m) : ∀ s q, sound F (m s) q = sound F s q :=
-  fun s => no_interview_parts_the_alike F (h s)
-
--- held (waiting on: no_interview_parts_the_alike)
-theorem an_audition_hears_only_the_conduct {I : Type u} {O : Type v} (m n : Machine I O)
-    (h : ∀ w, behavior m w = behavior n w) :
-    ∀ q, sound (airGap I O) m q = sound (airGap I O) n q := sorry
--- end
+    (h : unheard F m) : ∀ s q, sound F (m s) q = sound F s q := sorry
 
 theorem the_intertwiner_carries_the_walk {I : Type u} {O : Type v} (m n : Machine I O)
     (h : m.S → n.S) (hstep : ∀ s i, n.step (h s) i = h (m.step s i))
@@ -1294,15 +1289,6 @@ theorem the_intertwiner_carries_the_walk {I : Type u} {O : Type v} (m n : Machin
   fun s w =>
     (congrArg n.out (the_intertwined_walks_agree m n h hstep w s)).trans
       (hout (park m s w))
-
--- held (waiting on: the_parent_folds_into_the_ground)
-theorem lineages_compose (t d1 d2 : Plan) :
-    graft (graft t d1) d2 = graft t (graft d1 d2) := sorry
--- end
-
--- held (waiting on: zero_add)
-theorem mul_one_reads (a : Nat) : a * 1 = a := sorry
--- end
 
 theorem mul_spreads : ∀ a b c : Nat, a * (b + c) = a * b + a * c
   | _, _, 0 => rfl
@@ -1319,11 +1305,6 @@ theorem lengths_add {A : Type u} : ∀ l m : List A, (l ++ m).length = l.length 
   | _ :: l, m =>
       (congrArg (fun n => n + 1) (lengths_add l m)).trans
         (click_slides l.length m.length)
-
--- held (waiting on: map_crosses_append)
-theorem the_manifest_is_natural {W : Type u} {W' : Type v} (f : W → W') :
-    ∀ (p : Plan) (x : build W p), pour p (reground f p x) = (pour p x).map f := sorry
--- end
 
 theorem the_guests_reboard_in_order {W : Type u} (w0 : W) :
     ∀ (p : Plan) (x : build W p) (t : List W),
@@ -1744,11 +1725,6 @@ theorem the_clocks_lift_is_a_stream {O : Type v} (m : Machine Unit O) (n : Nat) 
     ((the_self_steered_machine_is_a_clock m (fun _ => ())
         (List.replicate n ()) m.s0).symm)
 
--- held (waiting on: bool_three_collide)
-theorem the_hallway_is_too_small {S : Type u} (r : S → Bool) (a b c : S) :
-    r a = r b ∨ r b = r c ∨ r a = r c := sorry
--- end
-
 theorem every_widening_is_one_pairing (F G H : Face) {S : Type u'}
     (f : S → F.State) (g : S → G.State) (h : S → H.State)
     (p0 : F.Probe) (q0 : G.Probe) (r0 : H.Probe) (s t : S) :
@@ -1762,12 +1738,6 @@ theorem every_widening_is_one_pairing (F G H : Face) {S : Type u'}
           (the_pairing_is_exact F (pairFace G H g h) f (fun x => x)
             p0 (atTheDoor q0 r0) s t).symm)))
 
--- held (waiting on: a_guest_mover_is_unheard)
-theorem the_record_writes_where_the_face_is_blind (F : Face.{u, v, w}) {W : Type v'}
-    (keep : door F.State W → W) :
-    unheard (host F W) (fun x => atTheDoor (face x) (keep x)) := sorry
--- end
-
 theorem the_meeting_mints_the_concord (F : Face) {V : Type v'}
     (agree : F.Ans → V → Prop) (p : F.Probe) :
     Derived (concordFace F V)
@@ -1776,9 +1746,25 @@ theorem the_meeting_mints_the_concord (F : Face) {V : Type v'}
   a_role_read_at_a_probe_is_derived (concordFace F V) (atTheDoor p ())
     (fun a => agree (face a) (met a))
 
--- held (waiting on: no_interview_parts_the_alike the_sounding_reads_the_alike)
-theorem the_curtain_is_exact (F : Face) (s t : F.State) :
-    alike F s t ↔ ∀ q, sound F s q = sound F t q := sorry
+theorem an_audition_hears_only_the_conduct {I : Type u} {O : Type v} (m n : Machine I O)
+    (h : ∀ w, behavior m w = behavior n w) :
+    ∀ q, sound (airGap I O) m q = sound (airGap I O) n q := sorry
+
+theorem lineages_compose (t d1 d2 : Plan) :
+    graft (graft t d1) d2 = graft t (graft d1 d2) := sorry
+
+-- held (waiting on: zero_add)
+theorem mul_one_reads (a : Nat) : a * 1 = a := sorry
+-- end
+
+-- held (waiting on: map_crosses_append)
+theorem the_manifest_is_natural {W : Type u} {W' : Type v} (f : W → W') :
+    ∀ (p : Plan) (x : build W p), pour p (reground f p x) = (pour p x).map f := sorry
+-- end
+
+-- held (waiting on: bool_three_collide)
+theorem the_hallway_is_too_small {S : Type u} (r : S → Bool) (a b c : S) :
+    r a = r b ∨ r b = r c ∨ r a = r c := sorry
 -- end
 
 theorem the_handshake :
@@ -1815,11 +1801,6 @@ theorem the_held_scale_rides (c : Nat) :
           fold (fun x y => x + y) c a + fold (fun x y => x + y) c b
             = c * reading a + c * reading b)).trans
         (mul_spreads c (reading a) (reading b)).symm
-
--- held (waiting on: lengths_add)
-theorem the_manifest_counts {W : Type u} :
-    ∀ (p : Plan) (x : build W p), (pour p x).length = reading p := sorry
--- end
 
 theorem the_manifest_rebuilds_the_carrier {W : Type u} (w0 : W) (p : Plan) (x : build W p) :
     reboard w0 p (pour p x) = x :=
@@ -1863,10 +1844,6 @@ theorem the_cross_keeps_apart {qs : List Plan} (hqs : Apart qs) :
           | ⟨_, _, hfr⟩, ⟨l', _, hy_eq, hl', _⟩ =>
               hp l' hl'
                 (Plan.board.inj ((hfr.trans he).trans hy_eq)).1)
-
--- held (waiting on: zero_add ble_refl succ_adds ble_trans ble_le_succ)
-theorem ble_le_add_left : ∀ a b : Nat, Nat.ble b (a + b) = true := sorry
--- end
 
 theorem the_reading_is_positive :
     ∀ p : Plan, ∃ m : Nat, reading p = m + 1
@@ -2094,20 +2071,9 @@ theorem the_filter_splits_the_room {A : Type u} (q : A → Bool) :
             = L.length + 1
           rw [the_filter_splits_the_room q L]
 
--- held (waiting on: succ_adds)
-theorem the_tally_parks_at_its_count :
-    ∀ (w : List Unit) (s : Nat), park tally s w = s + w.length := sorry
--- end
-
 theorem the_flywheel_and_the_shell_sound_alike (q : Interview (List Unit) Bool) :
     sound (airGap Unit Bool) restingCounter q = sound (airGap Unit Bool) hollowShell q :=
   an_audition_hears_only_the_conduct restingCounter hollowShell (fun _ => rfl) q
-
--- held (waiting on: the_hold_walks_beside_the_work)
-theorem the_buffer_is_invisible {I : Type u} {O : Type v} (m : Machine I O)
-    (w : List I) :
-    behavior (buffered m) w = behavior m w := sorry
--- end
 
 theorem the_settle_is_unheard {I : Type u} {O : Type v} (m : Machine I O)
     (st : m.S × List I) (w : List I) :
@@ -2251,10 +2217,25 @@ theorem the_settled_gap_moves_the_model (F : Face) {V : Type v'}
      (the_record_writes_where_the_face_is_blind F fix) x q,
    rfl⟩
 
--- held (waiting on: the_curtain_is_exact)
+theorem the_curtain_is_exact (F : Face) (s t : F.State) :
+    alike F s t ↔ ∀ q, sound F s q = sound F t q := sorry
+
+-- held (waiting on: lengths_add)
+theorem the_manifest_counts {W : Type u} :
+    ∀ (p : Plan) (x : build W p), (pour p x).length = reading p := sorry
+-- end
+
+-- held (waiting on: succ_adds)
+theorem the_tally_parks_at_its_count :
+    ∀ (w : List Unit) (s : Nat), park tally s w = s + w.length := sorry
+-- end
+
+theorem the_buffer_is_invisible {I : Type u} {O : Type v} (m : Machine I O)
+    (w : List I) :
+    behavior (buffered m) w = behavior m w := sorry
+
 theorem the_audition_is_exact {I : Type u} {O : Type v} (m n : Machine I O) :
     alike (airGap I O) m n ↔ ∀ q, sound (airGap I O) m q = sound (airGap I O) n q := sorry
--- end
 
 theorem the_revision_multiplies_the_reading (t δ : Plan) :
     reading (graft t δ) = reading t * reading δ :=
@@ -2264,11 +2245,6 @@ theorem the_revision_multiplies_the_reading (t δ : Plan) :
 theorem the_drain_settles {W : Type u} (w0 : W) (p : Plan) (l : List W) :
     drain w0 p (drain w0 p l) = drain w0 p l :=
   congrArg (pour p) (the_manifest_rebuilds_the_carrier w0 p (reboard w0 p l))
-
--- held (waiting on: the_manifest_counts)
-theorem the_drained_is_on_spec {W : Type u} (w0 : W) (p : Plan) (l : List W) :
-    (drain w0 p l).length = reading p := sorry
--- end
 
 theorem the_orders_count_to_the_factorial {A : Type u} :
     ∀ l : List A, (perms l).length = fact l.length
@@ -2607,15 +2583,6 @@ theorem the_right_loop_reads_zero :
   | rest => rfl
   | step h1 h2 => exact absurd h1 no_move_past_the_right_comb
 
--- held (waiting on: the_book_counts_the_cap the_book_repeats_no_word every_word_fits the_book_holds_every_word)
-theorem the_book_is_the_answer_space (n : Nat) :
-    (words n).length = roomCap n
-      ∧ Apart (words n)
-      ∧ (∀ w : List Bool, w ∈ words n → w.length = n)
-      ∧ (∀ w : List Bool, w ∈ words w.length)
-      ∧ (words 3).length = 8 := sorry
--- end
-
 theorem the_odometer_comes_home_at_the_cap :
     ∀ s : List Bool, again inc (roomCap s.length) s = s
   | [] => rfl
@@ -2763,6 +2730,34 @@ theorem the_concord_is_the_meetings_own (F : Face) {V : Type v'}
    (the_settled_gap_moves_the_model F fix x q p).1,
    (the_settled_gap_moves_the_model F fix x q p).2⟩
 
+theorem the_lift_is_the_conduct {I : Type u} {O : Type v} (m n : Machine I O)
+    (f g : sheet I O) :
+    (∀ s, peek (liftFrom m s) = m.out s)
+      ∧ (∀ s i, feed (liftFrom m s) i = liftFrom m (m.step s i))
+      ∧ (∀ (h : m.S → sheet I O),
+          (∀ s, peek (h s) = m.out s) →
+          (∀ s i, feed (h s) i = h (m.step s i)) →
+          ∀ (w : List I) (s : m.S), h s w = liftFrom m s w)
+      ∧ liftFrom m m.s0 = behavior m
+      ∧ (alike (airGap I O) m n ↔ ∀ q, sound (airGap I O) m q = sound (airGap I O) n q)
+      ∧ (alike (appFace (List I) O) f g ↔ ∀ w, f w = g w) :=
+  ⟨fun _ => rfl,
+   fun _ _ => rfl,
+   fun h hp hf => the_lift_is_unique m h ⟨hp, hf⟩,
+   rfl,
+   the_audition_is_exact m n,
+   the_pointwise_license (List I) O f g⟩
+
+theorem the_drained_is_on_spec {W : Type u} (w0 : W) (p : Plan) (l : List W) :
+    (drain w0 p l).length = reading p := sorry
+
+theorem the_book_is_the_answer_space (n : Nat) :
+    (words n).length = roomCap n
+      ∧ Apart (words n)
+      ∧ (∀ w : List Bool, w ∈ words n → w.length = n)
+      ∧ (∀ w : List Bool, w ∈ words w.length)
+      ∧ (words 3).length = 8 := sorry
+
 theorem the_census_is_exact (k : Nat) :
     Apart ((allPlans k).filter (fun p => Nat.beq (reading p) (k + 1)))
       ∧ ∀ p : Plan,
@@ -2870,6 +2865,12 @@ theorem the_value_tells_the_words_apart {n : Nat} {p q : List Bool}
     exact the_clock_reaches_every_word q
   rw [← h1, ← h2, he]
 
+theorem the_tallys_stream_counts (n : Nat) :
+    streamOf tally n = n :=
+  (the_clocks_lift_is_a_stream tally n).trans
+    ((the_wider_voice_releases_the_bank (List.replicate n ())).trans
+      (len_replicate () n))
+
 -- held (waiting on: the_self_steered_machine_is_a_clock the_settle_is_unheard the_flywheel_and_the_shell_sound_alike the_wider_voice_releases_the_bank no_mark_lights_itself the_key_is_cut_from_the_room a_wider_seat_reads_the_remainder)
 theorem room_margin_flywheel_door {I : Type u} {O : Type v} {A : Type w}
     (m : Machine I O) (r : m.S → I) (u : List Unit) (s : m.S)
@@ -2889,38 +2890,6 @@ theorem room_margin_flywheel_door {I : Type u} {O : Type v} {A : Type w}
           ∃ k, k ∈ needs ∧ enrolled beq hall k = false ∧
             backed beq (k :: hall) needs = true)
       ∧ ¬ alike (widen F W) (atTheDoor g w1) (atTheDoor g w2) := sorry
--- end
-
-theorem the_lift_is_the_conduct {I : Type u} {O : Type v} (m n : Machine I O)
-    (f g : sheet I O) :
-    (∀ s, peek (liftFrom m s) = m.out s)
-      ∧ (∀ s i, feed (liftFrom m s) i = liftFrom m (m.step s i))
-      ∧ (∀ (h : m.S → sheet I O),
-          (∀ s, peek (h s) = m.out s) →
-          (∀ s i, feed (h s) i = h (m.step s i)) →
-          ∀ (w : List I) (s : m.S), h s w = liftFrom m s w)
-      ∧ liftFrom m m.s0 = behavior m
-      ∧ (alike (airGap I O) m n ↔ ∀ q, sound (airGap I O) m q = sound (airGap I O) n q)
-      ∧ (alike (appFace (List I) O) f g ↔ ∀ w, f w = g w) :=
-  ⟨fun _ => rfl,
-   fun _ _ => rfl,
-   fun h hp hf => the_lift_is_unique m h ⟨hp, hf⟩,
-   rfl,
-   the_audition_is_exact m n,
-   the_pointwise_license (List I) O f g⟩
-
-theorem the_tallys_stream_counts (n : Nat) :
-    streamOf tally n = n :=
-  (the_clocks_lift_is_a_stream tally n).trans
-    ((the_wider_voice_releases_the_bank (List.replicate n ())).trans
-      (len_replicate () n))
-
--- held (waiting on: every_shuffle_is_an_order every_order_is_a_shuffle the_orders_repeat_never the_orders_count_to_the_factorial)
-theorem the_census_of_orders_is_exact {A : Type u} (l p : List A)
-    (hl : Apart l) :
-    (p.Perm l ↔ p ∈ perms l)
-      ∧ Apart (perms l)
-      ∧ (perms l).length = fact l.length := sorry
 -- end
 
 theorem the_trade_keeps_the_room {A : Type u} {beq : A → A → Bool}
@@ -2971,6 +2940,12 @@ theorem the_clock_writes_its_sequence {O : Type v} (m m' : Machine Unit O)
    (the_round_trips_come_home f g w n).2,
    the_tallys_stream_counts n,
    the_audition_is_exact m m'⟩
+
+theorem the_census_of_orders_is_exact {A : Type u} (l p : List A)
+    (hl : Apart l) :
+    (p.Perm l ↔ p ∈ perms l)
+      ∧ Apart (perms l)
+      ∧ (perms l).length = fact l.length := sorry
 
 theorem the_trade_shuffles_the_room {A : Type u} {beq : A → A → Bool}
     (hE : ∀ x y : A, beq x y = true → x = y)

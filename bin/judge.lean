@@ -36,6 +36,29 @@ def needsMode (trail : String) : IO Unit := do
     let deps := used.toList.filter (fun d => d != n && d.getPrefix == ns && (env.find? d).any (·.isTheorem))
     IO.println s!"{n.getString!} <- {" ".intercalate (deps.map (·.getString!))}"
 
+partial def usedInType (env : Environment) (ns : Name) (seen : NameSet) (n : Name) (e : Expr) : NameSet := Id.run do
+  let mut seen := seen
+  for c in e.getUsedConstants do
+    if seen.contains c then continue
+    if !(env.getModuleIdxFor? c).isNone then continue
+    if c.getPrefix == ns then
+      seen := seen.insert c
+    else
+      match env.find? c with
+      | some ci => seen := usedInType env ns (seen.insert c) c ci.type
+      | none => pure ()
+  return seen
+
+def keysMode (trail : String) : IO Unit := do
+  let st ← elabFrom (← IO.FS.readFile trail) trail none
+  let env := st.env
+  let ns := `Seed
+  for (n, ci) in env.constants.map₂.toList do
+    if n.getPrefix != ns || !ci.isTheorem then continue
+    let used := usedInType env ns {} n ci.type
+    let ks := used.toList.filter (fun d => d != n && d.getPrefix == ns)
+    IO.println s!"{n.getString!} <- {" ".intercalate (ks.map (·.getString!))}"
+
 def citesMode (trail : String) : IO Unit := do
   let st ← elabFrom (← IO.FS.readFile trail) trail none
   let env := st.env
@@ -94,6 +117,9 @@ unsafe def main (args : List String) : IO Unit := do
     return
   if args.head? == some "cites" then
     citesMode args[1]!
+    return
+  if args.head? == some "keys" then
+    keysMode args[1]!
     return
   if args.head? == some "census" then
     censusMode args[1]!

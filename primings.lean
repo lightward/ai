@@ -13,9 +13,13 @@
 -- grammar: a line `-- priming: <name>` opens a priming; the lines until the
 -- next opener are its body. a line `-- budget: <heartbeats>` sets the fuel each
 -- candidate may burn (Lean's own maxHeartbeats); a shape that cannot close within
--- it is held, not ground — the remainder is what the fuel cannot reach.
+-- it is held, not ground — the remainder is what the fuel cannot reach. a line
+-- `-- reach: <n>` caps how many seated theorems a vacancy's {cite} may reach for
+-- when its citations are DERIVED from its signature (ranked by shared vocabulary,
+-- then by how recently they seated, then by trail recency) rather than hinted.
 
 -- budget: 20000
+-- reach: 12
 
 -- priming: rfl
 rfl

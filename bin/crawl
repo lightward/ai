@@ -434,11 +434,12 @@ order = sorted(theorems, key=lambda t: (storey[t[1]], order_index[t[1]]))
 
 print(f'the primer: {len(carriers)} carriers')
 print(f'the vacancies: {len(theorems)} theorems, one egg each')
-print(f'the drain: {len(rounds)} storeys — ' + ' '.join(str(c) for c in rounds))
-free = [n for n in storey if storey[n] == 1]
-deep = max(storey.items(), key=lambda kv: kv[1]) if storey else ('—', 0)
-print(f'the free layer: {len(free)} theorems need only the primer')
-print(f'the deepest seat: {deep[0]} at storey {deep[1]}')
+if not germ_mode:
+    print(f'the drain: {len(rounds)} storeys — ' + ' '.join(str(c) for c in rounds))
+    free = [n for n in storey if storey[n] == 1]
+    deep = max(storey.items(), key=lambda kv: kv[1]) if storey else ('—', 0)
+    print(f'the free layer: {len(free)} theorems need only the primer')
+    print(f'the deepest seat: {deep[0]} at storey {deep[1]}')
 
 prefix = [header.rstrip('\n'), '']
 for _, _, b in carriers:
@@ -448,11 +449,14 @@ seated_text = {}
 
 if primings_path:
     # ---- tier two: regrow the proof bodies from the ordered primings
-    primings, cur, budget = [], None, None
+    primings, cur, budget, reach = [], None, None, 12
     for line in open(primings_path).read().splitlines():
         mb = re.match(r'-- budget: (\d+)$', line)
         if mb:
             budget = int(mb.group(1)); continue
+        mr = re.match(r'-- reach: (\d+)$', line)
+        if mr:
+            reach = int(mr.group(1)); continue
         m = re.match(r'-- priming: (.+)$', line)
         if m:
             cur = [m.group(1).strip(), []]; primings.append(cur)
@@ -492,10 +496,13 @@ if primings_path:
     tf2.close()
     res2 = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'cites', tf2.name], capture_output=True, text=True)
     os.unlink(tf2.name)
+    carrier_deps = {}
     for l in res2.stdout.splitlines():
         parts = l.split(' <- ')
         if len(parts) == 2 and parts[0].startswith('theorem '):
             defs_of[parts[0].split()[1]] = [d for d in parts[1].split() if d in cnames]
+        elif len(parts) == 2 and parts[0].startswith('carrier '):
+            carrier_deps[parts[0].split()[1]] = [d for d in parts[1].split() if d in cnames]
 
     def defs_macro(n):
         ds = defs_of.get(n)
@@ -536,9 +543,9 @@ if primings_path:
         core = (b[:rt] if rt != -1 else b).rstrip('\n')
         return core + '\n\n' + receipt_for(n)
 
-    def candidate_text(n, k):
+    def candidate_text(n, k, cites=None):
         stmt, _ = split_block(by_name[n])
-        body = instantiate(primings[k][1], ordered_needs(n), n)
+        body = instantiate(primings[k][1], ordered_needs(n) if cites is None else cites, n)
         body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
         fuel = f'set_option maxHeartbeats {budget} in\n' if budget else ''
         return fuel + stmt.replace(f'theorem {n}', f'theorem {n}__p{k}', 1) + ' :=\n' + body
@@ -556,7 +563,7 @@ if primings_path:
         pre = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-prefix-', dir='/tmp', delete=False)
         pre.write('\n'.join(prefix_lines) + '\n'); pre.close()
         cf = tempfile.NamedTemporaryFile('w', suffix='.txt', prefix='crawl-cands-', dir='/tmp', delete=False)
-        cf.write('\n-- candidate\n'.join(candidate_text(n, k) for (n, k) in cands) + '\n'); cf.close()
+        cf.write('\n-- candidate\n'.join(candidate_text(*c) for c in cands) + '\n'); cf.close()
         import time
         t0 = time.time()
         res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', pre.name, cf.name],
@@ -573,41 +580,200 @@ if primings_path:
         if res.returncode != 0 or len(verdicts) != len(cands):
             raise SystemExit('crawl: the judge did not return a verdict for every candidate:\n'
                              + (res.stdout + res.stderr)[-2000:])
-        return set(c for i, c in enumerate(cands) if verdicts[i] == 'held')
+        return set(i for i in range(len(cands)) if verdicts[i] == 'held')
 
-    for r_i, count in enumerate(rounds, start=1):
-        names = [n for _, n, _ in order if storey[n] == r_i]
-        prefix_lines = list(prefix)
-        for _, n, _ in order:
-            if storey[n] < r_i:
-                prefix_lines.append(seated_text[n]); prefix_lines.append('')
-        per_round = {nm: 0 for nm, _ in primings}
-        failed = judge(prefix_lines, [(n, k) for n in names for k in range(len(primings))])
-        pending = []
-        for n in names:
-            chosen = next((k for k in range(len(primings)) if (n, k) not in failed), None)
-            if chosen is None:
-                seated_text[n] = by_name[n].rstrip('\n')
-                if germ_mode:
-                    seated_text[n] = hand_with_receipt(n)
-                carried.append(n); pending.append(n)
-            else:
-                pname, pbody = primings[chosen]
-                stmt, receipts = split_block(by_name[n])
-                if germ_mode or not receipts:
-                    receipts = receipt_for(n)
-                body = instantiate(pbody, ordered_needs(n), n)
-                body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
-                seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipts
-                tally[pname] += 1; per_round[pname] += 1
-        detail = ' '.join(f'{nm} {c}' for nm, c in per_round.items() if c)
-        print(f'  storey {r_i}: {count} vacancies — regrown {count - len(pending)} ({detail}), carried {len(pending)}')
-        if germ_mode:
-            dead = [n for n in pending if re.search(r':=\s*sorry\s*$', strip_receipts(by_name[n]).strip())]
-            if dead:
-                print(f'GROW REFUSED at storey {r_i}: {len(dead)} vacancies no priming regrows — the germ names them:')
-                for n in dead: print(f'  {n} (waiting on: {" ".join(ordered_needs(n)) or "—"})')
+    kept_hint = {}
+    if germ_mode:
+        # ---- the germ: the cascade as a fixed-point search. a vacancy's citations are
+        # DERIVED from its signature's vocabulary (the type's constants, one unfolding
+        # through the carriers it names) and ranked by shared vocabulary, then by how
+        # recently the candidate seated, then by trail recency — the primer as an
+        # ordering, not a stored route. a hint (marker) is tried too, and kept by the
+        # settle only if the vacancy does not seat without it.
+        kf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-keys-', dir='/tmp', delete=False)
+        kf.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
+        kf.close()
+        resk = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'keys', kf.name], capture_output=True, text=True)
+        os.unlink(kf.name)
+        keys = {}
+        for l in resk.stdout.splitlines():
+            n, sep, ks = l.partition(' <- ')
+            if sep and n in by_name:
+                k = set(ks.split())
+                for c in list(k):
+                    k |= set(carrier_deps.get(c, []))
+                keys[n] = k - {n}
+        for _, n, _ in theorems:
+            keys.setdefault(n, set())
+        is_vac = {n: bool(re.search(r':=\s*sorry\s*$', strip_receipts(by_name[n]).strip())) for _, n, _ in theorems}
+        trail_index = {n: i for i, (_, n, _) in enumerate(theorems)}
+        entry = {n: t for t in theorems for n in [t[1]]}
+        seated_order, seated_round, seated_set = [], {}, set()
+        pending_hand = [n for _, n, _ in theorems if not is_vac[n]]
+        pending_vac = [n for _, n, _ in theorems if is_vac[n]]
+        rounds, tried = [], 0
+        P = len(primings)
+
+        def derived_cites_all(n):
+            cs = [t for t in seated_order if t != n and (keys[t] & keys[n] or t in used_hint(n))]
+            cs.sort(key=lambda t: (-len(keys[t] & keys[n]), -seated_round.get(t, 0), -trail_index[t]))
+            return cs
+
+        def used_hint(n):
+            return set(marker_needs.get(n, [])) | set(ordered_needs(n))
+
+        def derived_cites(n):
+            return [t for t in derived_cites_all(n) if keys[t] & keys[n]][:reach]
+
+        def seat_regrown(n, k, cites):
+            pname, pbody = primings[k]
+            stmt, _ = split_block(by_name[n])
+            body = instantiate(pbody, cites, n)
+            body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
+            seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipt_for(n)
+            tally[pname] += 1
+            return pname
+
+        r = 0
+        while pending_hand or pending_vac:
+            r += 1
+            ready_hand = [n for n in pending_hand if needs[n] <= seated_set]
+            if not ready_hand and not pending_vac:
+                print(f'STUCK at round {r}: {len(pending_hand)} hand bodies wait on names that never seat:')
+                for n in pending_hand[:10]:
+                    print(f'  {n}: waiting on {" ".join(sorted(needs[n] - seated_set))}')
                 sys.exit(1)
+            prefix_lines = list(prefix)
+            for n in seated_order:
+                prefix_lines.append(seated_text[n]); prefix_lines.append('')
+            cands = []
+            for n in ready_hand:
+                der = derived_cites(n); body_cites = ordered_needs(n)
+                for k in range(P): cands.append((n, k, der, 'derived'))
+                if body_cites and body_cites != der:
+                    for k in range(P): cands.append((n, k, body_cites, 'hinted'))
+            for n in pending_vac:
+                der = derived_cites(n)
+                for k in range(P): cands.append((n, k, der, 'derived'))
+                hint = [h for h in marker_needs.get(n, []) if h in tnames]
+                if hint and all(h in seated_set for h in hint):
+                    hinted = hint + [d for d in der if d not in hint]
+                    for k in range(P): cands.append((n, k, hinted, 'hinted'))
+            tried += len(cands)
+            failed = judge(prefix_lines, [(n, k, cites) for (n, k, cites, _) in cands])
+            best = {}
+            for i, (n, k, cites, tag) in enumerate(cands):
+                if i in failed: continue
+                rank = (0 if tag == 'derived' else 1, k)
+                if n not in best or rank < best[n][0]:
+                    best[n] = (rank, k, cites, tag)
+            per_round = {nm: 0 for nm, _ in primings}
+            seated_now, carried_now = [], 0
+            for n in ready_hand:
+                if n in best:
+                    _, k, cites, tag = best[n]
+                    per_round[seat_regrown(n, k, cites)] += 1
+                    kept_hint[n] = ordered_needs(n) if tag == 'hinted' else []
+                else:
+                    seated_text[n] = hand_with_receipt(n); carried.append(n); carried_now += 1
+                seated_now.append(n)
+            for n in pending_vac:
+                if n in best:
+                    _, k, cites, tag = best[n]
+                    per_round[seat_regrown(n, k, cites)] += 1
+                    kept_hint[n] = [h for h in marker_needs.get(n, []) if h in tnames] if tag == 'hinted' else []
+                    seated_now.append(n)
+            seated_now.sort(key=lambda n: trail_index[n])
+            for n in seated_now:
+                seated_set.add(n); seated_round[n] = r; seated_order.append(n)
+            pending_hand = [n for n in pending_hand if n not in seated_set]
+            pending_vac = [n for n in pending_vac if n not in seated_set]
+            rounds.append(len(seated_now))
+            detail = ' '.join(f'{nm} {c}' for nm, c in per_round.items() if c)
+            print(f'  round {r}: seated {len(seated_now)} — regrown {len(seated_now) - carried_now} ({detail}), carried {carried_now}; {len(pending_vac)} vacancies still pending')
+            if not seated_now:
+                print(f'GROW REFUSED at round {r}: {len(pending_vac)} vacancies no priming regrows from their vocabulary — the germ names them:')
+                for n in pending_vac:
+                    print(f'  {n} (vocabulary: {" ".join(sorted(keys[n])) or "—"}; hint: {" ".join(marker_needs.get(n, [])) or "—"})')
+                sys.exit(1)
+        order = [entry[n] for n in seated_order]
+        storey = seated_round
+        # tighten: a regrown body carries its search chain; replace it by the same shape over
+        # only the theorems its proof term actually used (the elaborator's reading), judged
+        # once against the finished artifact — the artifact is read, so its bodies read as proofs
+        regrown_by = {}
+        for n in seated_order:
+            if n not in carried:
+                m = re.search(r':=\n((?:.|\n)*?)\n\n/-- info:', seated_text[n])
+                regrown_by[n] = m.group(1) if m else None
+        grown_lines = list(prefix)
+        for n in seated_order:
+            grown_lines.append(seated_text[n]); grown_lines.append('')
+        gf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-grown-', dir='/tmp', delete=False)
+        gf.write('\n'.join(grown_lines + ([footer] if footer else [])) + '\n'); gf.close()
+        resn = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'needs', gf.name], capture_output=True, text=True)
+        os.unlink(gf.name)
+        used = {}
+        for l in resn.stdout.splitlines():
+            n, sep, deps = l.partition(' <- ')
+            if sep: used[n] = set(deps.split())
+        tight_cands = []
+        for n in seated_order:
+            if n in carried: continue
+            body_now = seated_text[n].split(' :=\n', 1)[1].split('\n\n/-- info:')[0]
+            cites = [t for t in derived_cites_all(n) if t in used.get(n, set())]
+            for k, (pname, pbody) in enumerate(primings):
+                if '{cite}' not in pbody and '{rws}' not in pbody:
+                    continue
+                cand = '\n'.join(('  ' + l if l else l) for l in instantiate(pbody, cites, n).splitlines())
+                if cand != body_now:
+                    tight_cands.append((n, k, cites))
+        if tight_cands:
+            failed = judge(grown_lines, tight_cands)
+            tightened, done = 0, set()
+            for i, (n, k, cites) in enumerate(tight_cands):
+                if i in failed or n in done: continue
+                seat_regrown(n, k, cites); tally[primings[k][0]] -= 1; tightened += 1; done.add(n)
+            print(f'the tighten: {tightened} regrown bodies narrowed to the citations their proof terms use')
+        print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged')
+        lb = sum(1 for n, h in kept_hint.items() if h)
+        print(f'the hints: {lb} load-bearing (kept), {sum(1 for n in marker_needs if n in kept_hint and not kept_hint[n])} derivable (dropped)')
+    else:
+        for r_i, count in enumerate(rounds, start=1):
+            names = [n for _, n, _ in order if storey[n] == r_i]
+            prefix_lines = list(prefix)
+            for _, n, _ in order:
+                if storey[n] < r_i:
+                    prefix_lines.append(seated_text[n]); prefix_lines.append('')
+            per_round = {nm: 0 for nm, _ in primings}
+            cands = [(n, k) for n in names for k in range(len(primings))]
+            failed_idx = judge(prefix_lines, cands)
+            failed = set(cands[i] for i in failed_idx)
+            pending = []
+            for n in names:
+                chosen = next((k for k in range(len(primings)) if (n, k) not in failed), None)
+                if chosen is None:
+                    seated_text[n] = by_name[n].rstrip('\n')
+                    if germ_mode:
+                        seated_text[n] = hand_with_receipt(n)
+                    carried.append(n); pending.append(n)
+                else:
+                    pname, pbody = primings[chosen]
+                    stmt, receipts = split_block(by_name[n])
+                    if germ_mode or not receipts:
+                        receipts = receipt_for(n)
+                    body = instantiate(pbody, ordered_needs(n), n)
+                    body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
+                    seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipts
+                    tally[pname] += 1; per_round[pname] += 1
+            detail = ' '.join(f'{nm} {c}' for nm, c in per_round.items() if c)
+            print(f'  storey {r_i}: {count} vacancies — regrown {count - len(pending)} ({detail}), carried {len(pending)}')
+            if germ_mode:
+                dead = [n for n in pending if re.search(r':=\s*sorry\s*$', strip_receipts(by_name[n]).strip())]
+                if dead:
+                    print(f'GROW REFUSED at storey {r_i}: {len(dead)} vacancies no priming regrows — the germ names them:')
+                    for n in dead: print(f'  {n} (waiting on: {" ".join(ordered_needs(n)) or "—"})')
+                    sys.exit(1)
     total = len(theorems)
     print(f'the bodies: {total - len(carried)} of {total} regrown from {len(primings)} primings — '
           + ', '.join(f'{nm} {c}' for nm, c in tally.items()))
@@ -620,7 +786,7 @@ if primings_path:
         regrowable_hand = [n for _, n, _ in theorems if not is_vacancy(n) and n not in carried]
         def vacancy_text(n):
             stmt, _ = split_block(by_name[n])
-            waits = ' '.join(ordered_needs(n))
+            waits = ' '.join(kept_hint.get(n, []))
             if waits:
                 return f'-- held (waiting on: {waits})\n{stmt} := sorry\n-- end'
             return f'{stmt} := sorry'
