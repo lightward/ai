@@ -65,7 +65,7 @@ book = html.escape(os.environ.get('BOOK', ''))
 n_thm = len(re.findall(r'^theorem ', open('Seed.lean').read(), re.M))
 n_car = len(re.findall(r'^(def|structure|inductive) ', open('Seed.lean').read(), re.M))
 germ_bytes = os.path.getsize('Germ.lean'); seed_bytes = os.path.getsize('Seed.lean')
-vac = len(re.findall(r'^-- held \(waiting on:', open('Germ.lean').read(), re.M))
+vac = len(re.findall(r':= sorry\s*$', open('Germ.lean').read(), re.M))
 index_body = (f'<div class="readme">{link_names(readme)}</div>'
               f'<h2>the bench at this push</h2><pre>{n_car} carriers, {n_thm} theorems in the grown trunk\n'
               f'the germ: {vac} vacancies, {germ_bytes} bytes; the grown artifact {seed_bytes} bytes\n\n{candle}</pre>')
