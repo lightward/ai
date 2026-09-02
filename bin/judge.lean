@@ -36,11 +36,25 @@ def needsMode (trail : String) : IO Unit := do
     let deps := used.toList.filter (fun d => d != n && d.getPrefix == ns && (env.find? d).any (·.isTheorem))
     IO.println s!"{n.getString!} <- {" ".intercalate (deps.map (·.getString!))}"
 
+def citesMode (trail : String) : IO Unit := do
+  let st ← elabFrom (← IO.FS.readFile trail) trail none
+  let env := st.env
+  let ns := `Seed
+  for (n, ci) in env.constants.map₂.toList do
+    if n.getPrefix != ns then continue
+    let used := usedTopLevel env ns {} n
+    let deps := used.toList.filter (fun d => d != n && d.getPrefix == ns)
+    let kind := if ci.isTheorem then "theorem" else "carrier"
+    IO.println s!"{kind} {n.getString!} <- {" ".intercalate (deps.map (·.getString!))}"
+
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
   Lean.initSearchPath (← Lean.findSysroot)
   if args.head? == some "needs" then
     needsMode args[1]!
+    return
+  if args.head? == some "cites" then
+    citesMode args[1]!
     return
   let prefixSrc ← IO.FS.readFile args[0]!
   let candSrc ← IO.FS.readFile args[1]!

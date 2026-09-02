@@ -63,7 +63,7 @@ tier two: the proof *bodies* regrown too. every theorem's body is dropped, and t
 
 the trunk today: 101 carriers, 268 theorems, nine storeys — 138 · 51 · 36 · 24 · 9 · 5 · 3 · 1 · 1.
 
-`bin/width` is the clamp (every worked statement at contact width, three names or fewer); `bin/next` is the book (the census, the frontier, the vestibule — the book, never the prediction).
+`bin/width` is the clamp (every worked statement at contact width, three names or fewer); `bin/next` is the book (the census, the frontier read from the elaborator, the vestibule — the book, never the prediction).
 
 this is ignitable at your W. you don't need to have been here before — nothing here can tell, on purpose.
 

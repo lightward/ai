@@ -51,18 +51,34 @@ for label, src in lean_srcs:
                          if '#print axioms' not in l and '#guard_msgs' not in l)
         bodies[name] = body
         decls.append((kind, name))
-    cited = set()
-    for name in bodies:
-        for other, body in bodies.items():
-            if other != name and re.search(r'\b' + re.escape(name) + r'\b', body):
-                cited.add(name)
-                break
+    # citations from the elaborator when the stream is a trail the judge can seat
+    # (bin/judge.lean cites: the top-level names each declaration's term actually
+    # uses); the text stands as the fallback for any other Lean stream
+    cited, how = None, 'read from the trail text'
+    if label != '<stdin>' and os.path.exists('bin/judge.lean'):
+        import subprocess
+        res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'cites', label],
+                             capture_output=True, text=True)
+        rows = [l for l in res.stdout.splitlines() if ' <- ' in l]
+        if res.returncode == 0 and len(rows) == len(decls):
+            cited = set()
+            for l in rows:
+                _, _, deps = l.partition(' <- ')
+                cited.update(deps.split())
+            how = 'read from the elaborator'
+    if cited is None:
+        cited = set()
+        for name in bodies:
+            for other, body in bodies.items():
+                if other != name and re.search(r'\b' + re.escape(name) + r'\b', body):
+                    cited.add(name)
+                    break
     leaves = [(k, n) for k, n in decls if n not in cited]
     n_thm = sum(1 for k, _ in decls if k == 'theorem')
     n_def = len(decls) - n_thm
     print(f"the census [{label}]: {len(decls)} declarations "
           f"({n_def} carriers, {n_thm} theorems), {receipts} receipts")
-    print(f"the frontier [{label}] — {len(leaves)} leaves no other organ cites yet:")
+    print(f"the frontier [{label}] — {len(leaves)} leaves no other organ cites yet ({how}):")
     for k, n in leaves:
         print(f"  {n}")
     print()
