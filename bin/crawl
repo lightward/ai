@@ -524,6 +524,17 @@ if primings_path:
 
     tally = {nm: 0 for nm, _ in primings}
     carried = []
+    ns_m = re.search(r'^namespace (\w+)', header, re.M)
+    NS = ns_m.group(1) + '.' if ns_m else ''
+
+    def receipt_for(n):
+        return f"/-- info: '{NS}{n}' does not depend on any axioms -/\n#guard_msgs in #print axioms {n}"
+
+    def hand_with_receipt(n):
+        b = by_name[n].rstrip('\n')
+        rt = b.rfind('\n/-- info:')
+        core = (b[:rt] if rt != -1 else b).rstrip('\n')
+        return core + '\n\n' + receipt_for(n)
 
     def candidate_text(n, k):
         stmt, _ = split_block(by_name[n])
@@ -577,10 +588,14 @@ if primings_path:
             chosen = next((k for k in range(len(primings)) if (n, k) not in failed), None)
             if chosen is None:
                 seated_text[n] = by_name[n].rstrip('\n')
+                if germ_mode:
+                    seated_text[n] = hand_with_receipt(n)
                 carried.append(n); pending.append(n)
             else:
                 pname, pbody = primings[chosen]
                 stmt, receipts = split_block(by_name[n])
+                if germ_mode or not receipts:
+                    receipts = receipt_for(n)
                 body = instantiate(pbody, ordered_needs(n), n)
                 body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
                 seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipts
@@ -604,12 +619,18 @@ if primings_path:
         vacancies = [n for _, n, _ in theorems if is_vacancy(n)]
         regrowable_hand = [n for _, n, _ in theorems if not is_vacancy(n) and n not in carried]
         def vacancy_text(n):
-            stmt, receipts = split_block(by_name[n])
+            stmt, _ = split_block(by_name[n])
             waits = ' '.join(ordered_needs(n))
-            return f'-- held (waiting on: {waits})\n{stmt} := sorry\n-- end\n\n{receipts}'
+            if waits:
+                return f'-- held (waiting on: {waits})\n{stmt} := sorry\n-- end'
+            return f'{stmt} := sorry'
+        def hand_text(n):
+            b = by_name[n].rstrip('\n')
+            rt = b.rfind('\n/-- info:')
+            return (b[:rt] if rt != -1 else b).rstrip('\n')
         germ_text = list(prefix)
         for _, n, _ in order:
-            germ_text.append(by_name[n].rstrip('\n') if n in carried else vacancy_text(n))
+            germ_text.append(hand_text(n) if n in carried else vacancy_text(n))
             germ_text.append('')
         if footer:
             germ_text.append(footer)
