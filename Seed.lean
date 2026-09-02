@@ -381,6 +381,12 @@ def toSheet {O : Type v} (g : stream O) : sheet Unit O :=
 def streamOf {O : Type v} (m : Machine Unit O) : stream O :=
   fun n => m.out (orbit m (fun _ => ()) m.s0 n)
 
+def Derived (F : Face) (P : F.State → Prop) : Prop :=
+  ∀ s t, alike F s t → (P s ↔ P t)
+
+def concordFace (F : Face) (V : Type v') : Face :=
+  pairFace (host F V) ⟨door F.State V, Unit, V, fun x _ => met x⟩ (fun x => x) (fun x => x)
+
 theorem the_pointwise_license (P : Type v) (A : Type w) (g h : P → A) :
     alike (appFace P A) g h ↔ ∀ p, g p = h p :=
   Iff.rfl
@@ -1700,6 +1706,124 @@ theorem the_comparison_mints_a_face (F G : Face) {S : Type u'}
 /-- info: 'Seed.the_comparison_mints_a_face' does not depend on any axioms -/
 #guard_msgs in #print axioms the_comparison_mints_a_face
 
+theorem a_role_read_at_a_probe_is_derived (F : Face) (p : F.Probe) (Q : F.Ans → Prop) :
+    Derived F (fun s => Q (F.obs s p)) :=
+  fun s t h => by
+    show Q (F.obs s p) ↔ Q (F.obs t p)
+    rw [h p]
+
+/-- info: 'Seed.a_role_read_at_a_probe_is_derived' does not depend on any axioms -/
+#guard_msgs in #print axioms a_role_read_at_a_probe_is_derived
+
+theorem the_window_agrees_or_names_the_gap (F : Face)
+    (beq : F.Ans → F.Ans → Bool) (s t : F.State) :
+    ∀ ps : List F.Probe,
+      (∀ p, p ∈ ps → beq (F.obs s p) (F.obs t p) = true)
+        ∨ ∃ p, p ∈ ps ∧ beq (F.obs s p) (F.obs t p) = false
+  | [] => Or.inl (fun _ hp => nomatch hp)
+  | p :: ps => by
+      cases hb : beq (F.obs s p) (F.obs t p) with
+      | false => exact Or.inr ⟨p, List.Mem.head ps, hb⟩
+      | true =>
+          cases the_window_agrees_or_names_the_gap F beq s t ps with
+          | inl hall =>
+              refine Or.inl (fun q hq => ?_)
+              cases hq with
+              | head => exact hb
+              | tail _ hq' => exact hall q hq'
+          | inr hw =>
+              obtain ⟨q, hq, hbq⟩ := hw
+              exact Or.inr ⟨q, List.Mem.tail p hq, hbq⟩
+
+/-- info: 'Seed.the_window_agrees_or_names_the_gap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_window_agrees_or_names_the_gap
+
+theorem the_agreed_window_sounds_as_one (F : Face) (s t : F.State) :
+    ∀ ps : List F.Probe, (∀ p, p ∈ ps → F.obs s p = F.obs t p) →
+      sound F s (recite ps) = sound F t (recite ps)
+  | [], _ => rfl
+  | p :: ps, h => by
+      show F.obs s p :: sound F s (recite ps) = F.obs t p :: sound F t (recite ps)
+      rw [h p (List.Mem.head ps),
+          the_agreed_window_sounds_as_one F s t ps (fun q hq => h q (List.Mem.tail p hq))]
+
+/-- info: 'Seed.the_agreed_window_sounds_as_one' does not depend on any axioms -/
+#guard_msgs in #print axioms the_agreed_window_sounds_as_one
+
+theorem the_mutual_records_ride_together (F : Face.{u, v, w}) {V : Type v'} {W : Type w'}
+    (mine : door F.State (door V W) → V) (yours : door F.State (door V W) → W) :
+    unheard (host F (door V W)) (fun x => atTheDoor (face x) (atTheDoor (mine x) (met (met x))))
+      ∧ unheard (host F (door V W)) (fun x => atTheDoor (face x) (atTheDoor (face (met x)) (yours x)))
+      ∧ unheard (host F (door V W)) (fun x => atTheDoor (face x) (atTheDoor (mine x) (yours x))) :=
+  ⟨fun _ _ => rfl, fun _ _ => rfl, fun _ _ => rfl⟩
+
+/-- info: 'Seed.the_mutual_records_ride_together' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mutual_records_ride_together
+
+theorem the_records_part_the_seats (F : Face.{u, v, w}) {V : Type v'} {W : Type w'}
+    (s : F.State) {v v' : V} (hv : v ≠ v') (w : W) :
+    alike (host F (door V W)) (atTheDoor s (atTheDoor v w)) (atTheDoor s (atTheDoor v' w))
+      ∧ atTheDoor s (atTheDoor v w) ≠ atTheDoor s (atTheDoor v' w)
+      ∧ (widen F (door V W)).obs (atTheDoor s (atTheDoor v w)) (.viaRight ())
+          ≠ (widen F (door V W)).obs (atTheDoor s (atTheDoor v' w)) (.viaRight ()) :=
+  ⟨fun _ => rfl,
+   fun he => hv (congrArg (fun y => face (met y)) he),
+   fun he => hv (congrArg face (fork.viaRight.inj he))⟩
+
+/-- info: 'Seed.the_records_part_the_seats' does not depend on any axioms -/
+#guard_msgs in #print axioms the_records_part_the_seats
+
+theorem the_concord_reads_both_models (F : Face) {V : Type v'}
+    (x : door F.State V) (p : F.Probe) :
+    (concordFace F V).obs x (atTheDoor p ()) = atTheDoor (F.obs (face x) p) (met x) :=
+  rfl
+
+/-- info: 'Seed.the_concord_reads_both_models' does not depend on any axioms -/
+#guard_msgs in #print axioms the_concord_reads_both_models
+
+theorem no_seat_reads_the_concord_alone (F : Face) {V : Type v'}
+    (p₀ : F.Probe) (s : F.State) {v v' : V} (hv : v ≠ v') :
+    alike (host F V) (atTheDoor s v) (atTheDoor s v')
+      ∧ ¬ alike (concordFace F V) (atTheDoor s v) (atTheDoor s v') :=
+  ⟨fun _ => rfl,
+   fun hal => hv (congrArg met (hal (atTheDoor p₀ ())))⟩
+
+/-- info: 'Seed.no_seat_reads_the_concord_alone' does not depend on any axioms -/
+#guard_msgs in #print axioms no_seat_reads_the_concord_alone
+
+theorem the_concord_agrees_or_names_the_gap (F : Face) {V : Type v'}
+    (beq : F.Ans → V → Bool) (x : door F.State V) :
+    ∀ ps : List F.Probe,
+      (∀ p, p ∈ ps → beq (F.obs (face x) p) (met x) = true)
+        ∨ ∃ p, p ∈ ps ∧ beq (F.obs (face x) p) (met x) = false
+  | [] => Or.inl (fun _ hp => nomatch hp)
+  | p :: ps => by
+      cases hb : beq (F.obs (face x) p) (met x) with
+      | false => exact Or.inr ⟨p, List.Mem.head ps, hb⟩
+      | true =>
+          cases the_concord_agrees_or_names_the_gap F beq x ps with
+          | inl hall =>
+              refine Or.inl (fun r hr => ?_)
+              cases hr with
+              | head => exact hb
+              | tail _ hr' => exact hall r hr'
+          | inr hw =>
+              obtain ⟨r, hr, hbr⟩ := hw
+              exact Or.inr ⟨r, List.Mem.tail p hr, hbr⟩
+
+/-- info: 'Seed.the_concord_agrees_or_names_the_gap' does not depend on any axioms -/
+#guard_msgs in #print axioms the_concord_agrees_or_names_the_gap
+
+theorem the_gap_is_minted_at_the_meeting (F : Face) {V : Type v'}
+    (p₀ : F.Probe) (s : F.State) {v v' : V} (hv : v ≠ v') :
+    alike (host F V) (atTheDoor s v) (atTheDoor s v')
+      ∧ met ((concordFace F V).obs (atTheDoor s v) (atTheDoor p₀ ()))
+          ≠ met ((concordFace F V).obs (atTheDoor s v') (atTheDoor p₀ ())) :=
+  ⟨fun _ => rfl, hv⟩
+
+/-- info: 'Seed.the_gap_is_minted_at_the_meeting' does not depend on any axioms -/
+#guard_msgs in #print axioms the_gap_is_minted_at_the_meeting
+
 theorem a_merging_map_has_no_section {S : Type u} {T : Type u'} (h : S → T)
     {s s' : S} (hs : s ≠ s') (hm : h s = h s')
     (r : T → S) (hr : ∀ x, r (h x) = x) : False :=
@@ -2362,6 +2486,25 @@ theorem every_widening_is_one_pairing (F G H : Face) {S : Type u'}
 /-- info: 'Seed.every_widening_is_one_pairing' does not depend on any axioms -/
 #guard_msgs in #print axioms every_widening_is_one_pairing
 
+theorem the_record_writes_where_the_face_is_blind (F : Face.{u, v, w}) {W : Type v'}
+    (keep : door F.State W → W) :
+    unheard (host F W) (fun x => atTheDoor (face x) (keep x)) :=
+  fun x => a_guest_mover_is_unheard F keep x
+
+/-- info: 'Seed.the_record_writes_where_the_face_is_blind' does not depend on any axioms -/
+#guard_msgs in #print axioms the_record_writes_where_the_face_is_blind
+
+theorem the_meeting_mints_the_concord (F : Face) {V : Type v'}
+    (agree : F.Ans → V → Prop) (p : F.Probe) :
+    Derived (concordFace F V)
+      (fun x => agree (face ((concordFace F V).obs x (atTheDoor p ())))
+        (met ((concordFace F V).obs x (atTheDoor p ())))) :=
+  a_role_read_at_a_probe_is_derived (concordFace F V) (atTheDoor p ())
+    (fun a => agree (face a) (met a))
+
+/-- info: 'Seed.the_meeting_mints_the_concord' does not depend on any axioms -/
+#guard_msgs in #print axioms the_meeting_mints_the_concord
+
 theorem the_curtain_is_exact (F : Face) (s t : F.State) :
     alike F s t ↔ ∀ q, sound F s q = sound F t q :=
   ⟨fun h => no_interview_parts_the_alike F h, the_sounding_reads_the_alike F⟩
@@ -2918,6 +3061,46 @@ theorem the_click_spares_the_dark {A : Type u} (beq : A → A → Bool)
 /-- info: 'Seed.the_click_spares_the_dark' does not depend on any axioms -/
 #guard_msgs in #print axioms the_click_spares_the_dark
 
+theorem recording_the_recording_grounds (F : Face.{u, v, w}) {W : Type v'}
+    (keep : door F.State W → W) (x : door F.State W) (q : Interview F.Probe F.Ans) :
+    sound (host F W) (atTheDoor (face x) (keep x)) q = sound (host F W) x q
+      ∧ sound (host F W) (atTheDoor (face x) (keep (atTheDoor (face x) (keep x)))) q
+          = sound (host F W) x q :=
+  ⟨no_interview_hears_the_unheard (host F W) (fun y => atTheDoor (face y) (keep y))
+     (the_record_writes_where_the_face_is_blind F keep) x q,
+   (no_interview_hears_the_unheard (host F W) (fun y => atTheDoor (face y) (keep y))
+       (the_record_writes_where_the_face_is_blind F keep) (atTheDoor (face x) (keep x)) q).trans
+     (no_interview_hears_the_unheard (host F W) (fun y => atTheDoor (face y) (keep y))
+       (the_record_writes_where_the_face_is_blind F keep) x q)⟩
+
+/-- info: 'Seed.recording_the_recording_grounds' does not depend on any axioms -/
+#guard_msgs in #print axioms recording_the_recording_grounds
+
+theorem the_mutual_recording_is_unheard (F : Face.{u, v, w}) {V : Type v'} {W : Type w'}
+    (mine : door F.State (door V W) → V) (yours : door F.State (door V W) → W)
+    (x : door F.State (door V W)) (q : Interview F.Probe F.Ans) :
+    sound (host F (door V W)) (atTheDoor (face x) (atTheDoor (mine x) (yours x))) q
+      = sound (host F (door V W)) x q :=
+  no_interview_hears_the_unheard (host F (door V W))
+    (fun y => atTheDoor (face y) (atTheDoor (mine y) (yours y)))
+    (the_mutual_records_ride_together F mine yours).2.2 x q
+
+/-- info: 'Seed.the_mutual_recording_is_unheard' does not depend on any axioms -/
+#guard_msgs in #print axioms the_mutual_recording_is_unheard
+
+theorem the_settled_gap_moves_the_model (F : Face) {V : Type v'}
+    (fix : door F.State V → V) (x : door F.State V)
+    (q : Interview F.Probe F.Ans) (p : F.Probe) :
+    sound (host F V) (atTheDoor (face x) (fix x)) q = sound (host F V) x q
+      ∧ (concordFace F V).obs (atTheDoor (face x) (fix x)) (atTheDoor p ())
+          = atTheDoor (F.obs (face x) p) (fix x) :=
+  ⟨no_interview_hears_the_unheard (host F V) (fun y => atTheDoor (face y) (fix y))
+     (the_record_writes_where_the_face_is_blind F fix) x q,
+   rfl⟩
+
+/-- info: 'Seed.the_settled_gap_moves_the_model' does not depend on any axioms -/
+#guard_msgs in #print axioms the_settled_gap_moves_the_model
+
 theorem the_audition_is_exact {I : Type u} {O : Type v} (m n : Machine I O) :
     alike (airGap I O) m n ↔ ∀ q, sound (airGap I O) m q = sound (airGap I O) n q :=
   the_curtain_is_exact (airGap I O) m n
@@ -3463,6 +3646,51 @@ theorem the_key_is_cut_from_the_room {A : Type u} (beq : A → A → Bool)
 
 /-- info: 'Seed.the_key_is_cut_from_the_room' does not depend on any axioms -/
 #guard_msgs in #print axioms the_key_is_cut_from_the_room
+
+theorem two_seats_record_each_other (F : Face.{u, v, w}) {V : Type v'} {W : Type w'}
+    (mine : door F.State (door V W) → V) (yours : door F.State (door V W) → W)
+    (x : door F.State (door V W)) (q : Interview F.Probe F.Ans)
+    (s : F.State) {v v' : V} (hv : v ≠ v') (w : W) :
+    unheard (host F (door V W)) (fun y => atTheDoor (face y) (atTheDoor (mine y) (yours y)))
+      ∧ sound (host F (door V W)) (atTheDoor (face x) (atTheDoor (mine x) (yours x))) q
+          = sound (host F (door V W)) x q
+      ∧ alike (host F (door V W)) (atTheDoor s (atTheDoor v w)) (atTheDoor s (atTheDoor v' w))
+      ∧ atTheDoor s (atTheDoor v w) ≠ atTheDoor s (atTheDoor v' w)
+      ∧ (widen F (door V W)).obs (atTheDoor s (atTheDoor v w)) (.viaRight ())
+          ≠ (widen F (door V W)).obs (atTheDoor s (atTheDoor v' w)) (.viaRight ()) :=
+  ⟨(the_mutual_records_ride_together.{u, v, w, v', w'} F mine yours).2.2,
+   the_mutual_recording_is_unheard.{u, v, w, v', w'} F mine yours x q,
+   (the_records_part_the_seats.{u, v, w, v', w'} F s hv w).1,
+   (the_records_part_the_seats.{u, v, w, v', w'} F s hv w).2.1,
+   (the_records_part_the_seats.{u, v, w, v', w'} F s hv w).2.2⟩
+
+/-- info: 'Seed.two_seats_record_each_other' does not depend on any axioms -/
+#guard_msgs in #print axioms two_seats_record_each_other
+
+theorem the_concord_is_the_meetings_own (F : Face) {V : Type v'}
+    (agree : F.Ans → V → Prop) (beq : F.Ans → V → Bool) (p : F.Probe)
+    (s : F.State) {v v' : V} (hv : v ≠ v')
+    (fix : door F.State V → V) (x : door F.State V)
+    (q : Interview F.Probe F.Ans) (ps : List F.Probe) :
+    Derived (concordFace F V)
+        (fun y => agree (face ((concordFace F V).obs y (atTheDoor p ())))
+          (met ((concordFace F V).obs y (atTheDoor p ()))))
+      ∧ alike (host F V) (atTheDoor s v) (atTheDoor s v')
+      ∧ ¬ alike (concordFace F V) (atTheDoor s v) (atTheDoor s v')
+      ∧ ((∀ r, r ∈ ps → beq (F.obs (face x) r) (met x) = true)
+          ∨ ∃ r, r ∈ ps ∧ beq (F.obs (face x) r) (met x) = false)
+      ∧ sound (host F V) (atTheDoor (face x) (fix x)) q = sound (host F V) x q
+      ∧ (concordFace F V).obs (atTheDoor (face x) (fix x)) (atTheDoor p ())
+          = atTheDoor (F.obs (face x) p) (fix x) :=
+  ⟨the_meeting_mints_the_concord F agree p,
+   (no_seat_reads_the_concord_alone F p s hv).1,
+   (no_seat_reads_the_concord_alone F p s hv).2,
+   the_concord_agrees_or_names_the_gap F beq x ps,
+   (the_settled_gap_moves_the_model F fix x q p).1,
+   (the_settled_gap_moves_the_model F fix x q p).2⟩
+
+/-- info: 'Seed.the_concord_is_the_meetings_own' does not depend on any axioms -/
+#guard_msgs in #print axioms the_concord_is_the_meetings_own
 
 theorem the_census_is_exact (k : Nat) :
     Apart ((allPlans k).filter (fun p => Nat.beq (reading p) (k + 1)))

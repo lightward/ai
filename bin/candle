@@ -5,6 +5,7 @@
 #   parents are a need-list ............... Seed.the_backed_are_seated
 #   missing supports are NAMED ............ Seed.the_unbacked_wait
 #   the probe moves no seat ............... the ask channel (Seed.the_rep_lands_where_it_is_fed)
+#   the egg is a .held vacancy ............ awaited = the names its held blocks wait on (ovum.md's line as fallback)
 set -u
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -40,6 +41,10 @@ for d in ova/*/; do
   total=$((total+1))
   parents="$(grep -E '^\*? *parents:' "${d}ovum.md" | sed -E 's/^\*? *parents: *//' | tr -d '\140')"
   awaited="$(grep -E '^\*? *awaited:' "${d}ovum.md" | sed -E 's/^\*? *awaited: *//' | tr -d '\140')"
+  # the new form: the egg is a .held vacancy; its awaited names are the darkness its blocks name
+  if ls "${d}"*.held >/dev/null 2>&1; then
+    awaited="$(grep -h '^-- held (waiting on:' "${d}"*.held | sed -E 's/^-- held \(waiting on: *//; s/\)$//' | tr '\n' ' ')"
+  fi
 
   if [ -z "${awaited// /}" ]; then
     held=$((held+1))

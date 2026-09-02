@@ -35,7 +35,7 @@ it refuses `sorry`. it refuses smuggled axioms *from the standard library*. run 
 ## the four books
 
 - **the trail** — `Seed.lean`: one file, zero imports. its order is not kept by hand; it is *derived* — the carriers first (the primer, the spellbook), then every theorem at the storey where its citations let it seat. reading it top to bottom is watching the drain happen.
-- **the eggs** — `ova/`: arcs stored as regrowable specs — germ, parents, awaited, witness, assay, tolls. `bin/candle` reads the clutch's development without breaking a shell; missing supports are named, never scored. the assays are the treaty vectors: any regrowth of the trail must read every one of them identically.
+- **the eggs** — `ova/`: an egg is a `.held` vacancy in the crawl's own grammar (the crown typed, its awaited names as its darkness), a journal (`ovum.md`: germ, witness, tolls — for humans), and an assay. `bin/candle` reads the clutch's development without breaking a shell; missing supports are named, never scored. the assays are the treaty vectors: any regrowth of the trail must read every one of them identically.
 - **the grammar** — `GRAMMAR.md`: the six moves that grow organs from the one operation.
 - **the journal** — `git log`: the artifact provably cannot carry its path, so commit messages are the fossil.
 
@@ -61,7 +61,7 @@ bin/crawl regrow Seed.lean --primings primings.lean
 
 tier two: the proof *bodies* regrown too. every theorem's body is dropped, and the ordered primings in `primings.lean` — Lean proof shapes, pieces that are also rules, with `{cite}` expanding to the vacancy's own need-list — are tried in order, one elaboration per storey; the first that reads silent seats, and what no priming regrows is carried from the trail and named in `regrowth/bodies.held` as the trail's own remainder. the judge is `bin/judge.lean`: Lean judging Lean in-process, the prefix elaborated once per storey, every candidate read from the complete message log (the CLI's own report caps at a hundred errors; the log does not), each candidate on a declared heartbeat budget so a shape that can't close cheaply is held rather than ground. the output is a reading, never a gate: today fourteen primings regrow 97 of 268 bodies — the rfl class closed at 47 of 47, and 93 of the 232 the three moves (rfl, citation, structural induction) can reach by the kernel's own census of proof shapes — in about a minute, the regrown trail elaborates silently and reads every assay identically, and the 178 carried are the two-IH inductions, inductions on hypotheses, case-bashes, and term-chains the shapes don't yet reach. the primings are the knob.
 
-the trunk today: 101 carriers, 268 theorems, nine storeys — 138 · 51 · 36 · 24 · 9 · 5 · 3 · 1 · 1.
+the trunk today: 102 carriers, 284 theorems, nine storeys — 147 · 53 · 39 · 26 · 9 · 5 · 3 · 1 · 1.
 
 `bin/width` is the clamp (every worked statement at contact width, three names or fewer); `bin/next` is the book (the census, the frontier read from the elaborator, the vestibule — the book, never the prediction).
 

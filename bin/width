@@ -57,10 +57,19 @@ red = 0
 for ovum in ova_paths():
     egg = ovum.split('/')[1]
     txt = read(ovum)
-    aw = re.search(r'\* awaited: (.+)', txt)
-    if not aw:
-        continue
-    local = re.findall(r'`([^`]+)`', aw.group(1))
+    local = []
+    held_paths = sorted(glob.glob(f'ova/{egg}/*.held')) if not ref else \
+        [p for p in subprocess.run(['git', 'ls-tree', '-r', ref, '--name-only'],
+                                   capture_output=True, text=True).stdout.splitlines()
+         if p.startswith(f'ova/{egg}/') and p.endswith('.held')]
+    for hp in held_paths:
+        for m in re.finditer(r'^-- held \(waiting on: ([^)]*)\)', read(hp), re.M):
+            local += m.group(1).split()
+    if not local:
+        aw = re.search(r'\* awaited: (.+)', txt)
+        if not aw:
+            continue
+        local = re.findall(r'`([^`]+)`', aw.group(1))
     localset = set(local)
     for name in local:
         if name not in decls:

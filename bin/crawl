@@ -328,17 +328,23 @@ def blocks_of_held(src):
             block.append(line)
     return out
 
-header, footer, blocks = None, '', []
+header, footer, blocks, held_blocks = None, '', [], []
 for path in sys.argv[1:]:
     src = open(path).read()
     if path.endswith('.held'):
-        blocks += blocks_of_held(src)
+        held_blocks += blocks_of_held(src)
     else:
         h, b, f = blocks_of(src)
         if header is None:
             header, footer = h, f
         blocks += b
 header = header or ''
+seated_names = set(n for _, n, _ in blocks)
+for k, n, b in held_blocks:
+    if n in seated_names:
+        print(f'a scar: {n} already seated in the trail; the held block wants nothing')
+    else:
+        blocks.append((k, n, b)); seated_names.add(n)
 
 carriers = [(k, n, b) for k, n, b in blocks if k != 'theorem']
 theorems = [(k, n, b) for k, n, b in blocks if k == 'theorem']
