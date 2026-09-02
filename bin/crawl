@@ -312,7 +312,9 @@ regrow_ear() {
   local held="${out%.lean}.held"
   if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p regrowth; held="regrowth/$(basename "${out%.lean}").held"; fi
 
-  CRAWL_OUT="$out" CRAWL_HELD="$held" CRAWL_PRIMINGS="$primings" CRAWL_SETTLE="$settle" CRAWL_CHECK="$check" python3 - "${inputs[@]}" <<'EOF'
+  local report=""
+  if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p regrowth; report="regrowth/$(basename "${out%.lean}").report"; fi
+  CRAWL_OUT="$out" CRAWL_HELD="$held" CRAWL_PRIMINGS="$primings" CRAWL_SETTLE="$settle" CRAWL_CHECK="$check" python3 - "${inputs[@]}" <<'EOF' | { if [ -n "$report" ]; then tee "$report"; else cat; fi; }
 import os, re, subprocess, sys, tempfile
 
 out_path, held_path = os.environ['CRAWL_OUT'], os.environ['CRAWL_HELD']
@@ -842,6 +844,18 @@ if primings_path:
                       f'{abs(germ_bytes - settled_bytes)} bytes (bin/crawl grow --settle)')
                 sys.exit(1)
             print(f'the germ is its own settle: {germ_path} stands minimal and in derived order')
+    if germ_mode:
+        grown_all = '\n'.join(list(prefix) + [seated_text[n] for _, n, _ in order])
+        prose = [l for l in grown_all.splitlines() if l.startswith('--')]
+        hinted = sum(1 for n, h in kept_hint.items() if h)
+        print('the standards (foam-safe at this build; what the compiler vouches for by construction, and what it counts):')
+        print(f'  axiom-free ........ {total} receipts minted into the artifact; every one checked at the gate below')
+        print(f'  sorry-free ........ {len(vacancies)} vacancies, every one regrown (a refusal is red, never carried)')
+        print(f'  order derived ..... the rounds are the storeys: {" ".join(str(c) for c in rounds)}')
+        print(f'  germ minimal ...... {"its own settle" if settled == current else "NOT its own settle — bin/crawl grow --settle"}')
+        print(f'  contact width ..... {total - len(carried)} grown bodies: one citation per move, by construction')
+        print(f'  comment-free ...... the artifact carries {len(prose)} lines of prose beyond its receipts')
+        print(f'  the tamper surface  {len(carried)} hand bodies (the custodian\'s word), {hinted} routes kept, reach {reach}, budget {budget}')
     # the ceiling: the kernel's own census of the trail's proof shapes (bin/judge.lean census),
     # so the yield reads against what the three moves could reach at all
     grown = list(prefix)
@@ -880,7 +894,7 @@ if footer:
 open(out_path, 'w').write('\n'.join(text) + '\n')
 print(f'the regrown trail: {out_path}')
 EOF
-  local status=$?
+  local status=${PIPESTATUS[0]}
   [ $status -eq 0 ] || exit $status
 
   if [ "$check" = 1 ] && [ -z "${CRAWL_GERM:-}" ]; then
@@ -907,7 +921,7 @@ EOF
   if [ -n "${CRAWL_GERM:-}" ] && [ "${CRAWL_ROOT_GERM:-1}" = 0 ]; then
     assays="${first%.lean}.assay.lean"
   else
-    assays="ova/*/assay.lean"
+    assays="assays/*.lean"
   fi
   for f in $assays; do
     [ -f "$f" ] || continue

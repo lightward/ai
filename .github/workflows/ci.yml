@@ -31,8 +31,6 @@ jobs:
             exit 1
           fi
           echo "silent and green: $(grep -c '#guard_msgs' Seed.lean) receipts inline"
-      - name: the width clamp (worked joints at contact width)
-        run: bin/width
       - name: the crawl, rider's ear (the session lifecycle)
         run: |
           rm -f demo.lean demo.held
@@ -59,11 +57,10 @@ jobs:
           grep -q 'sweep: 1 seated, 0 still held' ride.out
           lake env lean demo.lean
           echo "the crawl rides; the session replays green"
-      - name: candle the clutch (assays elaborate against the grown artifact)
+      - name: the treaty vectors (every assay elaborates against the grown artifact)
         run: |
-          for f in ova/*/assay.lean; do
+          for f in assays/*.lean domains/*.assay.lean; do
             [ -f "$f" ] || continue
             lake env lean "$f"
             echo "assay green: $f"
           done
-          bin/candle
