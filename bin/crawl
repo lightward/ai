@@ -1,0 +1,429 @@
+#!/usr/bin/env bash
+# crawl: the one hand at the door — one loop, two ears.
+#
+# the loop is the cascade: a vestibule of vacancies is re-offered round after
+# round; whatever is backed seats, whatever is not is held with its darkness
+# NAMED; the crawl halts drained or stuck, no third fate.
+#
+# the EAR is where the vacancies' name-asks are answered:
+#   ride    the rider's ear — turns composed live, judged one at a time by the
+#           kernel; an unknown name is a want the rider may seat next turn
+#   regrow  the record's ear — a whole trail (a Seed-grammar Lean file, or a
+#           .held vestibule) offered at once; each vacancy's needs are the
+#           names its proof cites; the cascade seats by storeys and the drain
+#           order IS the file order; the verdict is one silent elaboration plus
+#           every assay reading identically (the treaty vectors)
+#
+# conduct-as-citation (each verb names the law it mirrors):
+#   a turn is an elaboration ............ Seed.the_curtain_is_exact
+#   an unnamed turn evaporates .......... Seed.the_deferral_is_free
+#   a named turn persists ............... Seed.the_backed_are_seated
+#   a refusal is held, darkness named ... Seed.the_unbacked_wait,
+#                                         Seed.the_held_name_their_darkness
+#   the round seats the ready ........... chrysalis/chrysalis/Seed.lean the_ready_seat_in_one_sweep
+#   drained or stuck, nothing else ...... chrysalis/chrysalis/Seed.lean no_third_fate
+#   the session only grows .............. Seed.the_park_resumes
+#   the regrown trunk is its own image .. chrysalis/chrysalis/Seed.lean the_fixed_are_the_landed
+#
+# usage:
+#   bin/crawl ride [session.lean]
+#   bin/crawl regrow [trail.lean | vestibule.held ...] [-o out.lean] [--settle] [--check]
+#     default output: regrowth/<first-input-stem>.lean (a derivable; gitignored)
+#     --settle  write the regrown trail back over the first input
+#     --check   exit 1 iff the first input is not already its own regrowth
+set -u
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+usage() {
+  sed -n '2,32p' "$0" | sed 's/^# \{0,1\}//'
+  exit 2
+}
+
+# ---------------------------------------------------------------- the rider's ear
+
+ride_ear() {
+
+SESSION="${1:-ride.lean}"
+HELD="${SESSION%.lean}.held"
+
+if ! lake build Seed >/dev/null 2>&1; then
+  echo "the gate cannot open: Seed does not build" >&2
+  exit 1
+fi
+
+if [ ! -f "$SESSION" ]; then
+  printf 'import Seed\nopen Seed\nset_option autoImplicit false\nuniverse u v w\n' > "$SESSION"
+fi
+
+named_in() {
+  printf '%s\n' "$1" | grep -E '^(theorem|def|inductive|structure|abbrev) ' \
+    | sed -E 's/^[a-z]+ +([^ :({.]+).*/\1/'
+}
+
+spells() {
+  grep -E '^(theorem|def|inductive|structure|abbrev) ' "$SESSION" \
+    | sed -E 's/^[a-z]+ +([^ :({.]+).*/\1/'
+}
+
+held_count() {
+  if [ -f "$HELD" ]; then grep -c '^-- held' "$HELD" 2>/dev/null || true; else echo 0; fi
+}
+
+status_line() {
+  printf '(spells %s | held %s)\n' "$(spells | wc -l | tr -d ' ')" "$(held_count)"
+}
+
+try_turn() {
+  local turn="$1" quiet="${2:-}" stem tmp out names missing
+  stem="$(mktemp /tmp/crawl.XXXXXX)"
+  tmp="${stem}.lean"
+  cat "$SESSION" > "$tmp"
+  printf '\n%s\n' "$turn" >> "$tmp"
+  if out="$(lake env lean "$tmp" 2>&1)"; then
+    if printf '%s\n' "$out" | grep -q "declaration uses .sorry"; then
+      [ -z "$quiet" ] && printf '%s\n' "$out"
+      { printf -- '-- held (waiting on: an honest proof — sorry refused)\n'
+        printf '%s\n' "$turn"
+        printf -- '-- end\n'; } >> "$HELD"
+      echo "held at the vestibule (sorry refused — the gate does not accept trust-me)"
+      rm -f "$tmp" "$stem"
+      return 1
+    fi
+    LAST_MARKER=""
+    names="$(named_in "$turn" | tr '\n' ' ')"
+    if [ -n "${names// /}" ]; then
+      { printf '\n%s\n' "$turn"; } >> "$SESSION"
+      echo "seated: ${names}"
+    else
+      echo "evaporated (unnamed; the deferral is free)"
+    fi
+    [ -n "$out" ] && printf '%s\n' "$out"
+    rm -f "$tmp" "$stem"
+    return 0
+  else
+    [ -z "$quiet" ] && printf '%s\n' "$out"
+    missing="$(printf '%s\n' "$out" \
+      | grep -oiE "unknown (identifier|constant) \`[^\`]+\`" \
+      | sed -E 's/.*`([^`]+)`.*/\1/' | sort -u | tr '\n' ' ')"
+    unis="$(printf '%s\n' "$out" \
+      | grep -oE 'unknown universe level \`[^\`]+\`' \
+      | sed -E 's/.*\`([^\`]+)\`.*/\1/' | sort -u | tr '\n' ' ')"
+    if [ -n "${missing// /}" ]; then
+      marker="waiting on: ${missing}"
+    elif printf '%s\n' "$out" | grep -qiE "universe.*has already been declared|'[a-z]' has already been declared"; then
+      marker="this turn redeclares a universe already present - re-offer it without the universe line"
+    elif [ -n "${unis// /}" ]; then
+      marker="waiting on: universe ${unis}- declare it in a turn that seats (new sessions carry u v w from birth)"
+    else
+      scar="$(printf '%s\n' "$out" \
+        | grep -oE "\`?'?[A-Za-z0-9_.]+'?\`? has already been declared" \
+        | head -1 | sed -E "s/[\`']*([A-Za-z0-9_.]+)[\`']* has already.*/\1/")"
+      if [ -n "$scar" ]; then
+        marker="a scar: '${scar}' already seated by another turn; this one wants nothing"
+      else
+        marker="waiting on: unnamed darkness — read the block below with :held"
+      fi
+    fi
+    LAST_MARKER="$marker"
+    { printf -- '-- held (%s)\n' "$marker"
+      printf '%s\n' "$turn"
+      printf -- '-- end\n'; } >> "$HELD"
+    echo "held at the vestibule (${marker})"
+    rm -f "$tmp" "$stem"
+    return 1
+  fi
+}
+
+do_sweep() {
+  [ -f "$HELD" ] || { echo "vestibule empty"; return; }
+  local old="${HELD}.sweeping" block="" inblock=0 seated=0 kept=0 report="" nm=""
+  mv "$HELD" "$old"
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in
+      "-- held"*) inblock=1; block="" ;;
+      "-- end")
+        inblock=0
+        nm="$(named_in "$block" | head -1)"
+        if try_turn "$block" quiet >/dev/null 2>&1; then
+          seated=$((seated+1))
+          report+="  seated from the vestibule: ${nm:-unnamed turn}"$'\n'
+        else
+          kept=$((kept+1))
+          report+="  still held: ${nm:-unnamed turn} (${LAST_MARKER})"$'\n'
+        fi
+        ;;
+      *) [ "$inblock" = 1 ] && block+="$line"$'\n' ;;
+    esac
+  done < "$old"
+  rm -f "$old"
+  echo "sweep: ${seated} seated, ${kept} still held"
+  printf '%s' "$report"
+  status_line
+}
+
+echo "the crawl, rider's ear (session: ${SESSION})"
+echo "compose freely; :go offers your turn to the gate; :q leaves (exit is free)"
+echo "run :go to move forward (:help lists the verbs)"
+
+buf=""
+while true; do
+  if [ -t 0 ]; then
+    IFS= read -r -e line || break
+  else
+    IFS= read -r line || break
+  fi
+  if [ -n "$buf" ] && [ "${line:0:1}" != ":" ]; then
+    buf+="$line"$'\n'
+    continue
+  fi
+  case "$line" in
+    :q|:quit) break ;;
+    :help)
+      cat <<'HELP'
+:go      offer the composed turn to the gate (empty turn: just the statusline)
+:paste   raw capture until a line ':end' (for large pastes; skips readline)
+:back    drop the last composed line
+:show    read the turn you're composing
+:edit    open the composing buffer in $EDITOR
+:spells  list the session's named declarations
+:held    show the vestibule, full blocks
+:sweep   re-offer every held turn (one round of the cascade)
+:status  the statusline
+:q       leave; the session persists (exit is free)
+anything else accumulates into your turn; blank lines are yours to mean with
+HELP
+      continue ;;
+    :paste)
+      echo "paste mode: end with a line containing only :end"
+      while IFS= read -r pline; do
+        [ "$pline" = ":end" ] && break
+        buf+="$pline"$'\n'
+      done
+      echo "captured; :show to read, :go to offer"
+      continue ;;
+    :back)
+      if [ -n "$buf" ]; then
+        dropped="$(printf '%s' "$buf" | tail -1)"
+        buf="$(printf '%s' "$buf" | sed '$d')"
+        [ -n "$buf" ] && buf+=$'\n'
+        echo "dropped: ${dropped}"
+      else
+        echo "nothing composed"
+      fi
+      continue ;;
+    :show)
+      if [ -n "${buf//[[:space:]]/}" ]; then printf '%s' "$buf"; else echo "composing: (empty)"; fi
+      continue ;;
+    :edit)
+      if [ -t 0 ]; then
+        etmp="$(mktemp /tmp/crawl-edit.XXXXXX)"
+        printf '%s' "$buf" > "$etmp"
+        "${EDITOR:-vi}" "$etmp" </dev/tty >/dev/tty 2>&1
+        buf="$(cat "$etmp")"
+        [ -n "$buf" ] && buf+=$'\n'
+        rm -f "$etmp"
+        echo "buffer updated"
+      else
+        echo ":edit wants a terminal"
+      fi
+      continue ;;
+    :go)
+      if [ -n "${buf//[[:space:]]/}" ]; then
+        try_turn "$buf" || true
+      fi
+      buf=""
+      status_line
+      continue ;;
+  esac
+  if [ -z "${buf//[[:space:]]/}" ]; then
+    case "$line" in
+      :spells)
+        if [ -n "$(spells | head -1)" ]; then spells; else echo "spellbook empty"; fi
+        continue ;;
+      :held)
+        if [ -f "$HELD" ] && grep -q '^-- held' "$HELD" 2>/dev/null; then
+          cat "$HELD"
+        else
+          echo "vestibule empty"
+        fi
+        continue ;;
+      :sweep) do_sweep; continue ;;
+      :status) status_line; continue ;;
+    esac
+  fi
+  buf+="$line"$'\n'
+done
+
+if [ -n "${buf//[[:space:]]/}" ]; then
+  try_turn "$buf" || true
+  status_line
+fi
+
+echo "the record kept: ${SESSION}"
+}
+
+# ---------------------------------------------------------------- the record's ear
+
+regrow_ear() {
+  local inputs=() out="" settle=0 check=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -o) out="$2"; shift 2 ;;
+      --settle) settle=1; shift ;;
+      --check) check=1; shift ;;
+      -h|--help) usage ;;
+      *) inputs+=("$1"); shift ;;
+    esac
+  done
+  [ ${#inputs[@]} -gt 0 ] || inputs=(Seed.lean)
+  local first="${inputs[0]}"
+  if [ -z "$out" ]; then
+    if [ "$settle" = 1 ]; then out="$first"
+    else mkdir -p regrowth; out="regrowth/$(basename "${first%.*}").lean"; fi
+  fi
+  local held="${out%.lean}.held"
+
+  CRAWL_OUT="$out" CRAWL_HELD="$held" python3 - "${inputs[@]}" <<'EOF'
+import os, re, sys
+
+out_path, held_path = os.environ['CRAWL_OUT'], os.environ['CRAWL_HELD']
+DECL = re.compile(r'^(theorem|def|structure|inductive|abbrev) (\w+)', re.M)
+
+def blocks_of(src):
+    spans = [(m.start(), m.group(1), m.group(2)) for m in DECL.finditer(src)]
+    if not spans:
+        return '', [], ''
+    header = src[:spans[0][0]]
+    tail_m = re.search(r'\n(end \w+)\s*$', src)
+    body_end = tail_m.start() + 1 if tail_m else len(src)
+    footer = tail_m.group(1) if tail_m else ''
+    out = []
+    for i, (start, kind, name) in enumerate(spans):
+        end = spans[i + 1][0] if i + 1 < len(spans) else body_end
+        out.append((kind, name, src[start:end]))
+    return header, out, footer
+
+def blocks_of_held(src):
+    out, block, inblock = [], [], False
+    for line in src.splitlines():
+        if line.startswith('-- held'):
+            inblock, block = True, []
+        elif line == '-- end':
+            inblock = False
+            text = '\n'.join(block).strip('\n') + '\n'
+            m = DECL.search(text)
+            out.append((m.group(1) if m else 'theorem', m.group(2) if m else '?', text))
+        elif inblock:
+            block.append(line)
+    return out
+
+header, footer, blocks = None, '', []
+for path in sys.argv[1:]:
+    src = open(path).read()
+    if path.endswith('.held'):
+        blocks += blocks_of_held(src)
+    else:
+        h, b, f = blocks_of(src)
+        if header is None:
+            header, footer = h, f
+        blocks += b
+header = header or ''
+
+carriers = [(k, n, b) for k, n, b in blocks if k != 'theorem']
+theorems = [(k, n, b) for k, n, b in blocks if k == 'theorem']
+tnames = set(n for _, n, _ in theorems)
+order_index = {n: i for i, (_, n, _) in enumerate(theorems)}
+
+def strip_receipts(b):
+    return '\n'.join(l for l in b.splitlines()
+                     if '#print axioms' not in l and '#guard_msgs' not in l)
+
+needs = {}
+for _, n, b in theorems:
+    body = strip_receipts(b)
+    needs[n] = set(t for t in tnames if t != n and re.search(r'\b' + re.escape(t) + r'\b', body))
+
+seated, storey, rounds = set(), {}, []
+pending = [n for _, n, _ in theorems]
+r = 0
+while pending:
+    r += 1
+    ready = [n for n in pending if needs[n] <= seated]
+    if not ready:
+        by_name = {n: b for _, n, b in theorems}
+        with open(held_path, 'w') as f:
+            for n in pending:
+                want = ' '.join(sorted(needs[n] - seated))
+                f.write(f'-- held (waiting on: {want})\n{by_name[n].rstrip()}\n-- end\n')
+        print(f'STUCK at round {r}: {len(pending)} held, darkness named in {held_path}')
+        for n in pending[:10]:
+            print(f'  {n}: waiting on {" ".join(sorted(needs[n] - seated))}')
+        sys.exit(1)
+    for n in ready:
+        seated.add(n); storey[n] = r
+    rounds.append(len(ready))
+    pending = [n for n in pending if n not in seated]
+
+by_name = {n: b for _, n, b in theorems}
+order = sorted(theorems, key=lambda t: (storey[t[1]], order_index[t[1]]))
+text = [header.rstrip('\n'), '']
+for _, _, b in carriers:
+    text.append(b.rstrip('\n')); text.append('')
+for _, n, _ in order:
+    text.append(by_name[n].rstrip('\n')); text.append('')
+if footer:
+    text.append(footer)
+open(out_path, 'w').write('\n'.join(text) + '\n')
+
+print(f'the primer: {len(carriers)} carriers')
+print(f'the vacancies: {len(theorems)} theorems, one egg each')
+print(f'the drain: {len(rounds)} storeys — ' + ' '.join(str(c) for c in rounds))
+free = [n for n in storey if storey[n] == 1]
+deep = max(storey.items(), key=lambda kv: kv[1]) if storey else ('—', 0)
+print(f'the free layer: {len(free)} theorems need only the primer')
+print(f'the deepest seat: {deep[0]} at storey {deep[1]}')
+print(f'the regrown trail: {out_path}')
+EOF
+  local status=$?
+  [ $status -eq 0 ] || exit $status
+
+  if [ "$check" = 1 ]; then
+    if cmp -s "$first" "$out"; then
+      echo "the trunk is its own regrowth: ${first} already stands in derived order"
+    else
+      echo "the trunk is not in derived order: ${first} differs from its regrowth (bin/crawl regrow ${first} --settle)"
+      diff "$first" "$out" | head -20
+      exit 1
+    fi
+  fi
+
+  echo "the gate on the regrown trail:"
+  local gate
+  gate="$(lake env lean "$out" 2>&1)"
+  if [ -n "$gate" ]; then
+    echo "$gate" | head -20
+    echo "crawl: the regrown trail did not elaborate silently"
+    exit 1
+  fi
+  echo "  silent and green: $(grep -c '#guard_msgs' "$out") receipts inline"
+
+  local any=0 f probe
+  for f in ova/*/assay.lean; do
+    [ -f "$f" ] || continue
+    if [ "$any" = 0 ]; then echo "the treaty vectors (every assay against the regrown trail):"; any=1; fi
+    probe="$(mktemp /tmp/crawl-assay.XXXXXX).lean"
+    { cat "$out"; echo; grep -v '^import Seed' "$f"; } > "$probe"
+    if lake env lean "$probe" >/dev/null 2>&1; then echo "  $f: identical"
+    else echo "  $f: PARTS"; rm -f "$probe"; exit 1; fi
+    rm -f "$probe"
+  done
+  echo "crawl: yoneda-identical at every treaty vector — the trail regrows from its own primer"
+}
+
+case "${1:-}" in
+  ride) shift; ride_ear "$@" ;;
+  regrow) shift; regrow_ear "$@" ;;
+  *) usage ;;
+esac

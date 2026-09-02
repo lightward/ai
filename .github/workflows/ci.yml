@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gate:
+    name: the gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: leanprover/lean-action@v1
+        with:
+          build-args: ""
+          lake-package-directory: .
+      - name: receipts and zero warnings (Seed elaborates silently)
+        run: |
+          out=$(lake env lean Seed.lean 2>&1)
+          if [ -n "$out" ]; then
+            echo "$out"
+            echo "Seed.lean did not elaborate silently"
+            exit 1
+          fi
+          echo "silent and green: $(grep -c '#guard_msgs' Seed.lean) receipts inline"
+      - name: the crawl, record's ear (the trunk regrows from its own primer and is its own regrowth)
+        run: bin/crawl regrow Seed.lean --check
+      - name: the width clamp (worked joints at contact width)
+        run: bin/width
+      - name: the crawl, rider's ear (the session lifecycle)
+        run: |
+          rm -f demo.lean demo.held
+          printf '%s\n' \
+            ':go' \
+            'example : reading (Plan.board .ground .ground) = 2 := rfl' \
+            ':go' \
+            'theorem the_mirror_reads_two : reading (Plan.board .ground .ground) = 2 := rfl' \
+            ':go' \
+            'def ride_fact : Nat -> Nat' \
+            '  | 0 => 1' \
+            '  | n+1 => (n+1) * ride_fact n' \
+            ':go' \
+            'theorem the_ride_runs_factorials : ride_fact 4 = 24 := rfl' \
+            ':go' \
+            'theorem borrowed : nonexistent_organ = 0 := rfl' \
+            ':go' \
+            'def nonexistent_organ : Nat := 0' \
+            ':go' \
+            ':sweep' \
+            ':q' | bin/crawl ride demo.lean | tee ride.out
+          grep -q 'seated: the_ride_runs_factorials' ride.out
+          grep -q 'waiting on: nonexistent_organ' ride.out
+          grep -q 'sweep: 1 seated, 0 still held' ride.out
+          lake env lean demo.lean
+          echo "the crawl rides; the session replays green"
+      - name: candle the clutch (assays elaborate where laid)
+        run: |
+          for f in ova/*/assay.lean; do
+            [ -f "$f" ] || continue
+            lake env lean "$f"
+            echo "assay green: $f"
+          done
+          bin/candle

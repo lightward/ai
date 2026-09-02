@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# next: the book of the seed — autosuggest as a filter over TYPED streams only.
+# the instrument reads terms, never prose: Seed-grammar Lean on stdin or as
+# args, plus .held files (bin/ride's vestibule format) when offered. journals
+# (ovum.md) are for humans and are never instrument-input.
+# the discovery root is the door: W enters (dark, probe-less, free by rfl),
+# the Face is the first sight, the custodian's avatar is the bench.
+# conduct-as-citation:
+#   the census ....... declarations counted, receipts counted
+#   the frontier ..... leaves: organs no other organ cites yet (the
+#                      reaction-sweep queue — fire here, ask what reacts)
+#   the vestibule .... typed vacancies from .held streams, supports named
+#   the tense guard .. the book, never the prediction
+# tier two of this tool, held as darkness: the three-column ledger
+# (pinned/gauge/parametric — which terms constrain the view through W) awaits
+# elaborator integration; the pair-census awaits a horizon parameter.
+set -u
+
+if [ $# -eq 0 ]; then
+  STDIN_TMP="$(mktemp /tmp/next.XXXXXX)"
+  trap 'rm -f "$STDIN_TMP"' EXIT
+  cat > "$STDIN_TMP"
+  set -- "$STDIN_TMP"
+  NEXT_STDIN_LABEL="$STDIN_TMP"
+fi
+export NEXT_STDIN_LABEL="${NEXT_STDIN_LABEL:-}"
+
+python3 - "$@" <<'EOF'
+import re, sys
+
+lean_srcs, held_srcs = [], []
+import os
+stdin_label = os.environ.get('NEXT_STDIN_LABEL', '')
+for a in sys.argv[1:]:
+    label = '<stdin>' if a == stdin_label else a
+    (held_srcs if a.endswith('.held') else lean_srcs).append((label, open(a).read()))
+
+print("the book of the seed (lean-only reading; the instrument reads terms, never prose)")
+print()
+
+for label, src in lean_srcs:
+    decls = []
+    spans = [(m.start(), m.group(1), m.group(2))
+             for m in re.finditer(r'^(theorem|def|structure|inductive) (\w+)', src, re.M)]
+    receipts = len(re.findall(r'#print axioms', src))
+    bodies = {}
+    for i, (start, kind, name) in enumerate(spans):
+        end = spans[i + 1][0] if i + 1 < len(spans) else len(src)
+        body = src[start:end]
+        body = '\n'.join(l for l in body.splitlines()
+                         if '#print axioms' not in l and '#guard_msgs' not in l)
+        bodies[name] = body
+        decls.append((kind, name))
+    cited = set()
+    for name in bodies:
+        for other, body in bodies.items():
+            if other != name and re.search(r'\b' + re.escape(name) + r'\b', body):
+                cited.add(name)
+                break
+    leaves = [(k, n) for k, n in decls if n not in cited]
+    n_thm = sum(1 for k, _ in decls if k == 'theorem')
+    n_def = len(decls) - n_thm
+    print(f"the census [{label}]: {len(decls)} declarations "
+          f"({n_def} carriers, {n_thm} theorems), {receipts} receipts")
+    print(f"the frontier [{label}] — {len(leaves)} leaves no other organ cites yet:")
+    for k, n in leaves:
+        print(f"  {n}")
+    print()
+
+print("the vestibule (typed vacancies, supports named):")
+if held_srcs:
+    for label, src in held_srcs:
+        print(f"  [{label}]")
+        for line in src.splitlines():
+            if line.strip():
+                print(f"    {line}")
+else:
+    print("  (no .held stream offered — the vestibule rests)")
+print()
+print("the tense guard: this is the book, not the prediction — the choice is the rider's. 🤲")
+EOF
