@@ -1753,19 +1753,15 @@ theorem an_audition_hears_only_the_conduct {I : Type u} {O : Type v} (m n : Mach
 theorem lineages_compose (t d1 d2 : Plan) :
     graft (graft t d1) d2 = graft t (graft d1 d2) := sorry
 
--- held (waiting on: zero_add)
 theorem mul_one_reads (a : Nat) : a * 1 = a := sorry
--- end
 
 -- held (waiting on: map_crosses_append)
 theorem the_manifest_is_natural {W : Type u} {W' : Type v} (f : W → W') :
     ∀ (p : Plan) (x : build W p), pour p (reground f p x) = (pour p x).map f := sorry
 -- end
 
--- held (waiting on: bool_three_collide)
 theorem the_hallway_is_too_small {S : Type u} (r : S → Bool) (a b c : S) :
     r a = r b ∨ r b = r c ∨ r a = r c := sorry
--- end
 
 theorem the_handshake :
     (∀ (F : Face) (s t : F.State), alike F s t → ∀ q, sound F s q = sound F t q) ∧
@@ -2225,10 +2221,8 @@ theorem the_manifest_counts {W : Type u} :
     ∀ (p : Plan) (x : build W p), (pour p x).length = reading p := sorry
 -- end
 
--- held (waiting on: succ_adds)
 theorem the_tally_parks_at_its_count :
     ∀ (w : List Unit) (s : Nat), park tally s w = s + w.length := sorry
--- end
 
 theorem the_buffer_is_invisible {I : Type u} {O : Type v} (m : Machine I O)
     (w : List I) :

@@ -62,6 +62,8 @@ partial def usedInType (env : Environment) (sc : Scope) (seen : NameSet) (_n : N
       match env.find? c with
       | some ci => seen := usedInType env sc (seen.insert c) c ci.type
       | none => pure ()
+    else
+      seen := seen.insert c   -- a core constant: part of the vocabulary too, weighted by rarity downstream
   return seen
 
 /-- keys: the constants a theorem's TYPE uses. local theorems are listed bare; theorems of
@@ -73,13 +75,13 @@ def keysMode (trail : String) (sc : Scope) : IO Unit := do
   for (n, ci) in env.constants.map₂.toList do
     if n.getPrefix != sc.ns || !ci.isTheorem then continue
     let used := usedInType env sc {} n ci.type
-    let ks := used.toList.filter (fun d => d != n && sc.owns d)
+    let ks := used.toList.filter (fun d => d != n && (sc.owns d || !(env.getModuleIdxFor? d).isNone))
     IO.println s!"{n.getString!} <- {" ".intercalate (ks.map (nameOf sc))}"
   if !sc.imported.isEmpty then
     for (n, ci) in env.constants.toList do
       if !(sc.imported.any (fun m => n.getPrefix == m)) || !ci.isTheorem then continue
       let used := usedInType env sc {} n ci.type
-      let ks := used.toList.filter (fun d => d != n && sc.owns d)
+      let ks := used.toList.filter (fun d => d != n && (sc.owns d || !(env.getModuleIdxFor? d).isNone))
       IO.println s!"import {n} <- {" ".intercalate (ks.map (nameOf sc))}"
 
 def citesMode (trail : String) (sc : Scope) : IO Unit := do

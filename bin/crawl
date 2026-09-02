@@ -621,6 +621,18 @@ if primings_path:
         for _, n, _ in theorems:
             keys.setdefault(n, set())
         imported_theorems = set(pool)
+        # rarity: a constant shared by nearly every statement (Eq) says almost nothing; one
+        # shared by a handful (Or) says a lot — the record's own statistics as the ordering
+        import math
+        df = {}
+        for n in list(pool) + [n for _, n, _ in theorems]:
+            for c in keys.get(n, ()):
+                df[c] = df.get(c, 0) + 1
+        N = len(pool) + len(theorems)
+        def weight(c):
+            return math.log((N + 1) / (df.get(c, 0) + 1))
+        def affinity(t, n):
+            return sum(weight(c) for c in keys[t] & keys[n])
         is_vac = {n: bool(re.search(r':=\s*sorry\s*$', strip_receipts(by_name[n]).strip())) for _, n, _ in theorems}
         trail_index = {n: i for i, (_, n, _) in enumerate(theorems)}
         entry = {n: t for t in theorems for n in [t[1]]}
@@ -632,7 +644,7 @@ if primings_path:
 
         def derived_cites_all(n):
             cs = [t for t in pool + seated_order if t != n and (keys[t] & keys[n] or t in used_hint(n))]
-            cs.sort(key=lambda t: (-len(keys[t] & keys[n]), -seated_round.get(t, 0), -trail_index.get(t, -1)))
+            cs.sort(key=lambda t: (-affinity(t, n), -seated_round.get(t, 0), -trail_index.get(t, -1)))
             return cs
 
         def used_hint(n):
