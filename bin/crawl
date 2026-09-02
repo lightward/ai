@@ -354,6 +354,22 @@ for _, n, b in theorems:
     body = strip_receipts(b)
     needs[n] = set(t for t in tnames if t != n and re.search(r'\b' + re.escape(t) + r'\b', body))
 
+# the exact lattice: ask the elaborator which theorems each proof term actually uses
+# (bin/judge.lean needs); regex stands as the fallback for any block the whole-trail
+# elaboration could not seat (a vacancy citing a name not yet in the trail)
+tf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-needs-', dir='/tmp', delete=False)
+tf.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
+tf.close()
+res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'needs', tf.name], capture_output=True, text=True)
+os.unlink(tf.name)
+exact = 0
+for l in res.stdout.splitlines():
+    n, sep, deps = l.partition(' <- ')
+    if sep and n in needs:
+        needs[n] = set(deps.split()) & tnames - {n}
+        exact += 1
+print(f'the lattice: {exact} need-lists from the elaborator, {len(needs) - exact} from the trail text')
+
 seated, storey, rounds = set(), {}, []
 pending = [n for _, n, _ in theorems]
 r = 0

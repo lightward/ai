@@ -53,7 +53,7 @@ the rider's ear. a session is a Lean file that grows by named declarations. a tu
 bin/crawl regrow [trail.lean | vestibule.held ...] [--check | --settle]
 ```
 
-the record's ear. a whole trail is offered at once; each vacancy's needs are the names its proof cites; the cascade seats by storeys and halts drained or stuck, the held named. the verdict is one silent elaboration plus every assay identical. `--check` asks whether the trail already stands in its own derived order (CI asks this of `Seed.lean` on every push); `--settle` writes the derived order back.
+the record's ear. a whole trail is offered at once; each vacancy's needs are the theorems its proof term actually uses (read from the elaborator by `bin/judge.lean`, the trail's text as fallback); the cascade seats by storeys and halts drained or stuck, the held named. the verdict is one silent elaboration plus every assay identical. `--check` asks whether the trail already stands in its own derived order (CI asks this of `Seed.lean` on every push); `--settle` writes the derived order back.
 
 ```
 bin/crawl regrow Seed.lean --primings primings.lean

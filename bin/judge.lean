@@ -8,13 +8,40 @@ def elabFrom (src : String) (name : String) (st : Option Command.State) : IO Com
     | some s => pure { s with messages := {} }
     | none =>
         let env ← importModules #[{ module := `Init }] {} 0 (loadExts := true)
-        pure (Command.mkState env msgs {})
+        pure (Command.mkState env msgs (({} : Options).setBool `Elab.async false))
   let s ← IO.processCommands ictx ps cs
   return s.commandState
+
+partial def usedTopLevel (env : Environment) (ns : Name) (seen : NameSet) (n : Name) : NameSet := Id.run do
+  let some ci := env.find? n | return seen
+  let mut seen := seen
+  let consts := ci.type.getUsedConstants ++ (match ci.value? (allowOpaque := true) with | some v => v.getUsedConstants | none => #[])
+  for c in consts do
+    if seen.contains c then continue
+    if !(env.getModuleIdxFor? c).isNone then continue
+    if c.getPrefix == ns then
+      seen := seen.insert c
+    else
+      seen := usedTopLevel env ns (seen.insert c) c
+  return seen
+
+def needsMode (trail : String) : IO Unit := do
+  let st ← elabFrom (← IO.FS.readFile trail) trail none
+  let env := st.env
+  let ns := `Seed
+  for (n, ci) in env.constants.map₂.toList do
+    if n.getPrefix != ns then continue
+    if !ci.isTheorem then continue
+    let used := usedTopLevel env ns {} n
+    let deps := used.toList.filter (fun d => d != n && d.getPrefix == ns && (env.find? d).any (·.isTheorem))
+    IO.println s!"{n.getString!} <- {" ".intercalate (deps.map (·.getString!))}"
 
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
   Lean.initSearchPath (← Lean.findSysroot)
+  if args.head? == some "needs" then
+    needsMode args[1]!
+    return
   let prefixSrc ← IO.FS.readFile args[0]!
   let candSrc ← IO.FS.readFile args[1]!
   let cands := (candSrc.splitOn "\n-- candidate\n").filter (fun c => !c.trimAscii.isEmpty)
