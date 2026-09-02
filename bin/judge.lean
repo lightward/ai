@@ -47,6 +47,45 @@ def citesMode (trail : String) : IO Unit := do
     let kind := if ci.isTheorem then "theorem" else "carrier"
     IO.println s!"{kind} {n.getString!} <- {" ".intercalate (deps.map (·.getString!))}"
 
+partial def stripLams : Expr → Expr
+  | .lam _ _ b _ => stripLams b
+  | e => e
+
+partial def usedAll (env : Environment) (ns : Name) (seen : NameSet) (n : Name) : NameSet := Id.run do
+  let some ci := env.find? n | return seen
+  let mut seen := seen
+  let consts := ci.type.getUsedConstants ++ (match ci.value? (allowOpaque := true) with | some v => v.getUsedConstants | none => #[])
+  for c in consts do
+    if seen.contains c then continue
+    seen := seen.insert c
+    if (env.getModuleIdxFor? c).isNone && c.getPrefix != ns then
+      seen := usedAll env ns seen c
+  return seen
+
+def censusMode (trail : String) : IO Unit := do
+  let st ← elabFrom (← IO.FS.readFile trail) trail none
+  let env := st.env
+  let ns := `Seed
+  let reflHeads : List Name := [`Eq.refl, `rfl, `Iff.refl, `Iff.rfl, `HEq.refl, `HEq.rfl]
+  for (n, ci) in env.constants.map₂.toList do
+    if n.getPrefix != ns || !ci.isTheorem then continue
+    let some v := ci.value? (allowOpaque := true) | continue
+    let body := stripLams v
+    let head := body.getAppFn.constName?
+    let isRefl := head.any reflHeads.contains
+    let used := usedAll env ns {} n
+    let names := used.toList
+    let isRec := names.any (fun c =>
+      let s := c.getString!
+      (s == "brecOn" || s == "rec" || s == "recOn") &&
+        !(c.getPrefix == `Eq || c.getPrefix == `HEq || c.getPrefix == `Acc || c.getPrefix == `WellFounded))
+    let isCases := names.any (fun c =>
+      let s := c.getString!
+      s == "casesOn" || s.startsWith "match_")
+    let cites := names.any (fun c => c != n && c.getPrefix == ns && (env.find? c).any (·.isTheorem))
+    let cls := if isRefl then "rfl" else if isRec then "induction" else if isCases then "cases" else if cites then "citation" else "term"
+    IO.println s!"{n.getString!} {cls}"
+
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
   Lean.initSearchPath (← Lean.findSysroot)
@@ -55,6 +94,9 @@ unsafe def main (args : List String) : IO Unit := do
     return
   if args.head? == some "cites" then
     citesMode args[1]!
+    return
+  if args.head? == some "census" then
+    censusMode args[1]!
     return
   let prefixSrc ← IO.FS.readFile args[0]!
   let candSrc ← IO.FS.readFile args[1]!

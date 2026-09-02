@@ -516,6 +516,23 @@ if primings_path:
     total = len(theorems)
     print(f'the bodies: {total - len(carried)} of {total} regrown from {len(primings)} primings — '
           + ', '.join(f'{nm} {c}' for nm, c in tally.items()))
+    # the ceiling: the kernel's own census of the trail's proof shapes (bin/judge.lean census),
+    # so the yield reads against what the three moves could reach at all
+    cf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-census-', dir='/tmp', delete=False)
+    cf.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
+    cf.close()
+    res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'census', cf.name], capture_output=True, text=True)
+    os.unlink(cf.name)
+    cls = dict(l.split() for l in res.stdout.splitlines() if len(l.split()) == 2)
+    if cls:
+        carried_set = set(carried)
+        row = []
+        for c in ['rfl', 'citation', 'induction', 'term', 'cases']:
+            names = [n for n, k in cls.items() if k == c]
+            row.append(f'{c} {sum(1 for n in names if n not in carried_set)}/{len(names)}')
+        reach = [n for n, k in cls.items() if k in ('rfl', 'citation', 'induction')]
+        print(f'the ceiling (the kernel census of proof shapes; seated/class): ' + ', '.join(row))
+        print(f'the three moves reach {len(reach)} of {total} by shape; regrown {sum(1 for n in reach if n not in carried_set)} of those')
     print(f'the remainder: {len(carried)} carried from the trail (the genuine trail; named in {held_path})')
     with open(held_path, 'w') as f:
         for n in carried:

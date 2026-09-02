@@ -1,4 +1,4 @@
--- this is a copy of schema.sql as it existed as of `caf25e2` aka `foamcore~1`. the Lean references
+ishe-- this is a copy of schema.sql as it existed as of `caf25e2` aka `foamcore~1`. the Lean references
 -- apply to *that* tree, probably not to HEAD as of whatever ref you're reading right now. :) it's
 -- here as a sort a hmmm a tuning fork, maybe
 
