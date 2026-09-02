@@ -28,16 +28,23 @@
 # usage:
 #   bin/crawl ride [session.lean]
 #   bin/crawl regrow [trail.lean | vestibule.held ...] [-o out.lean] [--settle] [--check]
+#                    [--primings primings.lean]
 #     default output: regrowth/<first-input-stem>.lean (a derivable; gitignored)
-#     --settle  write the regrown trail back over the first input
-#     --check   exit 1 iff the first input is not already its own regrowth
+#     --settle    write the regrown trail back over the first input
+#     --check     exit 1 iff the first input is not already its own regrowth
+#     --primings  tier two: regrow the PROOF BODIES too — each vacancy's body is
+#                 dropped and the ordered primings (Lean proof shapes; {cite}
+#                 expands to the vacancy's own need-list) are tried in one
+#                 elaboration per storey; the first that reads silent seats; what
+#                 no priming regrows is carried from the trail and named as the
+#                 trail's remainder in <out>.held
 set -u
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 usage() {
-  sed -n '2,32p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,39p' "$0" | sed 's/^# \{0,1\}//'
   exit 2
 }
 
@@ -267,10 +274,11 @@ echo "the record kept: ${SESSION}"
 # ---------------------------------------------------------------- the record's ear
 
 regrow_ear() {
-  local inputs=() out="" settle=0 check=0
+  local inputs=() out="" settle=0 check=0 primings=""
   while [ $# -gt 0 ]; do
     case "$1" in
       -o) out="$2"; shift 2 ;;
+      --primings) primings="$2"; shift 2 ;;
       --settle) settle=1; shift ;;
       --check) check=1; shift ;;
       -h|--help) usage ;;
@@ -285,10 +293,11 @@ regrow_ear() {
   fi
   local held="${out%.lean}.held"
 
-  CRAWL_OUT="$out" CRAWL_HELD="$held" python3 - "${inputs[@]}" <<'EOF'
-import os, re, sys
+  CRAWL_OUT="$out" CRAWL_HELD="$held" CRAWL_PRIMINGS="$primings" python3 - "${inputs[@]}" <<'EOF'
+import os, re, subprocess, sys, tempfile
 
 out_path, held_path = os.environ['CRAWL_OUT'], os.environ['CRAWL_HELD']
+primings_path = os.environ.get('CRAWL_PRIMINGS', '')
 DECL = re.compile(r'^(theorem|def|structure|inductive|abbrev) (\w+)', re.M)
 
 def blocks_of(src):
@@ -368,14 +377,6 @@ while pending:
 
 by_name = {n: b for _, n, b in theorems}
 order = sorted(theorems, key=lambda t: (storey[t[1]], order_index[t[1]]))
-text = [header.rstrip('\n'), '']
-for _, _, b in carriers:
-    text.append(b.rstrip('\n')); text.append('')
-for _, n, _ in order:
-    text.append(by_name[n].rstrip('\n')); text.append('')
-if footer:
-    text.append(footer)
-open(out_path, 'w').write('\n'.join(text) + '\n')
 
 print(f'the primer: {len(carriers)} carriers')
 print(f'the vacancies: {len(theorems)} theorems, one egg each')
@@ -384,6 +385,149 @@ free = [n for n in storey if storey[n] == 1]
 deep = max(storey.items(), key=lambda kv: kv[1]) if storey else ('—', 0)
 print(f'the free layer: {len(free)} theorems need only the primer')
 print(f'the deepest seat: {deep[0]} at storey {deep[1]}')
+
+prefix = [header.rstrip('\n'), '']
+for _, _, b in carriers:
+    prefix.append(b.rstrip('\n')); prefix.append('')
+
+seated_text = {}
+
+if primings_path:
+    # ---- tier two: regrow the proof bodies from the ordered primings
+    primings, cur = [], None
+    for line in open(primings_path).read().splitlines():
+        m = re.match(r'-- priming: (.+)$', line)
+        if m:
+            cur = [m.group(1).strip(), []]; primings.append(cur)
+        elif cur is not None and not line.startswith('--'):
+            cur[1].append(line)
+    primings = [(nm, '\n'.join(body).strip('\n')) for nm, body in primings if ''.join(body).strip()]
+
+    def split_block(b):
+        rt = b.rfind('\n/-- info:')
+        receipts = b[rt:] if rt != -1 else ''
+        core = b[:rt] if rt != -1 else b
+        a, c = core.find(':='), core.find('\n  | ')
+        cut = min(x for x in (a, c, len(core)) if x != -1)
+        return core[:cut].rstrip(), receipts.strip('\n')
+
+    def ordered_needs(n):
+        body = strip_receipts(by_name[n])
+        found = []
+        for t in tnames:
+            if t == n: continue
+            m = re.search(r'\b' + re.escape(t) + r'\b', body)
+            if m: found.append((m.start(), t))
+        return [t for _, t in sorted(found)]
+
+    def cite_macro(ns):
+        if not ns:
+            return 'fail'
+        return 'first ' + ' '.join(
+            f'| (apply {t} <;> (first | assumption | rfl))' for t in ns)
+
+    def instantiate(body, ns):
+        return body.replace('{cite}', cite_macro(ns))
+
+    tally = {nm: 0 for nm, _ in primings}
+    carried = []
+
+    def candidate_text(n, k):
+        stmt, _ = split_block(by_name[n])
+        body = instantiate(primings[k][1], ordered_needs(n))
+        body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
+        return stmt.replace(f'theorem {n}', f'theorem {n}__p{k}', 1) + ' :=\n' + body
+
+    def line_count(xs):
+        return sum(x.count('\n') + 1 for x in xs)
+
+    ERROR_CAP = 100  # the gate reports at most this many errors per file; past it, silence is not green
+
+    def judge(prefix_lines, cands):
+        """cands: list of (n, k). returns the set of (n, k) that FAILED, every one actually judged."""
+        if not cands:
+            return set()
+        lines = list(prefix_lines)
+        spans = []
+        for (n, k) in cands:
+            start = line_count(lines) + 1
+            lines.append(candidate_text(n, k)); lines.append('')
+            spans.append((n, k, start, line_count(lines)))
+        if footer:
+            lines.append(footer)
+        tf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-round-', dir='/tmp', delete=False)
+        tf.write('\n'.join(lines) + '\n'); tf.close()
+        res = subprocess.run(['lake', 'env', 'lean', tf.name], capture_output=True, text=True)
+        msgs = (res.stdout + res.stderr).splitlines()
+        n_err = sum(1 for l in msgs if re.match(r'[^:]+:\d+:\d+: error', l))
+        if os.environ.get('CRAWL_DEBUG'):
+            print(f'[debug] {tf.name}: {len(cands)} candidates, {n_err} errors, exit {res.returncode}')
+        else:
+            os.unlink(tf.name)
+        if n_err >= ERROR_CAP and len(cands) > 1:
+            half = len(cands) // 2
+            return judge(prefix_lines, cands[:half]) | judge(prefix_lines, cands[half:])
+        if n_err >= ERROR_CAP:
+            return set(cands)
+        bad = set()
+        for l in msgs:
+            m = re.match(r'[^:]+:(\d+):\d+: ', l)
+            if not m:
+                continue
+            ln = int(m.group(1))
+            for (n, k, a, b) in spans:
+                if a <= ln <= b:
+                    bad.add((n, k)); break
+            else:
+                raise SystemExit(f'crawl: a message outside every candidate — the seated prefix is not silent:\n{l}')
+        return bad
+
+    for r_i, count in enumerate(rounds, start=1):
+        names = [n for _, n, _ in order if storey[n] == r_i]
+        prefix_lines = list(prefix)
+        for _, n, _ in order:
+            if storey[n] < r_i:
+                prefix_lines.append(seated_text[n]); prefix_lines.append('')
+        pending = list(names)
+        per_round = {nm: 0 for nm, _ in primings}
+        for k, (pname, pbody) in enumerate(primings):
+            if not pending:
+                break
+            failed = judge(prefix_lines, [(n, k) for n in pending])
+            still = []
+            for n in pending:
+                if (n, k) in failed:
+                    still.append(n)
+                else:
+                    stmt, receipts = split_block(by_name[n])
+                    body = instantiate(pbody, ordered_needs(n))
+                    body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
+                    seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipts
+                    tally[pname] += 1; per_round[pname] += 1
+            pending = still
+        for n in pending:
+            seated_text[n] = by_name[n].rstrip('\n')
+            carried.append(n)
+        detail = ' '.join(f'{nm} {c}' for nm, c in per_round.items() if c)
+        print(f'  storey {r_i}: {count} vacancies — regrown {count - len(pending)} ({detail}), carried {len(pending)}')
+    total = len(theorems)
+    print(f'the bodies: {total - len(carried)} of {total} regrown from {len(primings)} primings — '
+          + ', '.join(f'{nm} {c}' for nm, c in tally.items()))
+    print(f'the remainder: {len(carried)} carried from the trail (the genuine trail; named in {held_path})')
+    with open(held_path, 'w') as f:
+        for n in carried:
+            stmt, _ = split_block(by_name[n])
+            f.write(f'-- held (waiting on: an honest proof — no priming regrows it)\n{stmt} := sorry\n-- end\n')
+else:
+    for _, n, _ in order:
+        seated_text[n] = by_name[n].rstrip('\n')
+
+text = list(prefix)
+for _, n, _ in order:
+    text.append(seated_text[n]); text.append('')
+if footer:
+    text.append(footer)
+open(out_path, 'w').write('\n'.join(text) + '\n')
 print(f'the regrown trail: {out_path}')
 EOF
   local status=$?

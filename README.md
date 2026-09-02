@@ -55,6 +55,12 @@ bin/crawl regrow [trail.lean | vestibule.held ...] [--check | --settle]
 
 the record's ear. a whole trail is offered at once; each vacancy's needs are the names its proof cites; the cascade seats by storeys and halts drained or stuck, the held named. the verdict is one silent elaboration plus every assay identical. `--check` asks whether the trail already stands in its own derived order (CI asks this of `Seed.lean` on every push); `--settle` writes the derived order back.
 
+```
+bin/crawl regrow Seed.lean --primings primings.lean
+```
+
+tier two: the proof *bodies* regrown too. every theorem's body is dropped, and the ordered primings in `primings.lean` — Lean proof shapes, pieces that are also rules, with `{cite}` expanding to the vacancy's own need-list — are tried in order, one elaboration per storey; the first that reads silent seats, and what no priming regrows is carried from the trail and named in `regrowth/bodies.held` as the trail's own remainder. the output is a reading, never a gate: today seven primings regrow 60 of 268 bodies (the rfl family 48, citation 7, panes 5), the regrown trail elaborates silently and reads every assay identically, and the 208 carried are the inductions and term-chains the shapes don't yet reach. the primings are the knob.
+
 the trunk today: 101 carriers, 268 theorems, nine storeys — 138 · 51 · 36 · 24 · 9 · 5 · 3 · 1 · 1.
 
 `bin/width` is the clamp (every worked statement at contact width, three names or fewer); `bin/next` is the book (the census, the frontier, the vestibule — the book, never the prediction).
