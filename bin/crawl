@@ -27,6 +27,14 @@
 #
 # usage:
 #   bin/crawl ride [session.lean]
+#   bin/crawl grow [Germ.lean] [-o Seed.lean] [--settle] [--check]
+#     the build: the record's ear over the GERM with primings.lean — every `:= sorry`
+#     vacancy MUST regrow (red otherwise), hand bodies regrow where a priming reaches
+#     and carry where none does; the artifact (Seed.lean) is derived, never committed.
+#     --settle  rewrite the germ minimal: derived order, every regrowable hand body
+#               replaced by `sorry` (a stored derivable is drift)
+#     --check   red iff the germ is not already its own settle
+#     the reading: the germ in bytes, and the bytes a settle would shed
 #   bin/crawl regrow [trail.lean | vestibule.held ...] [-o out.lean] [--settle] [--check]
 #                    [--primings primings.lean]
 #     default output: regrowth/<first-input-stem>.lean (a derivable; gitignored)
@@ -44,7 +52,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 usage() {
-  sed -n '2,39p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,47p' "$0" | sed 's/^# \{0,1\}//'
   exit 2
 }
 
@@ -285,20 +293,31 @@ regrow_ear() {
       *) inputs+=("$1"); shift ;;
     esac
   done
-  [ ${#inputs[@]} -gt 0 ] || inputs=(Seed.lean)
+  if [ ${#inputs[@]} -eq 0 ]; then
+    if [ -n "${CRAWL_GERM:-}" ]; then inputs=(Germ.lean); else inputs=(Seed.lean); fi
+  fi
   local first="${inputs[0]}"
   if [ -z "$out" ]; then
-    if [ "$settle" = 1 ]; then out="$first"
+    if [ -n "${CRAWL_GERM:-}" ]; then out="Seed.lean"
+    elif [ "$settle" = 1 ]; then out="$first"
     else mkdir -p regrowth; out="regrowth/$(basename "${first%.*}").lean"; fi
   fi
   local held="${out%.lean}.held"
+  if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p regrowth; held="regrowth/$(basename "${out%.lean}").held"; fi
 
-  CRAWL_OUT="$out" CRAWL_HELD="$held" CRAWL_PRIMINGS="$primings" python3 - "${inputs[@]}" <<'EOF'
+  CRAWL_OUT="$out" CRAWL_HELD="$held" CRAWL_PRIMINGS="$primings" CRAWL_SETTLE="$settle" CRAWL_CHECK="$check" python3 - "${inputs[@]}" <<'EOF'
 import os, re, subprocess, sys, tempfile
 
 out_path, held_path = os.environ['CRAWL_OUT'], os.environ['CRAWL_HELD']
 primings_path = os.environ.get('CRAWL_PRIMINGS', '')
+germ_mode = bool(os.environ.get('CRAWL_GERM'))
+settle_mode = os.environ.get('CRAWL_SETTLE') == '1'
+check_mode = os.environ.get('CRAWL_CHECK') == '1'
+germ_path = sys.argv[1]
 DECL = re.compile(r'^(theorem|def|structure|inductive|abbrev) (\w+)', re.M)
+
+MARKER = re.compile(r'^-- held \(waiting on: ([^)]*)\)\n', re.M)
+marker_needs = {}
 
 def blocks_of(src):
     spans = [(m.start(), m.group(1), m.group(2)) for m in DECL.finditer(src)]
@@ -311,8 +330,20 @@ def blocks_of(src):
     out = []
     for i, (start, kind, name) in enumerate(spans):
         end = spans[i + 1][0] if i + 1 < len(spans) else body_end
-        out.append((kind, name, src[start:end]))
-    return header, out, footer
+        out.append([kind, name, src[start:end]])
+    # a vacancy's marker sits at the tail of the block before it; peel it onto its own block
+    for i in range(len(out) - 1):
+        ms = list(MARKER.finditer(out[i][2]))
+        if ms and ms[-1].end() >= len(out[i][2].rstrip('\n')):
+            marker_needs[out[i + 1][1]] = ms[-1].group(1).split()
+            out[i][2] = out[i][2][:ms[-1].start()]
+    ms = list(MARKER.finditer(header))
+    if out and ms and ms[-1].end() >= len(header.rstrip('\n')):
+        marker_needs[out[0][1]] = ms[-1].group(1).split()
+        header = header[:ms[-1].start()]
+    for b in out:
+        b[2] = re.sub(r'^-- end\n', '', b[2], flags=re.M)
+    return header, [tuple(b) for b in out], footer
 
 def blocks_of_held(src):
     out, block, inblock = [], [], False
@@ -359,6 +390,7 @@ needs = {}
 for _, n, b in theorems:
     body = strip_receipts(b)
     needs[n] = set(t for t in tnames if t != n and re.search(r'\b' + re.escape(t) + r'\b', body))
+    needs[n] |= set(marker_needs.get(n, [])) & tnames
 
 # the exact lattice: ask the elaborator which theorems each proof term actually uses
 # (bin/judge.lean needs); regex stands as the fallback for any block the whole-trail
@@ -372,7 +404,7 @@ exact = 0
 for l in res.stdout.splitlines():
     n, sep, deps = l.partition(' <- ')
     if sep and n in needs:
-        needs[n] = set(deps.split()) & tnames - {n}
+        needs[n] = (set(deps.split()) & tnames - {n}) | (set(marker_needs.get(n, [])) & tnames)
         exact += 1
 print(f'the lattice: {exact} need-lists from the elaborator, {len(needs) - exact} from the trail text')
 
@@ -437,6 +469,8 @@ if primings_path:
         return core[:cut].rstrip(), receipts.strip('\n')
 
     def ordered_needs(n):
+        if n in marker_needs:
+            return [t for t in marker_needs[n] if t in tnames and t != n]
         body = strip_receipts(by_name[n])
         found = []
         for t in tnames:
@@ -553,14 +587,55 @@ if primings_path:
                 tally[pname] += 1; per_round[pname] += 1
         detail = ' '.join(f'{nm} {c}' for nm, c in per_round.items() if c)
         print(f'  storey {r_i}: {count} vacancies — regrown {count - len(pending)} ({detail}), carried {len(pending)}')
+        if germ_mode:
+            dead = [n for n in pending if re.search(r':=\s*sorry\s*$', strip_receipts(by_name[n]).strip())]
+            if dead:
+                print(f'GROW REFUSED at storey {r_i}: {len(dead)} vacancies no priming regrows — the germ names them:')
+                for n in dead: print(f'  {n} (waiting on: {" ".join(ordered_needs(n)) or "—"})')
+                sys.exit(1)
     total = len(theorems)
     print(f'the bodies: {total - len(carried)} of {total} regrown from {len(primings)} primings — '
           + ', '.join(f'{nm} {c}' for nm, c in tally.items()))
+    if germ_mode:
+        def is_vacancy(n):
+            _, receipts = split_block(by_name[n])
+            core = by_name[n][:by_name[n].rfind('\n/-- info:')] if receipts else by_name[n]
+            return re.search(r':=\s*sorry\s*$', core.strip()) is not None
+        vacancies = [n for _, n, _ in theorems if is_vacancy(n)]
+        regrowable_hand = [n for _, n, _ in theorems if not is_vacancy(n) and n not in carried]
+        def vacancy_text(n):
+            stmt, receipts = split_block(by_name[n])
+            waits = ' '.join(ordered_needs(n))
+            return f'-- held (waiting on: {waits})\n{stmt} := sorry\n-- end\n\n{receipts}'
+        germ_text = list(prefix)
+        for _, n, _ in order:
+            germ_text.append(by_name[n].rstrip('\n') if n in carried else vacancy_text(n))
+            germ_text.append('')
+        if footer:
+            germ_text.append(footer)
+        settled = '\n'.join(germ_text) + '\n'
+        current = open(germ_path).read()
+        germ_bytes, settled_bytes = len(current.encode()), len(settled.encode())
+        print(f'the germ: {germ_bytes} bytes — {len(vacancies)} vacancies, {len(carried)} hand bodies, '
+              f'{len(regrowable_hand)} hand bodies now regrowable; settled the germ reads {settled_bytes} bytes')
+        if settle_mode:
+            open(germ_path, 'w').write(settled)
+            print(f'the germ settled: {settled_bytes} bytes ({germ_bytes - settled_bytes} shed) -> {germ_path}')
+        elif check_mode:
+            if settled != current:
+                print(f'the germ is not its own settle: {germ_path} differs from its settle by '
+                      f'{abs(germ_bytes - settled_bytes)} bytes (bin/crawl grow --settle)')
+                sys.exit(1)
+            print(f'the germ is its own settle: {germ_path} stands minimal and in derived order')
     # the ceiling: the kernel's own census of the trail's proof shapes (bin/judge.lean census),
     # so the yield reads against what the three moves could reach at all
+    grown = list(prefix)
+    for _, n, _ in order:
+        grown.append(seated_text[n]); grown.append('')
+    if footer:
+        grown.append(footer)
     cf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-census-', dir='/tmp', delete=False)
-    cf.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
-    cf.close()
+    cf.write('\n'.join(grown) + '\n'); cf.close()
     res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'census', cf.name], capture_output=True, text=True)
     os.unlink(cf.name)
     cls = dict(l.split() for l in res.stdout.splitlines() if len(l.split()) == 2)
@@ -571,8 +646,8 @@ if primings_path:
             names = [n for n, k in cls.items() if k == c]
             row.append(f'{c} {sum(1 for n in names if n not in carried_set)}/{len(names)}')
         reach = [n for n, k in cls.items() if k in ('rfl', 'citation', 'induction')]
-        print(f'the ceiling (the kernel census of proof shapes; seated/class): ' + ', '.join(row))
-        print(f'the three moves reach {len(reach)} of {total} by shape; regrown {sum(1 for n in reach if n not in carried_set)} of those')
+        print(f'the grown trail\'s shapes (kernel census; regrown/class): ' + ', '.join(row))
+        print(f'the three moves account for {len(reach)} of {total} bodies in the grown trail; {sum(1 for n in reach if n not in carried_set)} of them regrown from primings')
     print(f'the remainder: {len(carried)} carried from the trail (the genuine trail; named in {held_path})')
     with open(held_path, 'w') as f:
         for n in carried:
@@ -593,7 +668,7 @@ EOF
   local status=$?
   [ $status -eq 0 ] || exit $status
 
-  if [ "$check" = 1 ]; then
+  if [ "$check" = 1 ] && [ -z "${CRAWL_GERM:-}" ]; then
     if cmp -s "$first" "$out"; then
       echo "the trunk is its own regrowth: ${first} already stands in derived order"
     else
@@ -629,5 +704,6 @@ EOF
 case "${1:-}" in
   ride) shift; ride_ear "$@" ;;
   regrow) shift; regrow_ear "$@" ;;
+  grow) shift; CRAWL_GERM=1 regrow_ear --primings primings.lean "$@" ;;
   *) usage ;;
 esac

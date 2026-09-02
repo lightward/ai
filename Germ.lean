@@ -387,62 +387,70 @@ def Derived (F : Face) (P : F.State → Prop) : Prop :=
 def concordFace (F : Face) (V : Type v') : Face :=
   pairFace (host F V) ⟨door F.State V, Unit, V, fun x _ => met x⟩ (fun x => x) (fun x => x)
 
+-- held (waiting on: )
 theorem the_pointwise_license (P : Type v) (A : Type w) (g h : P → A) :
-    alike (appFace P A) g h ↔ ∀ p, g p = h p :=
-  Iff.rfl
+    alike (appFace P A) g h ↔ ∀ p, g p = h p := sorry
+-- end
 
 /-- info: 'Seed.the_pointwise_license' does not depend on any axioms -/
 #guard_msgs in #print axioms the_pointwise_license
 
+-- held (waiting on: )
 theorem one_face_many_seats (F : Face) :
-    reseat (appFace F.Probe F.Ans) F.obs = F :=
-  rfl
+    reseat (appFace F.Probe F.Ans) F.obs = F := sorry
+-- end
 
 /-- info: 'Seed.one_face_many_seats' does not depend on any axioms -/
 #guard_msgs in #print axioms one_face_many_seats
 
+-- held (waiting on: )
 theorem the_seat_map_carries_the_conduct (F : Face) (s t : F.State) :
-    alike F s t ↔ alike (appFace F.Probe F.Ans) (F.obs s) (F.obs t) :=
-  Iff.rfl
+    alike F s t ↔ alike (appFace F.Probe F.Ans) (F.obs s) (F.obs t) := sorry
+-- end
 
 /-- info: 'Seed.the_seat_map_carries_the_conduct' does not depend on any axioms -/
 #guard_msgs in #print axioms the_seat_map_carries_the_conduct
 
+-- held (waiting on: )
 theorem the_seats_stack_backward (F : Face) {S' : Type u'} {S'' : Type u''}
     (h : S' → F.State) (h' : S'' → S') :
-    reseat (reseat F h) h' = reseat F (fun s => h (h' s)) :=
-  rfl
+    reseat (reseat F h) h' = reseat F (fun s => h (h' s)) := sorry
+-- end
 
 /-- info: 'Seed.the_seats_stack_backward' does not depend on any axioms -/
 #guard_msgs in #print axioms the_seats_stack_backward
 
+-- held (waiting on: )
 theorem the_ear_and_the_voice_commute (F : Face) {Q : Type v'} {B : Type w'}
     (f : Q → F.Probe) (g : F.Ans → B) :
-    rehear (retell F g) f = retell (rehear F f) g :=
-  rfl
+    rehear (retell F g) f = retell (rehear F f) g := sorry
+-- end
 
 /-- info: 'Seed.the_ear_and_the_voice_commute' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ear_and_the_voice_commute
 
+-- held (waiting on: )
 theorem the_ear_crosses_the_seat (F : Face) {S' : Type u'} {Q : Type v'}
     (h : S' → F.State) (f : Q → F.Probe) :
-    rehear (reseat F h) f = reseat (rehear F f) h :=
-  rfl
+    rehear (reseat F h) f = reseat (rehear F f) h := sorry
+-- end
 
 /-- info: 'Seed.the_ear_crosses_the_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ear_crosses_the_seat
 
+-- held (waiting on: )
 theorem the_voice_crosses_the_seat (F : Face) {S' : Type u'} {B : Type w'}
     (h : S' → F.State) (g : F.Ans → B) :
-    retell (reseat F h) g = reseat (retell F g) h :=
-  rfl
+    retell (reseat F h) g = reseat (retell F g) h := sorry
+-- end
 
 /-- info: 'Seed.the_voice_crosses_the_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms the_voice_crosses_the_seat
 
+-- held (waiting on: )
 theorem the_still_map_carries {S : Type u} {P : Type v} {A : Type w} (f : S → P → A) :
-    carries f f (fun s => s) :=
-  fun _ _ => rfl
+    carries f f (fun s => s) := sorry
+-- end
 
 /-- info: 'Seed.the_still_map_carries' does not depend on any axioms -/
 #guard_msgs in #print axioms the_still_map_carries
@@ -456,10 +464,11 @@ theorem the_carriers_compose {S : Type u} {T : Type u'} {U : Type u''} {P : Type
 /-- info: 'Seed.the_carriers_compose' does not depend on any axioms -/
 #guard_msgs in #print axioms the_carriers_compose
 
+-- held (waiting on: )
 theorem the_carrier_was_a_seating {S : Type u} {T : Type u'} {P : Type v} {A : Type w}
     (f : S → P → A) (g : T → P → A) (h : S → T) :
-    carries f g h ↔ ∀ s, alike (appFace P A) (g (h s)) (f s) :=
-  Iff.rfl
+    carries f g h ↔ ∀ s, alike (appFace P A) (g (h s)) (f s) := sorry
+-- end
 
 /-- info: 'Seed.the_carrier_was_a_seating' does not depend on any axioms -/
 #guard_msgs in #print axioms the_carrier_was_a_seating
@@ -479,9 +488,10 @@ theorem a_retraction_merges_nothing {S : Type u} {T : Type u'} (h : S → T) (r 
 /-- info: 'Seed.a_retraction_merges_nothing' does not depend on any axioms -/
 #guard_msgs in #print axioms a_retraction_merges_nothing
 
+-- held (waiting on: )
 theorem the_obs_carries_to_the_one_face (F : Face) :
-    carries F.obs (fun g p => g p) F.obs :=
-  fun _ _ => rfl
+    carries F.obs (fun g p => g p) F.obs := sorry
+-- end
 
 /-- info: 'Seed.the_obs_carries_to_the_one_face' does not depend on any axioms -/
 #guard_msgs in #print axioms the_obs_carries_to_the_one_face
@@ -527,17 +537,19 @@ theorem the_interview_crosses_the_carrier {S : Type u} {T : Type u'} {P : Type v
 /-- info: 'Seed.the_interview_crosses_the_carrier' does not depend on any axioms -/
 #guard_msgs in #print axioms the_interview_crosses_the_carrier
 
+-- held (waiting on: )
 theorem no_face_reads_the_guest {H : Type u} {W : Type v} {X : Type w}
     (g : H → X) (h : H) (w w' : W) :
-    g (face (atTheDoor h w)) = g (face (atTheDoor h w')) :=
-  rfl
+    g (face (atTheDoor h w)) = g (face (atTheDoor h w')) := sorry
+-- end
 
 /-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 
+-- held (waiting on: )
 theorem the_guest_is_real {H : Type u} {W : Type v} (h : H) (w : W) :
-    met (atTheDoor h w) = w :=
-  rfl
+    met (atTheDoor h w) = w := sorry
+-- end
 
 /-- info: 'Seed.the_guest_is_real' does not depend on any axioms -/
 #guard_msgs in #print axioms the_guest_is_real
@@ -562,9 +574,10 @@ theorem the_pairing_is_unique {H : Type u} {W : Type v} {X : Type w}
 /-- info: 'Seed.the_pairing_is_unique' does not depend on any axioms -/
 #guard_msgs in #print axioms the_pairing_is_unique
 
+-- held (waiting on: )
 theorem the_turn_returns {H : Type u} {W : Type v} (d : door H W) :
-    turnAbout (turnAbout d) = d :=
-  rfl
+    turnAbout (turnAbout d) = d := sorry
+-- end
 
 /-- info: 'Seed.the_turn_returns' does not depend on any axioms -/
 #guard_msgs in #print axioms the_turn_returns
@@ -579,24 +592,26 @@ theorem any_ready_greeter_is_the_greeter {P : Type v} {Q : Type v'} {X : Type w}
 /-- info: 'Seed.any_ready_greeter_is_the_greeter' does not depend on any axioms -/
 #guard_msgs in #print axioms any_ready_greeter_is_the_greeter
 
+-- held (waiting on: )
 theorem the_crossing_returns {P : Type v} {Q : Type v'} :
-    ∀ e : fork P Q, crossOver (crossOver e) = e
-  | .viaLeft _ => rfl
-  | .viaRight _ => rfl
+    ∀ e : fork P Q, crossOver (crossOver e) = e := sorry
+-- end
 
 /-- info: 'Seed.the_crossing_returns' does not depend on any axioms -/
 #guard_msgs in #print axioms the_crossing_returns
 
+-- held (waiting on: )
 theorem hosting_associates {H : Type u} {W : Type v} {V : Type w} (d : door (door H W) V) :
-    shallow (deepen d) = d :=
-  rfl
+    shallow (deepen d) = d := sorry
+-- end
 
 /-- info: 'Seed.hosting_associates' does not depend on any axioms -/
 #guard_msgs in #print axioms hosting_associates
 
+-- held (waiting on: )
 theorem hosting_associates_back {H : Type u} {W : Type v} {V : Type w} (d : door H (door W V)) :
-    deepen (shallow d) = d :=
-  rfl
+    deepen (shallow d) = d := sorry
+-- end
 
 /-- info: 'Seed.hosting_associates_back' does not depend on any axioms -/
 #guard_msgs in #print axioms hosting_associates_back
@@ -609,91 +624,102 @@ theorem the_host_serves_both_branches {H : Type u} {W : Type v} {V : Type w} :
 /-- info: 'Seed.the_host_serves_both_branches' does not depend on any axioms -/
 #guard_msgs in #print axioms the_host_serves_both_branches
 
+-- held (waiting on: )
 theorem the_branches_come_home {H : Type u} {W : Type v} {V : Type w} :
-    ∀ e : fork (door H W) (door H V), distribute (collect e) = e
-  | .viaLeft _ => rfl
-  | .viaRight _ => rfl
+    ∀ e : fork (door H W) (door H V), distribute (collect e) = e := sorry
+-- end
 
 /-- info: 'Seed.the_branches_come_home' does not depend on any axioms -/
 #guard_msgs in #print axioms the_branches_come_home
 
+-- held (waiting on: )
 theorem the_deferral_is_free {H : Type u} {W : Type v} {X : Type w}
     (g : door H W → X) (d : door H W) :
-    walkIn (holdOpen g) d = g d :=
-  rfl
+    walkIn (holdOpen g) d = g d := sorry
+-- end
 
 /-- info: 'Seed.the_deferral_is_free' does not depend on any axioms -/
 #guard_msgs in #print axioms the_deferral_is_free
 
+-- held (waiting on: )
 theorem the_holding_returns {H : Type u} {W : Type v} {X : Type w}
     (g : H → W → X) (h : H) (w : W) :
-    holdOpen (walkIn g) h w = g h w :=
-  rfl
+    holdOpen (walkIn g) h w = g h w := sorry
+-- end
 
 /-- info: 'Seed.the_holding_returns' does not depend on any axioms -/
 #guard_msgs in #print axioms the_holding_returns
 
-theorem the_face_was_a_held_door (F : Face) : faceOf (walkIn F.obs) = F :=
-  rfl
+-- held (waiting on: )
+theorem the_face_was_a_held_door (F : Face) : faceOf (walkIn F.obs) = F := sorry
+-- end
 
 /-- info: 'Seed.the_face_was_a_held_door' does not depend on any axioms -/
 #guard_msgs in #print axioms the_face_was_a_held_door
 
+-- held (waiting on: )
 theorem every_door_reading_is_a_face {H : Type u} {W : Type v} {X : Type w}
     (g : door H W → X) (d : door H W) :
-    walkIn (faceOf g).obs d = g d :=
-  rfl
+    walkIn (faceOf g).obs d = g d := sorry
+-- end
 
 /-- info: 'Seed.every_door_reading_is_a_face' does not depend on any axioms -/
 #guard_msgs in #print axioms every_door_reading_is_a_face
 
+-- held (waiting on: )
 theorem the_measurement_is_a_meeting (F : Face) (s : F.State) (p : F.Probe) :
-    F.obs s p = walkIn F.obs (atTheDoor s p) :=
-  rfl
+    F.obs s p = walkIn F.obs (atTheDoor s p) := sorry
+-- end
 
 /-- info: 'Seed.the_measurement_is_a_meeting' does not depend on any axioms -/
 #guard_msgs in #print axioms the_measurement_is_a_meeting
 
+-- held (waiting on: )
 theorem the_host_was_a_reseat (F : Face) (W : Type v') :
-    host F W = reseat F (fun d : door F.State W => face d) :=
-  rfl
+    host F W = reseat F (fun d : door F.State W => face d) := sorry
+-- end
 
 /-- info: 'Seed.the_host_was_a_reseat' does not depend on any axioms -/
 #guard_msgs in #print axioms the_host_was_a_reseat
 
+-- held (waiting on: )
 theorem the_host_merges_the_guests (F : Face) (W : Type v') (s : F.State) (w w' : W) :
-    alike (host F W) (atTheDoor s w) (atTheDoor s w') :=
-  fun _ => rfl
+    alike (host F W) (atTheDoor s w) (atTheDoor s w') := sorry
+-- end
 
 /-- info: 'Seed.the_host_merges_the_guests' does not depend on any axioms -/
 #guard_msgs in #print axioms the_host_merges_the_guests
 
+-- held (waiting on: )
 theorem the_probe_boards_as_the_guest (F : Face) (s : F.State) (p : F.Probe) :
-    selfMeet (host F F.Probe) met (atTheDoor s p) = F.obs s p :=
-  rfl
+    selfMeet (host F F.Probe) met (atTheDoor s p) = F.obs s p := sorry
+-- end
 
 /-- info: 'Seed.the_probe_boards_as_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_probe_boards_as_the_guest
 
+-- held (waiting on: )
 theorem the_meeting_was_a_self_meeting {H : Type u} {W : Type v} {X : Type w}
     (g : door H W → X) (d : door H W) :
-    selfMeet (host (faceOf g) W) met d = g d :=
-  rfl
+    selfMeet (host (faceOf g) W) met d = g d := sorry
+-- end
 
 /-- info: 'Seed.the_meeting_was_a_self_meeting' does not depend on any axioms -/
 #guard_msgs in #print axioms the_meeting_was_a_self_meeting
 
+-- held (waiting on: )
 theorem the_self_meeting_reads_the_guest (F : Face) {W : Type v'}
     (r : W → F.Probe) (s : F.State) (w : W) :
-    selfMeet (host F W) (fun d => r (met d)) (atTheDoor s w) = F.obs s (r w) :=
-  rfl
+    selfMeet (host F W) (fun d => r (met d)) (atTheDoor s w) = F.obs s (r w) := sorry
+-- end
 
 /-- info: 'Seed.the_self_meeting_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms the_self_meeting_reads_the_guest
 
+-- held (waiting on: )
 theorem a_guest_mover_is_unheard (F : Face) {W : Type v'} (σ : door F.State W → W)
-    (d : door F.State W) : alike (host F W) (vertical σ d) d :=
-  fun _ => rfl
+    (d : door F.State W) : alike (host F W) (vertical σ d) d := sorry
+-- end
 
 /-- info: 'Seed.a_guest_mover_is_unheard' does not depend on any axioms -/
 #guard_msgs in #print axioms a_guest_mover_is_unheard
@@ -738,9 +764,10 @@ theorem the_pairing_is_exact (F G : Face) {S : Type u'}
 /-- info: 'Seed.the_pairing_is_exact' does not depend on any axioms -/
 #guard_msgs in #print axioms the_pairing_is_exact
 
+-- held (waiting on: )
 theorem the_origin_merges_every_seat {S' : Type u'} (s t : S') :
-    alike (originFace S') s t :=
-  fun _ => rfl
+    alike (originFace S') s t := sorry
+-- end
 
 /-- info: 'Seed.the_origin_merges_every_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms the_origin_merges_every_seat
@@ -754,8 +781,9 @@ theorem the_origin_is_the_pairs_unit (F : Face) {S : Type u'} {S' : Type v'}
 /-- info: 'Seed.the_origin_is_the_pairs_unit' does not depend on any axioms -/
 #guard_msgs in #print axioms the_origin_is_the_pairs_unit
 
-theorem the_still_hand_is_unheard (F : Face) : unheard F (fun s => s) :=
-  fun _ _ => rfl
+-- held (waiting on: )
+theorem the_still_hand_is_unheard (F : Face) : unheard F (fun s => s) := sorry
+-- end
 
 /-- info: 'Seed.the_still_hand_is_unheard' does not depend on any axioms -/
 #guard_msgs in #print axioms the_still_hand_is_unheard
@@ -767,44 +795,50 @@ theorem the_unheard_hands_compose (F : Face) (m n : F.State → F.State)
 /-- info: 'Seed.the_unheard_hands_compose' does not depend on any axioms -/
 #guard_msgs in #print axioms the_unheard_hands_compose
 
+-- held (waiting on: )
 theorem the_maintenance_is_the_identitys_hom (F : Face) (m : F.State → F.State) :
-    unheard F m ↔ carries F.obs F.obs m :=
-  Iff.rfl
+    unheard F m ↔ carries F.obs F.obs m := sorry
+-- end
 
 /-- info: 'Seed.the_maintenance_is_the_identitys_hom' does not depend on any axioms -/
 #guard_msgs in #print axioms the_maintenance_is_the_identitys_hom
 
+-- held (waiting on: )
 theorem the_spoken_arrives_at_the_face {H : Type u} {W : Type v}
-    (σ : door H W → W) (d : door H W) : face (exchange σ d) = σ d :=
-  rfl
+    (σ : door H W → W) (d : door H W) : face (exchange σ d) = σ d := sorry
+-- end
 
 /-- info: 'Seed.the_spoken_arrives_at_the_face' does not depend on any axioms -/
 #guard_msgs in #print axioms the_spoken_arrives_at_the_face
 
+-- held (waiting on: )
 theorem the_speaker_rides_unread {H : Type u} {W : Type v}
-    (σ : door H W → W) (d : door H W) : met (exchange σ d) = face d :=
-  rfl
+    (σ : door H W → W) (d : door H W) : met (exchange σ d) = face d := sorry
+-- end
 
 /-- info: 'Seed.the_speaker_rides_unread' does not depend on any axioms -/
 #guard_msgs in #print axioms the_speaker_rides_unread
 
+-- held (waiting on: )
 theorem the_listening_turn_is_the_yield {H : Type u} {W : Type v} (d : door H W) :
-    exchange met d = turnAbout d :=
-  rfl
+    exchange met d = turnAbout d := sorry
+-- end
 
 /-- info: 'Seed.the_listening_turn_is_the_yield' does not depend on any axioms -/
 #guard_msgs in #print axioms the_listening_turn_is_the_yield
 
+-- held (waiting on: )
 theorem the_two_listeners_restore_the_table {H : Type u} {W : Type v} (d : door H W) :
-    exchange met (exchange met d) = d :=
-  rfl
+    exchange met (exchange met d) = d := sorry
+-- end
 
 /-- info: 'Seed.the_two_listeners_restore_the_table' does not depend on any axioms -/
 #guard_msgs in #print axioms the_two_listeners_restore_the_table
 
+-- held (waiting on: )
 theorem the_ode_comes_home {H : Type u} {W : Type v} (σ : door H W → W) (d : door H W) :
-    exchange met (exchange σ d) = vertical σ d :=
-  rfl
+    exchange met (exchange σ d) = vertical σ d := sorry
+-- end
 
 /-- info: 'Seed.the_ode_comes_home' does not depend on any axioms -/
 #guard_msgs in #print axioms the_ode_comes_home
@@ -819,189 +853,176 @@ theorem the_yield_fixes_the_agreed {H : Type u} (d : door H H) :
 /-- info: 'Seed.the_yield_fixes_the_agreed' does not depend on any axioms -/
 #guard_msgs in #print axioms the_yield_fixes_the_agreed
 
+-- held (waiting on: )
 theorem the_air_gap_wears_the_one_face (I : Type u) (O : Type v) :
     airGap.{u, v, w} I O
-      = reseat (appFace (List I) O) (fun m : Machine.{u, v, w} I O => behavior m) :=
-  rfl
+      = reseat (appFace (List I) O) (fun m : Machine.{u, v, w} I O => behavior m) := sorry
+-- end
 
 /-- info: 'Seed.the_air_gap_wears_the_one_face' does not depend on any axioms -/
 #guard_msgs in #print axioms the_air_gap_wears_the_one_face
 
+-- held (waiting on: )
 theorem the_park_resumes {I : Type u} {O : Type v} (m : Machine I O) :
     ∀ (u : List I) (s : m.S) (v : List I),
-      park m s (u ++ v) = park m (park m s u) v
-  | [], _, _ => rfl
-  | i :: u, s, v => the_park_resumes m u (m.step s i) v
+      park m s (u ++ v) = park m (park m s u) v := sorry
+-- end
 
 /-- info: 'Seed.the_park_resumes' does not depend on any axioms -/
 #guard_msgs in #print axioms the_park_resumes
 
+-- held (waiting on: )
 theorem the_retuned_seat_walks_the_translated_word {I : Type u} {I' : Type u'} {O : Type v}
     (f : I → I') (m : Machine I' O) :
-    ∀ (w : List I) (s : m.S), park (retune f m) s w = park m s (w.map f)
-  | [], _ => rfl
-  | i :: w, s => the_retuned_seat_walks_the_translated_word f m w (m.step s (f i))
+    ∀ (w : List I) (s : m.S), park (retune f m) s w = park m s (w.map f) := sorry
+-- end
 
 /-- info: 'Seed.the_retuned_seat_walks_the_translated_word' does not depend on any axioms -/
 #guard_msgs in #print axioms the_retuned_seat_walks_the_translated_word
 
+-- held (waiting on: )
 theorem the_revoice_moves_no_seat {I : Type u} {O : Type v} {O' : Type v'}
     (g : O → O') (m : Machine I O) :
-    ∀ (w : List I) (s : m.S), park (revoice g m) s w = park m s w
-  | [], _ => rfl
-  | i :: w, s => the_revoice_moves_no_seat g m w (m.step s i)
+    ∀ (w : List I) (s : m.S), park (revoice g m) s w = park m s w := sorry
+-- end
 
 /-- info: 'Seed.the_revoice_moves_no_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms the_revoice_moves_no_seat
 
+-- held (waiting on: )
 theorem the_intertwined_walks_agree {I : Type u} {O : Type v} (m n : Machine I O)
     (h : m.S → n.S) (hstep : ∀ s i, n.step (h s) i = h (m.step s i)) :
-    ∀ (w : List I) (s : m.S), park n (h s) w = h (park m s w)
-  | [], _ => rfl
-  | i :: w, s => by
-      show park n (n.step (h s) i) w = h (park m (m.step s i) w)
-      rw [hstep s i]
-      exact the_intertwined_walks_agree m n h hstep w (m.step s i)
+    ∀ (w : List I) (s : m.S), park n (h s) w = h (park m s w) := sorry
+-- end
 
 /-- info: 'Seed.the_intertwined_walks_agree' does not depend on any axioms -/
 #guard_msgs in #print axioms the_intertwined_walks_agree
 
-theorem the_pace_wears_the_tallys_voice : paceOne = revoice oddNat tally :=
-  rfl
+-- held (waiting on: )
+theorem the_pace_wears_the_tallys_voice : paceOne = revoice oddNat tally := sorry
+-- end
 
 /-- info: 'Seed.the_pace_wears_the_tallys_voice' does not depend on any axioms -/
 #guard_msgs in #print axioms the_pace_wears_the_tallys_voice
 
+-- held (waiting on: )
 theorem any_two_readings_agree {A : Type u} (op : A → A → A) (base : A) (h : Plan → A)
     (hg : h .ground = base) (hb : ∀ p q, h (.board p q) = op (h p) (h q)) :
-    ∀ p, h p = fold op base p
-  | .ground => hg
-  | .board p q =>
-      (hb p q).trans
-        (congr (congrArg op (any_two_readings_agree op base h hg hb p))
-          (any_two_readings_agree op base h hg hb q) :
-          op (h p) (h q) = op (fold op base p) (fold op base q))
+    ∀ p, h p = fold op base p := sorry
+-- end
 
 /-- info: 'Seed.any_two_readings_agree' does not depend on any axioms -/
 #guard_msgs in #print axioms any_two_readings_agree
 
-theorem the_revision_is_a_reading (base : Plan) : graft base = fold .board base :=
-  rfl
+-- held (waiting on: )
+theorem the_revision_is_a_reading (base : Plan) : graft base = fold .board base := sorry
+-- end
 
 /-- info: 'Seed.the_revision_is_a_reading' does not depend on any axioms -/
 #guard_msgs in #print axioms the_revision_is_a_reading
 
-theorem the_trivial_revision_changes_nothing (t : Plan) : graft t .ground = t :=
-  rfl
+-- held (waiting on: )
+theorem the_trivial_revision_changes_nothing (t : Plan) : graft t .ground = t := sorry
+-- end
 
 /-- info: 'Seed.the_trivial_revision_changes_nothing' does not depend on any axioms -/
 #guard_msgs in #print axioms the_trivial_revision_changes_nothing
 
+-- held (waiting on: )
 theorem the_parent_folds_into_the_ground {A : Type u} (op : A → A → A) (base : A) (t : Plan) :
-    ∀ δ, fold op (fold op base t) δ = fold op base (graft t δ)
-  | .ground => rfl
-  | .board a b =>
-      (congr (congrArg op (the_parent_folds_into_the_ground op base t a))
-        (the_parent_folds_into_the_ground op base t b) :
-        op (fold op (fold op base t) a) (fold op (fold op base t) b)
-          = op (fold op base (graft t a)) (fold op base (graft t b)))
+    ∀ δ, fold op (fold op base t) δ = fold op base (graft t δ) := sorry
+-- end
 
 /-- info: 'Seed.the_parent_folds_into_the_ground' does not depend on any axioms -/
 #guard_msgs in #print axioms the_parent_folds_into_the_ground
 
-theorem zero_add : ∀ n : Nat, 0 + n = n
-  | 0 => rfl
-  | n + 1 => congrArg Nat.succ (zero_add n)
+-- held (waiting on: )
+theorem zero_add : ∀ n : Nat, 0 + n = n := sorry
+-- end
 
 /-- info: 'Seed.zero_add' does not depend on any axioms -/
 #guard_msgs in #print axioms zero_add
 
-theorem add_regroups : ∀ a b c : Nat, (a + b) + c = a + (b + c)
-  | _, _, 0 => rfl
-  | a, b, c + 1 => congrArg Nat.succ (add_regroups a b c)
+-- held (waiting on: )
+theorem add_regroups : ∀ a b c : Nat, (a + b) + c = a + (b + c) := sorry
+-- end
 
 /-- info: 'Seed.add_regroups' does not depend on any axioms -/
 #guard_msgs in #print axioms add_regroups
 
-theorem click_slides : ∀ a b : Nat, (a + b) + 1 = (a + 1) + b
-  | _, 0 => rfl
-  | a, b + 1 => congrArg Nat.succ (click_slides a b)
+-- held (waiting on: )
+theorem click_slides : ∀ a b : Nat, (a + b) + 1 = (a + 1) + b := sorry
+-- end
 
 /-- info: 'Seed.click_slides' does not depend on any axioms -/
 #guard_msgs in #print axioms click_slides
 
+-- held (waiting on: )
 theorem the_type_is_a_reading (W : Type u) (p : Plan) :
-    build W p = fold (fun A B : Type u => door A B) W p :=
-  rfl
+    build W p = fold (fun A B : Type u => door A B) W p := sorry
+-- end
 
 /-- info: 'Seed.the_type_is_a_reading' does not depend on any axioms -/
 #guard_msgs in #print axioms the_type_is_a_reading
 
+-- held (waiting on: )
 theorem the_customs_keep_the_still_world {W : Type u} :
-    ∀ (p : Plan) (x : build W p), reground (fun w => w) p x = x
-  | .ground, _ => rfl
-  | .board p q, d =>
-      (congr (congrArg atTheDoor (the_customs_keep_the_still_world p (face d)))
-        (the_customs_keep_the_still_world q (met d)) :
-        atTheDoor (reground (fun w => w) p (face d)) (reground (fun w => w) q (met d))
-          = atTheDoor (face d) (met d))
+    ∀ (p : Plan) (x : build W p), reground (fun w => w) p x = x := sorry
+-- end
 
 /-- info: 'Seed.the_customs_keep_the_still_world' does not depend on any axioms -/
 #guard_msgs in #print axioms the_customs_keep_the_still_world
 
+-- held (waiting on: )
 theorem the_customs_stack_forward {W : Type u} {W' : Type v} {W'' : Type w}
     (f : W → W') (g : W' → W'') :
     ∀ (p : Plan) (x : build W p),
-      reground g p (reground f p x) = reground (fun w => g (f w)) p x
-  | .ground, _ => rfl
-  | .board p q, d =>
-      (congr (congrArg atTheDoor (the_customs_stack_forward f g p (face d)))
-        (the_customs_stack_forward f g q (met d)) :
-        atTheDoor (reground g p (reground f p (face d))) (reground g q (reground f q (met d)))
-          = atTheDoor (reground (fun w => g (f w)) p (face d))
-              (reground (fun w => g (f w)) q (met d)))
+      reground g p (reground f p x) = reground (fun w => g (f w)) p x := sorry
+-- end
 
 /-- info: 'Seed.the_customs_stack_forward' does not depend on any axioms -/
 #guard_msgs in #print axioms the_customs_stack_forward
 
-theorem the_append_rests {A : Type u} : ∀ l : List A, l ++ [] = l
-  | [] => rfl
-  | a :: l => congrArg (List.cons a) (the_append_rests l)
+-- held (waiting on: )
+theorem the_append_rests {A : Type u} : ∀ l : List A, l ++ [] = l := sorry
+-- end
 
 /-- info: 'Seed.the_append_rests' does not depend on any axioms -/
 #guard_msgs in #print axioms the_append_rests
 
-theorem the_appends_regroup {A : Type u} : ∀ l m t : List A, (l ++ m) ++ t = l ++ (m ++ t)
-  | [], _, _ => rfl
-  | a :: l, m, t => congrArg (List.cons a) (the_appends_regroup l m t)
+-- held (waiting on: )
+theorem the_appends_regroup {A : Type u} : ∀ l m t : List A, (l ++ m) ++ t = l ++ (m ++ t) := sorry
+-- end
 
 /-- info: 'Seed.the_appends_regroup' does not depend on any axioms -/
 #guard_msgs in #print axioms the_appends_regroup
 
+-- held (waiting on: )
 theorem map_crosses_append {A : Type u} {B : Type v} (f : A → B) :
-    ∀ l m : List A, (l ++ m).map f = l.map f ++ m.map f
-  | [], _ => rfl
-  | a :: l, m => congrArg (List.cons (f a)) (map_crosses_append f l m)
+    ∀ l m : List A, (l ++ m).map f = l.map f ++ m.map f := sorry
+-- end
 
 /-- info: 'Seed.map_crosses_append' does not depend on any axioms -/
 #guard_msgs in #print axioms map_crosses_append
 
+-- held (waiting on: )
 theorem the_unencumbered_are_welcome {A : Type u} (beq : A → A → Bool) (room : List A) :
-    backed beq room [] = true :=
-  rfl
+    backed beq room [] = true := sorry
+-- end
 
 /-- info: 'Seed.the_unencumbered_are_welcome' does not depend on any axioms -/
 #guard_msgs in #print axioms the_unencumbered_are_welcome
 
-theorem true_or_reads (b : Bool) : (true || b) = true :=
-  rfl
+-- held (waiting on: )
+theorem true_or_reads (b : Bool) : (true || b) = true := sorry
+-- end
 
 /-- info: 'Seed.true_or_reads' does not depend on any axioms -/
 #guard_msgs in #print axioms true_or_reads
 
-theorem or_swallows : ∀ b : Bool, (b || true) = true
-  | true => rfl
-  | false => rfl
+-- held (waiting on: )
+theorem or_swallows : ∀ b : Bool, (b || true) = true := sorry
+-- end
 
 /-- info: 'Seed.or_swallows' does not depend on any axioms -/
 #guard_msgs in #print axioms or_swallows
@@ -1024,10 +1045,10 @@ theorem the_unbacked_wait {A : Type u} (beq : A → A → Bool)
 /-- info: 'Seed.the_unbacked_wait' does not depend on any axioms -/
 #guard_msgs in #print axioms the_unbacked_wait
 
+-- held (waiting on: )
 theorem len_map {A : Type u} {B : Type v} (f : A → B) :
-    ∀ l : List A, (l.map f).length = l.length
-  | [] => rfl
-  | _ :: l => congrArg (· + 1) (len_map f l)
+    ∀ l : List A, (l.map f).length = l.length := sorry
+-- end
 
 /-- info: 'Seed.len_map' does not depend on any axioms -/
 #guard_msgs in #print axioms len_map
@@ -1059,24 +1080,25 @@ theorem mem_map_back {A : Type u} {B : Type v} {f : A → B} {q : B} :
 /-- info: 'Seed.mem_map_back' does not depend on any axioms -/
 #guard_msgs in #print axioms mem_map_back
 
+-- held (waiting on: )
 theorem the_census_checksums_with_the_polygon_cutters :
     census 1 = 1 ∧ census 2 = 1 ∧ census 3 = 2 ∧ census 4 = 5
-      ∧ census 5 = 14 :=
-  ⟨rfl, rfl, rfl, rfl, rfl⟩
+      ∧ census 5 = 14 := sorry
+-- end
 
 /-- info: 'Seed.the_census_checksums_with_the_polygon_cutters' does not depend on any axioms -/
 #guard_msgs in #print axioms the_census_checksums_with_the_polygon_cutters
 
-theorem ble_refl : ∀ n : Nat, Nat.ble n n = true
-  | 0 => rfl
-  | n + 1 => ble_refl n
+-- held (waiting on: )
+theorem ble_refl : ∀ n : Nat, Nat.ble n n = true := sorry
+-- end
 
 /-- info: 'Seed.ble_refl' does not depend on any axioms -/
 #guard_msgs in #print axioms ble_refl
 
-theorem ble_le_succ : ∀ n : Nat, Nat.ble n (n + 1) = true
-  | 0 => rfl
-  | n + 1 => ble_le_succ n
+-- held (waiting on: )
+theorem ble_le_succ : ∀ n : Nat, Nat.ble n (n + 1) = true := sorry
+-- end
 
 /-- info: 'Seed.ble_le_succ' does not depend on any axioms -/
 #guard_msgs in #print axioms ble_le_succ
@@ -1124,9 +1146,9 @@ theorem eq_of_beq : ∀ a b : Nat, Nat.beq a b = true → a = b
 /-- info: 'Seed.eq_of_beq' does not depend on any axioms -/
 #guard_msgs in #print axioms eq_of_beq
 
-theorem beq_self : ∀ n : Nat, Nat.beq n n = true
-  | 0 => rfl
-  | n + 1 => beq_self n
+-- held (waiting on: )
+theorem beq_self : ∀ n : Nat, Nat.beq n n = true := sorry
+-- end
 
 /-- info: 'Seed.beq_self' does not depend on any axioms -/
 #guard_msgs in #print axioms beq_self
@@ -1185,9 +1207,9 @@ theorem mem_filter_intro {A : Type u} {q : A → Bool} {x : A} :
 /-- info: 'Seed.mem_filter_intro' does not depend on any axioms -/
 #guard_msgs in #print axioms mem_filter_intro
 
-theorem perm_refl {A : Type u} : ∀ l : List A, l.Perm l
-  | [] => .nil
-  | x :: l => .cons x (perm_refl l)
+-- held (waiting on: )
+theorem perm_refl {A : Type u} : ∀ l : List A, l.Perm l := sorry
+-- end
 
 /-- info: 'Seed.perm_refl' does not depend on any axioms -/
 #guard_msgs in #print axioms perm_refl
@@ -1246,16 +1268,16 @@ theorem perm_length {A : Type u} {xs ys : List A} (h : xs.Perm ys) :
 /-- info: 'Seed.perm_length' does not depend on any axioms -/
 #guard_msgs in #print axioms perm_length
 
-theorem not_not : ∀ b : Bool, (!(!b)) = b
-  | true => rfl
-  | false => rfl
+-- held (waiting on: )
+theorem not_not : ∀ b : Bool, (!(!b)) = b := sorry
+-- end
 
 /-- info: 'Seed.not_not' does not depend on any axioms -/
 #guard_msgs in #print axioms not_not
 
-theorem one_scales : ∀ n : Nat, 1 * n = n
-  | 0 => rfl
-  | n + 1 => congrArg (· + 1) (one_scales n)
+-- held (waiting on: )
+theorem one_scales : ∀ n : Nat, 1 * n = n := sorry
+-- end
 
 /-- info: 'Seed.one_scales' does not depend on any axioms -/
 #guard_msgs in #print axioms one_scales
@@ -1419,38 +1441,39 @@ theorem perm_filter {A : Type u} (q : A → Bool) {xs ys : List A}
 /-- info: 'Seed.perm_filter' does not depend on any axioms -/
 #guard_msgs in #print axioms perm_filter
 
+-- held (waiting on: )
 theorem the_repeated_ask_hears_one_answer (F : Face) (s : F.State) (p : F.Probe) :
     ∀ n : Nat,
-      sound F s (recite (List.replicate n p)) = List.replicate n (F.obs s p)
-  | 0 => rfl
-  | n + 1 =>
-      congrArg (F.obs s p :: ·) (the_repeated_ask_hears_one_answer F s p n)
+      sound F s (recite (List.replicate n p)) = List.replicate n (F.obs s p) := sorry
+-- end
 
 /-- info: 'Seed.the_repeated_ask_hears_one_answer' does not depend on any axioms -/
 #guard_msgs in #print axioms the_repeated_ask_hears_one_answer
 
+-- held (waiting on: )
 theorem the_muffled_tally_is_the_resting_counter :
-    revoice (fun _ => true) tally = restingCounter := rfl
+    revoice (fun _ => true) tally = restingCounter := sorry
+-- end
 
 /-- info: 'Seed.the_muffled_tally_is_the_resting_counter' does not depend on any axioms -/
 #guard_msgs in #print axioms the_muffled_tally_is_the_resting_counter
 
+-- held (waiting on: )
 theorem the_self_steered_machine_is_a_clock {I : Type u} {O : Type v}
     (m : Machine I O) (r : m.S → I) :
     ∀ (w : List Unit) (s : m.S),
-      drive (selfSteered m r) s w = m.out (orbit m r s w.length)
-  | [], _ => rfl
-  | _ :: w, s => the_self_steered_machine_is_a_clock m r w (m.step s (r s))
+      drive (selfSteered m r) s w = m.out (orbit m r s w.length) := sorry
+-- end
 
 /-- info: 'Seed.the_self_steered_machine_is_a_clock' does not depend on any axioms -/
 #guard_msgs in #print axioms the_self_steered_machine_is_a_clock
 
+-- held (waiting on: )
 theorem the_instinct_replays_its_word {I : Type u} {O : Type v}
     (m : Machine I O) (r : m.S → I) :
     ∀ (w : List Unit) (s : m.S),
-      drive (selfSteered m r) s w = drive m s (selfWord m r s w.length)
-  | [], _ => rfl
-  | _ :: w, s => the_instinct_replays_its_word m r w (m.step s (r s))
+      drive (selfSteered m r) s w = drive m s (selfWord m r s w.length) := sorry
+-- end
 
 /-- info: 'Seed.the_instinct_replays_its_word' does not depend on any axioms -/
 #guard_msgs in #print axioms the_instinct_replays_its_word
@@ -1491,10 +1514,10 @@ theorem the_pentagon_turns_at_four :
 /-- info: 'Seed.the_pentagon_turns_at_four' does not depend on any axioms -/
 #guard_msgs in #print axioms the_pentagon_turns_at_four
 
+-- held (waiting on: )
 theorem inc_inc : ∀ (b : Bool) (bs : List Bool),
-    inc (inc (b :: bs)) = b :: inc bs
-  | false, _ => rfl
-  | true, _ => rfl
+    inc (inc (b :: bs)) = b :: inc bs := sorry
+-- end
 
 /-- info: 'Seed.inc_inc' does not depend on any axioms -/
 #guard_msgs in #print axioms inc_inc
@@ -1515,22 +1538,24 @@ theorem the_unwind_ticks : ∀ s : List Bool, inc (dec s) = s
 /-- info: 'Seed.the_unwind_ticks' does not depend on any axioms -/
 #guard_msgs in #print axioms the_unwind_ticks
 
-theorem the_zeros_span_the_width : ∀ n : Nat, (zeros n).length = n
-  | 0 => rfl
-  | n + 1 => congrArg (· + 1) (the_zeros_span_the_width n)
+-- held (waiting on: )
+theorem the_zeros_span_the_width : ∀ n : Nat, (zeros n).length = n := sorry
+-- end
 
 /-- info: 'Seed.the_zeros_span_the_width' does not depend on any axioms -/
 #guard_msgs in #print axioms the_zeros_span_the_width
 
+-- held (waiting on: )
 theorem the_again_steps_first {α : Sort u} (Φ : α → α) :
-    ∀ (n : Nat) (a : α), again Φ (n + 1) a = again Φ n (Φ a)
-  | 0, _ => rfl
-  | n + 1, a => congrArg Φ (the_again_steps_first Φ n a)
+    ∀ (n : Nat) (a : α), again Φ (n + 1) a = again Φ n (Φ a) := sorry
+-- end
 
 /-- info: 'Seed.the_again_steps_first' does not depend on any axioms -/
 #guard_msgs in #print axioms the_again_steps_first
 
-theorem the_home_wheel_turns : again collatzStep 3 1 = 1 := rfl
+-- held (waiting on: )
+theorem the_home_wheel_turns : again collatzStep 3 1 = 1 := sorry
+-- end
 
 /-- info: 'Seed.the_home_wheel_turns' does not depend on any axioms -/
 #guard_msgs in #print axioms the_home_wheel_turns
@@ -1618,17 +1643,19 @@ theorem the_weight_is_zero_at_the_door {A : Type u} (beq : A → A → Bool) (ro
 /-- info: 'Seed.the_weight_is_zero_at_the_door' does not depend on any axioms -/
 #guard_msgs in #print axioms the_weight_is_zero_at_the_door
 
+-- held (waiting on: )
 theorem the_lift_peeks_the_out {I : Type u} {O : Type v} (m : Machine I O) (s : m.S) :
-    peek (liftFrom m s) = m.out s :=
-  rfl
+    peek (liftFrom m s) = m.out s := sorry
+-- end
 
 /-- info: 'Seed.the_lift_peeks_the_out' does not depend on any axioms -/
 #guard_msgs in #print axioms the_lift_peeks_the_out
 
+-- held (waiting on: )
 theorem the_lift_feeds_the_step {I : Type u} {O : Type v} (m : Machine I O)
     (s : m.S) (i : I) :
-    feed (liftFrom m s) i = liftFrom m (m.step s i) :=
-  rfl
+    feed (liftFrom m s) i = liftFrom m (m.step s i) := sorry
+-- end
 
 /-- info: 'Seed.the_lift_feeds_the_step' does not depend on any axioms -/
 #guard_msgs in #print axioms the_lift_feeds_the_step
@@ -1644,25 +1671,26 @@ theorem the_lift_is_unique {I : Type u} {O : Type v} (m : Machine I O)
 /-- info: 'Seed.the_lift_is_unique' does not depend on any axioms -/
 #guard_msgs in #print axioms the_lift_is_unique
 
+-- held (waiting on: )
 theorem len_replicate {A : Type u} (a : A) :
-    ∀ n : Nat, (List.replicate n a).length = n
-  | 0 => rfl
-  | n + 1 => congrArg (· + 1) (len_replicate a n)
+    ∀ n : Nat, (List.replicate n a).length = n := sorry
+-- end
 
 /-- info: 'Seed.len_replicate' does not depend on any axioms -/
 #guard_msgs in #print axioms len_replicate
 
+-- held (waiting on: )
 theorem the_unit_word_is_its_count :
-    ∀ w : List Unit, List.replicate w.length () = w
-  | [] => rfl
-  | _ :: t => congrArg (List.cons ()) (the_unit_word_is_its_count t)
+    ∀ w : List Unit, List.replicate w.length () = w := sorry
+-- end
 
 /-- info: 'Seed.the_unit_word_is_its_count' does not depend on any axioms -/
 #guard_msgs in #print axioms the_unit_word_is_its_count
 
+-- held (waiting on: )
 theorem the_unit_machine_steers_itself {O : Type v} (m : Machine Unit O) :
-    selfSteered m (fun _ => ()) = m :=
-  rfl
+    selfSteered m (fun _ => ()) = m := sorry
+-- end
 
 /-- info: 'Seed.the_unit_machine_steers_itself' does not depend on any axioms -/
 #guard_msgs in #print axioms the_unit_machine_steers_itself
@@ -1696,12 +1724,13 @@ theorem and_regroups {a b c : Prop} : ((a ∧ b) ∧ c) ↔ (a ∧ (b ∧ c)) :=
 /-- info: 'Seed.and_regroups' does not depend on any axioms -/
 #guard_msgs in #print axioms and_regroups
 
+-- held (waiting on: )
 theorem the_comparison_mints_a_face (F G : Face) {S : Type u'}
     (f : S → F.State) (g : S → G.State) {X : Type w'}
     (c : F.Ans → G.Ans → X) (s : S) (p : F.Probe) (q : G.Probe) :
     c (F.obs (f s) p) (G.obs (g s) q)
-      = walkIn c ((pairFace F G f g).obs s (atTheDoor p q)) :=
-  rfl
+      = walkIn c ((pairFace F G f g).obs s (atTheDoor p q)) := sorry
+-- end
 
 /-- info: 'Seed.the_comparison_mints_a_face' does not depend on any axioms -/
 #guard_msgs in #print axioms the_comparison_mints_a_face
@@ -1773,10 +1802,11 @@ theorem the_records_part_the_seats (F : Face.{u, v, w}) {V : Type v'} {W : Type 
 /-- info: 'Seed.the_records_part_the_seats' does not depend on any axioms -/
 #guard_msgs in #print axioms the_records_part_the_seats
 
+-- held (waiting on: )
 theorem the_concord_reads_both_models (F : Face) {V : Type v'}
     (x : door F.State V) (p : F.Probe) :
-    (concordFace F V).obs x (atTheDoor p ()) = atTheDoor (F.obs (face x) p) (met x) :=
-  rfl
+    (concordFace F V).obs x (atTheDoor p ()) = atTheDoor (F.obs (face x) p) (met x) := sorry
+-- end
 
 /-- info: 'Seed.the_concord_reads_both_models' does not depend on any axioms -/
 #guard_msgs in #print axioms the_concord_reads_both_models
@@ -1841,9 +1871,10 @@ theorem the_sounding_reads_the_alike (F : Face) {s t : F.State}
 /-- info: 'Seed.the_sounding_reads_the_alike' does not depend on any axioms -/
 #guard_msgs in #print axioms the_sounding_reads_the_alike
 
+-- held (waiting on: the_interview_crosses_the_carrier)
 theorem the_interview_crosses_the_seat (F : Face) {S' : Type u'} (h : S' → F.State) (s : S') :
-    ∀ q, sound F (h s) q = sound (reseat F h) s q :=
-  the_interview_crosses_the_carrier (reseat F h).obs F.obs h (fun _ _ => rfl) s
+    ∀ q, sound F (h s) q = sound (reseat F h) s q := sorry
+-- end
 
 /-- info: 'Seed.the_interview_crosses_the_seat' does not depend on any axioms -/
 #guard_msgs in #print axioms the_interview_crosses_the_seat
@@ -1856,9 +1887,10 @@ theorem a_wider_seat_reads_the_remainder (F : Face) {W : Type v'}
 /-- info: 'Seed.a_wider_seat_reads_the_remainder' does not depend on any axioms -/
 #guard_msgs in #print axioms a_wider_seat_reads_the_remainder
 
+-- held (waiting on: no_interview_parts_the_alike the_origin_merges_every_seat)
 theorem no_interview_parts_the_origin {S' : Type u'} (s t : S') :
-    ∀ q, sound (originFace S') s q = sound (originFace S') t q :=
-  no_interview_parts_the_alike (originFace S') (the_origin_merges_every_seat s t)
+    ∀ q, sound (originFace S') s q = sound (originFace S') t q := sorry
+-- end
 
 /-- info: 'Seed.no_interview_parts_the_origin' does not depend on any axioms -/
 #guard_msgs in #print axioms no_interview_parts_the_origin
@@ -1870,10 +1902,11 @@ theorem no_interview_hears_the_unheard (F : Face) (m : F.State → F.State)
 /-- info: 'Seed.no_interview_hears_the_unheard' does not depend on any axioms -/
 #guard_msgs in #print axioms no_interview_hears_the_unheard
 
+-- held (waiting on: no_interview_parts_the_alike)
 theorem an_audition_hears_only_the_conduct {I : Type u} {O : Type v} (m n : Machine I O)
     (h : ∀ w, behavior m w = behavior n w) :
-    ∀ q, sound (airGap I O) m q = sound (airGap I O) n q :=
-  no_interview_parts_the_alike (airGap I O) h
+    ∀ q, sound (airGap I O) m q = sound (airGap I O) n q := sorry
+-- end
 
 /-- info: 'Seed.an_audition_hears_only_the_conduct' does not depend on any axioms -/
 #guard_msgs in #print axioms an_audition_hears_only_the_conduct
@@ -1889,15 +1922,17 @@ theorem the_intertwiner_carries_the_walk {I : Type u} {O : Type v} (m n : Machin
 /-- info: 'Seed.the_intertwiner_carries_the_walk' does not depend on any axioms -/
 #guard_msgs in #print axioms the_intertwiner_carries_the_walk
 
+-- held (waiting on: the_parent_folds_into_the_ground)
 theorem lineages_compose (t d1 d2 : Plan) :
-    graft (graft t d1) d2 = graft t (graft d1 d2) :=
-  the_parent_folds_into_the_ground Plan.board t d1 d2
+    graft (graft t d1) d2 = graft t (graft d1 d2) := sorry
+-- end
 
 /-- info: 'Seed.lineages_compose' does not depend on any axioms -/
 #guard_msgs in #print axioms lineages_compose
 
-theorem mul_one_reads (a : Nat) : a * 1 = a :=
-  zero_add a
+-- held (waiting on: zero_add)
+theorem mul_one_reads (a : Nat) : a * 1 = a := sorry
+-- end
 
 /-- info: 'Seed.mul_one_reads' does not depend on any axioms -/
 #guard_msgs in #print axioms mul_one_reads
@@ -1927,14 +1962,10 @@ theorem lengths_add {A : Type u} : ∀ l m : List A, (l ++ m).length = l.length 
 /-- info: 'Seed.lengths_add' does not depend on any axioms -/
 #guard_msgs in #print axioms lengths_add
 
+-- held (waiting on: map_crosses_append)
 theorem the_manifest_is_natural {W : Type u} {W' : Type v} (f : W → W') :
-    ∀ (p : Plan) (x : build W p), pour p (reground f p x) = (pour p x).map f
-  | .ground, _ => rfl
-  | .board p q, d => by
-      show pour p (reground f p (face d)) ++ pour q (reground f q (met d))
-         = (pour p (face d) ++ pour q (met d)).map f
-      rw [map_crosses_append f]
-      rw [the_manifest_is_natural f p (face d), the_manifest_is_natural f q (met d)]
+    ∀ (p : Plan) (x : build W p), pour p (reground f p x) = (pour p x).map f := sorry
+-- end
 
 /-- info: 'Seed.the_manifest_is_natural' does not depend on any axioms -/
 #guard_msgs in #print axioms the_manifest_is_natural
@@ -2463,9 +2494,10 @@ theorem the_clocks_lift_is_a_stream {O : Type v} (m : Machine Unit O) (n : Nat) 
 /-- info: 'Seed.the_clocks_lift_is_a_stream' does not depend on any axioms -/
 #guard_msgs in #print axioms the_clocks_lift_is_a_stream
 
+-- held (waiting on: bool_three_collide)
 theorem the_hallway_is_too_small {S : Type u} (r : S → Bool) (a b c : S) :
-    r a = r b ∨ r b = r c ∨ r a = r c :=
-  bool_three_collide (r a) (r b) (r c)
+    r a = r b ∨ r b = r c ∨ r a = r c := sorry
+-- end
 
 /-- info: 'Seed.the_hallway_is_too_small' does not depend on any axioms -/
 #guard_msgs in #print axioms the_hallway_is_too_small
@@ -2486,10 +2518,11 @@ theorem every_widening_is_one_pairing (F G H : Face) {S : Type u'}
 /-- info: 'Seed.every_widening_is_one_pairing' does not depend on any axioms -/
 #guard_msgs in #print axioms every_widening_is_one_pairing
 
+-- held (waiting on: a_guest_mover_is_unheard)
 theorem the_record_writes_where_the_face_is_blind (F : Face.{u, v, w}) {W : Type v'}
     (keep : door F.State W → W) :
-    unheard (host F W) (fun x => atTheDoor (face x) (keep x)) :=
-  fun x => a_guest_mover_is_unheard F keep x
+    unheard (host F W) (fun x => atTheDoor (face x) (keep x)) := sorry
+-- end
 
 /-- info: 'Seed.the_record_writes_where_the_face_is_blind' does not depend on any axioms -/
 #guard_msgs in #print axioms the_record_writes_where_the_face_is_blind
@@ -2505,9 +2538,10 @@ theorem the_meeting_mints_the_concord (F : Face) {V : Type v'}
 /-- info: 'Seed.the_meeting_mints_the_concord' does not depend on any axioms -/
 #guard_msgs in #print axioms the_meeting_mints_the_concord
 
+-- held (waiting on: no_interview_parts_the_alike the_sounding_reads_the_alike)
 theorem the_curtain_is_exact (F : Face) (s t : F.State) :
-    alike F s t ↔ ∀ q, sound F s q = sound F t q :=
-  ⟨fun h => no_interview_parts_the_alike F h, the_sounding_reads_the_alike F⟩
+    alike F s t ↔ ∀ q, sound F s q = sound F t q := sorry
+-- end
 
 /-- info: 'Seed.the_curtain_is_exact' does not depend on any axioms -/
 #guard_msgs in #print axioms the_curtain_is_exact
@@ -2562,13 +2596,10 @@ theorem the_held_scale_rides (c : Nat) :
 /-- info: 'Seed.the_held_scale_rides' does not depend on any axioms -/
 #guard_msgs in #print axioms the_held_scale_rides
 
+-- held (waiting on: lengths_add)
 theorem the_manifest_counts {W : Type u} :
-    ∀ (p : Plan) (x : build W p), (pour p x).length = reading p
-  | .ground, _ => rfl
-  | .board p q, d => by
-      show (pour p (face d) ++ pour q (met d)).length = reading p + reading q
-      rw [lengths_add (pour p (face d)) (pour q (met d))]
-      rw [the_manifest_counts p (face d), the_manifest_counts q (met d)]
+    ∀ (p : Plan) (x : build W p), (pour p x).length = reading p := sorry
+-- end
 
 /-- info: 'Seed.the_manifest_counts' does not depend on any axioms -/
 #guard_msgs in #print axioms the_manifest_counts
@@ -2628,12 +2659,9 @@ theorem the_cross_keeps_apart {qs : List Plan} (hqs : Apart qs) :
 /-- info: 'Seed.the_cross_keeps_apart' does not depend on any axioms -/
 #guard_msgs in #print axioms the_cross_keeps_apart
 
-theorem ble_le_add_left : ∀ a b : Nat, Nat.ble b (a + b) = true
-  | 0, b => by rw [zero_add]; exact ble_refl b
-  | a + 1, b => by
-      rw [succ_adds]
-      exact ble_trans b (a + b) ((a + b) + 1)
-        (ble_le_add_left a b) (ble_le_succ (a + b))
+-- held (waiting on: zero_add ble_refl succ_adds ble_trans ble_le_succ)
+theorem ble_le_add_left : ∀ a b : Nat, Nat.ble b (a + b) = true := sorry
+-- end
 
 /-- info: 'Seed.ble_le_add_left' does not depend on any axioms -/
 #guard_msgs in #print axioms ble_le_add_left
@@ -2897,10 +2925,10 @@ theorem the_filter_splits_the_room {A : Type u} (q : A → Bool) :
 /-- info: 'Seed.the_filter_splits_the_room' does not depend on any axioms -/
 #guard_msgs in #print axioms the_filter_splits_the_room
 
+-- held (waiting on: succ_adds)
 theorem the_tally_parks_at_its_count :
-    ∀ (w : List Unit) (s : Nat), park tally s w = s + w.length
-  | [], _ => rfl
-  | _ :: w, s => (the_tally_parks_at_its_count w (s + 1)).trans (succ_adds s w.length)
+    ∀ (w : List Unit) (s : Nat), park tally s w = s + w.length := sorry
+-- end
 
 /-- info: 'Seed.the_tally_parks_at_its_count' does not depend on any axioms -/
 #guard_msgs in #print axioms the_tally_parks_at_its_count
@@ -2912,10 +2940,11 @@ theorem the_flywheel_and_the_shell_sound_alike (q : Interview (List Unit) Bool) 
 /-- info: 'Seed.the_flywheel_and_the_shell_sound_alike' does not depend on any axioms -/
 #guard_msgs in #print axioms the_flywheel_and_the_shell_sound_alike
 
+-- held (waiting on: the_hold_walks_beside_the_work)
 theorem the_buffer_is_invisible {I : Type u} {O : Type v} (m : Machine I O)
     (w : List I) :
-    behavior (buffered m) w = behavior m w :=
-  the_hold_walks_beside_the_work m w m.s0 []
+    behavior (buffered m) w = behavior m w := sorry
+-- end
 
 /-- info: 'Seed.the_buffer_is_invisible' does not depend on any axioms -/
 #guard_msgs in #print axioms the_buffer_is_invisible
@@ -3101,9 +3130,10 @@ theorem the_settled_gap_moves_the_model (F : Face) {V : Type v'}
 /-- info: 'Seed.the_settled_gap_moves_the_model' does not depend on any axioms -/
 #guard_msgs in #print axioms the_settled_gap_moves_the_model
 
+-- held (waiting on: the_curtain_is_exact)
 theorem the_audition_is_exact {I : Type u} {O : Type v} (m n : Machine I O) :
-    alike (airGap I O) m n ↔ ∀ q, sound (airGap I O) m q = sound (airGap I O) n q :=
-  the_curtain_is_exact (airGap I O) m n
+    alike (airGap I O) m n ↔ ∀ q, sound (airGap I O) m q = sound (airGap I O) n q := sorry
+-- end
 
 /-- info: 'Seed.the_audition_is_exact' does not depend on any axioms -/
 #guard_msgs in #print axioms the_audition_is_exact
@@ -3123,9 +3153,10 @@ theorem the_drain_settles {W : Type u} (w0 : W) (p : Plan) (l : List W) :
 /-- info: 'Seed.the_drain_settles' does not depend on any axioms -/
 #guard_msgs in #print axioms the_drain_settles
 
+-- held (waiting on: the_manifest_counts)
 theorem the_drained_is_on_spec {W : Type u} (w0 : W) (p : Plan) (l : List W) :
-    (drain w0 p l).length = reading p :=
-  the_manifest_counts p (reboard w0 p l)
+    (drain w0 p l).length = reading p := sorry
+-- end
 
 /-- info: 'Seed.the_drained_is_on_spec' does not depend on any axioms -/
 #guard_msgs in #print axioms the_drained_is_on_spec
@@ -3509,17 +3540,14 @@ theorem the_right_loop_reads_zero :
 /-- info: 'Seed.the_right_loop_reads_zero' does not depend on any axioms -/
 #guard_msgs in #print axioms the_right_loop_reads_zero
 
+-- held (waiting on: the_book_counts_the_cap the_book_repeats_no_word every_word_fits the_book_holds_every_word)
 theorem the_book_is_the_answer_space (n : Nat) :
     (words n).length = roomCap n
       ∧ Apart (words n)
       ∧ (∀ w : List Bool, w ∈ words n → w.length = n)
       ∧ (∀ w : List Bool, w ∈ words w.length)
-      ∧ (words 3).length = 8 :=
-  ⟨the_book_counts_the_cap n,
-   the_book_repeats_no_word n,
-   every_word_fits n,
-   the_book_holds_every_word,
-   rfl⟩
+      ∧ (words 3).length = 8 := sorry
+-- end
 
 /-- info: 'Seed.the_book_is_the_answer_space' does not depend on any axioms -/
 #guard_msgs in #print axioms the_book_is_the_answer_space
@@ -3817,6 +3845,7 @@ theorem the_value_tells_the_words_apart {n : Nat} {p q : List Bool}
 /-- info: 'Seed.the_value_tells_the_words_apart' does not depend on any axioms -/
 #guard_msgs in #print axioms the_value_tells_the_words_apart
 
+-- held (waiting on: the_self_steered_machine_is_a_clock the_settle_is_unheard the_flywheel_and_the_shell_sound_alike the_wider_voice_releases_the_bank no_mark_lights_itself the_key_is_cut_from_the_room a_wider_seat_reads_the_remainder)
 theorem room_margin_flywheel_door {I : Type u} {O : Type v} {A : Type w}
     (m : Machine I O) (r : m.S → I) (u : List Unit) (s : m.S)
     (st : m.S × List I) (v : List I) (q : Interview (List Unit) Bool)
@@ -3834,14 +3863,8 @@ theorem room_margin_flywheel_door {I : Type u} {O : Type v} {A : Type w}
       ∧ (lacking beq hall needs = 1 →
           ∃ k, k ∈ needs ∧ enrolled beq hall k = false ∧
             backed beq (k :: hall) needs = true)
-      ∧ ¬ alike (widen F W) (atTheDoor g w1) (atTheDoor g w2) :=
-  ⟨the_self_steered_machine_is_a_clock m r u s,
-   the_settle_is_unheard m st v,
-   the_flywheel_and_the_shell_sound_alike q,
-   the_wider_voice_releases_the_bank,
-   fun hd hs => no_mark_lights_itself beq x word st' hd hs,
-   the_key_is_cut_from_the_room beq hrefl hall needs,
-   a_wider_seat_reads_the_remainder F g hw⟩
+      ∧ ¬ alike (widen F W) (atTheDoor g w1) (atTheDoor g w2) := sorry
+-- end
 
 /-- info: 'Seed.room_margin_flywheel_door' does not depend on any axioms -/
 #guard_msgs in #print axioms room_margin_flywheel_door
@@ -3876,14 +3899,13 @@ theorem the_tallys_stream_counts (n : Nat) :
 /-- info: 'Seed.the_tallys_stream_counts' does not depend on any axioms -/
 #guard_msgs in #print axioms the_tallys_stream_counts
 
+-- held (waiting on: every_shuffle_is_an_order every_order_is_a_shuffle the_orders_repeat_never the_orders_count_to_the_factorial)
 theorem the_census_of_orders_is_exact {A : Type u} (l p : List A)
     (hl : Apart l) :
     (p.Perm l ↔ p ∈ perms l)
       ∧ Apart (perms l)
-      ∧ (perms l).length = fact l.length :=
-  ⟨⟨every_shuffle_is_an_order l p, every_order_is_a_shuffle l p⟩,
-   the_orders_repeat_never l hl,
-   the_orders_count_to_the_factorial l⟩
+      ∧ (perms l).length = fact l.length := sorry
+-- end
 
 /-- info: 'Seed.the_census_of_orders_is_exact' does not depend on any axioms -/
 #guard_msgs in #print axioms the_census_of_orders_is_exact

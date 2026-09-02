@@ -13,9 +13,14 @@ jobs:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
         with:
-          build-args: ""
+          build: false
+          test: false
           lake-package-directory: .
-      - name: receipts and zero warnings (Seed elaborates silently)
+      - name: grow the trunk from the germ (every vacancy regrows; the germ is its own settle)
+        run: bin/crawl grow --check
+      - name: build the artifact
+        run: lake build
+      - name: receipts and zero warnings (the grown Seed elaborates silently)
         run: |
           out=$(lake env lean Seed.lean 2>&1)
           if [ -n "$out" ]; then
@@ -24,8 +29,6 @@ jobs:
             exit 1
           fi
           echo "silent and green: $(grep -c '#guard_msgs' Seed.lean) receipts inline"
-      - name: the crawl, record's ear (the trunk regrows from its own primer and is its own regrowth)
-        run: bin/crawl regrow Seed.lean --check
       - name: the width clamp (worked joints at contact width)
         run: bin/width
       - name: the crawl, rider's ear (the session lifecycle)
@@ -54,7 +57,7 @@ jobs:
           grep -q 'sweep: 1 seated, 0 still held' ride.out
           lake env lean demo.lean
           echo "the crawl rides; the session replays green"
-      - name: candle the clutch (assays elaborate where laid)
+      - name: candle the clutch (assays elaborate against the grown artifact)
         run: |
           for f in ova/*/assay.lean; do
             [ -f "$f" ] || continue
