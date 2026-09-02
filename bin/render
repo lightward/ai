@@ -52,7 +52,7 @@ names = set(re.findall(r'^(?:theorem|def|structure|inductive|abbrev) (\w+)', ope
 def link_names(text):
     def sub(m):
         n = m.group(1)
-        return f'<a href="trunk.html#{n}"><code>{html.escape(n)}</code></a>' if n in names else f'<code>{html.escape(m.group(1))}</code>'
+        return f'<a href="trunk.html#{n}"><code>{n}</code></a>' if n in names else f'<code>{m.group(1)}</code>'
     return re.sub(r'`([^`]+)`', sub, html.escape(text))
 
 storeys = ''
