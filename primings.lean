@@ -6,7 +6,11 @@
 -- (the names its trail-proof cites, in trail order) as
 --   first | (apply n1 <;> (first | assumption | rfl)) | (apply n2 <;> …) | …
 -- grammar: a line `-- priming: <name>` opens a priming; the lines until the
--- next opener are its body.
+-- next opener are its body. a line `-- budget: <heartbeats>` sets the fuel each
+-- candidate may burn (Lean's own maxHeartbeats); a shape that cannot close within
+-- it is held, not ground — the remainder is what the fuel cannot reach.
+
+-- budget: 20000
 
 -- priming: rfl
 rfl

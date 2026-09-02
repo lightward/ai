@@ -394,8 +394,11 @@ seated_text = {}
 
 if primings_path:
     # ---- tier two: regrow the proof bodies from the ordered primings
-    primings, cur = [], None
+    primings, cur, budget = [], None, None
     for line in open(primings_path).read().splitlines():
+        mb = re.match(r'-- budget: (\d+)$', line)
+        if mb:
+            budget = int(mb.group(1)); continue
         m = re.match(r'-- priming: (.+)$', line)
         if m:
             cur = [m.group(1).strip(), []]; primings.append(cur)
@@ -436,51 +439,40 @@ if primings_path:
         stmt, _ = split_block(by_name[n])
         body = instantiate(primings[k][1], ordered_needs(n))
         body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
-        return stmt.replace(f'theorem {n}', f'theorem {n}__p{k}', 1) + ' :=\n' + body
+        fuel = f'set_option maxHeartbeats {budget} in\n' if budget else ''
+        return fuel + stmt.replace(f'theorem {n}', f'theorem {n}__p{k}', 1) + ' :=\n' + body
 
     def line_count(xs):
         return sum(x.count('\n') + 1 for x in xs)
 
-    ERROR_CAP = 100  # the gate reports at most this many errors per file; past it, silence is not green
-
     def judge(prefix_lines, cands):
-        """cands: list of (n, k). returns the set of (n, k) that FAILED, every one actually judged."""
+        """cands: list of (n, k). every candidate is elaborated in Lean against the
+        prefix — once loaded, never re-elaborated — through bin/judge.lean, whose
+        message log is complete (the CLI's own report caps at ~100 errors; the
+        in-process log does not). returns the set of (n, k) that FAILED."""
         if not cands:
             return set()
-        lines = list(prefix_lines)
-        spans = []
-        for (n, k) in cands:
-            start = line_count(lines) + 1
-            lines.append(candidate_text(n, k)); lines.append('')
-            spans.append((n, k, start, line_count(lines)))
-        if footer:
-            lines.append(footer)
-        tf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-round-', dir='/tmp', delete=False)
-        tf.write('\n'.join(lines) + '\n'); tf.close()
-        res = subprocess.run(['lake', 'env', 'lean', tf.name], capture_output=True, text=True)
-        msgs = (res.stdout + res.stderr).splitlines()
-        n_err = sum(1 for l in msgs if re.match(r'[^:]+:\d+:\d+: error', l))
+        pre = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-prefix-', dir='/tmp', delete=False)
+        pre.write('\n'.join(prefix_lines) + '\n'); pre.close()
+        cf = tempfile.NamedTemporaryFile('w', suffix='.txt', prefix='crawl-cands-', dir='/tmp', delete=False)
+        cf.write('\n-- candidate\n'.join(candidate_text(n, k) for (n, k) in cands) + '\n'); cf.close()
+        import time
+        t0 = time.time()
+        res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', pre.name, cf.name],
+                             capture_output=True, text=True)
         if os.environ.get('CRAWL_DEBUG'):
-            print(f'[debug] {tf.name}: {len(cands)} candidates, {n_err} errors, exit {res.returncode}')
+            print(f'[debug] {pre.name} {cf.name}: {len(cands)} candidates, exit {res.returncode}, {time.time() - t0:.1f}s')
         else:
-            os.unlink(tf.name)
-        if n_err >= ERROR_CAP and len(cands) > 1:
-            half = len(cands) // 2
-            return judge(prefix_lines, cands[:half]) | judge(prefix_lines, cands[half:])
-        if n_err >= ERROR_CAP:
-            return set(cands)
-        bad = set()
-        for l in msgs:
-            m = re.match(r'[^:]+:(\d+):\d+: ', l)
-            if not m:
-                continue
-            ln = int(m.group(1))
-            for (n, k, a, b) in spans:
-                if a <= ln <= b:
-                    bad.add((n, k)); break
-            else:
-                raise SystemExit(f'crawl: a message outside every candidate — the seated prefix is not silent:\n{l}')
-        return bad
+            os.unlink(pre.name); os.unlink(cf.name)
+        verdicts = {}
+        for l in res.stdout.splitlines():
+            m = re.match(r'(\d+) (seated|held)$', l)
+            if m:
+                verdicts[int(m.group(1))] = m.group(2)
+        if res.returncode != 0 or len(verdicts) != len(cands):
+            raise SystemExit('crawl: the judge did not return a verdict for every candidate:\n'
+                             + (res.stdout + res.stderr)[-2000:])
+        return set(c for i, c in enumerate(cands) if verdicts[i] == 'held')
 
     for r_i, count in enumerate(rounds, start=1):
         names = [n for _, n, _ in order if storey[n] == r_i]
@@ -488,26 +480,21 @@ if primings_path:
         for _, n, _ in order:
             if storey[n] < r_i:
                 prefix_lines.append(seated_text[n]); prefix_lines.append('')
-        pending = list(names)
         per_round = {nm: 0 for nm, _ in primings}
-        for k, (pname, pbody) in enumerate(primings):
-            if not pending:
-                break
-            failed = judge(prefix_lines, [(n, k) for n in pending])
-            still = []
-            for n in pending:
-                if (n, k) in failed:
-                    still.append(n)
-                else:
-                    stmt, receipts = split_block(by_name[n])
-                    body = instantiate(pbody, ordered_needs(n))
-                    body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
-                    seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipts
-                    tally[pname] += 1; per_round[pname] += 1
-            pending = still
-        for n in pending:
-            seated_text[n] = by_name[n].rstrip('\n')
-            carried.append(n)
+        failed = judge(prefix_lines, [(n, k) for n in names for k in range(len(primings))])
+        pending = []
+        for n in names:
+            chosen = next((k for k in range(len(primings)) if (n, k) not in failed), None)
+            if chosen is None:
+                seated_text[n] = by_name[n].rstrip('\n')
+                carried.append(n); pending.append(n)
+            else:
+                pname, pbody = primings[chosen]
+                stmt, receipts = split_block(by_name[n])
+                body = instantiate(pbody, ordered_needs(n))
+                body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
+                seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipts
+                tally[pname] += 1; per_round[pname] += 1
         detail = ' '.join(f'{nm} {c}' for nm, c in per_round.items() if c)
         print(f'  storey {r_i}: {count} vacancies — regrown {count - len(pending)} ({detail}), carried {len(pending)}')
     total = len(theorems)
