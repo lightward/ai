@@ -133,6 +133,23 @@ def censusMode (trail : String) (sc : Scope) : IO Unit := do
     let cls := if isRefl then "rfl" else if isRec then "induction" else if isCases then "cases" else if cites then "citation" else "term"
     IO.println s!"{n.getString!} {cls}"
 
+partial def codomain : Expr → Expr
+  | .forallE _ _ b _ => codomain b
+  | e => e
+
+/-- kinds: every carrier (non-theorem) of the namespace with the sort of its codomain —
+`prop` (a relation; no `#guard` row can decide it, its theorems are its treaty), `sort`
+(a type; rows evaluate its inhabitants, never the name), or `data` (a row can compute it) -/
+def kindsMode (trail : String) (sc : Scope) : IO Unit := do
+  let st ← elabFrom (← IO.FS.readFile trail) trail none
+  let env := st.env
+  for (n, ci) in env.constants.map₂.toList do
+    if n.getPrefix != sc.ns || ci.isTheorem then continue
+    let k := match codomain ci.type with
+      | .sort l => if l == Level.zero then "prop" else "sort"
+      | _ => "data"
+    IO.println s!"{n.getString!} {k}"
+
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
   Lean.initSearchPath (← Lean.findSysroot)
@@ -148,6 +165,9 @@ unsafe def main (args : List String) : IO Unit := do
     return
   if args.head? == some "census" then
     censusMode args[1]! sc
+    return
+  if args.head? == some "kinds" then
+    kindsMode args[1]! sc
     return
   let prefixSrc ← IO.FS.readFile args[0]!
   let candSrc ← IO.FS.readFile args[1]!

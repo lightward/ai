@@ -974,6 +974,16 @@ if primings_path:
         grown_all = '\n'.join(list(prefix) + [seated_text[n] for _, n, _ in order])
         prose = [l for l in grown_all.splitlines() if l.startswith('--')]
         hinted = sum(1 for n, h in kept_hint.items() if h)
+        # the grown trail as one file, for the kernel's readings below (kinds, census)
+        grown = list(prefix)
+        for _, n, _ in order:
+            grown.append(seated_text[n]); grown.append('')
+        if footer:
+            grown.append(footer)
+        cf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-census-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
+        cf.write('\n'.join(grown) + '\n'); cf.close()
+        resk = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'kinds', cf.name] + SCOPE, capture_output=True, text=True)
+        kinds = dict(l.split() for l in resk.stdout.splitlines() if len(l.split()) == 2)
         print('the standards (foam-safe at this build; what the compiler vouches for by construction, and what it counts):')
         print(f'  axiom-free ........ {total} receipts minted into the artifact; every one checked at the gate below')
         print(f'  sorry-free ........ {len(vacancies)} vacancies, every one regrown (a refusal is red, never carried)')
@@ -991,19 +1001,18 @@ if primings_path:
             imps = [l.split()[1] for l in lines if l.startswith('import ')]
             if imps and imps[-1] == NS_NAME:
                 assay_text += '\n'.join(lines) + '\n'
-        covered = [c for c in cnames if re.search(r'\b' + re.escape(c) + r'\b', assay_text)]
-        uncovered = [c for c in cnames if c not in covered]
-        print(f'  treaty coverage ... {len(covered)} of {len(cnames)} carriers evaluated by an assay'
-              + (f'; unevaluated: {" ".join(uncovered)}' if uncovered else ''))
+        # a row computes a Bool: only a data carrier can be evaluated by one. a prop carrier's treaty
+        # is its theorems; a sort carrier is evaluated through its inhabitants, never by name
+        data = [c for c in cnames if kinds.get(c, 'data') == 'data']
+        props = [c for c in cnames if kinds.get(c) == 'prop']
+        sorts = [c for c in cnames if kinds.get(c) == 'sort']
+        covered = [c for c in data if re.search(r'\b' + re.escape(c) + r'\b', assay_text)]
+        uncovered = [c for c in data if c not in covered]
+        print(f'  treaty coverage ... {len(covered)} of {len(data)} data carriers evaluated by an assay'
+              + (f'; unevaluated: {" ".join(uncovered)}' if uncovered else '')
+              + f'; beyond a row\'s reach: {len(props)} relations ({" ".join(props)}), {len(sorts)} types ({" ".join(sorts)})')
     # the ceiling: the kernel's own census of the trail's proof shapes (bin/judge.lean census),
     # so the yield reads against what the three moves could reach at all
-    grown = list(prefix)
-    for _, n, _ in order:
-        grown.append(seated_text[n]); grown.append('')
-    if footer:
-        grown.append(footer)
-    cf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-census-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
-    cf.write('\n'.join(grown) + '\n'); cf.close()
     res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'census', cf.name] + SCOPE, capture_output=True, text=True)
     os.unlink(cf.name)
     cls = dict(l.split() for l in res.stdout.splitlines() if len(l.split()) == 2)

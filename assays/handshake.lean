@@ -87,3 +87,7 @@ def reseated : Nat := readNat ((reseat F (fun n : Nat => fun m : Nat => n + m)).
 #guard rehearsed == 21
 #guard retold
 #guard reseated == 7
+def heldDoor : Nat := (faceOf (fun d : door Nat Nat => face d + met d)).obs (2 : Nat) (3 : Nat)
+#guard heldDoor == 5
+def originRead : Unit := (originFace Nat).obs (1 : Nat) ()
+#guard originRead == ()

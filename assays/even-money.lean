@@ -6,3 +6,5 @@ set_option autoImplicit false
 #guard (perms [1, 2, 3]).length == 6
 #guard ((perms [1, 2, 3, 4]).filter (firstOf Nat.beq 1 2)).length == 12
 #guard (perms [1, 2, 3, 4]).length == 24
+#guard trade Nat.beq 1 2 1 == 2
+#guard trade Nat.beq 1 2 3 == 3

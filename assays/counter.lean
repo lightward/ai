@@ -19,3 +19,6 @@ def circle : room := round empty [(8, [9]), (9, [8])]
 #guard weight afterSweep [3, 2] == 0
 #guard !(seated selfCiter 7)
 #guard !(seated circle 8) && !(seated circle 9)
+def offered : room := offer empty (4, [])
+#guard seated offered 4
+#guard !(seated (offer empty (5, [6])) 5)
