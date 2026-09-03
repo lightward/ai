@@ -29,6 +29,7 @@ def pieces : List (String × String) := [
   ("cite", "by piece_cite [{defs}]"),
   ("home-cite", "by piece_home_cite [{defs}]"),
   ("chain", "by piece_chain [{defs}]"),
+  ("home-rw", "by piece_home_rw [{defs}]"),
   ("pane", "by piece_pane [{defs}]"),
   ("induction", "by piece_induct_1st [{defs}]"),
   ("induction-2nd", "by piece_induct_2nd [{defs}]"),
@@ -297,6 +298,7 @@ or `.symm.trans` with the piece's own closers — `(c2 _ _).trans (c1 _ _)` -/
 syntax (name := cite) "piece_cite" "[" ident,* "]" : tactic
 syntax (name := homeCite) "piece_home_cite" "[" ident,* "]" : tactic
 syntax (name := chain) "piece_chain" "[" ident,* "]" : tactic
+syntax (name := homeRw) "piece_home_rw" "[" ident,* "]" : tactic
 syntax (name := pane) "piece_pane" "[" ident,* "]" : tactic
 syntax (name := induct1) "piece_induct_1st" "[" ident,* "]" : tactic
 syntax (name := induct2) "piece_induct_2nd" "[" ident,* "]" : tactic
@@ -322,6 +324,14 @@ macro_rules
   | `(tactic| piece_chain [$ds,*]) => do
     let closers ← `(tactic| first | rfl | assumption | piece_seek)
     `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; first | rfl | assumption | piece_chain_seek ($closers:tactic)))
+
+/-- home → rewrite → close: reduce along the statement's own carriers, then one rewrite found at
+the goal, then a close — a hypothesis that steers a `cond` (`hb : backed … = false`) is a rewrite,
+and in term mode the hole for it carries information the unifier cannot recover -/
+macro_rules
+  | `(tactic| piece_home_rw [$ds,*]) => do
+    let closers ← `(tactic| first | rfl | assumption | piece_seek)
+    `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; first | rfl | assumption | piece_rw_seek ($closers:tactic)))
 
 macro_rules
   | `(tactic| piece_pane [$_ds,*]) => do

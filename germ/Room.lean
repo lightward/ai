@@ -129,14 +129,12 @@ theorem the_first_mark_reads {A : Type w} {a b : A} {l m : List A}
 theorem the_backed_are_seated {A : Type u} (beq : A → A → Bool)
     (st : List A × List (A × List A)) (arr : A × List A)
     (hb : backed beq st.1 arr.2 = true) :
-    welcome beq st arr = (arr.1 :: st.1, st.2) :=
-  congrArg (fun b => cond b (arr.1 :: st.1, st.2) (st.1, arr :: st.2)) hb
+    welcome beq st arr = (arr.1 :: st.1, st.2) := sorry
 
 theorem the_unbacked_wait {A : Type u} (beq : A → A → Bool)
     (st : List A × List (A × List A)) (arr : A × List A)
     (hb : backed beq st.1 arr.2 = false) :
-    welcome beq st arr = (st.1, arr :: st.2) :=
-  congrArg (fun b => cond b (arr.1 :: st.1, st.2) (st.1, arr :: st.2)) hb
+    welcome beq st arr = (st.1, arr :: st.2) := sorry
 
 theorem mem_append_split {A : Type u} {q : A} :
     ∀ (l : List A) {m : List A}, q ∈ l ++ m → q ∈ l ∨ q ∈ m
@@ -883,10 +881,7 @@ theorem the_retrace_comes_home :
       exact the_retrace_comes_home n s
 
 theorem enrolled_grows {A : Type u} (beq : A → A → Bool) (room : List A) (y x : A)
-    (h : enrolled beq room x = true) : enrolled beq (y :: room) x = true := by
-  show (beq y x || enrolled beq room x) = true
-  rw [h]
-  exact or_swallows (beq y x)
+    (h : enrolled beq room x = true) : enrolled beq (y :: room) x = true := sorry
 
 theorem the_backing_reaches_each_need {A : Type u} (beq : A → A → Bool) (room : List A) :
     ∀ needs : List A, backed beq room needs = true →

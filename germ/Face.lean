@@ -810,8 +810,7 @@ theorem the_intertwiner_carries_the_walk {I : Type u} {O : Type v} (m n : Machin
       (hout (park m s w))
 
 theorem a_stage_may_ground_a_stage (W : Type u) (t δ : Plan) :
-    build W (graft t δ) = build (build W t) δ :=
-  (the_parent_folds_into_the_ground (fun A B : Type u => door A B) W t δ).symm
+    build W (graft t δ) = build (build W t) δ := sorry
 
 theorem the_hold_walks_beside_the_work {I : Type u} {O : Type v}
     (m : Machine I O) (w : List I) (s : m.S) (held : List I) :
