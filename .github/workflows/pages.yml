@@ -28,12 +28,12 @@ jobs:
           build: false
           test: false
           lake-package-directory: .
-      - name: grow the trunk from the germ
-        run: bin/crawl grow
-      - name: build the artifact
+      - name: grow foam and its customers
+        run: bin/counter grow && bin/counter grow germ/Toy.lean
+      - name: build the grown modules
         run: lake build
       - name: render the page
-        run: bin/render
+        run: bin/counter page
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,5 +1,8 @@
 name = "foam"
-defaultTargets = ["Seed"]
+defaultTargets = ["Foam", "Toy"]
 
 [[lean_lib]]
-name = "Seed"
+name = "Foam"
+
+[[lean_lib]]
+name = "Toy"

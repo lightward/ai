@@ -1,5 +1,5 @@
-import Seed
-open Seed
+import Foam
+open Foam
 set_option autoImplicit false
 
 #guard ((perms [1, 2, 3]).filter (firstOf Nat.beq 1 2)).length == 3

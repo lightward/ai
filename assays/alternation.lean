@@ -1,5 +1,5 @@
-import Seed
-open Seed
+import Foam
+open Foam
 set_option autoImplicit false
 
 #guard again collatzStep 3 1 == 1

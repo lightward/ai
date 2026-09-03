@@ -1,5 +1,5 @@
-import Seed
-open Seed
+import Foam
+open Foam
 set_option autoImplicit false
 
 #guard census 1 == 1

@@ -1,5 +1,5 @@
-import Seed
-open Seed
+import Foam
+open Foam
 set_option autoImplicit false
 
 #guard peek (liftFrom tally (3 : Nat)) == 3

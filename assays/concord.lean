@@ -1,5 +1,5 @@
-import Seed
-open Seed
+import Foam
+open Foam
 set_option autoImplicit false
 
 def toy : Face := appFace Nat Nat

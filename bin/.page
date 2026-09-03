@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# render: the browseable artifact — foam.is as a page. the trunk (grown), the germ,
+# the primings, and the readings (the book, the candle, the storeys), each name an
+# anchor. no framework, no build step but the crawl's own. output: site/.
+# conduct-as-citation:
+#   the artifact is grown, never committed .... bin/crawl grow
+#   every name is an address ................. the map is the citation graph; #name links
+#   readings, never meters ................... the standards report, the book's tense guard
+set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+[ -f Foam.lean ] || bin/counter grow >/dev/null
+mkdir -p site
+CANDLE="$(cat regrowth/Foam.report 2>/dev/null | grep -vE "assay.lean: identical" || echo "(no report — run bin/counter grow)")"
+BOOK="$(bin/counter book Foam.lean 2>&1)"
+CANDLE="$CANDLE" BOOK="$BOOK" python3 - <<'EOF'
+import html, os, re, subprocess
+
+def page(title, body, nav):
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{html.escape(title)}</title>
+<style>
+body{{margin:0;padding:2rem 1rem 6rem;background:#fbfaf7;color:#1e1d1a;font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;max-width:70rem;margin-inline:auto}}
+nav a{{margin-right:1.2rem}} a{{color:#1e1d1a}} a:hover{{color:#8a5a00}}
+h1,h2{{font-weight:600;font-size:1.05rem;margin:2.5rem 0 .6rem}}
+pre{{white-space:pre-wrap;word-break:break-word;background:#f3f1ec;padding:1rem;border-radius:6px;overflow:auto}}
+.decl{{display:block}} .decl:target{{background:#fff2c8}}
+.readme{{white-space:pre-wrap}} footer{{margin-top:4rem;opacity:.6}}
+</style></head><body><nav>{nav}</nav>{body}
+<footer>strict phenomenology is indistinguishable from physics — the artifact grew from the germ on push. UNLICENSE.</footer></body></html>"""
+
+NAV = ('<a href="./">foam</a><a href="trunk.html">the trunk</a><a href="germ.html">the germ</a><a href="toy.html">toy, a customer</a>'
+       '<a href="primings.html">the primings</a><a href="book.html">the book</a>'
+       '<a href="https://github.com/lightward/foam">github</a>')
+
+def lean_page(path, title):
+    src = open(path).read()
+    out = []
+    for line in src.splitlines():
+        m = re.match(r'^(theorem|def|structure|inductive|abbrev) (\w+)', line)
+        esc = html.escape(line)
+        if m:
+            out.append(f'<span class="decl" id="{m.group(2)}"><a href="#{m.group(2)}">{esc}</a></span>')
+        else:
+            out.append(esc)
+    return page(f'{title} — foam', f'<h1>{html.escape(title)}</h1><pre>' + '\n'.join(out) + '</pre>', NAV)
+
+readme = open('README.md').read()
+# link `name` in the README to the trunk where the name is a declaration
+names = set(re.findall(r'^(?:theorem|def|structure|inductive|abbrev) (\w+)', open('Foam.lean').read(), re.M))
+def link_names(text):
+    def sub(m):
+        n = m.group(1)
+        return f'<a href="trunk.html#{n}"><code>{n}</code></a>' if n in names else f'<code>{m.group(1)}</code>'
+    return re.sub(r'`([^`]+)`', sub, html.escape(text))
+
+storeys = ''
+try:
+    r = subprocess.run(['python3', '-c', 'print(1)'], capture_output=True, text=True)
+except Exception:
+    pass
+candle = html.escape(os.environ.get('CANDLE', ''))
+book = html.escape(os.environ.get('BOOK', ''))
+n_thm = len(re.findall(r'^theorem ', open('Foam.lean').read(), re.M))
+n_car = len(re.findall(r'^(def|structure|inductive) ', open('Foam.lean').read(), re.M))
+germ_bytes = os.path.getsize('germ/Foam.lean'); seed_bytes = os.path.getsize('Foam.lean')
+vac = len(re.findall(r':= sorry\s*$', open('germ/Foam.lean').read(), re.M))
+index_body = (f'<div class="readme">{link_names(readme)}</div>'
+              f'<h2>the bench at this push</h2><pre>{n_car} carriers, {n_thm} theorems in the grown trunk\n'
+              f'the germ: {vac} vacancies, {germ_bytes} bytes; the grown artifact {seed_bytes} bytes\n\n{candle}</pre>'
+              f'<h2>the treaty vectors</h2><pre>' + html.escape(open('regrowth/Foam.report').read().split('the treaty vectors')[1] if os.path.exists('regrowth/Foam.report') and 'the treaty vectors' in open('regrowth/Foam.report').read() else '') + '</pre>')
+open('site/index.html', 'w').write(page('foam', index_body, NAV))
+open('site/trunk.html', 'w').write(lean_page('Foam.lean', 'foam, grown from germ/Foam.lean'))
+open('site/toy.html', 'w').write(lean_page('Toy.lean', 'toy — a customer germ, grown on foam') if os.path.exists('Toy.lean') else page('toy — foam', '<p>not grown at this push</p>', NAV))
+open('site/germ.html', 'w').write(lean_page('germ/Foam.lean', 'germ/Foam.lean — what is kept by hand'))
+open('site/primings.html', 'w').write(page('the primings — foam', '<h1>the primings</h1><pre>' + html.escape(open('primings.lean').read()) + '</pre>', NAV))
+open('site/book.html', 'w').write(page('the book — foam', '<h1>the book of the seed</h1><pre>' + book + '</pre>', NAV))
+open('site/CNAME', 'w').write(open('CNAME').read())
+open('site/.nojekyll', 'w').write('')
+print('site/: index trunk toy germ primings book')
+EOF

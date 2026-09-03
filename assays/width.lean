@@ -1,5 +1,5 @@
-import Seed
-open Seed
+import Foam
+open Foam
 set_option autoImplicit false
 
 #guard [true, false].all (fun x => [true, false].all (fun y => [true, false].all

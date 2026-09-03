@@ -14,17 +14,17 @@ foam is a type system holding itself together under measurement: a trunk of theo
 ## the shape
 
 ```
-Germ.lean          what is kept by hand: carriers, signatures, the proofs no shape reaches yet
+germ/Foam.lean     what is kept by hand: carriers, signatures, the proofs no shape reaches yet
+germ/Toy.lean      a customer's germ — it imports Foam and stands on it
 primings.lean      the ordered moves the compiler tries — Lean proof shapes that are also rules
-bin/crawl          the compiler: one loop, two ears (grow / ride)
-bin/judge.lean     Lean judging Lean in-process; the crawl's eyes
-Seed.lean          the grown artifact — never committed, published at foam.is
+bin/counter        the compiler: grow · settle · check · ride · book · page
+bin/judge.lean     Lean judging Lean in-process; counter's eyes
+Foam.lean          the grown module — never committed, importable, published at foam.is
+Toy.lean           likewise, grown on Foam
 assays/            the treaty vectors: what every growth must compute identically
-domains/           germs that stand on the trunk (a custodian's, not the house's)
-bin/next           the book: census, frontier, vestibule
-bin/render         the page
-chrysalis/         every prior body of this project, whole
 ```
+
+the prior bodies of this project stand whole at the tag `chrysalis` (`git show chrysalis:chrysalis/`), the ride era, and inside it the seed era with its parent strata. quarry, fully reachable, no longer process.
 
 ## the gate
 
@@ -45,14 +45,15 @@ theorem foo : P := sorry
 -- 'foo' depends on axioms: [sorryAx]   ← refused
 ```
 
-it refuses `sorry`. it refuses axioms smuggled *from the standard library*. the receipts ride inside the artifact so that anyone holding only the file can re-run them, with no foam tooling present: `lake env lean Seed.lean` — silence is every receipt passing at once. clean water, not signed-by-its-filter water.
+it refuses `sorry`. it refuses axioms smuggled *from the standard library*. the receipts ride inside the artifact so that anyone holding only the file can re-run them, with no foam tooling present: `lake env lean Foam.lean` — silence is every receipt passing at once. clean water, not signed-by-its-filter water.
 
 ## the germ and the compiler
 
 ```
-bin/crawl grow            Germ.lean → Seed.lean; red if any vacancy fails to regrow
-bin/crawl grow --check    the germ is minimal and in derived order (CI asks this on every push)
-bin/crawl grow --settle   shrink the germ: every proof a shape now reaches becomes a vacancy
+bin/counter grow                  germ/Foam.lean → Foam.lean; red if any vacancy fails to regrow
+bin/counter grow --check          the germ is minimal and in derived order (CI asks this on every push)
+bin/counter grow --settle         shrink the germ: every proof a shape now reaches becomes a vacancy
+bin/counter grow germ/Toy.lean    a customer's germ, grown on foam
 ```
 
 the germ holds three things: the carriers (every `def`, `structure`, `inductive` — the spellbook), every theorem's *signature*, and the hand-written proofs the primings cannot yet regrow. a theorem the primings *can* regrow is a vacancy — its signature and `:= sorry`, nothing else. its citations are not stored; they are found at growth time from the signature's own vocabulary, ranked by how rare the shared words are across the trunk. the artifact provably cannot carry its path, so the germ doesn't either. where the settle has proven a route load-bearing, a `-- held (waiting on: …)` line stands above the vacancy, and those lines are counted.
@@ -65,7 +66,7 @@ today: 103 carriers, 284 theorems, nine rounds — 151 · 50 · 39 · 26 · 8 ·
 
 ## the standards
 
-the crawl is a compiler, and a compiler's standards are the rules its output satisfies by construction, printed at every build:
+counter is a compiler, and a compiler's standards are the rules its output satisfies by construction, printed at every build:
 
 ```
 axiom-free ........ 284 receipts minted; every one checked at the gate
@@ -79,38 +80,51 @@ the tamper surface  184 hand bodies, 3 routes kept, reach 12, budget 20000
 
 the artifact says one thing about itself, in Lean's voice: no axioms. everything *foam-shaped* about it is the compiler's word, printed here and published with the artifact. and the places a custodian can depart from construction are not forbidden — a hand body, a kept route, a raised reach — they are counted on the same report. that last line is the port: documented, visible on every build, shrinking as the shapes improve.
 
-## the domains
+## the customers
 
 ```
-bin/crawl grow domains/toy.lean
+bin/counter grow germ/Toy.lean
 ```
 
-a germ need not be the trunk. `domains/toy.lean` says `import Seed`, opens its own namespace, defines a counter and a flipper, and states four things about them — and it is 555 bytes with no proofs in it. it grows against the trunk in seconds: three sightings cite the trunk's own laws, found through vocabulary alone; one regrows by induction; four receipts are minted; its own `toy.assay.lean` reads identically. the judge takes the namespace and the imports from the germ's header, and the trunk's theorems are seated before the domain's first round.
+foam is counter's first customer; any germ that imports it is another. `germ/Toy.lean` says `import Foam`, opens its own namespace, defines a counter and a flipper, and states four things about them — and it is 555 bytes with no proofs in it. it grows on foam in seconds: three sightings cite foam's own laws, found through vocabulary alone; one regrows by induction; four receipts are minted; `Toy.lean` is an importable module in its turn (a stage may ground a stage), and `assays/toy.lean` reads identically. the judge takes the namespace and the imports from the germ's header, and the imported modules' theorems are seated before the customer's first round.
 
-this is the floor a custodian stands on: state what you see about your own domain, and the physics is found for it where the physics is there, and named as missing where it isn't. the trunk's slow settle tunes the shapes; a domain's short run inherits the tuning and pays almost nothing.
+this is the floor a custodian stands on: state what you see about your own domain, and the physics is found for it where the physics is there, and named as missing where it isn't. foam's slow settle tunes the shapes; a customer's short run inherits the tuning and pays almost nothing.
 
 ## the assays
 
-`assays/<arc>.lean` — thirteen of them, one per arc that grew the trunk: catalan (1 1 2 5 14), factorial, even-money, isaac, entanglement, book, odometer, alternation, seat, lift, stream, width, concord. each is a handful of `#guard` rows. any growth of the trunk must compute every one of them identically; that is the certificate of identity and the integration suite in one. the arcs' journals — germ, witness, tolls — stand in the chrysalis with the rest of the process that grew them.
+`assays/<arc>.lean` — one per arc that grew foam (catalan: 1 1 2 5 14; factorial; even-money; isaac; entanglement; book; odometer; alternation; seat; lift; stream; width; concord) and one for the toy. each is a handful of `#guard` rows, and belongs to the module it imports. any growth of that module must compute every one of them identically; that is the certificate of identity and the integration suite in one. the arcs' journals — germ, witness, tolls — stand in the chrysalis with the rest of the process that grew them.
 
 ## the book, and the ride
 
 ```
-bin/next Seed.lean
-bin/crawl ride [session.lean]
+bin/counter book Foam.lean
+bin/counter ride [session.lean]
 ```
 
-`bin/next` reads the grown trunk and says what is there: the census, the frontier (organs no other organ cites yet — the reaction-sweep queue), and the vestibule if a `.held` stream is offered. the book, never the prediction.
+`book` reads a grown module and says what is there: the census, the frontier (organs no other organ cites yet — the reaction-sweep queue), and the vestibule if a `.held` stream is offered. the book, never the prediction.
 
-`bin/crawl ride` is the compiler's other ear. a session is a Lean file that grows by named declarations; a turn is an elaboration; `example` is a what-if, fully judged, zero footprint; a named theorem is a spell, kept; a refusal is held with its missing supports *named*, and `:sweep` re-offers the vestibule. this is ignitable at your W. you don't need to have been here before — nothing here can tell, on purpose.
+`ride` is the compiler's other ear. a session is a Lean file that grows by named declarations; a turn is an elaboration; `example` is a what-if, fully judged, zero footprint; a named theorem is a spell, kept; a refusal is held with its missing supports *named*, and `:sweep` re-offers the vestibule. this is ignitable at your W. you don't need to have been here before — nothing here can tell, on purpose.
 
 ## the page
 
-`bin/render` writes `site/`: this file, the grown trunk with every declaration an anchor (`foam.is/trunk.html#the_handshake`), the germ, the primings, the book, and the compiler's report for that push. the `foam.is` workflow grows the artifact and publishes it. nothing browseable is committed, the same way nothing derived is.
+`bin/counter page` writes `site/`: this file, foam grown with every declaration an anchor (`foam.is/trunk.html#the_handshake`), the toy, the germ, the primings, the book, and the compiler's report for that push. the `foam.is` workflow grows the modules and publishes it. nothing browseable is committed, the same way nothing derived is.
 
-## the chrysalis
+## the grammar
 
-every prior body of this project nests at `chrysalis/`: the ride era whole — its rides, its ova with their journals and campaign turns — and inside it `chrysalis/chrysalis/`, the seed era with its parent strata. quarry, fully reachable, no longer process. the trunk at the root was regrown from `chrysalis/Seed.lean` by the compiler's own record's ear, and reads every assay identically. the git log is the journal: the artifact cannot carry its path, so commit messages are the fossil.
+six moves grow everything here from one operation. each is named for what it does; each has a worked instance standing in the trunk.
+
+1. **cross** — meet two organs at a shared face. the crossing is priced by an intertwiner, and what opens is exactly the agreement-sector neither factor affords alone: license conserved, inheritance componentwise, novelty only in the comparison. instance: `the_pace_is_carried_onto_the_flip`.
+2. **diagonalize** — cross an organ with itself. self-reference is the smallest move there is. instance: `selfMeet`, `the_probe_boards_as_the_guest`.
+3. **enumerate-then-face** — make a room exact (nothing missed, nothing doubled, counted), then every symmetry on it yields a counting law. instances: `the_census_is_exact`, `the_census_of_orders_is_exact`, `the_direction_is_even_money`.
+4. **iterate** — every endo-operator has an orbit and a resumption law; continuation is the primitive. instance: `the_park_resumes`.
+5. **complete the iff** — every one-way blindness law is half an exactness statement; find the converse. instance: `the_curtain_is_exact`.
+6. **classify the map** — iso, retraction, merge: sort any morphism and you have sorted licensed identification from real remainder. instances: `a_retraction_merges_nothing`, `a_merging_map_has_no_section`.
+
+and the vow the whole house keeps: axiom-free (every theorem ends with its receipt; if a standard-library lemma smuggles `propext`, re-derive it by hand); comment-free (names and proofs are the walk and the talk at once; prose lives here and in the journal, never in the organs); W stays opaque (the one dark type, on purpose — nothing reads the water, and that is why the whole thing can be wet); no design decisions (if a carve wants one, the carve is not ready — W decides, by firing).
+
+## the journal
+
+the git log. the artifact cannot carry its path, so commit messages are the fossil. foam was regrown from `chrysalis:chrysalis/Seed.lean` by the compiler's own record's ear, and reads every assay identically; the prior walls stand at `git show 4be2406:CLAUDE.md`.
 
 ## the exit
 

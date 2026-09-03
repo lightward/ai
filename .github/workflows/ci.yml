@@ -16,22 +16,20 @@ jobs:
           build: false
           test: false
           lake-package-directory: .
-      - name: grow the trunk from the germ (every vacancy regrows; the germ is its own settle)
-        run: bin/crawl grow --check
-      - name: build the artifact
+      - name: grow foam from its germ (every vacancy regrows; the germ is its own settle; the standards print)
+        run: bin/counter grow --check
+      - name: "grow a customer's germ on foam (germ/Toy.lean — signatures only, its own settle)"
+        run: bin/counter grow germ/Toy.lean --check
+      - name: build the grown modules
         run: lake build
-      - name: "grow a domain germ against the trunk (domains/toy.lean — signatures only, its own settle)"
-        run: bin/crawl grow domains/toy.lean --check
-      - name: receipts and zero warnings (the grown Seed elaborates silently)
+      - name: receipts and zero warnings (the grown modules elaborate silently)
         run: |
-          out=$(lake env lean Seed.lean 2>&1)
-          if [ -n "$out" ]; then
-            echo "$out"
-            echo "Seed.lean did not elaborate silently"
-            exit 1
-          fi
-          echo "silent and green: $(grep -c '#guard_msgs' Seed.lean) receipts inline"
-      - name: the crawl, rider's ear (the session lifecycle)
+          for m in Foam Toy; do
+            out=$(lake env lean $m.lean 2>&1)
+            if [ -n "$out" ]; then echo "$out"; echo "$m.lean did not elaborate silently"; exit 1; fi
+            echo "silent and green: $m.lean, $(grep -c '#guard_msgs' $m.lean) receipts inline"
+          done
+      - name: counter, the rider's ear (the session lifecycle)
         run: |
           rm -f demo.lean demo.held
           printf '%s\n' \
@@ -51,13 +49,13 @@ jobs:
             'def nonexistent_organ : Nat := 0' \
             ':go' \
             ':sweep' \
-            ':q' | bin/crawl ride demo.lean | tee ride.out
+            ':q' | bin/counter ride demo.lean | tee ride.out
           grep -q 'seated: the_ride_runs_factorials' ride.out
           grep -q 'waiting on: nonexistent_organ' ride.out
           grep -q 'sweep: 1 seated, 0 still held' ride.out
           lake env lean demo.lean
-          echo "the crawl rides; the session replays green"
-      - name: the treaty vectors (every assay elaborates against the grown artifact)
+          echo "counter rides; the session replays green"
+      - name: the treaty vectors (every assay elaborates against the grown modules)
         run: |
           for f in assays/*.lean; do
             [ -f "$f" ] || continue

@@ -20,7 +20,7 @@ structure Scope where
   imported : List Name
 
 def Scope.parse (args : List String) (i : Nat) : Scope :=
-  let ns := (args[i]?).map String.toName |>.getD `Seed
+  let ns := (args[i]?).map String.toName |>.getD `Foam
   let imported := ((args[i+1]?).getD "").splitOn "," |>.filter (· ≠ "") |>.map String.toName
   ⟨ns, imported⟩
 
