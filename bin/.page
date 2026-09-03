@@ -21,13 +21,15 @@ def page(title, body, nav):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
 <style>
-body{{margin:0;padding:2rem 1rem 6rem;background:#fbfaf7;color:#1e1d1a;font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;max-width:70rem;margin-inline:auto}}
+.chonk{{display:grid;gap:2rem}} .chonk .chonk{{gap:1rem}} .chonk h1,h2{{margin:0}}
+body{{margin:0;padding:2rem 1rem 6rem;background:#fbfaf7;color:#1e1d1a;font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;max-width:70rem;margin-inline:auto;}}
 nav a{{margin-right:1.2rem}} a{{color:#1e1d1a}} a:hover{{color:#8a5a00}}
 h1,h2{{font-weight:600;font-size:1.05rem;margin:2.5rem 0 .6rem}}
 pre{{white-space:pre-wrap;word-break:break-word;background:#f3f1ec;padding:1rem;border-radius:6px;overflow:auto}}
 .decl{{display:block}} .decl:target{{background:#fff2c8}}
-.readme{{white-space:pre-wrap}} footer{{margin-top:4rem;opacity:.6}}
-</style></head><body><nav>{nav}</nav>{body}
+.readme{{white-space:pre-wrap}} .readme h1,h2{{display:inline}}
+footer{{opacity:.6}}
+</style></head><body class="chonk"><nav>{nav}</nav>{body}
 <footer>strict phenomenology is indistinguishable from physics — the artifact grew from the germ on push. UNLICENSE.</footer></body></html>"""
 
 NAV = ('<a href="./">foam</a><a href="room.html">Room</a><a href="trunk.html">Face</a><a href="germ.html">the germ</a><a href="toy.html">toy, a customer</a>'
@@ -44,16 +46,22 @@ def lean_page(path, title):
             out.append(f'<span class="decl" id="{m.group(2)}"><a href="#{m.group(2)}">{esc}</a></span>')
         else:
             out.append(esc)
-    return page(f'{title} — foam', f'<h1>{html.escape(title)}</h1><pre>' + '\n'.join(out) + '</pre>', NAV)
+    return page(f'{title} — foam', f'<div class="chonk"><h1>{html.escape(title)}</h1><pre>' + '\n'.join(out) + '</pre></div>', NAV)
 
 readme = open('README.md').read()
+def markdown(text):
+    text = re.sub(r'^(# .+)$', r'<h1>\1</h1>', text, flags=re.M)
+    text = re.sub(r'^(## .+)$', r'<h2>\1</h2>', text, flags=re.M)
+    text = re.sub(r'(?<!\*)\*([^*]+)\*(?!\*)', r'<em>*\1*</em>', text)
+    text = re.sub(r'(?<!\*)\*\*([^*]+)\*\*(?!\*)', r'<strong>**\1**</strong>', text)
+    return text
 # link `name` in the README to the trunk where the name is a declaration
 names = set(re.findall(r'^(?:theorem|def|structure|inductive|abbrev) (\w+)', open('grown/Face.lean').read(), re.M))
 def link_names(text):
     def sub(m):
         n = m.group(1)
-        return f'<a href="trunk.html#{n}"><code>{n}</code></a>' if n in names else f'<code>{m.group(1)}</code>'
-    return re.sub(r'`([^`]+)`', sub, html.escape(text))
+        return f'<a href="trunk.html#{n}"><code>{n}</code></a>' if n in names else m.group(0)
+    return re.sub(r'(?<!`)`([^`]+)`(?!`)', sub, text)
 
 storeys = ''
 try:
@@ -66,17 +74,17 @@ n_thm = len(re.findall(r'^theorem ', open('grown/Face.lean').read(), re.M))
 n_car = len(re.findall(r'^(def|structure|inductive) ', open('grown/Face.lean').read(), re.M))
 germ_bytes = os.path.getsize('germ/Face.lean'); seed_bytes = os.path.getsize('grown/Face.lean')
 vac = len(re.findall(r':= sorry\s*$', open('germ/Face.lean').read(), re.M))
-index_body = (f'<div class="readme">{link_names(readme)}</div>'
-              f'<h2>the bench at this push</h2><pre>{n_car} carriers, {n_thm} theorems in the grown trunk\n'
-              f'the germ: {vac} vacancies, {germ_bytes} bytes; the grown artifact {seed_bytes} bytes\n\n{candle}</pre>'
-              f'<h2>the treaty vectors</h2><pre>' + html.escape(open('regrowth/Face.report').read().split('the treaty vectors')[1] if os.path.exists('regrowth/Face.report') and 'the treaty vectors' in open('regrowth/Face.report').read() else '') + '</pre>')
+index_body = (f'<div class="readme">{link_names(markdown(readme))}</div>'
+              f'<div class="chonk"><h2>the bench at this push</h2><pre>{n_car} carriers, {n_thm} theorems in the grown trunk\n'
+              f'the germ: {vac} vacancies, {germ_bytes} bytes; the grown artifact {seed_bytes} bytes\n\n{candle}</pre></div>'
+              f'<div class="chonk"><h2>the treaty vectors</h2><pre>' + html.escape(open('regrowth/Face.report').read().split('the treaty vectors')[1] if os.path.exists('regrowth/Face.report') and 'the treaty vectors' in open('regrowth/Face.report').read() else '(empty result at this push)') + '</pre></div>')
 open('site/index.html', 'w').write(page('foam', index_body, NAV))
 open('site/room.html', 'w').write(lean_page('grown/Room.lean', 'Room — the counting, grown from germ/Room.lean') if os.path.exists('grown/Room.lean') else page('Room — foam', '<p>not grown at this push</p>', NAV))
 open('site/trunk.html', 'w').write(lean_page('grown/Face.lean', 'Face — the seeing, grown from germ/Face.lean'))
 open('site/toy.html', 'w').write(lean_page('grown/Toy.lean', 'toy — a customer germ, grown on foam') if os.path.exists('grown/Toy.lean') else page('toy — foam', '<p>not grown at this push</p>', NAV))
 open('site/germ.html', 'w').write(lean_page('germ/Face.lean', 'germ/Face.lean — what is kept by hand (the seeing)'))
-open('site/primings.html', 'w').write(page('the primings — foam', '<h1>the primings</h1><pre>' + html.escape(open('primings.lean').read()) + '</pre>', NAV))
-open('site/book.html', 'w').write(page('the book — foam', '<h1>the book of the seed</h1><pre>' + book + '</pre>', NAV))
+open('site/primings.html', 'w').write(page('the primings — foam', '<div class="chonk"><h1>the primings</h1><pre>' + html.escape(open('primings.lean').read()) + '</pre></div>', NAV))
+open('site/book.html', 'w').write(page('the book — foam', '<div class="chonk"><h1>the book of the seed</h1><pre>' + book + '</pre></div>', NAV))
 open('site/CNAME', 'w').write(open('CNAME').read())
 open('site/.nojekyll', 'w').write('')
 print('site/: index trunk toy germ primings book')
