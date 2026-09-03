@@ -27,7 +27,7 @@ nav a{{margin-right:1.2rem}} a{{color:#1e1d1a}} a:hover{{color:#8a5a00}}
 h1,h2{{font-weight:600;font-size:1.05rem;margin:2.5rem 0 .6rem}}
 pre{{white-space:pre-wrap;word-break:break-word;background:#f3f1ec;padding:1rem;border-radius:6px;overflow:auto}}
 .decl{{display:block}} .decl:target{{background:#fff2c8}}
-.readme{{white-space:pre-wrap}} .readme h1,h2{{display:inline}}
+.readme{{display:block;white-space:pre-wrap}} .readme h1,.readme h2{{display:inline}}
 footer{{opacity:.6}}
 </style></head><body><nav>{nav}</nav>{body}
 <footer>strict phenomenology is indistinguishable from physics — the artifact grew from the germ on push. UNLICENSE.</footer></body></html>"""
