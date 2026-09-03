@@ -12,7 +12,7 @@ cd "$ROOT"
 [ -f grown/Face.lean ] || bin/counter grow >/dev/null
 mkdir -p site
 CANDLE="$(cat regrowth/Face.report 2>/dev/null | grep -vE "assay.lean: identical" || echo "(no report — run bin/counter grow)")"
-BOOK="$(bin/counter book grown/Face.lean 2>&1)"
+BOOK="$(bin/counter book 2>&1)"
 CANDLE="$CANDLE" BOOK="$BOOK" python3 - <<'EOF'
 import html, os, re, subprocess
 

@@ -15,72 +15,80 @@
 # (pinned/gauge/parametric — which terms constrain the view through W) awaits
 # elaborator integration; the pair-census awaits a horizon parameter.
 set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 
+# no stream offered: the book of the house — every lib the lakefile lists, grown
 if [ $# -eq 0 ]; then
-  STDIN_TMP="$(mktemp /tmp/next.XXXXXX)"
-  trap 'rm -f "$STDIN_TMP"' EXIT
-  cat > "$STDIN_TMP"
-  set -- "$STDIN_TMP"
-  NEXT_STDIN_LABEL="$STDIN_TMP"
+  set -- $(grep -E '^defaultTargets' lakefile.toml | grep -oE '"[A-Za-z]+"' | tr -d '"' | sed 's|^|grown/|; s|$|.lean|')
 fi
-export NEXT_STDIN_LABEL="${NEXT_STDIN_LABEL:-}"
 
 python3 - "$@" <<'EOF'
-import re, sys
+import os, re, subprocess, sys
 
 lean_srcs, held_srcs = [], []
-import os
-stdin_label = os.environ.get('NEXT_STDIN_LABEL', '')
 for a in sys.argv[1:]:
-    label = '<stdin>' if a == stdin_label else a
-    (held_srcs if a.endswith('.held') else lean_srcs).append((label, open(a).read()))
+    if not os.path.exists(a):
+        continue
+    (held_srcs if a.endswith('.held') else lean_srcs).append((a, open(a).read()))
 
 print("the book of the seed (lean-only reading; the instrument reads terms, never prose)")
 print()
 
+# every stream read first, so a leaf is a leaf only if nothing in the house cites it:
+# citation crosses storeys (Face seats on Room's lemmas; Counter on both)
+DECL = re.compile(r'^(theorem|def|structure|inductive|abbrev) (\w+)', re.M)
+books = []
 for label, src in lean_srcs:
-    decls = []
-    spans = [(m.start(), m.group(1), m.group(2))
-             for m in re.finditer(r'^(theorem|def|structure|inductive) (\w+)', src, re.M)]
+    decls = [(m.group(1), m.group(2)) for m in DECL.finditer(src)]
     receipts = len(re.findall(r'#print axioms', src))
-    bodies = {}
-    for i, (start, kind, name) in enumerate(spans):
-        end = spans[i + 1][0] if i + 1 < len(spans) else len(src)
-        body = src[start:end]
-        body = '\n'.join(l for l in body.splitlines()
-                         if '#print axioms' not in l and '#guard_msgs' not in l)
-        bodies[name] = body
-        decls.append((kind, name))
-    # citations from the elaborator when the stream is a trail the judge can seat
-    # (bin/judge.lean cites: the top-level names each declaration's term actually
-    # uses); the text stands as the fallback for any other Lean stream
-    cited, how = None, 'read from the trail text'
-    if label != '<stdin>' and os.path.exists('bin/judge.lean'):
-        import subprocess
-        res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'cites', label, 'Foam'],
-                             capture_output=True, text=True)
-        rows = [l for l in res.stdout.splitlines() if ' <- ' in l]
-        if res.returncode == 0 and len(rows) == len(decls):
-            cited = set()
-            for l in rows:
-                _, _, deps = l.partition(' <- ')
-                cited.update(deps.split())
-            how = 'read from the elaborator'
-    if cited is None:
-        cited = set()
+    imports = re.findall(r'^import (\S+)', src, re.M)
+    nsm = re.search(r'^namespace (\S+)', src, re.M)
+    ns = nsm.group(1) if nsm else os.path.splitext(os.path.basename(label))[0]
+    # citations from the elaborator (bin/judge.lean cites, scoped by the stream's own header:
+    # its namespace, its imports); the text stands as the fallback for a stream the judge can't seat
+    local, above, how = set(), {}, 'read from the trail text'
+    res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'cites', label, ns, ','.join(imports)],
+                         capture_output=True, text=True)
+    rows = [l for l in res.stdout.splitlines() if ' <- ' in l]
+    if res.returncode == 0 and rows:
+        for l in rows:
+            _, _, deps = l.partition(' <- ')
+            for d in deps.split():
+                if '.' in d:
+                    m, _, n = d.rpartition('.')
+                    above.setdefault((m, n), set()).add(ns)
+                else:
+                    local.add(d)
+        how = 'read from the elaborator'
+    else:
+        spans = [(m.start(), m.group(2)) for m in DECL.finditer(src)]
+        bodies = {}
+        for i, (start, name) in enumerate(spans):
+            end = spans[i + 1][0] if i + 1 < len(spans) else len(src)
+            bodies[name] = '\n'.join(l for l in src[start:end].splitlines() if '#print axioms' not in l and '#guard_msgs' not in l)
         for name in bodies:
-            for other, body in bodies.items():
-                if other != name and re.search(r'\b' + re.escape(name) + r'\b', body):
-                    cited.add(name)
-                    break
-    leaves = [(k, n) for k, n in decls if n not in cited]
+            if any(other != name and re.search(r'\b' + re.escape(name) + r'\b', body) for other, body in bodies.items()):
+                local.add(name)
+    books.append((label, ns, decls, receipts, local, above, how))
+
+cited_above = {}
+for _, _, _, _, _, above, _ in books:
+    for (m, n), by in above.items():
+        cited_above.setdefault((m, n), set()).update(by)
+
+for label, ns, decls, receipts, local, _, how in books:
     n_thm = sum(1 for k, _ in decls if k == 'theorem')
-    n_def = len(decls) - n_thm
-    print(f"the census [{label}]: {len(decls)} declarations "
-          f"({n_def} carriers, {n_thm} theorems), {receipts} receipts")
-    print(f"the frontier [{label}] — {len(leaves)} leaves no other organ cites yet ({how}):")
-    for k, n in leaves:
+    print(f"the census [{label}]: {len(decls)} declarations ({len(decls) - n_thm} carriers, {n_thm} theorems), {receipts} receipts")
+    leaves = [n for _, n in decls if n not in local and (ns, n) not in cited_above]
+    seated_above = [(n, sorted(cited_above[(ns, n)])) for _, n in decls if n not in local and (ns, n) in cited_above]
+    print(f"the frontier [{label}] — {len(leaves)} leaves no organ in the house cites yet ({how}):")
+    for n in leaves:
         print(f"  {n}")
+    if seated_above:
+        print(f"cited only from above [{label}] — {len(seated_above)} organs no organ of their own storey cites, seated by a storey that stands on it:")
+        for n, by in seated_above:
+            print(f"  {n} ← {' '.join(by)}")
     print()
 
 print("the vestibule (typed vacancies, supports named):")
