@@ -7,7 +7,7 @@
 # NAMED; the crawl halts drained or stuck, no third fate.
 #
 # the EAR is where the vacancies' name-asks are answered:
-#   grow    the record's ear over a GERM — germ/<Name>.lean grows to <Name>.lean, an
+#   grow    the record's ear over a GERM — germ/<Name>.lean grows to grown/<Name>.lean, an
 #           importable module; every `:= sorry` vacancy must regrow (red otherwise),
 #           hand bodies regrow where a priming reaches and carry where none does;
 #           citations are derived from each signature's vocabulary; the artifact is
@@ -54,7 +54,8 @@ usage() {
 
 ride_ear() {
 
-SESSION="${1:-ride.lean}"
+mkdir -p regrowth
+SESSION="${1:-regrowth/ride.lean}"
 HELD="${SESSION%.lean}.held"
 
 if ! lake build Foam >/dev/null 2>&1; then
@@ -288,12 +289,12 @@ regrow_ear() {
     esac
   done
   if [ ${#inputs[@]} -eq 0 ]; then
-    if [ -n "${CRAWL_GERM:-}" ]; then inputs=(germ/Foam.lean); else inputs=(Foam.lean); fi
+    if [ -n "${CRAWL_GERM:-}" ]; then inputs=(germ/Foam.lean); else inputs=(grown/Foam.lean); fi
   fi
   local first="${inputs[0]}"
   local name; name="$(basename "${first%.lean}")"
   if [ -z "$out" ]; then
-    if [ -n "${CRAWL_GERM:-}" ]; then out="${name}.lean"
+    if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p grown; out="grown/${name}.lean"
     elif [ "$settle" = 1 ]; then out="$first"
     else mkdir -p regrowth; out="regrowth/${name}.lean"; fi
   fi
@@ -302,7 +303,7 @@ regrow_ear() {
     local dep
     for dep in $(grep -E '^import ' "$first" | awk '{print $2}'); do
       if [ -f "germ/${dep}.lean" ]; then
-        [ -f "${dep}.lean" ] || bin/counter grow "germ/${dep}.lean" >/dev/null || { echo "the gate cannot open: ${dep} does not grow"; exit 1; }
+        [ -f "grown/${dep}.lean" ] || bin/counter grow "germ/${dep}.lean" >/dev/null || { echo "the gate cannot open: ${dep} does not grow"; exit 1; }
         lake build "$dep" >/dev/null 2>&1 || { echo "the gate cannot open: ${dep} does not build"; exit 1; }
       fi
     done
@@ -494,10 +495,14 @@ if primings_path:
         return [t for _, t in sorted(found)]
 
     def cite_macro(ns):
+        # a citation, with its side goals closed by assumption, rfl, or ONE more citation from the
+        # same list (a lemma that takes a lemma as an argument — hrefl, a decidability, a helper)
         if not ns:
             return 'fail'
-        return 'first ' + ' '.join(
-            f'| (apply {t} <;> (first | assumption | rfl))' for t in ns)
+        def side(t):
+            others = ' '.join(f'| (apply {m})' for m in ns if m != t)
+            return f'(first | assumption | rfl {others})' if others else '(first | assumption | rfl)'
+        return 'first ' + ' '.join(f'| (apply {t} <;> {side(t)})' for t in ns)
 
     cnames = [n for _, n, _ in carriers]
     defs_of = {}
@@ -512,7 +517,9 @@ if primings_path:
         if len(parts) == 2 and parts[0].startswith('theorem '):
             defs_of[parts[0].split()[1]] = [d for d in parts[1].split() if d in cnames or (d.startswith(NS_NAME + '.') is False and '.' in d)]
         elif len(parts) == 2 and parts[0].startswith('carrier '):
-            carrier_deps[parts[0].split()[1]] = [d for d in parts[1].split() if d in cnames]
+            # a carrier's vocabulary: every owned name it unfolds to — local carriers AND the
+            # imported ones (a customer's `offer` unfolds to Foam.welcome; the key must know)
+            carrier_deps[parts[0].split()[1]] = parts[1].split()
 
     def defs_macro(n):
         ds = defs_of.get(n)

@@ -39,6 +39,12 @@ by intros; rfl
 -- priming: cite
 by intros; {cite}
 
+-- priming: home-cite
+by
+  intros
+  (try dsimp only [{defs}] at *)
+  first | rfl | assumption | {cite}
+
 -- priming: pane
 by
   intros

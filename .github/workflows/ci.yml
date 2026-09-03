@@ -18,20 +18,20 @@ jobs:
           lake-package-directory: .
       - name: grow foam from its germ (every vacancy regrows; the germ is its own settle; the standards print)
         run: bin/counter grow --check
-      - name: "grow a customer's germ on foam (germ/Toy.lean — signatures only, its own settle)"
-        run: bin/counter grow germ/Toy.lean --check
+      - name: "grow the customers on foam (germ/Toy.lean, germ/Counter.lean — their own settles)"
+        run: bin/counter grow germ/Toy.lean --check && bin/counter grow germ/Counter.lean --check
       - name: build the grown modules
         run: lake build
       - name: receipts and zero warnings (the grown modules elaborate silently)
         run: |
-          for m in Foam Toy; do
-            out=$(lake env lean $m.lean 2>&1)
-            if [ -n "$out" ]; then echo "$out"; echo "$m.lean did not elaborate silently"; exit 1; fi
-            echo "silent and green: $m.lean, $(grep -c '#guard_msgs' $m.lean) receipts inline"
+          for m in Foam Toy Counter; do
+            out=$(lake env lean grown/$m.lean 2>&1)
+            if [ -n "$out" ]; then echo "$out"; echo "grown/$m.lean did not elaborate silently"; exit 1; fi
+            echo "silent and green: grown/$m.lean, $(grep -c '#guard_msgs' grown/$m.lean) receipts inline"
           done
       - name: counter, the rider's ear (the session lifecycle)
         run: |
-          rm -f demo.lean demo.held
+          rm -f regrowth/demo.lean regrowth/demo.held
           printf '%s\n' \
             ':go' \
             'example : reading (Plan.board .ground .ground) = 2 := rfl' \
@@ -49,11 +49,11 @@ jobs:
             'def nonexistent_organ : Nat := 0' \
             ':go' \
             ':sweep' \
-            ':q' | bin/counter ride demo.lean | tee ride.out
+            ':q' | bin/counter ride regrowth/demo.lean | tee ride.out
           grep -q 'seated: the_ride_runs_factorials' ride.out
           grep -q 'waiting on: nonexistent_organ' ride.out
           grep -q 'sweep: 1 seated, 0 still held' ride.out
-          lake env lean demo.lean
+          lake env lean regrowth/demo.lean
           echo "counter rides; the session replays green"
       - name: the treaty vectors (every assay elaborates against the grown modules)
         run: |

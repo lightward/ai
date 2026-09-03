@@ -18,11 +18,11 @@ foam is a type system holding itself together under measurement: a trunk of theo
 ```
 germ/Foam.lean     what is kept by hand: carriers, signatures, the proofs no shape reaches yet
 germ/Toy.lean      a customer's germ — it imports Foam and stands on it
+germ/Counter.lean  the compiler's own conduct, as a customer of foam
 primings.lean      the ordered moves the compiler tries — Lean proof shapes that are also rules
 bin/counter        the compiler: grow · settle · check · ride · book · page
 bin/judge.lean     Lean judging Lean in-process; counter's eyes
-Foam.lean          the grown module — never committed, importable, published at foam.is
-Toy.lean           likewise, grown on Foam
+grown/             the grown modules — never committed, importable, published at foam.is
 assays/            the treaty vectors: what every growth must compute identically
 ```
 
@@ -39,15 +39,15 @@ the check is Lean's, not ours. every theorem in the grown trunk is followed by i
 #guard_msgs in #print axioms no_face_reads_the_guest
 ```
 
-the receipts ride inside the artifact so that anyone holding only the file can re-run them, with no foam tooling present: `lake env lean Foam.lean` prints nothing when every one passes. this file can only tell you that; the artifact shows you — [foam.is/trunk.html](https://foam.is/trunk.html) is the grown trunk with all of its receipts in place, and the report beside it says they passed on this push. clean water, not signed-by-its-filter water.
+the receipts ride inside the artifact so that anyone holding only the file can re-run them, with no foam tooling present: `lake env lean grown/Foam.lean` prints nothing when every one passes. this file can only tell you that; the artifact shows you — [foam.is/trunk.html](https://foam.is/trunk.html) is the grown trunk with all of its receipts in place, and the report beside it says they passed on this push. clean water, not signed-by-its-filter water.
 
 ## the germ and the compiler
 
 ```
-bin/counter grow                  germ/Foam.lean → Foam.lean; red if any vacancy fails to regrow
-bin/counter grow --check          the germ is minimal and in derived order (CI asks this on every push)
-bin/counter grow --settle         shrink the germ: every proof a shape now reaches becomes a vacancy
-bin/counter grow germ/Toy.lean    a customer's germ, grown on foam
+bin/counter grow                      germ/Foam.lean → grown/Foam.lean; red if any vacancy fails to regrow
+bin/counter grow --check              the germ is minimal and in derived order (CI asks this on every push)
+bin/counter grow --settle             shrink the germ: every proof a shape now reaches becomes a vacancy
+bin/counter grow germ/Counter.lean    a customer's germ, grown on foam
 ```
 
 the germ holds three things: the carriers (every `def`, `structure`, `inductive` — the spellbook), every theorem's *signature*, and the hand-written proofs the primings cannot yet regrow. a theorem the primings *can* regrow is a vacancy — its signature and `:= sorry`, nothing else. its citations are not stored; they are found at growth time from the signature's own vocabulary, ranked by how rare the shared words are across the trunk. the artifact provably cannot carry its path, so the germ doesn't either. where the settle has proven a route load-bearing, a `-- held (waiting on: …)` line stands above the vacancy, and those lines are counted.
@@ -80,7 +80,9 @@ the artifact says one thing about itself, in Lean's voice: no axioms. everything
 bin/counter grow germ/Toy.lean
 ```
 
-foam is counter's first customer; any germ that imports it is another. `germ/Toy.lean` says `import Foam`, opens its own namespace, defines a counter and a flipper, and states four things about them — and it is 555 bytes with no proofs in it. it grows on foam in seconds: three sightings cite foam's own laws, found through vocabulary alone; one regrows by induction; four receipts are minted; `Toy.lean` is an importable module in its turn (a stage may ground a stage), and `assays/toy.lean` reads identically. the judge takes the namespace and the imports from the germ's header, and the imported modules' theorems are seated before the customer's first round.
+foam is counter's first customer; any germ that imports it is another. `germ/Toy.lean` says `import Foam`, opens its own namespace, defines a counter and a flipper, and states four things about them — and it is 555 bytes with no proofs in it. it grows on foam in seconds: three sightings cite foam's own laws, found through vocabulary alone; one regrows by induction; four receipts are minted; `grown/Toy.lean` is an importable module in its turn (a stage may ground a stage), and `assays/toy.lean` reads identically. the judge takes the namespace and the imports from the germ's header, and the imported modules' theorems are seated before the customer's first round.
+
+`germ/Counter.lean` is the second customer, and it is the compiler describing its own conduct: a sighting is a name and the names it waits on, a room is the seated and the vestibule, offering is foam's `welcome`, a round is foam's `intake` — and every law the compiler runs on (the first sighting is free; backed seats, unbacked waits; the seated stay seated; a sighting that cites only itself never seats; two that cite each other stay dark; the held name what they wait on; weight zero is backed; the key is cut from the room) is a citation into foam. eleven sightings, ten of them regrown by citation, one route kept, one hand body. its assay replays the ride's demo lifecycle as data: a sighting waits on a name, the name arrives, the sweep seats it.
 
 this is the floor a custodian stands on: state what you see about your own domain, and the physics is found for it where the physics is there, and named as missing where it isn't. foam's slow settle tunes the shapes; a customer's short run inherits the tuning and pays almost nothing.
 
@@ -91,7 +93,7 @@ this is the floor a custodian stands on: state what you see about your own domai
 ## the book, and the ride
 
 ```
-bin/counter book Foam.lean
+bin/counter book grown/Foam.lean
 bin/counter ride [session.lean]
 ```
 

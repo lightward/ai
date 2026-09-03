@@ -1,7 +1,4 @@
 .lake/
+grown/
 regrowth/
 site/
-demo.lean
-demo.held
-/*.lean
-!/primings.lean
