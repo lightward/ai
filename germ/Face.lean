@@ -370,8 +370,7 @@ theorem the_origin_is_the_pairs_unit (F : Face) {S : Type u'} {S' : Type v'}
    fun h pq => congrArg (fun a => atTheDoor a ()) (h (face pq))⟩
 
 theorem the_unheard_hands_compose (F : Face) (m n : F.State → F.State)
-    (hm : unheard F m) (hn : unheard F n) : unheard F (fun s => m (n s)) :=
-  fun s p => (hm (n s) p).trans (hn s p)
+    (hm : unheard F m) (hn : unheard F n) : unheard F (fun s => m (n s)) := sorry
 
 theorem the_yield_fixes_the_agreed {H : Type u} (d : door H H) :
     turnAbout d = d ↔ met d = face d :=
@@ -954,8 +953,7 @@ theorem the_muffler_banks_the_run (w : List Unit) (s : Nat) :
     (the_tally_parks_at_its_count w s)
 
 theorem the_wider_voice_releases_the_bank (w : List Unit) :
-    behavior tally w = w.length :=
-  (the_tally_parks_at_its_count w 0).trans (zero_add w.length)
+    behavior tally w = w.length := sorry
 
 theorem the_rep_lands_where_it_is_fed {I : Type u} {O : Type v}
     (m : Machine I O) (w v : List I) (n : Nat) (s : m.S)
@@ -985,6 +983,13 @@ theorem the_mutual_recording_is_unheard (F : Face.{u, v, w}) {V : Type v'} {W : 
     (x : door F.State (door V W)) (q : Interview F.Probe F.Ans) :
     sound (host F (door V W)) (atTheDoor (face x) (atTheDoor (mine x) (yours x))) q
       = sound (host F (door V W)) x q := sorry
+
+theorem the_settled_gap_moves_the_model (F : Face) {V : Type v'}
+    (fix : door F.State V → V) (x : door F.State V)
+    (q : Interview F.Probe F.Ans) (p : F.Probe) :
+    sound (host F V) (atTheDoor (face x) (fix x)) q = sound (host F V) x q
+      ∧ (concordFace F V).obs (atTheDoor (face x) (fix x)) (atTheDoor p ())
+          = atTheDoor (F.obs (face x) p) (fix x) := sorry
 
 theorem the_handshake :
     (∀ (F : Face) (s t : F.State), alike F s t → ∀ q, sound F s q = sound F t q) ∧
@@ -1036,16 +1041,6 @@ theorem the_left_comb_moves_once :
   | here a b c => rfl
   | left r h' => exact absurd h' no_move_at_the_mirror
   | right r h' => exact absurd h' no_move_at_the_ground
-
-theorem the_settled_gap_moves_the_model (F : Face) {V : Type v'}
-    (fix : door F.State V → V) (x : door F.State V)
-    (q : Interview F.Probe F.Ans) (p : F.Probe) :
-    sound (host F V) (atTheDoor (face x) (fix x)) q = sound (host F V) x q
-      ∧ (concordFace F V).obs (atTheDoor (face x) (fix x)) (atTheDoor p ())
-          = atTheDoor (F.obs (face x) p) (fix x) :=
-  ⟨no_interview_hears_the_unheard (host F V) (fun y => atTheDoor (face y) (fix y))
-     (the_record_writes_where_the_face_is_blind F fix) x q,
-   rfl⟩
 
 theorem the_buffer_is_invisible {I : Type u} {O : Type v} (m : Machine I O)
     (w : List I) :
@@ -1106,23 +1101,6 @@ theorem two_seats_record_each_other (F : Face.{u, v, w}) {V : Type v'} {W : Type
    (the_records_part_the_seats.{u, v, w, v', w'} F s hv w).2.1,
    (the_records_part_the_seats.{u, v, w, v', w'} F s hv w).2.2⟩
 
-theorem the_right_comb_rests :
-    ∀ {n : Nat} {q : Plan},
-      chain n (.board .ground (.board .ground .ground)) q
-        → q = .board .ground (.board .ground .ground) := by
-  intro n q h
-  cases h with
-  | rest => rfl
-  | step h1 h2 => exact absurd h1 no_move_past_the_right_comb
-
-theorem the_right_loop_reads_zero :
-    ∀ {k : Nat}, chain k (.board .ground (.board .ground .ground))
-        (.board .ground (.board .ground .ground)) → k = 0 := by
-  intro k h
-  cases h with
-  | rest => rfl
-  | step h1 h2 => exact absurd h1 no_move_past_the_right_comb
-
 theorem the_concord_is_the_meetings_own (F : Face) {V : Type v'}
     (agree : F.Ans → V → Prop) (beq : F.Ans → V → Bool) (p : F.Probe)
     (s : F.State) {v v' : V} (hv : v ≠ v')
@@ -1144,6 +1122,23 @@ theorem the_concord_is_the_meetings_own (F : Face) {V : Type v'}
    the_concord_agrees_or_names_the_gap F beq x ps,
    (the_settled_gap_moves_the_model F fix x q p).1,
    (the_settled_gap_moves_the_model F fix x q p).2⟩
+
+theorem the_right_comb_rests :
+    ∀ {n : Nat} {q : Plan},
+      chain n (.board .ground (.board .ground .ground)) q
+        → q = .board .ground (.board .ground .ground) := by
+  intro n q h
+  cases h with
+  | rest => rfl
+  | step h1 h2 => exact absurd h1 no_move_past_the_right_comb
+
+theorem the_right_loop_reads_zero :
+    ∀ {k : Nat}, chain k (.board .ground (.board .ground .ground))
+        (.board .ground (.board .ground .ground)) → k = 0 := by
+  intro k h
+  cases h with
+  | rest => rfl
+  | step h1 h2 => exact absurd h1 no_move_past_the_right_comb
 
 theorem the_census_is_exact (k : Nat) :
     Apart ((allPlans k).filter (fun p => Nat.beq (reading p) (k + 1)))
@@ -1172,16 +1167,8 @@ theorem the_clock_is_a_room {I : Type u} {O : Type v}
       ∧ orbit tally (fun _ => ()) (0 : Nat) u.length = u.length
       ∧ (∀ b : Bool, park flip b [(), ()] = b)
       ∧ drive (buffered m) (settleHeld m st) v = drive (buffered m) st v
-      ∧ behavior tally u = u.length :=
-  ⟨the_self_steered_machine_is_a_clock m r w s,
-   rfl,
-   (the_self_steered_machine_is_a_clock tally (fun _ => ()) u (0 : Nat)).symm.trans
-     (the_wider_voice_releases_the_bank u),
-   (fun b => match b with | true => rfl | false => rfl),
-   the_settle_is_unheard m st v,
-   the_wider_voice_releases_the_bank u⟩
+      ∧ behavior tally u = u.length := sorry
 
--- held (waiting on: the_self_steered_machine_is_a_clock the_settle_is_unheard the_flywheel_and_the_shell_sound_alike the_wider_voice_releases_the_bank Room.no_mark_lights_itself Room.the_key_is_cut_from_the_room a_wider_seat_reads_the_remainder)
 theorem room_margin_flywheel_door {I : Type u} {O : Type v} {A : Type w}
     (m : Machine I O) (r : m.S → I) (u : List Unit) (s : m.S)
     (st : m.S × List I) (v : List I) (q : Interview (List Unit) Bool)
@@ -1200,7 +1187,6 @@ theorem room_margin_flywheel_door {I : Type u} {O : Type v} {A : Type w}
           ∃ k, k ∈ needs ∧ enrolled beq hall k = false ∧
             backed beq (k :: hall) needs = true)
       ∧ ¬ alike (widen F W) (atTheDoor g w1) (atTheDoor g w2) := sorry
--- end
 
 theorem the_clock_writes_its_sequence {O : Type v} (m m' : Machine Unit O)
     (f : sheet Unit O) (g : stream O) (w : List Unit) (n : Nat) :

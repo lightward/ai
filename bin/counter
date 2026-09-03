@@ -705,6 +705,8 @@ if primings_path:
             if not os.path.exists(grown_path):
                 raise SystemExit(f'probe: {grown_path} is not grown yet — bin/counter grow {germ_path} first')
             grown_src = open(grown_path).read()
+            # the probed theorem leaves the prefix: a search at the goal would otherwise find it citing itself
+            grown_src = re.sub(r'(?ms)^theorem ' + re.escape(probe_name) + r'\b.*?^#guard_msgs in #print axioms ' + re.escape(probe_name) + r'\s*$\n?', '', grown_src)
             grown_lines = [re.sub(r'\nend \w+\s*$', '\n', grown_src)]
             for _, n, _ in theorems:
                 if n != probe_name:
@@ -807,41 +809,10 @@ if primings_path:
                 sys.exit(1)
         order = [entry[n] for n in seated_order]
         storey = seated_round
-        # tighten: a regrown body carries its search chain; replace it by the same shape over
-        # only the theorems its proof term actually used (the elaborator's reading), judged
-        # once against the finished artifact — the artifact is read, so its bodies read as proofs
-        regrown_by = {}
-        for n in seated_order:
-            if n not in carried:
-                m = re.search(r':=\n((?:.|\n)*?)\n\n/-- info:', seated_text[n])
-                regrown_by[n] = m.group(1) if m else None
-        grown_lines = list(prefix)
-        for n in seated_order:
-            grown_lines.append(seated_text[n]); grown_lines.append('')
-        gf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-grown-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
-        gf.write('\n'.join(grown_lines + ([footer] if footer else [])) + '\n'); gf.close()
-        resn = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'needs', gf.name] + SCOPE, capture_output=True, text=True)
-        os.unlink(gf.name)
-        used = {}
-        for l in resn.stdout.splitlines():
-            n, sep, deps = l.partition(' <- ')
-            if sep: used[n] = set(deps.split())
-        tight_cands = []
-        for n in seated_order:
-            if n in carried: continue
-            cites = [t for t in derived_cites_all(n) if t in used.get(n, set())]
-            if cites == seated_cites.get(n): continue
-            for k, (pname, pbody) in enumerate(primings):
-                if '{cites}' in pbody:
-                    tight_cands.append((n, k, cites))
-        if tight_cands:
-            failed = judge(grown_lines, tight_cands)
-            bodies = judge.bodies
-            tightened, done = 0, set()
-            for i, (n, k, cites) in enumerate(tight_cands):
-                if i in failed or n in done: continue
-                seat_regrown(n, k, cites, bodies[i]); tally[primings[k][0]] -= 1; tightened += 1; done.add(n)
-            print(f'the tighten: {tightened} regrown bodies narrowed to the citations their proof terms use')
+        # (the tighten pass is retired: a body's citations are found per goal and only the winners
+        # are recorded, so a regrown body is already exactly the citations that closed it; and a
+        # search against the FINISHED module can see theorems seated in later rounds, which the
+        # derived order cannot carry)
         print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged')
         lb = sum(1 for n, h in kept_hint.items() if h)
         print(f'the hints: {lb} load-bearing (kept), {sum(1 for n in marker_needs if n in kept_hint and not kept_hint[n])} derivable (dropped)')
