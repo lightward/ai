@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # render: the browseable artifact — foam.is as a page. the trunk (grown), the germ,
-# the primings, and the readings (the book, the candle, the storeys), each name an
+# the pieces, and the readings (the book, the candle, the storeys), each name an
 # anchor. no framework, no build step but the crawl's own. output: site/.
 # conduct-as-citation:
 #   the artifact is grown, never committed .... bin/crawl grow
@@ -33,7 +33,7 @@ footer{{opacity:.6}}
 <footer>strict phenomenology is indistinguishable from physics — the artifact grew from the germ on push. UNLICENSE.</footer></body></html>"""
 
 NAV = ('<a href="./">foam</a><a href="room.html">Room</a><a href="trunk.html">Face</a><a href="germ.html">the germ</a><a href="toy.html">toy, a customer</a>'
-       '<a href="primings.html">the primings</a><a href="book.html">the book</a>'
+       '<a href="pieces.html">the pieces</a><a href="book.html">the book</a>'
        '<a href="https://github.com/lightward/foam">github</a>')
 
 def lean_page(path, title):
@@ -87,9 +87,9 @@ open('site/room.html', 'w').write(lean_page('grown/Room.lean', 'Room — the cou
 open('site/trunk.html', 'w').write(lean_page('grown/Face.lean', 'Face — the seeing, grown from germ/Face.lean'))
 open('site/toy.html', 'w').write(lean_page('grown/Toy.lean', 'toy — a customer germ, grown on foam') if os.path.exists('grown/Toy.lean') else page('toy — foam', '<p>not grown at this push</p>', NAV))
 open('site/germ.html', 'w').write(lean_page('germ/Face.lean', 'germ/Face.lean — what is kept by hand (the seeing)'))
-open('site/primings.html', 'w').write(page('the primings — foam', '<section><h1>the primings</h1><pre>' + html.escape(open('primings.lean').read()) + '</pre></section>', NAV))
+open('site/pieces.html', 'w').write(page('the pieces — foam', '<section><h1>the pieces — bin/Pieces.lean, the proof shapes as Lean macros over the three derived lists</h1><pre>' + html.escape(open('bin/Pieces.lean').read()) + '</pre></section>', NAV))
 open('site/book.html', 'w').write(page('the book — foam', '<section><h1>the book of the seed</h1><pre>' + book + '</pre></section>', NAV))
 open('site/CNAME', 'w').write(open('CNAME').read())
 open('site/.nojekyll', 'w').write('')
-print('site/: index trunk toy germ primings book')
+print('site/: index trunk toy germ pieces book')
 EOF

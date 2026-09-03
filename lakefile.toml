@@ -16,3 +16,7 @@ srcDir = "grown"
 [[lean_lib]]
 name = "Counter"
 srcDir = "grown"
+
+[[lean_lib]]
+name = "Pieces"
+srcDir = "bin"

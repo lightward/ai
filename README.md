@@ -20,7 +20,7 @@ germ/Room.lean     the counting: everything that mentions no face — rooms, whe
 germ/Face.lean     the seeing: faces, doors, machines, sheets; it imports Room
 germ/Toy.lean      a customer's germ — it imports Face and stands on it
 germ/Counter.lean  the compiler's own conduct, as a customer of Room
-primings.lean      the ordered moves the compiler tries — Lean proof shapes that are also rules
+bin/Pieces.lean    the ordered moves the compiler tries — Lean proof shapes that are also rules, as Lean macros
 bin/counter        the compiler: grow · settle · check · ride · book · page
 bin/judge.lean     Lean judging Lean in-process; counter's eyes
 grown/             the grown modules — never committed, importable, published at foam.is
@@ -49,16 +49,16 @@ bin/counter grow                      germ/Face.lean → grown/Face.lean; red if
 bin/counter grow --check              the germ is minimal and in derived order (CI asks this on every push)
 bin/counter grow --settle             shrink the germ: every proof a shape now reaches becomes a vacancy
 bin/counter grow germ/Counter.lean    a customer's germ, grown on foam
-bin/counter probe germ/X.lean name    one vacancy: every priming tried, the gate's sentence for each hold
+bin/counter probe germ/X.lean name    one vacancy: every piece tried, the gate's sentence for each hold
 ```
 
-a germ holds three things: the carriers (every `def`, `structure`, `inductive` — the spellbook), every theorem's *signature*, and the hand-written proofs the primings cannot yet regrow. the line between `Room` and `Face` was derived, not drawn: a carrier is Room if nothing it unfolds to is a face, and a theorem is Room if its statement mentions only Room carriers — 25 carriers and 137 theorems fell on that side, 78 and 147 on the other. a theorem the primings *can* regrow is a vacancy — its signature and `:= sorry`, nothing else. its citations are not stored; they are found at growth time from the signature's own vocabulary, ranked by how rare the shared words are across the trunk. the artifact provably cannot carry its path, so the germ doesn't either. where the settle has proven a route load-bearing, a `-- held (waiting on: …)` line stands above the vacancy, and those lines are counted.
+a germ holds three things: the carriers (every `def`, `structure`, `inductive` — the spellbook), every theorem's *signature*, and the hand-written proofs the pieces cannot yet regrow. the line between `Room` and `Face` was derived, not drawn: a carrier is Room if nothing it unfolds to is a face, and a theorem is Room if its statement mentions only Room carriers — 25 carriers and 137 theorems fell on that side, 78 and 147 on the other. a theorem the pieces *can* regrow is a vacancy — its signature and `:= sorry`, nothing else. its citations are not stored; they are found at growth time from the signature's own vocabulary, ranked by how rare the shared words are across the trunk. the artifact provably cannot carry its path, so the germ doesn't either. where the settle has proven a route load-bearing, a `-- held (waiting on: …)` line stands above the vacancy, and those lines are counted.
 
-growth is a cascade run to its fixed point: each round, every pending vacancy is offered every priming with the citations its vocabulary can reach among what has already seated; whatever seats, seats; the rounds are the storeys; a vacancy that never seats is red with its vocabulary named. regrown bodies are then tightened to the citations their proof terms actually used, so the artifact reads as proofs. every theorem gets its receipt minted. the artifact must elaborate silently and read every assay identically, or the build is red.
+growth is a cascade run to its fixed point: each round, every pending vacancy is offered every piece with the citations its vocabulary can reach among what has already seated; whatever seats, seats; the rounds are the storeys; a vacancy that never seats is red with its vocabulary named. regrown bodies are then tightened to the citations their proof terms actually used, so the artifact reads as proofs. every theorem gets its receipt minted. the artifact must elaborate silently and read every assay identically, or the build is red.
 
-the primings are the knob. each is a Lean proof shape — `rfl`, a citation, a pane of citations, structural induction on the first variable, home-then-cite-then-recurse — with three macros the compiler fills per vacancy: `{cite}` (the derived citations), `{rws}` (rewrite by each of them, and by the statement's own equation-shaped hypotheses), `{defs}` (unfold the statement's own carriers first, so a goal reduces to its home before a closer lands). the file also declares a heartbeat `budget` per candidate and a `reach` for how many citations a vacancy may try. the judge, `bin/judge.lean`, elaborates the prefix once and every candidate against a copy of it, reading the complete message log — the CLI caps its report at a hundred errors; the log does not.
+the pieces are the knob. each is a Lean proof shape — `rfl`, a citation, a chain of citations, a pane, structural induction on the first variable, home-then-cite-then-recurse — written as a Lean tactic macro in `bin/Pieces.lean` over three lists the compiler derives per vacancy: its citations (from the signature's vocabulary), its applicable hypotheses, and the carriers its statement names (unfolded first, so a goal reduces to its home before a closer lands). the file also declares a heartbeat `budget` per candidate and a `reach` for how many citations a vacancy may try; the judge reads all of it from the module. a trial imports the pieces; the artifact never does — the judge, `bin/judge.lean`, elaborates the prefix once and every candidate against a copy of it through `#seat`, which reports the body with the pieces expanded, and that expansion is what the module grows. the judge reads the complete message log — the CLI caps its report at a hundred errors; the log does not.
 
-today: Room — 25 carriers, 137 theorems, nine rounds (66 31 18 13 3 3 1 1 1), 31 vacancies, 106 hand bodies, 70,528 bytes. Face — 78 carriers, 147 theorems, seven rounds (96 23 16 8 1 1 2), 72 vacancies, 72 hand bodies, 3 routes kept, 56,117 bytes. the germs' byte counts are the numbers the primings exist to shrink.
+today: Room — 25 carriers, 137 theorems, nine rounds (66 31 18 13 3 3 1 1 1), 34 vacancies, 103 hand bodies, 70,433 bytes. Face — 78 carriers, 147 theorems, seven rounds (96 23 16 8 1 1 2), 72 vacancies, 72 hand bodies, 3 routes kept, 56,117 bytes. the germs' byte counts are the numbers the pieces exist to shrink.
 
 ## the standards
 
@@ -105,7 +105,7 @@ bin/counter ride [session.lean]
 
 ## the page
 
-`bin/counter page` writes `site/`: this file, Room and Face grown with every declaration an anchor (`foam.is/trunk.html#the_handshake`), the toy, the germ, the primings, the book, and the compiler's report for that push. the `foam.is` workflow grows the modules and publishes it. nothing browseable is committed, the same way nothing derived is.
+`bin/counter page` writes `site/`: this file, Room and Face grown with every declaration an anchor (`foam.is/trunk.html#the_handshake`), the toy, the germ, the pieces, the book, and the compiler's report for that push. the `foam.is` workflow grows the modules and publishes it. nothing browseable is committed, the same way nothing derived is.
 
 ## the grammar
 

@@ -43,7 +43,7 @@
 #   bin/counter book [trail.lean | vestibule.held ...]
 #   bin/counter page
 #   bin/counter regrow [trail.lean | vestibule.held ...] [-o out.lean] [--settle] [--check]
-#                      [--primings primings.lean]
+#                      (the pieces: bin/Pieces.lean, through the judge)
 set -u
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -319,6 +319,10 @@ regrow_ear() {
 
   local report=""
   if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p regrowth; report="regrowth/$(basename "${out%.lean}").report"; fi
+  primings="${primings:-${CRAWL_PRIMINGS:-}}"
+  if [ -n "$primings" ]; then
+    lake build Pieces >/dev/null 2>&1 || { echo "the gate cannot open: the pieces (bin/Pieces.lean) do not build"; lake build Pieces 2>&1 | tail -20; exit 1; }
+  fi
   if [ "$keep" = 1 ]; then mkdir -p regrowth/trials; export CRAWL_KEEP=1; export TMPDIR="$ROOT/regrowth/trials"; fi
   CRAWL_OUT="$out" CRAWL_HELD="$held" CRAWL_PRIMINGS="$primings" CRAWL_SETTLE="$settle" CRAWL_CHECK="$check" CRAWL_PROBE="$probe" python3 - "${inputs[@]}" <<'EOF' | { if [ -n "$report" ]; then tee "$report"; else cat; fi; }
 import os, re, subprocess, sys, tempfile
@@ -464,24 +468,21 @@ prefix = [header.rstrip('\n'), '']
 for _, _, b in carriers:
     prefix.append(b.rstrip('\n')); prefix.append('')
 
-seated_text = {}
+seated_text, seated_cites = {}, {}
 
 if primings_path:
     # ---- tier two: regrow the proof bodies from the ordered primings
-    primings, cur, budget, reach = [], None, None, 12
-    for line in open(primings_path).read().splitlines():
-        mb = re.match(r'-- budget: (\d+)$', line)
-        if mb:
-            budget = int(mb.group(1)); continue
-        mr = re.match(r'-- reach: (\d+)$', line)
-        if mr:
-            reach = int(mr.group(1)); continue
-        m = re.match(r'-- priming: (.+)$', line)
-        if m:
-            cur = [m.group(1).strip(), []]; primings.append(cur)
-        elif cur is not None and not line.startswith('--'):
-            cur[1].append(line)
-    primings = [(nm, '\n'.join(body).strip('\n')) for nm, body in primings if ''.join(body).strip()]
+    # the pieces — bin/Pieces.lean, read through the judge: their order, the knobs, and each
+    # piece's template over the three derived lists ({cites} {hyps} {defs})
+    resp = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'pieces'], capture_output=True, text=True)
+    primings, budget, reach = [], None, 12
+    for line in resp.stdout.splitlines():
+        if line.startswith('budget '): budget = int(line.split()[1])
+        elif line.startswith('reach '): reach = int(line.split()[1])
+        elif '\t' in line:
+            nm, tpl = line.split('\t', 1); primings.append((nm, tpl))
+    if not primings:
+        raise SystemExit('crawl: the judge listed no pieces (lake build Pieces?)\n' + (resp.stdout + resp.stderr)[-1500:])
 
     def split_block(b):
         rt = b.rfind('\n/-- info:')
@@ -517,27 +518,6 @@ if primings_path:
                 out += [x for x in names.split() if re.match(r"[A-Za-z_][A-Za-z0-9_₀-₉']*$", x)]
         return out
 
-    def cite_macro(ns, n=None):
-        # a citation — or one of the statement's own hypotheses — with its side goals closed by
-        # assumption, rfl, or ONE more citation/hypothesis from the same list (a lemma that takes
-        # a lemma as an argument — hrefl, a helper — or a side goal that is a hypothesis applied)
-        hyps = binder_names(n) if n else []
-        names = list(ns) + [h for h in hyps if h not in ns]
-        if not names:
-            return 'fail'
-        # every side alternative must CLOSE or fail: a bare `apply` can succeed leaving goals,
-        # `first` counts that as success, and the outer alternative commits with work undone
-        CLOSE = '(first | assumption | rfl)'
-        def hyp_forms(m):
-            # a hypothesis whose type is a def (unheard, carries) hides its ∀ from `apply`;
-            # `exact h _` elaborates the application and unfolds as needed
-            return f'| (apply {m} <;> {CLOSE}) | (exact {m} _)'
-        def side(t):
-            others = ' '.join((hyp_forms(m) if m in hyps else f'| (apply {m} <;> {CLOSE})') for m in names if m != t)
-            return f'(first | assumption | rfl {others})' if others else CLOSE
-        heads = ' '.join((f'| (apply {t} <;> {side(t)})' if t not in hyps else f'| (apply {t} <;> {side(t)}) | (exact {t} _)') for t in names)
-        return 'first ' + heads
-
     cnames = [n for _, n, _ in carriers]
     defs_of = {}
     tf2 = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-cites-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
@@ -562,62 +542,12 @@ if primings_path:
             ds = [c for c in cnames if re.search(r'\b' + re.escape(c) + r'\b', stmt)]
         return ', '.join(ds) if ds else ''
 
-    def hyps_of(n):
-        # the statement's own equation-shaped hypotheses, by binder name
-        stmt, _ = split_block(by_name[n])
-        out = []
-        for names, ty in re.findall(r'\(([^:()]+?)\s*:\s*((?:[^()]|\([^()]*\))*?)\)', stmt):
-            if re.search(r'(?<![<>≠!])=(?!>)|↔', ty):
-                out += [x for x in names.split() if re.match(r'[A-Za-z_][A-Za-z0-9_₀-₉\']*$', x)]
-        return out
-
-    def rws_macro(ns, n=None):
-        names = (hyps_of(n) if n else []) + list(ns)
-        return '; '.join(f'(try rw [{t}])' for t in names) if names else 'skip'
-
-    def rws_alternatives(ns, n, closers):
-        # each rewrite as an ATOMIC alternative with its own closers: a rewrite that succeeds in
-        # the wrong place fails and backtracks instead of poisoning the moves after it
-        # rewriting is the tightening move: the hint first, then only the few cites most akin
-        names = (hyps_of(n) if n else []) + list(ns)[:4]
-        return ' '.join(f'| (rw [{t}]; {closers})' for t in names)
-
-    def chains_alternatives(ns, n, closers):
-        # the term chain: a cited law or hypothesis, applied at some arity, composed by `.trans`
-        # with one more close — `(c2 _ _).trans (c1 _ _)` — each alternative atomic, with its own
-        # closers; the hypotheses first (a chain usually starts from the statement's own law)
-        hyps = binder_names(n) if n else []
-        names = hyps + [t for t in list(ns)[:6] if t not in hyps]
-        out = []
-        for t in names:
-            for k in range(4):
-                app = f'({t}{" _" * k})' if k else t
-                out.append(f'| exact {app}.trans (by {closers})')
-                out.append(f'| exact {app}.symm.trans (by {closers})')
-        return ' '.join(out)
-
-    def cite_compact(ns, n=None):
-        # the one-deep cite over the few most akin — what a rewrite alternative may carry
-        hyps = binder_names(n) if n else []
-        names = list(ns)[:4] + [h for h in hyps if h not in ns]
-        if not names:
-            return 'fail'
-        return 'first ' + ' '.join((f'| (apply {t} <;> (first | assumption | rfl))' if t not in hyps else f'| (apply {t} <;> (first | assumption | rfl)) | (exact {t} _)') for t in names)
-
     def instantiate(body, ns, n=None):
-        # the rewrite fan first, with compact closers inside it; then the full cite for the rest
-        def rws_sub(m):
-            closers = m.group(1).strip().replace('{cite}', cite_compact(ns, n))
-            return rws_alternatives(ns, n, closers)
-        out = re.sub(r'\{rws\|([^{}]*(?:\{cite\}[^{}]*)*)\}', rws_sub, body)
-        def chains_sub(m):
-            closers = m.group(1).strip().replace('{cite}', cite_compact(ns, n))
-            return chains_alternatives(ns, n, closers)
-        out = re.sub(r'\{chains\|([^{}]*(?:\{cite\}[^{}]*)*)\}', chains_sub, out)
-        out = (out.replace('{cite}', cite_macro(ns, n))
-                  .replace('{rws}', rws_macro(ns, n))
-                  .replace('{defs}', defs_macro(n) if n else ''))
-        return out
+        # a piece's template over the three derived lists; the fan itself is the pieces' own (Lean),
+        # and the judge reports it expanded once the candidate seats
+        return (body.replace('{cites}', ', '.join(ns))
+                    .replace('{hyps}', ', '.join(binder_names(n)) if n else '')
+                    .replace('{defs}', defs_macro(n) if n else ''))
 
     tally = {nm: 0 for nm, _ in primings}
     carried = []
@@ -662,14 +592,18 @@ if primings_path:
             print(f'[trial] {pre.name} {cf.name}: {len(cands)} candidates, exit {res.returncode}, {time.time() - t0:.1f}s')
         else:
             os.unlink(pre.name); os.unlink(cf.name)
-        verdicts = {}
+        verdicts, bodies, cur = {}, {}, None
         for l in res.stdout.splitlines():
             m = re.match(r'(\d+) (seated|held)$', l)
             if m:
-                verdicts[int(m.group(1))] = m.group(2)
+                cur = int(m.group(1)); verdicts[cur] = m.group(2); continue
+            if cur is not None and (l.startswith('| ') or l == '|'):
+                bodies.setdefault(cur, []).append(l[2:])
         if res.returncode != 0 or len(verdicts) != len(cands):
             raise SystemExit('crawl: the judge did not return a verdict for every candidate:\n'
                              + (res.stdout + res.stderr)[-2000:])
+        # the seated bodies as the judge elaborated them, pieces expanded — what the module grows
+        judge.bodies = {i: '\n'.join(v).rstrip() for i, v in bodies.items()}
         return set(i for i in range(len(cands)) if verdicts[i] == 'held')
 
     kept_hint = {}
@@ -753,12 +687,12 @@ if primings_path:
         def derived_cites(n):
             return [t for t in derived_cites_all(n) if keys[t] & keys[n]][:reach]
 
-        def seat_regrown(n, k, cites):
-            pname, pbody = primings[k]
+        def seat_regrown(n, k, cites, body):
+            pname, _ = primings[k]
             stmt, _ = split_block(by_name[n])
-            body = instantiate(pbody, cites, n)
             body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
             seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipt_for(n)
+            seated_cites[n] = list(cites)
             tally[pname] += 1
             return pname
 
@@ -800,7 +734,7 @@ if primings_path:
                     ci = int(m.group(1)); k = ci % P; variant = 'hinted' if ci >= P else 'derived'
                     print(f'  {primings[k][0]:22s} {variant:8s} {m.group(2)}{m.group(3) or ""}')
                     i += 1
-                    while i < len(lines) and lines[i].startswith('    '):
+                    while i < len(lines) and (lines[i].startswith('    ') or lines[i].startswith('| ') or lines[i] == '|'):
                         print(f'      {lines[i].strip()}'); i += 1
                 else:
                     i += 1
@@ -835,26 +769,27 @@ if primings_path:
                     for k in range(P): cands.append((n, k, hinted, 'hinted'))
             tried += len(cands)
             failed = judge(prefix_lines, [(n, k, cites) for (n, k, cites, _) in cands])
+            bodies = judge.bodies
             best = {}
             for i, (n, k, cites, tag) in enumerate(cands):
                 if i in failed: continue
                 rank = (0 if tag == 'derived' else 1, k)
                 if n not in best or rank < best[n][0]:
-                    best[n] = (rank, k, cites, tag)
+                    best[n] = (rank, k, cites, tag, bodies[i])
             per_round = {nm: 0 for nm, _ in primings}
             seated_now, carried_now = [], 0
             for n in ready_hand:
                 if n in best:
-                    _, k, cites, tag = best[n]
-                    per_round[seat_regrown(n, k, cites)] += 1
+                    _, k, cites, tag, body = best[n]
+                    per_round[seat_regrown(n, k, cites, body)] += 1
                     kept_hint[n] = ordered_needs(n) if tag == 'hinted' else []
                 else:
                     seated_text[n] = hand_with_receipt(n); carried.append(n); carried_now += 1
                 seated_now.append(n)
             for n in pending_vac:
                 if n in best:
-                    _, k, cites, tag = best[n]
-                    per_round[seat_regrown(n, k, cites)] += 1
+                    _, k, cites, tag, body = best[n]
+                    per_round[seat_regrown(n, k, cites, body)] += 1
                     kept_hint[n] = resolve_hint(n) if tag == 'hinted' else []
                     seated_now.append(n)
             seated_now.sort(key=lambda n: trail_index[n])
@@ -894,20 +829,18 @@ if primings_path:
         tight_cands = []
         for n in seated_order:
             if n in carried: continue
-            body_now = seated_text[n].split(' :=\n', 1)[1].split('\n\n/-- info:')[0]
             cites = [t for t in derived_cites_all(n) if t in used.get(n, set())]
+            if cites == seated_cites.get(n): continue
             for k, (pname, pbody) in enumerate(primings):
-                if '{cite}' not in pbody and '{rws}' not in pbody and '{chains|' not in pbody:
-                    continue
-                cand = '\n'.join(('  ' + l if l else l) for l in instantiate(pbody, cites, n).splitlines())
-                if cand != body_now:
+                if '{cites}' in pbody:
                     tight_cands.append((n, k, cites))
         if tight_cands:
             failed = judge(grown_lines, tight_cands)
+            bodies = judge.bodies
             tightened, done = 0, set()
             for i, (n, k, cites) in enumerate(tight_cands):
                 if i in failed or n in done: continue
-                seat_regrown(n, k, cites); tally[primings[k][0]] -= 1; tightened += 1; done.add(n)
+                seat_regrown(n, k, cites, bodies[i]); tally[primings[k][0]] -= 1; tightened += 1; done.add(n)
             print(f'the tighten: {tightened} regrown bodies narrowed to the citations their proof terms use')
         print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged')
         lb = sum(1 for n, h in kept_hint.items() if h)
@@ -922,6 +855,7 @@ if primings_path:
             per_round = {nm: 0 for nm, _ in primings}
             cands = [(n, k) for n in names for k in range(len(primings))]
             failed_idx = judge(prefix_lines, cands)
+            bodies = judge.bodies
             failed = set(cands[i] for i in failed_idx)
             pending = []
             for n in names:
@@ -936,7 +870,7 @@ if primings_path:
                     stmt, receipts = split_block(by_name[n])
                     if germ_mode or not receipts:
                         receipts = receipt_for(n)
-                    body = instantiate(pbody, ordered_needs(n), n)
+                    body = bodies[cands.index((n, chosen))]
                     body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
                     seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipts
                     tally[pname] += 1; per_round[pname] += 1
@@ -949,7 +883,7 @@ if primings_path:
                     for n in dead: print(f'  {n} (waiting on: {" ".join(ordered_needs(n)) or "—"})')
                     sys.exit(1)
     total = len(theorems)
-    print(f'the bodies: {total - len(carried)} of {total} regrown from {len(primings)} primings — '
+    print(f'the bodies: {total - len(carried)} of {total} regrown from {len(primings)} pieces — '
           + ', '.join(f'{nm} {c}' for nm, c in tally.items()))
     if germ_mode:
         def is_vacancy(n):
@@ -1112,15 +1046,15 @@ case "${1:-}" in
       germ="germ/Face.lean"; for a in "$@"; do case "$a" in germ/*.lean) germ="$a";; esac; done
       for pass in 1 2 3; do
         before="$(shasum "$germ" | cut -c1-40)"
-        CRAWL_GERM=1 regrow_ear --primings primings.lean "$@" || exit $?
+        CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear "$@" || exit $?
         after="$(shasum "$germ" | cut -c1-40)"
         [ "$before" = "$after" ] && break
         echo "the settle moved the germ; pass $((pass+1)) to reach its fixed point"
       done
     else
-      CRAWL_GERM=1 regrow_ear --primings primings.lean "$@"
+      CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear "$@"
     fi ;;
-  probe) shift; CRAWL_GERM=1 regrow_ear --primings primings.lean --probe "$2" "$1" ;;
+  probe) shift; CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear --probe "$2" "$1" ;;
   book) shift; exec "$ROOT/bin/.book" "$@" ;;
   page) shift; exec "$ROOT/bin/.page" "$@" ;;
   *) usage ;;

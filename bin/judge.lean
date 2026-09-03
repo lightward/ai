@@ -1,13 +1,14 @@
 import Lean
+import Pieces
 open Lean Elab
 
-def elabFrom (src : String) (name : String) (st : Option Command.State) : IO Command.State := do
+def elabFrom (src : String) (name : String) (st : Option Command.State) (extra : Array Import := #[]) : IO Command.State := do
   let ictx := Parser.mkInputContext src name
   let (hdr, ps, msgs) ← Parser.parseHeader ictx
   let cs ← match st with
     | some s => pure { s with messages := {} }
     | none =>
-        let imports := headerToImports hdr
+        let imports := headerToImports hdr ++ extra
         let env ← importModules (if imports.isEmpty then #[{ module := `Init }] else imports) {} 0 (loadExts := true)
         pure (Command.mkState env msgs (({} : Options).setBool `Elab.async false))
   let s ← IO.processCommands ictx ps cs
@@ -169,10 +170,17 @@ unsafe def main (args : List String) : IO Unit := do
   if args.head? == some "kinds" then
     kindsMode args[1]! sc
     return
+  if args.head? == some "pieces" then
+    -- the pieces in the order the crawl offers them, and the knobs, read from bin/Pieces.lean
+    IO.println s!"budget {Pieces.budget}"
+    IO.println s!"reach {Pieces.reach}"
+    for (n, t) in Pieces.pieces do IO.println s!"{n}\t{t}"
+    return
   let prefixSrc ← IO.FS.readFile args[0]!
   let candSrc ← IO.FS.readFile args[1]!
   let cands := (candSrc.splitOn "\n-- candidate\n").filter (fun c => !c.trimAscii.isEmpty)
-  let base ← elabFrom prefixSrc "<prefix>" none
+  -- a trial imports the pieces; the artifact never does (the judge reports each seated body expanded)
+  let base ← elabFrom prefixSrc "<prefix>" none #[{ module := `Pieces }]
   let baseMsgs := base.messages.toList
   if !baseMsgs.isEmpty then
     IO.println s!"prefix not silent: {baseMsgs.length} messages"
@@ -183,11 +191,17 @@ unsafe def main (args : List String) : IO Unit := do
   let sentences := args.length > 2 && args[2]! == "vv"
   for c in cands do
     let t0 ← IO.monoMsNow
-    let s ← elabFrom (c ++ "\n") s!"<candidate {i}>" (some base)
+    let s ← elabFrom ("#seat " ++ c ++ "\n") s!"<candidate {i}>" (some base)
     let msgs := s.messages.toList
     let bad := msgs.any (fun m => m.severity != .information)
     let dt := (← IO.monoMsNow) - t0
     IO.println s!"{i} {if bad then "held" else "seated"}{if verbose then s!" {dt}ms" else ""}"
+    if !bad then
+      -- the body as elaborated, pieces expanded: one line per line, each behind `| `
+      for m in msgs do
+        if m.severity == .information then
+          let txt ← m.data.toString
+          for l in txt.splitOn "\n" do IO.println s!"| {l}"
     if sentences && bad then
       for m in msgs do
         if m.severity != .information then
