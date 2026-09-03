@@ -8,6 +8,9 @@
 -- a second macro: {defs} expands to the carriers (defs) the vacancy's statement
 -- cites, comma-separated, for `dsimp only [{defs}]` — let the goal reduce along
 -- its own definitions before a closer unifies against it.
+-- a fourth: {chains|closers} expands, inside a `first`, to one alternative per cited name and
+-- hypothesis at each arity 0–3, composed by `.trans` (and `.symm.trans`) with the closers:
+-- the term chain `(c2 _ _).trans (c1 _ _)`, each alternative atomic.
 -- a third: {rws|closers} expands, inside a `first`, to one alternative per cited
 -- name (and per equation-shaped hypothesis): `| (rw [n]; closers)` — each rewrite
 -- atomic with its own closers, so a rewrite that lands in the wrong place fails and
@@ -46,7 +49,18 @@ by intros; {cite}
 by
   intros
   (try dsimp only [{defs}] at *)
+  intros
   first | rfl | assumption | {cite}
+
+-- priming: chain
+by
+  intros
+  (try dsimp only [{defs}] at *)
+  intros
+  first
+    | rfl
+    | assumption
+    {chains| first | rfl | assumption | {cite}}
 
 -- priming: pane
 by

@@ -107,8 +107,7 @@ def lacking {A : Type u} (beq : A → A → Bool) (room : List A) : List A → N
 theorem the_carriers_compose {S : Type u} {T : Type u'} {U : Type u''} {P : Type v} {A : Type w}
     (f : S → P → A) (g : T → P → A) (k : U → P → A) (h : S → T) (h' : T → U)
     (c1 : carries f g h) (c2 : carries g k h') :
-    carries f k (fun s => h' (h s)) :=
-  fun s p => (c2 (h s) p).trans (c1 s p)
+    carries f k (fun s => h' (h s)) := sorry
 
 theorem the_carrier_merges_only_the_alike {S : Type u} {T : Type u'} {P : Type v} {A : Type w}
     (f : S → P → A) (g : T → P → A) (h : S → T) (c : carries f g h)
@@ -651,8 +650,7 @@ theorem apart_append {A : Type u} :
         (apart_append ys hxs hys
           (fun a ha y hy => hcross a (List.Mem.tail _ ha) y hy))
 
-theorem succ_adds (a b : Nat) : (a + 1) + b = (a + b) + 1 :=
-  (click_slides a b).symm
+theorem succ_adds (a b : Nat) : (a + 1) + b = (a + b) + 1 := sorry
 
 theorem ble_le_add : ∀ a b : Nat, Nat.ble a (a + b) = true := sorry
 
@@ -844,9 +842,7 @@ theorem the_first_voice_decides {A : Type u} {beq : A → A → Bool}
               rw [hxa, hxb, the_first_voice_decides hE hR hab p ha']
               exact rfl
 
-theorem mul_two_reads_double (n : Nat) : n * 2 = n + n := by
-  show (0 + n) + n = n + n
-  rw [zero_add]
+theorem mul_two_reads_double (n : Nat) : n * 2 = n + n := sorry
 
 theorem every_word_fits :
     ∀ (n : Nat) (w : List Bool), w ∈ words n → w.length = n

@@ -582,6 +582,20 @@ if primings_path:
         names = (hyps_of(n) if n else []) + list(ns)[:4]
         return ' '.join(f'| (rw [{t}]; {closers})' for t in names)
 
+    def chains_alternatives(ns, n, closers):
+        # the term chain: a cited law or hypothesis, applied at some arity, composed by `.trans`
+        # with one more close — `(c2 _ _).trans (c1 _ _)` — each alternative atomic, with its own
+        # closers; the hypotheses first (a chain usually starts from the statement's own law)
+        hyps = binder_names(n) if n else []
+        names = hyps + [t for t in list(ns)[:6] if t not in hyps]
+        out = []
+        for t in names:
+            for k in range(4):
+                app = f'({t}{" _" * k})' if k else t
+                out.append(f'| exact {app}.trans (by {closers})')
+                out.append(f'| exact {app}.symm.trans (by {closers})')
+        return ' '.join(out)
+
     def cite_compact(ns, n=None):
         # the one-deep cite over the few most akin — what a rewrite alternative may carry
         hyps = binder_names(n) if n else []
@@ -596,6 +610,10 @@ if primings_path:
             closers = m.group(1).strip().replace('{cite}', cite_compact(ns, n))
             return rws_alternatives(ns, n, closers)
         out = re.sub(r'\{rws\|([^{}]*(?:\{cite\}[^{}]*)*)\}', rws_sub, body)
+        def chains_sub(m):
+            closers = m.group(1).strip().replace('{cite}', cite_compact(ns, n))
+            return chains_alternatives(ns, n, closers)
+        out = re.sub(r'\{chains\|([^{}]*(?:\{cite\}[^{}]*)*)\}', chains_sub, out)
         out = (out.replace('{cite}', cite_macro(ns, n))
                   .replace('{rws}', rws_macro(ns, n))
                   .replace('{defs}', defs_macro(n) if n else ''))
@@ -879,7 +897,7 @@ if primings_path:
             body_now = seated_text[n].split(' :=\n', 1)[1].split('\n\n/-- info:')[0]
             cites = [t for t in derived_cites_all(n) if t in used.get(n, set())]
             for k, (pname, pbody) in enumerate(primings):
-                if '{cite}' not in pbody and '{rws}' not in pbody:
+                if '{cite}' not in pbody and '{rws}' not in pbody and '{chains|' not in pbody:
                     continue
                 cand = '\n'.join(('  ' + l if l else l) for l in instantiate(pbody, cites, n).splitlines())
                 if cand != body_now:
