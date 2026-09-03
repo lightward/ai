@@ -2,12 +2,13 @@ import Lean
 open Lean Elab Command
 
 /-! the pieces: the ordered proof shapes the crawl tries when a vacancy has a statement and no
-body — Baba-style pieces that are also rules, each a Lean macro over three DERIVED lists: the
-vacancy's citations (its signature's vocabulary, ranked), its applicable hypotheses, and the
-carriers its statement names. a trial imports this module; the artifact never does — the judge
-reports each seated body with the pieces expanded, and that expansion is what the module grows.
-`budget` is the fuel a candidate may burn (Lean's own maxHeartbeats); `reach` caps how many seated
-theorems a vacancy's citations may reach for. -/
+body — Baba-style pieces that are also rules, each a Lean macro over one DERIVED list, the
+carriers its statement names (to unfold first, so a goal reduces to its home); every citation,
+hypothesis, rewrite, and chain is found by a search AT THE GOAL (`piece_seek`, `piece_rw_seek`,
+`piece_chain_seek`). a trial imports this module; the artifact never does — the judge reports each
+seated body with the pieces expanded and the searches' winners substituted, and that is what the
+module grows. `budget` is the fuel a candidate may burn (Lean's own maxHeartbeats); `reach` caps how
+many theorems a search tries at one goal. -/
 
 namespace Pieces
 
@@ -18,24 +19,24 @@ set_option hygiene false
 def budget : Nat := 20000
 def reach : Nat := 12
 
-/-- the order the crawl offers the pieces in; `{cites}` `{hyps}` `{defs}` are the three lists -/
+/-- the order the crawl offers the pieces in; `{defs}` is the statement's own carriers -/
 def pieces : List (String × String) := [
   ("rfl", "rfl"),
   ("Iff.rfl", "Iff.rfl"),
   ("fun _ => rfl", "fun _ => rfl"),
   ("fun _ _ => rfl", "fun _ _ => rfl"),
   ("intros; rfl", "by (intros; rfl)"),
-  ("cite", "by piece_cite [{cites}] [{hyps}] [{defs}]"),
-  ("home-cite", "by piece_home_cite [{cites}] [{hyps}] [{defs}]"),
-  ("chain", "by piece_chain [{cites}] [{hyps}] [{defs}]"),
-  ("pane", "by piece_pane [{cites}] [{hyps}] [{defs}]"),
-  ("induction", "by piece_induct_1st [{cites}] [{hyps}] [{defs}]"),
-  ("induction-2nd", "by piece_induct_2nd [{cites}] [{hyps}] [{defs}]"),
-  ("induction-3rd", "by piece_induct_3rd [{cites}] [{hyps}] [{defs}]"),
-  ("induction-two-ih", "by piece_induct_two_ih [{cites}] [{hyps}] [{defs}]"),
-  ("induction-two-ih-2nd", "by piece_induct_two_ih_2nd [{cites}] [{hyps}] [{defs}]"),
-  ("home-cite-recurse", "by piece_home_cite_recurse [{cites}] [{hyps}] [{defs}]"),
-  ("home-cite-recurse-2nd", "by piece_home_cite_recurse_2nd [{cites}] [{hyps}] [{defs}]")]
+  ("cite", "by piece_cite [{defs}]"),
+  ("home-cite", "by piece_home_cite [{defs}]"),
+  ("chain", "by piece_chain [{defs}]"),
+  ("pane", "by piece_pane [{defs}]"),
+  ("induction", "by piece_induct_1st [{defs}]"),
+  ("induction-2nd", "by piece_induct_2nd [{defs}]"),
+  ("induction-3rd", "by piece_induct_3rd [{defs}]"),
+  ("induction-two-ih", "by piece_induct_two_ih [{defs}]"),
+  ("induction-two-ih-2nd", "by piece_induct_two_ih_2nd [{defs}]"),
+  ("home-cite-recurse", "by piece_home_cite_recurse [{defs}]"),
+  ("home-cite-recurse-2nd", "by piece_home_cite_recurse_2nd [{defs}]")]
 
 abbrev Seq := TSyntax ``Lean.Parser.Tactic.tacticSeq
 abbrev Tac := TSyntax `tactic
@@ -293,37 +294,37 @@ or `.symm.trans` with the piece's own closers — `(c2 _ _).trans (c1 _ _)` -/
   throwError "piece_chain_seek: no chain in reach closes{indentExpr (← g.getType)}\ntried: {names.map (·.getId)}"
 
 
-syntax (name := cite) "piece_cite" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
-syntax (name := homeCite) "piece_home_cite" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
-syntax (name := chain) "piece_chain" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
-syntax (name := pane) "piece_pane" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
-syntax (name := induct1) "piece_induct_1st" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
-syntax (name := induct2) "piece_induct_2nd" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
-syntax (name := induct3) "piece_induct_3rd" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
-syntax (name := inductTwo) "piece_induct_two_ih" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
-syntax (name := inductTwo2) "piece_induct_two_ih_2nd" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
-syntax (name := hcr) "piece_home_cite_recurse" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
-syntax (name := hcr2) "piece_home_cite_recurse_2nd" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
+syntax (name := cite) "piece_cite" "[" ident,* "]" : tactic
+syntax (name := homeCite) "piece_home_cite" "[" ident,* "]" : tactic
+syntax (name := chain) "piece_chain" "[" ident,* "]" : tactic
+syntax (name := pane) "piece_pane" "[" ident,* "]" : tactic
+syntax (name := induct1) "piece_induct_1st" "[" ident,* "]" : tactic
+syntax (name := induct2) "piece_induct_2nd" "[" ident,* "]" : tactic
+syntax (name := induct3) "piece_induct_3rd" "[" ident,* "]" : tactic
+syntax (name := inductTwo) "piece_induct_two_ih" "[" ident,* "]" : tactic
+syntax (name := inductTwo2) "piece_induct_two_ih_2nd" "[" ident,* "]" : tactic
+syntax (name := hcr) "piece_home_cite_recurse" "[" ident,* "]" : tactic
+syntax (name := hcr2) "piece_home_cite_recurse_2nd" "[" ident,* "]" : tactic
 
 macro_rules
-  | `(tactic| piece_cite [$_cs,*] [$_hs,*] [$_ds,*]) => do
+  | `(tactic| piece_cite [$_ds,*]) => do
     let c ← `(tactic| piece_seek)
     -- parenthesized: inside `(…)` the layout is position-free, so the expansion re-parses however
     -- the formatter breaks its lines (a bare `by intros;` + newline ends the sequence early)
     `(tactic| (intros; $c:tactic))
 
 macro_rules
-  | `(tactic| piece_home_cite [$_cs,*] [$_hs,*] [$ds,*]) => do
+  | `(tactic| piece_home_cite [$ds,*]) => do
     let c ← `(tactic| piece_seek)
     `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; first | rfl | assumption | $c:tactic))
 
 macro_rules
-  | `(tactic| piece_chain [$_cs,*] [$_hs,*] [$ds,*]) => do
+  | `(tactic| piece_chain [$ds,*]) => do
     let closers ← `(tactic| first | rfl | assumption | piece_seek)
     `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; first | rfl | assumption | piece_chain_seek ($closers:tactic)))
 
 macro_rules
-  | `(tactic| piece_pane [$_cs,*] [$_hs,*] [$_ds,*]) => do
+  | `(tactic| piece_pane [$_ds,*]) => do
     let c ← `(tactic| piece_seek)
     -- `(repeat' …)` parenthesized: `repeat'` takes a tactic SEQUENCE, and on one line it would swallow
     -- the `all_goals` after it (one failed iteration, zero repeats, the goal untouched)
@@ -379,31 +380,31 @@ def twoIhMoves (c : Tac) (ds : Array Ident) (home : Bool) : MacroM (Array Seq) :
   return out
 
 macro_rules
-  | `(tactic| piece_induct_1st [$_cs,*] [$_hs,*] [$ds,*]) => do
+  | `(tactic| piece_induct_1st [$ds,*]) => do
     let c ← `(tactic| piece_seek)
     let moves ← firstOf (← ihMoves c ds.getElems true)
     `(tactic| (intro x; induction x; all_goals (first | $(← baseCase c) | (rename_i ih; intros; $moves:tactic))))
 
 macro_rules
-  | `(tactic| piece_induct_2nd [$_cs,*] [$_hs,*] [$ds,*]) => do
+  | `(tactic| piece_induct_2nd [$ds,*]) => do
     let c ← `(tactic| piece_seek)
     let moves ← firstOf (← ihMoves c ds.getElems false)
     `(tactic| (intro _ y; induction y; all_goals (first | $(← baseCase c) | (rename_i ih; intros; $moves:tactic))))
 
 macro_rules
-  | `(tactic| piece_induct_3rd [$_cs,*] [$_hs,*] [$ds,*]) => do
+  | `(tactic| piece_induct_3rd [$ds,*]) => do
     let c ← `(tactic| piece_seek)
     let moves ← firstOf (← ihMoves c ds.getElems false)
     `(tactic| (intro _ _ z; induction z; all_goals (first | $(← baseCase c) | (rename_i ih; intros; $moves:tactic))))
 
 macro_rules
-  | `(tactic| piece_induct_two_ih [$_cs,*] [$_hs,*] [$ds,*]) => do
+  | `(tactic| piece_induct_two_ih [$ds,*]) => do
     let c ← `(tactic| piece_seek)
     let moves ← firstOf (← twoIhMoves c ds.getElems true)
     `(tactic| (intro x; induction x; all_goals (first | $(← baseCase c) | (rename_i ih₁ ih₂; intros; $moves:tactic))))
 
 macro_rules
-  | `(tactic| piece_induct_two_ih_2nd [$_cs,*] [$_hs,*] [$ds,*]) => do
+  | `(tactic| piece_induct_two_ih_2nd [$ds,*]) => do
     let c ← `(tactic| piece_seek)
     let moves ← firstOf (← twoIhMoves c ds.getElems false)
     `(tactic| (intro _ y; induction y; all_goals (first | $(← baseCase c) | (rename_i ih₁ ih₂; intros; $moves:tactic))))
@@ -411,7 +412,7 @@ macro_rules
 /-- home → cite → recurse: reduce the goal along its own carriers before any closer lands, then
 tighten by the citations, then close by the recursion — two IHs first, then one; rewrites by the
 cited names and the statement's own hypotheses as atomic alternatives -/
-def homeCiteRecurse (_cs _hs ds : Array Ident) (second : Bool) : MacroM Tac := do
+def homeCiteRecurse (ds : Array Ident) (second : Bool) : MacroM Tac := do
   let c ← `(tactic| piece_seek)
   let compact ← `(tactic| piece_seek)
   let twoClosers ← `(tactic| first | rfl | exact congr (congrArg _ ih₁) ih₂ | exact congr (congrArg _ (ih₁ _)) (ih₂ _) | (rw [ih₁, ih₂]) | (rw [ih₁ _, ih₂ _]) | (rw [ih₁, ih₂]; $compact:tactic) | (rw [ih₁ _, ih₂ _]; $compact:tactic))
@@ -448,9 +449,9 @@ def homeCiteRecurse (_cs _hs ds : Array Ident) (second : Bool) : MacroM Tac := d
       | (rename_i ih; intros; (try dsimp only [$[$ds:ident],*] at *); $oneT:tactic))))
 
 macro_rules
-  | `(tactic| piece_home_cite_recurse [$cs,*] [$hs,*] [$ds,*]) => homeCiteRecurse cs.getElems hs.getElems ds.getElems false
+  | `(tactic| piece_home_cite_recurse [$ds,*]) => homeCiteRecurse ds.getElems false
 macro_rules
-  | `(tactic| piece_home_cite_recurse_2nd [$cs,*] [$hs,*] [$ds,*]) => homeCiteRecurse cs.getElems hs.getElems ds.getElems true
+  | `(tactic| piece_home_cite_recurse_2nd [$ds,*]) => homeCiteRecurse ds.getElems true
 
 /-- expand only the pieces' own macros, leaving Lean's (`rw`, `try`) as written; `piece_seek` is
 a tactic, not a macro, and stays -/

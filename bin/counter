@@ -468,7 +468,7 @@ prefix = [header.rstrip('\n'), '']
 for _, _, b in carriers:
     prefix.append(b.rstrip('\n')); prefix.append('')
 
-seated_text, seated_cites = {}, {}
+seated_text = {}
 
 if primings_path:
     # ---- tier two: regrow the proof bodies from the ordered primings
@@ -491,32 +491,6 @@ if primings_path:
         a, c = core.find(':='), core.find('\n  | ')
         cut = min(x for x in (a, c, len(core)) if x != -1)
         return core[:cut].rstrip(), receipts.strip('\n')
-
-    def ordered_needs(n):
-        if n in marker_needs:
-            return [t for t in marker_needs[n] if t in tnames and t != n]
-        body = strip_receipts(by_name[n])
-        found = []
-        for t in tnames:
-            if t == n: continue
-            m = re.search(r'\b' + re.escape(t) + r'\b', body)
-            if m: found.append((m.start(), t))
-        return [t for _, t in sorted(found)]
-
-    def binder_names(n):
-        # the statement's HYPOTHESES (not its data): binders whose type is an equation, an iff, a
-        # membership, a negation, a ∀, or an application of a lowercase (Prop-valued) carrier —
-        # alike, unheard, carries. data binders (F : Face, m : S → S) are never applicables.
-        stmt, _ = split_block(by_name[n])
-        out = []
-        for names, ty in re.findall(r'[({]([^:(){}]+?)\s*:\s*((?:[^(){}]|\([^()]*\))*?)[)}]', stmt):
-            t = ty.strip()
-            head = re.match(r'([A-Za-z_][A-Za-z0-9_.]*)', t)
-            is_prop = (re.search(r'(?<![<>≠!])=(?!>)|↔|∈|≠|¬|∀', t) is not None
-                       or (head and head.group(1) in cnames and head.group(1)[0].islower()))
-            if is_prop:
-                out += [x for x in names.split() if re.match(r"[A-Za-z_][A-Za-z0-9_₀-₉']*$", x)]
-        return out
 
     cnames = [n for _, n, _ in carriers]
     defs_of = {}
@@ -542,12 +516,11 @@ if primings_path:
             ds = [c for c in cnames if re.search(r'\b' + re.escape(c) + r'\b', stmt)]
         return ', '.join(ds) if ds else ''
 
-    def instantiate(body, ns, n=None):
-        # a piece's template over the three derived lists; the fan itself is the pieces' own (Lean),
-        # and the judge reports it expanded once the candidate seats
-        return (body.replace('{cites}', ', '.join(ns))
-                    .replace('{hyps}', ', '.join(binder_names(n)) if n else '')
-                    .replace('{defs}', defs_macro(n) if n else ''))
+    def instantiate(body, n=None):
+        # a piece's template over the one derived list, the statement's own carriers; citations,
+        # hypotheses, rewrites, and chains are searched at the goal by the pieces themselves (Lean),
+        # and the judge reports the body expanded, winners substituted, once the candidate seats
+        return body.replace('{defs}', defs_macro(n) if n else '')
 
     tally = {nm: 0 for nm, _ in primings}
     carried = []
@@ -563,9 +536,9 @@ if primings_path:
         core = (b[:rt] if rt != -1 else b).rstrip('\n')
         return core + '\n\n' + receipt_for(n)
 
-    def candidate_text(n, k, cites=None):
+    def candidate_text(n, k):
         stmt, _ = split_block(by_name[n])
-        body = instantiate(primings[k][1], ordered_needs(n) if cites is None else cites, n)
+        body = instantiate(primings[k][1], n)
         body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
         fuel = f'set_option maxHeartbeats {budget} in\n' if budget else ''
         return fuel + stmt.replace(f'theorem {n}', f'theorem {n}__p{k}', 1) + ' :=\n' + body
@@ -608,49 +581,9 @@ if primings_path:
 
     kept_hint = {}
     if germ_mode:
-        # ---- the germ: the cascade as a fixed-point search. a vacancy's citations are
-        # DERIVED from its signature's vocabulary (the type's constants, one unfolding
-        # through the carriers it names) and ranked by shared vocabulary, then by how
-        # recently the candidate seated, then by trail recency — the primer as an
-        # ordering, not a stored route. a hint (marker) is tried too, and kept by the
-        # settle only if the vacancy does not seat without it.
-        kf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-keys-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
-        kf.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
-        kf.close()
-        resk = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'keys', kf.name] + SCOPE, capture_output=True, text=True)
-        os.unlink(kf.name)
-        keys, pool = {}, []   # pool: the imported trunk's theorems, seated before round one
-        for l in resk.stdout.splitlines():
-            n, sep, ks = l.partition(' <- ')
-            if not sep: continue
-            if n.startswith('import '):
-                n = n.split()[1]
-                keys[n] = set(ks.split()) - {n}
-                pool.append(n)
-            elif n in by_name:
-                k = set(ks.split())
-                for c in list(k):
-                    k |= set(carrier_deps.get(c, []))
-                keys[n] = k - {n}
-        for _, n, _ in theorems:
-            keys.setdefault(n, set())
-        imported_theorems = set(pool)
-        # rarity: a constant shared by nearly every statement (Eq) says almost nothing; one
-        # shared by a handful (Or) says a lot — the record's own statistics as the ordering
-        import math
-        df = {}
-        for n in list(pool) + [n for _, n, _ in theorems]:
-            for c in keys.get(n, ()):
-                df[c] = df.get(c, 0) + 1
-        N = len(pool) + len(theorems)
-        def weight(c):
-            return math.log((N + 1) / (df.get(c, 0) + 1))
-        def affinity(t, n):
-            # shared rarity, normalized by the candidate's own vocabulary: a tight lemma that
-            # shares most of its words outranks a crown that shares a few of its many
-            shared = sum(weight(c) for c in keys[t] & keys[n])
-            own = sum(weight(c) for c in keys[t]) or 1.0
-            return shared / math.sqrt(own)
+        # ---- the germ: the cascade as a fixed-point search. every round, every pending vacancy is
+        # offered every piece against what has seated so far; the pieces search their own goals
+        # (bin/Pieces.lean), so nothing is derived here but the order
         is_vac = {n: bool(re.search(r':=\s*sorry\s*$', strip_receipts(by_name[n]).strip())) for _, n, _ in theorems}
         trail_index = {n: i for i, (_, n, _) in enumerate(theorems)}
         entry = {n: t for t in theorems for n in [t[1]]}
@@ -660,39 +593,11 @@ if primings_path:
         rounds, tried = [], 0
         P = len(primings)
 
-        by_bare = {}
-        for t in pool:
-            by_bare.setdefault(t.split('.')[-1], t)
-
-        def resolve_hint(n):
-            # a route may name a theorem that has since moved into an imported module: match bare
-            # names against the pool and keep the qualified form
-            out = []
-            for h in marker_needs.get(n, []):
-                bare = h.split('.')[-1]
-                if h in tnames or h in imported_theorems: out.append(h)
-                elif h in by_bare: out.append(by_bare[h])
-                elif bare in tnames: out.append(bare)            # a qualified route whose prefix moved
-                elif bare in by_bare: out.append(by_bare[bare])
-            return out
-
-        def derived_cites_all(n):
-            cs = [t for t in pool + seated_order if t != n and (keys[t] & keys[n] or t in used_hint(n))]
-            cs.sort(key=lambda t: (-affinity(t, n), -seated_round.get(t, 0), -trail_index.get(t, -1)))
-            return cs
-
-        def used_hint(n):
-            return set(marker_needs.get(n, [])) | set(ordered_needs(n))
-
-        def derived_cites(n):
-            return [t for t in derived_cites_all(n) if keys[t] & keys[n]][:reach]
-
-        def seat_regrown(n, k, cites, body):
+        def seat_regrown(n, k, body):
             pname, _ = primings[k]
             stmt, _ = split_block(by_name[n])
             body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
             seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipt_for(n)
-            seated_cites[n] = list(cites)
             tally[pname] += 1
             return pname
 
@@ -714,15 +619,8 @@ if primings_path:
                 if n != probe_name:
                     seated_order.append(n); seated_set.add(n); seated_round[n] = 1
             n = probe_name
-            der = derived_cites(n)
-            hint = resolve_hint(n)
             print(f'probe: {n}')
-            print(f'  vocabulary: {" ".join(sorted(keys[n])) or "—"}')
-            print(f'  cites in reach ({reach}): {" ".join(der) or "—"}')
-            if hint: print(f'  hint: {" ".join(hint)}')
-            cands = [(n, k, der) for k in range(P)]
-            if hint:
-                cands += [(n, k, hint + [d for d in der if d not in hint]) for k in range(P)]
+            cands = [(n, k) for k in range(P)]
             pre = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='probe-prefix-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
             pre.write('\n'.join(grown_lines) + '\n'); pre.close()
             cf = tempfile.NamedTemporaryFile('w', suffix='.txt', prefix='probe-cands-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
@@ -735,8 +633,8 @@ if primings_path:
             while i < len(lines):
                 m = re.match(r'(\d+) (seated|held)( \d+ms)?$', lines[i])
                 if m:
-                    ci = int(m.group(1)); k = ci % P; variant = 'hinted' if ci >= P else 'derived'
-                    print(f'  {primings[k][0]:22s} {variant:8s} {m.group(2)}{m.group(3) or ""}')
+                    ci = int(m.group(1)); k = ci % P
+                    print(f'  {primings[k][0]:22s} {m.group(2)}{m.group(3) or ""}')
                     i += 1
                     while i < len(lines) and (lines[i].startswith('    ') or lines[i].startswith('| ') or lines[i] == '|'):
                         print(f'      {lines[i].strip()}'); i += 1
@@ -758,43 +656,30 @@ if primings_path:
             prefix_lines = list(prefix)
             for n in seated_order:
                 prefix_lines.append(seated_text[n]); prefix_lines.append('')
-            cands = []
-            for n in ready_hand:
-                der = derived_cites(n); body_cites = ordered_needs(n)
-                for k in range(P): cands.append((n, k, der, 'derived'))
-                if body_cites and body_cites != der:
-                    for k in range(P): cands.append((n, k, body_cites, 'hinted'))
-            for n in pending_vac:
-                der = derived_cites(n)
-                for k in range(P): cands.append((n, k, der, 'derived'))
-                hint = resolve_hint(n)
-                if hint and all(h in seated_set or h in imported_theorems for h in hint):
-                    hinted = hint + [d for d in der if d not in hint]
-                    for k in range(P): cands.append((n, k, hinted, 'hinted'))
+            cands = [(n, k) for n in ready_hand + pending_vac for k in range(P)]
             tried += len(cands)
-            failed = judge(prefix_lines, [(n, k, cites) for (n, k, cites, _) in cands])
+            failed = judge(prefix_lines, cands)
             bodies = judge.bodies
             best = {}
-            for i, (n, k, cites, tag) in enumerate(cands):
+            for i, (n, k) in enumerate(cands):
                 if i in failed: continue
-                rank = (0 if tag == 'derived' else 1, k)
-                if n not in best or rank < best[n][0]:
-                    best[n] = (rank, k, cites, tag, bodies[i])
+                if n not in best or k < best[n][0]:
+                    best[n] = (k, bodies[i])
             per_round = {nm: 0 for nm, _ in primings}
             seated_now, carried_now = [], 0
             for n in ready_hand:
                 if n in best:
-                    _, k, cites, tag, body = best[n]
-                    per_round[seat_regrown(n, k, cites, body)] += 1
-                    kept_hint[n] = ordered_needs(n) if tag == 'hinted' else []
+                    k, body = best[n]
+                    per_round[seat_regrown(n, k, body)] += 1
+                    kept_hint[n] = []
                 else:
                     seated_text[n] = hand_with_receipt(n); carried.append(n); carried_now += 1
                 seated_now.append(n)
             for n in pending_vac:
                 if n in best:
-                    _, k, cites, tag, body = best[n]
-                    per_round[seat_regrown(n, k, cites, body)] += 1
-                    kept_hint[n] = resolve_hint(n) if tag == 'hinted' else []
+                    k, body = best[n]
+                    per_round[seat_regrown(n, k, body)] += 1
+                    kept_hint[n] = []
                     seated_now.append(n)
             seated_now.sort(key=lambda n: trail_index[n])
             for n in seated_now:
@@ -805,9 +690,9 @@ if primings_path:
             detail = ' '.join(f'{nm} {c}' for nm, c in per_round.items() if c)
             print(f'  round {r}: seated {len(seated_now)} — regrown {len(seated_now) - carried_now} ({detail}), carried {carried_now}; {len(pending_vac)} vacancies still pending')
             if not seated_now:
-                print(f'GROW REFUSED at round {r}: {len(pending_vac)} vacancies no priming regrows from their vocabulary — the germ names them:')
+                print(f'GROW REFUSED at round {r}: {len(pending_vac)} vacancies no piece regrows — the germ names them:')
                 for n in pending_vac:
-                    print(f'  {n} (vocabulary: {" ".join(sorted(keys[n])) or "—"}; hint: {" ".join(marker_needs.get(n, [])) or "—"})')
+                    print(f'  {n}')
                 sys.exit(1)
         order = [entry[n] for n in seated_order]
         storey = seated_round
@@ -816,8 +701,9 @@ if primings_path:
         # search against the FINISHED module can see theorems seated in later rounds, which the
         # derived order cannot carry)
         print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged')
-        lb = sum(1 for n, h in kept_hint.items() if h)
-        print(f'the hints: {lb} load-bearing (kept), {sum(1 for n in marker_needs if n in kept_hint and not kept_hint[n])} derivable (dropped)')
+        routes = [n for n in marker_needs if n in by_name]
+        print(f'the routes: {len(routes)} in the germ, dropped — the search reaches every goal' if routes
+              else 'the routes: none — the search reaches every goal')
     else:
         for r_i, count in enumerate(rounds, start=1):
             names = [n for _, n, _ in order if storey[n] == r_i]
@@ -853,7 +739,7 @@ if primings_path:
                 dead = [n for n in pending if re.search(r':=\s*sorry\s*$', strip_receipts(by_name[n]).strip())]
                 if dead:
                     print(f'GROW REFUSED at storey {r_i}: {len(dead)} vacancies no priming regrows — the germ names them:')
-                    for n in dead: print(f'  {n} (waiting on: {" ".join(ordered_needs(n)) or "—"})')
+                    for n in dead: print(f'  {n}')
                     sys.exit(1)
     total = len(theorems)
     print(f'the bodies: {total - len(carried)} of {total} regrown from {len(primings)} pieces — '

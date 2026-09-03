@@ -53,38 +53,6 @@ def needsMode (trail : String) (sc : Scope) : IO Unit := do
     let deps := used.toList.filter (fun d => d != n && sc.owns d && (env.find? d).any (·.isTheorem))
     IO.println s!"{n.getString!} <- {" ".intercalate (deps.map (nameOf sc))}"
 
-partial def usedInType (env : Environment) (sc : Scope) (seen : NameSet) (_n : Name) (e : Expr) : NameSet := Id.run do
-  let mut seen := seen
-  for c in e.getUsedConstants do
-    if seen.contains c then continue
-    if sc.owns c then
-      seen := seen.insert c
-    else if (env.getModuleIdxFor? c).isNone then
-      match env.find? c with
-      | some ci => seen := usedInType env sc (seen.insert c) c ci.type
-      | none => pure ()
-    else
-      seen := seen.insert c   -- a core constant: part of the vocabulary too, weighted by rarity downstream
-  return seen
-
-/-- keys: the constants a theorem's TYPE uses. local theorems are listed bare; theorems of
-the imported namespaces are listed too (prefixed `import`), so a domain's vacancies may
-cite the trunk they stand on -/
-def keysMode (trail : String) (sc : Scope) : IO Unit := do
-  let st ← elabFrom (← IO.FS.readFile trail) trail none
-  let env := st.env
-  for (n, ci) in env.constants.map₂.toList do
-    if n.getPrefix != sc.ns || !ci.isTheorem then continue
-    let used := usedInType env sc {} n ci.type
-    let ks := used.toList.filter (fun d => d != n && (sc.owns d || !(env.getModuleIdxFor? d).isNone))
-    IO.println s!"{n.getString!} <- {" ".intercalate (ks.map (nameOf sc))}"
-  if !sc.imported.isEmpty then
-    for (n, ci) in env.constants.toList do
-      if !(sc.imported.any (fun m => n.getPrefix == m)) || !ci.isTheorem then continue
-      let used := usedInType env sc {} n ci.type
-      let ks := used.toList.filter (fun d => d != n && (sc.owns d || !(env.getModuleIdxFor? d).isNone))
-      IO.println s!"import {n} <- {" ".intercalate (ks.map (nameOf sc))}"
-
 def citesMode (trail : String) (sc : Scope) : IO Unit := do
   let st ← elabFrom (← IO.FS.readFile trail) trail none
   let env := st.env
@@ -160,9 +128,6 @@ unsafe def main (args : List String) : IO Unit := do
     return
   if args.head? == some "cites" then
     citesMode args[1]! sc
-    return
-  if args.head? == some "keys" then
-    keysMode args[1]! sc
     return
   if args.head? == some "census" then
     censusMode args[1]! sc
