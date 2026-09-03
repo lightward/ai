@@ -28,7 +28,7 @@ assays/            the treaty vectors: what every growth must compute identicall
 
 the prior bodies of this project stand whole at the tag `chrysalis` (`git show chrysalis:chrysalis/`), the ride era, and inside it the seed era with its parent strata. quarry, fully reachable, no longer process.
 
-## conductive
+## the receipt
 
 every proof here is *conductive*: it depends on no axioms — and so it identifies nothing it cannot compute. in that fragment there is no `propext`, no `Quot.sound`, hence no function extensionality, no choice; the only equality between distinct terms is definitional, and every other sameness is *carried* as a relation across a face rather than declared. the first theorem in the trunk is the shape of it — `alike (appFace P A) g h ↔ ∀ p, g p = h p` is function extensionality in conductive form. inductive is built by constructors and checked by termination; coinductive is defined by observation and checked by finality; conductive is identified by conduct and checked by the empty receipt.
 
