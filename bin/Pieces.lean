@@ -43,57 +43,6 @@ abbrev Tac := TSyntax `tactic
 def firstOf {m : Type → Type} [Monad m] [MonadQuotation m] (alts : Array Seq) : m Tac := do
   if alts.isEmpty then `(tactic| fail) else `(tactic| first $[| $alts]*)
 
-def has (xs : Array Ident) (n : Ident) : Bool := xs.any (·.getId == n.getId)
-
-def dedup (xs ys : Array Ident) : Array Ident := xs ++ ys.filter (fun y => !has xs y)
-
-/-- the cite: a citation — or one of the statement's own hypotheses — with its side goals closed
-by assumption, rfl, or ONE more name from the same list (a lemma that takes a lemma as an
-argument; a side goal that is a hypothesis applied). every side alternative must CLOSE or fail: a
-bare `apply` can succeed leaving goals, `first` counts that as success, and the outer alternative
-commits with work undone. a hypothesis whose type is a def hides its ∀ from `apply`: `exact h _`. -/
-def citeFull (cs hs : Array Ident) : MacroM Tac := do
-  let names := dedup cs hs
-  let mut alts : Array Seq := #[]
-  for t in names do
-    let mut sides : Array Seq := #[← `(tacticSeq| assumption), ← `(tacticSeq| rfl)]
-    for m in names do
-      if m.getId == t.getId then continue
-      sides := sides.push (← `(tacticSeq| (apply $m <;> (first | assumption | rfl))))
-      if has hs m then sides := sides.push (← `(tacticSeq| (exact $m _)))
-    let side ← firstOf sides
-    alts := alts.push (← `(tacticSeq| (apply $t <;> $side)))
-    if has hs t then alts := alts.push (← `(tacticSeq| (exact $t _)))
-  firstOf alts
-
-/-- the one-deep cite over the few most akin — what a rewrite or a chain alternative may carry -/
-def citeCompact (cs hs : Array Ident) : MacroM Tac := do
-  let names := dedup (cs.take 4) hs
-  let mut alts : Array Seq := #[]
-  for t in names do
-    alts := alts.push (← `(tacticSeq| (apply $t <;> (first | assumption | rfl))))
-    if has hs t then alts := alts.push (← `(tacticSeq| (exact $t _)))
-  firstOf alts
-
-/-- rewrites as ATOMIC alternatives, each with its own closers: a rewrite that succeeds in the
-wrong place fails and backtracks instead of poisoning the moves after it; the hypotheses first -/
-def rwAlts (cs hs : Array Ident) (closers : Tac) : MacroM (Array Seq) := do
-  let names := dedup hs (cs.take 4)
-  names.mapM fun t => `(tacticSeq| (rw [$t:ident]; $closers))
-
-/-- the term chain: a cited law or hypothesis at arity 0–3, composed by `.trans` (or
-`.symm.trans`) with one more close — `(c2 _ _).trans (c1 _ _)` — each alternative atomic -/
-def chainAlts (cs hs : Array Ident) (closers : Tac) : MacroM (Array Seq) := do
-  let names := dedup hs (cs.take 6)
-  let mut out : Array Seq := #[]
-  for t in names do
-    for k in [0, 1, 2, 3] do
-      let holes : Array Term := Array.replicate k (← `(_))
-      let app ← `(($t $holes*))
-      out := out.push (← `(tacticSeq| exact ($app).trans (by $closers:tactic)))
-      out := out.push (← `(tacticSeq| exact ($app).symm.trans (by $closers:tactic)))
-  return out
-
 /-! per-goal search: the cite slot of every piece is `piece_seek`, a tactic that reads the goal in
 front of it — its applicable hypotheses from the local context (kernel-grade: whatever is a Prop),
 its citations from the theorems already in the environment (at trial time the environment IS the
@@ -173,6 +122,11 @@ def inReach (p : Pool) (goal : NameSet) (exclude : Name) : Array Name := Id.run 
   return (sorted.take reach).map (·.2)
 
 syntax (name := seek) "piece_seek" (num)? (" !")? : tactic
+syntax (name := rwSeek) "piece_rw_seek" (num)? " (" tactic ")" : tactic
+syntax (name := chainSeek) "piece_chain_seek" (num)? " (" tactic ")" : tactic
+
+def isSeek (k : SyntaxNodeKind) : Bool := k == ``seek || k == ``rwSeek || k == ``chainSeek
+def stampOf (stx : Syntax) : Nat := if stx[1].getNumArgs == 0 then 0 else stx[1][0].toNat
 
 initialize seekCounter : IO.Ref Nat ← IO.mkRef 1000000
 
@@ -184,8 +138,8 @@ def nameFor (ns t : Name) : Name :=
 /-- the winners at each stamp, as one `first` fan (a seek inside `all_goals` wins once per goal);
 a seek never reached is `fail` -/
 partial def substitute (wins : Std.HashMap Nat (Array Syntax)) (stx : Syntax) : MacroM Syntax := do
-  if stx.isOfKind ``seek then
-    let k := if stx[1].getNumArgs == 0 then 0 else stx[1][0].toNat
+  if isSeek stx.getKind then
+    let k := stampOf stx
     match wins.get? k with
     | some ws =>
       if ws.size == 1 then return ws[0]!
@@ -205,78 +159,139 @@ partial def substitute (wins : Std.HashMap Nat (Array Syntax)) (stx : Syntax) : 
     return .node i k args
   | _ => return stx
 
-open Tactic in
-/-- the moves at this goal, in order: each hypothesis applied (its side goals closed by
-assumption, rfl, or one more name), each citation in reach likewise; the first that closes the
-goal is recorded under this seek's stamp -/
-@[tactic seek] def evalSeek : Tactic := fun stx => do
-  let stamp := if stx[1].getNumArgs == 0 then 0 else stx[1][0].toNat
-  let leaf := stx[2].getNumArgs > 0
-  let ns ← getCurrNamespace
+/-- the conclusion of a type: what stands after its binders -/
+partial def conclusion : Expr → Expr
+  | .forallE _ _ b _ => conclusion b
+  | e => e
+
+def isEqn (e : Expr) : Bool := let c := conclusion e; c.isAppOf ``Eq || c.isAppOf ``Iff
+
+open Tactic
+
+/-- what a search reads at a goal: the applicable hypotheses (accessible Props — an inaccessible
+name, `a✝` from `intros`, would not re-parse in the artifact, and `assumption` reaches it), the
+goal's vocabulary (its target and every Prop hypothesis, INSTANTIATED — a goal split by
+`constructor` carries its context types as assigned metavariables, and the walk sees nothing there
+otherwise), and the theorem under trial (`name__pK`), which must not cite itself — against a
+finished module `name` itself stands in the environment, the shortest route of all -/
+structure Sight where
+  hyps : Array (Ident × Expr)
+  key : NameSet
+  self : Name
+  ns : Name
+
+def sight (g : MVarId) : TacticM Sight := do
   let env ← getEnv
-  let p ← pool env
-  let g ← getMainGoal
-  let decl ← g.getDecl
-  -- the theorem under trial is `name__pK`; it must not cite itself — and against a finished
-  -- module (the tighten) `name` itself stands in the environment, the shortest route of all
+  let ns ← getCurrNamespace
   let dn := (← Lean.Elab.Term.getDeclName?).getD .anonymous
   let self := ((dn.toString.splitOn "__p").headD dn.toString).toName
-  let hyps ← g.withContext do
-    let mut hs : Array Ident := #[]
+  g.withContext do
+    let mut hs : Array (Ident × Expr) := #[]
+    let mut k := vocab env (← instantiateMVars (← g.getType))
     for d in (← getLCtx) do
-      -- an inaccessible name (`a✝`, from `intros`) would not re-parse in the artifact; `assumption` reaches it
-      if d.isImplementationDetail || d.userName.hasMacroScopes then continue
-      if ← Meta.isProp d.type then hs := hs.push (mkIdent d.userName)
-    return hs
-  let goalKey ← g.withContext do
-    let mut k := vocab env (← instantiateMVars decl.type)
-    for d in (← getLCtx) do
-      -- a hypothesis introduced under a `constructor` carries its type as an assigned metavariable;
-      -- the vocabulary walk sees nothing there until it is instantiated
-      if !d.isImplementationDetail && (← Meta.isProp d.type) then
-        for c in (vocab env (← instantiateMVars d.type)).toList do k := k.insert c
-    return k
-  let cites := (inReach p goalKey self).map (fun t => mkIdent (nameFor ns t))
-  let names := hyps ++ cites
-  let isHyp (n : Ident) := hyps.any (·.getId == n.getId)
+      if d.isImplementationDetail then continue
+      if !(← Meta.isProp d.type) then continue
+      let ty ← instantiateMVars d.type
+      for c in (vocab env ty).toList do k := k.insert c
+      if !d.userName.hasMacroScopes then hs := hs.push (mkIdent d.userName, ty)
+    return { hyps := hs, key := k, self := self, ns := ns }
+
+/-- the search loop: each candidate tried STRICT against the goal alone (with recovery on, an
+elaboration error is logged and the term becomes `sorry`, which would read as a win); the first
+that closes it is recorded under the stamp with its nested winners substituted, so the recorded
+move is exactly what closed; the trace rolls back on every failure, so only the successful path
+is ever recorded -/
+def search (stamp : Nat) (g : MVarId) (cands : Array Tac) : TacticM Bool := do
   let gs ← getGoals
+  for cand in cands do
+    let s ← saveState
+    let len := (← seekTrace.get).size
+    try
+      setGoals [g]
+      withoutRecover (evalTactic cand)
+      if (← getGoals).isEmpty then
+        let trace ← seekTrace.get
+        let mut wins : Std.HashMap Nat (Array Syntax) := {}
+        for (j, w) in trace.extract len trace.size do
+          let cur := wins.getD j #[]
+          if !cur.any (fun x => x.reprint == w.reprint) then wins := wins.insert j (cur.push w)
+        let cand' ← liftMacroM <| substitute wins cand.raw
+        seekTrace.modify fun t => (t.take len).push (stamp, cand')
+        setGoals (gs.filter (· != g))
+        return true
+      s.restore
+      seekTrace.modify (·.take len)
+    catch _ =>
+      s.restore
+      seekTrace.modify (·.take len)
+  return false
+
+def fresh : TacticM Nat := seekCounter.modifyGet fun n => (n, n + 1)
+
+/-- the cite at this goal: each hypothesis applied (its side goals closed by assumption, rfl, or
+ONE more search at that goal — a leaf, its own sides by assumption or rfl only — because a side
+goal's vocabulary is its own, which is what a route used to carry), then each citation in reach
+likewise; a def-typed hypothesis hides its ∀ from `apply`, so `exact h _` beside it -/
+@[tactic seek] def evalSeek : Tactic := fun stx => do
+  let stamp := stampOf stx
+  let leaf := stx[2].getNumArgs > 0
+  let g ← getMainGoal
+  let si ← sight g
+  let p ← pool (← getEnv)
+  let hyps := si.hyps.map (·.1)
+  let cites := (inReach p si.key si.self).map (fun t => mkIdent (nameFor si.ns t))
+  let names := hyps ++ cites
+  let mut cands : Array Tac := #[]
   for t in names do
-    -- a side goal is closed by assumption, rfl, or ONE more search at that goal (a leaf: its own
-    -- side goals by assumption or rfl only) — the side goal's vocabulary is its own, which is what
-    -- a route used to carry
-    let k ← seekCounter.modifyGet fun n => (n, n + 1)
+    let k ← fresh
     let side ← if leaf then `(tactic| first | assumption | rfl)
                else `(tactic| first | assumption | rfl | piece_seek $(Syntax.mkNumLit (toString k)):num !)
-    let mut cands : Array Tac := #[← `(tactic| (apply $t <;> $side))]
-    if isHyp t then cands := cands.push (← `(tactic| (exact $t _)))
-    for cand in cands do
-      let s ← saveState
-      try
-        setGoals [g]
-        -- strict: with recovery on, an elaboration error is logged and the term becomes `sorry`,
-        -- which would read as a win; without it the error throws and the next move is tried
-        withoutRecover (evalTactic cand)
-        if (← getGoals).isEmpty then
-          -- the side searches' winners, substituted: the recorded move is exactly what closed
-          let trace ← seekTrace.get
-          let ws := (trace.filter (·.1 == k)).map (·.2)
-          let mut wins : Std.HashMap Nat (Array Syntax) := {}
-          for w in ws do
-            let cur := wins.getD k #[]
-            if !cur.any (fun x => x.reprint == w.reprint) then wins := wins.insert k (cur.push w)
-          let cand' ← liftMacroM <| substitute wins cand.raw
-          seekTrace.modify (·.push (stamp, cand'))
-          setGoals (gs.filter (· != g))
-          return
-        s.restore
-      catch _ =>
-        s.restore
-  let ctx ← g.withContext do
-    let mut m : MessageData := m!""
-    for d in (← getLCtx) do
-      if !d.isImplementationDetail && (← Meta.isProp d.type) then m := m ++ m!"\n  {d.userName} : {d.type}"
-    return m
-  throwError "piece_seek: nothing in reach closes{indentExpr decl.type}\nwith:{ctx}\nkey: {goalKey.toList}\ntried: {names.map (·.getId)}"
+    cands := cands.push (← `(tactic| (apply $t <;> $side)))
+    if hyps.any (·.getId == t.getId) then cands := cands.push (← `(tactic| (exact $t _)))
+  if ← search stamp g cands then return
+  throwError "piece_seek: nothing in reach closes{indentExpr (← g.getType)}\ntried: {names.map (·.getId)}"
+
+/-- the rewrite at this goal: each equation-shaped hypothesis, then each equation or iff in reach,
+as an ATOMIC alternative with the piece's own closers after it — a rewrite that lands in the
+wrong place fails and backtracks instead of poisoning the moves after it -/
+@[tactic rwSeek] def evalRwSeek : Tactic := fun stx => do
+  let stamp := stampOf stx
+  let closers : Tac := ⟨stx[3]⟩
+  let g ← getMainGoal
+  let si ← sight g
+  let env ← getEnv
+  let p ← pool env
+  let hyps := (si.hyps.filter (fun (_, ty) => isEqn ty)).map (·.1)
+  let cites := ((inReach p si.key si.self).filter fun t => (env.find? t).any (fun ci => isEqn ci.type)).map
+    (fun t => mkIdent (nameFor si.ns t))
+  let names := hyps ++ cites
+  let cands ← names.mapM fun t => `(tactic| (rw [$t:ident]; $closers:tactic))
+  if ← search stamp g cands then return
+  throwError "piece_rw_seek: no rewrite in reach closes{indentExpr (← g.getType)}\ntried: {names.map (·.getId)}"
+
+/-- the chain at this goal: a hypothesis or an equation in reach at arity 0–3, composed by `.trans`
+or `.symm.trans` with the piece's own closers — `(c2 _ _).trans (c1 _ _)` -/
+@[tactic chainSeek] def evalChainSeek : Tactic := fun stx => do
+  let stamp := stampOf stx
+  let closers : Tac := ⟨stx[3]⟩
+  let g ← getMainGoal
+  let si ← sight g
+  let env ← getEnv
+  let p ← pool env
+  let hyps := (si.hyps.filter (fun (_, ty) => isEqn ty)).map (·.1)
+  let cites := (((inReach p si.key si.self).filter fun t => (env.find? t).any (fun ci => isEqn ci.type)).take 6).map
+    (fun t => mkIdent (nameFor si.ns t))
+  let names := hyps ++ cites
+  let mut cands : Array Tac := #[]
+  for t in names do
+    for k in [0, 1, 2, 3] do
+      let holes : Array Term := Array.replicate k (← `(_))
+      let app ← `(($t $holes*))
+      cands := cands.push (← `(tactic| exact ($app).trans (by $closers:tactic)))
+      cands := cands.push (← `(tactic| exact ($app).symm.trans (by $closers:tactic)))
+  if ← search stamp g cands then return
+  throwError "piece_chain_seek: no chain in reach closes{indentExpr (← g.getType)}\ntried: {names.map (·.getId)}"
+
 
 syntax (name := cite) "piece_cite" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
 syntax (name := homeCite) "piece_home_cite" "[" ident,* "]" "[" ident,* "]" "[" ident,* "]" : tactic
@@ -303,11 +318,9 @@ macro_rules
     `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; first | rfl | assumption | $c:tactic))
 
 macro_rules
-  | `(tactic| piece_chain [$cs,*] [$hs,*] [$ds,*]) => do
+  | `(tactic| piece_chain [$_cs,*] [$_hs,*] [$ds,*]) => do
     let closers ← `(tactic| first | rfl | assumption | piece_seek)
-    let alts ← chainAlts cs.getElems hs.getElems closers
-    let body ← firstOf (#[← `(tacticSeq| rfl), ← `(tacticSeq| assumption)] ++ alts)
-    `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; $body:tactic))
+    `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; first | rfl | assumption | piece_chain_seek ($closers:tactic)))
 
 macro_rules
   | `(tactic| piece_pane [$_cs,*] [$_hs,*] [$_ds,*]) => do
@@ -398,7 +411,7 @@ macro_rules
 /-- home → cite → recurse: reduce the goal along its own carriers before any closer lands, then
 tighten by the citations, then close by the recursion — two IHs first, then one; rewrites by the
 cited names and the statement's own hypotheses as atomic alternatives -/
-def homeCiteRecurse (cs hs ds : Array Ident) (second : Bool) : MacroM Tac := do
+def homeCiteRecurse (_cs _hs ds : Array Ident) (second : Bool) : MacroM Tac := do
   let c ← `(tactic| piece_seek)
   let compact ← `(tactic| piece_seek)
   let twoClosers ← `(tactic| first | rfl | exact congr (congrArg _ ih₁) ih₂ | exact congr (congrArg _ (ih₁ _)) (ih₂ _) | (rw [ih₁, ih₂]) | (rw [ih₁ _, ih₂ _]) | (rw [ih₁, ih₂]; $compact:tactic) | (rw [ih₁ _, ih₂ _]; $compact:tactic))
@@ -411,7 +424,7 @@ def homeCiteRecurse (cs hs ds : Array Ident) (second : Bool) : MacroM Tac := do
     ← `(tacticSeq| (rw [ih₁, ih₂]; $c:tactic)), ← `(tacticSeq| (rw [ih₁ _, ih₂ _]; $c:tactic)),
     ← `(tacticSeq| exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by $c:tactic)),
     ← `(tacticSeq| exact (by $c:tactic : _ = _).trans (congr (congrArg _ ih₁) ih₂))]
-  let two := two ++ (← rwAlts cs hs twoClosers)
+  let two := two.push (← `(tacticSeq| piece_rw_seek ($twoClosers:tactic)))
   let one : Array Seq := #[
     ← `(tacticSeq| rfl),
     ← `(tacticSeq| exact ih), ← `(tacticSeq| exact ih _), ← `(tacticSeq| exact ih _ _),
@@ -419,7 +432,7 @@ def homeCiteRecurse (cs hs ds : Array Ident) (second : Bool) : MacroM Tac := do
     ← `(tacticSeq| (rw [ih])), ← `(tacticSeq| (rw [ih _])), ← `(tacticSeq| (rw [ih _ _])),
     ← `(tacticSeq| (rw [ih]; $c:tactic)), ← `(tacticSeq| (rw [ih _]; $c:tactic)),
     ← `(tacticSeq| exact (ih _).trans (by $c:tactic)), ← `(tacticSeq| exact (ih _ _).trans (by $c:tactic))]
-  let one := one ++ (← rwAlts cs hs oneClosers)
+  let one := one.push (← `(tacticSeq| piece_rw_seek ($oneClosers:tactic)))
   let twoT ← firstOf two
   let oneT ← firstOf one
   let base ← baseCase c
@@ -443,7 +456,7 @@ macro_rules
 a tactic, not a macro, and stays -/
 partial def expandOurs (stx : Syntax) : MacroM Syntax := do
   if let .node _ k _ := stx then
-    if (`Pieces).isPrefixOf k && k != ``seek then
+    if (`Pieces).isPrefixOf k && !isSeek k then
       if let some stx' ← Macro.expandMacro? stx then return ← expandOurs stx'
   match stx with
   | .node i k args => return .node i k (← args.mapM expandOurs)
@@ -451,9 +464,12 @@ partial def expandOurs (stx : Syntax) : MacroM Syntax := do
 
 /-- stamp every seek with its own number, so its winners can be found again -/
 partial def stamp (stx : Syntax) : StateT Nat MacroM Syntax := do
-  if stx.isOfKind ``seek then
+  if isSeek stx.getKind then
     let k ← get; set (k + 1)
-    return ← `(tactic| piece_seek $(Syntax.mkNumLit (toString k)):num)
+    let stx := stx.setArg 1 (mkNullNode #[Syntax.mkNumLit (toString k)])
+    match stx with
+    | .node i kind args => return .node i kind (← args.mapM stamp)
+    | _ => return stx
   match stx with
   | .node i k args => return .node i k (← args.mapM stamp)
   | _ => return stx

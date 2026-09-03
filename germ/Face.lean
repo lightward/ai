@@ -764,10 +764,8 @@ theorem the_round_trips_come_home {O : Type v} (f : sheet Unit O) (g : stream O)
   ⟨congrArg f (the_unit_word_is_its_count w),
    congrArg g (len_replicate () n)⟩
 
--- held (waiting on: Room.map_crosses_append)
 theorem the_manifest_is_natural {W : Type u} {W' : Type v} (f : W → W') :
     ∀ (p : Plan) (x : build W p), pour p (reground f p x) = (pour p x).map f := sorry
--- end
 
 theorem the_held_scale_rides (c : Nat) :
     ∀ p : Plan, fold (fun a b => a + b) c p = c * reading p
@@ -789,10 +787,8 @@ theorem the_reading_is_positive :
             show reading l + reading r = (a + reading r) + 1
             rw [ha, succ_adds]⟩
 
--- held (waiting on: Room.lengths_add)
 theorem the_manifest_counts {W : Type u} :
     ∀ (p : Plan) (x : build W p), (pour p x).length = reading p := sorry
--- end
 
 theorem the_tally_parks_at_its_count :
     ∀ (w : List Unit) (s : Nat), park tally s w = s + w.length := sorry

@@ -705,9 +705,11 @@ if primings_path:
             if not os.path.exists(grown_path):
                 raise SystemExit(f'probe: {grown_path} is not grown yet — bin/counter grow {germ_path} first')
             grown_src = open(grown_path).read()
-            # the probed theorem leaves the prefix: a search at the goal would otherwise find it citing itself
-            grown_src = re.sub(r'(?ms)^theorem ' + re.escape(probe_name) + r'\b.*?^#guard_msgs in #print axioms ' + re.escape(probe_name) + r'\s*$\n?', '', grown_src)
-            grown_lines = [re.sub(r'\nend \w+\s*$', '\n', grown_src)]
+            # the prefix is the grown module up to the probed theorem: the order is derived, so what
+            # stands before it is exactly its pool (a search at the goal would otherwise find the
+            # theorem citing itself, and what stands after it may cite it)
+            m_at = re.search(r'(?m)^theorem ' + re.escape(probe_name) + r'\b', grown_src)
+            grown_lines = [grown_src[:m_at.start()] if m_at else re.sub(r'\nend \w+\s*$', '\n', grown_src)]
             for _, n, _ in theorems:
                 if n != probe_name:
                     seated_order.append(n); seated_set.add(n); seated_round[n] = 1
