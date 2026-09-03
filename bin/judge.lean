@@ -179,7 +179,7 @@ def shapesMode (trail : String) (sc : Scope) : IO Unit := do
   for (key, names) in sorted do
     let parts := key.splitOn "\t"
     IO.println s!"{names.size}\t{parts.headD ""}\t{(parts.getD 1 "").take 160}"
-    if names.size > 1 then IO.println s!"\t\t{" ".intercalate (names.map (fun n => n.getString!)).toList}"
+    IO.println s!"\t\t{" ".intercalate (names.map (fun n => n.getString!)).toList}"
 
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
