@@ -26,6 +26,7 @@ def pieces : List (String × String) := [
   ("fun _ => rfl", "fun _ => rfl"),
   ("fun _ _ => rfl", "fun _ _ => rfl"),
   ("intros; rfl", "by (intros; rfl)"),
+  ("decide", "by decide"),
   ("cite", "by piece_cite [{defs}]"),
   ("home-cite", "by piece_home_cite [{defs}]"),
   ("chain", "by piece_chain [{defs}]"),

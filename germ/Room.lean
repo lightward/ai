@@ -412,17 +412,13 @@ theorem the_unwind_ticks : ∀ s : List Bool, inc (dec s) = s
   | false :: bs => congrArg (false :: ·) (the_unwind_ticks bs)
 
 theorem the_step_merges_the_riders :
-    collatzStep 1 = collatzStep 8 ∧ (1 : Nat) ≠ 8 :=
-  ⟨rfl, (fun h => nomatch (Nat.succ.inj h))⟩
+    collatzStep 1 = collatzStep 8 ∧ (1 : Nat) ≠ 8 := sorry
 
 theorem no_inverse_unsteps_the_collatz :
     ¬ ∃ g : Nat → Nat, ∀ n, g (collatzStep n) = n :=
   fun ⟨_, hg⟩ => nomatch (Nat.succ.inj ((hg 1).symm.trans (hg 8)))
 
-theorem and_reads : ∀ a b : Bool, (a && b) = true → a = true ∧ b = true
-  | true, true, _ => ⟨rfl, rfl⟩
-  | true, false, h => nomatch h
-  | false, _, h => nomatch h
+theorem and_reads : ∀ a b : Bool, (a && b) = true → a = true ∧ b = true := sorry
 
 theorem the_held_name_their_darkness {A : Type u} (beq : A → A → Bool) (room : List A) :
     ∀ needs : List A, backed beq room needs = false →
@@ -479,13 +475,7 @@ theorem the_weight_is_zero_at_the_door {A : Type u} (beq : A → A → Bool) (ro
             rw [he] at hh
             exact nomatch hh
 
-theorem bool_three_collide : ∀ x y z : Bool, x = y ∨ y = z ∨ x = z
-  | true, true, _ => Or.inl rfl
-  | false, false, _ => Or.inl rfl
-  | true, false, true => Or.inr (Or.inr rfl)
-  | true, false, false => Or.inr (Or.inl rfl)
-  | false, true, true => Or.inr (Or.inl rfl)
-  | false, true, false => Or.inr (Or.inr rfl)
+theorem bool_three_collide : ∀ x y z : Bool, x = y ∨ y = z ∨ x = z := sorry
 
 theorem and_congr_first {a b c : Prop} (h : a ↔ b) : (a ∧ c) ↔ (b ∧ c) :=
   ⟨fun x => ⟨h.mp x.1, x.2⟩, fun x => ⟨h.mpr x.1, x.2⟩⟩
