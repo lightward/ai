@@ -160,10 +160,18 @@ unsafe def main (args : List String) : IO Unit := do
     IO.Process.exit 1
   let mut i := 0
   let verbose := args.length > 2
+  let sentences := args.length > 2 && args[2]! == "vv"
   for c in cands do
     let t0 ← IO.monoMsNow
     let s ← elabFrom (c ++ "\n") s!"<candidate {i}>" (some base)
-    let bad := s.messages.toList.any (fun m => m.severity != .information)
+    let msgs := s.messages.toList
+    let bad := msgs.any (fun m => m.severity != .information)
     let dt := (← IO.monoMsNow) - t0
     IO.println s!"{i} {if bad then "held" else "seated"}{if verbose then s!" {dt}ms" else ""}"
+    if sentences && bad then
+      for m in msgs do
+        if m.severity != .information then
+          let txt ← m.data.toString
+          for l in (txt.splitOn "\n").take 6 do
+            IO.println s!"    {l}"
     i := i + 1

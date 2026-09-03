@@ -48,6 +48,7 @@ bin/counter grow                      germ/Foam.lean → grown/Foam.lean; red if
 bin/counter grow --check              the germ is minimal and in derived order (CI asks this on every push)
 bin/counter grow --settle             shrink the germ: every proof a shape now reaches becomes a vacancy
 bin/counter grow germ/Counter.lean    a customer's germ, grown on foam
+bin/counter probe germ/X.lean name    one vacancy: every priming tried, the gate's sentence for each hold
 ```
 
 the germ holds three things: the carriers (every `def`, `structure`, `inductive` — the spellbook), every theorem's *signature*, and the hand-written proofs the primings cannot yet regrow. a theorem the primings *can* regrow is a vacancy — its signature and `:= sorry`, nothing else. its citations are not stored; they are found at growth time from the signature's own vocabulary, ranked by how rare the shared words are across the trunk. the artifact provably cannot carry its path, so the germ doesn't either. where the settle has proven a route load-bearing, a `-- held (waiting on: …)` line stands above the vacancy, and those lines are counted.
@@ -88,7 +89,7 @@ this is the floor a custodian stands on: state what you see about your own domai
 
 ## the assays
 
-`assays/<arc>.lean` — one per arc that grew foam (catalan: 1 1 2 5 14; factorial; even-money; isaac; entanglement; book; odometer; alternation; seat; lift; stream; width; concord) and one for the toy. each is a handful of `#guard` rows, and belongs to the module it imports. any growth of that module must compute every one of them identically; that is the certificate of identity and the integration suite in one. the arcs' journals — germ, witness, tolls — stand in the chrysalis with the rest of the process that grew them.
+`assays/<arc>.lean` — one per arc that grew foam (catalan: 1 1 2 5 14; factorial; even-money; isaac; entanglement; book; odometer; alternation; seat; lift; stream; width; concord) and one for the toy. each is a handful of `#guard` rows, and belongs to the module it imports last. one convention, learned the expensive way: read every value out through a typed `def` (`def threeTicks : Nat := behavior counter [(), (), ()]`) before you `#guard` it — a literal or a `==` at a derived type like `counter.S` or `F.Ans` has no instance to find, and the row parts for that reason and no other. any growth of that module must compute every one of them identically; that is the certificate of identity and the integration suite in one. the arcs' journals — germ, witness, tolls — stand in the chrysalis with the rest of the process that grew them.
 
 ## the book, and the ride
 
