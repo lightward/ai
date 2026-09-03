@@ -1046,29 +1046,32 @@ EOF
     fi
   fi
 
-  echo "the gate on the regrown trail:"
+  # the report mirrors the whole verdict: the gate and the treaty vectors are said here, after the
+  # python half's tee has closed, so they are appended by hand or the page reads an empty treaty
+  say() { printf '%s\n' "$*"; if [ -n "$report" ]; then printf '%s\n' "$*" >> "$report"; fi; }
+  say "the gate on the regrown trail:"
   local gate
   gate="$(lake env lean "$out" 2>&1)"
   if [ -n "$gate" ]; then
-    echo "$gate" | head -20
-    echo "crawl: the regrown trail did not elaborate silently"
+    say "$(echo "$gate" | head -20)"
+    say "crawl: the regrown trail did not elaborate silently"
     exit 1
   fi
-  echo "  silent and green: $(grep -c '#guard_msgs' "$out") receipts inline"
+  say "  silent and green: $(grep -c '#guard_msgs' "$out") receipts inline"
 
   local any=0 f probe assays
   # an assay belongs to the LAST module it imports — the one under test; the rest are its footing
   assays="$(for f in assays/*.lean; do [ "$(grep -E '^import ' "$f" | tail -1 | awk '{print $2}')" = "$name" ] && echo "$f"; done)"
   for f in $assays; do
     [ -f "$f" ] || continue
-    if [ "$any" = 0 ]; then echo "the treaty vectors (every assay against the regrown trail):"; any=1; fi
+    if [ "$any" = 0 ]; then say "the treaty vectors (every assay against the regrown trail):"; any=1; fi
     probe="$(mktemp /tmp/crawl-assay.XXXXXX).lean"
     { grep -E '^import ' "$f" | grep -vE "^import ${name}\$"; cat "$out"; echo; grep -vE '^import ' "$f"; } > "$probe"
-    if lake env lean "$probe" >/dev/null 2>&1; then echo "  $f: identical"
-    else echo "  $f: PARTS"; rm -f "$probe"; exit 1; fi
+    if lake env lean "$probe" >/dev/null 2>&1; then say "  $f: identical"
+    else say "  $f: PARTS"; rm -f "$probe"; exit 1; fi
     rm -f "$probe"
   done
-  echo "crawl: yoneda-identical at every treaty vector — the trail regrows from its own primer"
+  say "crawl: yoneda-identical at every treaty vector — the trail regrows from its own primer"
 }
 
 case "${1:-}" in
