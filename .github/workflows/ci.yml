@@ -18,13 +18,13 @@ jobs:
           lake-package-directory: .
       - name: grow Room, then Face on it (every vacancy regrows; each germ its own settle; the standards print)
         run: bin/counter grow germ/Room.lean --check && bin/counter grow --check
-      - name: "grow the customers on foam (germ/Toy.lean, germ/Counter.lean, germ/Seek.lean — their own settles)"
-        run: bin/counter grow germ/Toy.lean --check && bin/counter grow germ/Counter.lean --check && bin/counter grow germ/Seek.lean --check
+      - name: "grow the customers on foam (germ/Toy.lean, germ/Counter.lean, germ/Seek.lean, germ/Eih.lean — their own settles)"
+        run: bin/counter grow germ/Toy.lean --check && bin/counter grow germ/Counter.lean --check && bin/counter grow germ/Seek.lean --check && bin/counter grow germ/Eih.lean --check
       - name: build the grown modules
         run: lake build
       - name: receipts and zero warnings (the grown modules elaborate silently)
         run: |
-          for m in Room Face Toy Counter Seek; do
+          for m in Room Face Toy Counter Seek Eih; do
             out=$(lake env lean grown/$m.lean 2>&1)
             if [ -n "$out" ]; then echo "$out"; echo "grown/$m.lean did not elaborate silently"; exit 1; fi
             echo "silent and green: grown/$m.lean, $(grep -c '#guard_msgs' grown/$m.lean) receipts inline"

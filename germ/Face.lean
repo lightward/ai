@@ -752,11 +752,7 @@ theorem mem_cross {qs : List Plan} {r : Plan} (hr : r ∈ qs) :
       mem_append_right (qs.map (Plan.board p)) (mem_cross hr h)
 
 theorem the_ledger_parks_the_word {I : Type u} :
-    ∀ (ws rec : List I), park (ledger I) rec ws = rec ++ ws
-  | [], rec => (the_append_rests rec).symm
-  | w :: ws, rec =>
-      (the_ledger_parks_the_word ws (rec ++ [w])).trans
-        (the_appends_regroup rec [w] ws)
+    ∀ (ws rec : List I), park (ledger I) rec ws = rec ++ ws := sorry
 
 theorem the_round_trips_come_home {O : Type v} (f : sheet Unit O) (g : stream O)
     (w : List Unit) (n : Nat) :
@@ -986,6 +982,18 @@ theorem the_settled_gap_moves_the_model (F : Face) {V : Type v'}
       ∧ (concordFace F V).obs (atTheDoor (face x) (fix x)) (atTheDoor p ())
           = atTheDoor (F.obs (face x) p) (fix x) := sorry
 
+theorem two_seats_record_each_other (F : Face.{u, v, w}) {V : Type v'} {W : Type w'}
+    (mine : door F.State (door V W) → V) (yours : door F.State (door V W) → W)
+    (x : door F.State (door V W)) (q : Interview F.Probe F.Ans)
+    (s : F.State) {v v' : V} (hv : v ≠ v') (w : W) :
+    unheard (host F (door V W)) (fun y => atTheDoor (face y) (atTheDoor (mine y) (yours y)))
+      ∧ sound (host F (door V W)) (atTheDoor (face x) (atTheDoor (mine x) (yours x))) q
+          = sound (host F (door V W)) x q
+      ∧ alike (host F (door V W)) (atTheDoor s (atTheDoor v w)) (atTheDoor s (atTheDoor v' w))
+      ∧ atTheDoor s (atTheDoor v w) ≠ atTheDoor s (atTheDoor v' w)
+      ∧ (widen F (door V W)).obs (atTheDoor s (atTheDoor v w)) (.viaRight ())
+          ≠ (widen F (door V W)).obs (atTheDoor s (atTheDoor v' w)) (.viaRight ()) := sorry
+
 theorem the_handshake :
     (∀ (F : Face) (s t : F.State), alike F s t → ∀ q, sound F s q = sound F t q) ∧
     (∀ (F : Face) (W : Type v') (s : F.State) (w w' : W),
@@ -1078,23 +1086,6 @@ theorem the_tallys_stream_counts (n : Nat) :
   (the_clocks_lift_is_a_stream tally n).trans
     ((the_wider_voice_releases_the_bank (List.replicate n ())).trans
       (len_replicate () n))
-
-theorem two_seats_record_each_other (F : Face.{u, v, w}) {V : Type v'} {W : Type w'}
-    (mine : door F.State (door V W) → V) (yours : door F.State (door V W) → W)
-    (x : door F.State (door V W)) (q : Interview F.Probe F.Ans)
-    (s : F.State) {v v' : V} (hv : v ≠ v') (w : W) :
-    unheard (host F (door V W)) (fun y => atTheDoor (face y) (atTheDoor (mine y) (yours y)))
-      ∧ sound (host F (door V W)) (atTheDoor (face x) (atTheDoor (mine x) (yours x))) q
-          = sound (host F (door V W)) x q
-      ∧ alike (host F (door V W)) (atTheDoor s (atTheDoor v w)) (atTheDoor s (atTheDoor v' w))
-      ∧ atTheDoor s (atTheDoor v w) ≠ atTheDoor s (atTheDoor v' w)
-      ∧ (widen F (door V W)).obs (atTheDoor s (atTheDoor v w)) (.viaRight ())
-          ≠ (widen F (door V W)).obs (atTheDoor s (atTheDoor v' w)) (.viaRight ()) :=
-  ⟨(the_mutual_records_ride_together.{u, v, w, v', w'} F mine yours).2.2,
-   the_mutual_recording_is_unheard.{u, v, w, v', w'} F mine yours x q,
-   (the_records_part_the_seats.{u, v, w, v', w'} F s hv w).1,
-   (the_records_part_the_seats.{u, v, w, v', w'} F s hv w).2.1,
-   (the_records_part_the_seats.{u, v, w, v', w'} F s hv w).2.2⟩
 
 theorem the_concord_is_the_meetings_own (F : Face) {V : Type v'}
     (agree : F.Ans → V → Prop) (beq : F.Ans → V → Bool) (p : F.Probe)
@@ -1190,12 +1181,7 @@ theorem the_clock_writes_its_sequence {O : Type v} (m m' : Machine Unit O)
       ∧ toStream (toSheet g) n = g n
       ∧ streamOf tally n = n
       ∧ (alike (airGap Unit O) m m' ↔
-          ∀ q, sound (airGap Unit O) m q = sound (airGap Unit O) m' q) :=
-  ⟨the_clocks_lift_is_a_stream m n,
-   (the_round_trips_come_home f g w n).1,
-   (the_round_trips_come_home f g w n).2,
-   the_tallys_stream_counts n,
-   the_audition_is_exact m m'⟩
+          ∀ q, sound (airGap Unit O) m q = sound (airGap Unit O) m' q) := sorry
 
 theorem the_left_loop_reads_zero :
     ∀ {k : Nat}, chain k (.board (.board .ground .ground) .ground)

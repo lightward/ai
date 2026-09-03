@@ -31,6 +31,7 @@ def pieces : List (String × String) := [
   ("home-cite", "by piece_home_cite [{defs}]"),
   ("chain", "by piece_chain [{defs}]"),
   ("home-rw", "by piece_home_rw [{defs}]"),
+  ("home-induct", "by piece_home_induct [{defs}]"),
   ("pane", "by piece_pane [{defs}]"),
   ("induction", "by piece_induct_1st [{defs}]"),
   ("induction-2nd", "by piece_induct_2nd [{defs}]"),
@@ -126,7 +127,7 @@ def inReach (p : Pool) (goal : NameSet) (exclude : Name) : Array Name := Id.run 
 
 syntax (name := seek) "piece_seek" (num)? (" !")? : tactic
 syntax (name := rwSeek) "piece_rw_seek" (num)? " (" tactic ")" : tactic
-syntax (name := chainSeek) "piece_chain_seek" (num)? " (" tactic ")" : tactic
+syntax (name := chainSeek) "piece_chain_seek" (num)? (" !")? " (" tactic ")" : tactic
 
 def isSeek (k : SyntaxNodeKind) : Bool := k == ``seek || k == ``rwSeek || k == ``chainSeek
 def stampOf (stx : Syntax) : Nat := if stx[1].getNumArgs == 0 then 0 else stx[1][0].toNat
@@ -242,15 +243,46 @@ likewise; a def-typed hypothesis hides its ∀ from `apply`, so `exact h _` besi
   let si ← sight g
   let p ← pool (← getEnv)
   let hyps := si.hyps.map (·.1)
-  let cites := (inReach p si.key si.self).map (fun t => mkIdent (nameFor si.ns t))
+  let env ← getEnv
+  let reach := inReach p si.key si.self
+  let cites := reach.map (fun t => mkIdent (nameFor si.ns t))
   let names := hyps ++ cites
+  -- a conjunction, cited or held, is closed through its projections: `h.2`, `(t _ _).2.2` —
+  -- the pane-of-projections shape a crown's hand writes; the arity is the explicit binders
+  let conj (ty : Expr) : TacticM (Option Nat) := do
+    let mut e := ty; let mut n := 0
+    while e.isForall do
+      if e.bindingInfo!.isExplicit then n := n + 1
+      e := e.bindingBody!
+    let e' : Expr ← try g.withContext (Meta.whnfD e) catch _ => pure e
+    return if Expr.isAppOf e' ``And then some n else none
   let mut cands : Array Tac := #[]
   for t in names do
     let k ← fresh
     let side ← if leaf then `(tactic| first | assumption | rfl)
                else `(tactic| first | assumption | rfl | piece_seek $(Syntax.mkNumLit (toString k)):num !)
     cands := cands.push (← `(tactic| (apply $t <;> $side)))
-    if hyps.any (·.getId == t.getId) then cands := cands.push (← `(tactic| (exact $t _)))
+    let isHyp := hyps.any (·.getId == t.getId)
+    if isHyp then cands := cands.push (← `(tactic| (exact $t _)))
+    let ty? ← if isHyp then pure ((si.hyps.find? (·.1.getId == t.getId)).map (·.2))
+              else pure ((env.find? (si.ns ++ t.getId)).orElse (fun _ => env.find? t.getId) |>.map (·.type))
+    if let some ty := ty? then
+      -- an equation cited REVERSED: `exact (t _).symm` — a chain's far end often reads right to left
+      if isEqn ty then
+        let mut e := ty; let mut n := 0
+        while e.isForall do
+          if e.bindingInfo!.isExplicit then n := n + 1
+          e := e.bindingBody!
+        let holes : Array Term := Array.replicate n (← `(_))
+        cands := cands.push (← `(tactic| (apply (($t $holes*)).symm <;> $side)))
+      if let some n ← conj ty then
+        let holes : Array Term := Array.replicate n (← `(_))
+        let app ← `(($t $holes*))
+        for path in [[1], [2], [2, 1], [2, 2], [2, 2, 1], [2, 2, 2], [2, 2, 2, 1], [2, 2, 2, 2]] do
+          let mut e : Term := app
+          for i in path do
+            e ← if i == 1 then `(($e).1) else `(($e).2)
+          cands := cands.push (← `(tactic| (apply $e <;> $side)))
   if ← search stamp g cands then return
   throwError "piece_seek: nothing in reach closes{indentExpr (← g.getType)}\ntried: {names.map (·.getId)}"
 
@@ -276,7 +308,12 @@ wrong place fails and backtracks instead of poisoning the moves after it -/
 or `.symm.trans` with the piece's own closers — `(c2 _ _).trans (c1 _ _)` -/
 @[tactic chainSeek] def evalChainSeek : Tactic := fun stx => do
   let stamp := stampOf stx
-  let closers : Tac := ⟨stx[3]⟩
+  let leaf := stx[2].getNumArgs > 0
+  let closers : Tac := ⟨stx[4]⟩
+  -- a chain's far end may itself be a chain, one level deep (a three-link chain)
+  let k ← fresh
+  let closers ← if leaf then pure closers
+                else `(tactic| first | $closers:tactic | piece_chain_seek $(Syntax.mkNumLit (toString k)):num ! ($closers:tactic))
   let g ← getMainGoal
   let si ← sight g
   let env ← getEnv
@@ -290,8 +327,10 @@ or `.symm.trans` with the piece's own closers — `(c2 _ _).trans (c1 _ _)` -/
     for k in [0, 1, 2, 3] do
       let holes : Array Term := Array.replicate k (← `(_))
       let app ← `(($t $holes*))
-      cands := cands.push (← `(tactic| exact ($app).trans (by $closers:tactic)))
-      cands := cands.push (← `(tactic| exact ($app).symm.trans (by $closers:tactic)))
+      -- `apply`, not `exact`: an explicit proof argument the unifier cannot fill (a hypothesis
+      -- `h : gl.Perm gl'`) stays a side goal, and assumption closes it
+      cands := cands.push (← `(tactic| (apply ($app).trans (by $closers:tactic) <;> first | assumption | rfl)))
+      cands := cands.push (← `(tactic| (apply ($app).symm.trans (by $closers:tactic) <;> first | assumption | rfl)))
   if ← search stamp g cands then return
   throwError "piece_chain_seek: no chain in reach closes{indentExpr (← g.getType)}\ntried: {names.map (·.getId)}"
 
@@ -300,6 +339,7 @@ syntax (name := cite) "piece_cite" "[" ident,* "]" : tactic
 syntax (name := homeCite) "piece_home_cite" "[" ident,* "]" : tactic
 syntax (name := chain) "piece_chain" "[" ident,* "]" : tactic
 syntax (name := homeRw) "piece_home_rw" "[" ident,* "]" : tactic
+syntax (name := homeInduct) "piece_home_induct" "[" ident,* "]" : tactic
 syntax (name := pane) "piece_pane" "[" ident,* "]" : tactic
 syntax (name := induct1) "piece_induct_1st" "[" ident,* "]" : tactic
 syntax (name := induct2) "piece_induct_2nd" "[" ident,* "]" : tactic
@@ -325,6 +365,13 @@ macro_rules
   | `(tactic| piece_chain [$ds,*]) => do
     let closers ← `(tactic| first | rfl | assumption | piece_seek)
     `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; first | rfl | assumption | piece_chain_seek ($closers:tactic)))
+
+/-- home → split → close: reduce along the statement's own carriers, then split the first variable
+(a face whose observation is a match on its probe reduces only once the probe is a constructor),
+then close each case by rfl, assumption, or a search -/
+macro_rules
+  | `(tactic| piece_home_induct [$ds,*]) => do
+    `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intro x; induction x; all_goals (intros; first | rfl | assumption | piece_seek)))
 
 /-- home → rewrite → close: reduce along the statement's own carriers, then one rewrite found at
 the goal, then a close — a hypothesis that steers a `cond` (`hb : backed … = false`) is a rewrite,

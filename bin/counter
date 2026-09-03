@@ -488,7 +488,15 @@ if primings_path:
         rt = b.rfind('\n/-- info:')
         receipts = b[rt:] if rt != -1 else ''
         core = b[:rt] if rt != -1 else b
-        a, c = core.find(':='), core.find('\n  | ')
+        # the statement ends at the first `:=` OUTSIDE brackets: a structure update `{ r with f := v }`
+        # carries one inside braces, and cutting there truncates the statement
+        depth, a = 0, -1
+        for i, ch in enumerate(core):
+            if ch in '({[⟨': depth += 1
+            elif ch in ')}]⟩': depth -= 1
+            elif depth == 0 and core.startswith(':=', i):
+                a = i; break
+        c = core.find('\n  | ')
         cut = min(x for x in (a, c, len(core)) if x != -1)
         return core[:cut].rstrip(), receipts.strip('\n')
 

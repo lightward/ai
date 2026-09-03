@@ -1,5 +1,5 @@
 name = "foam"
-defaultTargets = ["Room", "Face", "Toy", "Counter", "Seek"]
+defaultTargets = ["Room", "Face", "Toy", "Counter", "Seek", "Eih"]
 
 [[lean_lib]]
 name = "Room"
@@ -23,4 +23,8 @@ srcDir = "bin"
 
 [[lean_lib]]
 name = "Seek"
+srcDir = "grown"
+
+[[lean_lib]]
+name = "Eih"
 srcDir = "grown"
