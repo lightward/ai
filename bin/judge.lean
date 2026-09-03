@@ -14,6 +14,15 @@ def elabFrom (src : String) (name : String) (st : Option Command.State) (extra :
   let s ← IO.processCommands ictx ps cs
   return s.commandState
 
+/-- the same, keeping every command's syntax: a body as Syntax, not a string -/
+def elabCommands (src : String) (name : String) : IO (Command.State × Array Syntax) := do
+  let ictx := Parser.mkInputContext src name
+  let (hdr, ps, msgs) ← Parser.parseHeader ictx
+  let env ← importModules (headerToImports hdr) {} 0 (loadExts := true)
+  let cs := Command.mkState env msgs (({} : Options).setBool `Elab.async false)
+  let s ← IO.processCommands ictx ps cs
+  return (s.commandState, s.commands)
+
 /-- the namespaces a reading is about: the trail's own, and the imported ones whose
 theorems the trail may cite (given as `ns` and a comma-separated `imports` arg) -/
 structure Scope where
@@ -119,6 +128,59 @@ def kindsMode (trail : String) (sc : Scope) : IO Unit := do
       | _ => "data"
     IO.println s!"{n.getString!} {k}"
 
+/-- a body as a SHAPE: every name that is a theorem of the house, or resolves to nothing in the
+environment (a binder, a hypothesis, a name `intro` or `cases` brought in), becomes a hole `?`;
+the theorem's own name (a structural recursion's call) becomes `?self`; carriers, constructors,
+and core stay — they are what the shape is about. two bodies with one shape are one shape -/
+partial def abstractSyntax (env : Environment) (sc : Scope) (self : Name) (stx : Syntax) : Syntax :=
+  match stx with
+  | .ident info _ n _ =>
+    if n.isAnonymous then stx else
+    let resolves := [n, sc.ns ++ n] ++ sc.imported.map (· ++ n)
+    let found := resolves.filterMap env.find?
+    if n == self || sc.ns ++ n == self then mkIdent (Name.mkSimple "?self")
+    else if found.isEmpty then mkIdent (Name.mkSimple "?")
+    else if found.any (·.isTheorem) && found.any (fun ci => sc.owns ci.name) then mkIdent (Name.mkSimple "?")
+    else .ident info (toString n).toRawSubstring n []
+  | .node i k args =>
+    -- a field (`.trans`, `.1`) and a hygiene mark are structure, not names
+    if k == `hygieneInfo then stx
+    else if k == ``Lean.Parser.Term.proj then .node i k (args.modify 0 (abstractSyntax env sc self))
+    else .node i k (args.map (abstractSyntax env sc self))
+  | _ => stx
+
+def squeeze (s : String) : String :=
+  (" ".intercalate ((s.splitOn " ").filter (· ≠ ""))).replace "\n" " "
+
+/-- shapes: every theorem's body abstracted, then the census of shapes — how many bodies each
+shape covers, which is what bodies-as-shapes can carry -/
+def shapesMode (trail : String) (sc : Scope) : IO Unit := do
+  let (st, cmds) ← elabCommands (← IO.FS.readFile trail) trail
+  let env := st.env
+  let mut rows : Array (Name × String × String) := #[]
+  for c in cmds do
+    if !c.isOfKind ``Lean.Parser.Command.declaration then continue
+    let d := c[1]
+    if !d.isOfKind ``Lean.Parser.Command.theorem then continue
+    let name := sc.ns ++ d[1][0].getId
+    let val := d[3]
+    let mode := if val.isOfKind ``Lean.Parser.Command.declValSimple then
+                  (if val[1].isOfKind ``Lean.Parser.Term.byTactic then "tactic" else "term")
+                else "equations"
+    let body := if val.isOfKind ``Lean.Parser.Command.declValSimple then val[1] else val
+    let shape := squeeze ((abstractSyntax env sc name body).reprint.getD "<no reprint>")
+    rows := rows.push (name, mode, shape)
+  let mut groups : Std.HashMap String (Array Name) := {}
+  for (n, m, sh) in rows do
+    let key := m ++ "\t" ++ sh
+    groups := groups.insert key ((groups.getD key #[]).push n)
+  let sorted := groups.toArray.qsort (fun a b => a.2.size > b.2.size)
+  IO.println s!"the shapes: {rows.size} bodies, {sorted.size} shapes"
+  for (key, names) in sorted do
+    let parts := key.splitOn "\t"
+    IO.println s!"{names.size}\t{parts.headD ""}\t{(parts.getD 1 "").take 160}"
+    if names.size > 1 then IO.println s!"\t\t{" ".intercalate (names.map (fun n => n.getString!)).toList}"
+
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
   Lean.initSearchPath (← Lean.findSysroot)
@@ -134,6 +196,9 @@ unsafe def main (args : List String) : IO Unit := do
     return
   if args.head? == some "kinds" then
     kindsMode args[1]! sc
+    return
+  if args.head? == some "shapes" then
+    shapesMode args[1]! sc
     return
   if args.head? == some "pieces" then
     -- the pieces in the order the crawl offers them, and the knobs, read from bin/Pieces.lean

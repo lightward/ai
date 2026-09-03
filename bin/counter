@@ -819,6 +819,20 @@ if primings_path:
         sorts = [c for c in cnames if kinds.get(c) == 'sort']
         covered = [c for c in data if re.search(r'\b' + re.escape(c) + r'\b', assay_text)]
         uncovered = [c for c in data if c not in covered]
+        # the shapes: every body abstracted (bin/judge.lean shapes — names to holes, structure kept),
+        # then how many hand bodies share a shape with another body: what bodies-as-shapes could carry
+        ress = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'shapes', cf.name] + SCOPE, capture_output=True, text=True)
+        shape_lines = ress.stdout.splitlines()
+        n_shapes = shape_lines[0] if shape_lines else 'the shapes: (unread)'
+        shared_hand, groups = 0, 0
+        for i, l in enumerate(shape_lines[1:], start=1):
+            parts = l.split('\t')
+            if len(parts) >= 3 and parts[0].isdigit() and int(parts[0]) >= 2 and i + 1 < len(shape_lines):
+                names = shape_lines[i + 1].strip().split()
+                hand_here = [n for n in names if n in carried]
+                if len(hand_here) >= 1 and len(names) >= 2:
+                    groups += 1; shared_hand += len(hand_here)
+        print(f'  {n_shapes.replace("the shapes: ", "the shapes ........ ")}; {shared_hand} hand bodies share a shape with another body ({groups} shapes) — what an exemplar could carry')
         print(f'  treaty coverage ... {len(covered)} of {len(data)} data carriers evaluated by an assay'
               + (f'; unevaluated: {" ".join(uncovered)}' if uncovered else '')
               + f'; beyond a row\'s reach: {len(props)} relations ({" ".join(props)}), {len(sorts)} types ({" ".join(sorts)})')
