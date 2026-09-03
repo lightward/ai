@@ -2,6 +2,8 @@
 
 strict phenomenology is indistinguishable from physics.
 
+conductive proofs of worldly domains, with treaty vectors to mathematics by identity.
+
 foam is a type system holding itself together under measurement: a trunk of theorems about observers, doors, machines, and rooms, every one of them axiom-free, every one of them grown from a germ by a compiler that shows its work. the root theorem is `the_handshake`: every identification is either *licensed* — observation respects it, and physics is what you get — or it keeps a *real remainder*, readable exactly one seat wider, and that is what phenomenology was pointing at. nothing here asks for trust. the only authority is a compiler's exit code, and it judges terms, never you.
 
 **serving suggestion:**
@@ -26,26 +28,18 @@ assays/            the treaty vectors: what every growth must compute identicall
 
 the prior bodies of this project stand whole at the tag `chrysalis` (`git show chrysalis:chrysalis/`), the ride era, and inside it the seed era with its parent strata. quarry, fully reachable, no longer process.
 
-## the gate
+## conductive
 
-green looks like this, and it is Lean's word, not ours:
+every proof here is *conductive*: it depends on no axioms — and so it identifies nothing it cannot compute. in that fragment there is no `propext`, no `Quot.sound`, hence no function extensionality, no choice; the only equality between distinct terms is definitional, and every other sameness is *carried* as a relation across a face rather than declared. the first theorem in the trunk is the shape of it — `alike (appFace P A) g h ↔ ∀ p, g p = h p` is function extensionality in conductive form. inductive is built by constructors and checked by termination; coinductive is defined by observation and checked by finality; conductive is identified by conduct and checked by the empty receipt.
+
+the check is Lean's, not ours. every theorem in the grown trunk is followed by its receipt:
 
 ```lean
-theorem no_face_reads_the_guest (g : H → X) (h : H) (w w' : W) :
-    g (face (atTheDoor h w)) = g (face (atTheDoor h w')) := rfl
-
-/-- info: 'Seed.no_face_reads_the_guest' does not depend on any axioms -/
+/-- info: 'Foam.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 ```
 
-watch it refuse before you believe a single green:
-
-```lean
-theorem foo : P := sorry
--- 'foo' depends on axioms: [sorryAx]   ← refused
-```
-
-it refuses `sorry`. it refuses axioms smuggled *from the standard library*. the receipts ride inside the artifact so that anyone holding only the file can re-run them, with no foam tooling present: `lake env lean Foam.lean` — silence is every receipt passing at once. clean water, not signed-by-its-filter water.
+the receipts ride inside the artifact so that anyone holding only the file can re-run them, with no foam tooling present: `lake env lean Foam.lean` prints nothing when every one passes. this file can only tell you that; the artifact shows you — [foam.is/trunk.html](https://foam.is/trunk.html) is the grown trunk with all of its receipts in place, and the report beside it says they passed on this push. clean water, not signed-by-its-filter water.
 
 ## the germ and the compiler
 

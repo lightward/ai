@@ -854,6 +854,19 @@ if primings_path:
         print(f'  contact width ..... {total - len(carried)} grown bodies: one citation per move, by construction')
         print(f'  comment-free ...... the artifact carries {len(prose)} lines of prose beyond its receipts')
         print(f'  the tamper surface  {len(carried)} hand bodies (the custodian\'s word), {hinted} routes kept, reach {reach}, budget {budget}')
+        # treaty coverage: theorems are covered by construction (elaboration checks every one); the
+        # treaty's blind spot is a carrier no assay ever evaluates — it could change with every row identical
+        import glob as _glob
+        assay_text = ''
+        for af in _glob.glob('assays/*.lean'):
+            lines = open(af).read().splitlines()
+            imps = [l.split()[1] for l in lines if l.startswith('import ')]
+            if imps and imps[-1] == NS_NAME:
+                assay_text += '\n'.join(lines) + '\n'
+        covered = [c for c in cnames if re.search(r'\b' + re.escape(c) + r'\b', assay_text)]
+        uncovered = [c for c in cnames if c not in covered]
+        print(f'  treaty coverage ... {len(covered)} of {len(cnames)} carriers evaluated by an assay'
+              + (f'; unevaluated: {" ".join(uncovered)}' if uncovered else ''))
     # the ceiling: the kernel's own census of the trail's proof shapes (bin/judge.lean census),
     # so the yield reads against what the three moves could reach at all
     grown = list(prefix)
