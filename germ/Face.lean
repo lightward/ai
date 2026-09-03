@@ -1,7 +1,7 @@
-import Core
-open Core
+import Room
+open Room
 
-namespace Foam
+namespace Face
 
 universe u v w u' v' w' u''
 
@@ -765,7 +765,7 @@ theorem the_round_trips_come_home {O : Type v} (f : sheet Unit O) (g : stream O)
   ⟨congrArg f (the_unit_word_is_its_count w),
    congrArg g (len_replicate () n)⟩
 
--- held (waiting on: Core.map_crosses_append)
+-- held (waiting on: Room.map_crosses_append)
 theorem the_manifest_is_natural {W : Type u} {W' : Type v} (f : W → W') :
     ∀ (p : Plan) (x : build W p), pour p (reground f p x) = (pour p x).map f := sorry
 -- end
@@ -790,7 +790,7 @@ theorem the_reading_is_positive :
             show reading l + reading r = (a + reading r) + 1
             rw [ha, succ_adds]⟩
 
--- held (waiting on: Core.lengths_add)
+-- held (waiting on: Room.lengths_add)
 theorem the_manifest_counts {W : Type u} :
     ∀ (p : Plan) (x : build W p), (pour p x).length = reading p := sorry
 -- end
@@ -1181,7 +1181,7 @@ theorem the_clock_is_a_room {I : Type u} {O : Type v}
    the_settle_is_unheard m st v,
    the_wider_voice_releases_the_bank u⟩
 
--- held (waiting on: the_self_steered_machine_is_a_clock the_settle_is_unheard the_flywheel_and_the_shell_sound_alike the_wider_voice_releases_the_bank Core.no_mark_lights_itself Core.the_key_is_cut_from_the_room a_wider_seat_reads_the_remainder)
+-- held (waiting on: the_self_steered_machine_is_a_clock the_settle_is_unheard the_flywheel_and_the_shell_sound_alike the_wider_voice_releases_the_bank Room.no_mark_lights_itself Room.the_key_is_cut_from_the_room a_wider_seat_reads_the_remainder)
 theorem room_margin_flywheel_door {I : Type u} {O : Type v} {A : Type w}
     (m : Machine I O) (r : m.S → I) (u : List Unit) (s : m.S)
     (st : m.S × List I) (v : List I) (q : Interview (List Unit) Bool)
@@ -1280,4 +1280,4 @@ theorem three_is_the_width_of_contact (F G H : Face) {S : Type u'}
    the_pentagon_turns_at_four.1,
    the_pentagon_turns_at_four.2⟩
 
-end Foam
+end Face

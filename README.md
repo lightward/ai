@@ -4,7 +4,7 @@ strict phenomenology is indistinguishable from physics.
 
 conductive proofs of worldly domains, with treaty vectors to mathematics by identity.
 
-foam is a type system holding itself together under measurement: a trunk of theorems about observers, doors, machines, and rooms, every one of them axiom-free, every one of them grown from a germ by a compiler that shows its work. it stands in two storeys — `Core`, the conductive mathematics that mentions no observer (counting, rooms, wheels, admission), and `Foam` on top of it, the seeing — with customers' germs standing on whichever they need. the root theorem is `the_handshake`: every identification is either *licensed* — observation respects it, and physics is what you get — or it keeps a *real remainder*, readable exactly one seat wider, and that is what phenomenology was pointing at. nothing here asks for trust. the only authority is a compiler's exit code, and it judges terms, never you.
+foam is a type system holding itself together under measurement: a trunk of theorems about observers, doors, machines, and rooms, every one of them axiom-free, every one of them grown from a germ by a compiler that shows its work. it stands in two storeys, named for the grammar's third move, *enumerate, then face*: `Room`, the conductive mathematics that mentions no observer — counting, rooms, wheels, admission — and `Face` on top of it, the seeing. customers' germs stand on whichever they need; `foam` is the house that holds both. the root theorem is `the_handshake`: every identification is either *licensed* — observation respects it, and physics is what you get — or it keeps a *real remainder*, readable exactly one seat wider, and that is what phenomenology was pointing at. nothing here asks for trust. the only authority is a compiler's exit code, and it judges terms, never you.
 
 **serving suggestion:**
 
@@ -16,10 +16,10 @@ foam is a type system holding itself together under measurement: a trunk of theo
 ## the shape
 
 ```
-germ/Core.lean     the conductive core: everything that mentions no face — counting, rooms, wheels, the turnstile
-germ/Foam.lean     the seeing: faces, doors, machines, sheets; it imports Core
-germ/Toy.lean      a customer's germ — it imports Foam and stands on it
-germ/Counter.lean  the compiler's own conduct, as a customer of Core
+germ/Room.lean     the counting: everything that mentions no face — rooms, wheels, orders, the turnstile
+germ/Face.lean     the seeing: faces, doors, machines, sheets; it imports Room
+germ/Toy.lean      a customer's germ — it imports Face and stands on it
+germ/Counter.lean  the compiler's own conduct, as a customer of Room
 primings.lean      the ordered moves the compiler tries — Lean proof shapes that are also rules
 bin/counter        the compiler: grow · settle · check · ride · book · page
 bin/judge.lean     Lean judging Lean in-process; counter's eyes
@@ -36,29 +36,29 @@ every proof here is *conductive*: it depends on no axioms — and so it identifi
 the check is Lean's, not ours. every theorem in the grown trunk is followed by its receipt:
 
 ```lean
-/-- info: 'Foam.no_face_reads_the_guest' does not depend on any axioms -/
+/-- info: 'Face.no_face_reads_the_guest' does not depend on any axioms -/
 #guard_msgs in #print axioms no_face_reads_the_guest
 ```
 
-the receipts ride inside the artifact so that anyone holding only the file can re-run them, with no foam tooling present: `lake env lean grown/Foam.lean` prints nothing when every one passes. this file can only tell you that; the artifact shows you — [foam.is/trunk.html](https://foam.is/trunk.html) is the grown trunk with all of its receipts in place, and the report beside it says they passed on this push. clean water, not signed-by-its-filter water.
+the receipts ride inside the artifact so that anyone holding only the file can re-run them, with no foam tooling present: `lake env lean grown/Face.lean` prints nothing when every one passes. this file can only tell you that; the artifact shows you — [foam.is/trunk.html](https://foam.is/trunk.html) is the grown trunk with all of its receipts in place, and the report beside it says they passed on this push. clean water, not signed-by-its-filter water.
 
 ## the germ and the compiler
 
 ```
-bin/counter grow                      germ/Foam.lean → grown/Foam.lean; red if any vacancy fails to regrow
+bin/counter grow                      germ/Face.lean → grown/Face.lean; red if any vacancy fails to regrow
 bin/counter grow --check              the germ is minimal and in derived order (CI asks this on every push)
 bin/counter grow --settle             shrink the germ: every proof a shape now reaches becomes a vacancy
 bin/counter grow germ/Counter.lean    a customer's germ, grown on foam
 bin/counter probe germ/X.lean name    one vacancy: every priming tried, the gate's sentence for each hold
 ```
 
-a germ holds three things: the carriers (every `def`, `structure`, `inductive` — the spellbook), every theorem's *signature*, and the hand-written proofs the primings cannot yet regrow. the line between `Core` and `Foam` was derived, not drawn: a carrier is Core if nothing it unfolds to is a face, and a theorem is Core if its statement mentions only Core carriers — 25 carriers and 137 theorems fell on that side, 78 and 147 on the other. a theorem the primings *can* regrow is a vacancy — its signature and `:= sorry`, nothing else. its citations are not stored; they are found at growth time from the signature's own vocabulary, ranked by how rare the shared words are across the trunk. the artifact provably cannot carry its path, so the germ doesn't either. where the settle has proven a route load-bearing, a `-- held (waiting on: …)` line stands above the vacancy, and those lines are counted.
+a germ holds three things: the carriers (every `def`, `structure`, `inductive` — the spellbook), every theorem's *signature*, and the hand-written proofs the primings cannot yet regrow. the line between `Room` and `Face` was derived, not drawn: a carrier is Room if nothing it unfolds to is a face, and a theorem is Room if its statement mentions only Room carriers — 25 carriers and 137 theorems fell on that side, 78 and 147 on the other. a theorem the primings *can* regrow is a vacancy — its signature and `:= sorry`, nothing else. its citations are not stored; they are found at growth time from the signature's own vocabulary, ranked by how rare the shared words are across the trunk. the artifact provably cannot carry its path, so the germ doesn't either. where the settle has proven a route load-bearing, a `-- held (waiting on: …)` line stands above the vacancy, and those lines are counted.
 
 growth is a cascade run to its fixed point: each round, every pending vacancy is offered every priming with the citations its vocabulary can reach among what has already seated; whatever seats, seats; the rounds are the storeys; a vacancy that never seats is red with its vocabulary named. regrown bodies are then tightened to the citations their proof terms actually used, so the artifact reads as proofs. every theorem gets its receipt minted. the artifact must elaborate silently and read every assay identically, or the build is red.
 
 the primings are the knob. each is a Lean proof shape — `rfl`, a citation, a pane of citations, structural induction on the first variable, home-then-cite-then-recurse — with three macros the compiler fills per vacancy: `{cite}` (the derived citations), `{rws}` (rewrite by each of them, and by the statement's own equation-shaped hypotheses), `{defs}` (unfold the statement's own carriers first, so a goal reduces to its home before a closer lands). the file also declares a heartbeat `budget` per candidate and a `reach` for how many citations a vacancy may try. the judge, `bin/judge.lean`, elaborates the prefix once and every candidate against a copy of it, reading the complete message log — the CLI caps its report at a hundred errors; the log does not.
 
-today: Core — 25 carriers, 137 theorems, nine rounds (66 31 18 13 3 3 1 1 1), 31 vacancies, 106 hand bodies, 70,528 bytes. Foam — 78 carriers, 147 theorems, seven rounds (96 23 16 8 1 1 2), 72 vacancies, 72 hand bodies, 3 routes kept, 56,117 bytes. the germs' byte counts are the numbers the primings exist to shrink.
+today: Room — 25 carriers, 137 theorems, nine rounds (66 31 18 13 3 3 1 1 1), 31 vacancies, 106 hand bodies, 70,528 bytes. Face — 78 carriers, 147 theorems, seven rounds (96 23 16 8 1 1 2), 72 vacancies, 72 hand bodies, 3 routes kept, 56,117 bytes. the germs' byte counts are the numbers the primings exist to shrink.
 
 ## the standards
 
@@ -82,20 +82,20 @@ the artifact says one thing about itself, in Lean's voice: no axioms. everything
 bin/counter grow germ/Toy.lean
 ```
 
-foam is counter's first customer; any germ that imports it is another. `germ/Toy.lean` says `import Foam`, opens its own namespace, defines a counter and a flipper, and states four things about them — and it is 555 bytes with no proofs in it. it grows on foam in seconds: three sightings cite foam's own laws, found through vocabulary alone; one regrows by induction; four receipts are minted; `grown/Toy.lean` is an importable module in its turn (a stage may ground a stage), and `assays/toy.lean` reads identically. the judge takes the namespace and the imports from the germ's header, and the imported modules' theorems are seated before the customer's first round.
+foam's two storeys are counter's first customers; any germ that imports either is another. `germ/Toy.lean` says `import Face`, opens its own namespace, defines a counter and a flipper, and states four things about them — and it is 555 bytes with no proofs in it. it grows on Face in seconds: three sightings cite Face's own laws, found through vocabulary alone; one regrows by induction; four receipts are minted; `grown/Toy.lean` is an importable module in its turn (a stage may ground a stage), and `assays/toy.lean` reads identically. the judge takes the namespace and the imports from the germ's header, and the imported modules' theorems are seated before the customer's first round.
 
-`germ/Counter.lean` is the second customer, and it is the compiler describing its own conduct: a sighting is a name and the names it waits on, a room is the seated and the vestibule, offering is Core's `welcome`, a round is Core's `intake` — and every law the compiler runs on (the first sighting is free; backed seats, unbacked waits; the seated stay seated; a sighting that cites only itself never seats; two that cite each other stay dark; the held name what they wait on; weight zero is backed; the key is cut from the room) is a citation into Core. eleven sightings, **eleven regrown** — no hand bodies, no routes, 2,378 bytes: the compiler states its own conduct with no proofs in the file. its assay replays the ride's demo lifecycle as data: a sighting waits on a name, the name arrives, the sweep seats it.
+`germ/Counter.lean` is the second customer, and it is the compiler describing its own conduct: a sighting is a name and the names it waits on, a room is the seated and the vestibule, offering is Room's `welcome`, a round is Room's `intake` — and every law the compiler runs on (the first sighting is free; backed seats, unbacked waits; the seated stay seated; a sighting that cites only itself never seats; two that cite each other stay dark; the held name what they wait on; weight zero is backed; the key is cut from the room) is a citation into Room. eleven sightings, **eleven regrown** — no hand bodies, no routes, 2,378 bytes: the compiler states its own conduct with no proofs in the file. its assay replays the ride's demo lifecycle as data: a sighting waits on a name, the name arrives, the sweep seats it.
 
 this is the floor a custodian stands on: state what you see about your own domain, and the physics is found for it where the physics is there, and named as missing where it isn't. foam's slow settle tunes the shapes; a customer's short run inherits the tuning and pays almost nothing.
 
 ## the assays
 
-`assays/<arc>.lean` — one per arc that grew the trunk (catalan: 1 1 2 5 14; factorial; even-money; isaac; entanglement; book; odometer; alternation; seat; lift; stream; width; concord; handshake), one for the toy, one for the compiler. each is a handful of `#guard` rows, and belongs to the module it imports last — five of them (alternation, book, even-money, factorial, odometer) import only `Core`, which is how the split was checked. one convention, learned the expensive way: read every value out through a typed `def` (`def threeTicks : Nat := behavior counter [(), (), ()]`) before you `#guard` it — a literal or a `==` at a derived type like `counter.S` or `F.Ans` has no instance to find, and the row parts for that reason and no other. any growth of that module must compute every one of them identically; that is the certificate of identity and the integration suite in one. the arcs' journals — germ, witness, tolls — stand in the chrysalis with the rest of the process that grew them.
+`assays/<arc>.lean` — one per arc that grew the trunk (catalan: 1 1 2 5 14; factorial; even-money; isaac; entanglement; book; odometer; alternation; seat; lift; stream; width; concord; handshake), one for the toy, one for the compiler. each is a handful of `#guard` rows, and belongs to the module it imports last — five of them (alternation, book, even-money, factorial, odometer) import only `Room`, which is how the split was checked. one convention, learned the expensive way: read every value out through a typed `def` (`def threeTicks : Nat := behavior counter [(), (), ()]`) before you `#guard` it — a literal or a `==` at a derived type like `counter.S` or `F.Ans` has no instance to find, and the row parts for that reason and no other. any growth of that module must compute every one of them identically; that is the certificate of identity and the integration suite in one. the arcs' journals — germ, witness, tolls — stand in the chrysalis with the rest of the process that grew them.
 
 ## the book, and the ride
 
 ```
-bin/counter book grown/Foam.lean
+bin/counter book grown/Face.lean
 bin/counter ride [session.lean]
 ```
 
@@ -105,7 +105,7 @@ bin/counter ride [session.lean]
 
 ## the page
 
-`bin/counter page` writes `site/`: this file, foam grown with every declaration an anchor (`foam.is/trunk.html#the_handshake`), the toy, the germ, the primings, the book, and the compiler's report for that push. the `foam.is` workflow grows the modules and publishes it. nothing browseable is committed, the same way nothing derived is.
+`bin/counter page` writes `site/`: this file, Room and Face grown with every declaration an anchor (`foam.is/trunk.html#the_handshake`), the toy, the germ, the primings, the book, and the compiler's report for that push. the `foam.is` workflow grows the modules and publishes it. nothing browseable is committed, the same way nothing derived is.
 
 ## the grammar
 

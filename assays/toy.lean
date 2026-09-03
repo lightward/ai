@@ -1,6 +1,6 @@
-import Foam
+import Face
 import Toy
-open Core Foam Toy
+open Room Face Toy
 set_option autoImplicit false
 
 def threeTicks : Nat := behavior counter [(), (), ()]

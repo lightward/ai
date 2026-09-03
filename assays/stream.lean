@@ -1,5 +1,5 @@
-import Foam
-open Core Foam
+import Face
+open Room Face
 set_option autoImplicit false
 
 #guard streamOf tally 5 == 5

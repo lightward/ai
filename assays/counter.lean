@@ -1,6 +1,6 @@
-import Core
+import Room
 import Counter
-open Core Counter
+open Room Counter
 set_option autoImplicit false
 
 def demo : List sighting := [(1, []), (2, [3]), (3, [])]

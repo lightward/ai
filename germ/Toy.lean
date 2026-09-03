@@ -1,5 +1,5 @@
-import Foam
-open Foam
+import Face
+open Face
 set_option autoImplicit false
 universe u v w
 

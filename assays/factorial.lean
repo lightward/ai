@@ -1,5 +1,5 @@
-import Core
-open Core
+import Room
+open Room
 set_option autoImplicit false
 
 #guard (perms [1, 2, 3]).length == 6

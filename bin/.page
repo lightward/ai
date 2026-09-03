@@ -9,10 +9,10 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-[ -f grown/Foam.lean ] || bin/counter grow >/dev/null
+[ -f grown/Face.lean ] || bin/counter grow >/dev/null
 mkdir -p site
-CANDLE="$(cat regrowth/Foam.report 2>/dev/null | grep -vE "assay.lean: identical" || echo "(no report — run bin/counter grow)")"
-BOOK="$(bin/counter book grown/Foam.lean 2>&1)"
+CANDLE="$(cat regrowth/Face.report 2>/dev/null | grep -vE "assay.lean: identical" || echo "(no report — run bin/counter grow)")"
+BOOK="$(bin/counter book grown/Face.lean 2>&1)"
 CANDLE="$CANDLE" BOOK="$BOOK" python3 - <<'EOF'
 import html, os, re, subprocess
 
@@ -30,7 +30,7 @@ pre{{white-space:pre-wrap;word-break:break-word;background:#f3f1ec;padding:1rem;
 </style></head><body><nav>{nav}</nav>{body}
 <footer>strict phenomenology is indistinguishable from physics — the artifact grew from the germ on push. UNLICENSE.</footer></body></html>"""
 
-NAV = ('<a href="./">foam</a><a href="trunk.html">the trunk</a><a href="germ.html">the germ</a><a href="toy.html">toy, a customer</a>'
+NAV = ('<a href="./">foam</a><a href="room.html">Room</a><a href="trunk.html">Face</a><a href="germ.html">the germ</a><a href="toy.html">toy, a customer</a>'
        '<a href="primings.html">the primings</a><a href="book.html">the book</a>'
        '<a href="https://github.com/lightward/foam">github</a>')
 
@@ -48,7 +48,7 @@ def lean_page(path, title):
 
 readme = open('README.md').read()
 # link `name` in the README to the trunk where the name is a declaration
-names = set(re.findall(r'^(?:theorem|def|structure|inductive|abbrev) (\w+)', open('grown/Foam.lean').read(), re.M))
+names = set(re.findall(r'^(?:theorem|def|structure|inductive|abbrev) (\w+)', open('grown/Face.lean').read(), re.M))
 def link_names(text):
     def sub(m):
         n = m.group(1)
@@ -62,18 +62,19 @@ except Exception:
     pass
 candle = html.escape(os.environ.get('CANDLE', ''))
 book = html.escape(os.environ.get('BOOK', ''))
-n_thm = len(re.findall(r'^theorem ', open('grown/Foam.lean').read(), re.M))
-n_car = len(re.findall(r'^(def|structure|inductive) ', open('grown/Foam.lean').read(), re.M))
-germ_bytes = os.path.getsize('germ/Foam.lean'); seed_bytes = os.path.getsize('grown/Foam.lean')
-vac = len(re.findall(r':= sorry\s*$', open('germ/Foam.lean').read(), re.M))
+n_thm = len(re.findall(r'^theorem ', open('grown/Face.lean').read(), re.M))
+n_car = len(re.findall(r'^(def|structure|inductive) ', open('grown/Face.lean').read(), re.M))
+germ_bytes = os.path.getsize('germ/Face.lean'); seed_bytes = os.path.getsize('grown/Face.lean')
+vac = len(re.findall(r':= sorry\s*$', open('germ/Face.lean').read(), re.M))
 index_body = (f'<div class="readme">{link_names(readme)}</div>'
               f'<h2>the bench at this push</h2><pre>{n_car} carriers, {n_thm} theorems in the grown trunk\n'
               f'the germ: {vac} vacancies, {germ_bytes} bytes; the grown artifact {seed_bytes} bytes\n\n{candle}</pre>'
-              f'<h2>the treaty vectors</h2><pre>' + html.escape(open('regrowth/Foam.report').read().split('the treaty vectors')[1] if os.path.exists('regrowth/Foam.report') and 'the treaty vectors' in open('regrowth/Foam.report').read() else '') + '</pre>')
+              f'<h2>the treaty vectors</h2><pre>' + html.escape(open('regrowth/Face.report').read().split('the treaty vectors')[1] if os.path.exists('regrowth/Face.report') and 'the treaty vectors' in open('regrowth/Face.report').read() else '') + '</pre>')
 open('site/index.html', 'w').write(page('foam', index_body, NAV))
-open('site/trunk.html', 'w').write(lean_page('grown/Foam.lean', 'foam, grown from germ/Foam.lean'))
+open('site/room.html', 'w').write(lean_page('grown/Room.lean', 'Room — the counting, grown from germ/Room.lean') if os.path.exists('grown/Room.lean') else page('Room — foam', '<p>not grown at this push</p>', NAV))
+open('site/trunk.html', 'w').write(lean_page('grown/Face.lean', 'Face — the seeing, grown from germ/Face.lean'))
 open('site/toy.html', 'w').write(lean_page('grown/Toy.lean', 'toy — a customer germ, grown on foam') if os.path.exists('grown/Toy.lean') else page('toy — foam', '<p>not grown at this push</p>', NAV))
-open('site/germ.html', 'w').write(lean_page('germ/Foam.lean', 'germ/Foam.lean — what is kept by hand'))
+open('site/germ.html', 'w').write(lean_page('germ/Face.lean', 'germ/Face.lean — what is kept by hand (the seeing)'))
 open('site/primings.html', 'w').write(page('the primings — foam', '<h1>the primings</h1><pre>' + html.escape(open('primings.lean').read()) + '</pre>', NAV))
 open('site/book.html', 'w').write(page('the book — foam', '<h1>the book of the seed</h1><pre>' + book + '</pre>', NAV))
 open('site/CNAME', 'w').write(open('CNAME').read())

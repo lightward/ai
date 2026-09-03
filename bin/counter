@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# counter: the compiler. one loop, two ears, and the readings — foam is its first
-# customer, and any germ that imports foam is another.
+# counter: the compiler. one loop, two ears, and the readings — foam's two storeys, Room and
+# Face, are its first customers, and any germ that imports either is another.
 #
 # the loop is the cascade: a vestibule of vacancies is re-offered round after
 # round; whatever is backed seats, whatever is not is held with its darkness
@@ -19,19 +19,19 @@
 #   page    the browseable artifact: site/ for foam.is
 #
 # conduct-as-citation (each verb names the law it mirrors):
-#   a turn is an elaboration ............ Foam.the_curtain_is_exact
-#   an unnamed turn evaporates .......... Foam.the_deferral_is_free
-#   a named turn persists ............... Foam.the_backed_are_seated
-#   a refusal is held, darkness named ... Foam.the_unbacked_wait,
-#                                         Foam.the_held_name_their_darkness
+#   a turn is an elaboration ............ Face.the_curtain_is_exact
+#   an unnamed turn evaporates .......... Face.the_deferral_is_free
+#   a named turn persists ............... Face.the_backed_are_seated
+#   a refusal is held, darkness named ... Face.the_unbacked_wait,
+#                                         Face.the_held_name_their_darkness
 #   the round seats the ready ........... chrysalis:chrysalis/chrysalis/Seed.lean the_ready_seat_in_one_sweep
 #   drained or stuck, nothing else ...... chrysalis:chrysalis/chrysalis/Seed.lean no_third_fate
-#   the session only grows .............. Foam.the_park_resumes
-#   a stage may ground a stage .......... Foam.a_stage_may_ground_a_stage (a germ that imports a germ)
+#   the session only grows .............. Face.the_park_resumes
+#   a stage may ground a stage .......... Face.a_stage_may_ground_a_stage (a germ that imports a germ)
 #   the grown trunk is its own image .... chrysalis:chrysalis/chrysalis/Seed.lean the_fixed_are_the_landed
 #
 # usage:
-#   bin/counter grow [germ/Name.lean] [--settle] [--check]
+#   bin/counter grow [germ/Name.lean] [--settle] [--check]     (default germ/Face.lean)
 #     --settle  rewrite the germ minimal: derived order, every regrowable hand body a
 #               vacancy, a route kept only where load-bearing (a stored derivable is drift)
 #     --check   red iff the germ is not already its own settle
@@ -62,13 +62,13 @@ mkdir -p regrowth
 SESSION="${1:-regrowth/ride.lean}"
 HELD="${SESSION%.lean}.held"
 
-if ! lake build Foam >/dev/null 2>&1; then
-  echo "the gate cannot open: Foam does not build" >&2
+if ! lake build Face >/dev/null 2>&1; then
+  echo "the gate cannot open: Face does not build" >&2
   exit 1
 fi
 
 if [ ! -f "$SESSION" ]; then
-  printf 'import Foam\nopen Foam\nset_option autoImplicit false\nuniverse u v w\n' > "$SESSION"
+  printf 'import Face\nopen Room Face\nset_option autoImplicit false\nuniverse u v w\n' > "$SESSION"
 fi
 
 named_in() {
@@ -295,7 +295,7 @@ regrow_ear() {
     esac
   done
   if [ ${#inputs[@]} -eq 0 ]; then
-    if [ -n "${CRAWL_GERM:-}" ]; then inputs=(germ/Foam.lean); else inputs=(grown/Foam.lean); fi
+    if [ -n "${CRAWL_GERM:-}" ]; then inputs=(germ/Face.lean); else inputs=(grown/Face.lean); fi
   fi
   local first="${inputs[0]}"
   local name; name="$(basename "${first%.lean}")"
@@ -386,7 +386,7 @@ for path in sys.argv[1:]:
             header, footer = h, f
         blocks += b
 header = header or ''
-NS_NAME = (re.search(r'^namespace (\w+)', header, re.M) or re.search(r'^namespace (\w+)', 'namespace Foam', re.M)).group(1)
+NS_NAME = (re.search(r'^namespace (\w+)', header, re.M) or re.search(r'^namespace (\w+)', 'namespace Face', re.M)).group(1)
 IMPORTS = [m for m in re.findall(r'^import (\S+)', header, re.M) if m != 'Init']
 SCOPE = [NS_NAME, ','.join(IMPORTS)]
 seated_names = set(n for _, n, _ in blocks)
@@ -717,8 +717,11 @@ if primings_path:
             # names against the pool and keep the qualified form
             out = []
             for h in marker_needs.get(n, []):
+                bare = h.split('.')[-1]
                 if h in tnames or h in imported_theorems: out.append(h)
                 elif h in by_bare: out.append(by_bare[h])
+                elif bare in tnames: out.append(bare)            # a qualified route whose prefix moved
+                elif bare in by_bare: out.append(by_bare[bare])
             return out
 
         def derived_cites_all(n):
@@ -1076,7 +1079,7 @@ case "${1:-}" in
     if printf '%s\n' "$@" | grep -qx -- '--settle'; then
       # a settle is a fixed point: a body that becomes a vacancy may seat in a different round,
       # so iterate until the germ grows in the order it was settled to (three passes at most)
-      germ="germ/Foam.lean"; for a in "$@"; do case "$a" in germ/*.lean) germ="$a";; esac; done
+      germ="germ/Face.lean"; for a in "$@"; do case "$a" in germ/*.lean) germ="$a";; esac; done
       for pass in 1 2 3; do
         before="$(shasum "$germ" | cut -c1-40)"
         CRAWL_GERM=1 regrow_ear --primings primings.lean "$@" || exit $?

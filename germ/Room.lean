@@ -1,4 +1,4 @@
-namespace Core
+namespace Room
 
 universe u v w u' v' w' u''
 
@@ -1765,4 +1765,4 @@ theorem the_direction_is_even_money {A : Type u} {beq : A → A → Bool}
   exact (congrArg (((perms l).filter (firstOf beq a b)).length + ·)
     hsym).trans htotal
 
-end Core
+end Room

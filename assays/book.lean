@@ -1,5 +1,5 @@
-import Core
-open Core
+import Room
+open Room
 set_option autoImplicit false
 
 #guard (words 0).length == 1
