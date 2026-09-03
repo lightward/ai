@@ -193,7 +193,16 @@ partial def substitute (wins : Std.HashMap Nat (Array Syntax)) (stx : Syntax) : 
       return ← `(tactic| first $[| $alts]*)
     | none => return ← `(tactic| fail)
   match stx with
-  | .node i k args => return .node i k (← args.mapM (substitute wins))
+  | .node i k args =>
+    let args ← args.mapM (substitute wins)
+    -- a side search that never fired leaves `| fail` in a `first`: drop it, so the body reads as
+    -- exactly its citations (a `first` keeps at least one alternative)
+    if k == ``Lean.Parser.Tactic.first && args.size == 2 then
+      let groups := args[1]!.getArgs
+      let kept := groups.filter fun g => !(((g.getArg 1).reprint.getD "").trim == "fail")
+      if !kept.isEmpty && kept.size < groups.size then
+        return .node i k #[args[0]!, args[1]!.setArgs kept]
+    return .node i k args
   | _ => return stx
 
 open Tactic in
