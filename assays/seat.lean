@@ -1,5 +1,5 @@
 import Foam
-open Foam
+open Core Foam
 set_option autoImplicit false
 
 #guard enrolled Nat.beq (intake Nat.beq ([], []) [(7, [7]), (7, [7]), (7, [7])]).1 7 == false

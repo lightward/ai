@@ -1,5 +1,5 @@
 import Foam
-open Foam
+open Core Foam
 set_option autoImplicit false
 
 #guard peek (liftFrom tally (3 : Nat)) == 3

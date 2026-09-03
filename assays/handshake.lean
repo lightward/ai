@@ -1,5 +1,5 @@
 import Foam
-open Foam
+open Core Foam
 set_option autoImplicit false
 
 def F : Face := appFace Nat Nat

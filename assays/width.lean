@@ -1,5 +1,5 @@
 import Foam
-open Foam
+open Core Foam
 set_option autoImplicit false
 
 #guard [true, false].all (fun x => [true, false].all (fun y => [true, false].all

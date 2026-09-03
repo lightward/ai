@@ -1,5 +1,5 @@
-import Foam
-open Foam
+import Core
+open Core
 set_option autoImplicit false
 universe u v w
 
@@ -49,12 +49,9 @@ theorem two_sightings_that_cite_each_other_stay_dark (x y : Nat) (w : List sight
     seated (round st w) x = false ∧ seated (round st w) y = false := sorry
 
 theorem the_key_is_cut_from_the_room (st : room) (needs : List Nat) (h : weight st needs = 1) :
-    ∃ k, k ∈ needs ∧ seated st k = false ∧ backed Nat.beq (k :: st.1) needs = true :=
-  Foam.the_key_is_cut_from_the_room Nat.beq beq_self st.1 needs h
+    ∃ k, k ∈ needs ∧ seated st k = false ∧ backed Nat.beq (k :: st.1) needs = true := sorry
 
--- held (waiting on: a_name_reads_itself)
 theorem a_sighting_is_load_bearing_in_the_same_round (st : room) (a : sighting)
     (hb : backed Nat.beq st.1 a.2 = true) : seated (offer st a) a.1 = true := sorry
--- end
 
 end Counter

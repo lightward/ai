@@ -1,6 +1,6 @@
-import Foam
+import Core
 import Counter
-open Foam Counter
+open Core Counter
 set_option autoImplicit false
 
 def demo : List sighting := [(1, []), (2, [3]), (3, [])]

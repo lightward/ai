@@ -1,5 +1,5 @@
-import Foam
-open Foam
+import Core
+open Core
 set_option autoImplicit false
 
 #guard again collatzStep 3 1 == 1

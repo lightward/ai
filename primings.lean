@@ -8,8 +8,11 @@
 -- a second macro: {defs} expands to the carriers (defs) the vacancy's statement
 -- cites, comma-separated, for `dsimp only [{defs}]` — let the goal reduce along
 -- its own definitions before a closer unifies against it.
--- a third: {rws} expands to `try rw [n1]; try rw [n2]; …` over the need-list —
--- the cite move in rewrite clothing, applied in order, each one optional.
+-- a third: {rws|closers} expands, inside a `first`, to one alternative per cited
+-- name (and per equation-shaped hypothesis): `| (rw [n]; closers)` — each rewrite
+-- atomic with its own closers, so a rewrite that lands in the wrong place fails and
+-- backtracks rather than poisoning the moves after it. ({rws} alone, the older
+-- sequenced form, still expands to `(try rw [n1]); (try rw [n2]); …`.)
 -- grammar: a line `-- priming: <name>` opens a priming; the lines until the
 -- next opener are its body. a line `-- budget: <heartbeats>` sets the fuel each
 -- candidate may burn (Lean's own maxHeartbeats); a shape that cannot close within
@@ -162,7 +165,7 @@ by
   induction x
   all_goals (first
     | (intros; first | rfl | assumption | {cite})
-    | (rename_i ih₁ ih₂; intros; (try dsimp only [{defs}] at *); {rws}; first
+    | (rename_i ih₁ ih₂; intros; (try dsimp only [{defs}] at *); first
         | rfl
         | exact congr (congrArg _ ih₁) ih₂
         | exact congr (congrArg _ (ih₁ _)) (ih₂ _)
@@ -171,8 +174,9 @@ by
         | (rw [ih₁, ih₂]; {cite})
         | (rw [ih₁ _, ih₂ _]; {cite})
         | exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by {cite})
-        | exact (by {cite} : _ = _).trans (congr (congrArg _ ih₁) ih₂))
-    | (rename_i ih; intros; (try dsimp only [{defs}] at *); {rws}; first
+        | exact (by {cite} : _ = _).trans (congr (congrArg _ ih₁) ih₂)
+        {rws| first | rfl | exact congr (congrArg _ ih₁) ih₂ | exact congr (congrArg _ (ih₁ _)) (ih₂ _) | (rw [ih₁, ih₂]) | (rw [ih₁ _, ih₂ _]) | (rw [ih₁, ih₂]; {cite}) | (rw [ih₁ _, ih₂ _]; {cite})})
+    | (rename_i ih; intros; (try dsimp only [{defs}] at *); first
         | rfl
         | exact ih
         | exact ih _
@@ -186,7 +190,8 @@ by
         | (rw [ih]; {cite})
         | (rw [ih _]; {cite})
         | exact (ih _).trans (by {cite})
-        | exact (ih _ _).trans (by {cite})))
+        | exact (ih _ _).trans (by {cite})
+        {rws| first | rfl | exact ih | exact ih _ | exact ih _ _ | exact congrArg _ ih | exact congrArg _ (ih _) | (rw [ih]) | (rw [ih _]) | (rw [ih]; {cite}) | (rw [ih _]; {cite})}))
 
 -- priming: home-cite-recurse-2nd
 by
@@ -194,7 +199,7 @@ by
   induction y
   all_goals (first
     | (intros; first | rfl | assumption | {cite})
-    | (rename_i ih₁ ih₂; intros; (try dsimp only [{defs}] at *); {rws}; first
+    | (rename_i ih₁ ih₂; intros; (try dsimp only [{defs}] at *); first
         | rfl
         | exact congr (congrArg _ ih₁) ih₂
         | exact congr (congrArg _ (ih₁ _)) (ih₂ _)
@@ -203,8 +208,9 @@ by
         | (rw [ih₁, ih₂]; {cite})
         | (rw [ih₁ _, ih₂ _]; {cite})
         | exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by {cite})
-        | exact (by {cite} : _ = _).trans (congr (congrArg _ ih₁) ih₂))
-    | (rename_i ih; intros; (try dsimp only [{defs}] at *); {rws}; first
+        | exact (by {cite} : _ = _).trans (congr (congrArg _ ih₁) ih₂)
+        {rws| first | rfl | exact congr (congrArg _ ih₁) ih₂ | exact congr (congrArg _ (ih₁ _)) (ih₂ _) | (rw [ih₁, ih₂]) | (rw [ih₁ _, ih₂ _]) | (rw [ih₁, ih₂]; {cite}) | (rw [ih₁ _, ih₂ _]; {cite})})
+    | (rename_i ih; intros; (try dsimp only [{defs}] at *); first
         | rfl
         | exact ih
         | exact ih _
@@ -218,4 +224,5 @@ by
         | (rw [ih]; {cite})
         | (rw [ih _]; {cite})
         | exact (ih _).trans (by {cite})
-        | exact (ih _ _).trans (by {cite})))
+        | exact (ih _ _).trans (by {cite})
+        {rws| first | rfl | exact ih | exact ih _ | exact ih _ _ | exact congrArg _ ih | exact congrArg _ (ih _) | (rw [ih]) | (rw [ih _]) | (rw [ih]; {cite}) | (rw [ih _]; {cite})}))

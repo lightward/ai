@@ -1,5 +1,5 @@
-import Foam
-open Foam
+import Core
+open Core
 set_option autoImplicit false
 
 #guard (perms [1, 2, 3]).length == 6

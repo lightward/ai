@@ -172,6 +172,6 @@ unsafe def main (args : List String) : IO Unit := do
       for m in msgs do
         if m.severity != .information then
           let txt ← m.data.toString
-          for l in (txt.splitOn "\n").take 6 do
+          for l in (txt.splitOn "\n").take 24 do
             IO.println s!"    {l}"
     i := i + 1

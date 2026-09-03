@@ -29,7 +29,7 @@ jobs:
           test: false
           lake-package-directory: .
       - name: grow foam and its customers
-        run: bin/counter grow && bin/counter grow germ/Toy.lean && bin/counter grow germ/Counter.lean
+        run: bin/counter grow germ/Core.lean && bin/counter grow && bin/counter grow germ/Toy.lean && bin/counter grow germ/Counter.lean
       - name: build the grown modules
         run: lake build
       - name: render the page

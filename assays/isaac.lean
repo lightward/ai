@@ -1,5 +1,5 @@
 import Foam
-open Foam
+open Core Foam
 set_option autoImplicit false
 
 #guard behavior tally (List.replicate 5 ()) == 5

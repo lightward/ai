@@ -502,15 +502,41 @@ if primings_path:
             if m: found.append((m.start(), t))
         return [t for _, t in sorted(found)]
 
-    def cite_macro(ns):
-        # a citation, with its side goals closed by assumption, rfl, or ONE more citation from the
-        # same list (a lemma that takes a lemma as an argument — hrefl, a decidability, a helper)
-        if not ns:
+    def binder_names(n):
+        # the statement's HYPOTHESES (not its data): binders whose type is an equation, an iff, a
+        # membership, a negation, a ∀, or an application of a lowercase (Prop-valued) carrier —
+        # alike, unheard, carries. data binders (F : Face, m : S → S) are never applicables.
+        stmt, _ = split_block(by_name[n])
+        out = []
+        for names, ty in re.findall(r'[({]([^:(){}]+?)\s*:\s*((?:[^(){}]|\([^()]*\))*?)[)}]', stmt):
+            t = ty.strip()
+            head = re.match(r'([A-Za-z_][A-Za-z0-9_.]*)', t)
+            is_prop = (re.search(r'(?<![<>≠!])=(?!>)|↔|∈|≠|¬|∀', t) is not None
+                       or (head and head.group(1) in cnames and head.group(1)[0].islower()))
+            if is_prop:
+                out += [x for x in names.split() if re.match(r"[A-Za-z_][A-Za-z0-9_₀-₉']*$", x)]
+        return out
+
+    def cite_macro(ns, n=None):
+        # a citation — or one of the statement's own hypotheses — with its side goals closed by
+        # assumption, rfl, or ONE more citation/hypothesis from the same list (a lemma that takes
+        # a lemma as an argument — hrefl, a helper — or a side goal that is a hypothesis applied)
+        hyps = binder_names(n) if n else []
+        names = list(ns) + [h for h in hyps if h not in ns]
+        if not names:
             return 'fail'
+        # every side alternative must CLOSE or fail: a bare `apply` can succeed leaving goals,
+        # `first` counts that as success, and the outer alternative commits with work undone
+        CLOSE = '(first | assumption | rfl)'
+        def hyp_forms(m):
+            # a hypothesis whose type is a def (unheard, carries) hides its ∀ from `apply`;
+            # `exact h _` elaborates the application and unfolds as needed
+            return f'| (apply {m} <;> {CLOSE}) | (exact {m} _)'
         def side(t):
-            others = ' '.join(f'| (apply {m})' for m in ns if m != t)
-            return f'(first | assumption | rfl {others})' if others else '(first | assumption | rfl)'
-        return 'first ' + ' '.join(f'| (apply {t} <;> {side(t)})' for t in ns)
+            others = ' '.join((hyp_forms(m) if m in hyps else f'| (apply {m} <;> {CLOSE})') for m in names if m != t)
+            return f'(first | assumption | rfl {others})' if others else CLOSE
+        heads = ' '.join((f'| (apply {t} <;> {side(t)})' if t not in hyps else f'| (apply {t} <;> {side(t)}) | (exact {t} _)') for t in names)
+        return 'first ' + heads
 
     cnames = [n for _, n, _ in carriers]
     defs_of = {}
@@ -549,10 +575,31 @@ if primings_path:
         names = (hyps_of(n) if n else []) + list(ns)
         return '; '.join(f'(try rw [{t}])' for t in names) if names else 'skip'
 
+    def rws_alternatives(ns, n, closers):
+        # each rewrite as an ATOMIC alternative with its own closers: a rewrite that succeeds in
+        # the wrong place fails and backtracks instead of poisoning the moves after it
+        # rewriting is the tightening move: the hint first, then only the few cites most akin
+        names = (hyps_of(n) if n else []) + list(ns)[:4]
+        return ' '.join(f'| (rw [{t}]; {closers})' for t in names)
+
+    def cite_compact(ns, n=None):
+        # the one-deep cite over the few most akin — what a rewrite alternative may carry
+        hyps = binder_names(n) if n else []
+        names = list(ns)[:4] + [h for h in hyps if h not in ns]
+        if not names:
+            return 'fail'
+        return 'first ' + ' '.join((f'| (apply {t} <;> (first | assumption | rfl))' if t not in hyps else f'| (apply {t} <;> (first | assumption | rfl)) | (exact {t} _)') for t in names)
+
     def instantiate(body, ns, n=None):
-        return (body.replace('{cite}', cite_macro(ns))
-                    .replace('{rws}', rws_macro(ns, n))
-                    .replace('{defs}', defs_macro(n) if n else ''))
+        # the rewrite fan first, with compact closers inside it; then the full cite for the rest
+        def rws_sub(m):
+            closers = m.group(1).strip().replace('{cite}', cite_compact(ns, n))
+            return rws_alternatives(ns, n, closers)
+        out = re.sub(r'\{rws\|([^{}]*(?:\{cite\}[^{}]*)*)\}', rws_sub, body)
+        out = (out.replace('{cite}', cite_macro(ns, n))
+                  .replace('{rws}', rws_macro(ns, n))
+                  .replace('{defs}', defs_macro(n) if n else ''))
+        return out
 
     tally = {nm: 0 for nm, _ in primings}
     carried = []
@@ -647,7 +694,11 @@ if primings_path:
         def weight(c):
             return math.log((N + 1) / (df.get(c, 0) + 1))
         def affinity(t, n):
-            return sum(weight(c) for c in keys[t] & keys[n])
+            # shared rarity, normalized by the candidate's own vocabulary: a tight lemma that
+            # shares most of its words outranks a crown that shares a few of its many
+            shared = sum(weight(c) for c in keys[t] & keys[n])
+            own = sum(weight(c) for c in keys[t]) or 1.0
+            return shared / math.sqrt(own)
         is_vac = {n: bool(re.search(r':=\s*sorry\s*$', strip_receipts(by_name[n]).strip())) for _, n, _ in theorems}
         trail_index = {n: i for i, (_, n, _) in enumerate(theorems)}
         entry = {n: t for t in theorems for n in [t[1]]}
@@ -656,6 +707,19 @@ if primings_path:
         pending_vac = [n for _, n, _ in theorems if is_vac[n]]
         rounds, tried = [], 0
         P = len(primings)
+
+        by_bare = {}
+        for t in pool:
+            by_bare.setdefault(t.split('.')[-1], t)
+
+        def resolve_hint(n):
+            # a route may name a theorem that has since moved into an imported module: match bare
+            # names against the pool and keep the qualified form
+            out = []
+            for h in marker_needs.get(n, []):
+                if h in tnames or h in imported_theorems: out.append(h)
+                elif h in by_bare: out.append(by_bare[h])
+            return out
 
         def derived_cites_all(n):
             cs = [t for t in pool + seated_order if t != n and (keys[t] & keys[n] or t in used_hint(n))]
@@ -692,7 +756,7 @@ if primings_path:
                     seated_order.append(n); seated_set.add(n); seated_round[n] = 1
             n = probe_name
             der = derived_cites(n)
-            hint = [h for h in marker_needs.get(n, []) if h in tnames or h in imported_theorems]
+            hint = resolve_hint(n)
             print(f'probe: {n}')
             print(f'  vocabulary: {" ".join(sorted(keys[n])) or "—"}')
             print(f'  cites in reach ({reach}): {" ".join(der) or "—"}')
@@ -744,8 +808,8 @@ if primings_path:
             for n in pending_vac:
                 der = derived_cites(n)
                 for k in range(P): cands.append((n, k, der, 'derived'))
-                hint = [h for h in marker_needs.get(n, []) if h in tnames]
-                if hint and all(h in seated_set for h in hint):
+                hint = resolve_hint(n)
+                if hint and all(h in seated_set or h in imported_theorems for h in hint):
                     hinted = hint + [d for d in der if d not in hint]
                     for k in range(P): cands.append((n, k, hinted, 'hinted'))
             tried += len(cands)
@@ -770,7 +834,7 @@ if primings_path:
                 if n in best:
                     _, k, cites, tag = best[n]
                     per_round[seat_regrown(n, k, cites)] += 1
-                    kept_hint[n] = [h for h in marker_needs.get(n, []) if h in tnames] if tag == 'hinted' else []
+                    kept_hint[n] = resolve_hint(n) if tag == 'hinted' else []
                     seated_now.append(n)
             seated_now.sort(key=lambda n: trail_index[n])
             for n in seated_now:
@@ -1007,7 +1071,22 @@ EOF
 case "${1:-}" in
   ride) shift; ride_ear "$@" ;;
   regrow) shift; regrow_ear "$@" ;;
-  grow) shift; CRAWL_GERM=1 regrow_ear --primings primings.lean "$@" ;;
+  grow)
+    shift
+    if printf '%s\n' "$@" | grep -qx -- '--settle'; then
+      # a settle is a fixed point: a body that becomes a vacancy may seat in a different round,
+      # so iterate until the germ grows in the order it was settled to (three passes at most)
+      germ="germ/Foam.lean"; for a in "$@"; do case "$a" in germ/*.lean) germ="$a";; esac; done
+      for pass in 1 2 3; do
+        before="$(shasum "$germ" | cut -c1-40)"
+        CRAWL_GERM=1 regrow_ear --primings primings.lean "$@" || exit $?
+        after="$(shasum "$germ" | cut -c1-40)"
+        [ "$before" = "$after" ] && break
+        echo "the settle moved the germ; pass $((pass+1)) to reach its fixed point"
+      done
+    else
+      CRAWL_GERM=1 regrow_ear --primings primings.lean "$@"
+    fi ;;
   probe) shift; CRAWL_GERM=1 regrow_ear --primings primings.lean --probe "$2" "$1" ;;
   book) shift; exec "$ROOT/bin/.book" "$@" ;;
   page) shift; exec "$ROOT/bin/.page" "$@" ;;
