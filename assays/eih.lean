@@ -75,12 +75,79 @@ structure File where
 def visible (f : File) (m : Nat) : Prop := m ∈ f.channel.audience
 
 inductive Role where
-  | couple | planner | vendor | party
+  | couple | planner | vendor | venue | party
+
+def Role.code : Role → Nat
+  | .couple => 0 | .planner => 1 | .vendor => 2 | .venue => 3 | .party => 4
+
+def Role.beq (a b : Role) : Bool := Nat.beq a.code b.code
 
 def joinsFree : Role → Bool := fun _ => true
 
 def pays : Role → Bool
-  | .couple => true | .vendor => true | .planner => true | .party => false
+  | .couple => true | .vendor => true | .planner => true | .venue => true | .party => false
+
+structure Request where
+  audience : List Nat
+  sender : Nat
+  confirmed : List Nat
+
+def asked (q : Request) : List Nat := q.audience.filter (fun m => !(Nat.beq m q.sender))
+
+def tally (q : Request) : Nat := (q.confirmed.filter (enrolled Nat.beq (asked q))).length
+
+def heardBy (q : Request) (m : Nat) : List Nat := cond (enrolled Nat.beq q.audience m) q.confirmed []
+
+def confirm (q : Request) (m : Nat) : Request := { q with confirmed := m :: q.confirmed }
+
+def samePage : List Request → Nat → Nat
+  | [], _ => 0
+  | q :: qs, v => cond (enrolled Nat.beq q.audience v) (tally q + samePage qs v) (samePage qs v)
+
+inductive Thing where
+  | wedding | season
+
+def owner : Thing → Role
+  | .wedding => .couple | .season => .vendor
+
+structure Bill where
+  thing : Thing
+  payer : Role
+
+def lawful (b : Bill) : Bool := Role.beq b.payer (owner b.thing) || (Role.beq b.payer .vendor && Role.beq (owner b.thing) .couple)
+
+inductive Page where
+  | floorPlan | guestList | samePage | invoices | budget | guests | site | team | dayOf | tasks
+
+def Page.code : Page → Nat
+  | .floorPlan => 0 | .guestList => 1 | .samePage => 2 | .invoices => 3 | .budget => 4
+  | .guests => 5 | .site => 6 | .team => 7 | .dayOf => 8 | .tasks => 9
+
+def Page.beq (a b : Page) : Bool := Nat.beq a.code b.code
+
+def roles : List Role := [.couple, .planner, .vendor, .venue, .party]
+
+def pages : List Page := [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
+
+def seen : Role → List Page
+  | .couple => pages
+  | .planner => [.floorPlan, .guestList, .samePage, .invoices, .team, .dayOf, .tasks]
+  | .vendor => [.floorPlan, .samePage, .invoices, .team, .dayOf, .tasks]
+  | .venue => [.floorPlan, .samePage, .invoices, .team, .dayOf, .tasks]
+  | .party => [.floorPlan, .guestList, .samePage, .team, .dayOf, .tasks]
+
+def edited : Role → List Page
+  | .couple => pages
+  | .planner => [.floorPlan, .guestList, .invoices, .team, .dayOf, .tasks]
+  | .vendor => [.invoices, .dayOf, .tasks]
+  | .venue => [.floorPlan, .invoices, .dayOf, .tasks]
+  | .party => [.floorPlan, .guestList, .dayOf, .tasks]
+
+def sees (ρ : Role) (p : Page) : Bool := enrolled Page.beq (seen ρ) p
+
+def edits (ρ : Role) (p : Page) : Bool := enrolled Page.beq (edited ρ) p
+
+def withinSight : Bool := roles.all (fun ρ => pages.all (fun p => !(edits ρ p) || sees ρ p))
 
 def partnerView : List Nat := [0, 1, 2, 3, 4, 5]
 
@@ -164,6 +231,29 @@ def humanEars : List Ask := earshot roomFace humanSeats
 #guard enrolled Ask.beq humanEars .ledger == true
 #guard everyone Nat.beq [1, 2] demo.confirmed
 #guard !(everyone Nat.beq [1, 2, 7] demo.confirmed)
+
+def everyoneChannel : Request := ⟨[1, 2, 7, 8, 9], 1, [7, 8]⟩
+def vendorRoomRequest : Request := ⟨[7, 8, 9], 9, [7]⟩
+def maya : Nat := 1
+def jordan : Nat := 7
+#guard asked everyoneChannel == [2, 7, 8, 9]
+#guard tally everyoneChannel == 2
+#guard heardBy everyoneChannel jordan == [7, 8]
+#guard heardBy everyoneChannel maya == [7, 8]
+#guard heardBy vendorRoomRequest maya == []
+#guard heardBy vendorRoomRequest jordan == [7]
+#guard tally (confirm everyoneChannel 2) == 3
+#guard samePage [everyoneChannel, vendorRoomRequest] maya == 2
+#guard samePage [everyoneChannel, vendorRoomRequest] jordan == 3
+def coveredWedding : Bill := ⟨.wedding, .vendor⟩
+def ownWedding : Bill := ⟨.wedding, .couple⟩
+def strayBill : Bill := ⟨.season, .couple⟩
+#guard lawful coveredWedding && lawful ownWedding && !(lawful strayBill)
+#guard Role.beq (owner coveredWedding.thing) .couple
+#guard withinSight
+#guard sees .venue .floorPlan && edits .venue .floorPlan && !(sees .venue .guestList)
+#guard sees .vendor .floorPlan && !(edits .vendor .floorPlan)
+#guard pays .venue && joinsFree .venue && !(pays .party)
 
 theorem the_delivery_is_the_sheet (r : Room) : (deliver r).delivered = sheet r.guests := sorry
 
@@ -261,6 +351,59 @@ theorem the_humans_witness_no_license (r : Room) (c : List Nat) (hc : c ≠ r.co
   refine ⟨fun s hs => ?_, fun ha => hc (ha .confirmed)⟩
   refine a_wall_hides_the_probe roomFace (the_receipt_touches_only_the_receipt r c) s ?_
   exact fun hp => no_human_hears_the_receipt (mem_joinMap_intro hs hp)
+
+theorem the_audience_hears_the_receipt_by_name (q : Request) (m : Nat)
+    (h : enrolled Nat.beq q.audience m = true) : heardBy q m = q.confirmed := by
+  show cond (enrolled Nat.beq q.audience m) q.confirmed [] = q.confirmed
+  rw [h]
+  exact rfl
+
+theorem outside_the_audience_hears_no_receipt (q : Request) (m x : Nat)
+    (h : enrolled Nat.beq q.audience m = false) : heardBy (confirm q x) m = heardBy q m := by
+  show cond (enrolled Nat.beq q.audience m) (x :: q.confirmed) []
+      = cond (enrolled Nat.beq q.audience m) q.confirmed []
+  rw [h]
+  exact rfl
+
+theorem the_sender_is_never_asked (q : Request) : ¬ q.sender ∈ asked q := by
+  intro h
+  have hq := filter_holds q.audience h
+  have hs : (!(Nat.beq q.sender q.sender)) = true := hq
+  rw [beq_self] at hs
+  exact nomatch hs
+
+theorem the_same_page_counts_only_within_earshot (q : Request) (qs : List Request) (v : Nat)
+    (h : enrolled Nat.beq q.audience v = false) : samePage (q :: qs) v = samePage qs v := by
+  show cond (enrolled Nat.beq q.audience v) (tally q + samePage qs v) (samePage qs v) = samePage qs v
+  rw [h]
+  exact rfl
+
+theorem the_same_page_hears_its_own_earshot (q : Request) (qs : List Request) (v : Nat)
+    (h : enrolled Nat.beq q.audience v = true) : samePage (q :: qs) v = tally q + samePage qs v := by
+  show cond (enrolled Nat.beq q.audience v) (tally q + samePage qs v) (samePage qs v) = tally q + samePage qs v
+  rw [h]
+  exact rfl
+
+theorem a_covered_wedding_is_still_the_couples (b : Bill) (h : b.thing = .wedding) : owner b.thing = .couple := by
+  rw [h]
+  rfl
+
+theorem the_payer_is_the_owner_or_the_host (b : Bill) (h : lawful b = true) :
+    Role.beq b.payer (owner b.thing) = true ∨ (Role.beq b.payer .vendor = true ∧ Role.beq (owner b.thing) .couple = true) := by
+  cases hp : Role.beq b.payer (owner b.thing) with
+  | true => exact Or.inl rfl
+  | false =>
+      have h' : (Role.beq b.payer (owner b.thing) || (Role.beq b.payer .vendor && Role.beq (owner b.thing) .couple)) = true := h
+      rw [hp] at h'
+      exact Or.inr (and_reads _ _ h')
+
+theorem edit_is_within_sight : withinSight = true := rfl
+
+theorem the_venue_edits_the_floor_and_never_sees_the_list :
+    edits .venue .floorPlan = true ∧ sees .venue .guestList = false := ⟨rfl, rfl⟩
+
+theorem a_vendor_sees_the_floor_and_edits_nothing_there :
+    sees .vendor .floorPlan = true ∧ edits .vendor .floorPlan = false := ⟨rfl, rfl⟩
 
 theorem everyone_is_here (r : Room) (members : List Nat) (h : allClear r members)
     {p : Party} (hp : p ∈ r.guests) (hr : p.rsvp = true) {m : Nat} (hm : m ∈ p.meals)
