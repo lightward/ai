@@ -51,7 +51,12 @@ for name, ctors in types.items():
 out.append('')
 # a referenced table is created first
 def refs(fields):
-    return [t for _, t in fields if t in tables]
+    out = []
+    for _, t in fields:
+        if t in tables: out.append(t)
+        m = re.match(r'List (.+)$', t)
+        if m and m.group(1).strip('()') in tables: out.append(m.group(1).strip('()'))
+    return out
 ordered, placed = [], set()
 while len(ordered) < len(tables):
     for name, fields in tables.items():
@@ -99,9 +104,27 @@ for seat, (probe, probes) in seats.items():
     out.append('')
 # the derived: never stored — a clerk is a procedure, a prop a check, a data def a function; each
 # carries the theorems that describe it
+def hasmany(table, f):
+    return f in children_of.get(snake_key(table), {})
+snake_key = lambda t: next((n for n in tables if snake(n) == t), t)
 def sqlexpr(expr, table):
     e = re.sub(r'AGG\[[^\]]*\]\(row\)', lambda m: m.group(0), expr)   # the aggregate reads its own row
     e = re.sub(r'(?<!\[)row\.', f'{table}.', e)
+    # a has-many field reads as the child rows in order; a reference's field reads through a subselect
+    def field(m):
+        t, f = m.group(1), m.group(2)
+        tn = snake_key(t)
+        if f in children_of.get(tn, {}):
+            elem = tables_elem.get(tn, {}).get(f)
+            key = f'{snake(elem)}_id' if elem else 'c0'
+            return f'(SELECT array_agg({key} ORDER BY position) FROM {t}_{snake(f)} c WHERE c.{t}_id = {t}.id)'
+        for fname, ft in tables.get(tn, []):
+            if snake(fname) == f and ft in tables:
+                return f'(SELECT {snake(ft)} FROM {snake(ft)} WHERE id = {t}.{f})'
+        return f'{t}.{f}'
+    e = re.sub(r'\b(' + '|'.join(re.escape(snake(t)) for t in tables) + r')\.(\w+)(?=\.(\w+))', lambda m: f'(SELECT {m.group(3)} FROM {m.group(2)} WHERE id = {m.group(1)}.{m.group(2)})', e)
+    e = re.sub(r'\(SELECT (\w+) FROM (\w+) WHERE id = (\w+)\.(\w+)\)\.\w+', lambda m: m.group(0).rsplit('.',1)[0], e)
+    e = re.sub(r'\b(' + '|'.join(re.escape(snake(t)) for t in tables) + r')\.(\w+)\b(?!\.)', field, e)
     e = re.sub(r'\$(\d+)', lambda m: f'arg{int(m.group(1)) + 2}', e)
     def agg(m):
         q, f, xs = m.group(1), m.group(2), m.group(3)
@@ -114,9 +137,16 @@ def sqlexpr(expr, table):
                 f'unnest(p.{snake(f.split(".")[-1])}) m WHERE p.{snake(q.split(".")[-1])})')
     e = re.sub(r'AGG\[(?:\$0|\w+)\.(\w+) → (?:\$0|\w+)\.(\w+)\]\(([\w.]+)\)', agg, e)
     return e
-for name, kind, over, nargs, expr, describers in derived:
+rank = {'data': 0, 'prop': 1, 'clerk': 2}
+for name, kind, over, nargs, expr, describers in sorted(derived, key=lambda d: rank.get(d[1], 3)):
     over_list = over.startswith('List ')
+    if over.replace('List ', '') not in tables:
+        continue   # a def over a kind (a face), not over a table
     table = snake(over.replace('List ', ''))
+    if kind == 'clerk':
+        touched = re.findall(r'(\w+) = ', expr)
+        if any(hasmany(table, f) for f in touched):
+            out.append(f'-- {name}: a clerk over a has-many field ({", ".join(touched)}) — not yet drawn (an insert into the child table)'); out.append(''); continue
     extra = ', '.join(f'arg{i + 2} integer[]' for i in range(nargs - 1))
     params = (f'{table}_ids integer[]' if over_list else f'{table}_id integer') + (', ' + extra if extra else '')
     if '⟨unread' in expr:

@@ -210,6 +210,9 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
     | some ``cond, 4 => s!"(CASE WHEN {go args[1]!} THEN {go args[2]!} ELSE {go args[3]!} END)"
     | some ``List.length, 2 => s!"cardinality({go args[1]!})"
     | some ``Nat.beq, 2 => s!"({go args[0]!} = {go args[1]!})"
+    | some `Room.everyone, 3 => s!"({go args[1]!} <@ {go args[2]!})"   -- every member enrolled: containment
+    | some `Room.backed, 3 => s!"({go args[2]!} <@ {go args[1]!})"
+    | some `Room.enrolled, 3 => s!"({go args[2]!} = ANY({go args[1]!}))"
     | some `Room.joinMap, n =>
       -- joinMap (fun p => cond p.q p.f []) xs: the rows of xs where q, their f's flattened in order;
       -- with xs left implicit (a bare `joinMap f`), the rows are the argument itself
