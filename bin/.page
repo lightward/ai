@@ -34,7 +34,7 @@ footer{{opacity:.6}}
 <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"; mermaid.initialize({{startOnLoad:true, maxTextSize:900000, maxEdges:5000}});</script></body></html>"""
 
 NAV = ('<a href="./">foam</a><a href="room.html">Room</a><a href="trunk.html">Face</a><a href="germ.html">the germ</a><a href="toy.html">toy, a customer</a>'
-       '<a href="pieces.html">the pieces</a><a href="book.html">the book</a>'
+       '<a href="pieces.html">the pieces</a><a href="book.html">the book</a><a href="assay-eih.html">EVERYONE IS HERE</a>'
        '<a href="https://github.com/lightward/foam">github</a>')
 
 def chart_of(path):
@@ -101,6 +101,11 @@ open('site/toy.html', 'w').write(lean_page('grown/Toy.lean', 'toy — a customer
 open('site/germ.html', 'w').write(lean_page('germ/Face.lean', 'germ/Face.lean — what is kept by hand (the seeing)'))
 open('site/pieces.html', 'w').write(page('the pieces — foam', '<section><h1>the pieces — bin/Pieces.lean, the proof shapes as Lean macros over the three derived lists</h1><pre>' + html.escape(open('bin/Pieces.lean').read()) + '</pre></section>', NAV))
 open('site/book.html', 'w').write(page('the book — foam', '<section><h1>the book of the seed</h1><pre>' + book + '</pre></section>', NAV))
+# every grown assay with rows: the product whole — carriers, computations, inherited laws, and its map
+import glob as _glob
+for ap in sorted(_glob.glob('grown/assays/*.lean')):
+    stem = os.path.splitext(os.path.basename(ap))[0]
+    open(f'site/assay-{stem}.html', 'w').write(lean_page(ap, f'{stem} — a product as an assay, grown from assays/{stem}.lean'))
 open('site/CNAME', 'w').write(open('CNAME').read())
 open('site/.nojekyll', 'w').write('')
 print('site/: index trunk toy germ pieces book')
