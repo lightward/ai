@@ -40,12 +40,12 @@ NAV = ('<a href="./">foam</a><a href="room.html">Room</a><a href="trunk.html">Fa
 def chart_of(path):
     # the map of relations drawn from the proofs (bin/counter chart), rendered by mermaid in the browser
     try:
-        mmd = subprocess.run(['bin/counter', 'chart', path], capture_output=True, text=True).stdout
+        mmd = subprocess.run(['bin/counter', 'chart', path, '--laws'], capture_output=True, text=True).stdout
     except Exception:
         mmd = ''
     if not mmd.strip():
         return ''
-    return ('<section><h2>the map of relations — every organ a node, an arrow for each citation the elaborator reads</h2>'
+    return ('<section><h2>the map of relations — every law a node, an arrow for each citation the elaborator reads (bin/counter chart; without --laws the carriers join the map)</h2>'
             '<pre class="mermaid">' + html.escape(mmd) + '</pre></section>')
 
 def lean_page(path, title):
