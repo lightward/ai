@@ -105,8 +105,9 @@ texts = {}
 for label, path in sites:
     if not os.path.exists(path): continue
     body = open(path).read()
-    # a comment, a usage line, or a message that names a verb is not a run of it
-    body = '\n'.join(l for l in body.split('\n') if not re.match(r'\s*#', l) and not re.search(r'\b(echo|say|print)\b', l))
+    # in a script, a comment, a usage line, or a message that names a verb is not a run of it
+    if path.startswith('bin/'):
+        body = '\n'.join(l for l in body.split('\n') if not re.match(r'\s*#', l) and not re.search(r'\b(echo|say|print)\b', l))
     texts[label] = body
 print(f"the verbs [bin/counter]: {len(verbs)} dispatched — what in the house runs each:")
 unrun = []

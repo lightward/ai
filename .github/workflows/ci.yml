@@ -31,13 +31,8 @@ jobs:
         run: bin/counter grow germ/Toy.lean --check && bin/counter grow germ/Counter.lean --check && bin/counter grow germ/Seek.lean --check && bin/counter grow germ/Roster.lean --check
       - name: build the grown modules
         run: lake build
-      - name: receipts and zero warnings (the grown modules elaborate silently)
-        run: |
-          for m in Room Face Witness Toy Counter Seek Roster; do
-            out=$(lake env lean grown/$m.lean 2>&1)
-            if [ -n "$out" ]; then echo "$out"; echo "grown/$m.lean did not elaborate silently"; exit 1; fi
-            echo "silent and green: grown/$m.lean, $(grep -c '#guard_msgs' grown/$m.lean) receipts inline"
-          done
+      - name: the gate, drawn from the compiler's own species (Counter.gate — silent, every receipt read by the kernel and empty, one receipt per organ; the grown assays too)
+        run: bin/counter gate
       - name: the treaty vectors (every assay elaborates against the grown modules; an assay with rows in its grown form)
         run: |
           for f in assays/*.lean; do

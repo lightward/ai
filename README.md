@@ -24,7 +24,7 @@ germ/Counter.lean  the compiler's own conduct, as a customer of Room
 germ/Seek.lean     the compiler's search as a machine, as a customer of Face
 germ/Roster.lean   a species: a roster of parties with per-head meals — the sheet, the heads, reseating; on Room
 bin/Pieces.lean    the ordered moves the compiler tries — Lean proof shapes that are also rules, as Lean macros
-bin/counter        the compiler: grow · settle · check · probe · book · chart · schema · treaty · page
+bin/counter        the compiler: grow · settle · check · probe · gate · book · chart · schema · treaty · page
 bin/judge.lean     Lean judging Lean in-process; counter's eyes
 grown/             the grown modules — never committed, importable, published at foam.is
 assays/            the treaty vectors: what every growth must compute identically
@@ -44,6 +44,8 @@ the check is Lean's, not ours. every theorem in the grown trunk is followed by i
 ```
 
 the receipts ride inside the artifact so that anyone holding only the file can re-run them, with no foam tooling present: `lake env lean grown/Face.lean` prints nothing when every one passes. this file can only tell you that; the artifact shows you — [foam.is/trunk.html](https://foam.is/trunk.html) is the grown trunk with all of its receipts in place, and the report beside it says they passed on this push. clean water, not signed-by-its-filter water.
+
+the gate itself is drawn from the compiler's own species. `germ/Counter.lean` carries it: a trail is a list of organs, each a statement and a body; the kernel's reading of a body is its receipt (the axioms it seats on); the gate is a face whose one probe is the receipt, and its verdict is `conductive` on the trail's shadow — every receipt empty. `the_gate_hears_only_the_receipt` is that verdict derived at that face, by citation of `a_role_read_at_a_probe_is_derived`; `a_receipt_keeping_rebody_is_unheard` says a body rewrite that keeps the receipt is unheard by the gate. `assays/counter.lean` runs those defs on toy trails, and `bin/counter gate` runs the same `Counter.conductive` on the real house: each grown module elaborated whole, each theorem's axioms read by the kernel, the verdict the def's. CI's silent-and-green step is that verb. so a change to the shape of a grown body is moot at the gate by derivation, and a change to the gate is a change to one def with rows that would part.
 
 ## the germ and the compiler
 

@@ -12,8 +12,8 @@
 #           hand bodies regrow where a priming reaches and carry where none does;
 #           citations are derived from each signature's vocabulary; the artifact is
 #           never committed; the standards print at every build
-#   regrow  the record's ear over a hand-written trail (a measurement, not a build)
 #   book    the census, the frontier, the vestibule — the book, never the prediction
+#   gate    the house gate, drawn from Counter.gate — silent, every receipt empty, one per organ
 #   page    the browseable artifact: site/ for foam.is
 #
 # conduct-as-citation (each verb names the law it mirrors):
@@ -36,11 +36,13 @@
 #   bin/counter probe germ/Name.lean theorem_name
 #     the rider's ear pointed at one line of a germ: every priming, against the grown module, with
 #     the cites that vacancy can reach; the gate's sentence for each hold. --keep leaves trials
-#     under regrowth/trials/ (grow and regrow honor it too)
+#     under regrowth/trials/ (grow honors it too)
 #   bin/counter book [trail.lean | vestibule.held ...]
 #   bin/counter page
-#   bin/counter regrow [trail.lean | vestibule.held ...] [-o out.lean] [--settle] [--check]
-#                      (the pieces: bin/Pieces.lean, through the judge)
+#   bin/counter gate [grown/*.lean]
+#     the house gate, drawn from the compiler's own species (Counter.gate): each artifact elaborated
+#     whole, every theorem's receipt read by the kernel, the verdict Counter.conductive on that
+#     shadow — the same def the assay's rows run. default: every grown module and grown assay
 set -u
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -670,7 +672,7 @@ EOF
     if cmp -s "$first" "$out"; then
       echo "the trunk is its own regrowth: ${first} already stands in derived order"
     else
-      echo "the trunk is not in derived order: ${first} differs from its regrowth (bin/counter regrow ${first} --settle)"
+      echo "the trunk is not in derived order: ${first} differs from its regrowth (bin/counter grow ${first} --settle)"
       diff "$first" "$out" | head -20
       exit 1
     fi
@@ -712,7 +714,6 @@ EOF
 }
 
 case "${1:-}" in
-  regrow) shift; regrow_ear "$@" ;;
   grow)
     shift
     if printf '%s\n' "$@" | grep -qx -- '--settle'; then
@@ -731,6 +732,13 @@ case "${1:-}" in
     fi ;;
   probe) shift; CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear --probe "$2" "$1" ;;
   book) shift; exec "$ROOT/bin/.book" "$@" ;;
+  gate)
+    shift
+    if [ $# -eq 0 ]; then
+      set -- $(grep -E '^defaultTargets' lakefile.toml | grep -oE '"[A-Za-z]+"' | tr -d '"' | sed 's|^|grown/|; s|$|.lean|') grown/assays/*.lean
+    fi
+    lake build Counter >/dev/null 2>&1 || { echo "the gate cannot open: Counter (the species it is drawn from) does not build"; exit 1; }
+    exec lake env lean --run "$ROOT/bin/gate.lean" "$@" ;;
   chart) shift; exec "$ROOT/bin/.chart" "$@" ;;
   schema) shift; exec "$ROOT/bin/.schema" "$@" ;;
   treaty) shift; exec "$ROOT/bin/.treaty" "$@" ;;
