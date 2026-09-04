@@ -179,7 +179,10 @@ syntax (name := rwSeek) "piece_rw_seek" (num)? " (" tactic ")" : tactic
 syntax (name := chainSeek) "piece_chain_seek" (num)? (" !")? " (" tactic ")" : tactic
 
 syntax (name := memSeek) "piece_mem_seek" (num)? : tactic
-def isSeek (k : SyntaxNodeKind) : Bool := k == ``seek || k == ``rwSeek || k == ``chainSeek || k == ``memSeek
+/-- a `first` fan of a piece, as a seek over its own alternatives: the branch that closed is recorded,
+so the artifact carries it and not the fan -/
+syntax (name := firstSeek) "piece_first" (num)? withPosition((ppDedent(ppLine) colGe "| " tacticSeq)+) : tactic
+def isSeek (k : SyntaxNodeKind) : Bool := k == ``seek || k == ``rwSeek || k == ``chainSeek || k == ``memSeek || k == ``firstSeek
 def stampOf (stx : Syntax) : Nat := if stx[1].getNumArgs == 0 then 0 else stx[1][0].toNat
 
 initialize seekCounter : IO.Ref Nat ← IO.mkRef 1000000
@@ -205,10 +208,13 @@ partial def substitute (wins : Std.HashMap Nat (Array Syntax)) (stx : Syntax) : 
       if ws.size == 1 then return ws[0]!
       let alts ← ws.mapM fun w => `(tacticSeq| $(TSyntax.mk w):tactic)
       return ← `(tactic| first $[| $alts]*)
-    | none => return ← `(tactic| fail)
+    | none => if stx.getKind == ``firstSeek then return ← `(tactic| skip) else return ← `(tactic| fail)
   match stx with
   | .node i k args =>
     let args ← args.mapM (substitute wins)
+    -- a side-closer fan that never ran (no side goals) reads `<;> skip`: the move stands alone
+    if args.size == 3 && args[1]!.isAtom && args[1]!.getAtomVal == "<;>" && args[2]!.getKind == ``Lean.Parser.Tactic.skip then
+      return args[0]!
     -- an alternative that cannot close (a side search that never fired, a rewrite-then-fail
     -- probe) is dropped from its `first`, so the body reads as the moves that could have
     -- closed it (a `first` keeps at least one alternative)
@@ -257,9 +263,37 @@ elaboration error is logged and the term becomes `sorry`, which would read as a 
 that closes it is recorded under the stamp with its nested winners substituted, so the recorded
 move is exactly what closed; the trace rolls back on every failure, so only the successful path
 is ever recorded -/
+def fresh : TacticM Nat := seekCounter.modifyGet fun n => (n, n + 1)
+
+/-- a sequence of exactly one tactic, as that tactic -/
+def singleTactic? (seq : Syntax) : Option Syntax :=
+  if seq.getKind == ``Lean.Parser.Tactic.tacticSeq && seq[0].getKind == ``Lean.Parser.Tactic.tacticSeq1Indented then
+    let items := seq[0][0].getArgs
+    if items.size == 1 then some items[0]! else none
+  else none
+
+/-- every `first` of a candidate becomes a seek over its own alternatives -/
+partial def firstsToSeeks (stx : Syntax) : MacroM Syntax := do
+  let stx ← match stx with
+    | .node i k args => pure (Syntax.node i k (← args.mapM firstsToSeeks))
+    | _ => pure stx
+  match stx with
+  | `(tactic| first $[| $alts]*) => `(tactic| piece_first $[| $alts]*)
+  | _ => return stx
+
+/-- a seek built at runtime carries no stamp yet: give it one from the counter -/
+partial def freshen (stx : Syntax) : TacticM Syntax := do
+  let stx ← if isSeek stx.getKind && stx[1].getNumArgs == 0 then
+      pure (stx.setArg 1 (mkNullNode #[Syntax.mkNumLit (toString (← fresh))]))
+    else pure stx
+  match stx with
+  | .node i k args => return .node i k (← args.mapM freshen)
+  | _ => return stx
+
 def search (stamp : Nat) (g : MVarId) (cands : Array Tac) : TacticM Bool := do
   let gs ← getGoals
-  for cand in cands do
+  for cand₀ in cands do
+    let cand : Tac := TSyntax.mk (← freshen (← liftMacroM <| firstsToSeeks cand₀.raw))
     let s ← saveState
     let len := (← seekTrace.get).size
     try
@@ -282,7 +316,32 @@ def search (stamp : Nat) (g : MVarId) (cands : Array Tac) : TacticM Bool := do
       seekTrace.modify (·.take len)
   return false
 
-def fresh : TacticM Nat := seekCounter.modifyGet fun n => (n, n + 1)
+
+/-- a fan tried in order, each alternative strict and rolled back on failure exactly as Lean's
+`first` would; the one that ran is recorded under the stamp with its nested winners substituted -/
+@[tactic firstSeek] def evalFirstSeek : Tactic := fun stx => do
+  let stamp := stampOf stx
+  let alts := stx[2].getArgs.map (·[1])
+  for alt in alts do
+    let s ← saveState
+    let len := (← seekTrace.get).size
+    try
+      withoutRecover (evalTactic alt)
+      let trace ← seekTrace.get
+      let mut wins : Std.HashMap Nat (Array Syntax) := {}
+      for (j, w) in trace.extract len trace.size do
+        let cur := wins.getD j #[]
+        if !cur.any (fun x => x.reprint == w.reprint) then wins := wins.insert j (cur.push w)
+      let alt' ← liftMacroM <| substitute wins alt
+      let win ← match singleTactic? alt' with
+        | some t => pure t
+        | none => `(tactic| ($(TSyntax.mk alt'):tacticSeq))
+      seekTrace.modify fun t => (t.take len).push (stamp, win)
+      return
+    catch _ =>
+      s.restore
+      seekTrace.modify (·.take len)
+  throwError "piece_first: no alternative ran"
 
 /-- the cite at this goal: each hypothesis applied (its side goals closed by assumption, rfl, or
 ONE more search at that goal — a leaf, its own sides by assumption or rfl only — because a side
@@ -636,6 +695,7 @@ partial def stamp (stx : Syntax) : StateT Nat MacroM Syntax := do
 elaborated — the expansion is what the module grows; the artifact never imports the pieces -/
 elab "#seat " c:command : command => do
   let c' ← liftMacroM <| expandOurs c
+  let c' ← liftMacroM <| firstsToSeeks c'
   let (c', _) ← liftMacroM <| (stamp c').run 0
   seekTrace.set #[]
   elabCommand c'
