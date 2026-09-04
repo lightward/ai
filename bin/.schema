@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# schema: the data-model shadow of a grown stream, drawn from the proofs — every structure a table,
+# every enum a type, every seat a view over the columns its probes read, and every wall theorem the
+# policy it licenses. the minimum data model for the treaty to hold, never a second copy of it.
+set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+src="${1:?a grown stream: grown/assays/eih.lean}"
+python3 - "$src" <<'PY'
+import re, sys, os
+src = sys.argv[1]
+text = open(src).read()
+ns_m = re.search(r'^namespace ([\w.]+)', text, re.M)
+ns = ns_m.group(1) if ns_m else os.path.splitext(os.path.basename(src))[0]
+snake = lambda n: re.sub(r'(?<!^)(?=[A-Z])', '_', n).lower()
+def sqltype(t):
+    t = t.strip()
+    if t == 'Nat': return 'integer'
+    if t == 'Bool': return 'boolean'
+    if t == 'List Nat': return 'integer[]'
+    m = re.match(r'List \((.+)\)$', t)
+    if m: return ('child', m.group(1))
+    m = re.match(r'List (\w+)$', t)
+    if m: return ('child', m.group(1))
+    return t.lower()
+out = [f'-- the data-model shadow of {src}, drawn from the proofs (bin/counter schema)',
+       f'-- every foreign key is a field; every policy is a theorem; nothing here that the treaty does not need',
+       f'CREATE SCHEMA IF NOT EXISTS {snake(ns.split(".")[0])};', '']
+# enums
+for m in re.finditer(r'^inductive (\w+) where\n((?:  \|[^\n]*\n)+)', text, re.M):
+    name, body = m.group(1), m.group(2)
+    ctors = re.findall(r'\| (\w+)', body)
+    if ctors and all(re.search(r'\| ' + c + r'\s*(\||$)', body) for c in ctors):
+        out.append(f"CREATE TYPE {snake(name)} AS ENUM ({', '.join(repr(c) for c in ctors)});")
+out.append('')
+# structures
+structs = {}
+for m in re.finditer(r'^structure (\w+) where\n((?:  \w+ : [^\n]+\n)+)', text, re.M):
+    name, body = m.group(1), m.group(2)
+    fields = re.findall(r'  (\w+) : ([^\n]+)', body)
+    structs[name] = fields
+    cols, children = [f'  id serial PRIMARY KEY'], []
+    for f, t in fields:
+        st = sqltype(t)
+        if isinstance(st, tuple):
+            children.append((f, st[1]))
+        else:
+            cols.append(f'  {snake(f)} {st} NOT NULL')
+    out.append(f'CREATE TABLE {snake(name)} (\n' + ',\n'.join(cols) + '\n);')
+    for f, elem in children:
+        ecols = []
+        if elem in structs:
+            ecols = [f'  {snake(name)}_id integer NOT NULL REFERENCES {snake(name)}(id)', f'  {snake(elem)}_id integer NOT NULL REFERENCES {snake(elem)}(id)', '  position integer NOT NULL']
+        else:
+            parts = [p.strip() for p in re.split(r'×', elem)]
+            ecols = [f'  {snake(name)}_id integer NOT NULL REFERENCES {snake(name)}(id)', '  position integer NOT NULL'] + [f'  c{i} {sqltype(p) if not isinstance(sqltype(p), tuple) else "integer"} NOT NULL' for i, p in enumerate(parts)]
+        out.append(f'CREATE TABLE {snake(name)}_{snake(f)} (\n' + ',\n'.join(ecols) + '\n);')
+    out.append('')
+# the probe → column map, from a reader defined by match on the probe
+readers = {}
+for m in re.finditer(r'^def (\w+) \((\w+) : (\w+)\) : (\w+) → [^\n]+\n((?:  \| [^\n]+\n)+)', text, re.M):
+    reader, var, table, probe, arms = m.groups()
+    col = {}
+    for a in re.findall(r'  \| \.(\w+) => ' + var + r'\.(\w+)', arms):
+        col[a[0]] = a[1]
+    readers[probe] = (table, col)
+# seats: a view per seat over the columns its probes read; the policy licensed by the wall theorems
+thms = re.findall(r'^theorem (\w+)((?:.|\n)*?)(?=\n  by|\n  fun|\n  \(|\n  ⟨|:= \n| :=\n)', text, re.M)
+seats = re.findall(r'^def (\w+) : List (\w+) := \[([^\]]*)\]', text, re.M)
+for seat, probe, items in seats:
+    if probe not in readers: continue
+    table, col = readers[probe]
+    probes = [p.strip().lstrip('.') for p in items.split(',') if p.strip()]
+    cols = [snake(col[p]) for p in probes if p in col]
+    licensed = [n for n, stmt in thms if seat in stmt]
+    out.append(f'-- {seat}: hears {", ".join(probes)}' + (f'\n-- licensed by ' + ', '.join(licensed) if licensed else ''))
+    out.append(f'CREATE VIEW {snake(table)}_as_{snake(seat)} AS SELECT id, {", ".join(cols)} FROM {snake(table)};')
+    out.append('')
+print('\n'.join(out))
+PY

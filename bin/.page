@@ -48,6 +48,19 @@ def chart_of(path):
     return ('<section><h2>the map of relations — every law a node, an arrow for each citation the elaborator reads (bin/counter chart; without --laws the carriers join the map)</h2>'
             '<pre class="mermaid">' + html.escape(mmd) + '</pre></section>')
 
+def schema_of(path):
+    # the data-model shadow of a grown assay (bin/counter schema): tables, types, a view per seat
+    if not path.startswith('grown/assays/'):
+        return ''
+    try:
+        sql = subprocess.run(['bin/counter', 'schema', path], capture_output=True, text=True).stdout
+    except Exception:
+        sql = ''
+    if not sql.strip():
+        return ''
+    return ('<section><h2>the data-model shadow — every structure a table, every seat a view over the columns its probes read, every wall theorem the policy it licenses (bin/counter schema)</h2>'
+            '<pre>' + html.escape(sql) + '</pre></section>')
+
 def lean_page(path, title):
     src = open(path).read()
     out = []
@@ -58,7 +71,7 @@ def lean_page(path, title):
             out.append(f'<span class="decl" id="{m.group(2)}"><a href="#{m.group(2)}">{esc}</a></span>')
         else:
             out.append(esc)
-    return page(f'{title} — foam', f'<section><h1>{html.escape(title)}</h1><pre>' + '\n'.join(out) + '</pre></section>' + chart_of(path), NAV)
+    return page(f'{title} — foam', f'<section><h1>{html.escape(title)}</h1><pre>' + '\n'.join(out) + '</pre></section>' + chart_of(path) + schema_of(path), NAV)
 
 readme = open('README.md').read()
 def markdown(text):

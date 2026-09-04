@@ -960,6 +960,7 @@ case "${1:-}" in
   probe) shift; CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear --probe "$2" "$1" ;;
   book) shift; exec "$ROOT/bin/.book" "$@" ;;
   chart) shift; exec "$ROOT/bin/.chart" "$@" ;;
+  schema) shift; exec "$ROOT/bin/.schema" "$@" ;;
   page) shift; exec "$ROOT/bin/.page" "$@" ;;
   *) usage ;;
 esac
