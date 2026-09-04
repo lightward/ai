@@ -299,8 +299,12 @@ regrow_ear() {
   fi
   local first="${inputs[0]}"
   local name; name="$(basename "${first%.lean}")"
+  # an assay with instance rows (theorems at concrete carriers) grows like a germ — into
+  # grown/assays/, no lib, nothing imports it; its rows are regrown by search against the trunk
+  local treaty=0; case "$first" in assays/*) treaty=1 ;; esac
   if [ -z "$out" ]; then
-    if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p grown; out="grown/${name}.lean"
+    if [ "$treaty" = 1 ]; then mkdir -p grown/assays; out="grown/assays/${name}.lean"
+    elif [ -n "${CRAWL_GERM:-}" ]; then mkdir -p grown; out="grown/${name}.lean"
     elif [ "$settle" = 1 ]; then out="$first"
     else mkdir -p regrowth; out="regrowth/${name}.lean"; fi
   fi
@@ -314,11 +318,12 @@ regrow_ear() {
       fi
     done
   fi
-  local held="${out%.lean}.held"
-  if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p regrowth; held="regrowth/$(basename "${out%.lean}").held"; fi
+  local held="${out%.lean}.held" stem="$(basename "${out%.lean}")"
+  [ "$treaty" = 1 ] && stem="assays-${stem}"
+  if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p regrowth; held="regrowth/${stem}.held"; fi
 
   local report=""
-  if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p regrowth; report="regrowth/$(basename "${out%.lean}").report"; fi
+  if [ -n "${CRAWL_GERM:-}" ]; then mkdir -p regrowth; report="regrowth/${stem}.report"; fi
   primings="${primings:-${CRAWL_PRIMINGS:-}}"
   if [ -n "$primings" ]; then
     lake build Pieces >/dev/null 2>&1 || { echo "the gate cannot open: the pieces (bin/Pieces.lean) do not build"; lake build Pieces 2>&1 | tail -20; exit 1; }
@@ -344,7 +349,7 @@ def blocks_of(src):
     if not spans:
         return '', [], ''
     header = src[:spans[0][0]]
-    tail_m = re.search(r'\n(end \w+)\s*$', src)
+    tail_m = re.search(r'\n(end [\w.]+)\s*$', src)
     body_end = tail_m.start() + 1 if tail_m else len(src)
     footer = tail_m.group(1) if tail_m else ''
     out = []
@@ -390,7 +395,7 @@ for path in sys.argv[1:]:
             header, footer = h, f
         blocks += b
 header = header or ''
-NS_NAME = (re.search(r'^namespace (\w+)', header, re.M) or re.search(r'^namespace (\w+)', 'namespace Face', re.M)).group(1)
+NS_NAME = (re.search(r'^namespace ([\w.]+)', header, re.M) or re.search(r'^namespace (\w+)', 'namespace Face', re.M)).group(1)
 IMPORTS = [m for m in re.findall(r'^import (\S+)', header, re.M) if m != 'Init']
 SCOPE = [NS_NAME, ','.join(IMPORTS)]
 seated_names = set(n for _, n, _ in blocks)
@@ -532,7 +537,7 @@ if primings_path:
 
     tally = {nm: 0 for nm, _ in primings}
     carried = []
-    ns_m = re.search(r'^namespace (\w+)', header, re.M)
+    ns_m = re.search(r'^namespace ([\w.]+)', header, re.M)
     NS = ns_m.group(1) + '.' if ns_m else ''
 
     def receipt_for(n):
@@ -632,7 +637,7 @@ if primings_path:
             # stands before it is exactly its pool (a search at the goal would otherwise find the
             # theorem citing itself, and what stands after it may cite it)
             m_at = re.search(r'(?m)^theorem ' + re.escape(probe_name) + r'\b', grown_src)
-            grown_lines = [grown_src[:m_at.start()] if m_at else re.sub(r'\nend \w+\s*$', '\n', grown_src)]
+            grown_lines = [grown_src[:m_at.start()] if m_at else re.sub(r'\nend [\w.]+\s*$', '\n', grown_src)]
             for _, n, _ in theorems:
                 if n != probe_name:
                     seated_order.append(n); seated_set.add(n); seated_round[n] = 1
@@ -911,14 +916,21 @@ EOF
   fi
   say "  silent and green: $(grep -c '#guard_msgs' "$out") receipts inline"
 
-  local any=0 f probe assays
+  local any=0 f probe assays src
+  [ "$treaty" = 1 ] && { say "crawl: the treaty grew — its rows stand in ${out}"; return 0; }
   # an assay belongs to the LAST module it imports — the one under test; the rest are its footing
   assays="$(for f in assays/*.lean; do [ "$(grep -E '^import ' "$f" | tail -1 | awk '{print $2}')" = "$name" ] && echo "$f"; done)"
   for f in $assays; do
     [ -f "$f" ] || continue
     if [ "$any" = 0 ]; then say "the treaty vectors (every assay against the regrown trail):"; any=1; fi
+    src="$f"
+    if grep -qE '^theorem ' "$f"; then
+      # an assay with instance rows: grown first (a `sorry` row must never read as identical)
+      ( CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear "$f" ) >/dev/null 2>&1 || { say "  $f: its rows do not grow (bin/counter grow $f)"; exit 1; }
+      src="grown/assays/$(basename "$f")"
+    fi
     probe="$(mktemp /tmp/crawl-assay.XXXXXX).lean"
-    { grep -E '^import ' "$f" | grep -vE "^import ${name}\$"; cat "$out"; echo; grep -vE '^import ' "$f"; } > "$probe"
+    { grep -E '^import ' "$src" | grep -vE "^import ${name}\$"; cat "$out"; echo; grep -vE '^import ' "$src"; } > "$probe"
     if lake env lean "$probe" >/dev/null 2>&1; then say "  $f: identical"
     else say "  $f: PARTS"; rm -f "$probe"; exit 1; fi
     rm -f "$probe"

@@ -64,8 +64,10 @@ def house (env : Environment) (n : Name) : Bool :=
     let r := m.getRoot
     !(r == `Init || r == `Lean || r == `Std || r == `Lake || r == `Pieces)
 
-/-- a top-level theorem of the house: `Ns.name`, never an auxiliary one namespace down -/
-def topLevel (n : Name) : Bool := !n.getPrefix.isAnonymous && n.getPrefix.getPrefix.isAnonymous
+/-- a top-level theorem of the house: `Ns.name` where `Ns` is a namespace, never an auxiliary one
+namespace down (`Face.Plan.rec`, `Face.foo.match_1` — whose prefix is itself a constant) -/
+def topLevel (env : Environment) (n : Name) : Bool :=
+  !n.getPrefix.isAnonymous && !env.contains n.getPrefix
 
 /-- the vocabulary of a type: its constants, and one unfolding through the house's own defs
 (a carrier's value names what the carrier is about) -/
@@ -105,10 +107,10 @@ def pool (env : Environment) : IO Pool := do
     if p.size == size then return p
   let mut ths : Array (Name × NameSet) := #[]
   for (n, ci) in env.constants.map₂.toList do
-    if ci.isTheorem && topLevel n && (n.toString.splitOn "__p").length == 1 then
+    if ci.isTheorem && topLevel env n && (n.toString.splitOn "__p").length == 1 then
       ths := ths.push (n, vocab env ci.type)
   for (n, ci) in env.constants.map₁.toList do
-    if ci.isTheorem && topLevel n && house env n then
+    if ci.isTheorem && topLevel env n && house env n then
       ths := ths.push (n, vocab env ci.type)
   let mut df : Std.HashMap Name Nat := {}
   for (_, k) in ths do

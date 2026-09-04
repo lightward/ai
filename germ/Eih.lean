@@ -145,15 +145,6 @@ theorem the_guests_touch_only_the_guests (r : Room) (gl : List Party) :
     differOnly roomFace (withGuests r gl) r .guests :=
   fun q hq => by cases q <;> first | rfl | exact absurd rfl hq
 
-theorem linda_never_sees_the_ledger (r : Room) (e : Nat × Nat × Nat) :
-    reads roomFace lindaSeat (withLine r e) = reads roomFace lindaSeat r := sorry
-
-theorem the_caterer_never_sees_the_ledger (r : Room) (e : Nat × Nat × Nat) :
-    reads roomFace catererSeat (withLine r e) = reads roomFace catererSeat r := sorry
-
-theorem the_caterer_never_sees_the_guests (r : Room) (gl : List Party) :
-    reads roomFace catererSeat (withGuests r gl) = reads roomFace catererSeat r := sorry
-
 theorem a_vendor_never_sees_anothers_invoice (v w : Nat) (hvw : Nat.beq w v = false) (r : Room)
     (amount to : Nat) :
     alike (vendorFace v) (withLine r (w, to, amount)) r := by
@@ -165,50 +156,10 @@ theorem a_vendor_never_sees_anothers_invoice (v w : Nat) (hvw : Nat.beq w v = fa
         = (r.ledger.filter (fun e => Nat.beq e.1 v)).map (·.2.2)
       rw [List.filter, hvw]
 
-theorem the_bach_parts_the_best_man (r : Room) (b : List Nat) (hb : b ≠ r.bach) :
-    reads roomFace bestManSeat (withBach r b) ≠ reads roomFace bestManSeat r :=
-  the_seat_that_hears_it_reads_it roomFace (x := withBach r b) (y := r) (p := .bach) hb bestManSeat (List.Mem.tail _ (List.Mem.head _))
-
-theorem the_receipt_parts_the_room (r : Room) (c : List Nat) (hc : c ≠ r.confirmed) :
-    reads roomFace roomSeat (withConfirmed r c) ≠ reads roomFace roomSeat r :=
-  the_seat_that_hears_it_reads_it roomFace (x := withConfirmed r c) (y := r) (p := .confirmed) hc roomSeat
-    (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))))
-
 theorem an_ask_reads_itself : ∀ q : Ask, Ask.beq q q = true := sorry
-
-theorem the_room_covers_itself : covers roomFace [roomSeat] := sorry
-
-theorem the_room_witnesses_the_license (x y : Room)
-    (hw : witnessed roomFace [roomSeat] x y) : alike roomFace x y := sorry
-
-theorem the_caterer_reads_the_delivery (r : Room) :
-    readRoom (deliver r) .sheet = sheet r.guests := sorry
-
-theorem a_file_is_never_wider_than_its_channel (f : File) (m : Nat) :
-    visible f m ↔ m ∈ f.channel.audience := sorry
-
-theorem join_and_pay_are_unrelated : ∀ ρ : Role, joinsFree ρ = true := sorry
-
-theorem the_party_never_pays : pays .party = false := sorry
-
-theorem lanes_shrink_never_lock : dayOfView.all (enrolled Nat.beq partnerView) = true := sorry
-
-theorem the_maker_sees_shape_not_content (r : Room) (gl gl' : List Party)
-    (h : gl.length = gl'.length) : alike makerFace (withGuests r gl) (withGuests r gl') := sorry
-
-theorem the_bach_wall (r : Room) (b : List Nat) (hb : b ≠ r.bach) :
-    reads roomFace coupleSeat (withBach r b) = reads roomFace coupleSeat r
-      ∧ reads roomFace bestManSeat (withBach r b) ≠ reads roomFace bestManSeat r := sorry
-
-theorem the_room_alone_holds_the_receipt (r : Room) (c : List Nat) (hc : c ≠ r.confirmed) :
-    reads roomFace coupleSeat (withConfirmed r c) = reads roomFace coupleSeat r
-      ∧ reads roomFace lindaSeat (withConfirmed r c) = reads roomFace lindaSeat r
-      ∧ reads roomFace roomSeat (withConfirmed r c) ≠ reads roomFace roomSeat r := sorry
 
 theorem a_quiet_seat_does_not_hear_it (s : List Ask) (p : Ask) (h : enrolled Ask.beq s p = false) :
     ¬ hears roomFace s p := sorry
-
-theorem no_human_hears_the_receipt : ¬ hears roomFace (earshot roomFace humanSeats) .confirmed := sorry
 
 theorem everyone_clear_means_rose_ate (r : Room) (members : List Nat) (h : allClear r members)
     {p : Party} (hp : p ∈ r.guests) (hr : p.rsvp = true) {m : Nat} (hm : m ∈ p.meals) :
@@ -218,21 +169,5 @@ theorem everyone_clear_means_rose_ate (r : Room) (members : List Nat) (h : allCl
 
 theorem reseating_keeps_the_sheets_count {gl gl' : List Party} (h : gl.Perm gl') :
     (sheet gl).length = (sheet gl').length := sorry
-
-theorem the_humans_witness_no_license (r : Room) (c : List Nat) (hc : c ≠ r.confirmed) :
-    witnessed roomFace humanSeats (withConfirmed r c) r ∧ ¬ alike roomFace (withConfirmed r c) r := by
-  refine ⟨fun s hs => ?_, fun ha => hc (ha .confirmed)⟩
-  refine a_wall_hides_the_probe roomFace (the_receipt_touches_only_the_receipt r c) s ?_
-  exact fun hp => no_human_hears_the_receipt (mem_joinMap_intro hs hp)
-
-theorem everyone_is_here (r : Room) (members : List Nat) (h : allClear r members)
-    {p : Party} (hp : p ∈ r.guests) (hr : p.rsvp = true) {m : Nat} (hm : m ∈ p.meals)
-    (c : List Nat) (hc : c ≠ r.confirmed) {gl gl' : List Party} (hperm : gl.Perm gl') :
-    m ∈ r.delivered
-      ∧ (∀ x, x ∈ members → enrolled Nat.beq r.confirmed x = true)
-      ∧ (sheet r.guests).length = heads r.guests
-      ∧ heads gl = heads gl'
-      ∧ reads roomFace roomSeat (withConfirmed r c) ≠ reads roomFace roomSeat r
-      ∧ witnessed roomFace humanSeats (withConfirmed r c) r := sorry
 
 end Eih
