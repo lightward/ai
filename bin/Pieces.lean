@@ -112,12 +112,30 @@ def pool (env : Environment) : IO Pool := do
 def weight (p : Pool) (c : Name) : Float :=
   Float.log ((p.n.toFloat + 1) / ((p.df.getD c 0).toFloat + 1))
 
+/-- the conclusion of a type: what stands after its binders -/
+partial def conclusion : Expr → Expr
+  | .forallE _ _ b _ => conclusion b
+  | e => e
+
+/-- the logical head of a conclusion, as a class: `Eq`, `Ne`/`Not`, `And`, `Or`, `Iff`; a theorem
+whose conclusion's class differs from the goal's cannot `apply` — filtered before the cap, so
+that siblings sharing a goal's rare words do not crowd out the one lemma of the right shape -/
+def headClass (e : Expr) : Option Name :=
+  match (conclusion e).getAppFn.constName? with
+  | some ``Eq => some ``Eq
+  | some ``Ne => some ``Not
+  | some ``Not => some ``Not
+  | some ``And => some ``And
+  | some ``Or => some ``Or
+  | some ``Iff => some ``Iff
+  | _ => none
+
 /-- the citations in reach of a goal: shared rarity normalized by the candidate's own vocabulary
 (a tight lemma that shares most of its words outranks a crown that shares a few of its many) -/
-def inReach (p : Pool) (goal : NameSet) (exclude : Name) : Array Name := Id.run do
+def inReach (p : Pool) (goal : NameSet) (exclude : Name) (keep : Name → Bool := fun _ => true) : Array Name := Id.run do
   let mut scored : Array (Float × Name) := #[]
   for (t, k) in p.theorems do
-    if t == exclude then continue
+    if t == exclude || !keep t then continue
     let shared := k.toList.foldl (fun a c => if goal.contains c then a + weight p c else a) 0.0
     if shared == 0.0 then continue
     let own := k.toList.foldl (fun a c => a + weight p c) 0.0
@@ -129,7 +147,8 @@ syntax (name := seek) "piece_seek" (num)? (" !")? : tactic
 syntax (name := rwSeek) "piece_rw_seek" (num)? " (" tactic ")" : tactic
 syntax (name := chainSeek) "piece_chain_seek" (num)? (" !")? " (" tactic ")" : tactic
 
-def isSeek (k : SyntaxNodeKind) : Bool := k == ``seek || k == ``rwSeek || k == ``chainSeek
+syntax (name := memSeek) "piece_mem_seek" (num)? : tactic
+def isSeek (k : SyntaxNodeKind) : Bool := k == ``seek || k == ``rwSeek || k == ``chainSeek || k == ``memSeek
 def stampOf (stx : Syntax) : Nat := if stx[1].getNumArgs == 0 then 0 else stx[1][0].toNat
 
 initialize seekCounter : IO.Ref Nat ← IO.mkRef 1000000
@@ -162,11 +181,6 @@ partial def substitute (wins : Std.HashMap Nat (Array Syntax)) (stx : Syntax) : 
         return .node i k #[args[0]!, args[1]!.setArgs kept]
     return .node i k args
   | _ => return stx
-
-/-- the conclusion of a type: what stands after its binders -/
-partial def conclusion : Expr → Expr
-  | .forallE _ _ b _ => conclusion b
-  | e => e
 
 def isEqn (e : Expr) : Bool := let c := conclusion e; c.isAppOf ``Eq || c.isAppOf ``Iff
 
@@ -244,7 +258,11 @@ likewise; a def-typed hypothesis hides its ∀ from `apply`, so `exact h _` besi
   let p ← pool (← getEnv)
   let hyps := si.hyps.map (·.1)
   let env ← getEnv
-  let reach := inReach p si.key si.self
+  let goalHead := headClass (← instantiateMVars (← g.getType))
+  let reach := inReach p si.key si.self (fun t =>
+    match goalHead, (env.find? t).bind (fun ci => headClass ci.type) with
+    | some gh, some th => gh == th || th == ``And   -- a conjunction's projections may match
+    | _, _ => true)
   let cites := reach.map (fun t => mkIdent (nameFor si.ns t))
   let names := hyps ++ cites
   -- a conjunction, cited or held, is closed through its projections: `h.2`, `(t _ _).2.2` —
@@ -259,8 +277,8 @@ likewise; a def-typed hypothesis hides its ∀ from `apply`, so `exact h _` besi
   let mut cands : Array Tac := #[]
   for t in names do
     let k ← fresh
-    let side ← if leaf then `(tactic| first | assumption | rfl)
-               else `(tactic| first | assumption | rfl | piece_seek $(Syntax.mkNumLit (toString k)):num !)
+    let side ← if leaf then `(tactic| first | assumption | rfl | decide | piece_mem_seek $(Syntax.mkNumLit (toString k)):num)
+               else `(tactic| first | assumption | rfl | decide | piece_mem_seek $(Syntax.mkNumLit (toString k)):num | piece_seek $(Syntax.mkNumLit (toString k)):num !)
     cands := cands.push (← `(tactic| (apply $t <;> $side)))
     let isHyp := hyps.any (·.getId == t.getId)
     if isHyp then cands := cands.push (← `(tactic| (exact $t _)))
@@ -285,6 +303,19 @@ likewise; a def-typed hypothesis hides its ∀ from `apply`, so `exact h _` besi
           cands := cands.push (← `(tactic| (apply $e <;> $side)))
   if ← search stamp g cands then return
   throwError "piece_seek: nothing in reach closes{indentExpr (← g.getType)}\ntried: {names.map (·.getId)}"
+
+/-- a membership at this goal, from its constructors: the head, or the tail of a membership one
+deeper — recorded as the constructor term it found, up to twelve deep -/
+@[tactic memSeek] def evalMemSeek : Tactic := fun stx => do
+  let stamp := stampOf stx
+  let g ← getMainGoal
+  let mut cands : Array Tac := #[]
+  let mut inner : Tac ← `(tactic| exact List.Mem.head _)
+  for _ in [0:12] do
+    cands := cands.push inner
+    inner ← `(tactic| (apply List.Mem.tail; $inner:tactic))
+  if ← search stamp g cands then return
+  throwError "piece_mem_seek: no membership by constructors closes{indentExpr (← g.getType)}"
 
 /-- the rewrite at this goal: each equation-shaped hypothesis, then each equation or iff in reach,
 as an ATOMIC alternative with the piece's own closers after it — a rewrite that lands in the
@@ -329,8 +360,8 @@ or `.symm.trans` with the piece's own closers — `(c2 _ _).trans (c1 _ _)` -/
       let app ← `(($t $holes*))
       -- `apply`, not `exact`: an explicit proof argument the unifier cannot fill (a hypothesis
       -- `h : gl.Perm gl'`) stays a side goal, and assumption closes it
-      cands := cands.push (← `(tactic| (apply ($app).trans (by $closers:tactic) <;> first | assumption | rfl)))
-      cands := cands.push (← `(tactic| (apply ($app).symm.trans (by $closers:tactic) <;> first | assumption | rfl)))
+      cands := cands.push (← `(tactic| (apply ($app).trans (by $closers:tactic) <;> first | assumption | rfl | decide)))
+      cands := cands.push (← `(tactic| (apply ($app).symm.trans (by $closers:tactic) <;> first | assumption | rfl | decide)))
   if ← search stamp g cands then return
   throwError "piece_chain_seek: no chain in reach closes{indentExpr (← g.getType)}\ntried: {names.map (·.getId)}"
 
@@ -540,6 +571,14 @@ elab "#seat " c:command : command => do
   let (c', _) ← liftMacroM <| (stamp c').run 0
   seekTrace.set #[]
   elabCommand c'
+  -- the vow at the trial: a candidate that seats on an axiom (`decide` through a derived
+  -- `DecidableEq` smuggles `propext`) is refused here, not at the artifact's gate
+  if let some declId := c'.find? (·.isOfKind ``Lean.Parser.Command.declId) then
+    let name := (← getCurrNamespace) ++ declId[0].getId
+    if (← getEnv).contains name then
+      let axioms ← collectAxioms name
+      if !axioms.isEmpty then
+        throwError "{name} depends on axioms: {axioms}"
   let trace ← seekTrace.get
   let mut wins : Std.HashMap Nat (Array Syntax) := {}
   for (k, w) in trace do

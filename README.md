@@ -18,10 +18,11 @@ foam is a type system holding itself together under measurement: a trunk of theo
 ```
 germ/Room.lean     the counting: everything that mentions no face — rooms, wheels, orders, the turnstile
 germ/Face.lean     the seeing: faces, doors, machines, sheets; it imports Room
+germ/Witness.lean  the witnessing: seats over one face, walls, receipts, the group-witness of a license; on Face
 germ/Toy.lean      a customer's germ — it imports Face and stands on it
 germ/Counter.lean  the compiler's own conduct, as a customer of Room
 germ/Seek.lean     the compiler's search as a machine, as a customer of Face
-germ/Eih.lean      EVERYONE IS HERE — a wedding's room as faces over one state, as a customer of Face
+germ/Eih.lean      EVERYONE IS HERE — a wedding's room as seats over one face, as a customer of Witness
 bin/Pieces.lean    the ordered moves the compiler tries — Lean proof shapes that are also rules, as Lean macros
 bin/counter        the compiler: grow · settle · check · ride · book · page
 bin/judge.lean     Lean judging Lean in-process; counter's eyes
@@ -92,7 +93,7 @@ this is the floor a custodian stands on: state what you see about your own domai
 
 ## the assays
 
-`assays/<arc>.lean` — one per arc that grew the trunk (catalan: 1 1 2 5 14; factorial; even-money; isaac; entanglement; book; odometer; alternation; seat; lift; stream; width; concord; handshake; turnstile), one for the toy, two for the compiler (its admission loop, its search), one for EVERYONE IS HERE (the demo's cast as data). each is a handful of `#guard` rows, and belongs to the module it imports last — six of them (alternation, book, even-money, factorial, odometer, turnstile) import only `Room`, which is how the split was checked. one convention, learned the expensive way: read every value out through a typed `def` (`def threeTicks : Nat := behavior counter [(), (), ()]`) before you `#guard` it — a literal or a `==` at a derived type like `counter.S` or `F.Ans` has no instance to find, and the row parts for that reason and no other. any growth of that module must compute every one of them identically; that is the certificate of identity and the integration suite in one. the arcs' journals — germ, witness, tolls — stand in the chrysalis with the rest of the process that grew them.
+`assays/<arc>.lean` — one per arc that grew the trunk (catalan: 1 1 2 5 14; factorial; even-money; isaac; entanglement; book; odometer; alternation; seat; lift; stream; width; concord; handshake; turnstile), one for the toy, two for the compiler (its admission loop, its search), one for Witness, one for EVERYONE IS HERE (the demo's cast as data). each is a handful of `#guard` rows, and belongs to the module it imports last — six of them (alternation, book, even-money, factorial, odometer, turnstile) import only `Room`, which is how the split was checked. one convention, learned the expensive way: read every value out through a typed `def` (`def threeTicks : Nat := behavior counter [(), (), ()]`) before you `#guard` it — a literal or a `==` at a derived type like `counter.S` or `F.Ans` has no instance to find, and the row parts for that reason and no other. any growth of that module must compute every one of them identically; that is the certificate of identity and the integration suite in one. the arcs' journals — germ, witness, tolls — stand in the chrysalis with the rest of the process that grew them.
 
 ## the book, and the ride
 
