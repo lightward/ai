@@ -17,7 +17,7 @@ ns = ns_m.group(1) if ns_m else os.path.splitext(os.path.basename(src))[0]
 res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'schema', src, ns, ','.join(imports)], capture_output=True, text=True)
 snake = lambda n: re.sub(r'(?<!^)(?=[A-Z])', '_', n.rsplit('.', 1)[-1]).lower()
 strip = lambda t: re.sub(r'\.\{[^}]*\}', '', t)
-tables, types, seats, readers, cites, derived = {}, {}, {}, {}, {}, []
+tables, types, seats, readers, cites, derived, rules = {}, {}, {}, {}, {}, [], []
 for l in res.stdout.splitlines():
     parts = l.split()
     if not parts: continue
@@ -32,6 +32,9 @@ for l in res.stdout.splitlines():
         readers[parts[3]] = (parts[2], dict(a.split('=') for a in parts[4:]))
     elif parts[0] == 'cites':
         for seat in set(parts[2:]): cites.setdefault(seat, []).append(parts[1])
+    elif parts[0] == 'rule':
+        m = re.match(r'rule (\S+) depth=(\d+) ret=(\S+) params=(\S*) :: (.*)$', l)
+        if m: rules.append((m.group(1), int(m.group(2)), m.group(3), m.group(4).split(','), m.group(5)))
     elif parts[0] == 'derived':
         m = re.match(r'derived (\S+) (\S+) over=(.+?) args=(\d+)(?: argtypes=(\S*))? :: (.*?) \| ?(.*?)(?: @by (\S+))?$', l)
         if m: derived.append((m.group(1), m.group(2), m.group(3), int(m.group(4)), m.group(6), m.group(7).split() + ([f'(drawn by {m.group(8)})'] if m.group(8) else []), [t for t in (m.group(5) or '').split(',') if t]))
@@ -141,8 +144,17 @@ def sqlexpr(expr, table):
         return (f'(SELECT array_agg(m ORDER BY c.position) FROM {table}_{snake(child)} c JOIN party p ON p.id = c.party_id, '
                 f'unnest(p.{snake(f.split(".")[-1])}) m WHERE p.{snake(q.split(".")[-1])})')
     e = re.sub(r'AGG\[(?:\$0|\w+)\.(\w+) → (?:\$0|\w+)\.(\w+)\]\(([\w.]+)\)', agg, e)
+    e = re.sub(r'(?<![\[\w])row\b(?!\.)', f'{table}.id', e)   # the row passed whole is passed as its id
     return e
 rank = {'data': 0, 'prop': 1, 'clerk': 2}
+# the rules: a def over an enum, read by reducing it at each constructor or as its body over
+# positional parameters; emitted first, since the checks call them
+for name, depth, ret, params, expr in rules:
+    body = re.sub(r'\$(\d+)', lambda m: f'${depth - int(m.group(1))}', expr)
+    if ret in types.values() or ret in [snake(t) for t in types]: body = f'({body})::{ret}'
+    out.append(f'-- {name}: a rule over {params[0]}, derived, never stored')
+    out.append(f'CREATE FUNCTION {snake(name)}({", ".join(params)}) RETURNS {ret} LANGUAGE sql IMMUTABLE AS $$\n  SELECT {body} $$;')
+    out.append('')
 for name, kind, over, nargs, expr, describers, argtypes in sorted(derived, key=lambda d: rank.get(d[1], 3)):
     over_list = over.startswith('List ')
     if over.replace('List ', '') not in tables:
@@ -193,12 +205,13 @@ for name, kind, over, nargs, expr, describers, argtypes in sorted(derived, key=l
     else:
         out.append(f'-- {name}: derived, never stored{desc}')
         if over_list:
-            body = sqlexpr(expr.replace('(row)', '($1)') if 'AGG' not in expr else expr, table)
+            body = sqlexpr(re.sub(r'(?<!\[)\brow\b(?!\.)', '$1', expr) if 'AGG' not in expr else expr, table)
             if nargs == 1: body = re.sub(r'\barg\d+\b|\brow\b', '$1', body)   # the one argument is the list itself
             ret = 'integer' if body.startswith('cardinality') else 'integer[]'
             out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS {ret} LANGUAGE sql STABLE AS $$\n  SELECT {body} $$;')
         else:
-            out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS integer[] LANGUAGE sql STABLE AS $$\n  SELECT {sqlexpr(expr, table)} FROM {table} WHERE id = $1 $$;')
+            ret = 'integer' if expr.startswith('cardinality') else 'integer[]'
+            out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS {ret} LANGUAGE sql STABLE AS $$\n  SELECT {sqlexpr(expr, table)} FROM {table} WHERE id = $1 $$;')
     out.append('')
 print('\n'.join(out))
 PY

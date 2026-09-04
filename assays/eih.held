@@ -35,11 +35,6 @@ theorem the_pricing_rule_is_two_lines : (∀ ρ, joinsFree ρ = true) ∧ pays .
 theorem the_day_of_sheet_has_an_editor (ρ : Role) : edits ρ .dayOf = true := sorry
 -- end
 
--- held (waiting on: the treaty's translator. the row, in the customer's words: a file attached in the Vendor room; the couple's Files page; expected absent. visible is proved and drawn; a Channel and a File have no seating in the replay.)
-theorem a_vendor_room_file_is_absent_from_the_couples_files (f : File) (couple : Nat)
-    (h : ¬ couple ∈ f.channel.audience) : ¬ visible f couple := sorry
--- end
-
 -- held (waiting on: the product that spans rooms. My season is confirmed as a seat over many rooms: nobody but the vendor sees it, nothing on it exceeds the vendor's slice of each room, and one aggregate is allowed — what they are owed and what they have been paid, summed over their own invoices. the next diagonal, Face at a list of rooms.)
 theorem a_season_is_a_seat_over_many_rooms (rs : List Room) (v : Nat) :
     (rs.map (fun r => (vendorFace v).obs r .mine)).length = rs.length := sorry

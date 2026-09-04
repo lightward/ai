@@ -74,6 +74,8 @@ structure File where
 
 def visible (f : File) (m : Nat) : Prop := m ∈ f.channel.audience
 
+def canSee (f : File) (m : Nat) : Bool := enrolled Nat.beq f.channel.audience m
+
 inductive Role where
   | couple | planner | vendor | venue | party
 
@@ -254,6 +256,10 @@ def strayBill : Bill := ⟨.season, .couple⟩
 #guard sees .venue .floorPlan && edits .venue .floorPlan && !(sees .venue .guestList)
 #guard sees .vendor .floorPlan && !(edits .vendor .floorPlan)
 #guard pays .venue && joinsFree .venue && !(pays .party)
+def vendorRoomChannel : Channel := ⟨[7, 8, 9]⟩
+def vendorRoomFile : File := ⟨vendorRoomChannel⟩
+#guard !(canSee vendorRoomFile maya)
+#guard canSee vendorRoomFile jordan
 
 theorem the_delivery_is_the_sheet (r : Room) : (deliver r).delivered = sheet r.guests := sorry
 
@@ -316,6 +322,10 @@ theorem the_caterer_reads_the_delivery (r : Room) :
 
 theorem a_file_is_never_wider_than_its_channel (f : File) (m : Nat) :
     visible f m ↔ m ∈ f.channel.audience := sorry
+
+theorem a_vendor_room_file_is_absent_from_the_couples_files (f : File) (couple : Nat)
+    (h : canSee f couple = false) : ¬ visible f couple :=
+  the_unenrolled_are_no_member Nat.beq beq_self f.channel.audience couple h
 
 theorem join_and_pay_are_unrelated : ∀ ρ : Role, joinsFree ρ = true := sorry
 

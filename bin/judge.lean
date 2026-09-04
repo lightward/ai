@@ -197,31 +197,77 @@ partial def listItems (e : Expr) : Option (List Name) :=
     | some c, some rest => some (c :: rest) | _, _ => none
   else none
 
+/-- an enum, by name -/
+def isEnumName (env : Environment) (n : Name) : Bool :=
+  match env.find? n with
+  | some (.inductInfo ii) => !ii.isRec && ii.ctors.all fun c => match env.find? c with
+    | some (.ctorInfo ci) => ci.numFields == 0 | _ => false
+  | _ => false
+
+/-- an enum's SQL type: its short name in snake case -/
+def enumSQL (n : Name) : String := Id.run do
+  let mut out := ""
+  for c in n.getString!.toList do
+    if c.isUpper then out := out ++ (if out.isEmpty then "" else "_") ++ toString c.toLower else out := out.push c
+  return out
+
+/-- a literal list: the cons chain to its nil, with the element type -/
+partial def listLiteral? (e : Expr) : Option (List Expr × Expr) :=
+  if e.isAppOfArity ``List.nil 1 then some ([], e.getArg! 0)
+  else if e.isAppOfArity ``List.cons 3 then
+    (listLiteral? (e.getArg! 2)).map fun (xs, t) => (e.getArg! 1 :: xs, t)
+  else none
+
 /-- a fragment of the list vocabulary, read into SQL: projections are columns, `cons` prepends,
 a house def is a call, `And`/`Eq`/`∈` are themselves, `cond` is `CASE`, and the joinMap-over-a-cond
 shape is an aggregate over the child rows; anything outside the fragment is marked unread -/
 partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
   let go := toSQL env self
   let col (c : Name) := c.getString!
+  -- the element type of an array, for an empty one
+  let elemSQL (t : Expr) : String := match t.constName? with
+    | some ``Nat => "integer" | some ``Bool => "boolean"
+    | some c => if isEnumName env c then enumSQL c else "integer"
+    | none => "integer"
+  -- a predicate applied to the element `x` of an array
+  let pred (p : Expr) : String := match p with
+    | .lam _ _ body _ => toSQL env self (body.instantiate1 (.const `x []))
+    | _ => go (mkApp p (.const `x []))
   match e with
   | .bvar i => if i == self then "row" else s!"${i}"
   | .const ``Bool.true _ => "true"
   | .const ``Bool.false _ => "false"
   | .const ``List.nil _ => "ARRAY[]::integer[]"
+  | .const `x _ => "x"
+  | .const c _ =>
+    -- a constructor of an enum is its literal
+    match env.find? c with
+    | some (.ctorInfo ci) => if isEnumName env ci.induct then s!"'{c.getString!}'" else s!"⟨unread {c}⟩"
+    | _ => s!"⟨unread {c}⟩"
   | .app .. =>
     let f := e.getAppFn; let args := e.getAppArgs
+    match listLiteral? e with
+    | some ([], t) => s!"ARRAY[]::{elemSQL t}[]"
+    | some (xs, t) => s!"ARRAY[{", ".intercalate (xs.map go)}]::{elemSQL t}[]"
+    | none =>
     match f.constName?, args.size with
     | some ``And, 2 => s!"({go args[0]!} AND {go args[1]!})"
+    | some ``Bool.and, 2 => s!"({go args[0]!} AND {go args[1]!})"
+    | some ``Bool.or, 2 => s!"({go args[0]!} OR {go args[1]!})"
+    | some ``Bool.not, 1 => s!"(NOT {go args[0]!})"
     | some ``Eq, 3 => s!"({go args[1]!} = {go args[2]!})"
-    -- the list cast to an array: a subselect inside ANY would otherwise read as the row form
-    | some ``Membership.mem, 5 => s!"({go args[4]!} = ANY(({go args[3]!})::integer[]))"
+    -- a membership through a subquery, so any element type reads and a subselect is not the row form
+    | some ``Membership.mem, 5 => s!"({go args[4]!} = ANY(SELECT unnest({go args[3]!})))"
     | some ``List.cons, 3 => s!"array_prepend({go args[1]!}, {go args[2]!})"
     | some ``cond, 4 => s!"(CASE WHEN {go args[1]!} THEN {go args[2]!} ELSE {go args[3]!} END)"
     | some ``List.length, 2 => s!"cardinality({go args[1]!})"
+    | some ``List.filter, 3 => s!"ARRAY(SELECT x FROM unnest({go args[2]!}) WITH ORDINALITY AS u(x, o) WHERE {pred args[1]!} ORDER BY o)"
     | some ``Nat.beq, 2 => s!"({go args[0]!} = {go args[1]!})"
+    | some ``Nat.ble, 2 => s!"({go args[0]!} <= {go args[1]!})"
+    | some ``HAdd.hAdd, 6 => s!"({go args[4]!} + {go args[5]!})"
     | some `Room.everyone, 3 => s!"({go args[1]!} <@ {go args[2]!})"   -- every member enrolled: containment
-    | some `Room.backed, 3 => s!"({go args[2]!} <@ {go args[1]!})"
-    | some `Room.enrolled, 3 => s!"({go args[2]!} = ANY(({go args[1]!})::integer[]))"
+    | some `Room.backed, 4 => s!"({go args[3]!} <@ {go args[2]!})"
+    | some `Room.enrolled, 4 => s!"({go args[3]!} = ANY(SELECT unnest({go args[2]!})))"
     | some `Room.joinMap, n =>
       -- joinMap (fun p => cond p.q p.f []) xs: the rows of xs where q, their f's flattened in order;
       -- with xs left implicit (a bare `joinMap f`), the rows are the argument itself
@@ -234,8 +280,11 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
       if isStructure env c.getPrefix && (getStructureFields env c.getPrefix).contains c.getString!.toName then
         -- a projection: `row.field`, or a column of an argument
         s!"{go args[args.size - 1]!}.{col c}"
+      else if c.getString! == "beq" && isEnumName env c.getPrefix && args.size == 2 then
+        s!"({go args[0]!} = {go args[1]!})"
       else if c.getPrefix == `Room || c.getPrefix == `Roster || c.getPrefix.getString! == "Treaty" then
-        s!"{c.getString!}({", ".intercalate (args.toList.filter (fun a => !a.isConst) |>.map go)})"
+        -- a house call; a bare function argument (a comparator) is not a column
+        s!"{c.getString!}({", ".intercalate (args.toList.filter (fun a => !(a.isConst || a.isLambda)) |>.map go)})"
       else s!"⟨unread {c}⟩"
     | none, _ => s!"⟨unread⟩"
   | .proj sn i b => match (getStructureFields env sn)[i]? with
@@ -358,8 +407,10 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
     let sqlTy (t : String) : String :=
       let t := (shed t).trimAscii.toString
       if t == "Nat" then "integer" else if t == "Bool" then "boolean"
+      else if t.startsWith "List " && isEnumName env (t.drop 5).trimAscii.toString.toName then enumSQL (t.drop 5).trimAscii.toString.toName ++ "[]"
       else if t.startsWith "List " then "integer[]"
       else if (t.splitOn "×").length > 1 then "integer[]"
+      else if isEnumName env t.toName then enumSQL t.toName
       else if isStructure env t.toName then "integer" else "integer[]"
     let argtypes := ",".intercalate ((args.toList.drop 1).map fun a => sqlTy ((a.splitOn ":").getD 1 ""))
     let over := firstTy.splitOn " " |>.headD ""
@@ -367,8 +418,29 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
     let listOf := (firstTy.startsWith "List ") && isStructure env ((firstTy.drop 5).trimAscii.toString.toName)
     let overName := if listOf then (firstTy.drop 5).trimAscii.toString.toName else over.toName
     let isTable := !listOf && isStructure env overName
+    -- a def over an enum is a rule: read by reducing it at each constructor (one argument), or as
+    -- its body over positional parameters (more)
+    if isEnumName env overName then
+      let retSQL := sqlTy s!"{ty}"
+      let params := ",".intercalate (args.toList.map fun a => sqlTy ((a.splitOn ":").getD 1 ""))
+      let some (.inductInfo ii) := env.find? overName | continue
+      if args.size == 1 then
+        let arms ← (Meta.MetaM.toIO (ctxCore := { fileName := trail, fileMap := default }) (sCore := { env := env }) do
+          let mut arms : Array String := #[]
+          for c in ii.ctors do
+            let e ← Meta.whnf (mkAppN (.const n []) #[.const c []])
+            let e ← Meta.reduce e (skipTypes := true) (skipProofs := true)
+            arms := arms.push s!"WHEN '{c.getString!}' THEN {toSQL env 1000 e}"
+          pure arms)
+        IO.println s!"rule {n.getString!} depth=1 ret={retSQL} params={params} :: CASE $0 {" ".intercalate arms.1.toList} END"
+      else
+        let mut body := v
+        let mut depth := 0
+        while body.isLambda do body := body.bindingBody!; depth := depth + 1
+        IO.println s!"rule {n.getString!} depth={depth} ret={retSQL} params={params} :: {toSQL env 1000 body}"
+      continue
     if !(isTable || listOf) then continue
-    let kind := if ty.isProp then "prop" else if ty.isSort then "sort" else if isTable && ty.getAppFn.constName? == some overName then "clerk" else "data"
+    let kind := if ty.isProp || ty.isConstOf ``Bool then "prop" else if ty.isSort then "sort" else if isTable && ty.getAppFn.constName? == some overName then "clerk" else "data"
     let mut body := v
     let mut depth := 0
     while body.isLambda do body := body.bindingBody!; depth := depth + 1

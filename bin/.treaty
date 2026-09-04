@@ -19,124 +19,285 @@ q postgres -c "CREATE DATABASE ${db}" >/dev/null || { echo "treaty: no database 
 bin/counter schema "$grown" > "/tmp/treaty-${stem}.sql"
 load="$(q "$db" -f "/tmp/treaty-${stem}.sql" 2>&1)"
 if echo "$load" | grep -q ERROR; then echo "treaty: the shadow does not load"; echo "$load" | grep ERROR | head -5; exit 1; fi
-python3 - "$assay" "$db" "$PGSOCK" "$PGPORT" "$PGUSER" <<'PY'
+python3 - "$assay" "$db" "$PGSOCK" "$PGPORT" "$PGUSER" "$grown" "/tmp/treaty-${stem}.sql" <<'PY2'
 import re, subprocess, sys
-assay, db, sock, port, user = sys.argv[1:6]
+assay, db, sock, port, user, grown, sqlfile = sys.argv[1:8]
 text = open(assay).read()
 def q(sql):
     r = subprocess.run(['psql', '-h', sock, '-p', port, '-U', user, '-d', db, '-q', '-X', '-tA', '-c', sql], capture_output=True, text=True)
     return (r.stdout.strip(), r.stderr.strip())
 snake = lambda n: re.sub(r'(?<!^)(?=[A-Z])', '_', n).lower()
+short = lambda n: n.split('.')[-1]
+shed = lambda t: re.sub(r'\.\{[^}]*\}', '', t)
 def split_top(s):
-    # split on commas at bracket depth zero
     out, depth, cur = [], 0, ''
     for ch in s:
         if ch in '([⟨{': depth += 1
         elif ch in ')]⟩}': depth -= 1
-        if ch == ',' and depth == 0:
-            out.append(cur.strip()); cur = ''
+        if ch == ',' and depth == 0: out.append(cur.strip()); cur = ''
         else: cur += ch
     if cur.strip(): out.append(cur.strip())
     return out
 def lit_list(s):
     s = s.strip()
     if s.startswith('[') and s.endswith(']'):
-        inner = s[1:-1].strip()
-        return split_top(inner) if inner else []
+        inner = s[1:-1].strip(); return split_top(inner) if inner else []
     return None
-def sql_array(items):
-    return 'ARRAY[' + ','.join(str(x) for x in items) + ']::integer[]' if items else 'ARRAY[]::integer[]'
-# the assay's defs
+def sql_array(items, ty='integer'):
+    return 'ARRAY[' + ','.join(str(x) for x in items) + f']::{ty}[]' if items else f'ARRAY[]::{ty}[]'
+# the shadow, as the judge reads it: tables with their fields' types, enums, seats, readers, faces
+ns = re.search(r'^namespace (\S+)', open(grown).read(), re.M).group(1)
+imports = ','.join(re.findall(r'^import (\S+)', open(grown).read(), re.M))
+rep = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'schema', grown, ns, imports], capture_output=True, text=True).stdout
+tables, enums, seats, readers = {}, {}, {}, {}
+for l in rep.splitlines():
+    p = l.split(' ')
+    if p[0] == 'table':
+        # a field's type may carry spaces (List X, Prod ...): split on the next `name:`
+        rest = l[len('table ') + len(p[1]) + 1:]
+        fields = [(m.group(1), shed(m.group(2)).strip()) for m in re.finditer(r'(\w+):(.+?)(?= \w+:|$)', rest)]
+        tables[short(p[1])] = fields
+    elif p[0] == 'type': enums[short(p[1])] = p[2:]
+    elif p[0] == 'seat': seats[p[1]] = (short(p[2]), p[3:])
+    elif p[0] == 'reader':
+        arms = {}
+        for a in p[4:]:
+            probe, _, col = a.partition('='); arms[probe] = col
+        readers[p[1]] = (short(p[2]), short(p[3]), arms)
+def is_table(t): return short(t) in tables
+def is_enum(t): return short(t) in enums
+def elem(t):   # List X -> X
+    m = re.match(r'^List (?:\((.+)\)|(\S+))$', t); return (m.group(1) or m.group(2)) if m else None
+def is_tuple(t): return t.startswith('Prod ') or '×' in t
+# the drawn functions: name -> (param types, return type)
+funcs = {}
+pnames = {}
+for m in re.finditer(r'^CREATE FUNCTION (\w+)\(([^)]*)\) RETURNS (\S+)', open(sqlfile).read(), re.M):
+    params = [x.strip().split(' ')[-1] for x in m.group(2).split(',') if x.strip()]
+    pnames[m.group(1)] = [x.strip().split(' ')[0] for x in m.group(2).split(',') if x.strip()]
+    funcs[m.group(1)] = (params, m.group(3))
+# the assay's defs and faces
 defs = {}
 for m in re.finditer(r'^def (\w+) : (.+?) := (.+)$', text, re.M):
     defs[m.group(1)] = (m.group(2).strip(), m.group(3).strip())
-seats = {}
-for m in re.finditer(r'^def (\w+) : List Ask := \[([^\]]*)\]', text, re.M):
-    seats[m.group(1)] = [p.strip().lstrip('.') for p in m.group(2).split(',') if p.strip()]
-human_seats = ['coupleSeat', 'lindaSeat', 'bestManSeat', 'catererSeat']
-m = re.search(r'^def humanSeats : List \(List Ask\) := \[([^\]]*)\]', text, re.M)
-if m: human_seats = [x.strip() for x in m.group(1).split(',')]
-probe_col = {'guests': "(SELECT array_agg(party_id ORDER BY position) FROM room_guests g WHERE g.room_id = room.id)", 'sheet': 'delivered',
-             'ledger': "(SELECT array_agg(c2 ORDER BY position) FROM room_ledger l WHERE l.room_id = room.id)", 'timeline': 'timeline', 'bach': 'bach', 'confirmed': 'confirmed'}
-view_col = {'guests': 'guests', 'sheet': 'delivered', 'ledger': 'ledger', 'timeline': 'timeline', 'bach': 'bach', 'confirmed': 'confirmed'}
+faces = {}   # face def -> reader
+for name, (ty, val) in defs.items():
+    if ty == 'Face' and val.startswith('⟨'):
+        parts = split_top(val[1:-1])
+        if len(parts) == 4 and parts[3] in readers: faces[name] = parts[3]
 ids, lists, next_id = {}, {}, {}
-def new_id(t):
-    next_id[t] = next_id.get(t, 0) + 1; return next_id[t]
-def clone_and_apply(clerk, base, arg):
-    i = new_id('room')
-    q(f"INSERT INTO room (id, delivered, timeline, bach, confirmed) SELECT {i}, delivered, timeline, bach, confirmed FROM room WHERE id = {ids[base]}")
-    q(f"INSERT INTO room_guests (room_id, position, party_id) SELECT {i}, position, party_id FROM room_guests WHERE room_id = {ids[base]}")
-    q(f"INSERT INTO room_ledger (room_id, position, c0, c1, c2) SELECT {i}, position, c0, c1, c2 FROM room_ledger WHERE room_id = {ids[base]}")
-    a = ''
-    if arg:
-        al = lit_list(arg)
-        if al is not None: a = ', ' + sql_array([ids[x] if x in ids else x for x in al])
-        elif arg.startswith('('): a = ', ' + sql_array(split_top(arg.strip('()')))
-        elif arg in lists: a = ', ' + sql_array(lists[arg])
-    q(f"SELECT {snake(clerk)}({i}{a})")
+def new_id(t): next_id[t] = next_id.get(t, 0) + 1; return next_id[t]
+def has_many(field_ty): return elem(field_ty) is not None and (is_table(elem(field_ty)) or is_tuple(elem(field_ty)))
+def scalar_sql(v, ty):
+    v = v.strip()
+    if ty == 'Nat': return str(defs[v][1]) if v in defs and defs[v][0] == 'Nat' else v
+    if ty == 'Bool': return v
+    if is_enum(ty): return f"'{v.lstrip('.')}'"
+    if elem(ty) == 'Nat':
+        l = lit_list(v) if lit_list(v) is not None else lit_list(defs[v][1]) if v in defs else None
+        return sql_array(l or [])
+    if elem(ty) and is_enum(elem(ty)):
+        l = lit_list(v) or []; return sql_array([f"'{x.lstrip('.')}'" for x in l], snake(elem(ty)))
+    if is_table(ty): return str(seat_value(v, ty))
+    return None
+def seat_value(v, ty):
+    # a table-typed value: a def name (its id) or a literal (seated now)
+    v = v.strip()
+    if v in ids: return ids[v]
+    if v.startswith('⟨'): return seat_literal(short(ty), v, None)
+    return None
+def seat_literal(t, val, name):
+    fields = tables[t]; parts = split_top(val[1:-1]); i = new_id(snake(t))
+    cols, vals, children = ['id'], [str(i)], []
+    for (f, fty), v in zip(fields, parts):
+        if has_many(fty):
+            e = elem(fty)
+            items = lists.get(v) if v in lists else lit_list(v) or []
+            children.append((f, e, items))
+        else:
+            s = scalar_sql(v, fty)
+            if s is None: return None
+            cols.append(snake(f)); vals.append(s)
+    q(f"INSERT INTO {snake(t)} ({', '.join(cols)}) VALUES ({', '.join(vals)})")
+    for f, e, items in children:
+        child = f"{snake(t)}_{snake(f)}"
+        for pos, item in enumerate(items):
+            if is_table(e):
+                eid = item if isinstance(item, int) else seat_value(item, e)
+                q(f"INSERT INTO {child} ({snake(t)}_id, position, {snake(short(e))}_id) VALUES ({i}, {pos}, {eid})")
+            else:
+                c = split_top(item.strip('()')); cols_c = ', '.join(f'c{k}' for k in range(len(c)))
+                q(f"INSERT INTO {child} ({snake(t)}_id, position, {cols_c}) VALUES ({i}, {pos}, {', '.join(c)})")
+    if name: ids[name] = i
     return i
-def room_of(e):
-    # a room expression: a def name, or a clerk applied inline
-    e = e.strip().strip('()') if e.strip().startswith('(') and e.strip().endswith(')') else e.strip()
+def clone(t, base):
+    i = new_id(snake(t)); tn = snake(t)
+    cols = ['id'] + [snake(f) for f, fty in tables[t] if not has_many(fty)]
+    q(f"INSERT INTO {tn} ({', '.join(cols)}) SELECT {i}, {', '.join(cols[1:])} FROM {tn} WHERE id = {base}")
+    for f, fty in tables[t]:
+        if has_many(fty):
+            child = f"{tn}_{snake(f)}"; e = elem(fty)
+            cs = f"{snake(short(e))}_id" if is_table(e) else ', '.join(f'c{k}' for k in range(len(re.findall(r'Nat', e))))
+            q(f"INSERT INTO {child} ({tn}_id, position, {cs}) SELECT {i}, position, {cs} FROM {child} WHERE {tn}_id = {base}")
+    return i
+def arg_sql(a, pty):
+    a = a.strip()
+    if pty == 'integer[]':
+        l = lit_list(a)
+        if l is not None: return sql_array([str(ids[x]) if x in ids else x for x in l])
+        if a in lists: return sql_array(lists[a])
+        if a.startswith('('): return sql_array(split_top(a.strip('()')))
+        if a in defs and elem(defs[a][0]) == 'Nat': return sql_array(lit_list(defs[a][1]) or [])
+        return None
+    if pty == 'integer':
+        if a in defs and defs[a][0] == 'Nat': return defs[a][1]
+        return a if re.match(r'^\d+$', a) else None
+    if pty in enums or pty in [snake(e) for e in enums]: return f"'{a.lstrip('.')}'"
+    if pty.endswith('[]'):
+        l = lit_list(a) or []; return sql_array([f"'{x.lstrip('.')}'" for x in l], pty[:-2])
+    return None
+def row_of(e, t=None):
+    # a table-typed expression: a def name, or a clerk applied inline
+    e = e.strip()
+    if e.startswith('(') and e.endswith(')'): e = e[1:-1].strip()
     if e in ids: return ids[e]
-    m = re.match(r'^(deliver|withGuests|withBach|withConfirmed|withLine) (\w+)(?: (.+))?$', e)
-    if m and m.group(2) in ids: return clone_and_apply(m.group(1), m.group(2), m.group(3))
+    m = re.match(r'^(\w+) (\w+)(?: (.+))?$', e)
+    if m and snake(m.group(1)) in funcs and m.group(2) in ids and funcs[snake(m.group(1))][1] == 'void':
+        base = m.group(2); bt = defs[base][0]
+        i = clone(short(bt), ids[base]); params = funcs[snake(m.group(1))][0]
+        extra = ''
+        if m.group(3):
+            a = arg_sql(m.group(3), params[1] if len(params) > 1 else 'integer[]')
+            if a is None: return None
+            extra = ', ' + a
+        q(f"SELECT {snake(m.group(1))}({i}{extra})"); return i
     return None
 seated = 0
 for name, (ty, val) in defs.items():
-    if ty == 'Party' and val.startswith('⟨'):
-        f = split_top(val[1:-1]); i = new_id('party'); ids[name] = i
-        q(f"INSERT INTO party (id, name, rsvp, meals) VALUES ({i}, {f[0]}, {f[1]}, {sql_array(lit_list(f[2]) or [])})"); seated += 1
-    elif ty == 'List Party':
-        lists[name] = [ids[x] for x in (lit_list(val) or []) if x in ids]
-    elif ty == 'Room' and val.startswith('⟨'):
-        f = split_top(val[1:-1]); i = new_id('room'); ids[name] = i
-        guests = lists.get(f[0]) if f[0] in lists else [ids[x] for x in (lit_list(f[0]) or []) if x in ids]
-        q(f"INSERT INTO room (id, delivered, timeline, bach, confirmed) VALUES ({i}, {sql_array(lit_list(f[1]) or [])}, {sql_array(lit_list(f[3]) or [])}, {sql_array(lit_list(f[4]) or [])}, {sql_array(lit_list(f[5]) or [])})")
-        for pos, g in enumerate(guests or []): q(f"INSERT INTO room_guests (room_id, position, party_id) VALUES ({i}, {pos}, {g})")
-        for pos, t in enumerate(lit_list(f[2]) or []):
-            c = split_top(t.strip('()')); q(f"INSERT INTO room_ledger (room_id, position, c0, c1, c2) VALUES ({i}, {pos}, {c[0]}, {c[1]}, {c[2]})")
-        seated += 1
-    elif ty == 'Room':
-        r = room_of(val)
+    if is_table(ty) and val.startswith('⟨'):
+        if seat_literal(short(ty), val, name) is not None: seated += 1
+    elif elem(ty) and is_table(elem(ty)):
+        lists[name] = [ids[x] if x in ids else seat_value(x, elem(ty)) for x in (lit_list(val) or [])]
+    elif is_table(ty):
+        r = row_of(val)
         if r: ids[name] = r; seated += 1
 print(f"the cast: {seated} rows seated from the assay's defs")
-# expressions: ('s', sql) a scalar/array, ('t', [sql...]) a seat's reading, ('n', value) a number known from the shadow's shape
+def column(t, field):
+    # a field read as SQL at a row of table t: a column, a has-many as its child rows in order, a component thereof
+    f, _, comp = field.partition('#')
+    fty = dict(tables[t]).get(f)
+    tn = snake(t)
+    if fty and has_many(fty):
+        e = elem(fty); child = f"{tn}_{snake(f)}"
+        key = f"{snake(short(e))}_id" if is_table(e) else (f"c{comp}" if comp else 'c0')
+        return f"(SELECT array_agg({key} ORDER BY position) FROM {child} c WHERE c.{tn}_id = {tn}.id)"
+    return snake(f)
+def view_col(field): return snake(field.partition('#')[0])
+def earshot_of(e):
+    # a def `earshot face seats` -> the seats' names
+    m = re.match(r'^earshot (\w+) (\w+)$', e)
+    if m and m.group(2) in defs:
+        l = lit_list(defs[m.group(2)][1]) or []
+        return [s for s in l if s in seats]
+    return None
 def expr(e):
     e = e.strip()
-    if e in defs and defs[e][0] in ('List Nat', 'List (List Nat)', 'Nat', 'Bool') and e not in ids:
+    if e in defs and e not in ids and e not in lists and defs[e][0] in ('List Nat', 'List (List Nat)', 'Nat', 'Bool') or (e in defs and is_enum(defs[e][0])):
         return expr(defs[e][1])
-    m = re.match(r'^(sheet|heads) (\w+)$', e)
-    if m and m.group(2) in lists:
-        arr = sql_array(lists[m.group(2)])
-        return ('s', f"{m.group(1)}({arr})")
-    m = re.match(r'^(.+)\.delivered$', e)
+    if e.startswith('(') and e.endswith(')') and not e.startswith('(('): 
+        inner = expr(e[1:-1])
+        if inner: return inner
+    m = re.match(r'^(.+?) && (.+)$', e)
     if m:
-        r = room_of(m.group(1))
-        if r: return ('s', f"(SELECT delivered FROM room WHERE id = {r})")
-    m = re.match(r'^readRoom (.+) \.(\w+)$', e)
-    if m and m.group(2) in probe_col:
-        r = room_of(m.group(1))
-        if r: return ('s', f"(SELECT {probe_col[m.group(2)]} FROM room WHERE id = {r})")
-    m = re.match(r'^reads roomFace (\w+) (.+)$', e)
-    if m and m.group(1) in seats:
-        r = room_of(m.group(2))
+        a, b = expr(m.group(1)), expr(m.group(2))
+        if a and b and a[0] == 's' and b[0] == 's': return ('s', f"(({a[1]}) AND ({b[1]}))")
+    if e.startswith('!(') and e.endswith(')'):
+        a = expr(e[2:-1])
+        if a and a[0] == 's': return ('s', f"(NOT ({a[1]}))")
+    if e.startswith('.') and re.match(r'^\.\w+$', e): return ('s', f"'{e[1:]}'")
+    # a drawn function applied: the first argument a row (or a list of rows), the rest by parameter type
+    m = re.match(r'^(\w+)((?: .+)?)$', e)
+    if m and snake(m.group(1)) in funcs and (m.group(1) not in defs or '→' in defs[m.group(1)][0]):
+        fname = snake(m.group(1)); params, ret = funcs[fname]
+        args = split_top(m.group(2).strip().replace(' ', ',')) if False else None
+        rest = m.group(2).strip()
+        # arguments: a parenthesized clerk application, a def, a literal, a constructor — split on spaces at depth zero
+        toks, depth, cur = [], 0, ''
+        for ch in rest:
+            if ch in '([⟨': depth += 1
+            elif ch in ')]⟩': depth -= 1
+            if ch == ' ' and depth == 0:
+                if cur: toks.append(cur); cur = ''
+            else: cur += ch
+        if cur: toks.append(cur)
+        if len(toks) != len(params): return None
+        sqls = []
+        for a, pty in zip(toks, params):
+            if pty == 'integer' and (a in ids or (a.startswith('(') and row_of(a) is not None)):
+                sqls.append(str(row_of(a)))
+            elif pty == 'integer[]' and a in lists: sqls.append(sql_array(lists[a]))
+            else:
+                s = arg_sql(a, pty)
+                if s is None or a.startswith('(') or '.' in a.strip('.'):
+                    inner = expr(a)
+                    if inner and inner[0] == 's': s = inner[1]
+                if s is None: return None
+                sqls.append(s)
+        return ('s', f"{fname}({', '.join(sqls)})")
+    # a field of a row (a def, or a clerk applied inline — the clerk's first parameter names the table)
+    m = re.match(r'^(.+)\.(\w+)$', e)
+    if m and not e.startswith('.'):
+        base = m.group(1); r = row_of(base)
+        head = base.strip('()').split(' ')[0]
+        t = short(defs[head][0]) if head in defs else None
+        if t is None and snake(head) in funcs:
+            t = next((tn for tn in tables if pnames[snake(head)] and snake(tn) + '_id' == pnames[snake(head)][0]), None)
+        if r and t and t in tables and m.group(2) in dict(tables[t]):
+            return ('s', f"(SELECT {column(t, m.group(2))} FROM {snake(t)} WHERE id = {r})")
+    # a reader at a probe
+    m = re.match(r'^(\w+) (.+) \.(\w+)$', e)
+    if m and m.group(1) in readers:
+        t, _, arms = readers[m.group(1)]; r = row_of(m.group(2))
+        if r and m.group(3) in arms: return ('s', f"(SELECT {column(t, arms[m.group(3)])} FROM {snake(t)} WHERE id = {r})")
+    # a seat's reading through a face: the view's columns
+    m = re.match(r'^reads (\w+) (\w+) (.+)$', e)
+    if m and m.group(1) in faces and m.group(2) in seats:
+        t, _, arms = readers[faces[m.group(1)]]; r = row_of(m.group(3))
         if r:
-            view = f"room_as_{snake(m.group(1))}"
-            return ('t', [f"(SELECT {view_col[p]} FROM {view} WHERE id = {r})" for p in seats[m.group(1)]])
-    m = re.match(r'^everyone Nat\.beq (\[.*?\]) (\w+)\.confirmed$', e)
-    if m and m.group(2) in ids:
-        return ('s', f"({sql_array(lit_list(m.group(1)))} <@ (SELECT confirmed FROM room WHERE id = {ids[m.group(2)]}))")
+            view = f"{snake(t)}_as_{snake(m.group(2))}"
+            return ('t', [f"(SELECT {view_col(arms[p])} FROM {view} WHERE id = {r})" for p in seats[m.group(2)][1]])
+    # every one of a list enrolled in another: containment (the lanes)
+    m = re.match(r'^(\w+)\.all \(enrolled \S+ (\w+)\)$', e)
+    if m:
+        a = expr(m.group(1)) or (literal(defs[m.group(1)][1]) if m.group(1) in defs else None)
+        b = expr(m.group(2)) or (literal(defs[m.group(2)][1]) if m.group(2) in defs else None)
+        if a and b and a[0] == 's' and b[0] == 's': return ('s', f"({a[1]} <@ {b[1]})")
+    # the turnstile: containment
+    m = re.match(r'^everyone \S+ (\[.*?\]) (.+)$', e)
+    if m:
+        b = expr(m.group(2))
+        if b and b[0] == 's': return ('s', f"({sql_array(lit_list(m.group(1)))} <@ {b[1]})")
+    # a length: a seat's, an earshot's, a reading's
     m = re.match(r'^(\w+)\.length$', e)
     if m:
-        if m.group(1) in seats: return ('n', len(seats[m.group(1)]))
-        if m.group(1) == 'humanEars': return ('n', sum(len(seats[s]) for s in human_seats if s in seats))
+        if m.group(1) in seats: return ('n', len(seats[m.group(1)][1]))
+        if m.group(1) in defs and earshot_of(defs[m.group(1)][1]) is not None:
+            return ('n', sum(len(seats[s][1]) for s in earshot_of(defs[m.group(1)][1])))
         inner = expr(m.group(1))
         if inner and inner[0] == 't': return ('n', len(inner[1]))
-    m = re.match(r'^enrolled Ask\.beq humanEars \.(\w+)$', e)
-    if m and m.group(1) in view_col:
-        views = ', '.join(f"'room_as_{snake(s)}'" for s in human_seats)
-        return ('s', f"EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name IN ({views}) AND column_name = '{view_col[m.group(1)]}')")
+    # a probe in an earshot: a column of some seat's view
+    m = re.match(r'^enrolled \S+ (\w+) \.(\w+)$', e)
+    if m and m.group(1) in defs and earshot_of(defs[m.group(1)][1]) is not None:
+        ss = earshot_of(defs[m.group(1)][1])
+        face = re.match(r'^earshot (\w+)', defs[m.group(1)][1]).group(1)
+        t, _, arms = readers[faces[face]]
+        views = ', '.join(f"'{snake(t)}_as_{snake(s)}'" for s in ss)
+        return ('s', f"EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name IN ({views}) AND column_name = '{view_col(arms[m.group(2)])}')")
+    # an enum's own equality
+    m = re.match(r'^(\w+)\.beq (.+) (\S+)$', e)
+    if m and m.group(1) in enums:
+        a, b = expr(m.group(2)), expr(m.group(3))
+        if a and b and a[0] == 's' and b[0] == 's': return ('s', f"({a[1]} = {b[1]})")
     return None
 def literal(rhs):
     rhs = rhs.strip()
@@ -156,7 +317,7 @@ def compare(a, b):
         return ('sql', "SELECT " + " AND ".join(f"(({x}) = ({y}))" for x, y in zip(a[1], b[1])))
     return None
 replayed = identical = unread = 0
-held = []
+held, beyond = [], []
 for g in re.findall(r'^#guard (.+)$', text, re.M):
     g = g.strip(); verdict = None
     m = re.match(r'^(.+?) (==|!=) (.+)$', g)
@@ -168,19 +329,19 @@ for g in re.findall(r'^#guard (.+)$', text, re.M):
             else:
                 out, err = q(c[1]); verdict = (out == 't') == (m.group(2) == '==')
                 if err and not out: verdict = None; held.append((g, err[:100]))
-    elif g.startswith('!(') and g.endswith(')'):
-        a = expr(g[2:-1])
-        if a and a[0] == 's': out, _ = q(f"SELECT NOT ({a[1]})"); verdict = out == 't'
     else:
         a = expr(g)
-        if a and a[0] == 's': out, _ = q(f"SELECT ({a[1]})"); verdict = out == 't'
+        if a and a[0] == 's':
+            out, err = q(f"SELECT ({a[1]})"); verdict = out == 't'
+            if err and not out: verdict = None; held.append((g, err[:100]))
     if verdict is None:
-        if not any(h[0] == g for h in held): unread += 1
+        if not any(h[0] == g for h in held): unread += 1; beyond.append(g)
         continue
     replayed += 1
     if verdict: identical += 1
     else: held.append((g, 'parts'))
 print(f'the treaty in SQL: {replayed} rows replayed, {identical} identical, {unread} beyond the fragment')
+for g in beyond: print(f'  BEYOND: {g}')
 for g, r in held: print(f'  PARTS: {g}  ->  {r}')
 if held or replayed == 0: sys.exit(1)
-PY
+PY2
