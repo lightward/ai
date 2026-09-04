@@ -20,7 +20,7 @@ cd "$ROOT"
 
 # no stream offered: the book of the house — every lib the lakefile lists, grown
 if [ $# -eq 0 ]; then
-  set -- $(grep -E '^defaultTargets' lakefile.toml | grep -oE '"[A-Za-z]+"' | tr -d '"' | sed 's|^|grown/|; s|$|.lean|')
+  set -- $(grep -E '^defaultTargets' lakefile.toml | grep -oE '"[A-Za-z]+"' | tr -d '"' | sed 's|^|grown/|; s|$|.lean|') assays/*.held
 fi
 
 python3 - "$@" <<'EOF'

@@ -1,0 +1,48 @@
+-- the vestibule of EVERYONE IS HERE: the disagreements between the product as its team describes it
+-- (the field guide, the campaign, the executive briefs of September 2026) and the treaty as it stands,
+-- each a statement in the assay's own terms and the darkness it waits on. a held statement seats
+-- when what it waits on arrives: the customer's word, a carrier, or a reach of the drawer's fragment.
+-- read by bin/counter book. (bench-item mode, 2026-09-04: the reading is against the record, never
+-- from the PDFs' words into the house's.)
+
+-- held (waiting on: the customer's word. the product's Same Page shows who confirmed, by name, to everyone; the treaty proves the_room_alone_holds_the_receipt and no_human_hears_the_receipt. one of the two parts the day this is decided.)
+theorem the_couple_hears_the_receipt (r : Room) (c : List Nat) (hc : c ≠ r.confirmed) :
+    reads roomFace coupleSeat (withConfirmed r c) ≠ reads roomFace coupleSeat r := sorry
+-- end
+
+-- held (waiting on: a probe. the Vendor Room the couple can't see is built; the assay has its shape as the bach lane (the_bach_wall) and not the room itself. one more Ask, the couple's seat without it, the vendor seats with it — and the treaty's translator, which names the six asks by hand.)
+theorem the_vendor_room_wall (r : Room) (v : List Nat) (hv : v ≠ r.bach) :
+    reads roomFace coupleSeat (withBach r v) = reads roomFace coupleSeat r := sorry
+-- end
+
+-- held (waiting on: a carrier. "nobody ever pays for someone else's thing" names the object — a wedding is the couple's, a season is the vendor's; the assay's pays is per role and loses the object. an owner relation, one theorem: you pay for what is yours.)
+theorem you_pay_for_what_is_yours (ρ : Role) : pays ρ = true → joinsFree ρ = true := sorry
+-- end
+
+-- held (waiting on: a carrier and the customer's word. the confirmed list names members the schema has no table for — parties and vendors at once; the gold standard is about a member who confirms, and the shadow has no member.)
+theorem a_member_is_a_party_or_a_vendor (r : Room) (m : Nat) (hm : m ∈ r.confirmed) :
+    m ∈ r.guests.map (·.name) ∨ m ∈ r.ledger.map (·.1) := sorry
+-- end
+
+-- held (waiting on: the drawer's fragment. a face parameterized by a vendor's id — vendorFace v, the .mine reading — is proved (a_vendor_never_sees_anothers_invoice) and not drawn; drawn, it is the product's most important row-level policy. also makerFace, a computed reading of shape.)
+theorem a_vendor_sees_only_their_own (v : Nat) (r : Room) :
+    (vendorFace v).obs r .mine = (r.ledger.filter (fun e => Nat.beq e.1 v)).map (·.2.2) := sorry
+-- end
+
+-- held (waiting on: the drawer's fragment. a def over an enum (pays, joinsFree — the pricing rule, the one place the team got confused) is skipped as a def over a kind; it is one CASE expression.)
+theorem the_pricing_rule_is_two_lines : (∀ ρ, joinsFree ρ = true) ∧ pays .party = false ∧ pays .couple = true := sorry
+-- end
+
+-- held (waiting on: a relation the fragment lacks. the September 2 sentence — the couple, wedding party, planner and venue edit the seating chart; every other vendor sees the floor plan, never the guest list — is about who may run a clerk, and the shadow attaches no seat to a clerk. hearing a probe is necessary to edit it and not sufficient.)
+theorem the_hand_edits_only_what_the_seat_hears (r : Room) (gl : List Party) (s : List Ask) (hs : ¬ hears roomFace s .guests) :
+    reads roomFace s (withGuests r gl) = reads roomFace s r := sorry
+-- end
+
+-- held (waiting on: the treaty's translator. visible is a check no #guard exercises — a def with no row is unread, and the drawer's first wrong line hid there until 2026-09-04. the translator seats Party and Room by hand; a Channel and a File have no seating.)
+theorem a_member_of_the_audience_sees_the_file (f : File) (m : Nat) (hm : m ∈ f.channel.audience) : visible f m := sorry
+-- end
+
+-- held (waiting on: the product that spans rooms. "My season: every wedding a vendor works, one view" is the seat over many rooms the entry has waited for since the seventeenth session — the next diagonal, Face at a list of rooms.)
+theorem a_season_is_a_seat_over_many_rooms (rs : List Room) (v : Nat) :
+    (rs.map (fun r => (vendorFace v).obs r .mine)).length = rs.length := sorry
+-- end

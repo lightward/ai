@@ -213,14 +213,15 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
     match f.constName?, args.size with
     | some ``And, 2 => s!"({go args[0]!} AND {go args[1]!})"
     | some ``Eq, 3 => s!"({go args[1]!} = {go args[2]!})"
-    | some ``Membership.mem, 5 => s!"({go args[4]!} = ANY({go args[3]!}))"
+    -- the list cast to an array: a subselect inside ANY would otherwise read as the row form
+    | some ``Membership.mem, 5 => s!"({go args[4]!} = ANY(({go args[3]!})::integer[]))"
     | some ``List.cons, 3 => s!"array_prepend({go args[1]!}, {go args[2]!})"
     | some ``cond, 4 => s!"(CASE WHEN {go args[1]!} THEN {go args[2]!} ELSE {go args[3]!} END)"
     | some ``List.length, 2 => s!"cardinality({go args[1]!})"
     | some ``Nat.beq, 2 => s!"({go args[0]!} = {go args[1]!})"
     | some `Room.everyone, 3 => s!"({go args[1]!} <@ {go args[2]!})"   -- every member enrolled: containment
     | some `Room.backed, 3 => s!"({go args[2]!} <@ {go args[1]!})"
-    | some `Room.enrolled, 3 => s!"({go args[2]!} = ANY({go args[1]!}))"
+    | some `Room.enrolled, 3 => s!"({go args[2]!} = ANY(({go args[1]!})::integer[]))"
     | some `Room.joinMap, n =>
       -- joinMap (fun p => cond p.q p.f []) xs: the rows of xs where q, their f's flattened in order;
       -- with xs left implicit (a bare `joinMap f`), the rows are the argument itself
@@ -352,6 +353,15 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
           out := out.push c
       return out
     let firstTy := shed ((args[0]!.splitOn ":").getD 1 "")
+    -- the arguments after the row, as the shadow types them: a number an integer, a list or a
+    -- tuple an array, a table an id, a Bool a boolean
+    let sqlTy (t : String) : String :=
+      let t := (shed t).trimAscii.toString
+      if t == "Nat" then "integer" else if t == "Bool" then "boolean"
+      else if t.startsWith "List " then "integer[]"
+      else if (t.splitOn "×").length > 1 then "integer[]"
+      else if isStructure env t.toName then "integer" else "integer[]"
+    let argtypes := ",".intercalate ((args.toList.drop 1).map fun a => sqlTy ((a.splitOn ":").getD 1 ""))
     let over := firstTy.splitOn " " |>.headD ""
     -- only defs whose first argument is a table (a structure of the shadow) or a list of one
     let listOf := (firstTy.startsWith "List ") && isStructure env ((firstTy.drop 5).trimAscii.toString.toName)
@@ -398,7 +408,7 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
             let s' := toSQL env 0 o
             if !(s'.startsWith "⟨unread") && !((s'.splitOn "⟨unread").length > 1) then
               sql := s'.replace "$0" "row"; byThm := m.getString!; break
-    IO.println s!"derived {n.getString!} {kind} over={firstTy} args={depth'} :: {sql} | {" ".intercalate describers}{if byThm.isEmpty then "" else s!" @by {byThm}"}"
+    IO.println s!"derived {n.getString!} {kind} over={firstTy} args={depth'} argtypes={argtypes} :: {sql} | {" ".intercalate describers}{if byThm.isEmpty then "" else s!" @by {byThm}"}"
 
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution

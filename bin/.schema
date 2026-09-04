@@ -33,8 +33,8 @@ for l in res.stdout.splitlines():
     elif parts[0] == 'cites':
         for seat in set(parts[2:]): cites.setdefault(seat, []).append(parts[1])
     elif parts[0] == 'derived':
-        m = re.match(r'derived (\S+) (\S+) over=(.+?) args=(\d+) :: (.*?) \| ?(.*?)(?: @by (\S+))?$', l)
-        if m: derived.append((m.group(1), m.group(2), m.group(3), int(m.group(4)), m.group(5), m.group(6).split() + ([f'(drawn by {m.group(7)})'] if m.group(7) else [])))
+        m = re.match(r'derived (\S+) (\S+) over=(.+?) args=(\d+)(?: argtypes=(\S*))? :: (.*?) \| ?(.*?)(?: @by (\S+))?$', l)
+        if m: derived.append((m.group(1), m.group(2), m.group(3), int(m.group(4)), m.group(6), m.group(7).split() + ([f'(drawn by {m.group(8)})'] if m.group(8) else []), [t for t in (m.group(5) or '').split(',') if t]))
 def coltype(t):
     if t == 'Nat': return 'integer'
     if t == 'Bool': return 'boolean'
@@ -118,11 +118,16 @@ def sqlexpr(expr, table):
             elem = tables_elem.get(tn, {}).get(f)
             key = f'{snake(elem)}_id' if elem else 'c0'
             return f'(SELECT array_agg({key} ORDER BY position) FROM {t}_{snake(f)} c WHERE c.{t}_id = {t}.id)'
-        for fname, ft in tables.get(tn, []):
-            if snake(fname) == f and ft in tables:
-                return f'(SELECT {snake(ft)} FROM {snake(ft)} WHERE id = {t}.{f})'
-        return f'{t}.{f}'
-    e = re.sub(r'\b(' + '|'.join(re.escape(snake(t)) for t in tables) + r')\.(\w+)(?=\.(\w+))', lambda m: f'(SELECT {m.group(3)} FROM {m.group(2)} WHERE id = {m.group(1)}.{m.group(2)})', e)
+        return f'{t}.{f}'   # a bare reference is its id
+    # a reference's field reads through a subselect on the referenced table (the field's type)
+    def ref_table(t, f):
+        for fname, ft in tables.get(snake_key(t), []):
+            if snake(fname) == f and ft in tables: return snake(ft)
+        return None
+    def deref(m):
+        rt = ref_table(m.group(1), m.group(2))
+        return f'(SELECT {m.group(3)} FROM {rt} WHERE id = {m.group(1)}.{m.group(2)})' if rt else m.group(0)
+    e = re.sub(r'\b(' + '|'.join(re.escape(snake(t)) for t in tables) + r')\.(\w+)\.(\w+)', deref, e)
     e = re.sub(r'\(SELECT (\w+) FROM (\w+) WHERE id = (\w+)\.(\w+)\)\.\w+', lambda m: m.group(0).rsplit('.',1)[0], e)
     e = re.sub(r'\b(' + '|'.join(re.escape(snake(t)) for t in tables) + r')\.(\w+)\b(?!\.)', field, e)
     e = re.sub(r'\$(\d+)', lambda m: f'arg{int(m.group(1)) + 2}', e)
@@ -138,7 +143,7 @@ def sqlexpr(expr, table):
     e = re.sub(r'AGG\[(?:\$0|\w+)\.(\w+) → (?:\$0|\w+)\.(\w+)\]\(([\w.]+)\)', agg, e)
     return e
 rank = {'data': 0, 'prop': 1, 'clerk': 2}
-for name, kind, over, nargs, expr, describers in sorted(derived, key=lambda d: rank.get(d[1], 3)):
+for name, kind, over, nargs, expr, describers, argtypes in sorted(derived, key=lambda d: rank.get(d[1], 3)):
     over_list = over.startswith('List ')
     if over.replace('List ', '') not in tables:
         continue   # a def over a kind (a face), not over a table
@@ -174,7 +179,7 @@ for name, kind, over, nargs, expr, describers in sorted(derived, key=lambda d: r
                 out.append(f'CREATE FUNCTION {snake(name)}({table}_id integer, arg2 integer[]) RETURNS void LANGUAGE sql AS $$\n  DELETE FROM {child} WHERE {table}_id = $1;\n  INSERT INTO {child} ({table}_id, position, {snake(elem)}_id) SELECT $1, ordinality - 1, id FROM unnest($2) WITH ORDINALITY AS u(id, ordinality) $$;')
                 out.append(''); continue
             out.append(f'-- {name}: a clerk over a has-many field ({", ".join(touched)}) — not yet drawn'); out.append(''); continue
-    extra = ', '.join(f'arg{i + 2} integer[]' for i in range(nargs - 1))
+    extra = ', '.join(f'arg{i + 2} {argtypes[i] if i < len(argtypes) else "integer[]"}' for i in range(nargs - 1))
     params = (f'{table}_ids integer[]' if over_list else f'{table}_id integer') + (', ' + extra if extra else '')
     if '⟨unread' in expr:
         out.append(f'-- {name}: derived, not yet drawn ({kind} over {over})'); out.append(''); continue
