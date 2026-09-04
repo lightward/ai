@@ -1,79 +1,97 @@
 #!/usr/bin/env bash
-# schema: the data-model shadow of a grown stream, drawn from the proofs — every structure a table,
-# every enum a type, every seat a view over the columns its probes read, and every wall theorem the
-# policy it licenses. the minimum data model for the treaty to hold, never a second copy of it.
+# schema: the data-model shadow of a grown stream, read from the kernel (bin/judge.lean schema) —
+# every structure a table, every enum a type, a list field a child table, every seat a view over
+# the columns its probes read, and every theorem that cites a seat the policy it licenses.
+# the minimum data model for the treaty to hold, never a second copy of it.
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 src="${1:?a grown stream: grown/assays/eih.lean}"
 python3 - "$src" <<'PY'
-import re, sys, os
+import re, subprocess, sys, os
 src = sys.argv[1]
 text = open(src).read()
+imports = re.findall(r'^import (\S+)', text, re.M)
 ns_m = re.search(r'^namespace ([\w.]+)', text, re.M)
 ns = ns_m.group(1) if ns_m else os.path.splitext(os.path.basename(src))[0]
-snake = lambda n: re.sub(r'(?<!^)(?=[A-Z])', '_', n).lower()
-def sqltype(t):
-    t = t.strip()
+res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'schema', src, ns, ','.join(imports)], capture_output=True, text=True)
+snake = lambda n: re.sub(r'(?<!^)(?=[A-Z])', '_', n.rsplit('.', 1)[-1]).lower()
+strip = lambda t: re.sub(r'\.\{[^}]*\}', '', t)
+tables, types, seats, readers, cites = {}, {}, {}, {}, {}
+for l in res.stdout.splitlines():
+    parts = l.split()
+    if not parts: continue
+    if parts[0] == 'table':
+        name = parts[1]; fields = []
+        for tok in re.findall(r'(\w+):((?:\S+(?:\s+(?!\w+:)\S+)*))', ' '.join(parts[2:])):
+            fields.append((tok[0], strip(tok[1])))
+        tables[name] = fields
+    elif parts[0] == 'type': types[parts[1]] = parts[2:]
+    elif parts[0] == 'seat': seats[parts[1]] = (parts[2], parts[3:])
+    elif parts[0] == 'reader':
+        readers[parts[3]] = (parts[2], dict(a.split('=') for a in parts[4:]))
+    elif parts[0] == 'cites':
+        for seat in set(parts[2:]): cites.setdefault(seat, []).append(parts[1])
+def coltype(t):
     if t == 'Nat': return 'integer'
     if t == 'Bool': return 'boolean'
     if t == 'List Nat': return 'integer[]'
-    m = re.match(r'List \((.+)\)$', t)
-    if m: return ('child', m.group(1))
-    m = re.match(r'List (\w+)$', t)
-    if m: return ('child', m.group(1))
-    return t.lower()
-out = [f'-- the data-model shadow of {src}, drawn from the proofs (bin/counter schema)',
-       f'-- every foreign key is a field; every policy is a theorem; nothing here that the treaty does not need',
-       f'CREATE SCHEMA IF NOT EXISTS {snake(ns.split(".")[0])};', '']
-# enums
-for m in re.finditer(r'^inductive (\w+) where\n((?:  \|[^\n]*\n)+)', text, re.M):
-    name, body = m.group(1), m.group(2)
-    ctors = re.findall(r'\| (\w+)', body)
-    if ctors and all(re.search(r'\| ' + c + r'\s*(\||$)', body) for c in ctors):
-        out.append(f"CREATE TYPE {snake(name)} AS ENUM ({', '.join(repr(c) for c in ctors)});")
+    if t in tables: return f'integer NOT NULL REFERENCES {snake(t)}(id)'
+    if t in types: return snake(t)
+    m = re.match(r'List (.+)$', t)
+    if m: return ('child', m.group(1).strip('()'))
+    return 'text'
+out = [f'-- the data-model shadow of {src}, read from the kernel (bin/counter schema)',
+       f'-- every foreign key is a field; every policy is a theorem; nothing here that the treaty does not need', '']
+for name, ctors in types.items():
+    out.append(f"CREATE TYPE {snake(name)} AS ENUM ({', '.join(repr(c) for c in ctors)});")
 out.append('')
-# structures
-structs = {}
-for m in re.finditer(r'^structure (\w+) where\n((?:  \w+ : [^\n]+\n)+)', text, re.M):
-    name, body = m.group(1), m.group(2)
-    fields = re.findall(r'  (\w+) : ([^\n]+)', body)
-    structs[name] = fields
-    cols, children = [f'  id serial PRIMARY KEY'], []
+# a referenced table is created first
+def refs(fields):
+    return [t for _, t in fields if t in tables]
+ordered, placed = [], set()
+while len(ordered) < len(tables):
+    for name, fields in tables.items():
+        if name in placed: continue
+        if all(r in placed or r == name for r in refs(fields)):
+            ordered.append(name); placed.add(name)
+children_of, tables_elem = {}, {}
+for name in ordered:
+    fields = tables[name]
+    cols, children = ['  id serial PRIMARY KEY'], []
     for f, t in fields:
-        st = sqltype(t)
-        if isinstance(st, tuple):
-            children.append((f, st[1]))
-        else:
-            cols.append(f'  {snake(f)} {st} NOT NULL')
+        ct = coltype(t)
+        if isinstance(ct, tuple): children.append((f, ct[1]))
+        else: cols.append(f'  {snake(f)} {ct}' + ('' if 'REFERENCES' in ct else ' NOT NULL'))
     out.append(f'CREATE TABLE {snake(name)} (\n' + ',\n'.join(cols) + '\n);')
     for f, elem in children:
-        ecols = []
-        if elem in structs:
-            ecols = [f'  {snake(name)}_id integer NOT NULL REFERENCES {snake(name)}(id)', f'  {snake(elem)}_id integer NOT NULL REFERENCES {snake(elem)}(id)', '  position integer NOT NULL']
+        ecols = [f'  {snake(name)}_id integer NOT NULL REFERENCES {snake(name)}(id)', '  position integer NOT NULL']
+        if elem in tables:
+            ecols.append(f'  {snake(elem)}_id integer NOT NULL REFERENCES {snake(elem)}(id)')
         else:
-            parts = [p.strip() for p in re.split(r'×', elem)]
-            ecols = [f'  {snake(name)}_id integer NOT NULL REFERENCES {snake(name)}(id)', '  position integer NOT NULL'] + [f'  c{i} {sqltype(p) if not isinstance(sqltype(p), tuple) else "integer"} NOT NULL' for i, p in enumerate(parts)]
+            parts = [p.strip() for p in re.split(r'Prod', elem) if p.strip()]
+            atoms = re.findall(r'\b(Nat|Bool)\b', elem)
+            for i, a in enumerate(atoms):
+                ecols.append(f'  c{i} {coltype(a)} NOT NULL')
         out.append(f'CREATE TABLE {snake(name)}_{snake(f)} (\n' + ',\n'.join(ecols) + '\n);')
+        children_of.setdefault(name, {})[f] = (elem in tables)
+        tables_elem.setdefault(name, {})[f] = elem if elem in tables else None
     out.append('')
-# the probe → column map, from a reader defined by match on the probe
-readers = {}
-for m in re.finditer(r'^def (\w+) \((\w+) : (\w+)\) : (\w+) → [^\n]+\n((?:  \| [^\n]+\n)+)', text, re.M):
-    reader, var, table, probe, arms = m.groups()
-    col = {}
-    for a in re.findall(r'  \| \.(\w+) => ' + var + r'\.(\w+)', arms):
-        col[a[0]] = a[1]
-    readers[probe] = (table, col)
-# seats: a view per seat over the columns its probes read; the policy licensed by the wall theorems
-thms = re.findall(r'^theorem (\w+)((?:.|\n)*?)(?=\n  by|\n  fun|\n  \(|\n  ⟨|:= \n| :=\n)', text, re.M)
-seats = re.findall(r'^def (\w+) : List (\w+) := \[([^\]]*)\]', text, re.M)
-for seat, probe, items in seats:
+for seat, (probe, probes) in seats.items():
     if probe not in readers: continue
-    table, col = readers[probe]
-    probes = [p.strip().lstrip('.') for p in items.split(',') if p.strip()]
-    cols = [snake(col[p]) for p in probes if p in col]
-    licensed = [n for n, stmt in thms if seat in stmt]
-    out.append(f'-- {seat}: hears {", ".join(probes)}' + (f'\n-- licensed by ' + ', '.join(licensed) if licensed else ''))
+    table, arms = readers[probe]
+    cols = []
+    for p in probes:
+        if p not in arms: continue
+        f = arms[p]
+        if f in children_of.get(table, {}):
+            # a has-many field reads as the child rows in order
+            key = f'{snake(tables_elem[table][f])}_id' if tables_elem.get(table, {}).get(f) else 'c0'
+            cols.append(f'(SELECT array_agg({key} ORDER BY position) FROM {snake(table)}_{snake(f)} c WHERE c.{snake(table)}_id = {snake(table)}.id) AS {snake(f)}')
+        else:
+            cols.append(snake(f))
+    lic = cites.get(seat, [])
+    out.append(f'-- {seat}: hears {", ".join(probes)}' + (f'\n-- licensed by {", ".join(sorted(set(lic)))}' if lic else ''))
     out.append(f'CREATE VIEW {snake(table)}_as_{snake(seat)} AS SELECT id, {", ".join(cols)} FROM {snake(table)};')
     out.append('')
 print('\n'.join(out))

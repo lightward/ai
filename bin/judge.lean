@@ -181,6 +181,92 @@ def shapesMode (trail : String) (sc : Scope) : IO Unit := do
     IO.println s!"{names.size}\t{parts.headD ""}\t{(parts.getD 1 "").take 160}"
     IO.println s!"\t\t{" ".intercalate (names.map (fun n => n.getString!)).toList}"
 
+/-- a literal list's elements, as constant names -/
+partial def listItems (e : Expr) : Option (List Name) :=
+  if e.isAppOfArity ``List.nil 1 then some []
+  else if e.isAppOfArity ``List.cons 3 then
+    match (e.getArg! 1).getAppFn.constName?, listItems (e.getArg! 2) with
+    | some c, some rest => some (c :: rest) | _, _ => none
+  else none
+
+/-- the data-model shadow, read from the kernel: every structure of the stream and of its house
+imports that the stream's vocabulary names (`table`), every enum (`type`), every seat — a def
+whose value is a literal list of an enum's constructors (`seat`), and every reader — a def
+`State → Probe → Ans` — with the field each probe lands on, found by reducing the reader at that
+probe and taking the projection at its head (`reader`); and which theorems cite which seats -/
+def schemaMode (trail : String) (sc : Scope) : IO Unit := do
+  let st ← elabFrom (← IO.FS.readFile trail) trail none
+  let env := st.env
+  let mut vocab : Array Name := #[]
+  for (n, ci) in env.constants.map₂.toList do
+    if n.getPrefix != sc.ns then continue
+    vocab := vocab ++ ci.type.getUsedConstants
+    if let some v := ci.value? (allowOpaque := true) then vocab := vocab ++ v.getUsedConstants
+  let isEnum (ii : InductiveVal) : Bool := !ii.isRec && ii.ctors.all fun c => match env.find? c with
+    | some (.ctorInfo ci) => ci.numFields == 0 | _ => false
+  let mut seen : Array Name := #[]
+  for c in vocab ++ (env.constants.map₂.toList.map (·.1)).toArray do
+    if seen.contains c || !sc.owns c then continue
+    seen := seen.push c
+    match env.find? c with
+    | some (.inductInfo ii) =>
+      if isEnum ii then IO.println s!"type {c} {" ".intercalate (ii.ctors.map (·.getString!))}"
+      else if isStructure env c then
+        let mut cols : Array String := #[]
+        let mut data := true
+        for f in getStructureFields env c do
+          if let some pi := env.find? (c ++ f) then
+            -- the field's type is the projection's codomain, after its self binder
+            let mut t := pi.type
+            while t.isForall do t := t.bindingBody!
+            if t.isSort then data := false
+            cols := cols.push s!"{f}:{t}"
+        -- a structure with a Type-valued field (a Face) is a kind, not a table
+        if data then IO.println s!"table {c} {" ".intercalate cols.toList}"
+    | _ => pure ()
+  for (n, ci) in env.constants.map₂.toList do
+    if n.getPrefix != sc.ns || ci.isTheorem then continue
+    let some v := ci.value? | continue
+    match listItems v with
+    | some (c :: cs) =>
+      if let some (.ctorInfo ci') := env.find? c then
+        if let some (.inductInfo ii) := env.find? ci'.induct then
+          if isEnum ii then IO.println s!"seat {n.getString!} {ci'.induct} {" ".intercalate ((c :: cs).map (·.getString!))}"
+    | _ => pure ()
+  for (n, ci) in env.constants.map₂.toList do
+    if n.getPrefix != sc.ns || ci.isTheorem then continue
+    let ty := ci.type
+    if !ty.isForall then continue
+    let stateTy := ty.bindingDomain!
+    let rest := ty.bindingBody!
+    if !rest.isForall then continue
+    let probeTy := rest.bindingDomain!
+    let some (.inductInfo pii) := env.find? (probeTy.getAppFn.constName?.getD .anonymous) | continue
+    if !isEnum pii then continue
+    let some stateName := stateTy.getAppFn.constName? | continue
+    if !isStructure env stateName then continue
+    let fields := getStructureFields env stateName
+    let arms ← (Meta.MetaM.toIO (ctxCore := { fileName := trail, fileMap := default }) (sCore := { env := env }) do
+      Meta.withLocalDeclD `r stateTy fun r => do
+        let mut arms : Array String := #[]
+        for c in pii.ctors do
+          let e ← Meta.whnf (mkAppN (.const n []) #[r, .const c []])
+          -- a direct arm reduces to a projection NODE (`r.3`), an arm under a map keeps the
+          -- projection FUNCTION (`Room.guests r`); read both
+          let mut hit : Option Name := none
+          for i in [0:fields.size] do
+            let f := fields[i]!
+            if (e.find? fun s => s.isAppOf (stateName ++ f) || (match s with | .proj sn idx _ => sn == stateName && idx == i | _ => false)).isSome then
+              hit := some f; break
+          if let some f := hit then arms := arms.push s!"{c.getString!}={f}"
+        pure arms)
+    if !arms.1.isEmpty then IO.println s!"reader {n.getString!} {stateName} {pii.name} {" ".intercalate arms.1.toList}"
+  for (n, ci) in env.constants.map₂.toList do
+    if n.getPrefix != sc.ns || !ci.isTheorem then continue
+    let used := ci.type.getUsedConstants ++ (match ci.value? (allowOpaque := true) with | some v => v.getUsedConstants | none => #[])
+    let seats := used.filter fun c => c.getPrefix == sc.ns && (env.find? c).any (fun ci' => !ci'.isTheorem && ci'.type.isAppOf ``List)
+    if !seats.isEmpty then IO.println s!"cites {n.getString!} {" ".intercalate (seats.toList.map (·.getString!))}"
+
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
   Lean.initSearchPath (← Lean.findSysroot)
@@ -199,6 +285,9 @@ unsafe def main (args : List String) : IO Unit := do
     return
   if args.head? == some "shapes" then
     shapesMode args[1]! sc
+    return
+  if args.head? == some "schema" then
+    schemaMode args[1]! sc
     return
   if args.head? == some "pieces" then
     -- the pieces in the order the crawl offers them, and the knobs, read from bin/Pieces.lean
