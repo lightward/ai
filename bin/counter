@@ -564,7 +564,13 @@ if primings_path:
         pre = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-prefix-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
         pre.write('\n'.join(prefix_lines) + '\n'); pre.close()
         cf = tempfile.NamedTemporaryFile('w', suffix='.txt', prefix='crawl-cands-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
-        cf.write('\n-- candidate\n'.join(candidate_text(*c) for c in cands) + '\n'); cf.close()
+        # grouped by vacancy, in the pieces' order: the judge stops each group at its first seat
+        groups, cur = [], None
+        for c in cands:
+            if c[0] != cur:
+                groups.append([]); cur = c[0]
+            groups[-1].append(candidate_text(*c))
+        cf.write('\n-- vacancy\n'.join('\n-- candidate\n'.join(g) for g in groups) + '\n'); cf.close()
         import time
         t0 = time.time()
         res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', pre.name, cf.name],
@@ -574,10 +580,14 @@ if primings_path:
         else:
             os.unlink(pre.name); os.unlink(cf.name)
         verdicts, bodies, cur = {}, {}, None
+        judge.judged = 0
         for l in res.stdout.splitlines():
-            m = re.match(r'(\d+) (seated|held)$', l)
+            m = re.match(r'(\d+) (seated|held|skipped)$', l)
             if m:
                 cur = int(m.group(1)); verdicts[cur] = m.group(2); continue
+            mj = re.match(r'judged (\d+)$', l)
+            if mj:
+                judge.judged = int(mj.group(1)); continue
             if cur is not None and (l.startswith('| ') or l == '|'):
                 bodies.setdefault(cur, []).append(l[2:])
         if res.returncode != 0 or len(verdicts) != len(cands):
@@ -585,7 +595,7 @@ if primings_path:
                              + (res.stdout + res.stderr)[-2000:])
         # the seated bodies as the judge elaborated them, pieces expanded — what the module grows
         judge.bodies = {i: '\n'.join(v).rstrip() for i, v in bodies.items()}
-        return set(i for i in range(len(cands)) if verdicts[i] == 'held')
+        return set(i for i in range(len(cands)) if verdicts[i] != 'seated')
 
     kept_hint = {}
     if germ_mode:
@@ -665,8 +675,8 @@ if primings_path:
             for n in seated_order:
                 prefix_lines.append(seated_text[n]); prefix_lines.append('')
             cands = [(n, k) for n in ready_hand + pending_vac for k in range(P)]
-            tried += len(cands)
             failed = judge(prefix_lines, cands)
+            tried += judge.judged
             bodies = judge.bodies
             best = {}
             for i, (n, k) in enumerate(cands):

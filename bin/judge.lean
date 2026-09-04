@@ -208,7 +208,11 @@ unsafe def main (args : List String) : IO Unit := do
     return
   let prefixSrc ← IO.FS.readFile args[0]!
   let candSrc ← IO.FS.readFile args[1]!
-  let cands := (candSrc.splitOn "\n-- candidate\n").filter (fun c => !c.trimAscii.isEmpty)
+  -- candidates come grouped by vacancy (`-- vacancy` between groups, `-- candidate` within), in
+  -- the pieces' order: a group stops at its first seat, because the cascade takes the first seated
+  -- piece anyway — the rest are reported `skipped`, never elaborated (the probe, `vv`, sees all)
+  let groups := (candSrc.splitOn "\n-- vacancy\n").map fun grp =>
+    (grp.splitOn "\n-- candidate\n").filter (fun c => !c.trimAscii.isEmpty)
   -- a trial imports the pieces; the artifact never does (the judge reports each seated body expanded)
   let base ← elabFrom prefixSrc "<prefix>" none #[{ module := `Pieces }]
   let baseMsgs := base.messages.toList
@@ -217,9 +221,17 @@ unsafe def main (args : List String) : IO Unit := do
     for m in baseMsgs.take 5 do IO.println s!"  {m.pos.line}:{m.pos.column} {← m.data.toString}"
     IO.Process.exit 1
   let mut i := 0
+  let mut judged := 0
   let verbose := args.length > 2
   let sentences := args.length > 2 && args[2]! == "vv"
-  for c in cands do
+  for grp in groups do
+   let mut seatedYet := false
+   for c in grp do
+    if seatedYet && !sentences then
+      IO.println s!"{i} skipped"
+      i := i + 1
+      continue
+    judged := judged + 1
     let t0 ← IO.monoMsNow
     let s ← elabFrom ("#seat " ++ c ++ "\n") s!"<candidate {i}>" (some base)
     let msgs := s.messages.toList
@@ -238,4 +250,6 @@ unsafe def main (args : List String) : IO Unit := do
           let txt ← m.data.toString
           for l in (txt.splitOn "\n").take 24 do
             IO.println s!"    {l}"
+    if !bad then seatedYet := true
     i := i + 1
+  IO.println s!"judged {judged}"
