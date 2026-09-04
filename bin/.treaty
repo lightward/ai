@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+# treaty: the assay's rows, replayed as SQL against the shadow — the assay's defs seated as rows,
+# each `#guard` translated where the fragment reaches it and run inside a rolled-back transaction
+# (a clerk's effect never leaks into the next row). reports replayed / identical / unread.
+# needs a Postgres: PGSOCK and PGPORT for a private one, else the machine's default.
+set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+assay="${1:?an assay with rows: assays/eih.lean}"
+stem="$(basename "${assay%.lean}")"
+grown="grown/assays/${stem}.lean"
+[ -f "$grown" ] || { echo "treaty: ${grown} is not grown (bin/counter grow ${assay})"; exit 1; }
+export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
+PGSOCK="${PGSOCK:-/tmp}"; PGPORT="${PGPORT:-5432}"; PGUSER="${PGUSER:-$USER}"
+q() { psql -h "$PGSOCK" -p "$PGPORT" -U "$PGUSER" -d "$1" -q -X -tA "${@:2}"; }
+db="treaty_${stem}"
+q postgres -c "DROP DATABASE IF EXISTS ${db}" >/dev/null 2>&1
+q postgres -c "CREATE DATABASE ${db}" >/dev/null || { echo "treaty: no database at ${PGSOCK}:${PGPORT}"; exit 1; }
+bin/counter schema "$grown" > "/tmp/treaty-${stem}.sql"
+if q "$db" -f "/tmp/treaty-${stem}.sql" 2>&1 | grep -q ERROR; then echo "treaty: the shadow does not load"; q "$db" -f "/tmp/treaty-${stem}.sql" 2>&1 | grep ERROR | head -5; exit 1; fi
+python3 - "$assay" "$db" "$PGSOCK" "$PGPORT" "$PGUSER" <<'PY'
+import re, subprocess, sys
+assay, db, sock, port, user = sys.argv[1:6]
+text = open(assay).read()
+def q(sql):
+    r = subprocess.run(['psql', '-h', sock, '-p', port, '-U', user, '-d', db, '-q', '-X', '-tA', '-c', sql], capture_output=True, text=True)
+    return (r.stdout.strip(), r.stderr.strip())
+snake = lambda n: re.sub(r'(?<!^)(?=[A-Z])', '_', n).lower()
+def split_top(s):
+    # split on commas at bracket depth zero
+    out, depth, cur = [], 0, ''
+    for ch in s:
+        if ch in '([⟨{': depth += 1
+        elif ch in ')]⟩}': depth -= 1
+        if ch == ',' and depth == 0:
+            out.append(cur.strip()); cur = ''
+        else: cur += ch
+    if cur.strip(): out.append(cur.strip())
+    return out
+def lit_list(s):
+    s = s.strip()
+    if s.startswith('[') and s.endswith(']'):
+        inner = s[1:-1].strip()
+        return split_top(inner) if inner else []
+    return None
+def sql_array(items):
+    return 'ARRAY[' + ','.join(str(x) for x in items) + ']::integer[]' if items else 'ARRAY[]::integer[]'
+# the assay's defs
+defs = {}
+for m in re.finditer(r'^def (\w+) : (.+?) := (.+)$', text, re.M):
+    defs[m.group(1)] = (m.group(2).strip(), m.group(3).strip())
+seats = {}
+for m in re.finditer(r'^def (\w+) : List Ask := \[([^\]]*)\]', text, re.M):
+    seats[m.group(1)] = [p.strip().lstrip('.') for p in m.group(2).split(',') if p.strip()]
+human_seats = ['coupleSeat', 'lindaSeat', 'bestManSeat', 'catererSeat']
+m = re.search(r'^def humanSeats : List \(List Ask\) := \[([^\]]*)\]', text, re.M)
+if m: human_seats = [x.strip() for x in m.group(1).split(',')]
+probe_col = {'guests': "(SELECT array_agg(party_id ORDER BY position) FROM room_guests g WHERE g.room_id = room.id)", 'sheet': 'delivered',
+             'ledger': "(SELECT array_agg(c2 ORDER BY position) FROM room_ledger l WHERE l.room_id = room.id)", 'timeline': 'timeline', 'bach': 'bach', 'confirmed': 'confirmed'}
+view_col = {'guests': 'guests', 'sheet': 'delivered', 'ledger': 'ledger', 'timeline': 'timeline', 'bach': 'bach', 'confirmed': 'confirmed'}
+ids, lists, next_id = {}, {}, {}
+def new_id(t):
+    next_id[t] = next_id.get(t, 0) + 1; return next_id[t]
+def clone_and_apply(clerk, base, arg):
+    i = new_id('room')
+    q(f"INSERT INTO room (id, delivered, timeline, bach, confirmed) SELECT {i}, delivered, timeline, bach, confirmed FROM room WHERE id = {ids[base]}")
+    q(f"INSERT INTO room_guests (room_id, position, party_id) SELECT {i}, position, party_id FROM room_guests WHERE room_id = {ids[base]}")
+    q(f"INSERT INTO room_ledger (room_id, position, c0, c1, c2) SELECT {i}, position, c0, c1, c2 FROM room_ledger WHERE room_id = {ids[base]}")
+    a = ''
+    if arg:
+        al = lit_list(arg)
+        if al is not None: a = ', ' + sql_array([ids[x] if x in ids else x for x in al])
+        elif arg.startswith('('): a = ', ' + sql_array(split_top(arg.strip('()')))
+        elif arg in lists: a = ', ' + sql_array(lists[arg])
+    q(f"SELECT {snake(clerk)}({i}{a})")
+    return i
+def room_of(e):
+    # a room expression: a def name, or a clerk applied inline
+    e = e.strip().strip('()') if e.strip().startswith('(') and e.strip().endswith(')') else e.strip()
+    if e in ids: return ids[e]
+    m = re.match(r'^(deliver|withGuests|withBach|withConfirmed|withLine) (\w+)(?: (.+))?$', e)
+    if m and m.group(2) in ids: return clone_and_apply(m.group(1), m.group(2), m.group(3))
+    return None
+seated = 0
+for name, (ty, val) in defs.items():
+    if ty == 'Party' and val.startswith('⟨'):
+        f = split_top(val[1:-1]); i = new_id('party'); ids[name] = i
+        q(f"INSERT INTO party (id, name, rsvp, meals) VALUES ({i}, {f[0]}, {f[1]}, {sql_array(lit_list(f[2]) or [])})"); seated += 1
+    elif ty == 'List Party':
+        lists[name] = [ids[x] for x in (lit_list(val) or []) if x in ids]
+    elif ty == 'Room' and val.startswith('⟨'):
+        f = split_top(val[1:-1]); i = new_id('room'); ids[name] = i
+        guests = lists.get(f[0]) if f[0] in lists else [ids[x] for x in (lit_list(f[0]) or []) if x in ids]
+        q(f"INSERT INTO room (id, delivered, timeline, bach, confirmed) VALUES ({i}, {sql_array(lit_list(f[1]) or [])}, {sql_array(lit_list(f[3]) or [])}, {sql_array(lit_list(f[4]) or [])}, {sql_array(lit_list(f[5]) or [])})")
+        for pos, g in enumerate(guests or []): q(f"INSERT INTO room_guests (room_id, position, party_id) VALUES ({i}, {pos}, {g})")
+        for pos, t in enumerate(lit_list(f[2]) or []):
+            c = split_top(t.strip('()')); q(f"INSERT INTO room_ledger (room_id, position, c0, c1, c2) VALUES ({i}, {pos}, {c[0]}, {c[1]}, {c[2]})")
+        seated += 1
+    elif ty == 'Room':
+        r = room_of(val)
+        if r: ids[name] = r; seated += 1
+print(f"the cast: {seated} rows seated from the assay's defs")
+# expressions: ('s', sql) a scalar/array, ('t', [sql...]) a seat's reading, ('n', value) a number known from the shadow's shape
+def expr(e):
+    e = e.strip()
+    if e in defs and defs[e][0] in ('List Nat', 'List (List Nat)', 'Nat', 'Bool') and e not in ids:
+        return expr(defs[e][1])
+    m = re.match(r'^(sheet|heads) (\w+)$', e)
+    if m and m.group(2) in lists:
+        arr = sql_array(lists[m.group(2)])
+        return ('s', f"cardinality(sheet({arr}))" if m.group(1) == 'heads' else f"sheet({arr})")
+    m = re.match(r'^(.+)\.delivered$', e)
+    if m:
+        r = room_of(m.group(1))
+        if r: return ('s', f"(SELECT delivered FROM room WHERE id = {r})")
+    m = re.match(r'^readRoom (.+) \.(\w+)$', e)
+    if m and m.group(2) in probe_col:
+        r = room_of(m.group(1))
+        if r: return ('s', f"(SELECT {probe_col[m.group(2)]} FROM room WHERE id = {r})")
+    m = re.match(r'^reads roomFace (\w+) (.+)$', e)
+    if m and m.group(1) in seats:
+        r = room_of(m.group(2))
+        if r:
+            view = f"room_as_{snake(m.group(1))}"
+            return ('t', [f"(SELECT {view_col[p]} FROM {view} WHERE id = {r})" for p in seats[m.group(1)]])
+    m = re.match(r'^everyone Nat\.beq (\[.*?\]) (\w+)\.confirmed$', e)
+    if m and m.group(2) in ids:
+        return ('s', f"({sql_array(lit_list(m.group(1)))} <@ (SELECT confirmed FROM room WHERE id = {ids[m.group(2)]}))")
+    m = re.match(r'^(\w+)\.length$', e)
+    if m:
+        if m.group(1) in seats: return ('n', len(seats[m.group(1)]))
+        if m.group(1) == 'humanEars': return ('n', sum(len(seats[s]) for s in human_seats if s in seats))
+        inner = expr(m.group(1))
+        if inner and inner[0] == 't': return ('n', len(inner[1]))
+    m = re.match(r'^enrolled Ask\.beq humanEars \.(\w+)$', e)
+    if m and m.group(1) in view_col:
+        views = ', '.join(f"'room_as_{snake(s)}'" for s in human_seats)
+        return ('s', f"EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name IN ({views}) AND column_name = '{view_col[m.group(1)]}')")
+    return None
+def literal(rhs):
+    rhs = rhs.strip()
+    if rhs in ('true', 'false'): return ('s', rhs)
+    if re.match(r'^\d+$', rhs): return ('n', int(rhs))
+    l = lit_list(rhs)
+    if l is not None:
+        if l and all(x.startswith('[') for x in l): return ('t', [sql_array(lit_list(x)) for x in l])
+        return ('s', sql_array(l))
+    return None
+def compare(a, b):
+    if a[0] == 'n' and b[0] == 'n': return ('py', a[1] == b[1])
+    if a[0] == 'n' and b[0] == 's': return ('sql', f"SELECT ({b[1]}) = {a[1]}")
+    if a[0] == 's' and b[0] == 'n': return ('sql', f"SELECT ({a[1]}) = {b[1]}")
+    if a[0] == 's' and b[0] == 's': return ('sql', f"SELECT ({a[1]}) = ({b[1]})")
+    if a[0] == 't' and b[0] == 't' and len(a[1]) == len(b[1]):
+        return ('sql', "SELECT " + " AND ".join(f"(({x}) = ({y}))" for x, y in zip(a[1], b[1])))
+    return None
+replayed = identical = unread = 0
+held = []
+for g in re.findall(r'^#guard (.+)$', text, re.M):
+    g = g.strip(); verdict = None
+    m = re.match(r'^(.+?) (==|!=) (.+)$', g)
+    if m:
+        a = expr(m.group(1)); b = literal(m.group(3)) or expr(m.group(3))
+        c = compare(a, b) if a and b else None
+        if c:
+            if c[0] == 'py': verdict = c[1] == (m.group(2) == '==')
+            else:
+                out, err = q(c[1]); verdict = (out == 't') == (m.group(2) == '==')
+                if err and not out: verdict = None; held.append((g, err[:100]))
+    elif g.startswith('!(') and g.endswith(')'):
+        a = expr(g[2:-1])
+        if a and a[0] == 's': out, _ = q(f"SELECT NOT ({a[1]})"); verdict = out == 't'
+    else:
+        a = expr(g)
+        if a and a[0] == 's': out, _ = q(f"SELECT ({a[1]})"); verdict = out == 't'
+    if verdict is None:
+        if not any(h[0] == g for h in held): unread += 1
+        continue
+    replayed += 1
+    if verdict: identical += 1
+    else: held.append((g, 'parts'))
+print(f'the treaty in SQL: {replayed} rows replayed, {identical} identical, {unread} beyond the fragment')
+for g, r in held: print(f'  PARTS: {g}  ->  {r}')
+PY

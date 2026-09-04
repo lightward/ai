@@ -961,6 +961,7 @@ case "${1:-}" in
   book) shift; exec "$ROOT/bin/.book" "$@" ;;
   chart) shift; exec "$ROOT/bin/.chart" "$@" ;;
   schema) shift; exec "$ROOT/bin/.schema" "$@" ;;
+  treaty) shift; exec "$ROOT/bin/.treaty" "$@" ;;
   page) shift; exec "$ROOT/bin/.page" "$@" ;;
   *) usage ;;
 esac

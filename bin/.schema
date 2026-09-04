@@ -91,10 +91,10 @@ for seat, (probe, probes) in seats.items():
     cols = []
     for p in probes:
         if p not in arms: continue
-        f = arms[p]
+        f, _, comp = arms[p].partition('#')
         if f in children_of.get(table, {}):
-            # a has-many field reads as the child rows in order
-            key = f'{snake(tables_elem[table][f])}_id' if tables_elem.get(table, {}).get(f) else 'c0'
+            # a has-many field reads as the child rows in order — the component the reader takes, or the id
+            key = f'{snake(tables_elem[table][f])}_id' if tables_elem.get(table, {}).get(f) else f'c{comp or 0}'
             cols.append(f'(SELECT array_agg({key} ORDER BY position) FROM {snake(table)}_{snake(f)} c WHERE c.{snake(table)}_id = {snake(table)}.id) AS {snake(f)}')
         else:
             cols.append(snake(f))
@@ -145,8 +145,35 @@ for name, kind, over, nargs, expr, describers in sorted(derived, key=lambda d: r
     table = snake(over.replace('List ', ''))
     if kind == 'clerk':
         touched = re.findall(r'(\w+) = ', expr)
-        if any(hasmany(table, f) for f in touched):
-            out.append(f'-- {name}: a clerk over a has-many field ({", ".join(touched)}) — not yet drawn (an insert into the child table)'); out.append(''); continue
+        many = [f for f in touched if hasmany(table, f)]
+        if many:
+            # a clerk over a has-many field: a prepend shifts the child rows and inserts at zero; a
+            # replacement deletes and inserts in order; anything else is not yet drawn
+            f = many[0]
+            tn = snake_key(table)
+            elem = tables_elem.get(tn, {}).get(f)
+            child = f'{table}_{snake(f)}'
+            m_pre = re.search(r'array_prepend\((\$\d+), row\.' + re.escape(f) + r'\)', expr)
+            m_all = re.search(re.escape(f) + r' = (\$\d+)$', expr.strip())
+            desc = f'\n-- described by {", ".join(sorted(set(describers)))}' if describers else ''
+            if m_pre and len(touched) == 1:
+                if elem:
+                    ins = f'INSERT INTO {child} ({table}_id, position, {snake(elem)}_id) VALUES ($1, 0, $2)'
+                    params = f'{table}_id integer, arg2 integer'
+                else:
+                    ncols = len(re.findall(r'^  c\d+ ', '\n'.join(l for l in out if l.startswith('  c')), re.M)) or 3
+                    cols = ', '.join(f'c{i}' for i in range(ncols))
+                    vals = ', '.join(f'$2[{i + 1}]' for i in range(ncols))
+                    ins = f'INSERT INTO {child} ({table}_id, position, {cols}) VALUES ($1, 0, {vals})'
+                    params = f'{table}_id integer, arg2 integer[]'
+                out.append(f'-- {name}: a clerk over the has-many {f} — a prepend: shift the child rows, insert at zero{desc}')
+                out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS void LANGUAGE sql AS $$\n  UPDATE {child} SET position = position + 1 WHERE {table}_id = $1;\n  {ins} $$;')
+                out.append(''); continue
+            if m_all and len(touched) == 1 and elem:
+                out.append(f'-- {name}: a clerk over the has-many {f} — a replacement: delete, then insert in order{desc}')
+                out.append(f'CREATE FUNCTION {snake(name)}({table}_id integer, arg2 integer[]) RETURNS void LANGUAGE sql AS $$\n  DELETE FROM {child} WHERE {table}_id = $1;\n  INSERT INTO {child} ({table}_id, position, {snake(elem)}_id) SELECT $1, ordinality - 1, id FROM unnest($2) WITH ORDINALITY AS u(id, ordinality) $$;')
+                out.append(''); continue
+            out.append(f'-- {name}: a clerk over a has-many field ({", ".join(touched)}) — not yet drawn'); out.append(''); continue
     extra = ', '.join(f'arg{i + 2} integer[]' for i in range(nargs - 1))
     params = (f'{table}_ids integer[]' if over_list else f'{table}_id integer') + (', ' + extra if extra else '')
     if '⟨unread' in expr:

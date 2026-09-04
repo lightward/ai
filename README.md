@@ -108,7 +108,7 @@ bin/counter ride [session.lean]
 
 ## the page
 
-`bin/counter chart <grown stream> [--laws]` draws the map of relations from the proofs (mermaid); `bin/counter schema <grown assay>` draws its data-model shadow (Postgres: tables, types, a view per seat, the derived as functions, every line carrying the theorems that license it), read from the kernel. `bin/counter page` writes `site/`: this file, Room and Face grown with every declaration an anchor (`foam.is/trunk.html#the_handshake`), the toy, the germ, the pieces, the book, and the compiler's report for that push. the `foam.is` workflow grows the modules and publishes it. nothing browseable is committed, the same way nothing derived is.
+`bin/counter chart <grown stream> [--laws]` draws the map of relations from the proofs (mermaid); `bin/counter schema <grown assay>` draws its data-model shadow (Postgres: tables, types, a view per seat, the derived as functions, every line carrying the theorems that license it), read from the kernel; `bin/counter treaty assays/<arc>.lean` loads that shadow into a scratch Postgres, seats the assay's defs as rows, and replays its `#guard` rows as SQL (the treaty at database grain — what the fragment cannot read it reports as beyond it, never as identical). `bin/counter page` writes `site/`: this file, Room and Face grown with every declaration an anchor (`foam.is/trunk.html#the_handshake`), the toy, the germ, the pieces, the book, and the compiler's report for that push. the `foam.is` workflow grows the modules and publishes it. nothing browseable is committed, the same way nothing derived is.
 
 ## the grammar
 

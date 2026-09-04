@@ -181,6 +181,14 @@ def shapesMode (trail : String) (sc : Scope) : IO Unit := do
     IO.println s!"{names.size}\t{parts.headD ""}\t{(parts.getD 1 "").take 160}"
     IO.println s!"\t\t{" ".intercalate (names.map (fun n => n.getString!)).toList}"
 
+/-- the component of a tuple a projection chain reads: `x.1` is 0, `x.2.1` is 1, a bare `x.2.2` is
+the last (`snd` all the way down ends in the last component) -/
+partial def compDepth (b : Expr) (k : Nat) : Option Nat :=
+  if b.isAppOfArity ``Prod.snd 3 then compDepth (b.getArg! 2) (k + 1)
+  else if b.isAppOfArity ``Prod.fst 3 then some k
+  else if b.isBVar then some k
+  else none
+
 /-- a literal list's elements, as constant names -/
 partial def listItems (e : Expr) : Option (List Name) :=
   if e.isAppOfArity ``List.nil 1 then some []
@@ -303,7 +311,12 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
             let f := fields[i]!
             if (e.find? fun s => s.isAppOf (stateName ++ f) || (match s with | .proj sn idx _ => sn == stateName && idx == i | _ => false)).isSome then
               hit := some f; break
-          if let some f := hit then arms := arms.push s!"{c.getString!}={f}"
+          -- an arm `List.map (fun x => x.2.2) (field r)` reads one component of each element: name it
+          let comp : String := match e with
+            | .app (.app (.app (.app (.const ``List.map _) _) _) (.lam _ _ body _)) _ =>
+              match compDepth body 0 with | some k => s!"#{k}" | none => ""
+            | _ => ""
+          if let some f := hit then arms := arms.push s!"{c.getString!}={f}{comp}"
         pure arms)
     if !arms.1.isEmpty then IO.println s!"reader {n.getString!} {stateName} {pii.name} {" ".intercalate arms.1.toList}"
   for (n, ci) in env.constants.map₂.toList do
