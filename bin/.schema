@@ -33,8 +33,8 @@ for l in res.stdout.splitlines():
     elif parts[0] == 'cites':
         for seat in set(parts[2:]): cites.setdefault(seat, []).append(parts[1])
     elif parts[0] == 'derived':
-        m = re.match(r'derived (\S+) (\S+) over=(.+?) args=(\d+) :: (.*?) \| ?(.*)$', l)
-        if m: derived.append((m.group(1), m.group(2), m.group(3), int(m.group(4)), m.group(5), m.group(6).split()))
+        m = re.match(r'derived (\S+) (\S+) over=(.+?) args=(\d+) :: (.*?) \| ?(.*?)(?: @by (\S+))?$', l)
+        if m: derived.append((m.group(1), m.group(2), m.group(3), int(m.group(4)), m.group(5), m.group(6).split() + ([f'(drawn by {m.group(7)})'] if m.group(7) else [])))
 def coltype(t):
     if t == 'Nat': return 'integer'
     if t == 'Bool': return 'boolean'
@@ -188,7 +188,10 @@ for name, kind, over, nargs, expr, describers in sorted(derived, key=lambda d: r
     else:
         out.append(f'-- {name}: derived, never stored{desc}')
         if over_list:
-            out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS integer[] LANGUAGE sql STABLE AS $$\n  SELECT {sqlexpr(expr, table)} $$;')
+            body = sqlexpr(expr.replace('(row)', '($1)') if 'AGG' not in expr else expr, table)
+            if nargs == 1: body = re.sub(r'\barg\d+\b|\brow\b', '$1', body)   # the one argument is the list itself
+            ret = 'integer' if body.startswith('cardinality') else 'integer[]'
+            out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS {ret} LANGUAGE sql STABLE AS $$\n  SELECT {body} $$;')
         else:
             out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS integer[] LANGUAGE sql STABLE AS $$\n  SELECT {sqlexpr(expr, table)} FROM {table} WHERE id = $1 $$;')
     out.append('')

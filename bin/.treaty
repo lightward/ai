@@ -17,7 +17,8 @@ db="treaty_${stem}"
 q postgres -c "DROP DATABASE IF EXISTS ${db}" >/dev/null 2>&1
 q postgres -c "CREATE DATABASE ${db}" >/dev/null || { echo "treaty: no database at ${PGSOCK}:${PGPORT}"; exit 1; }
 bin/counter schema "$grown" > "/tmp/treaty-${stem}.sql"
-if q "$db" -f "/tmp/treaty-${stem}.sql" 2>&1 | grep -q ERROR; then echo "treaty: the shadow does not load"; q "$db" -f "/tmp/treaty-${stem}.sql" 2>&1 | grep ERROR | head -5; exit 1; fi
+load="$(q "$db" -f "/tmp/treaty-${stem}.sql" 2>&1)"
+if echo "$load" | grep -q ERROR; then echo "treaty: the shadow does not load"; echo "$load" | grep ERROR | head -5; exit 1; fi
 python3 - "$assay" "$db" "$PGSOCK" "$PGPORT" "$PGUSER" <<'PY'
 import re, subprocess, sys
 assay, db, sock, port, user = sys.argv[1:6]
@@ -108,7 +109,7 @@ def expr(e):
     m = re.match(r'^(sheet|heads) (\w+)$', e)
     if m and m.group(2) in lists:
         arr = sql_array(lists[m.group(2)])
-        return ('s', f"cardinality(sheet({arr}))" if m.group(1) == 'heads' else f"sheet({arr})")
+        return ('s', f"{m.group(1)}({arr})")
     m = re.match(r'^(.+)\.delivered$', e)
     if m:
         r = room_of(m.group(1))
@@ -181,4 +182,5 @@ for g in re.findall(r'^#guard (.+)$', text, re.M):
     else: held.append((g, 'parts'))
 print(f'the treaty in SQL: {replayed} rows replayed, {identical} identical, {unread} beyond the fragment')
 for g, r in held: print(f'  PARTS: {g}  ->  {r}')
+if held or replayed == 0: sys.exit(1)
 PY

@@ -9,6 +9,15 @@ jobs:
   gate:
     name: the gate
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
@@ -55,10 +64,16 @@ jobs:
           grep -q 'sweep: 1 seated, 0 still held' ride.out
           lake env lean regrowth/demo.lean
           echo "counter rides; the session replays green"
-      - name: the treaty vectors (every assay elaborates against the grown modules)
+      - name: the treaty vectors (every assay elaborates against the grown modules; an assay with rows in its grown form)
         run: |
           for f in assays/*.lean; do
             [ -f "$f" ] || continue
-            lake env lean "$f"
-            echo "assay green: $f"
+            g="grown/assays/$(basename "$f")"
+            src="$f"; [ -f "$g" ] && src="$g"
+            lake env lean "$src"
+            echo "assay green: $src"
           done
+      - name: the treaty in SQL (the shadow loads into Postgres; the assay's rows replay as queries)
+        run: |
+          sudo apt-get install -y -q postgresql-client >/dev/null
+          PGSOCK=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres bin/counter treaty assays/eih.lean

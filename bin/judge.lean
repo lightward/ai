@@ -380,7 +380,25 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
         "SET " ++ ", ".intercalate sets
       else toSQL env (depth' - 1) body
     let describers := (env.constants.map₂.toList.filter fun (m, ci') => m.getPrefix == sc.ns && ci'.isTheorem && ci'.type.getUsedConstants.contains n).map (·.1.getString!)
-    IO.println s!"derived {n.getString!} {kind} over={firstTy} args={depth'} :: {sql} | {" ".intercalate describers}"
+    -- a def the fragment cannot read may be read BY A THEOREM: `∀ x, g x = n x` (or `n x = g x`)
+    -- with g readable — the shadow draws from the proof, and names it
+    let mut sql := sql
+    let mut byThm := ""
+    if sql.startsWith "⟨unread" then
+      for (m, ci') in env.constants.toList do
+        if !(sc.owns m) || !ci'.isTheorem then continue
+        let mut t := ci'.type
+        while t.isForall do t := t.bindingBody!
+        if t.isAppOfArity ``Eq 3 then
+          let l := t.getArg! 1; let r := t.getArg! 2
+          let isSelf (e : Expr) := e.isApp && e.getAppFn.constName? == some n && e.getAppArgs.all (·.isBVar)
+          let mentions (e : Expr) := e.getUsedConstants.contains n
+          let other := if isSelf r && !mentions l then some l else if isSelf l && !mentions r then some r else none
+          if let some o := other then
+            let s' := toSQL env 0 o
+            if !(s'.startsWith "⟨unread") && !((s'.splitOn "⟨unread").length > 1) then
+              sql := s'.replace "$0" "row"; byThm := m.getString!; break
+    IO.println s!"derived {n.getString!} {kind} over={firstTy} args={depth'} :: {sql} | {" ".intercalate describers}{if byThm.isEmpty then "" else s!" @by {byThm}"}"
 
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
