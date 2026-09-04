@@ -85,6 +85,14 @@ structure Pool where
   theorems : Array (Name × NameSet)
   df : Std.HashMap Name Nat
   n : Nat
+  storey : Std.HashMap Name Nat   -- a theorem's storey: its module's index, the local module highest
+
+/-- a constant's storey: its module's index in the import order (Room below Face below Witness
+below the customer), the module being grown highest of all -/
+def storeyOf (env : Environment) (n : Name) : Nat :=
+  match env.getModuleIdxFor? n with
+  | some idx => idx.toNat
+  | none => env.header.moduleNames.size
 
 initialize poolRef : IO.Ref (Option Pool) ← IO.mkRef none
 initialize seekTrace : IO.Ref (Array (Nat × Syntax)) ← IO.mkRef #[]
@@ -105,7 +113,9 @@ def pool (env : Environment) : IO Pool := do
   let mut df : Std.HashMap Name Nat := {}
   for (_, k) in ths do
     for c in k.toList do df := df.insert c (df.getD c 0 + 1)
-  let p := { size := size, theorems := ths, df := df, n := ths.size }
+  let mut st : Std.HashMap Name Nat := {}
+  for (t, _) in ths do st := st.insert t (storeyOf env t)
+  let p := { size := size, theorems := ths, df := df, n := ths.size, storey := st }
   poolRef.set (some p)
   return p
 
@@ -132,7 +142,13 @@ def headClass (e : Expr) : Option Name :=
 
 /-- the citations in reach of a goal: shared rarity normalized by the candidate's own vocabulary
 (a tight lemma that shares most of its words outranks a crown that shares a few of its many) -/
-def inReach (p : Pool) (goal : NameSet) (exclude : Name) (keep : Name → Bool := fun _ => true) : Array Name := Id.run do
+def inReach (p : Pool) (goal : NameSet) (exclude : Name) (keep : Name → Bool := fun _ => true)
+    (goalStorey : Nat := 0) : Array Name := Id.run do
+  -- by affinity alone. the lines as the order (the goal's own storey first, then below) was tried
+  -- and refuted: with the reach filled by same-storey siblings, the lower-storey lemma a body
+  -- needs (Room's list laws at a Face goal) fell past the cap — Face refused four, Witness one,
+  -- EIH four. the storey is kept on the pool for the reading, not the ranking
+  let _ := goalStorey
   let mut scored : Array (Float × Name) := #[]
   for (t, k) in p.theorems do
     if t == exclude || !keep t then continue
@@ -259,10 +275,11 @@ likewise; a def-typed hypothesis hides its ∀ from `apply`, so `exact h _` besi
   let hyps := si.hyps.map (·.1)
   let env ← getEnv
   let goalHead := headClass (← instantiateMVars (← g.getType))
+  let goalStorey := si.key.toList.foldl (fun m c => if house env c then max m (storeyOf env c) else m) 0
   let reach := inReach p si.key si.self (fun t =>
     match goalHead, (env.find? t).bind (fun ci => headClass ci.type) with
     | some gh, some th => gh == th || th == ``And   -- a conjunction's projections may match
-    | _, _ => true)
+    | _, _ => true) goalStorey
   let cites := reach.map (fun t => mkIdent (nameFor si.ns t))
   let names := hyps ++ cites
   -- a conjunction, cited or held, is closed through its projections: `h.2`, `(t _ _).2.2` —
@@ -328,7 +345,8 @@ wrong place fails and backtracks instead of poisoning the moves after it -/
   let env ← getEnv
   let p ← pool env
   let hyps := (si.hyps.filter (fun (_, ty) => isEqn ty)).map (·.1)
-  let cites := ((inReach p si.key si.self).filter fun t => (env.find? t).any (fun ci => isEqn ci.type)).map
+  let goalStorey := si.key.toList.foldl (fun m c => if house env c then max m (storeyOf env c) else m) 0
+  let cites := ((inReach p si.key si.self (goalStorey := goalStorey)).filter fun t => (env.find? t).any (fun ci => isEqn ci.type)).map
     (fun t => mkIdent (nameFor si.ns t))
   let names := hyps ++ cites
   let cands ← names.mapM fun t => `(tactic| (rw [$t:ident]; $closers:tactic))
@@ -350,7 +368,8 @@ or `.symm.trans` with the piece's own closers — `(c2 _ _).trans (c1 _ _)` -/
   let env ← getEnv
   let p ← pool env
   let hyps := (si.hyps.filter (fun (_, ty) => isEqn ty)).map (·.1)
-  let cites := (((inReach p si.key si.self).filter fun t => (env.find? t).any (fun ci => isEqn ci.type)).take 6).map
+  let goalStorey := si.key.toList.foldl (fun m c => if house env c then max m (storeyOf env c) else m) 0
+  let cites := (((inReach p si.key si.self (goalStorey := goalStorey)).filter fun t => (env.find? t).any (fun ci => isEqn ci.type)).take 6).map
     (fun t => mkIdent (nameFor si.ns t))
   let names := hyps ++ cites
   let mut cands : Array Tac := #[]
