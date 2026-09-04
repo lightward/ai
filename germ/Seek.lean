@@ -41,7 +41,12 @@ theorem the_search_is_the_replay (close : Nat → Bool) (w : List Nat) :
 theorem the_audition_cannot_part_them (close : Nat → Bool) :
     ∀ q, sound (airGap Nat (List Nat)) (seeker close) q = sound (airGap Nat (List Nat)) (replay close) q := sorry
 
+theorem the_search_starts_empty (close : Nat → Bool) : (seeker close).s0 = [] := sorry
+
 theorem the_search_and_its_replay_are_alike (close : Nat → Bool) :
     alike (airGap Nat (List Nat)) (seeker close) (replay close) := sorry
+
+theorem the_search_has_no_memory (close : Nat → Bool) (w : List Nat) :
+    behavior (seeker close) w = w.filter close := sorry
 
 end Seek
