@@ -288,6 +288,9 @@ def Derived (F : Face) (P : F.State → Prop) : Prop :=
 def concordFace (F : Face) (V : Type v') : Face :=
   pairFace (host F V) ⟨door F.State V, Unit, V, fun x _ => met x⟩ (fun x => x) (fun x => x)
 
+def differOnly (F : Face) (x y : F.State) (p : F.Probe) : Prop :=
+  ∀ q, q ≠ p → F.obs x q = F.obs y q
+
 theorem no_interview_parts_the_alike (F : Face) {s t : F.State} (h : alike F s t) :
     ∀ q, sound F s q = sound F t q
   | .rest => rfl

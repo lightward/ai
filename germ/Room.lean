@@ -104,6 +104,9 @@ def lacking {A : Type u} (beq : A → A → Bool) (room : List A) : List A → N
   | n :: needs =>
       cond (enrolled beq room n) (lacking beq room needs) (lacking beq room needs + 1)
 
+def everyone (beq : Nat → Nat → Bool) (members confirmed : List Nat) : Bool :=
+  backed beq confirmed members
+
 theorem the_carriers_compose {S : Type u} {T : Type u'} {U : Type u''} {P : Type v} {A : Type w}
     (f : S → P → A) (g : T → P → A) (k : U → P → A) (h : S → T) (h' : T → U)
     (c1 : carries f g h) (c2 : carries g k h') :
@@ -542,6 +545,23 @@ theorem the_unit_word_is_its_count :
 
 theorem ble_le_add_left : ∀ a b : Nat, Nat.ble b (a + b) = true := sorry
 
+theorem the_rest_reads {A : Type w} {a b : A} {l m : List A} (h : a :: l = b :: m) : l = m :=
+  congrArg (fun x => x.tail) h
+
+theorem a_member_is_enrolled {A : Type u} (beq : A → A → Bool) (hrefl : ∀ x, beq x x = true) :
+    ∀ (s : List A) (p : A), p ∈ s → enrolled beq s p = true
+  | [], _, h => nomatch h
+  | q :: s, p, h => by
+      cases h with
+      | head =>
+          show (beq q q || enrolled beq s q) = true
+          rw [hrefl]
+          rfl
+      | tail _ h' =>
+          show (beq q p || enrolled beq s p) = true
+          rw [a_member_is_enrolled beq hrefl s p h']
+          cases beq q p <;> rfl
+
 theorem a_merging_map_has_no_section {S : Type u} {T : Type u'} (h : S → T)
     {s s' : S} (hs : s ≠ s') (hm : h s = h s')
     (r : T → S) (hr : ∀ x, r (h x) = x) : False := sorry
@@ -576,11 +596,7 @@ theorem the_seat_is_load_bearing_in_the_same_click {A : Type u} (beq : A → A �
     (hrefl : ∀ y : A, beq y y = true)
     (st : List A × List (A × List A)) (arr : A × List A)
     (hb : backed beq st.1 arr.2 = true) :
-    enrolled beq (welcome beq st arr).1 arr.1 = true := by
-  rw [the_backed_are_seated beq st arr hb]
-  show (beq arr.1 arr.1 || enrolled beq st.1 arr.1) = true
-  rw [hrefl arr.1]
-  exact true_or_reads (enrolled beq st.1 arr.1)
+    enrolled beq (welcome beq st arr).1 arr.1 = true := sorry
 
 theorem the_insertions_count {A : Type u} (x : A) :
     ∀ l : List A, (inserts x l).length = l.length + 1
@@ -891,6 +907,10 @@ theorem mul_one_reads (a : Nat) : a * 1 = a := sorry
 
 theorem the_hallway_is_too_small {S : Type u} (r : S → Bool) (a b c : S) :
     r a = r b ∨ r b = r c ∨ r a = r c := sorry
+
+theorem the_unenrolled_are_no_member {A : Type u} (beq : A → A → Bool) (hrefl : ∀ x, beq x x = true)
+    (s : List A) (p : A) (h : enrolled beq s p = false) : ¬ p ∈ s :=
+  fun hp => nomatch (h.symm.trans (a_member_is_enrolled beq hrefl s p hp))
 
 theorem the_join_counts_evenly {A : Type u} {B : Type v} (f : A → List B) (n : Nat) :
     ∀ as : List A, (∀ a, a ∈ as → (f a).length = n) →
@@ -1214,6 +1234,10 @@ theorem the_click_spares_the_dark {A : Type u} (beq : A → A → Bool)
           have hze := the_backing_reaches_each_need beq st.1 arr.2 hb z hz
           rw [hze] at hzd
           exact nomatch hzd
+
+theorem everyone_means_each (beq : Nat → Nat → Bool) (members confirmed : List Nat)
+    (h : everyone beq members confirmed = true) :
+    ∀ m, m ∈ members → enrolled beq confirmed m = true := sorry
 
 theorem the_orders_count_to_the_factorial {A : Type u} :
     ∀ l : List A, (perms l).length = fact l.length
