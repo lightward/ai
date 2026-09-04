@@ -165,19 +165,12 @@ def humanEars : List Ask := earshot roomFace humanSeats
 #guard everyone Nat.beq [1, 2] demo.confirmed
 #guard !(everyone Nat.beq [1, 2, 7] demo.confirmed)
 
-theorem the_sheet_counts_the_heads : ∀ gl : List Party, (sheet gl).length = heads gl := sorry
-
-theorem a_yes_reaches_the_sheet {p : Party} {gl : List Party} (hp : p ∈ gl)
-    (hr : p.rsvp = true) {m : Nat} (hm : m ∈ p.meals) : m ∈ sheet gl := sorry
-
 theorem the_delivery_is_the_sheet (r : Room) : (deliver r).delivered = sheet r.guests := sorry
 
 theorem the_delivery_moves_no_guest (r : Room) : (deliver r).guests = r.guests := sorry
 
 theorem everyone_clear_means_everyone_confirmed (r : Room) (members : List Nat)
     (h : allClear r members) : ∀ m, m ∈ members → enrolled Nat.beq r.confirmed m = true := sorry
-
-theorem reseating_keeps_the_heads {gl gl' : List Party} (h : gl.Perm gl') : heads gl = heads gl' := sorry
 
 theorem a_line_touches_only_the_ledger (r : Room) (e : Nat × Nat × Nat) :
     differOnly roomFace (withLine r e) r .ledger :=
@@ -207,9 +200,6 @@ theorem a_vendor_never_sees_anothers_invoice (v w : Nat) (hvw : Nat.beq w v = fa
       rw [List.filter, hvw]
 
 theorem an_ask_reads_itself : ∀ q : Ask, Ask.beq q q = true := sorry
-
-theorem reseating_keeps_the_sheets_count {gl gl' : List Party} (h : gl.Perm gl') :
-    (sheet gl).length = (sheet gl').length := sorry
 
 theorem linda_never_sees_the_ledger (r : Room) (e : Nat × Nat × Nat) :
     reads roomFace lindaSeat (withLine r e) = reads roomFace lindaSeat r := sorry
@@ -249,14 +239,14 @@ theorem lanes_shrink_never_lock : dayOfView.all (enrolled Nat.beq partnerView) =
 theorem the_maker_sees_shape_not_content (r : Room) (gl gl' : List Party)
     (h : gl.length = gl'.length) : alike makerFace (withGuests r gl) (withGuests r gl') := sorry
 
-theorem a_quiet_seat_does_not_hear_it (s : List Ask) (p : Ask) (h : enrolled Ask.beq s p = false) :
-    ¬ hears roomFace s p := sorry
-
 theorem everyone_clear_means_rose_ate (r : Room) (members : List Nat) (h : allClear r members)
     {p : Party} (hp : p ∈ r.guests) (hr : p.rsvp = true) {m : Nat} (hm : m ∈ p.meals) :
     m ∈ r.delivered := by
   rw [h.1]
   exact a_yes_reaches_the_sheet hp hr hm
+
+theorem a_quiet_seat_does_not_hear_it (s : List Ask) (p : Ask) (h : enrolled Ask.beq s p = false) :
+    ¬ hears roomFace s p := sorry
 
 theorem no_human_hears_the_receipt : ¬ hears roomFace (earshot roomFace humanSeats) .confirmed := sorry
 

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# chart: the map of relations, drawn from the proofs — every organ of a grown stream as a node,
+# grouped by the storey it lives in, an arrow for each citation the elaborator reads.
+# relations, not relata: the names are only where the arrows touch down.
+set -u
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+src="${1:?a grown stream: grown/Room.lean or grown/assays/eih.lean}"
+python3 - "$src" <<'PY'
+import re, subprocess, sys, os
+src = sys.argv[1]
+text = open(src).read()
+imports = re.findall(r'^import (\S+)', text, re.M)
+ns_m = re.search(r'^namespace ([\w.]+)', text, re.M)
+ns = ns_m.group(1) if ns_m else os.path.splitext(os.path.basename(src))[0]
+res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'cites', src, ns, ','.join(imports)], capture_output=True, text=True)
+nodes, edges = {}, []
+for l in res.stdout.splitlines():
+    head, sep, deps = l.partition(' <- ')
+    if not sep: continue
+    kind, name = head.split()
+    nodes[name] = kind
+    for d in deps.split():
+        edges.append((name, d))
+def storey(n):
+    return n.rsplit('.', 1)[0] if '.' in n else ns
+def nid(n):
+    return re.sub(r'[^A-Za-z0-9_]', '_', n)
+def label(n):
+    return n.rsplit('.', 1)[-1]
+groups = {}
+for a, b in edges:
+    for n in (a, b):
+        groups.setdefault(storey(n), set()).add(n)
+for n in nodes:
+    groups.setdefault(ns, set()).add(n)
+out = ['graph LR']
+for st, ns_ in groups.items():
+    out.append(f'  subgraph {nid(st)}["{st}"]')
+    for n in sorted(ns_):
+        shape = '([' + label(n) + '])' if nodes.get(n) == 'carrier' or (n not in nodes and False) else '["' + label(n) + '"]'
+        if n not in nodes and st != ns:
+            shape = '["' + label(n) + '"]'
+        out.append(f'    {nid(n)}{shape}')
+    out.append('  end')
+seen = set()
+for a, b in edges:
+    if (a, b) in seen or a == b: continue
+    seen.add((a, b))
+    out.append(f'  {nid(a)} --> {nid(b)}')
+print('\n'.join(out))
+PY

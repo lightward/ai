@@ -30,11 +30,23 @@ pre{{white-space:pre-wrap;word-break:break-word;background:#f3f1ec;padding:1rem;
 .readme{{display:block;white-space:pre-wrap}} .readme h1,.readme h2{{display:inline}}
 footer{{opacity:.6}}
 </style></head><body><nav>{nav}</nav>{body}
-<footer>strict phenomenology is indistinguishable from physics — the artifact grew from the germ on push. UNLICENSE.</footer></body></html>"""
+<footer>strict phenomenology is indistinguishable from physics — the artifact grew from the germ on push. UNLICENSE.</footer>
+<script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"; mermaid.initialize({{startOnLoad:true, maxTextSize:900000, maxEdges:5000}});</script></body></html>"""
 
 NAV = ('<a href="./">foam</a><a href="room.html">Room</a><a href="trunk.html">Face</a><a href="germ.html">the germ</a><a href="toy.html">toy, a customer</a>'
        '<a href="pieces.html">the pieces</a><a href="book.html">the book</a>'
        '<a href="https://github.com/lightward/foam">github</a>')
+
+def chart_of(path):
+    # the map of relations drawn from the proofs (bin/counter chart), rendered by mermaid in the browser
+    try:
+        mmd = subprocess.run(['bin/counter', 'chart', path], capture_output=True, text=True).stdout
+    except Exception:
+        mmd = ''
+    if not mmd.strip():
+        return ''
+    return ('<section><h2>the map of relations — every organ a node, an arrow for each citation the elaborator reads</h2>'
+            '<pre class="mermaid">' + html.escape(mmd) + '</pre></section>')
 
 def lean_page(path, title):
     src = open(path).read()
@@ -46,7 +58,7 @@ def lean_page(path, title):
             out.append(f'<span class="decl" id="{m.group(2)}"><a href="#{m.group(2)}">{esc}</a></span>')
         else:
             out.append(esc)
-    return page(f'{title} — foam', f'<section><h1>{html.escape(title)}</h1><pre>' + '\n'.join(out) + '</pre></section>', NAV)
+    return page(f'{title} — foam', f'<section><h1>{html.escape(title)}</h1><pre>' + '\n'.join(out) + '</pre></section>' + chart_of(path), NAV)
 
 readme = open('README.md').read()
 def markdown(text):
