@@ -189,6 +189,48 @@ partial def listItems (e : Expr) : Option (List Name) :=
     | some c, some rest => some (c :: rest) | _, _ => none
   else none
 
+/-- a fragment of the list vocabulary, read into SQL: projections are columns, `cons` prepends,
+a house def is a call, `And`/`Eq`/`∈` are themselves, `cond` is `CASE`, and the joinMap-over-a-cond
+shape is an aggregate over the child rows; anything outside the fragment is marked unread -/
+partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
+  let go := toSQL env self
+  let col (c : Name) := c.getString!
+  match e with
+  | .bvar i => if i == self then "row" else s!"${i}"
+  | .const ``Bool.true _ => "true"
+  | .const ``Bool.false _ => "false"
+  | .const ``List.nil _ => "ARRAY[]::integer[]"
+  | .app .. =>
+    let f := e.getAppFn; let args := e.getAppArgs
+    match f.constName?, args.size with
+    | some ``And, 2 => s!"({go args[0]!} AND {go args[1]!})"
+    | some ``Eq, 3 => s!"({go args[1]!} = {go args[2]!})"
+    | some ``Membership.mem, 5 => s!"({go args[4]!} = ANY({go args[3]!}))"
+    | some ``List.cons, 3 => s!"array_prepend({go args[1]!}, {go args[2]!})"
+    | some ``cond, 4 => s!"(CASE WHEN {go args[1]!} THEN {go args[2]!} ELSE {go args[3]!} END)"
+    | some ``List.length, 2 => s!"cardinality({go args[1]!})"
+    | some ``Nat.beq, 2 => s!"({go args[0]!} = {go args[1]!})"
+    | some `Room.joinMap, n =>
+      -- joinMap (fun p => cond p.q p.f []) xs: the rows of xs where q, their f's flattened in order;
+      -- with xs left implicit (a bare `joinMap f`), the rows are the argument itself
+      if n < 3 then s!"⟨unread joinMap⟩" else
+      match args[2]! with
+      | .lam _ _ (.app (.app (.app (.app (.const ``cond _) _) q) f) (.app (.const ``List.nil _) _)) _ =>
+        s!"AGG[{toSQL env 0 q} → {toSQL env 0 f}]({if n ≥ 4 then go args[3]! else "row"})"
+      | _ => s!"⟨unread joinMap⟩"
+    | some c, _ =>
+      if isStructure env c.getPrefix && (getStructureFields env c.getPrefix).contains c.getString!.toName then
+        -- a projection: `row.field`, or a column of an argument
+        s!"{go args[args.size - 1]!}.{col c}"
+      else if c.getPrefix == `Room || c.getPrefix == `Roster || c.getPrefix.getString! == "Treaty" then
+        s!"{c.getString!}({", ".intercalate (args.toList.filter (fun a => !a.isConst) |>.map go)})"
+      else s!"⟨unread {c}⟩"
+    | none, _ => s!"⟨unread⟩"
+  | .proj sn i b => match (getStructureFields env sn)[i]? with
+    | some f => s!"{go b}.{f}" | none => "⟨unread⟩"
+  | .lit (.natVal n) => toString n
+  | _ => "⟨unread⟩"
+
 /-- the data-model shadow, read from the kernel: every structure of the stream and of its house
 imports that the stream's vocabulary names (`table`), every enum (`type`), every seat — a def
 whose value is a literal list of an enum's constructors (`seat`), and every reader — a def
@@ -266,6 +308,63 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
     let used := ci.type.getUsedConstants ++ (match ci.value? (allowOpaque := true) with | some v => v.getUsedConstants | none => #[])
     let seats := used.filter fun c => c.getPrefix == sc.ns && (env.find? c).any (fun ci' => !ci'.isTheorem && ci'.type.isAppOf ``List)
     if !seats.isEmpty then IO.println s!"cites {n.getString!} {" ".intercalate (seats.toList.map (·.getString!))}"
+  -- the derived: a def over a table's row — a view (data), a constraint (prop), a clerk (state to
+  -- state, a procedure) — with its body printed for the drawer's fragment, and the theorems that
+  -- describe it (those whose statement names it)
+  let mut derivedSeen : Array Name := #[]
+  for (n, ci) in env.constants.map₂.toList ++ (vocab.toList.filterMap fun c => (env.find? c).map (c, ·)) do
+    if !(sc.owns n) || ci.isTheorem || derivedSeen.contains n then continue
+    derivedSeen := derivedSeen.push n
+    let some v := ci.value? | continue
+    let mut ty := ci.type
+    let mut args : Array String := #[]
+    while ty.isForall do
+      args := args.push s!"{ty.bindingName!}:{ty.bindingDomain!}"
+      ty := ty.bindingBody!
+    if args.isEmpty then continue
+    -- the printed type carries universe annotations (`List.{0} Roster.Party`); shed them
+    let shed (t : String) : String := Id.run do
+      let mut out := ""; let mut skip := false
+      let cs := t.toList
+      for i in [0:cs.length] do
+        let c := cs[i]!
+        if !skip && c == '.' && i + 1 < cs.length && cs[i+1]! == '{' then
+          skip := true
+        else if skip then
+          if c == '}' then skip := false
+        else
+          out := out.push c
+      return out
+    let firstTy := shed ((args[0]!.splitOn ":").getD 1 "")
+    let over := firstTy.splitOn " " |>.headD ""
+    -- only defs whose first argument is a table (a structure of the shadow) or a list of one
+    let listOf := (firstTy.startsWith "List ") && isStructure env ((firstTy.drop 5).trimAscii.toString.toName)
+    let overName := if listOf then (firstTy.drop 5).trimAscii.toString.toName else over.toName
+    let isTable := !listOf && isStructure env overName
+    if !(isTable || listOf) then continue
+    let kind := if ty.isProp then "prop" else if ty.isSort then "sort" else if isTable && ty.getAppFn.constName? == some overName then "clerk" else "data"
+    let mut body := v
+    let mut depth := 0
+    while body.isLambda do body := body.bindingBody!; depth := depth + 1
+    -- the row is the first argument: de Bruijn index depth - 1 at the body
+    let depth' := if depth == 0 then 1 else depth
+    let sql := if kind == "clerk" then
+        -- a constructor with fields: name each as `field = expr`, keeping only those not the row's own
+        let args := body.getAppArgs
+        let fields := getStructureFields env overName
+        let sets := (List.range fields.size).filterMap fun i =>
+          match args[i]?, fields[i]? with
+          | some a, some f =>
+            let same := match a with
+              | .app (.const c _) (.bvar j) => c == overName ++ f && j == depth' - 1
+              | .proj sn j (.bvar k) => sn == overName && j == i && k == depth' - 1
+              | _ => false
+            if same then none else some s!"{f} = {toSQL env (depth' - 1) a}"
+          | _, _ => none
+        "SET " ++ ", ".intercalate sets
+      else toSQL env (depth' - 1) body
+    let describers := (env.constants.map₂.toList.filter fun (m, ci') => m.getPrefix == sc.ns && ci'.isTheorem && ci'.type.getUsedConstants.contains n).map (·.1.getString!)
+    IO.println s!"derived {n.getString!} {kind} over={firstTy} args={depth'} :: {sql} | {" ".intercalate describers}"
 
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
