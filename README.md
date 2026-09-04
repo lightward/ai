@@ -24,7 +24,7 @@ germ/Counter.lean  the compiler's own conduct, as a customer of Room
 germ/Seek.lean     the compiler's search as a machine, as a customer of Face
 germ/Roster.lean   a species: a roster of parties with per-head meals — the sheet, the heads, reseating; on Room
 bin/Pieces.lean    the ordered moves the compiler tries — Lean proof shapes that are also rules, as Lean macros
-bin/counter        the compiler: grow · settle · check · probe · gate · book · chart · schema · treaty · page
+bin/counter        the compiler: grow · settle · check · probe · gate · shapes · book · chart · schema · treaty · page
 bin/judge.lean     Lean judging Lean in-process; counter's eyes
 grown/             the grown modules — never committed, importable, published at foam.is
 assays/            the treaty vectors: what every growth must compute identically

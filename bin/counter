@@ -14,6 +14,7 @@
 #           never committed; the standards print at every build
 #   book    the census, the frontier, the vestibule — the book, never the prediction
 #   gate    the house gate, drawn from Counter.gate — silent, every receipt empty, one per organ
+#   shapes  the census of shapes of a grown module, hand bodies marked — the vestibule's own reading
 #   page    the browseable artifact: site/ for foam.is
 #
 # conduct-as-citation (each verb names the law it mirrors):
@@ -39,6 +40,8 @@
 #     under regrowth/trials/ (grow honors it too)
 #   bin/counter book [trail.lean | vestibule.held ...]
 #   bin/counter page
+#   bin/counter shapes grown/Name.lean
+#     every body as a shape (names to holes), grouped, the bodies of each named, hand bodies marked
 #   bin/counter gate [grown/*.lean]
 #     the house gate, drawn from the compiler's own species (Counter.gate): each artifact elaborated
 #     whole, every theorem's receipt read by the kernel, the verdict Counter.conductive on that
@@ -732,6 +735,23 @@ case "${1:-}" in
     fi ;;
   probe) shift; CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear --probe "$2" "$1" ;;
   book) shift; exec "$ROOT/bin/.book" "$@" ;;
+  shapes)
+    shift
+    f="${1:?a grown module: grown/Room.lean}"
+    ns="$(grep -m1 '^namespace ' "$f" | cut -d' ' -f2)"; imps="$(grep '^import ' "$f" | cut -d' ' -f2 | paste -sd, -)"
+    held="regrowth/$(basename "${f%.lean}").held"; [ -f "$held" ] || held=/dev/null
+    lake env lean --run "$ROOT/bin/judge.lean" shapes "$f" "$ns" "$imps" | python3 -c '
+import re, sys
+hand = set(re.findall(r"^theorem (\w+)", open(sys.argv[1]).read(), re.M)) if sys.argv[1] != "/dev/null" else set()
+for line in sys.stdin:
+    line = line.rstrip("\n")
+    if line.startswith("\t\t"):
+        line = "\t\t" + " ".join(n + ("*" if n in hand else "") for n in line.split())
+    print(line)
+print()
+print("* a hand body, carried from the germ — a shape two hand bodies share is what an exemplar could carry;")
+print("  a hand body sharing a shape with a regrown one is a piece that exists and a hole the search did not fill")
+' "$held" ;;
   gate)
     shift
     if [ $# -eq 0 ]; then
