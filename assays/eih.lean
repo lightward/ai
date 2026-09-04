@@ -211,13 +211,10 @@ theorem the_caterer_never_sees_the_guests (r : Room) (gl : List Party) :
     reads roomFace catererSeat (withGuests r gl) = reads roomFace catererSeat r := sorry
 
 theorem the_bach_parts_the_best_man (r : Room) (b : List Nat) (hb : b ≠ r.bach) :
-    reads roomFace bestManSeat (withBach r b) ≠ reads roomFace bestManSeat r :=
-  the_seat_that_hears_it_reads_it roomFace (x := withBach r b) (y := r) (p := .bach) hb bestManSeat (List.Mem.tail _ (List.Mem.head _))
+    reads roomFace bestManSeat (withBach r b) ≠ reads roomFace bestManSeat r := sorry
 
 theorem the_receipt_parts_the_room (r : Room) (c : List Nat) (hc : c ≠ r.confirmed) :
-    reads roomFace roomSeat (withConfirmed r c) ≠ reads roomFace roomSeat r :=
-  the_seat_that_hears_it_reads_it roomFace (x := withConfirmed r c) (y := r) (p := .confirmed) hc roomSeat
-    (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _))))))
+    reads roomFace roomSeat (withConfirmed r c) ≠ reads roomFace roomSeat r := sorry
 
 theorem the_room_covers_itself : covers roomFace [roomSeat] := sorry
 

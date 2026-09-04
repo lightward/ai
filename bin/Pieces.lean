@@ -312,6 +312,33 @@ likewise; a def-typed hypothesis hides its ∀ from `apply`, so `exact h _` besi
     let side ← if leaf then `(tactic| first | assumption | rfl | decide | piece_mem_seek $(Syntax.mkNumLit (toString k)):num)
                else `(tactic| first | assumption | rfl | decide | piece_mem_seek $(Syntax.mkNumLit (toString k)):num | piece_seek $(Syntax.mkNumLit (toString k)):num !)
     cands := cands.push (← `(tactic| (apply $t <;> $side)))
+    -- choosing the witness: `apply t` may leave a data goal the conclusion did not fix — a probe
+    -- `p : F.Probe` whose type is an ENUM (an inductive with only nullary constructors); the side
+    -- goals that would fix it are tried before anyone chooses it. so, speculatively: apply, read the
+    -- leftover enum goal's binder name from its tag, and offer `apply t (p := C)` for each
+    -- constructor, closers after — the winner is plain Lean with a named argument
+    let env ← getEnv
+    let isEnum (c : Name) : Bool := match env.find? c with
+      | some (.ctorInfo ci) => ci.numFields == 0 | _ => false
+    let s0 ← saveState
+    let mut enumGoals : Array (Name × List Name) := #[]
+    try
+      setGoals [g]
+      withoutRecover (evalTactic (← `(tactic| apply $t)))
+      for g' in (← getGoals) do
+        let ty ← g'.withContext (do Meta.whnfD (← instantiateMVars (← g'.getType)))
+        if let some (.inductInfo ii) := env.find? (ty.getAppFn.constName?.getD .anonymous) then
+          if !ii.isRec && ii.ctors.all isEnum then
+            let tag ← g'.getTag
+            if !tag.isAnonymous && !tag.hasMacroScopes then enumGoals := enumGoals.push (tag, ii.ctors)
+    catch _ => pure ()
+    s0.restore
+    if enumGoals.size == 1 then
+      let (tag, ctors) := enumGoals[0]!
+      for c in ctors do
+        let cid := mkIdent (nameFor si.ns c)
+        let tagId := mkIdent tag
+        cands := cands.push (← `(tactic| (apply $t ($tagId := $cid) <;> $side)))
     let isHyp := hyps.any (·.getId == t.getId)
     if isHyp then cands := cands.push (← `(tactic| (exact $t _)))
     let ty? ← if isHyp then pure ((si.hyps.find? (·.1.getId == t.getId)).map (·.2))
