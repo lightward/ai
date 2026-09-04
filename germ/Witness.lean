@@ -10,6 +10,8 @@ def seat (F : Face) : Type v := List F.Probe
 def reads (F : Face) (s : List F.Probe) (x : F.State) : List F.Ans :=
   s.map (F.obs x)
 
+def witnessFace (F : Face) : Face := ⟨F.State, List F.Probe, List F.Ans, fun x s => reads F s x⟩
+
 def hears (F : Face) (s : List F.Probe) (p : F.Probe) : Prop := p ∈ s
 
 def witnessed (F : Face) (seats : List (List F.Probe)) (x y : F.State) : Prop :=
@@ -54,6 +56,10 @@ theorem the_seat_that_hears_it_reads_it (F : Face) {x y : F.State} {p : F.Probe}
       | tail _ hs =>
           exact the_seat_that_hears_it_reads_it F hp s hs (the_rest_reads he)
 
+theorem the_witness_parts_what_the_face_parts (F : Face) {x y : F.State}
+    (h : alike (witnessFace F) x y) : alike F x y :=
+  fun p => the_first_mark_reads (h [p])
+
 theorem the_room_is_the_widest_seat (F : Face) (s : List F.Probe) (x y : F.State)
     (h : reads F s x ≠ reads F s y) : ¬ alike F x y :=
   fun ha => h (the_alike_read_alike F ha s)
@@ -63,6 +69,12 @@ theorem speak_now (F : Face) {seats : List (List F.Probe)} {x y : F.State}
   intro q hq
   obtain ⟨s, hs, hqs⟩ := mem_joinMap_back seats hq
   exact the_probe_reads_the_seat F s hqs (hw s hs)
+
+theorem the_witness_is_a_face (F : Face) {x y : F.State} (h : alike F x y) :
+    alike (witnessFace F) x y := sorry
+
+theorem a_wall_at_the_witness (F : Face) {x y : F.State} {p : F.Probe} (h : differOnly F x y p)
+    (s : List F.Probe) (hs : ¬ hears F s p) : (witnessFace F).obs x s = (witnessFace F).obs y s := sorry
 
 theorem forever_hold_your_peace (F : Face) {seats : List (List F.Probe)} {x y : F.State}
     (hc : covers F seats) (hw : witnessed F seats x y) : alike F x y := sorry
