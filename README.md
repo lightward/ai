@@ -24,7 +24,7 @@ germ/Counter.lean  the compiler's own conduct, as a customer of Room
 germ/Seek.lean     the compiler's search as a machine, as a customer of Face
 germ/Roster.lean   a species: a roster of parties with per-head meals — the sheet, the heads, reseating; on Room
 bin/Pieces.lean    the ordered moves the compiler tries — Lean proof shapes that are also rules, as Lean macros
-bin/counter        the compiler: grow · settle · check · ride · book · page
+bin/counter        the compiler: grow · settle · check · probe · book · chart · schema · treaty · page
 bin/judge.lean     Lean judging Lean in-process; counter's eyes
 grown/             the grown modules — never committed, importable, published at foam.is
 assays/            the treaty vectors: what every growth must compute identically
@@ -95,16 +95,13 @@ this is the floor a custodian stands on: state what you see about your own domai
 
 `assays/<arc>.lean` — one per arc that grew the trunk (catalan: 1 1 2 5 14; factorial; even-money; isaac; entanglement; book; odometer; alternation; seat; lift; stream; width; concord; handshake; turnstile), one for the toy, two for the compiler (its admission loop, its search), one for Witness, and `assays/eih.lean` — EVERYONE IS HERE whole: its room, its seats, the demo's cast as data, and its laws as instance rows of the trunk's (a product is an assay; what it stands on is species). each is a handful of `#guard` rows, and belongs to the module it imports last — six of them (alternation, book, even-money, factorial, odometer, turnstile) import only `Room`, which is how the split was checked. an assay may also carry INSTANCE ROWS: theorems that are the trunk's laws at the assay's own carriers (`namespace <Stem>.Treaty` at the top, the computations first, the rows after, `:= sorry` where the search should reach them). such an assay grows like a germ — `bin/counter grow assays/<arc>.lean` → `grown/assays/<arc>.lean`, no lib, nothing imports it — and the module's check grows it first, so a `sorry` row never reads as identical. the rows are the treaty at law grain: which of the trunk's laws this product inherits, with the citation the search found, or the darkness named. one convention, learned the expensive way: read every value out through a typed `def` (`def threeTicks : Nat := behavior counter [(), (), ()]`) before you `#guard` it — a literal or a `==` at a derived type like `counter.S` or `F.Ans` has no instance to find, and the row parts for that reason and no other. any growth of that module must compute every one of them identically; that is the certificate of identity and the integration suite in one. the arcs' journals — germ, witness, tolls — stand in the chrysalis with the rest of the process that grew them.
 
-## the book, and the ride
+## the book
 
 ```
-bin/counter book grown/Face.lean
-bin/counter ride [session.lean]
+bin/counter book [grown/Face.lean]
 ```
 
-`book` reads a grown module and says what is there: the census, the frontier (organs no other organ cites yet — the reaction-sweep queue), and the vestibule if a `.held` stream is offered. the book, never the prediction.
-
-`ride` is the compiler's other ear. a session is a Lean file that grows by named declarations; a turn is an elaboration; `example` is a what-if, fully judged, zero footprint; a named theorem is a spell, kept; a refusal is held with its missing supports *named*, and `:sweep` re-offers the vestibule. this is ignitable at your W. you don't need to have been here before — nothing here can tell, on purpose.
+`book` reads the grown house and says what is there: the census, the frontier (organs no other organ cites yet — the reaction-sweep queue), the organs cited only from a storey above, the vestibule if a `.held` stream is offered, and the compiler's own frontier: every verb `bin/counter` dispatches with what in the house runs it, so a verb nothing runs is as visible as a theorem nothing cites. the book, never the prediction.
 
 ## the page
 

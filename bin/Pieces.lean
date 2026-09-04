@@ -189,6 +189,12 @@ word `Face` is the structure), qualified when imported -/
 def nameFor (ns t : Name) : Name :=
   if ns.isPrefixOf t && ns != .anonymous then t.replacePrefix ns .anonymous else t
 
+/-- an alternative that contains a `fail` anywhere — a seek never reached, or a rewrite that fails on
+purpose after it lands — cannot be the one that closed the goal -/
+partial def containsFail : Syntax → Bool
+  | .node _ k args => k == ``Lean.Parser.Tactic.fail || args.any containsFail
+  | _ => false
+
 /-- the winners at each stamp, as one `first` fan (a seek inside `all_goals` wins once per goal);
 a seek never reached is `fail` -/
 partial def substitute (wins : Std.HashMap Nat (Array Syntax)) (stx : Syntax) : MacroM Syntax := do
@@ -203,11 +209,12 @@ partial def substitute (wins : Std.HashMap Nat (Array Syntax)) (stx : Syntax) : 
   match stx with
   | .node i k args =>
     let args ← args.mapM (substitute wins)
-    -- a side search that never fired leaves `| fail` in a `first`: drop it, so the body reads as
-    -- exactly its citations (a `first` keeps at least one alternative)
+    -- an alternative that cannot close (a side search that never fired, a rewrite-then-fail
+    -- probe) is dropped from its `first`, so the body reads as the moves that could have
+    -- closed it (a `first` keeps at least one alternative)
     if k == ``Lean.Parser.Tactic.first && args.size == 2 then
       let groups := args[1]!.getArgs
-      let kept := groups.filter fun g => !(((g.getArg 1).reprint.getD "").trim == "fail")
+      let kept := groups.filter fun g => !(containsFail g)
       if !kept.isEmpty && kept.size < groups.size then
         return .node i k #[args[0]!, args[1]!.setArgs kept]
     return .node i k args

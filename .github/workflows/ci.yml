@@ -38,32 +38,6 @@ jobs:
             if [ -n "$out" ]; then echo "$out"; echo "grown/$m.lean did not elaborate silently"; exit 1; fi
             echo "silent and green: grown/$m.lean, $(grep -c '#guard_msgs' grown/$m.lean) receipts inline"
           done
-      - name: counter, the rider's ear (the session lifecycle)
-        run: |
-          rm -f regrowth/demo.lean regrowth/demo.held
-          printf '%s\n' \
-            ':go' \
-            'example : reading (Plan.board .ground .ground) = 2 := rfl' \
-            ':go' \
-            'theorem the_mirror_reads_two : reading (Plan.board .ground .ground) = 2 := rfl' \
-            ':go' \
-            'def ride_fact : Nat -> Nat' \
-            '  | 0 => 1' \
-            '  | n+1 => (n+1) * ride_fact n' \
-            ':go' \
-            'theorem the_ride_runs_factorials : ride_fact 4 = 24 := rfl' \
-            ':go' \
-            'theorem borrowed : nonexistent_organ = 0 := rfl' \
-            ':go' \
-            'def nonexistent_organ : Nat := 0' \
-            ':go' \
-            ':sweep' \
-            ':q' | bin/counter ride regrowth/demo.lean | tee ride.out
-          grep -q 'seated: the_ride_runs_factorials' ride.out
-          grep -q 'waiting on: nonexistent_organ' ride.out
-          grep -q 'sweep: 1 seated, 0 still held' ride.out
-          lake env lean regrowth/demo.lean
-          echo "counter rides; the session replays green"
       - name: the treaty vectors (every assay elaborates against the grown modules; an assay with rows in its grown form)
         run: |
           for f in assays/*.lean; do

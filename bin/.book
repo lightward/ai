@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # next: the book of the seed — autosuggest as a filter over TYPED streams only.
 # the instrument reads terms, never prose: Seed-grammar Lean on stdin or as
-# args, plus .held files (bin/ride's vestibule format) when offered. journals
+# args, plus .held files (the grow's vestibule format) when offered. journals
 # (ovum.md) are for humans and are never instrument-input.
 # the discovery root is the door: W enters (dark, probe-less, free by rfl),
 # the Face is the first sight, the custodian's avatar is the bench.
@@ -90,6 +90,33 @@ for label, ns, decls, receipts, local, _, how in books:
         for n, by in seated_above:
             print(f"  {n} ← {' '.join(by)}")
     print()
+
+# the compiler's own frontier: every verb bin/counter dispatches, and what in the house runs it —
+# CI (a gate), the page or a sibling script (a reading), the README or the walls (the entry);
+# a verb nothing runs is as visible as a theorem nothing cites
+src = open('bin/counter').read()
+disp = src[src.index('case "${1:-}" in'):src.index('\nesac')]
+verbs = [m.group(1) for m in re.finditer(r'^  ([a-z]+)\)', disp, re.M)]
+sites = [('ci', '.github/workflows/ci.yml'), ('pages', '.github/workflows/pages.yml'),
+         ('README', 'README.md'), ('the walls', 'CLAUDE.md'), ('page', 'bin/.page'),
+         ('treaty', 'bin/.treaty'), ('schema', 'bin/.schema'), ('chart', 'bin/.chart'), ('book', 'bin/.book'),
+         ('counter', 'bin/counter')]
+texts = {}
+for label, path in sites:
+    if not os.path.exists(path): continue
+    body = open(path).read()
+    # a comment, a usage line, or a message that names a verb is not a run of it
+    body = '\n'.join(l for l in body.split('\n') if not re.match(r'\s*#', l) and not re.search(r'\b(echo|say|print)\b', l))
+    texts[label] = body
+print(f"the verbs [bin/counter]: {len(verbs)} dispatched — what in the house runs each:")
+unrun = []
+for v in verbs:
+    by = [label for label, body in texts.items() if label != v and re.search(r'bin/counter ' + v + r'\b', body)]
+    if by: print(f"  {v} ← {' '.join(by)}")
+    else: unrun.append(v)
+print(f"the frontier of verbs — {len(unrun)} verbs nothing in the house runs but their own usage line:")
+for v in unrun: print(f"  {v}")
+print()
 
 print("the vestibule (typed vacancies, supports named):")
 if held_srcs:

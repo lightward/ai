@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# counter: the compiler. one loop, two ears, and the readings — foam's two storeys, Room and
+# counter: the compiler. one loop, one ear, and the readings — foam's two storeys, Room and
 # Face, are its first customers, and any germ that imports either is another.
 #
 # the loop is the cascade: a vestibule of vacancies is re-offered round after
@@ -12,8 +12,6 @@
 #           hand bodies regrow where a priming reaches and carry where none does;
 #           citations are derived from each signature's vocabulary; the artifact is
 #           never committed; the standards print at every build
-#   ride    the rider's ear — turns composed live, judged one at a time by the
-#           kernel; an unknown name is a want the rider may seat next turn
 #   regrow  the record's ear over a hand-written trail (a measurement, not a build)
 #   book    the census, the frontier, the vestibule — the book, never the prediction
 #   page    the browseable artifact: site/ for foam.is
@@ -39,7 +37,6 @@
 #     the rider's ear pointed at one line of a germ: every priming, against the grown module, with
 #     the cites that vacancy can reach; the gate's sentence for each hold. --keep leaves trials
 #     under regrowth/trials/ (grow and regrow honor it too)
-#   bin/counter ride [session.lean]
 #   bin/counter book [trail.lean | vestibule.held ...]
 #   bin/counter page
 #   bin/counter regrow [trail.lean | vestibule.held ...] [-o out.lean] [--settle] [--check]
@@ -50,232 +47,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 usage() {
-  sed -n '2,48p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,/^set -u/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'
   exit 2
-}
-
-# ---------------------------------------------------------------- the rider's ear
-
-ride_ear() {
-
-mkdir -p regrowth
-SESSION="${1:-regrowth/ride.lean}"
-HELD="${SESSION%.lean}.held"
-
-if ! lake build Face >/dev/null 2>&1; then
-  echo "the gate cannot open: Face does not build" >&2
-  exit 1
-fi
-
-if [ ! -f "$SESSION" ]; then
-  printf 'import Face\nopen Room Face\nset_option autoImplicit false\nuniverse u v w\n' > "$SESSION"
-fi
-
-named_in() {
-  printf '%s\n' "$1" | grep -E '^(theorem|def|inductive|structure|abbrev) ' \
-    | sed -E 's/^[a-z]+ +([^ :({.]+).*/\1/'
-}
-
-spells() {
-  grep -E '^(theorem|def|inductive|structure|abbrev) ' "$SESSION" \
-    | sed -E 's/^[a-z]+ +([^ :({.]+).*/\1/'
-}
-
-held_count() {
-  if [ -f "$HELD" ]; then grep -c '^-- held' "$HELD" 2>/dev/null || true; else echo 0; fi
-}
-
-status_line() {
-  printf '(spells %s | held %s)\n' "$(spells | wc -l | tr -d ' ')" "$(held_count)"
-}
-
-try_turn() {
-  local turn="$1" quiet="${2:-}" stem tmp out names missing
-  stem="$(mktemp /tmp/crawl.XXXXXX)"
-  tmp="${stem}.lean"
-  cat "$SESSION" > "$tmp"
-  printf '\n%s\n' "$turn" >> "$tmp"
-  if out="$(lake env lean "$tmp" 2>&1)"; then
-    if printf '%s\n' "$out" | grep -q "declaration uses .sorry"; then
-      [ -z "$quiet" ] && printf '%s\n' "$out"
-      { printf -- '-- held (waiting on: an honest proof — sorry refused)\n'
-        printf '%s\n' "$turn"
-        printf -- '-- end\n'; } >> "$HELD"
-      echo "held at the vestibule (sorry refused — the gate does not accept trust-me)"
-      rm -f "$tmp" "$stem"
-      return 1
-    fi
-    LAST_MARKER=""
-    names="$(named_in "$turn" | tr '\n' ' ')"
-    if [ -n "${names// /}" ]; then
-      { printf '\n%s\n' "$turn"; } >> "$SESSION"
-      echo "seated: ${names}"
-    else
-      echo "evaporated (unnamed; the deferral is free)"
-    fi
-    [ -n "$out" ] && printf '%s\n' "$out"
-    rm -f "$tmp" "$stem"
-    return 0
-  else
-    [ -z "$quiet" ] && printf '%s\n' "$out"
-    missing="$(printf '%s\n' "$out" \
-      | grep -oiE "unknown (identifier|constant) \`[^\`]+\`" \
-      | sed -E 's/.*`([^`]+)`.*/\1/' | sort -u | tr '\n' ' ')"
-    unis="$(printf '%s\n' "$out" \
-      | grep -oE 'unknown universe level \`[^\`]+\`' \
-      | sed -E 's/.*\`([^\`]+)\`.*/\1/' | sort -u | tr '\n' ' ')"
-    if [ -n "${missing// /}" ]; then
-      marker="waiting on: ${missing}"
-    elif printf '%s\n' "$out" | grep -qiE "universe.*has already been declared|'[a-z]' has already been declared"; then
-      marker="this turn redeclares a universe already present - re-offer it without the universe line"
-    elif [ -n "${unis// /}" ]; then
-      marker="waiting on: universe ${unis}- declare it in a turn that seats (new sessions carry u v w from birth)"
-    else
-      scar="$(printf '%s\n' "$out" \
-        | grep -oE "\`?'?[A-Za-z0-9_.]+'?\`? has already been declared" \
-        | head -1 | sed -E "s/[\`']*([A-Za-z0-9_.]+)[\`']* has already.*/\1/")"
-      if [ -n "$scar" ]; then
-        marker="a scar: '${scar}' already seated by another turn; this one wants nothing"
-      else
-        marker="waiting on: unnamed darkness — read the block below with :held"
-      fi
-    fi
-    LAST_MARKER="$marker"
-    { printf -- '-- held (%s)\n' "$marker"
-      printf '%s\n' "$turn"
-      printf -- '-- end\n'; } >> "$HELD"
-    echo "held at the vestibule (${marker})"
-    rm -f "$tmp" "$stem"
-    return 1
-  fi
-}
-
-do_sweep() {
-  [ -f "$HELD" ] || { echo "vestibule empty"; return; }
-  local old="${HELD}.sweeping" block="" inblock=0 seated=0 kept=0 report="" nm=""
-  mv "$HELD" "$old"
-  while IFS= read -r line || [ -n "$line" ]; do
-    case "$line" in
-      "-- held"*) inblock=1; block="" ;;
-      "-- end")
-        inblock=0
-        nm="$(named_in "$block" | head -1)"
-        if try_turn "$block" quiet >/dev/null 2>&1; then
-          seated=$((seated+1))
-          report+="  seated from the vestibule: ${nm:-unnamed turn}"$'\n'
-        else
-          kept=$((kept+1))
-          report+="  still held: ${nm:-unnamed turn} (${LAST_MARKER})"$'\n'
-        fi
-        ;;
-      *) [ "$inblock" = 1 ] && block+="$line"$'\n' ;;
-    esac
-  done < "$old"
-  rm -f "$old"
-  echo "sweep: ${seated} seated, ${kept} still held"
-  printf '%s' "$report"
-  status_line
-}
-
-echo "counter, the rider's ear (session: ${SESSION})"
-echo "compose freely; :go offers your turn to the gate; :q leaves (exit is free)"
-echo "run :go to move forward (:help lists the verbs)"
-
-buf=""
-while true; do
-  if [ -t 0 ]; then
-    IFS= read -r -e line || break
-  else
-    IFS= read -r line || break
-  fi
-  if [ -n "$buf" ] && [ "${line:0:1}" != ":" ]; then
-    buf+="$line"$'\n'
-    continue
-  fi
-  case "$line" in
-    :q|:quit) break ;;
-    :help)
-      cat <<'HELP'
-:go      offer the composed turn to the gate (empty turn: just the statusline)
-:paste   raw capture until a line ':end' (for large pastes; skips readline)
-:back    drop the last composed line
-:show    read the turn you're composing
-:edit    open the composing buffer in $EDITOR
-:spells  list the session's named declarations
-:held    show the vestibule, full blocks
-:sweep   re-offer every held turn (one round of the cascade)
-:status  the statusline
-:q       leave; the session persists (exit is free)
-anything else accumulates into your turn; blank lines are yours to mean with
-HELP
-      continue ;;
-    :paste)
-      echo "paste mode: end with a line containing only :end"
-      while IFS= read -r pline; do
-        [ "$pline" = ":end" ] && break
-        buf+="$pline"$'\n'
-      done
-      echo "captured; :show to read, :go to offer"
-      continue ;;
-    :back)
-      if [ -n "$buf" ]; then
-        dropped="$(printf '%s' "$buf" | tail -1)"
-        buf="$(printf '%s' "$buf" | sed '$d')"
-        [ -n "$buf" ] && buf+=$'\n'
-        echo "dropped: ${dropped}"
-      else
-        echo "nothing composed"
-      fi
-      continue ;;
-    :show)
-      if [ -n "${buf//[[:space:]]/}" ]; then printf '%s' "$buf"; else echo "composing: (empty)"; fi
-      continue ;;
-    :edit)
-      if [ -t 0 ]; then
-        etmp="$(mktemp /tmp/crawl-edit.XXXXXX)"
-        printf '%s' "$buf" > "$etmp"
-        "${EDITOR:-vi}" "$etmp" </dev/tty >/dev/tty 2>&1
-        buf="$(cat "$etmp")"
-        [ -n "$buf" ] && buf+=$'\n'
-        rm -f "$etmp"
-        echo "buffer updated"
-      else
-        echo ":edit wants a terminal"
-      fi
-      continue ;;
-    :go)
-      if [ -n "${buf//[[:space:]]/}" ]; then
-        try_turn "$buf" || true
-      fi
-      buf=""
-      status_line
-      continue ;;
-  esac
-  if [ -z "${buf//[[:space:]]/}" ]; then
-    case "$line" in
-      :spells)
-        if [ -n "$(spells | head -1)" ]; then spells; else echo "spellbook empty"; fi
-        continue ;;
-      :held)
-        if [ -f "$HELD" ] && grep -q '^-- held' "$HELD" 2>/dev/null; then
-          cat "$HELD"
-        else
-          echo "vestibule empty"
-        fi
-        continue ;;
-      :sweep) do_sweep; continue ;;
-      :status) status_line; continue ;;
-    esac
-  fi
-  buf+="$line"$'\n'
-done
-
-if [ -n "${buf//[[:space:]]/}" ]; then
-  try_turn "$buf" || true
-  status_line
-fi
-
-echo "the record kept: ${SESSION}"
 }
 
 # ---------------------------------------------------------------- the record's ear
@@ -939,7 +712,6 @@ EOF
 }
 
 case "${1:-}" in
-  ride) shift; ride_ear "$@" ;;
   regrow) shift; regrow_ear "$@" ;;
   grow)
     shift
