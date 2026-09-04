@@ -208,8 +208,7 @@ theorem the_room_alone_holds_the_receipt (r : Room) (c : List Nat) (hc : c ≠ r
 theorem a_quiet_seat_does_not_hear_it (s : List Ask) (p : Ask) (h : enrolled Ask.beq s p = false) :
     ¬ hears roomFace s p := sorry
 
-theorem no_human_hears_the_receipt : ¬ hears roomFace (earshot roomFace humanSeats) .confirmed :=
-  fun h => nomatch (a_member_is_enrolled Ask.beq an_ask_reads_itself _ _ h)
+theorem no_human_hears_the_receipt : ¬ hears roomFace (earshot roomFace humanSeats) .confirmed := sorry
 
 theorem everyone_clear_means_rose_ate (r : Room) (members : List Nat) (h : allClear r members)
     {p : Party} (hp : p ∈ r.guests) (hr : p.rsvp = true) {m : Nat} (hm : m ∈ p.meals) :

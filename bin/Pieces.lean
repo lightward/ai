@@ -148,6 +148,10 @@ def inReach (p : Pool) (goal : NameSet) (exclude : Name) (keep : Name → Bool :
   -- and refuted: with the reach filled by same-storey siblings, the lower-storey lemma a body
   -- needs (Room's list laws at a Face goal) fell past the cap — Face refused four, Witness one,
   -- EIH four. the storey is kept on the pool for the reading, not the ranking
+  -- a WINDOW PER STOREY: the reach is shared out across the storeys present (Room, Face,
+  -- Witness, the customer), each keeping its own top few by affinity, so a goal is offered the best
+  -- of every level at once rather than the best of a pile that one storey's siblings can own; the
+  -- picks are then tried in affinity order. the window is stacked; nothing reads across levels
   let _ := goalStorey
   let mut scored : Array (Float × Name) := #[]
   for (t, k) in p.theorems do
@@ -157,7 +161,16 @@ def inReach (p : Pool) (goal : NameSet) (exclude : Name) (keep : Name → Bool :
     let own := k.toList.foldl (fun a c => a + weight p c) 0.0
     scored := scored.push (shared / Float.sqrt (if own == 0.0 then 1.0 else own), t)
   let sorted := scored.qsort (fun a b => a.1 > b.1)
-  return (sorted.take reach).map (·.2)
+  let storeys := (sorted.map (fun x => p.storey.getD x.2 0)).toList.eraseDups
+  let quota := reach   -- a full window per storey: each level tried at the reach's own width
+  let mut picked : Array (Float × Name) := #[]
+  for st in storeys do
+    picked := picked ++ (sorted.filter (fun x => p.storey.getD x.2 0 == st)).take quota
+  -- the leftover of the reach, if a storey had fewer than its share, by affinity over the rest
+  for x in sorted do
+    if picked.size ≥ reach then break
+    if !picked.any (·.2 == x.2) then picked := picked.push x
+  return (picked.qsort (fun a b => a.1 > b.1)).map (·.2)
 
 syntax (name := seek) "piece_seek" (num)? (" !")? : tactic
 syntax (name := rwSeek) "piece_rw_seek" (num)? " (" tactic ")" : tactic
