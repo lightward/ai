@@ -14,10 +14,11 @@
 -- anyone_may_open_a_task and the_day_of_sheet_is_everyones_to_edit; the day lane's exclusion from tasks
 -- still waits on lanes as a carrier, below.
 
--- held (waiting on: the drawer's fragment. a structural recursion over a list (samePage, total, undo) and a pair-valued reading (venueTable) are beyond it; Same page as a drawn aggregate is a sum over the requests the viewer hears, one SELECT.)
-theorem the_same_page_is_a_sum (qs : List Request) (v : Nat) :
-    samePage qs v = total ((qs.filter (fun q => enrolled Nat.beq q.audience v)).map tally) := sorry
--- end
+-- the sixth round (the house's turn): Same page is a drawn sum — stated as a sum (List.sum over the
+-- requests the viewer hears, mapped through tally) and read by the drawer as an aggregate, its two laws
+-- re-proved over the filter; the season's total the same way, a face applied inside a lambda read as a
+-- call to the face's function. a structural recursion (undo) and a pair-valued reading (venueTable) stay
+-- beyond, and a list of lists (seasonView) is held as undrawn: the shadow holds no jagged array.
 
 -- held (waiting on: a carrier. the wedding party's day lane sees neither task list but edits the day-of sheet; lanes are a seat over pages and the assay's lanes are two lists of page numbers. a lane as a role's sub-seat.)
 theorem the_day_lane_sees_no_task_list (m : Member) (h : m.dayLane = true) : sees m.role .tasks = false := sorry

@@ -117,9 +117,8 @@ def joinsFree : Role → Bool := fun _ => true
 def pays : Role → Bool
   | .couple => true | .vendor => true | .planner => true | .venue => true | .party => false
 
-def samePage : List Request → Nat → Nat
-  | [], _ => 0
-  | q :: qs, v => cond (enrolled Nat.beq q.audience v) (tally q + samePage qs v) (samePage qs v)
+def samePage (qs : List Request) (v : Nat) : Nat :=
+  ((qs.filter (fun q => enrolled Nat.beq q.audience v)).map tally).sum
 
 inductive Thing where
   | wedding | season
@@ -223,13 +222,9 @@ def venueTable (t : Table) : Nat × Nat := (t.shape, t.occupants.length)
 
 def venueChart (c : List Table) : List (Nat × Nat) := c.map venueTable
 
-def total : List Nat → Nat
-  | [] => 0
-  | x :: xs => x + total xs
-
 def seasonView (rs : List Room) (v : Nat) : List (List Nat) := rs.map (fun r => (vendorFace v).obs r .mine)
 
-def seasonOwed (rs : List Room) (v : Nat) : Nat := total (joinMap (fun r => (vendorFace v).obs r .mine) rs)
+def seasonOwed (rs : List Room) (v : Nat) : Nat := (joinMap (fun r => (vendorFace v).obs r .mine) rs).sum
 
 def partnerView : List Nat := [0, 1, 2, 3, 4, 5]
 
@@ -593,14 +588,15 @@ theorem the_sender_is_never_asked (q : Request) : ¬ q.sender ∈ asked q := by
 
 theorem the_same_page_counts_only_within_earshot (q : Request) (qs : List Request) (v : Nat)
     (h : enrolled Nat.beq q.audience v = false) : samePage (q :: qs) v = samePage qs v := by
-  show cond (enrolled Nat.beq q.audience v) (tally q + samePage qs v) (samePage qs v) = samePage qs v
-  rw [h]
-  exact rfl
+  show (((q :: qs).filter (fun q => enrolled Nat.beq q.audience v)).map tally).sum
+    = ((qs.filter (fun q => enrolled Nat.beq q.audience v)).map tally).sum
+  rw [List.filter_cons_of_neg (p := fun q => enrolled Nat.beq q.audience v) (a := q) (ne_true_of_eq_false h)]
 
 theorem the_same_page_hears_its_own_earshot (q : Request) (qs : List Request) (v : Nat)
     (h : enrolled Nat.beq q.audience v = true) : samePage (q :: qs) v = tally q + samePage qs v := by
-  show cond (enrolled Nat.beq q.audience v) (tally q + samePage qs v) (samePage qs v) = tally q + samePage qs v
-  rw [h]
+  show (((q :: qs).filter (fun q => enrolled Nat.beq q.audience v)).map tally).sum
+    = tally q + ((qs.filter (fun q => enrolled Nat.beq q.audience v)).map tally).sum
+  rw [List.filter_cons_of_pos (p := fun q => enrolled Nat.beq q.audience v) (a := q) h]
   exact rfl
 
 theorem a_covered_wedding_is_still_the_couples (b : Bill) (h : b.thing = .wedding) : owner b.thing = .couple := by
@@ -709,7 +705,7 @@ theorem a_season_reads_each_room_as_the_vendor (rs : List Room) (v : Nat) :
     seasonView rs v = rs.map (fun r => (vendorFace v).obs r .mine) := rfl
 
 theorem the_seasons_sum_is_over_my_own_invoices (rs : List Room) (v : Nat) :
-    seasonOwed rs v = total (joinMap (fun r => (vendorFace v).obs r .mine) rs) := rfl
+    seasonOwed rs v = (joinMap (fun r => (vendorFace v).obs r .mine) rs).sum := rfl
 
 theorem everyone_is_here (r : Room) (h : allClear r)
     {p : Party} (hp : p ∈ r.guests) (hr : p.rsvp = true) {m : Nat} (hm : m ∈ p.meals)

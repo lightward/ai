@@ -44,8 +44,8 @@ for l in res.stdout.splitlines():
         m = re.match(r'rule (\S+) depth=(\d+) ret=(\S+) params=(\S*) :: (.*)$', l)
         if m: rules.append((m.group(1), int(m.group(2)), m.group(3), m.group(4).split(','), m.group(5)))
     elif parts[0] == 'derived':
-        m = re.match(r'derived (\S+) (\S+) over=(.+?) args=(\d+)(?: argtypes=(\S*))? :: (.*?) \| ?(.*?)(?: @by (\S+))?$', l)
-        if m: derived.append((m.group(1), m.group(2), m.group(3), int(m.group(4)), m.group(6), m.group(7).split() + ([f'(drawn by {m.group(8)})'] if m.group(8) else []), [t for t in (m.group(5) or '').split(',') if t]))
+        m = re.match(r'derived (\S+) (\S+) over=(.+?) args=(\d+)(?: argtypes=(\S*))?(?: ret=(\S+))? :: (.*?) \| ?(.*?)(?: @by (\S+))?$', l)
+        if m: derived.append((m.group(1), m.group(2), m.group(3), int(m.group(4)), m.group(7), m.group(8).split() + ([f'(drawn by {m.group(9)})'] if m.group(9) else []), [t for t in (m.group(5) or '').split(',') if t], m.group(6) or ''))
 def coltype(t):
     if t == 'Nat': return 'integer'
     if t == 'Bool': return 'boolean'
@@ -148,6 +148,15 @@ def sqlexpr(expr, table, nargs=2):
     e = re.sub(r'\(SELECT (\w+) FROM (\w+) WHERE id = (\w+)\.(\w+)\)\.\w+', lambda m: m.group(0).rsplit('.',1)[0], e)
     e = re.sub(r'\b(' + '|'.join(re.escape(snake(t)) for t in tables) + r')\.(\w+)\b(?!\.)', field, e)
     e = re.sub(r'\$(\d+)', lambda m: f'arg{nargs - int(m.group(1))}', e)   # a bound variable by its binder: the row is the first
+    # a face applied to a row at a probe: a column of the face's function over its state's table
+    def faceobs(m):
+        fname = next((f for f in faces if f[0] == m.group(1)), None)
+        if not fname: return '⟨unread face⟩'
+        probe = m.group(4).strip("'")
+        col = 'unit' if probe in ('unit', '()') else snake(probe)
+        fargs = (', ' + m.group(2)) if m.group(2) else ''
+        return f'(SELECT {col} FROM {snake(fname[1])}_as_{snake(m.group(1))}({m.group(3)}{fargs}))'
+    e = re.sub(r'FACEOBS\[(\w+)\]\(([^()]*)\)\(([^;]+); ([^)]+)\)', faceobs, e)
     e = re.sub(r'\b([a-z]+[A-Z]\w*)\(', lambda m: snake(m.group(1)) + '(', e)   # a house call, in the drawn name
     def agg(m):
         q, f, xs = m.group(1), m.group(2), m.group(3)
@@ -181,7 +190,9 @@ for name, depth, ret, params, expr in rules:
     out.append(f'-- {name}: a rule over {params[0]}, derived, never stored')
     out.append(f'CREATE FUNCTION {snake(name)}({", ".join(params)}) RETURNS {ret} LANGUAGE sql IMMUTABLE AS $$\n  SELECT {body} $$;')
     out.append('')
-for name, kind, over, nargs, expr, describers, argtypes in sorted(derived, key=lambda d: rank.get(d[1], 3)):
+for name, kind, over, nargs, expr, describers, argtypes, rettype in sorted(derived, key=lambda d: rank.get(d[1], 3)):
+    if rettype == 'integer[][]':
+        out.append(f'-- {name}: derived, not yet drawn (a list of lists — the shadow holds no jagged array)'); out.append(''); continue
     over_list = over.startswith('List ')
     if over.replace('List ', '') not in tables:
         continue   # a def over a kind (a face), not over a table
@@ -245,10 +256,10 @@ for name, kind, over, nargs, expr, describers, argtypes in sorted(derived, key=l
         if over_list:
             body = sqlexpr(re.sub(r'(?<!\[)\brow\b(?!\.)', 'ROWLIST', expr) if 'AGG' not in expr else expr, table, nargs).replace('ROWLIST', '$1')
             if nargs == 1: body = re.sub(r'\barg\d+\b|\brow\b', '$1', body)   # the one argument is the list itself
-            ret = 'integer' if body.startswith('cardinality') else 'integer[]'
+            ret = rettype or ('integer' if body.startswith('cardinality') else 'integer[]')
             out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS {ret} LANGUAGE sql STABLE AS $$\n  SELECT {body} $$;')
         else:
-            ret = 'integer' if expr.startswith('cardinality') else 'integer[]'
+            ret = rettype or ('integer' if expr.startswith('cardinality') else 'integer[]')
             out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS {ret} LANGUAGE sql STABLE AS $$\n  SELECT {sqlexpr(expr, table, nargs)} FROM {table} WHERE id = $1 $$;')
     out.append('')
 # the functions in dependency order: a function after every function it calls (the database

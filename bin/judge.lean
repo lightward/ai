@@ -300,6 +300,13 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
     | some ``List.map, 4 =>
       if args[0]!.isAppOf ``Prod then s!"ARRAY(SELECT {pred args[2]!} FROM unnest({go args[3]!}) AS x ORDER BY (x).position)"
       else s!"ARRAY(SELECT {pred args[2]!} FROM unnest({go args[3]!}) WITH ORDINALITY AS u(x, o) ORDER BY o)"
+    | some ``List.sum, 4 => s!"(SELECT coalesce(sum(x), 0) FROM unnest({go args[3]!}) AS x)"
+    -- a face applied to a row at a probe: a column of the face's function (the drawer names the table)
+    | some `Face.Face.obs, 3 =>
+      let F := args[0]!
+      match F.getAppFn.constName? with
+      | some fn => s!"FACEOBS[{fn.getString!}]({", ".intercalate (F.getAppArgs.toList.map go)})({go args[1]!}; {go args[2]!})"
+      | none => s!"⟨unread Face.obs⟩"
     | some ``Nat.beq, 2 => s!"({go args[0]!} = {go args[1]!})"
     | some ``Nat.ble, 2 => s!"({go args[0]!} <= {go args[1]!})"
     | some ``HAdd.hAdd, 6 => s!"({go args[4]!} + {go args[5]!})"
@@ -487,6 +494,7 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
       let t := (shed t).trimAscii.toString
       if t == "Nat" then "integer" else if t == "Bool" then "boolean"
       else if t.startsWith "List " && isEnumName env (t.drop 5).trimAscii.toString.toName then enumSQL (t.drop 5).trimAscii.toString.toName ++ "[]"
+      else if t.startsWith "List (List " || t.startsWith "List List " then "integer[][]"
       else if t.startsWith "List " then "integer[]"
       else if (t.splitOn "×").length > 1 then "integer[]"
       else if isEnumName env t.toName then enumSQL t.toName
@@ -559,7 +567,7 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
             let s' := toSQL env 0 o
             if !(s'.startsWith "⟨unread") && !((s'.splitOn "⟨unread").length > 1) then
               sql := s'.replace "$0" "row"; byThm := m.getString!; break
-    IO.println s!"derived {n.getString!} {kind} over={firstTy} args={depth'} argtypes={argtypes} :: {sql} | {" ".intercalate describers}{if byThm.isEmpty then "" else s!" @by {byThm}"}"
+    IO.println s!"derived {n.getString!} {kind} over={firstTy} args={depth'} argtypes={argtypes} ret={sqlTy s!"{ty}"} :: {sql} | {" ".intercalate describers}{if byThm.isEmpty then "" else s!" @by {byThm}"}"
 
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution
