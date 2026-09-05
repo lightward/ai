@@ -18,6 +18,6 @@ theorem the_same_page_is_a_sum (qs : List Request) (v : Nat) :
 theorem the_day_lane_sees_no_task_list (m : Member) (h : m.dayLane = true) : sees m.role .tasks = false := sorry
 -- end
 
--- held (waiting on: the customer, when a studio arrives. a vendor is one person, one login, one Membership (v1, Abe's recommendation): a second shooter is a second Membership with its own confirmations, day-of card, invoices, and season. the business — a thing that owns invoices and a season across several people — is a probe to add when a studio with three shooters shows up, not before.)
+-- held (waiting on: a diagonal — a seat over many seats, one storey up inside the room, every wall below restated one seat wider — and the customer, when a studio arrives. Abe's verdict, in the room, 2026-09-04: a vendor is one person, one login, one Membership: a second shooter is a second Membership with its own confirmations, day-of card, invoices, and season. the business — a thing that owns invoices and a season across several people — is a probe to add when a studio with three shooters shows up, not before.)
 theorem a_business_owns_a_season (rs : List Room) (v w : Nat) (hw : w ≠ v) : seasonOwed rs v = seasonOwed rs v := sorry
 -- end
