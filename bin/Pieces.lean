@@ -1,14 +1,15 @@
 import Lean
 open Lean Elab Command
 
-/-! the pieces: the ordered proof shapes the crawl tries when a vacancy has a statement and no
-body — Baba-style pieces that are also rules, each a Lean macro over one DERIVED list, the
-carriers its statement names (to unfold first, so a goal reduces to its home); every citation,
-hypothesis, rewrite, and chain is found by a search AT THE GOAL (`piece_seek`, `piece_rw_seek`,
-`piece_chain_seek`). a trial imports this module; the artifact never does — the judge reports each
-seated body with the pieces expanded and the searches' winners substituted, and that is what the
-module grows. `budget` is the fuel a candidate may burn (Lean's own maxHeartbeats); `reach` caps how
-many theorems a search tries at one goal. -/
+/-! the act of the compiler: the searches. a piece is a proof shape with the citations put back as
+searches — and since 2026-09-05 the pieces are DERIVED from the bodies in scope (the grown modules
+a germ stands on and the germ's own hand bodies, rendered by `bin/judge.lean templates`), so this
+file keeps no list of shapes. what it keeps is what a shape cannot say: the search at the goal
+(`piece_seek`, `piece_rw_seek`, `piece_chain_seek`, `piece_mem_seek`), the fan as a seek over its own
+alternatives (`piece_first`), and `#seat`, which elaborates a candidate and reports the body with
+every search's winner substituted — that expansion is what the module grows. a trial imports this
+module; the artifact never does. `budget` is the fuel a candidate may burn (Lean's own
+maxHeartbeats); `reach` caps how many theorems a search tries at one goal. -/
 
 namespace Pieces
 
@@ -19,33 +20,7 @@ set_option hygiene false
 def budget : Nat := 20000
 def reach : Nat := 12
 
-/-- the order the crawl offers the pieces in; `{defs}` is the statement's own carriers -/
-def pieces : List (String × String) := [
-  ("rfl", "rfl"),
-  ("Iff.rfl", "Iff.rfl"),
-  ("fun _ => rfl", "fun _ => rfl"),
-  ("fun _ _ => rfl", "fun _ _ => rfl"),
-  ("intros; rfl", "by (intros; rfl)"),
-  ("decide", "by decide"),
-  ("cite", "by piece_cite [{defs}]"),
-  ("home-cite", "by piece_home_cite [{defs}]"),
-  ("chain", "by piece_chain [{defs}]"),
-  ("home-rw", "by piece_home_rw [{defs}]"),
-  ("home-induct", "by piece_home_induct [{defs}]"),
-  ("pane", "by piece_pane [{defs}]"),
-  ("induction", "by piece_induct_1st [{defs}]"),
-  ("induction-2nd", "by piece_induct_2nd [{defs}]"),
-  ("induction-3rd", "by piece_induct_3rd [{defs}]"),
-  ("induction-two-ih", "by piece_induct_two_ih [{defs}]"),
-  ("induction-two-ih-2nd", "by piece_induct_two_ih_2nd [{defs}]"),
-  ("home-cite-recurse", "by piece_home_cite_recurse [{defs}]"),
-  ("home-cite-recurse-2nd", "by piece_home_cite_recurse_2nd [{defs}]")]
-
-abbrev Seq := TSyntax ``Lean.Parser.Tactic.tacticSeq
 abbrev Tac := TSyntax `tactic
-
-def firstOf {m : Type → Type} [Monad m] [MonadQuotation m] (alts : Array Seq) : m Tac := do
-  if alts.isEmpty then `(tactic| fail) else `(tactic| first $[| $alts]*)
 
 /-! per-goal search: the cite slot of every piece is `piece_seek`, a tactic that reads the goal in
 front of it — its applicable hypotheses from the local context (kernel-grade: whatever is a Prop),
@@ -494,192 +469,6 @@ or `.symm.trans` with the piece's own closers — `(c2 _ _).trans (c1 _ _)` -/
   throwError "piece_chain_seek: no chain in reach closes{indentExpr (← g.getType)}\ntried: {names.map (·.getId)}"
 
 
-syntax (name := cite) "piece_cite" "[" ident,* "]" : tactic
-syntax (name := homeCite) "piece_home_cite" "[" ident,* "]" : tactic
-syntax (name := chain) "piece_chain" "[" ident,* "]" : tactic
-syntax (name := homeRw) "piece_home_rw" "[" ident,* "]" : tactic
-syntax (name := homeInduct) "piece_home_induct" "[" ident,* "]" : tactic
-syntax (name := pane) "piece_pane" "[" ident,* "]" : tactic
-syntax (name := induct1) "piece_induct_1st" "[" ident,* "]" : tactic
-syntax (name := induct2) "piece_induct_2nd" "[" ident,* "]" : tactic
-syntax (name := induct3) "piece_induct_3rd" "[" ident,* "]" : tactic
-syntax (name := inductTwo) "piece_induct_two_ih" "[" ident,* "]" : tactic
-syntax (name := inductTwo2) "piece_induct_two_ih_2nd" "[" ident,* "]" : tactic
-syntax (name := hcr) "piece_home_cite_recurse" "[" ident,* "]" : tactic
-syntax (name := hcr2) "piece_home_cite_recurse_2nd" "[" ident,* "]" : tactic
-
-macro_rules
-  | `(tactic| piece_cite [$_ds,*]) => do
-    let c ← `(tactic| piece_seek)
-    -- parenthesized: inside `(…)` the layout is position-free, so the expansion re-parses however
-    -- the formatter breaks its lines (a bare `by intros;` + newline ends the sequence early)
-    `(tactic| (intros; $c:tactic))
-
-macro_rules
-  | `(tactic| piece_home_cite [$ds,*]) => do
-    let c ← `(tactic| piece_seek)
-    `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; first | rfl | assumption | $c:tactic))
-
-macro_rules
-  | `(tactic| piece_chain [$ds,*]) => do
-    let closers ← `(tactic| first | rfl | assumption | piece_seek)
-    `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; first | rfl | assumption | piece_chain_seek ($closers:tactic)))
-
-/-- home → split → close: reduce along the statement's own carriers, then split the first variable
-(a face whose observation is a match on its probe reduces only once the probe is a constructor),
-then close each case by rfl, assumption, or a search -/
-macro_rules
-  | `(tactic| piece_home_induct [$ds,*]) => do
-    `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intro x; induction x; all_goals (intros; first | rfl | assumption | piece_seek)))
-
-/-- home → rewrite → close: reduce along the statement's own carriers, then one rewrite found at
-the goal, then a close — a hypothesis that steers a `cond` (`hb : backed … = false`) is a rewrite,
-and in term mode the hole for it carries information the unifier cannot recover -/
-macro_rules
-  | `(tactic| piece_home_rw [$ds,*]) => do
-    let closers ← `(tactic| first | rfl | assumption | piece_seek)
-    `(tactic| (intros; (try dsimp only [$[$ds:ident],*] at *); intros; first | rfl | assumption | piece_rw_seek ($closers:tactic)))
-
-macro_rules
-  | `(tactic| piece_pane [$_ds,*]) => do
-    let c ← `(tactic| piece_seek)
-    -- `(repeat' …)` parenthesized: `repeat'` takes a tactic SEQUENCE, and on one line it would swallow
-    -- the `all_goals` after it (one failed iteration, zero repeats, the goal untouched)
-    `(tactic| (intros; (repeat' constructor); all_goals (intros; first | rfl | $c:tactic)))
-
-/-- the base case, or any case the closers reach without the hypothesis -/
-def baseCase (c : Tac) : MacroM Seq := `(tacticSeq| (intros; first | rfl | assumption | $c:tactic))
-
-/-- the one-IH moves: the IH itself at some arity, `congrArg` over it, a rewrite by it, a chain
-from it; then the same after reducing along the statement's own carriers -/
-def ihMoves (c : Tac) (ds : Array Ident) (home : Bool) : MacroM (Array Seq) := do
-  let mut out : Array Seq := #[
-    ← `(tacticSeq| exact ih), ← `(tacticSeq| exact ih _), ← `(tacticSeq| exact ih _ _),
-    ← `(tacticSeq| exact congrArg _ ih), ← `(tacticSeq| exact congrArg _ (ih _)), ← `(tacticSeq| exact congrArg _ (ih _ _)),
-    ← `(tacticSeq| (rw [ih])), ← `(tacticSeq| (rw [ih]; $c:tactic)),
-    ← `(tacticSeq| exact (ih _).trans (by $c:tactic)), ← `(tacticSeq| exact (ih _ _).trans (by $c:tactic)),
-    ← `(tacticSeq| exact (ih _ _ _).trans (by $c:tactic))]
-  if home then
-    out := out.push (← `(tacticSeq| (dsimp only [$[$ds:ident],*]; first
-      | exact congrArg _ ih
-      | exact congrArg _ (ih _)
-      | (rw [ih])
-      | (rw [ih]; $c:tactic)
-      | (rw [ih _]; $c:tactic)
-      | exact (ih _).trans (by $c:tactic)
-      | exact (ih _ _).trans (by $c:tactic))))
-  return out
-
-/-- the two-IH moves: the joint `congr (congrArg _ ih₁) ih₂` is the inverted triangle between two
-upright ones -/
-def twoIhMoves (c : Tac) (ds : Array Ident) (home : Bool) : MacroM (Array Seq) := do
-  let mut out : Array Seq := #[
-    ← `(tacticSeq| exact congr (congrArg _ ih₁) ih₂)]
-  if home then out := out.push (← `(tacticSeq| exact congrArg₂ _ ih₁ ih₂))
-  out := out ++ #[
-    ← `(tacticSeq| (rw [ih₁, ih₂])), ← `(tacticSeq| (rw [ih₁, ih₂]; $c:tactic)),
-    ← `(tacticSeq| (rw [ih₁ _, ih₂ _])), ← `(tacticSeq| (rw [ih₁ _, ih₂ _]; $c:tactic)),
-    ← `(tacticSeq| exact congr (congrArg _ (ih₁ _)) (ih₂ _)),
-    ← `(tacticSeq| exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by $c:tactic))]
-  if home then
-    out := out ++ #[
-      ← `(tacticSeq| exact (by $c:tactic : _ = _).trans (congr (congrArg _ ih₁) ih₂)),
-      ← `(tacticSeq| exact (by $c:tactic : _ = _).trans (congr (congrArg _ (ih₁ _)) (ih₂ _))),
-      ← `(tacticSeq| (dsimp only [$[$ds:ident],*]; first
-        | exact congr (congrArg _ ih₁) ih₂
-        | exact congr (congrArg _ (ih₁ _)) (ih₂ _)
-        | (rw [ih₁, ih₂])
-        | (rw [ih₁ _, ih₂ _])
-        | (rw [ih₁, ih₂]; $c:tactic)
-        | (rw [ih₁ _, ih₂ _]; $c:tactic)
-        | exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by $c:tactic)
-        | exact (by $c:tactic : _ = _).trans (congr (congrArg _ ih₁) ih₂)))]
-  return out
-
-macro_rules
-  | `(tactic| piece_induct_1st [$ds,*]) => do
-    let c ← `(tactic| piece_seek)
-    let moves ← firstOf (← ihMoves c ds.getElems true)
-    `(tactic| (intro x; induction x; all_goals (first | $(← baseCase c) | (rename_i ih; intros; $moves:tactic))))
-
-macro_rules
-  | `(tactic| piece_induct_2nd [$ds,*]) => do
-    let c ← `(tactic| piece_seek)
-    let moves ← firstOf (← ihMoves c ds.getElems false)
-    `(tactic| (intro _ y; induction y; all_goals (first | $(← baseCase c) | (rename_i ih; intros; $moves:tactic))))
-
-macro_rules
-  | `(tactic| piece_induct_3rd [$ds,*]) => do
-    let c ← `(tactic| piece_seek)
-    let moves ← firstOf (← ihMoves c ds.getElems false)
-    `(tactic| (intro _ _ z; induction z; all_goals (first | $(← baseCase c) | (rename_i ih; intros; $moves:tactic))))
-
-macro_rules
-  | `(tactic| piece_induct_two_ih [$ds,*]) => do
-    let c ← `(tactic| piece_seek)
-    let moves ← firstOf (← twoIhMoves c ds.getElems true)
-    `(tactic| (intro x; induction x; all_goals (first | $(← baseCase c) | (rename_i ih₁ ih₂; intros; $moves:tactic))))
-
-macro_rules
-  | `(tactic| piece_induct_two_ih_2nd [$ds,*]) => do
-    let c ← `(tactic| piece_seek)
-    let moves ← firstOf (← twoIhMoves c ds.getElems false)
-    `(tactic| (intro _ y; induction y; all_goals (first | $(← baseCase c) | (rename_i ih₁ ih₂; intros; $moves:tactic))))
-
-/-- home → cite → recurse: reduce the goal along its own carriers before any closer lands, then
-tighten by the citations, then close by the recursion — two IHs first, then one; rewrites by the
-cited names and the statement's own hypotheses as atomic alternatives -/
-def homeCiteRecurse (ds : Array Ident) (second : Bool) : MacroM Tac := do
-  let c ← `(tactic| piece_seek)
-  let compact ← `(tactic| piece_seek)
-  let twoClosers ← `(tactic| first | rfl | exact congr (congrArg _ ih₁) ih₂ | exact congr (congrArg _ (ih₁ _)) (ih₂ _) | (rw [ih₁, ih₂]) | (rw [ih₁ _, ih₂ _]) | (rw [ih₁, ih₂]; $compact:tactic) | (rw [ih₁ _, ih₂ _]; $compact:tactic))
-  let oneClosers ← `(tactic| first | rfl | exact ih | exact ih _ | exact ih _ _ | exact congrArg _ ih | exact congrArg _ (ih _) | (rw [ih]) | (rw [ih _]) | (rw [ih]; $compact:tactic) | (rw [ih _]; $compact:tactic))
-  let two : Array Seq := #[
-    ← `(tacticSeq| rfl),
-    ← `(tacticSeq| exact congr (congrArg _ ih₁) ih₂),
-    ← `(tacticSeq| exact congr (congrArg _ (ih₁ _)) (ih₂ _)),
-    ← `(tacticSeq| (rw [ih₁, ih₂])), ← `(tacticSeq| (rw [ih₁ _, ih₂ _])),
-    ← `(tacticSeq| (rw [ih₁, ih₂]; $c:tactic)), ← `(tacticSeq| (rw [ih₁ _, ih₂ _]; $c:tactic)),
-    ← `(tacticSeq| exact (congr (congrArg _ (ih₁ _)) (ih₂ _)).trans (by $c:tactic)),
-    ← `(tacticSeq| exact (by $c:tactic : _ = _).trans (congr (congrArg _ ih₁) ih₂))]
-  let two := two.push (← `(tacticSeq| piece_rw_seek ($twoClosers:tactic)))
-  let one : Array Seq := #[
-    ← `(tacticSeq| rfl),
-    ← `(tacticSeq| exact ih), ← `(tacticSeq| exact ih _), ← `(tacticSeq| exact ih _ _),
-    ← `(tacticSeq| exact congrArg _ ih), ← `(tacticSeq| exact congrArg _ (ih _)), ← `(tacticSeq| exact congrArg _ (ih _ _)),
-    ← `(tacticSeq| (rw [ih])), ← `(tacticSeq| (rw [ih _])), ← `(tacticSeq| (rw [ih _ _])),
-    ← `(tacticSeq| (rw [ih]; $c:tactic)), ← `(tacticSeq| (rw [ih _]; $c:tactic)),
-    ← `(tacticSeq| exact (ih _).trans (by $c:tactic)), ← `(tacticSeq| exact (ih _ _).trans (by $c:tactic))]
-  let one := one.push (← `(tacticSeq| piece_rw_seek ($oneClosers:tactic)))
-  let twoT ← firstOf two
-  let oneT ← firstOf one
-  let base ← baseCase c
-  if second then
-    `(tactic| (intro _ y; induction y; all_goals (first
-      | $base
-      | (rename_i ih₁ ih₂; intros; (try dsimp only [$[$ds:ident],*] at *); $twoT:tactic)
-      | (rename_i ih; intros; (try dsimp only [$[$ds:ident],*] at *); $oneT:tactic))))
-  else
-    `(tactic| (intro x; induction x; all_goals (first
-      | $base
-      | (rename_i ih₁ ih₂; intros; (try dsimp only [$[$ds:ident],*] at *); $twoT:tactic)
-      | (rename_i ih; intros; (try dsimp only [$[$ds:ident],*] at *); $oneT:tactic))))
-
-macro_rules
-  | `(tactic| piece_home_cite_recurse [$ds,*]) => homeCiteRecurse ds.getElems false
-macro_rules
-  | `(tactic| piece_home_cite_recurse_2nd [$ds,*]) => homeCiteRecurse ds.getElems true
-
-/-- expand only the pieces' own macros, leaving Lean's (`rw`, `try`) as written; `piece_seek` is
-a tactic, not a macro, and stays -/
-partial def expandOurs (stx : Syntax) : MacroM Syntax := do
-  if let .node _ k _ := stx then
-    if (`Pieces).isPrefixOf k && !isSeek k then
-      if let some stx' ← Macro.expandMacro? stx then return ← expandOurs stx'
-  match stx with
-  | .node i k args => return .node i k (← args.mapM expandOurs)
-  | _ => return stx
-
 /-- stamp every seek with its own number, so its winners can be found again -/
 partial def stamp (stx : Syntax) : StateT Nat MacroM Syntax := do
   if isSeek stx.getKind then
@@ -692,11 +481,11 @@ partial def stamp (stx : Syntax) : StateT Nat MacroM Syntax := do
   | .node i k args => return .node i k (← args.mapM stamp)
   | _ => return stx
 
-/-- seat: elaborate the command with the pieces expanded, and report the body that was
-elaborated — the expansion is what the module grows; the artifact never imports the pieces -/
+/-- seat: elaborate the candidate with every fan a seek and every seek stamped, and report the
+body with the winners substituted — that is what the module grows; the artifact never imports
+the pieces -/
 elab "#seat " c:command : command => do
-  let c' ← liftMacroM <| expandOurs c
-  let c' ← liftMacroM <| firstsToSeeks c'
+  let c' ← liftMacroM <| firstsToSeeks c
   let (c', _) ← liftMacroM <| (stamp c').run 0
   seekTrace.set #[]
   elabCommand c'

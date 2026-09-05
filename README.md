@@ -25,7 +25,7 @@ germ/Toy.lean      a customer's germ — it imports Face and stands on it
 germ/Counter.lean  the compiler's own conduct, as a customer of Room
 germ/Seek.lean     the compiler's search as a machine, as a customer of Face
 germ/Roster.lean   a species: a roster of parties with per-head meals — the sheet, the heads, reseating; on Room
-bin/Pieces.lean    the ordered moves the compiler tries — Lean proof shapes that are also rules, as Lean macros
+bin/Pieces.lean    the act: the searches at the goal, the fan as a seek, `#seat` — the pieces themselves are derived from the bodies
 bin/counter        the compiler: grow · settle · check · probe · gate · shapes · book · chart · schema · treaty · page
 bin/judge.lean     Lean judging Lean in-process; counter's eyes
 grown/             the grown modules — never committed, importable, published at foam.is
@@ -63,25 +63,25 @@ a germ holds three things: the carriers (every `def`, `structure`, `inductive` �
 
 growth is a cascade run to its fixed point: each round, every pending vacancy is offered every piece with the citations its vocabulary can reach among what has already seated; whatever seats, seats; the rounds are the storeys; a vacancy that never seats is red with its vocabulary named. regrown bodies are then tightened to the citations their proof terms actually used, so the artifact reads as proofs. every theorem gets its receipt minted. the artifact must elaborate silently and read every assay identically, or the build is red.
 
-the pieces are the knob. each is a Lean proof shape — `rfl`, `decide`, a citation, a chain of citations, home-then-rewrite, a pane, structural induction on the first variable, home-then-cite-then-recurse — written as a Lean tactic macro in `bin/Pieces.lean`. the cite slot of every piece is `piece_seek`, a search AT THE GOAL: its applicable hypotheses read from the local context (whatever is a Prop), its citations from the theorems already in the environment (at trial time the environment is exactly what has seated), ranked by the goal's own vocabulary weighted by rarity; a side goal gets one more search of its own; the rewrite and chain alternatives search the same way (equations in reach, each atomic with the piece's closers); the syntax that closes each goal is recorded, and the grown body is exactly those citations. no germ in the house carries a route. the carriers a statement names are unfolded first, so a goal reduces to its home before a closer lands. the file also declares a heartbeat `budget` per candidate and a `reach` for how many citations a vacancy may try; the judge reads all of it from the module. a trial imports the pieces; the artifact never does — the judge, `bin/judge.lean`, elaborates the prefix once and every candidate against a copy of it through `#seat`, which reports the body with the pieces expanded, and that expansion is what the module grows. the judge reads the complete message log — the CLI caps its report at a hundred errors; the log does not.
+the pieces are derived. every body in scope — the grown modules a germ stands on, and the germ's own hand bodies — is rendered as a piece by the judge (`bin/judge.lean templates <module>`): every citation a search found becomes the search again (`(apply T <;> …)` is `piece_seek`; `(rw [T]; C)` is `piece_rw_seek` with C kept beside the generic closers; a chain is `piece_chain_seek`; a cited application in a term is `(by piece_seek)`), the carriers a `dsimp` unfolds become the vacancy's own, the theorem's own name becomes the candidate's, and everything else — the intros, the induction, the constructors, the locals — stays as written. bodies are grouped by SKELETON (the body with every `first` fan blanked), and a vacancy is offered one piece per skeleton, its fans the union over the *other* bodies of that skeleton, the most-run alternative first, in census order: no body is offered its own shape, and a piece is named for its exemplar, so the report says `zero_add 22` where it used to say `induction 13`. no list of shapes stands anywhere in the house. what `bin/Pieces.lean` keeps is what a shape cannot say: the search AT THE GOAL (`piece_seek` — its applicable hypotheses read from the local context, its citations from the theorems already in the environment, which at trial time is exactly what has seated, ranked by the goal's own vocabulary weighted by rarity, a window per storey, a side goal getting one more search of its own), the rewrite, chain, and membership searches, the fan as a seek over its own alternatives (`piece_first`), and `#seat`, which elaborates a candidate and reports the body with every winner substituted — that expansion is what the module grows; the artifact never imports it. the settle keeps, as hand bodies, the EXEMPLARS: a body whose fans carry an alternative no standing body carries stays hand, and the tamper-surface line counts them; a germ shrinks by growing an exemplar the others regrow by. the file also declares a heartbeat `budget` per candidate and a `reach` for how many citations a search may try; the judge reads both from the module. the judge, `bin/judge.lean`, elaborates the prefix once and every candidate against a copy of it, and reads the complete message log — the CLI caps its report at a hundred errors; the log does not.
 
-today: Room — 26 carriers, 141 theorems, 42 vacancies, 99 hand bodies, 70,880 bytes. Face — 79 carriers, 147 theorems, 83 vacancies, 64 hand bodies, no routes, 54,583 bytes. Witness — 6 carriers, 8 theorems, 2 vacancies, 6 hand bodies, 2,820 bytes. the germs' byte counts are the numbers the pieces exist to shrink.
+today: Room — 26 carriers, 141 theorems, 29 vacancies, 112 hand bodies (8 of them exemplars a regrown body's skeleton came from), 72,658 bytes. Face — 79 carriers, 147 theorems, 75 vacancies, 72 hand bodies (2 exemplars), 56,367 bytes. Witness — 6 carriers, 11 theorems, 5 vacancies, 6 hand bodies, 3,371 bytes. the germs' byte counts are the numbers the shapes exist to shrink.
 
 ## the standards
 
 counter is a compiler, and a compiler's standards are the rules its output satisfies by construction, printed at every build:
 
 ```
-axiom-free ........ 284 receipts minted; every one checked at the gate
-sorry-free ........ 100 vacancies, every one regrown
+axiom-free ........ 299 receipts minted; every one checked at the gate
+sorry-free ........ 109 vacancies, every one regrown
 order derived ..... the rounds are the storeys
 germ minimal ...... its own settle
 contact width ..... grown bodies: one citation per move, by construction
 comment-free ...... 0 lines of prose beyond the receipts
-the tamper surface  184 hand bodies, 3 routes kept, reach 12, budget 20000
+the tamper surface  190 hand bodies, 10 of them exemplars, 0 routes kept, reach 12, budget 20000
 ```
 
-the artifact says one thing about itself, in Lean's voice: no axioms. everything *foam-shaped* about it is the compiler's word, printed here and published with the artifact. and the places a custodian can depart from construction are not forbidden — a hand body, a kept route, a raised reach — they are counted on the same report. that last line is the port: documented, visible on every build, shrinking as the shapes improve.
+the artifact says one thing about itself, in Lean's voice: no axioms. everything *foam-shaped* about it is the compiler's word, printed here and published with the artifact. and the places a custodian can depart from construction are not forbidden — a hand body, an exemplar the others regrow by, a kept route, a raised reach — they are counted on the same report. that last line is the port: documented, visible on every build, shrinking as the shapes improve.
 
 ## the customers
 

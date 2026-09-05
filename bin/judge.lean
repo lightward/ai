@@ -348,15 +348,45 @@ partial def unionFans (env : Environment) (e : Syntax) (others : Array Syntax) :
       .node i k args
   | _ => e
 
-/-- templates: every theorem's body as a piece, one exemplar per skeleton with its fans unioned, in
-census order — the pieces list derived from the bodies in scope. a line per piece: count, mode,
-exemplar, template (newlines as ⏎); a body that still cites where no search reaches is unrendered -/
+/-- one line of text: whitespace runs and newlines as one space -/
+def flat (s : String) : String := " ".intercalate (((s.replace "\n" " ").splitOn " ").filter (· ≠ ""))
+
+/-- the fans of a rendered body marked: every `first` whose alternatives squeeze to one line
+(a recorded winner is parenthesized, and inside parens the layout is position-free) becomes
+`{fanK}`, its alternatives returned beside it in order — so the union over a skeleton's bodies is
+the reader's to take per vacancy, a body's own fan never offered to itself; a fan with an
+alternative that cannot be squeezed stays as it stands -/
+partial def markFans (stx : Syntax) : StateM (Array (Array String)) Syntax := do
+  match stx with
+  | .node i k args =>
+    if k == ``Lean.Parser.Tactic.first && args.size == 2 then
+      let groups := args[1]!.getArgs
+      let unsqueezable := groups.any fun g =>
+        let t := (g[1].reprint.getD "").trimAscii.toString
+        t.contains '\n' && !t.startsWith "("
+      if unsqueezable then return stx
+      let texts := groups.map fun g => flat (g[1].reprint.getD "")
+      let n := (← get).size
+      modify (·.push texts)
+      return (placeholder s!"\{fan{n}}").setTailInfo stx.getTailInfo
+    else
+      let args ← args.mapM markFans
+      return .node i k args
+  | _ => return stx
+
+/-- templates: every theorem's body as a piece — the searches' winners inverted — with its
+skeleton (every fan blanked) and its fans marked and listed; one line per body: the name, the
+mode, the skeleton, the template with `{fanK}` marks (newlines as ⏎), the fans (alternatives by
+␟, fans by ␞). the grow groups bodies by skeleton and, per vacancy, unions the fans of the
+others. a vacancy (`sorry`) has no shape. a body that still cites where no search reaches is
+named unrendered -/
 def templatesMode (trail : String) (sc : Scope) : IO Unit := do
   let source ← IO.FS.readFile trail
   let (st, cmds) ← elabCommands source trail #[{ module := `Pieces }]
   let env := st.env
-  let mut rows : Array (Name × String × Syntax) := #[]
   let mut unrendered : Array Name := #[]
+  let mut count := 0
+  let mut lines : Array String := #[]
   for c in cmds do
     if !c.isOfKind ``Lean.Parser.Command.declaration then continue
     let d := c[1]
@@ -367,23 +397,18 @@ def templatesMode (trail : String) (sc : Scope) : IO Unit := do
                   (if val[1].isOfKind ``Lean.Parser.Term.byTactic then "tactic" else "term")
                 else "equations"
     let body := if val.isOfKind ``Lean.Parser.Command.declValSimple then val[1] else val
+    let raw := flat (body.reprint.getD "")
+    if raw == "sorry" || raw == "by sorry" then continue
+    count := count + 1
     let r := render env sc name (sigBinders d[2]) body
-    if citesAny env sc r then unrendered := unrendered.push name
-    else rows := rows.push (name, mode, r)
-  let mut groups : Std.HashMap String (Array (Name × Syntax)) := {}
-  let mut order : Array String := #[]
-  for (n, m, r) in rows do
-    let key := m ++ "\t" ++ ((blankFans r).reprint.getD "").trimAscii.toString
-    if !groups.contains key then order := order.push key
-    groups := groups.insert key ((groups.getD key #[]).push (n, r))
-  let sorted := (order.map fun k => (k, groups.getD k #[])).qsort (fun a b => a.2.size > b.2.size)
-  IO.println s!"the templates: {rows.size + unrendered.size} bodies, {sorted.size} pieces; {unrendered.size} unrendered: {" ".intercalate (unrendered.map (·.getString!)).toList}"
-  for (key, members) in sorted do
-    let mode := (key.splitOn "\t").headD ""
-    let (exemplar, r) := members[0]!
-    let t := unionFans env r (members.extract 1 members.size |>.map (·.2))
-    let tpl := (t.reprint.getD "").trimAscii.toString.replace "\n" "⏎"
-    IO.println s!"{members.size}\t{mode}\t{exemplar.getString!}\t{tpl}"
+    if citesAny env sc r then unrendered := unrendered.push name; continue
+    let skel := flat ((blankFans r).reprint.getD "")
+    let (marked, fans) := (markFans r).run #[]
+    let tpl := (marked.reprint.getD "").trimAscii.toString.replace "\n" "⏎"
+    let fanText := "␞".intercalate (fans.map fun f => "␟".intercalate f.toList).toList
+    lines := lines.push s!"{name}\t{mode}\t{skel}\t{tpl}\t{fanText}"
+  IO.println s!"the templates: {count} bodies, {lines.size} rendered; {unrendered.size} unrendered: {" ".intercalate (unrendered.map (·.getString!)).toList}"
+  for l in lines do IO.println l
 
 /-- the component of a tuple a projection chain reads: `x.1` is 0, `x.2.1` is 1, a bare `x.2.2` is
 the last (`snd` all the way down ends in the last component) -/
@@ -799,10 +824,9 @@ unsafe def main (args : List String) : IO Unit := do
     schemaMode args[1]! sc
     return
   if args.head? == some "pieces" then
-    -- the pieces in the order the crawl offers them, and the knobs, read from bin/Pieces.lean
+    -- the knobs, read from bin/Pieces.lean; the pieces themselves are derived (`templates`)
     IO.println s!"budget {Pieces.budget}"
     IO.println s!"reach {Pieces.reach}"
-    for (n, t) in Pieces.pieces do IO.println s!"{n}\t{t}"
     return
   let prefixSrc ← IO.FS.readFile args[0]!
   let candSrc ← IO.FS.readFile args[1]!

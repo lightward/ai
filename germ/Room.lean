@@ -132,7 +132,8 @@ theorem the_first_mark_reads {A : Type w} {a b : A} {l m : List A}
 theorem the_backed_are_seated {A : Type u} (beq : A → A → Bool)
     (st : List A × List (A × List A)) (arr : A × List A)
     (hb : backed beq st.1 arr.2 = true) :
-    welcome beq st arr = (arr.1 :: st.1, st.2) := sorry
+    welcome beq st arr = (arr.1 :: st.1, st.2) :=
+  by (intros; (try dsimp only [backed, welcome] at *); intros; (rw [hb]; rfl))
 
 theorem the_unbacked_wait {A : Type u} (beq : A → A → Bool)
     (st : List A × List (A × List A)) (arr : A × List A)
@@ -415,7 +416,8 @@ theorem the_unwind_ticks : ∀ s : List Bool, inc (dec s) = s
   | false :: bs => congrArg (false :: ·) (the_unwind_ticks bs)
 
 theorem the_step_merges_the_riders :
-    collatzStep 1 = collatzStep 8 ∧ (1 : Nat) ≠ 8 := sorry
+    collatzStep 1 = collatzStep 8 ∧ (1 : Nat) ≠ 8 :=
+  by decide
 
 theorem no_inverse_unsteps_the_collatz :
     ¬ ∃ g : Nat → Nat, ∀ n, g (collatzStep n) = n :=
@@ -490,20 +492,51 @@ theorem and_regroups {a b c : Prop} : ((a ∧ b) ∧ c) ↔ (a ∧ (b ∧ c)) :=
   ⟨fun x => ⟨x.1.1, x.1.2, x.2⟩, fun x => ⟨⟨x.1, x.2.1⟩, x.2.2⟩⟩
 
 theorem the_still_map_carries {S : Type u} {P : Type v} {A : Type w} (f : S → P → A) :
-    carries f f (fun s => s) := sorry
+    carries f f (fun s => s) :=
+  fun _ _ => rfl
 
-theorem zero_add : ∀ n : Nat, 0 + n = n := sorry
+theorem zero_add : ∀ n : Nat, 0 + n = n :=
+  by
+    (intro x; induction x;
+      all_goals
+        (first
+          | (intros; rfl)
+          | (rename_i ih; intros; exact congrArg _ ih)))
 
-theorem add_regroups : ∀ a b c : Nat, (a + b) + c = a + (b + c) := sorry
+theorem add_regroups : ∀ a b c : Nat, (a + b) + c = a + (b + c) :=
+  by
+    (intro _ _ z; induction z;
+      all_goals
+        (first
+          | (intros; rfl)
+          | (rename_i ih; intros; exact congrArg _ ih)))
 
-theorem click_slides : ∀ a b : Nat, (a + b) + 1 = (a + 1) + b := sorry
+theorem click_slides : ∀ a b : Nat, (a + b) + 1 = (a + 1) + b :=
+  by
+    (intro _ y; induction y;
+      all_goals
+        (first
+          | (intros; rfl)
+          | (rename_i ih; intros; exact congrArg _ ih)))
 
 theorem the_append_rests {A : Type u} : ∀ l : List A, l ++ [] = l := sorry
 
-theorem the_appends_regroup {A : Type u} : ∀ l m t : List A, (l ++ m) ++ t = l ++ (m ++ t) := sorry
+theorem the_appends_regroup {A : Type u} : ∀ l m t : List A, (l ++ m) ++ t = l ++ (m ++ t) :=
+  by
+    (intro x; induction x;
+      all_goals
+        (first
+          | (intros; rfl)
+          | (rename_i ih; intros; exact congrArg _ (ih _ _))))
 
 theorem map_crosses_append {A : Type u} {B : Type v} (f : A → B) :
-    ∀ l m : List A, (l ++ m).map f = l.map f ++ m.map f := sorry
+    ∀ l m : List A, (l ++ m).map f = l.map f ++ m.map f :=
+  by
+    (intro x; induction x;
+      all_goals
+        (first
+          | (intros; rfl)
+          | (rename_i ih; intros; exact congrArg _ (ih _))))
 
 theorem the_unencumbered_are_welcome {A : Type u} (beq : A → A → Bool) (room : List A) :
     backed beq room [] = true := sorry
@@ -515,7 +548,13 @@ theorem or_swallows : ∀ b : Bool, (b || true) = true := sorry
 theorem len_map {A : Type u} {B : Type v} (f : A → B) :
     ∀ l : List A, (l.map f).length = l.length := sorry
 
-theorem ble_refl : ∀ n : Nat, Nat.ble n n = true := sorry
+theorem ble_refl : ∀ n : Nat, Nat.ble n n = true :=
+  by
+    (intro x; induction x;
+      all_goals
+        (first
+          | (intros; rfl)
+          | (intros; assumption)))
 
 theorem ble_le_succ : ∀ n : Nat, Nat.ble n (n + 1) = true := sorry
 
@@ -543,7 +582,13 @@ theorem len_replicate {A : Type u} (a : A) :
 theorem the_unit_word_is_its_count :
     ∀ w : List Unit, List.replicate w.length () = w := sorry
 
-theorem ble_le_add_left : ∀ a b : Nat, Nat.ble b (a + b) = true := sorry
+theorem ble_le_add_left : ∀ a b : Nat, Nat.ble b (a + b) = true :=
+  by
+    (intro _ y; induction y;
+      all_goals
+        (first
+          | (intros; rfl)
+          | (intros; assumption)))
 
 theorem the_rest_reads {A : Type w} {a b : A} {l m : List A} (h : a :: l = b :: m) : l = m :=
   congrArg (fun x => x.tail) h
@@ -656,7 +701,18 @@ theorem apart_append {A : Type u} :
 
 theorem succ_adds (a b : Nat) : (a + 1) + b = (a + b) + 1 := sorry
 
-theorem ble_le_add : ∀ a b : Nat, Nat.ble a (a + b) = true := sorry
+theorem ble_le_add : ∀ a b : Nat, Nat.ble a (a + b) = true :=
+  by
+    (intro _ y; induction y;
+      all_goals
+        (first
+          | (intros; (apply ble_trans <;> (apply ble_refl <;> fail)))
+          |
+            (intros;
+              (apply ble_trans <;>
+                  first
+                  | assumption
+                  | (apply ble_le_succ <;> fail)))))
 
 theorem apart_filter {A : Type u} {q : A → Bool} :
     ∀ {xs : List A}, Apart xs → Apart (xs.filter q)
@@ -846,7 +902,10 @@ theorem the_first_voice_decides {A : Type u} {beq : A → A → Bool}
               rw [hxa, hxb, the_first_voice_decides hE hR hab p ha']
               exact rfl
 
-theorem mul_two_reads_double (n : Nat) : n * 2 = n + n := sorry
+theorem mul_two_reads_double (n : Nat) : n * 2 = n + n :=
+  by
+    (intros; (try dsimp only [] at *); intros;
+      (apply ((add_regroups _ _ _)).trans (by (apply zero_add <;> fail)) <;> fail))
 
 theorem every_word_fits :
     ∀ (n : Nat) (w : List Bool), w ∈ words n → w.length = n
@@ -1605,7 +1664,16 @@ theorem the_book_is_the_answer_space (n : Nat) :
       ∧ Apart (words n)
       ∧ (∀ w : List Bool, w ∈ words n → w.length = n)
       ∧ (∀ w : List Bool, w ∈ words w.length)
-      ∧ (words 3).length = 8 := sorry
+      ∧ (words 3).length = 8 :=
+  by
+    (intros; (repeat' constructor);
+      all_goals
+        (intros;
+          first
+          | (apply the_book_counts_the_cap <;> fail)
+          | (apply the_book_repeats_no_word <;> fail)
+          | (apply every_word_fits <;> assumption)
+          | (apply the_book_holds_every_word <;> fail)))
 
 theorem every_shuffle_is_an_order {A : Type u} :
     ∀ (l p : List A), p.Perm l → p ∈ perms l

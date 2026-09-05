@@ -258,41 +258,84 @@ if primings_path:
     # the pieces — bin/Pieces.lean, read through the judge: their order, the knobs, and each
     # piece's template over the three derived lists ({cites} {hyps} {defs})
     resp = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'pieces'], capture_output=True, text=True)
-    primings, budget, reach = [], None, 12
+    budget, reach = None, 12
     for line in resp.stdout.splitlines():
         if line.startswith('budget '): budget = int(line.split()[1])
         elif line.startswith('reach '): reach = int(line.split()[1])
-        elif '\t' in line:
-            nm, tpl = line.split('\t', 1); primings.append((nm, tpl))
-    if not primings:
-        raise SystemExit('crawl: the judge listed no pieces (lake build Pieces?)\n' + (resp.stdout + resp.stderr)[-1500:])
-    # BODIES AS SHAPES: the pieces derived from the bodies in scope (CRAWL_SHAPES: grown modules,
-    # space-separated) — every body rendered as a piece by the judge (the searches' winners
-    # inverted), one exemplar per shape, in census order; a piece's name is its exemplar's
-    exemplar_count = {}
-    if os.environ.get('CRAWL_SHAPES'):
-        derived, seen_keys, unrendered = [], set(), []
-        for shp in os.environ['CRAWL_SHAPES'].split():
+    if budget is None:
+        raise SystemExit('crawl: the judge read no knobs (lake build Pieces?)\n' + (resp.stdout + resp.stderr)[-1500:])
+    from collections import defaultdict
+    # BODIES AS SHAPES (2026-09-05): the pieces are derived from the bodies in scope — the grown
+    # modules the germ stands on (transitively) and the germ's own hand bodies — every body rendered
+    # as a piece by the judge (the searches' winners inverted), grouped by skeleton, and for each
+    # vacancy the fans unioned over the OTHER bodies of its skeleton, so no body is offered its own
+    # shape; a piece is named for its exemplar, the first body of its skeleton in scope. no list of
+    # shapes stands anywhere in the house. CRAWL_SHAPES names the scope by hand (a measurement)
+    derived_mode = True
+    groups, group_of, n_groups = {}, {}, 0
+    if derived_mode:
+        if os.environ.get('CRAWL_SHAPES'):
+            scope_files = os.environ['CRAWL_SHAPES'].split()
+        else:
+            scope_files, seen_mods = [], set()
+            def walk(mod):
+                if mod in seen_mods or not os.path.exists(f'grown/{mod}.lean'): return
+                seen_mods.add(mod)
+                for dep in re.findall(r'^import (\S+)', open(f'grown/{mod}.lean').read(), re.M):
+                    walk(dep)
+                scope_files.append(f'grown/{mod}.lean')
+            for mod in IMPORTS: walk(mod)
+            scope_files.append(germ_path)
+        rows, unrendered, n_bodies = [], [], 0
+        for shp in scope_files:
             src_s = open(shp).read()
             m_ns = re.search(r'^namespace ([\w.]+)', src_s, re.M)
-            imps = ','.join(re.findall(r'^import (\S+)', src_s, re.M))
+            imps = ','.join(m for m in re.findall(r'^import (\S+)', src_s, re.M) if m != 'Init')
             rt = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'templates', shp, m_ns.group(1) if m_ns else 'Foam', imps], capture_output=True, text=True)
             for line in rt.stdout.splitlines():
-                m_u = re.match(r'the templates: .*unrendered: (.*)$', line)
-                if m_u: unrendered += m_u.group(1).split()
+                m_u = re.match(r'the templates: (\d+) bodies, \d+ rendered; \d+ unrendered: ?(.*)$', line)
+                if m_u:
+                    n_bodies += int(m_u.group(1)); unrendered += m_u.group(2).split(); continue
                 parts = line.split('\t')
-                if len(parts) != 4: continue
-                cnt, mode, exemplar, tpl = int(parts[0]), parts[1], parts[2], parts[3].replace('⏎', '\n')
-                key = (mode, tpl)
-                if key in seen_keys: continue
-                seen_keys.add(key)
-                derived.append((cnt, len(tpl), exemplar, tpl))
-        derived.sort(key=lambda x: (-x[0], x[1]))
-        primings = [(ex, tpl) for _, _, ex, tpl in derived]
-        exemplar_count = {ex: cnt for cnt, _, ex, _ in derived}
-        print(f'the pieces, derived: {len(primings)} shapes from the bodies in scope ({os.environ["CRAWL_SHAPES"]}); {len(unrendered)} bodies unrendered (a hole no search reaches): {" ".join(unrendered)}')
-        if not primings:
-            raise SystemExit('crawl: no shape rendered as a piece')
+                if len(parts) != 5: continue
+                qn, mode, skel, tpl, fans = parts
+                fans = [f.split('␟') for f in fans.split('␞')] if fans else []
+                key = (mode, skel)
+                groups.setdefault(key, []).append((qn, tpl.replace('⏎', '\n'), fans))
+                group_of[qn] = key
+            if rt.returncode != 0 or not rt.stdout.startswith('the templates:'):
+                raise SystemExit(f'crawl: the judge rendered no templates from {shp}\n' + (rt.stdout + rt.stderr)[-1500:])
+        n_groups = len(groups)
+        print(f'the pieces, derived: {n_bodies} bodies in scope ({" ".join(scope_files)}), {n_groups} skeletons; '
+              f'{len(unrendered)} bodies unrendered (a hole no search reaches){": " + " ".join(unrendered) if unrendered else ""}')
+        if not groups:
+            raise SystemExit('crawl: no body in scope rendered as a piece')
+        piece_cache = {}
+        def pieces_for(n):
+            """the pieces offered to vacancy n: every skeleton with a body other than n, its fans the
+            union over those bodies (the most-run alternative first), in census order"""
+            qn = NS_NAME + '.' + n
+            out = []
+            for key, members in groups.items():
+                others = [m for m in members if m[0] != qn]
+                if not others: continue
+                ck = (key, len(others) != len(members))
+                if ck not in piece_cache:
+                    ex_qn, tpl, ex_fans = others[0]
+                    for K in range(len(ex_fans)):
+                        seen = {}
+                        for _, _, fs in others:
+                            if len(fs) != len(ex_fans): continue
+                            for a in fs[K]:
+                                seen[a] = seen.get(a, 0) + 1
+                        alts = sorted(seen, key=lambda a: (-seen[a], list(seen).index(a)))
+                        tpl = tpl.replace('{fan%d}' % K, 'first | ' + ' | '.join(alts))
+                    piece_cache[ck] = (len(others), ex_qn.split('.')[-1], tpl)
+                out.append(piece_cache[ck])
+            out.sort(key=lambda x: (-x[0], len(x[2])))
+            return [(ex, tpl) for _, ex, tpl in out]
+        primings_of = {n: pieces_for(n) for _, n, _ in theorems}
+        primings = []
 
     def split_block(b):
         rt = b.rfind('\n/-- info:')
@@ -341,7 +384,8 @@ if primings_path:
         # `{self}` is the structural recursion's own call, named as the candidate is named
         return body.replace('{defs}', defs_macro(n) if n else '').replace('{self}', f'{n}__p{k}' if n and k is not None else (n or ''))
 
-    tally = {nm: 0 for nm, _ in primings}
+    tally = defaultdict(int)
+    for nm, _ in primings: tally[nm] = 0
     carried = []
     regrown_by = {}
     ns_m = re.search(r'^namespace ([\w.]+)', header, re.M)
@@ -362,7 +406,7 @@ if primings_path:
 
     def candidate_text(n, k):
         stmt, _ = split_block(by_name[n])
-        body = instantiate(primings[k][1], n, k)
+        body = instantiate(primings_of[n][k][1], n, k)
         body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
         fuel = f'set_option maxHeartbeats {budget} in\n' if budget else ''
         return fuel + stmt.replace(f'theorem {n}', f'theorem {n}__p{k}', 1) + joint(body) + body
@@ -425,15 +469,13 @@ if primings_path:
         pending_hand = [n for _, n, _ in theorems if not is_vac[n]]
         pending_vac = [n for _, n, _ in theorems if is_vac[n]]
         rounds, tried = [], 0
-        P = len(primings)
-
         def seat_regrown(n, k, body):
-            pname, _ = primings[k]
+            pname, _ = primings_of[n][k]
             stmt, _ = split_block(by_name[n])
             body = body.replace(f'{n}__p{k}', n).strip('\n')
             body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
             seated_text[n] = stmt + joint(body) + body + '\n\n' + receipt_for(n)
-            regrown_by[n] = (pname, exemplar_count.get(pname, 0))
+            regrown_by[n] = pname
             tally[pname] += 1
             return pname
 
@@ -456,6 +498,7 @@ if primings_path:
                     seated_order.append(n); seated_set.add(n); seated_round[n] = 1
             n = probe_name
             print(f'probe: {n}')
+            P = len(primings_of[n])
             cands = [(n, k) for k in range(P)]
             pre = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='probe-prefix-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
             pre.write('\n'.join(grown_lines) + '\n'); pre.close()
@@ -470,7 +513,7 @@ if primings_path:
                 m = re.match(r'(\d+) (seated|held)( \d+ms)?$', lines[i])
                 if m:
                     ci = int(m.group(1)); k = ci % P
-                    print(f'  {primings[k][0]:22s} {m.group(2)}{m.group(3) or ""}')
+                    print(f'  {primings_of[n][k][0]:22s} {m.group(2)}{m.group(3) or ""}')
                     i += 1
                     while i < len(lines) and (lines[i].startswith('    ') or lines[i].startswith('| ') or lines[i] == '|'):
                         print(f'      {lines[i].strip()}'); i += 1
@@ -492,7 +535,7 @@ if primings_path:
             prefix_lines = list(prefix)
             for n in seated_order:
                 prefix_lines.append(seated_text[n]); prefix_lines.append('')
-            cands = [(n, k) for n in ready_hand + pending_vac for k in range(P)]
+            cands = [(n, k) for n in ready_hand + pending_vac for k in range(len(primings_of[n]))]
             failed = judge(prefix_lines, cands)
             tried += judge.judged
             bodies = judge.bodies
@@ -501,7 +544,7 @@ if primings_path:
                 if i in failed: continue
                 if n not in best or k < best[n][0]:
                     best[n] = (k, bodies[i])
-            per_round = {nm: 0 for nm, _ in primings}
+            per_round = defaultdict(int)
             seated_now, carried_now = [], 0
             for n in ready_hand:
                 if n in best:
@@ -529,6 +572,21 @@ if primings_path:
                 print(f'GROW REFUSED at round {r}: {len(pending_vac)} vacancies no piece regrows — the germ names them:')
                 for n in pending_vac:
                     print(f'  {n}')
+                if settle_mode and derived_mode and os.path.exists(out_path):
+                    # the settle's restore: a vacancy no other body's shape reaches comes back as a
+                    # hand body, its text the last grown module's — it is the exemplar of its shape
+                    last = open(out_path).read()
+                    restored = {}
+                    for n in pending_vac:
+                        m_b = re.search(r'(?ms)^theorem ' + re.escape(n) + r'\b.*?(?=\n\n/-- info:)', last)
+                        if m_b: restored[n] = m_b.group(0)
+                    if restored:
+                        germ_src = open(germ_path).read()
+                        for n, text in restored.items():
+                            germ_src = re.sub(r'(?ms)^(-- held \(waiting on: [^)]*\)\n)?theorem ' + re.escape(n) + r'\b.*?:=\s*sorry\n(-- end\n)?', text.rstrip('\n') + '\n', germ_src, count=1)
+                        open(germ_path, 'w').write(germ_src)
+                        print(f'the settle restores {len(restored)} as hand bodies (the exemplars of their shapes): {" ".join(restored)}; pass again')
+                        sys.exit(3)
                 sys.exit(1)
         order = [entry[n] for n in seated_order]
         storey = seated_round
@@ -537,11 +595,28 @@ if primings_path:
         # search against the FINISHED module can see theorems seated in later rounds, which the
         # derived order cannot carry)
         print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged')
-        if exemplar_count:
-            selfs = [n for n, (nm, cnt) in regrown_by.items() if nm == n and cnt == 1]
-            others = [n for n, (nm, cnt) in regrown_by.items() if nm != n]
-            hand_others = [n for n in others if not is_vac[n]]
-            print(f'the exemplars: {len(set(nm for nm, _ in regrown_by.values()))} pieces seated bodies; {len(others)} bodies regrown by another body\'s shape ({len(hand_others)} of them hand: {" ".join(hand_others)}); {len(selfs)} regrown only by their own shape (the settle keeps them as hand): {" ".join(selfs)}')
+        if derived_mode:
+            hand_regrown = [n for n in regrown_by if not is_vac[n]]
+            print(f'the exemplars: {len(set(regrown_by.values()))} pieces seated bodies; {len(hand_regrown)} hand bodies regrown by another body\'s shape: {" ".join(hand_regrown)}')
+            # the settle's cover: a hand body that regrew is vacated only if every alternative its
+            # fans carry stands in a body that will still stand — the imports' bodies, the hand
+            # bodies that did not regrow, and the ones kept before it in trail order; otherwise it
+            # is kept as the exemplar of what it carries. bodies vacated together must not have
+            # covered each other alone (the nine induction bodies oscillated until this was the rule)
+            kept = []
+            for key, members in groups.items():
+                by_qn = {m[0]: m for m in members}
+                hand_members = [n for _, n, _ in theorems if not is_vac[n] and group_of.get(NS_NAME + '.' + n) == key]
+                base = [m for m in members if not m[0].startswith(NS_NAME + '.')] + [by_qn[NS_NAME + '.' + n] for n in hand_members if n not in regrown_by]
+                cover = set(a for m in base for f in m[2] for a in f)
+                for n in hand_members:
+                    if n not in regrown_by: continue
+                    alts = set(a for f in by_qn[NS_NAME + '.' + n][2] for a in f)
+                    if alts <= cover: continue
+                    kept.append(n); cover |= alts
+                    carried.append(n); seated_text[n] = hand_with_receipt(n); del regrown_by[n]
+            if kept:
+                print(f'the exemplars kept: {len(kept)} hand bodies carrying a fan alternative no standing body carries: {" ".join(kept)}')
         routes = [n for n in marker_needs if n in by_name]
         print(f'the routes: {len(routes)} in the germ, dropped — the search reaches every goal' if routes
               else 'the routes: none — the search reaches every goal')
@@ -552,21 +627,21 @@ if primings_path:
             for _, n, _ in order:
                 if storey[n] < r_i:
                     prefix_lines.append(seated_text[n]); prefix_lines.append('')
-            per_round = {nm: 0 for nm, _ in primings}
-            cands = [(n, k) for n in names for k in range(len(primings))]
+            per_round = defaultdict(int)
+            cands = [(n, k) for n in names for k in range(len(primings_of[n]))]
             failed_idx = judge(prefix_lines, cands)
             bodies = judge.bodies
             failed = set(cands[i] for i in failed_idx)
             pending = []
             for n in names:
-                chosen = next((k for k in range(len(primings)) if (n, k) not in failed), None)
+                chosen = next((k for k in range(len(primings_of[n])) if (n, k) not in failed), None)
                 if chosen is None:
                     seated_text[n] = by_name[n].rstrip('\n')
                     if germ_mode:
                         seated_text[n] = hand_with_receipt(n)
                     carried.append(n); pending.append(n)
                 else:
-                    pname, pbody = primings[chosen]
+                    pname, pbody = primings_of[n][chosen]
                     stmt, receipts = split_block(by_name[n])
                     if germ_mode or not receipts:
                         receipts = receipt_for(n)
@@ -583,8 +658,8 @@ if primings_path:
                     for n in dead: print(f'  {n}')
                     sys.exit(1)
     total = len(theorems)
-    print(f'the bodies: {total - len(carried)} of {total} regrown from {len(primings)} pieces — '
-          + ', '.join(f'{nm} {c}' for nm, c in tally.items()))
+    print(f'the bodies: {total - len(carried)} of {total} regrown from {n_groups} pieces — '
+          + ', '.join(f'{nm} {c}' for nm, c in (sorted(tally.items(), key=lambda x: -x[1]) if derived_mode else tally.items()) if c or not derived_mode))
     if germ_mode:
         def is_vacancy(n):
             _, receipts = split_block(by_name[n])
@@ -643,7 +718,11 @@ if primings_path:
         print(f'  germ minimal ...... {"its own settle" if settled == current else "NOT its own settle — bin/counter grow --settle"}')
         print(f'  contact width ..... {total - len(carried)} grown bodies: one citation per move, by construction')
         print(f'  comment-free ...... the artifact carries {len(prose)} lines of prose beyond its receipts')
-        print(f'  the tamper surface  {len(carried)} hand bodies (the custodian\'s word), {hinted} routes kept, reach {reach}, budget {budget}')
+        # an exemplar: a hand body of this germ whose skeleton some regrown body's piece came from —
+        # a piece carries one name and many bodies' fans, so the skeleton is the unit, not the name
+        used_keys = set(group_of.get(NS_NAME + '.' + ex) or group_of.get(ex) for ex in regrown_by.values())
+        exemplars = [n for n in carried if group_of.get(NS_NAME + '.' + n) in used_keys]
+        print(f'  the tamper surface  {len(carried)} hand bodies (the custodian\'s word), {len(exemplars)} of them exemplars a regrown body\'s shape came from, {hinted} routes kept, reach {reach}, budget {budget}')
         # treaty coverage: theorems are covered by construction (elaboration checks every one); the
         # treaty's blind spot is a carrier no assay ever evaluates — it could change with every row identical
         import glob as _glob
@@ -709,7 +788,7 @@ open(out_path, 'w').write('\n'.join(text) + '\n')
 print(f'the regrown trail: {out_path}')
 EOF
   local status=${PIPESTATUS[0]}
-  [ $status -eq 0 ] || exit $status
+  [ $status -eq 0 ] || return $status
 
   if [ "$check" = 1 ] && [ -z "${CRAWL_GERM:-}" ]; then
     if cmp -s "$first" "$out"; then
@@ -763,9 +842,12 @@ case "${1:-}" in
       # a settle is a fixed point: a body that becomes a vacancy may seat in a different round,
       # so iterate until the germ grows in the order it was settled to (three passes at most)
       germ="germ/Face.lean"; for a in "$@"; do case "$a" in germ/*.lean) germ="$a";; esac; done
-      for pass in 1 2 3; do
+      for pass in 1 2 3 4 5 6 7 8; do
         before="$(shasum "$germ" | cut -c1-40)"
-        CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear "$@" || exit $?
+        CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear "$@"; rc=$?
+        # 3: the settle restored refused vacancies as hand bodies; the germ moved, grow again
+        [ $rc -eq 3 ] && continue
+        [ $rc -eq 0 ] || exit $rc
         after="$(shasum "$germ" | cut -c1-40)"
         [ "$before" = "$after" ] && break
         echo "the settle moved the germ; pass $((pass+1)) to reach its fixed point"

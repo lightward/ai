@@ -61,8 +61,7 @@ theorem the_witness_parts_what_the_face_parts (F : Face) {x y : F.State}
   fun p => the_first_mark_reads (h [p])
 
 theorem the_room_is_the_widest_seat (F : Face) (s : List F.Probe) (x y : F.State)
-    (h : reads F s x ≠ reads F s y) : ¬ alike F x y :=
-  fun ha => h (the_alike_read_alike F ha s)
+    (h : reads F s x ≠ reads F s y) : ¬ alike F x y := sorry
 
 theorem speak_now (F : Face) {seats : List (List F.Probe)} {x y : F.State}
     (hw : witnessed F seats x y) : ∀ q, q ∈ earshot F seats → F.obs x q = F.obs y q := by
