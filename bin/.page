@@ -112,7 +112,7 @@ open('site/room.html', 'w').write(lean_page('grown/Room.lean', 'Room — the cou
 open('site/trunk.html', 'w').write(lean_page('grown/Face.lean', 'Face — the seeing, grown from germ/Face.lean'))
 open('site/toy.html', 'w').write(lean_page('grown/Toy.lean', 'toy — a customer germ, grown on foam') if os.path.exists('grown/Toy.lean') else page('toy — foam', '<p>not grown at this push</p>', NAV))
 open('site/germ.html', 'w').write(lean_page('germ/Face.lean', 'germ/Face.lean — what is kept by hand (the seeing)'))
-open('site/pieces.html', 'w').write(page('the pieces — foam', '<section><h1>the pieces — bin/Pieces.lean, the proof shapes as Lean macros over the three derived lists</h1><pre>' + html.escape(open('bin/Pieces.lean').read()) + '</pre></section>', NAV))
+open('site/pieces.html', 'w').write(page('the pieces — foam', '<section><h1>the pieces — bin/Pieces.lean, the searches at the goal and the seat; the shapes themselves are derived from the bodies</h1><pre>' + html.escape(open('bin/Pieces.lean').read()) + '</pre></section>', NAV))
 open('site/book.html', 'w').write(page('the book — foam', '<section><h1>the book of the seed</h1><pre>' + book + '</pre></section>', NAV))
 # every grown assay with rows: the product whole — carriers, computations, inherited laws, and its map
 import glob as _glob
