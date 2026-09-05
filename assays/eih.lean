@@ -198,6 +198,10 @@ def close (t : Task) : Task := { t with done := true }
 
 def assign (t : Task) (to : Nat) : Task := { t with assignee := to }
 
+def mayOpen (_ : Member) : Bool := true
+
+def dayOfIsEveryones : Bool := roles.all (fun ρ => !(sees ρ .dayOf) || edits ρ .dayOf)
+
 structure DayOfEdit where
   who : Nat
   row : Nat
@@ -376,6 +380,8 @@ def loadIn : Task := ⟨7, 7, false⟩
 #guard mayClose jordanM loadIn && mayClose mayaM loadIn && !(mayClose sofiaM loadIn)
 #guard (close loadIn).done
 #guard (assign loadIn 9).assignee == 9
+#guard mayOpen sofiaM && mayOpen lindaM
+#guard dayOfIsEveryones
 #guard undo [1, 2, 3] == [1, 2]
 #guard undo [1] == []
 def firstEdit : DayOfEdit := ⟨9, 3, 100, 130⟩
@@ -681,6 +687,10 @@ theorem a_vendor_may_not_close_anothers (m : Member) (t : Task) (h1 : Nat.beq m.
   show (Nat.beq m.user t.owner || (Role.beq m.role .couple || Role.beq m.role .planner)) = false
   rw [h1, h2]
   exact rfl
+
+theorem anyone_may_open_a_task (m : Member) : mayOpen m = true := rfl
+
+theorem the_day_of_sheet_is_everyones_to_edit : dayOfIsEveryones = true := rfl
 
 theorem every_edit_is_kept (w : List DayOfEdit) : behavior dayOfLog w = w :=
   the_ledger_parks_the_word w []

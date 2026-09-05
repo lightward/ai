@@ -9,6 +9,11 @@
 -- the audience of the channel minus the sender), and left these.
 
 
+-- Abe, in the room (2026-09-04): the day-of sheet is everyone's to edit with a memory, anyone opens a task and
+-- only its owner, the couple, or the planner closes it — "yep that's great" — seated as
+-- anyone_may_open_a_task and the_day_of_sheet_is_everyones_to_edit; the day lane's exclusion from tasks
+-- still waits on lanes as a carrier, below.
+
 -- held (waiting on: the drawer's fragment. a structural recursion over a list (samePage, total, undo) and a pair-valued reading (venueTable) are beyond it; Same page as a drawn aggregate is a sum over the requests the viewer hears, one SELECT.)
 theorem the_same_page_is_a_sum (qs : List Request) (v : Nat) :
     samePage qs v = total ((qs.filter (fun q => enrolled Nat.beq q.audience v)).map tally) := sorry
