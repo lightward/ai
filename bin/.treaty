@@ -52,9 +52,12 @@ def sql_array(items, ty='integer'):
 ns = re.search(r'^namespace (\S+)', open(grown).read(), re.M).group(1)
 imports = ','.join(re.findall(r'^import (\S+)', open(grown).read(), re.M))
 rep = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'schema', grown, ns, imports], capture_output=True, text=True).stdout
-tables, enums, seats, readers = {}, {}, {}, {}
+tables, enums, seats, readers, facefns = {}, {}, {}, {}, {}
 for l in rep.splitlines():
     p = l.split(' ')
+    if p[0] == 'face':
+        m = re.match(r'face (\S+) (\S+) (\S+) params=(\d+)', l)
+        if m: facefns[m.group(1)] = (short(m.group(2)), int(m.group(4)))
     if p[0] == 'table':
         # a field's type may carry spaces (List X, Prod ...): split on the next `name:`
         rest = l[len('table ') + len(p[1]) + 1:]
@@ -149,6 +152,8 @@ def arg_sql(a, pty):
         l = lit_list(a)
         if l is not None: return sql_array([str(ids[x]) if x in ids else x for x in l])
         if a in lists: return sql_array(lists[a])
+        m = re.match(r'^\(?(\w+) :: (\w+)\)?$', a)   # a row prepended to a list
+        if m and m.group(1) in ids and m.group(2) in lists: return sql_array([ids[m.group(1)]] + lists[m.group(2)])
         if a.startswith('('): return sql_array(split_top(a.strip('()')))
         if a in defs and elem(defs[a][0]) == 'Nat': return sql_array(lit_list(defs[a][1]) or [])
         return None
@@ -262,6 +267,15 @@ def expr(e):
     if m and m.group(1) in readers:
         t, _, arms = readers[m.group(1)]; r = row_of(m.group(2))
         if r and m.group(3) in arms: return ('s', f"(SELECT {column(t, arms[m.group(3)])} FROM {snake(t)} WHERE id = {r})")
+    # a face applied to a row at a probe: a column of the face's function
+    m = re.match(r'^\(?(\w+)((?: [^\s)]+)*)\)?\.obs (\S+) (\.\w+|\(\))$', e)
+    if m and m.group(1) in facefns:
+        t, n = facefns[m.group(1)]; r = row_of(m.group(3))
+        args = m.group(2).split()
+        if r and len(args) == n:
+            col = 'unit' if m.group(4) == '()' else snake(m.group(4)[1:])
+            argsql = ''.join(f', {arg_sql(a, "integer")}' for a in args)
+            return ('s', f"(SELECT {col} FROM {snake(t)}_as_{snake(m.group(1))}({r}{argsql}))")
     # a seat's reading through a face: the view's columns
     m = re.match(r'^reads (\w+) (\w+) (.+)$', e)
     if m and m.group(1) in faces and m.group(2) in seats:

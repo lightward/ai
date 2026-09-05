@@ -20,7 +20,7 @@ def snake(n):
     s = re.sub(r'(?<!^)(?=[A-Z])', '_', n.rsplit('.', 1)[-1]).lower()
     return s + '_' if s in RESERVED else s
 strip = lambda t: re.sub(r'\.\{[^}]*\}', '', t)
-tables, types, seats, readers, cites, derived, rules = {}, {}, {}, {}, {}, [], []
+tables, types, seats, readers, cites, derived, rules, faces = {}, {}, {}, {}, {}, [], [], []
 for l in res.stdout.splitlines():
     parts = l.split()
     if not parts: continue
@@ -35,6 +35,11 @@ for l in res.stdout.splitlines():
         readers[parts[3]] = (parts[2], dict(a.split('=') for a in parts[4:]))
     elif parts[0] == 'cites':
         for seat in set(parts[2:]): cites.setdefault(seat, []).append(parts[1])
+    elif parts[0] == 'face':
+        m = re.match(r'face (\S+) (\S+) (\S+) params=(\d+) ans=(\S+) (.*)$', l)
+        if m:
+            arms = [(a.split('=', 1)[0], a.split('=', 1)[1]) for a in re.findall(r'\S+?=(?:(?!\s\w+=).)+', m.group(6))]
+            faces.append((m.group(1), m.group(2), m.group(3), int(m.group(4)), m.group(5), arms))
     elif parts[0] == 'rule':
         m = re.match(r'rule (\S+) depth=(\d+) ret=(\S+) params=(\S*) :: (.*)$', l)
         if m: rules.append((m.group(1), int(m.group(2)), m.group(3), m.group(4).split(','), m.group(5)))
@@ -122,7 +127,7 @@ def sqlexpr(expr, table):
         tn = snake_key(t)
         if f in children_of.get(tn, {}):
             elem = tables_elem.get(tn, {}).get(f)
-            key = f'{snake(elem)}_id' if elem else 'c0'
+            key = f'{snake(elem)}_id' if elem else 'c'
             return f'(SELECT array_agg({key} ORDER BY position) FROM {t}_{snake(f)} c WHERE c.{t}_id = {t}.id)'
         return f'{t}.{snake(f)}'   # a bare reference is its id
     # a reference's field reads through a subselect on the referenced table (the field's type)
@@ -151,9 +156,19 @@ def sqlexpr(expr, table):
     e = re.sub(r'(?<![\[\w])row\b(?!\.)', f'{table}.id', e)   # the row passed whole is passed as its id
     return e
 rank = {'data': 0, 'prop': 1, 'clerk': 2}
+functions_start = len(out)
+# the faces: a face over a table, each probe's reading a column of a function of the row and the
+# face's parameters — a seat with a parameter is a row-level policy in the form the database holds
+for name, state, probe, nparams, ans, arms in faces:
+    table = snake(state)
+    params = ', '.join([f'{table}_id integer'] + [f'p{i + 1} integer' for i in range(nparams)])
+    cols = ', '.join(f'{snake(pr)} {ans}' for pr, _ in arms)
+    sels = ', '.join(re.sub(r'\bp(\d+)\b', lambda m: f'${int(m.group(1)) + 1}', sqlexpr(sql, table)) for _, sql in arms)
+    out.append(f'-- {name}: a face over {table}' + (f', parameterized ({nparams})' if nparams else '') + ' — each probe a column')
+    out.append(f'CREATE FUNCTION {table}_as_{snake(name)}({params}) RETURNS TABLE({cols}) LANGUAGE sql STABLE AS $$\n  SELECT {sels} FROM {table} WHERE id = $1 $$;')
+    out.append('')
 # the rules: a def over an enum, read by reducing it at each constructor or as its body over
 # positional parameters; emitted first, since the checks call them
-functions_start = len(out)
 for name, depth, ret, params, expr in rules:
     body = re.sub(r'\$(\d+)', lambda m: f'${depth - int(m.group(1))}', expr)
     if ret in types.values() or ret in [snake(t) for t in types]: body = f'({body})::{ret}'

@@ -388,6 +388,9 @@ theorem a_vendor_never_sees_anothers_invoice (v w : Nat) (hvw : Nat.beq w v = fa
 
 theorem an_ask_reads_itself : ∀ q : Ask, Ask.beq q q = true := sorry
 
+theorem a_vendor_sees_only_their_own (v : Nat) (r : Room) :
+    (vendorFace v).obs r .mine = (r.ledger.filter (fun e => Nat.beq e.1 v)).map (·.2.2) := rfl
+
 theorem linda_never_sees_the_ledger (r : Room) (e : Nat × Nat × Nat) :
     reads roomFace lindaSeat (withLine r e) = reads roomFace lindaSeat r := sorry
 

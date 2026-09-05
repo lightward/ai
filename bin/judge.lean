@@ -249,6 +249,20 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
   let pred (p : Expr) : String := match p with
     | .lam _ _ body _ => toSQL env self (body.instantiate1 (.const `x []))
     | _ => go (mkApp p (.const `x []))
+  -- a chain of pair projections is a component: `.1` is c0, `.2.1` c1, `.2.2` c2
+  let rec comp (e : Expr) (k : Nat) : Option (Nat × Expr) :=
+    if e.isAppOfArity ``Prod.fst 3 then some (k, e.getArg! 2)
+    else if e.isAppOfArity ``Prod.snd 3 then
+      match comp (e.getArg! 2) (k + 1) with
+      | some r => some r
+      | none => some (k + 1, e.getArg! 2)
+    else match e with
+      | .proj ``Prod 0 b => some (k, b)
+      | .proj ``Prod 1 b => (match comp b (k + 1) with | some r => some r | none => some (k + 1, b))
+      | _ => none
+  match comp e 0 with
+  | some (k, base) => s!"({go base}).c{k}"
+  | none =>
   match e with
   | .bvar i => if i == self then "row" else s!"${i}"
   | .const ``Bool.true _ => "true"
@@ -256,9 +270,10 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
   | .const ``List.nil _ => "ARRAY[]::integer[]"
   | .const `x _ => "x"
   | .const c _ =>
-    -- a constructor of an enum is its literal
+    -- a constructor of an enum is its literal; a marker (`row`, `p1`) prints by name
     match env.find? c with
     | some (.ctorInfo ci) => if isEnumName env ci.induct then s!"'{c.getString!}'" else s!"⟨unread {c}⟩"
+    | none => if c.getPrefix == .anonymous then c.toString else s!"⟨unread {c}⟩"
     | _ => s!"⟨unread {c}⟩"
   | .app .. =>
     let f := e.getAppFn; let args := e.getAppArgs
@@ -277,8 +292,14 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
     | some ``List.cons, 3 => s!"array_prepend({go args[1]!}, {go args[2]!})"
     | some ``cond, 4 => s!"(CASE WHEN {go args[1]!} THEN {go args[2]!} ELSE {go args[3]!} END)"
     | some ``List.length, 2 => s!"cardinality({go args[1]!})"
-    | some ``List.filter, 3 => s!"ARRAY(SELECT x FROM unnest({go args[2]!}) WITH ORDINALITY AS u(x, o) WHERE {pred args[1]!} ORDER BY o)"
-    | some ``List.map, 4 => s!"ARRAY(SELECT {pred args[2]!} FROM unnest({go args[3]!}) WITH ORDINALITY AS u(x, o) ORDER BY o)"
+    -- over rows (a list of pairs is a child table's rows, kept whole): the alias is the row, the
+    -- order its own position; over scalars: the element with its ordinality
+    | some ``List.filter, 3 =>
+      if args[0]!.isAppOf ``Prod then s!"ARRAY(SELECT x FROM unnest({go args[2]!}) AS x WHERE {pred args[1]!} ORDER BY (x).position)"
+      else s!"ARRAY(SELECT x FROM unnest({go args[2]!}) WITH ORDINALITY AS u(x, o) WHERE {pred args[1]!} ORDER BY o)"
+    | some ``List.map, 4 =>
+      if args[0]!.isAppOf ``Prod then s!"ARRAY(SELECT {pred args[2]!} FROM unnest({go args[3]!}) AS x ORDER BY (x).position)"
+      else s!"ARRAY(SELECT {pred args[2]!} FROM unnest({go args[3]!}) WITH ORDINALITY AS u(x, o) ORDER BY o)"
     | some ``Nat.beq, 2 => s!"({go args[0]!} = {go args[1]!})"
     | some ``Nat.ble, 2 => s!"({go args[0]!} <= {go args[1]!})"
     | some ``HAdd.hAdd, 6 => s!"({go args[4]!} + {go args[5]!})"
@@ -298,7 +319,7 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
         -- a projection: `row.field`; on anything but the row (an argument, an element), a lookup
         -- of the field on the structure's table by id — a pair keeps its component
         let base := args[args.size - 1]!
-        if base == .bvar self || c.getPrefix == ``Prod then s!"{go base}.{col c}"
+        if base == .bvar self || base == .const `row [] || c.getPrefix == ``Prod then s!"{go base}.{col c}"
         else if isTableStruct env c.getPrefix then s!"(SELECT {col c} FROM {tableSQL c.getPrefix} WHERE id = {go base})"
         else s!"⟨unread {c}⟩"
       else if c.getString! == "beq" && isEnumName env c.getPrefix && args.size == 2 then
@@ -309,7 +330,7 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
       else s!"⟨unread {c}⟩"
     | none, _ => s!"⟨unread⟩"
   | .proj sn i b => match (getStructureFields env sn)[i]? with
-    | some f => if b == .bvar self || sn == ``Prod then s!"{go b}.{colSQL f.getString!}" else if isTableStruct env sn then s!"(SELECT {colSQL f.getString!} FROM {tableSQL sn} WHERE id = {go b})" else "⟨unread⟩"
+    | some f => if b == .bvar self || b == .const `row [] || sn == ``Prod then s!"{go b}.{colSQL f.getString!}" else if isTableStruct env sn then s!"(SELECT {colSQL f.getString!} FROM {tableSQL sn} WHERE id = {go b})" else "⟨unread⟩"
     | none => "⟨unread⟩"
   | .lit (.natVal n) => toString n
   | _ => "⟨unread⟩"
@@ -391,6 +412,40 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
           if let some f := hit then arms := arms.push s!"{c.getString!}={f}{comp}"
         pure arms)
     if !arms.1.isEmpty then IO.println s!"reader {n.getString!} {stateName} {pii.name} {" ".intercalate arms.1.toList}"
+  -- faces: a def whose type, after its parameters, is a Face over a table with an enum (or Unit)
+  -- probe — each probe's reading reduced at the probe, the parameters as p1…, the row as `row`
+  for (n, ci) in env.constants.map₂.toList do
+    if n.getPrefix != sc.ns || ci.isTheorem then continue
+    let mut ty := ci.type
+    while ty.isForall do ty := ty.bindingBody!
+    if ty.getAppFn.constName? != some `Face.Face then continue
+    let res ← (Meta.MetaM.toIO (ctxCore := { fileName := trail, fileMap := default }) (sCore := { env := env }) do
+      Meta.forallTelescope ci.type fun ps _ => do
+        let F := mkAppN (.const n []) ps
+        let stateTy ← Meta.whnf (← Meta.mkProjection F `State)
+        let probeTy ← Meta.whnf (← Meta.mkProjection F `Probe)
+        let ansTy ← Meta.whnf (← Meta.mkProjection F `Ans)
+        let some stateName := stateTy.getAppFn.constName? | return none
+        if !isTableStruct env stateName then return none
+        let probeName := probeTy.getAppFn.constName?.getD .anonymous
+        let ctors : List Name ← if probeName == ``Unit then pure [``Unit.unit] else
+          match env.find? probeName with
+          | some (.inductInfo ii) => if isEnumName env probeName then pure ii.ctors else return none
+          | _ => return none
+        let obs ← Meta.mkProjection F `obs
+        let markers := ps.mapIdx fun i _ => Expr.const (Name.mkSimple s!"p{i + 1}") []
+        let arms : Array String ← Meta.withLocalDeclD `r stateTy fun r => do
+          let mut arms : Array String := #[]
+          for c in ctors do
+            let e ← Meta.whnf (mkAppN obs #[r, .const c []])
+            let e ← Meta.reduce e (skipTypes := true) (skipProofs := true)
+            let e := (e.replaceFVars ps markers).replaceFVar r (.const `row [])
+            arms := arms.push s!"{if c == ``Unit.unit then "unit" else c.getString!}={toSQL env 1000 e}"
+          return arms
+        let ansSQL := match ansTy.getAppFn.constName? with
+          | some ``Nat => "integer" | some ``Bool => "boolean" | some ``List => "integer[]" | _ => "integer[]"
+        return some s!"face {n.getString!} {stateName} {probeName} params={ps.size} ans={ansSQL} {" ".intercalate arms.toList}")
+    if let some line := res.1 then IO.println line
   for (n, ci) in env.constants.map₂.toList do
     if n.getPrefix != sc.ns || !ci.isTheorem then continue
     let used := ci.type.getUsedConstants ++ (match ci.value? (allowOpaque := true) with | some v => v.getUsedConstants | none => #[])
