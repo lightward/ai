@@ -275,11 +275,17 @@ names = {defines(b) for b in blocks if defines(b)}
 house = {snake(d[0]) for d in derived} | {snake(r[0]) for r in rules}
 def calls_all(b): return {m for l in b for m in re.findall(r'\b(\w+)\(', l)} - {defines(b)}
 def calls(b): return calls_all(b) & names
-# a block that calls a house def the fragment did not draw is itself not drawn, and says which
-for i, b in enumerate(blocks):
-    missing = (calls_all(b) & house) - names
-    if defines(b) and missing:
-        blocks[i] = [f'-- {defines(b)}: derived, not yet drawn (calls {", ".join(sorted(missing))}, beyond the fragment)', '']
+# a block that calls a house def the fragment did not draw is itself not drawn, and says which —
+# to a fixed point, since a block undrawn by this rule undraws the blocks that call it
+changed = True
+while changed:
+    changed = False
+    names = {defines(b) for b in blocks if defines(b)}
+    for i, b in enumerate(blocks):
+        missing = (calls_all(b) & house) - names
+        if defines(b) and missing:
+            blocks[i] = [f'-- {defines(b)}: derived, not yet drawn (calls {", ".join(sorted(missing))}, beyond the fragment)', '']
+            changed = True
 names = {defines(b) for b in blocks if defines(b)}
 ordered, done = [], set()
 while blocks:

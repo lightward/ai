@@ -786,16 +786,20 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
       for (m, ci') in env.constants.toList do
         if !(sc.owns m) || !ci'.isTheorem then continue
         let mut t := ci'.type
-        while t.isForall do t := t.bindingBody!
-        if t.isAppOfArity ``Eq 3 then
+        let mut d := 0
+        while t.isForall do t := t.bindingBody!; d := d + 1
+        -- the theorem's binders are the def's parameters in order: the row is the outermost, so its
+        -- de Bruijn index at the equation is d - 1, exactly as at the def's own body
+        if d == depth' && t.isAppOfArity ``Eq 3 then
           let l := t.getArg! 1; let r := t.getArg! 2
-          let isSelf (e : Expr) := e.isApp && e.getAppFn.constName? == some n && e.getAppArgs.all (·.isBVar)
+          let inOrder (e : Expr) := e.getAppArgs.toList == (List.range d).reverse.map Expr.bvar
+          let isSelf (e : Expr) := e.isApp && e.getAppFn.constName? == some n && inOrder e
           let mentions (e : Expr) := e.getUsedConstants.contains n
           let other := if isSelf r && !mentions l then some l else if isSelf l && !mentions r then some r else none
           if let some o := other then
-            let s' := toSQL env 0 o
+            let s' := toSQL env (d - 1) o
             if !(s'.startsWith "⟨unread") && !((s'.splitOn "⟨unread").length > 1) then
-              sql := s'.replace "$0" "row"; byThm := m.getString!; break
+              sql := s'; byThm := m.getString!; break
     IO.println s!"derived {n.getString!} {kind} over={firstTy} args={depth'} argtypes={argtypes} ret={sqlTy s!"{ty}"} :: {sql} | {" ".intercalate describers}{if byThm.isEmpty then "" else s!" @by {byThm}"}"
 
 unsafe def main (args : List String) : IO Unit := do
