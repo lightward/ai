@@ -151,6 +151,67 @@ def edits (ρ : Role) (p : Page) : Bool := enrolled Page.beq (edited ρ) p
 
 def withinSight : Bool := roles.all (fun ρ => pages.all (fun p => !(edits ρ p) || sees ρ p))
 
+structure Member where
+  user : Nat
+  role : Role
+  kind : Nat
+  dayLane : Bool
+  arrival : Nat
+  phone : Nat
+
+def vendorSide (m : Member) : Bool :=
+  Role.beq m.role .vendor || (Role.beq m.role .venue || Role.beq m.role .planner)
+
+def vendorRoomMembers (roster : List Member) : List Member := roster.filter vendorSide
+
+def vendorRoomAudience (roster : List Member) : List Nat := (vendorRoomMembers roster).map (·.user)
+
+def channelAudience (roster : List Member) (p : Member → Bool) : List Nat := (roster.filter p).map (·.user)
+
+def vendorRoomRequestOf (roster : List Member) (sender : Nat) (confirmed : List Nat) : Request :=
+  ⟨vendorRoomAudience roster, sender, confirmed⟩
+
+structure Task where
+  owner : Nat
+  assignee : Nat
+  done : Bool
+
+def mayClose (m : Member) (t : Task) : Bool :=
+  Nat.beq m.user t.owner || (Role.beq m.role .couple || Role.beq m.role .planner)
+
+def close (t : Task) : Task := { t with done := true }
+
+def assign (t : Task) (to : Nat) : Task := { t with assignee := to }
+
+structure DayOfEdit where
+  who : Nat
+  row : Nat
+  before : Nat
+  after : Nat
+
+def dayOfLog : Machine DayOfEdit (List DayOfEdit) := ledger DayOfEdit
+
+def undo : List Nat → List Nat
+  | [] => []
+  | [_] => []
+  | x :: y :: w => x :: undo (y :: w)
+
+structure Table where
+  shape : Nat
+  occupants : List Nat
+
+def venueTable (t : Table) : Nat × Nat := (t.shape, t.occupants.length)
+
+def venueChart (c : List Table) : List (Nat × Nat) := c.map venueTable
+
+def total : List Nat → Nat
+  | [] => 0
+  | x :: xs => x + total xs
+
+def seasonView (rs : List Room) (v : Nat) : List (List Nat) := rs.map (fun r => (vendorFace v).obs r .mine)
+
+def seasonOwed (rs : List Room) (v : Nat) : Nat := total (joinMap (fun r => (vendorFace v).obs r .mine) rs)
+
 def partnerView : List Nat := [0, 1, 2, 3, 4, 5]
 
 def dayOfView : List Nat := [0, 1, 2, 3, 4]
@@ -260,6 +321,36 @@ def vendorRoomChannel : Channel := ⟨[7, 8, 9]⟩
 def vendorRoomFile : File := ⟨vendorRoomChannel⟩
 #guard !(canSee vendorRoomFile maya)
 #guard canSee vendorRoomFile jordan
+
+def mayaM : Member := ⟨1, .couple, 0, false, 15, 0⟩
+def lindaM : Member := ⟨2, .party, 0, true, 14, 0⟩
+def jordanM : Member := ⟨7, .vendor, 1, false, 12, 0⟩
+def djM : Member := ⟨8, .vendor, 2, false, 13, 0⟩
+def sofiaM : Member := ⟨9, .vendor, 3, false, 11, 0⟩
+def roster : List Member := [mayaM, lindaM, jordanM, djM, sofiaM]
+#guard vendorRoomAudience roster == [7, 8, 9]
+#guard !(enrolled Nat.beq (vendorRoomAudience roster) 1)
+#guard !(enrolled Nat.beq (vendorRoomAudience roster) 2)
+#guard (vendorRoomRequestOf roster 9 [7]).audience == vendorRoomRequest.audience
+#guard vendorRoomAudience [mayaM, lindaM, jordanM] == [7]
+def loadIn : Task := ⟨7, 7, false⟩
+#guard mayClose jordanM loadIn && mayClose mayaM loadIn && !(mayClose sofiaM loadIn)
+#guard (close loadIn).done
+#guard (assign loadIn 9).assignee == 9
+#guard undo [1, 2, 3] == [1, 2]
+#guard undo [1] == []
+def firstEdit : DayOfEdit := ⟨9, 3, 100, 130⟩
+def secondEdit : DayOfEdit := ⟨7, 5, 600, 615⟩
+#guard (behavior dayOfLog [firstEdit, secondEdit]).length == 2
+#guard (behavior dayOfLog [firstEdit, secondEdit]).map (·.who) == [9, 7]
+def headTable : Table := ⟨0, [1, 2, 3]⟩
+def table2 : Table := ⟨1, [4]⟩
+#guard venueChart [headTable, table2] == [(0, 3), (1, 1)]
+#guard venueChart [⟨0, [4, 5, 6]⟩, table2] == venueChart [headTable, table2]
+#guard seasonView [demo, withInvoice] 7 == [[900], [900]]
+#guard seasonView [demo, withInvoice] 9 == [[], [300]]
+#guard seasonOwed [demo, withInvoice] 7 == 1800
+#guard seasonOwed [demo, withInvoice] 9 == 300
 
 theorem the_delivery_is_the_sheet (r : Room) : (deliver r).delivered = sheet r.guests := sorry
 
@@ -414,6 +505,89 @@ theorem the_venue_edits_the_floor_and_never_sees_the_list :
 
 theorem a_vendor_sees_the_floor_and_edits_nothing_there :
     sees .vendor .floorPlan = true ∧ edits .vendor .floorPlan = false := ⟨rfl, rfl⟩
+
+theorem the_couple_is_never_in_the_vendor_room (roster : List Member) (m : Member) (hc : m.role = .couple) :
+    ¬ m ∈ vendorRoomMembers roster := fun h => by
+  have hp : vendorSide m = true := filter_holds roster h
+  have hf : vendorSide m = false := by
+    cases m with
+    | mk u r k l a p =>
+        cases r with
+        | couple => rfl
+        | planner => exact nomatch hc
+        | vendor => exact nomatch hc
+        | venue => exact nomatch hc
+        | party => exact nomatch hc
+  exact nomatch (hf.symm.trans hp)
+
+theorem the_wedding_party_is_never_in_the_vendor_room (roster : List Member) (m : Member) (hc : m.role = .party) :
+    ¬ m ∈ vendorRoomMembers roster := fun h => by
+  have hp : vendorSide m = true := filter_holds roster h
+  have hf : vendorSide m = false := by
+    cases m with
+    | mk u r k l a p =>
+        cases r with
+        | couple => exact nomatch hc
+        | planner => exact nomatch hc
+        | vendor => exact nomatch hc
+        | venue => exact nomatch hc
+        | party => rfl
+  exact nomatch (hf.symm.trans hp)
+
+theorem a_vendor_is_in_the_vendor_room (roster : List Member) (m : Member) (hm : m ∈ roster) (hv : m.role = .vendor) :
+    m ∈ vendorRoomMembers roster :=
+  mem_filter_intro roster hm (by
+    cases m with
+    | mk u r k l a p =>
+        cases r with
+        | couple => exact nomatch hv
+        | planner => exact nomatch hv
+        | vendor => rfl
+        | venue => exact nomatch hv
+        | party => exact nomatch hv)
+
+theorem the_vendor_room_is_derived_from_the_roster (roster : List Member) :
+    vendorRoomAudience roster = channelAudience roster vendorSide := rfl
+
+theorem an_audience_is_members (roster : List Member) (p : Member → Bool) (u : Nat)
+    (h : u ∈ channelAudience roster p) : ∃ m, m ∈ roster ∧ m.user = u := by
+  obtain ⟨m, hm, he⟩ := mem_map_back (roster.filter p) h
+  exact ⟨m, mem_of_mem_filter roster hm, he⟩
+
+theorem the_owner_may_close (m : Member) (t : Task) (h : Nat.beq m.user t.owner = true) : mayClose m t = true := by
+  show (Nat.beq m.user t.owner || (Role.beq m.role .couple || Role.beq m.role .planner)) = true
+  rw [h]
+  exact rfl
+
+theorem the_couple_may_close (m : Member) (t : Task) (h : m.role = .couple) : mayClose m t = true := by
+  show (Nat.beq m.user t.owner || (Role.beq m.role .couple || Role.beq m.role .planner)) = true
+  rw [h]
+  cases Nat.beq m.user t.owner <;> rfl
+
+theorem a_vendor_may_not_close_anothers (m : Member) (t : Task) (h1 : Nat.beq m.user t.owner = false)
+    (h2 : m.role = .vendor) : mayClose m t = false := by
+  show (Nat.beq m.user t.owner || (Role.beq m.role .couple || Role.beq m.role .planner)) = false
+  rw [h1, h2]
+  exact rfl
+
+theorem every_edit_is_kept (w : List DayOfEdit) : behavior dayOfLog w = w :=
+  the_ledger_parks_the_word w []
+
+theorem the_last_edit_undoes (e : Nat) : ∀ w : List Nat, undo (w ++ [e]) = w
+  | [] => rfl
+  | [_] => rfl
+  | x :: y :: w => congrArg (x :: ·) (the_last_edit_undoes e (y :: w))
+
+theorem the_venue_reads_counts_not_names (t : Table) (occ occ' : List Nat) (h : occ.length = occ'.length) :
+    venueTable { t with occupants := occ } = venueTable { t with occupants := occ' } := by
+  show (t.shape, occ.length) = (t.shape, occ'.length)
+  rw [h]
+
+theorem a_season_reads_each_room_as_the_vendor (rs : List Room) (v : Nat) :
+    seasonView rs v = rs.map (fun r => (vendorFace v).obs r .mine) := rfl
+
+theorem the_seasons_sum_is_over_my_own_invoices (rs : List Room) (v : Nat) :
+    seasonOwed rs v = total (joinMap (fun r => (vendorFace v).obs r .mine) rs) := rfl
 
 theorem everyone_is_here (r : Room) (members : List Nat) (h : allClear r members)
     {p : Party} (hp : p ∈ r.guests) (hr : p.rsvp = true) {m : Nat} (hm : m ∈ p.meals)

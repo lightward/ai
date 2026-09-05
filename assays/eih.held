@@ -8,34 +8,26 @@
 -- its two instances), refuted one (a member is a Membership; guests are never members; who can be asked is
 -- the audience of the channel minus the sender), and left these.
 
--- held (waiting on: a carrier and the translator. the room's confirmed field and the turnstile everyone members confirmed are at the wrong grain: a confirmation lives in the channel its request was sent in, heard by that channel's audience. Request carries it now; Room still carries the old list, and the treaty's translator seats Room's columns by hand.)
-theorem the_rooms_receipt_is_its_requests (r : Room) (qs : List Request) :
-    r.confirmed = joinMap (fun q => q.confirmed) qs := sorry
--- end
 
--- held (waiting on: a carrier and the translator. a member is a Membership — a name and a role in the room's planning team; guests are parties, never members; a channel's audience is a list of members. the assay has no roster.)
-theorem an_audience_is_members (q : Request) (roster : List Nat) (m : Nat) (hm : m ∈ q.audience) : m ∈ roster := sorry
--- end
-
--- held (waiting on: a probe and the translator. the Vendor Room is confirmed as the bach lane's shape — nothing posted there reaches any couple-facing surface, aggregates included (the_same_page_counts_only_within_earshot). one more Ask, the couple's seat without it; the translator names the six asks by hand.)
-theorem the_vendor_room_wall (r : Room) (v : List Nat) (hv : v ≠ r.bach) :
-    reads roomFace coupleSeat (withBach r v) = reads roomFace coupleSeat r := sorry
--- end
-
--- held (waiting on: the drawer's fragment. a face parameterized by a vendor's id — vendorFace v, the .mine reading — is proved (a_vendor_never_sees_anothers_invoice), confirmed exactly (the planner and the venue are vendors for invoices; hosting adds nothing; the couple sees all), and not drawn. budget lines are couple-only: a probe the assay lacks.)
+-- held (waiting on: the drawer's fragment. a face parameterized by a vendor's id — vendorFace v, the .mine reading — is proved (a_vendor_never_sees_anothers_invoice), confirmed exactly, and not drawn; drawn, it is the product's most important row-level policy, and My season's per-room slice reads through it. also makerFace, and the season's sum (a structural recursion). budget lines are couple-only: a probe the assay lacks.)
 theorem a_vendor_sees_only_their_own (v : Nat) (r : Room) :
     (vendorFace v).obs r .mine = (r.ledger.filter (fun e => Nat.beq e.1 v)).map (·.2.2) := sorry
 -- end
 
--- held (waiting on: the drawer's fragment. a def over an enum (pays, joinsFree, sees, edits, owner) is skipped as a def over a kind; each is one CASE expression or one lookup table. confirmed without exception, door two included.)
-theorem the_pricing_rule_is_two_lines : (∀ ρ, joinsFree ρ = true) ∧ pays .party = false ∧ pays .couple = true := sorry
+-- held (waiting on: a carrier. the room's confirmed field and the turnstile everyone members confirmed are at the wrong grain: a confirmation lives in the channel its request was sent in (Request carries it now); Room still carries the old list. the Vendor Room itself as a probe of the room face — one more Ask, the couple's seat without it — waits with it: the room's shape changes once, with the receipt's grain.)
+theorem the_rooms_receipt_is_its_requests (r : Room) (qs : List Request) :
+    r.confirmed = joinMap (fun q => q.confirmed) qs := sorry
 -- end
 
--- held (waiting on: the customer's word on two "today"s. the day-of sheet and tasks are edit-by-all in the demo; and the venue sees the guest list today because the list view is gated on edit rights. the assay states the recommended change (the_venue_edits_the_floor_and_never_sees_the_list); the demo does not yet.)
-theorem the_day_of_sheet_has_an_editor (ρ : Role) : edits ρ .dayOf = true := sorry
+-- held (waiting on: the drawer's fragment. a structural recursion over a list (samePage, total, undo) and a pair-valued reading (venueTable) are beyond it; Same page as a drawn aggregate is a sum over the requests the viewer hears, one SELECT.)
+theorem the_same_page_is_a_sum (qs : List Request) (v : Nat) :
+    samePage qs v = total ((qs.filter (fun q => enrolled Nat.beq q.audience v)).map tally) := sorry
 -- end
 
--- held (waiting on: the product that spans rooms. My season is confirmed as a seat over many rooms: nobody but the vendor sees it, nothing on it exceeds the vendor's slice of each room, and one aggregate is allowed — what they are owed and what they have been paid, summed over their own invoices. the next diagonal, Face at a list of rooms.)
-theorem a_season_is_a_seat_over_many_rooms (rs : List Room) (v : Nat) :
-    (rs.map (fun r => (vendorFace v).obs r .mine)).length = rs.length := sorry
+-- held (waiting on: a carrier. the wedding party's day lane sees neither task list but edits the day-of sheet; lanes are a seat over pages and the assay's lanes are two lists of page numbers. a lane as a role's sub-seat.)
+theorem the_day_lane_sees_no_task_list (m : Member) (h : m.dayLane = true) : sees m.role .tasks = false := sorry
+-- end
+
+-- held (waiting on: the customer, when a studio arrives. a vendor is one person, one login, one Membership (v1, Abe's recommendation): a second shooter is a second Membership with its own confirmations, day-of card, invoices, and season. the business — a thing that owns invoices and a season across several people — is a probe to add when a studio with three shooters shows up, not before.)
+theorem a_business_owns_a_season (rs : List Room) (v w : Nat) (hw : w ≠ v) : seasonOwed rs v = seasonOwed rs v := sorry
 -- end

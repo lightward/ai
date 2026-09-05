@@ -218,12 +218,28 @@ partial def listLiteral? (e : Expr) : Option (List Expr × Expr) :=
     (listLiteral? (e.getArg! 2)).map fun (xs, t) => (e.getArg! 1 :: xs, t)
   else none
 
+/-- a column name Postgres would refuse bare gets a trailing underscore; the drawer and the
+translator apply the same rule -/
+def reservedSQL : List String := "user table order group from select where to end check default primary references in is on all and or not as by into join case when then else null limit offset union values with using cast column constraint create do for grant having only some window distinct desc asc any array between except fetch foreign intersect lateral returning unique".splitOn " "
+def colSQL (f : String) : String := if reservedSQL.contains f then f ++ "_" else f
+def tableSQL (n : Name) : String := colSQL (enumSQL n)
+
+/-- a structure the shadow keeps as a table: none of its fields is a type (a Face is a kind) -/
+def isTableStruct (env : Environment) (sn : Name) : Bool :=
+  isStructure env sn && (getStructureFields env sn).all fun f =>
+    match env.find? (sn ++ f) with
+    | some pi => Id.run do
+      let mut t := pi.type
+      while t.isForall do t := t.bindingBody!
+      return !t.isSort
+    | none => false
+
 /-- a fragment of the list vocabulary, read into SQL: projections are columns, `cons` prepends,
 a house def is a call, `And`/`Eq`/`∈` are themselves, `cond` is `CASE`, and the joinMap-over-a-cond
 shape is an aggregate over the child rows; anything outside the fragment is marked unread -/
 partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
   let go := toSQL env self
-  let col (c : Name) := c.getString!
+  let col (c : Name) := colSQL c.getString!
   -- the element type of an array, for an empty one
   let elemSQL (t : Expr) : String := match t.constName? with
     | some ``Nat => "integer" | some ``Bool => "boolean"
@@ -262,6 +278,7 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
     | some ``cond, 4 => s!"(CASE WHEN {go args[1]!} THEN {go args[2]!} ELSE {go args[3]!} END)"
     | some ``List.length, 2 => s!"cardinality({go args[1]!})"
     | some ``List.filter, 3 => s!"ARRAY(SELECT x FROM unnest({go args[2]!}) WITH ORDINALITY AS u(x, o) WHERE {pred args[1]!} ORDER BY o)"
+    | some ``List.map, 4 => s!"ARRAY(SELECT {pred args[2]!} FROM unnest({go args[3]!}) WITH ORDINALITY AS u(x, o) ORDER BY o)"
     | some ``Nat.beq, 2 => s!"({go args[0]!} = {go args[1]!})"
     | some ``Nat.ble, 2 => s!"({go args[0]!} <= {go args[1]!})"
     | some ``HAdd.hAdd, 6 => s!"({go args[4]!} + {go args[5]!})"
@@ -278,17 +295,22 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
       | _ => s!"⟨unread joinMap⟩"
     | some c, _ =>
       if isStructure env c.getPrefix && (getStructureFields env c.getPrefix).contains c.getString!.toName then
-        -- a projection: `row.field`, or a column of an argument
-        s!"{go args[args.size - 1]!}.{col c}"
+        -- a projection: `row.field`; on anything but the row (an argument, an element), a lookup
+        -- of the field on the structure's table by id — a pair keeps its component
+        let base := args[args.size - 1]!
+        if base == .bvar self || c.getPrefix == ``Prod then s!"{go base}.{col c}"
+        else if isTableStruct env c.getPrefix then s!"(SELECT {col c} FROM {tableSQL c.getPrefix} WHERE id = {go base})"
+        else s!"⟨unread {c}⟩"
       else if c.getString! == "beq" && isEnumName env c.getPrefix && args.size == 2 then
         s!"({go args[0]!} = {go args[1]!})"
       else if c.getPrefix == `Room || c.getPrefix == `Roster || c.getPrefix.getString! == "Treaty" then
         -- a house call; a bare function argument (a comparator) is not a column
-        s!"{c.getString!}({", ".intercalate (args.toList.filter (fun a => !(a.isConst || a.isLambda)) |>.map go)})"
+        s!"{c.getString!}({", ".intercalate (args.toList.filter (fun a => !((a.isConst && a != .const `x []) || a.isLambda)) |>.map go)})"
       else s!"⟨unread {c}⟩"
     | none, _ => s!"⟨unread⟩"
   | .proj sn i b => match (getStructureFields env sn)[i]? with
-    | some f => s!"{go b}.{f}" | none => "⟨unread⟩"
+    | some f => if b == .bvar self || sn == ``Prod then s!"{go b}.{colSQL f.getString!}" else if isTableStruct env sn then s!"(SELECT {colSQL f.getString!} FROM {tableSQL sn} WHERE id = {go b})" else "⟨unread⟩"
+    | none => "⟨unread⟩"
   | .lit (.natVal n) => toString n
   | _ => "⟨unread⟩"
 

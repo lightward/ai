@@ -26,7 +26,10 @@ text = open(assay).read()
 def q(sql):
     r = subprocess.run(['psql', '-h', sock, '-p', port, '-U', user, '-d', db, '-q', '-X', '-tA', '-c', sql], capture_output=True, text=True)
     return (r.stdout.strip(), r.stderr.strip())
-snake = lambda n: re.sub(r'(?<!^)(?=[A-Z])', '_', n).lower()
+RESERVED = set("user table order group from select where to end check default primary references in is on all and or not as by into join case when then else null limit offset union values with using cast column constraint create do for grant having only some window distinct desc asc any array between except fetch foreign intersect lateral returning unique".split())
+def snake(n):
+    s = re.sub(r'(?<!^)(?=[A-Z])', '_', n).lower()
+    return s + '_' if s in RESERVED else s
 short = lambda n: n.split('.')[-1]
 shed = lambda t: re.sub(r'\.\{[^}]*\}', '', t)
 def split_top(s):
@@ -293,6 +296,12 @@ def expr(e):
         t, _, arms = readers[faces[face]]
         views = ', '.join(f"'{snake(t)}_as_{snake(s)}'" for s in ss)
         return ('s', f"EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name IN ({views}) AND column_name = '{view_col(arms[m.group(2)])}')")
+    # a member of any list: the list an expression
+    m = re.match(r'^enrolled \S+ (.+) (\S+)$', e)
+    if m:
+        a = expr(m.group(1)) or (literal(m.group(1)) if lit_list(m.group(1)) is not None else None)
+        b = expr(m.group(2)) or literal(m.group(2))
+        if a and b and a[0] == 's' and b[0] in ('s', 'n'): return ('s', f"({b[1]} = ANY(SELECT unnest({a[1]})))")
     # an enum's own equality
     m = re.match(r'^(\w+)\.beq (.+) (\S+)$', e)
     if m and m.group(1) in enums:
