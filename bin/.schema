@@ -96,6 +96,7 @@ for name in ordered:
         children_of.setdefault(name, {})[f] = (elem in tables)
         tables_elem.setdefault(name, {})[f] = elem if elem in tables else None
     out.append('')
+views = []   # the seat views select from the face functions, so they come after every function
 for seat, (probe, probes) in seats.items():
     if probe not in readers: continue
     table, arms = readers[probe]
@@ -106,19 +107,24 @@ for seat, (probe, probes) in seats.items():
         if f in children_of.get(table, {}):
             # a has-many field reads as the child rows in order — the component the reader takes, or the id
             key = f'{snake(tables_elem[table][f])}_id' if tables_elem.get(table, {}).get(f) else f'c{comp or 0}'
-            cols.append(f'(SELECT array_agg({key} ORDER BY position) FROM {snake(table)}_{snake(f)} c WHERE c.{snake(table)}_id = {snake(table)}.id) AS {snake(f)}')
+            cols.append(f'(SELECT array_agg({key} ORDER BY position) FROM {snake(table)}_{snake(f)} c WHERE c.{snake(table)}_id = {snake(table)}.id) AS {snake(p)}')
         else:
-            cols.append(snake(f))
+            cols.append(f'{snake(f)} AS {snake(p)}')
     lic = cites.get(seat, [])
-    out.append(f'-- {seat}: hears {", ".join(probes)}' + (f'\n-- licensed by {", ".join(sorted(set(lic)))}' if lic else ''))
-    out.append(f'CREATE VIEW {snake(table)}_as_{snake(seat)} AS SELECT id, {", ".join(cols)} FROM {snake(table)};')
-    out.append('')
+    views.append(f'-- {seat}: hears {", ".join(probes)}' + (f'\n-- licensed by {", ".join(sorted(set(lic)))}' if lic else ''))
+    face = next((f for f in faces if f[2] == probe and f[3] == 0 and f[1] == table), None)
+    if face:
+        # the face's function reads every probe exactly; the view is its columns at each row
+        views.append(f'CREATE VIEW {snake(table)}_as_{snake(seat)} AS SELECT {snake(table)}.id, {", ".join("f." + snake(p) for p in probes)} FROM {snake(table)}, LATERAL {snake(table)}_as_{snake(face[0])}({snake(table)}.id) f;')
+    else:
+        views.append(f'CREATE VIEW {snake(table)}_as_{snake(seat)} AS SELECT id, {", ".join(cols)} FROM {snake(table)};')
+    views.append('')
 # the derived: never stored — a clerk is a procedure, a prop a check, a data def a function; each
 # carries the theorems that describe it
 def hasmany(table, f):
     return f in children_of.get(snake_key(table), {})
 snake_key = lambda t: next((n for n in tables if snake(n) == t), t)
-def sqlexpr(expr, table):
+def sqlexpr(expr, table, nargs=2):
     e = re.sub(r'AGG\[[^\]]*\]\(row\)', lambda m: m.group(0), expr)   # the aggregate reads its own row
     e = re.sub(r'(?<!\[)row\.', f'{table}.', e)
     # a has-many field reads as the child rows in order; a reference's field reads through a subselect
@@ -141,7 +147,7 @@ def sqlexpr(expr, table):
     e = re.sub(r'\b(' + '|'.join(re.escape(snake(t)) for t in tables) + r')\.(\w+)\.(\w+)', deref, e)
     e = re.sub(r'\(SELECT (\w+) FROM (\w+) WHERE id = (\w+)\.(\w+)\)\.\w+', lambda m: m.group(0).rsplit('.',1)[0], e)
     e = re.sub(r'\b(' + '|'.join(re.escape(snake(t)) for t in tables) + r')\.(\w+)\b(?!\.)', field, e)
-    e = re.sub(r'\$(\d+)', lambda m: f'arg{int(m.group(1)) + 2}', e)
+    e = re.sub(r'\$(\d+)', lambda m: f'arg{nargs - int(m.group(1))}', e)   # a bound variable by its binder: the row is the first
     e = re.sub(r'\b([a-z]+[A-Z]\w*)\(', lambda m: snake(m.group(1)) + '(', e)   # a house call, in the drawn name
     def agg(m):
         q, f, xs = m.group(1), m.group(2), m.group(3)
@@ -210,6 +216,18 @@ for name, kind, over, nargs, expr, describers, argtypes in sorted(derived, key=l
                 out.append(f'-- {name}: a clerk over the has-many {f} — a replacement: delete, then insert in order{desc}')
                 out.append(f'CREATE FUNCTION {snake(name)}({table}_id integer, arg2 integer[]) RETURNS void LANGUAGE sql AS $$\n  DELETE FROM {child} WHERE {table}_id = $1;\n  INSERT INTO {child} ({table}_id, position, {snake(elem)}_id) SELECT $1, ordinality - 1, id FROM unnest($2) WITH ORDINALITY AS u(id, ordinality) $$;')
                 out.append(''); continue
+            # a conditional map of the element's own clerk over the child rows: that clerk, run on
+            # each child the condition selects
+            m_map = re.match(r'^SET ' + re.escape(f) + r' = ARRAY\(SELECT \(CASE WHEN (.+) THEN (\w+)\(x(?:, ([^)]*))?\) ELSE x END\) FROM unnest\(row\.' + re.escape(f) + r'\) WITH ORDINALITY AS u\(x, o\) ORDER BY o\)$', expr.strip())
+            if m_map and elem:
+                argn = lambda t: re.sub(r'\$(\d+)', lambda m: f'arg{nargs - int(m.group(1))}', t)
+                key = f'{snake(elem)}_id'
+                pred = re.sub(r'\bx\b', f'c.{key}', argn(m_map.group(1)))
+                call_args = (', ' + argn(m_map.group(3))) if m_map.group(3) else ''
+                params = ', '.join([f'{table}_id integer'] + [f'arg{i + 2} {argtypes[i] if i < len(argtypes) else "integer"}' for i in range(nargs - 1)])
+                out.append(f'-- {name}: a clerk over the has-many {f} — the element\'s clerk {snake(m_map.group(2))} run on each child the condition selects{desc}')
+                out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS void LANGUAGE sql AS $$\n  SELECT {snake(m_map.group(2))}(c.{key}{call_args}) FROM {child} c WHERE c.{table}_id = $1 AND {pred} $$;')
+                out.append(''); continue
             out.append(f'-- {name}: a clerk over a has-many field ({", ".join(touched)}) — not yet drawn'); out.append(''); continue
     extra = ', '.join(f'arg{i + 2} {argtypes[i] if i < len(argtypes) else "integer[]"}' for i in range(nargs - 1))
     params = (f'{table}_ids integer[]' if over_list else f'{table}_id integer') + (', ' + extra if extra else '')
@@ -218,20 +236,20 @@ for name, kind, over, nargs, expr, describers, argtypes in sorted(derived, key=l
     desc = f'\n-- described by {", ".join(sorted(set(describers)))}' if describers else ''
     if kind == 'clerk':
         out.append(f'-- {name}: a clerk — never a second copy of the row, an update to it{desc}')
-        out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS void LANGUAGE sql AS $$\n  UPDATE {table} {sqlexpr(expr, table)} WHERE id = $1 $$;')
+        out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS void LANGUAGE sql AS $$\n  UPDATE {table} {sqlexpr(expr, table, nargs)} WHERE id = $1 $$;')
     elif kind == 'prop':
         out.append(f'-- {name}: a check, derived, never stored{desc}')
-        out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS boolean LANGUAGE sql STABLE AS $$\n  SELECT {sqlexpr(expr, table)} FROM {table} WHERE id = $1 $$;')
+        out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS boolean LANGUAGE sql STABLE AS $$\n  SELECT {sqlexpr(expr, table, nargs)} FROM {table} WHERE id = $1 $$;')
     else:
         out.append(f'-- {name}: derived, never stored{desc}')
         if over_list:
-            body = sqlexpr(re.sub(r'(?<!\[)\brow\b(?!\.)', 'ROWLIST', expr) if 'AGG' not in expr else expr, table).replace('ROWLIST', '$1')
+            body = sqlexpr(re.sub(r'(?<!\[)\brow\b(?!\.)', 'ROWLIST', expr) if 'AGG' not in expr else expr, table, nargs).replace('ROWLIST', '$1')
             if nargs == 1: body = re.sub(r'\barg\d+\b|\brow\b', '$1', body)   # the one argument is the list itself
             ret = 'integer' if body.startswith('cardinality') else 'integer[]'
             out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS {ret} LANGUAGE sql STABLE AS $$\n  SELECT {body} $$;')
         else:
             ret = 'integer' if expr.startswith('cardinality') else 'integer[]'
-            out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS {ret} LANGUAGE sql STABLE AS $$\n  SELECT {sqlexpr(expr, table)} FROM {table} WHERE id = $1 $$;')
+            out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS {ret} LANGUAGE sql STABLE AS $$\n  SELECT {sqlexpr(expr, table, nargs)} FROM {table} WHERE id = $1 $$;')
     out.append('')
 # the functions in dependency order: a function after every function it calls (the database
 # checks a body at creation)
@@ -259,5 +277,6 @@ while blocks:
     for b in ready:
         ordered.extend(b); done.add(defines(b)); blocks.remove(b)
 out[functions_start:] = ordered
+out.extend(views)
 print('\n'.join(out))
 PY

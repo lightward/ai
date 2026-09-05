@@ -9,11 +9,6 @@
 -- the audience of the channel minus the sender), and left these.
 
 
--- held (waiting on: a carrier. the room's confirmed field and the turnstile everyone members confirmed are at the wrong grain: a confirmation lives in the channel its request was sent in (Request carries it now); Room still carries the old list. the Vendor Room itself as a probe of the room face — one more Ask, the couple's seat without it — waits with it: the room's shape changes once, with the receipt's grain.)
-theorem the_rooms_receipt_is_its_requests (r : Room) (qs : List Request) :
-    r.confirmed = joinMap (fun q => q.confirmed) qs := sorry
--- end
-
 -- held (waiting on: the drawer's fragment. a structural recursion over a list (samePage, total, undo) and a pair-valued reading (venueTable) are beyond it; Same page as a drawn aggregate is a sum over the requests the viewer hears, one SELECT.)
 theorem the_same_page_is_a_sum (qs : List Request) (v : Nat) :
     samePage qs v = total ((qs.filter (fun q => enrolled Nat.beq q.audience v)).map tally) := sorry

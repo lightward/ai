@@ -313,6 +313,8 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
       match args[2]! with
       | .lam _ _ (.app (.app (.app (.app (.const ``cond _) _) q) f) (.app (.const ``List.nil _) _)) _ =>
         s!"AGG[{toSQL env 0 q} → {toSQL env 0 f}]({if n ≥ 4 then go args[3]! else "row"})"
+      -- a joinMap over any other lambda: each element's list, flattened in order
+      | .lam .. => if n ≥ 4 then s!"ARRAY(SELECT m FROM unnest({go args[3]!}) WITH ORDINALITY AS u(x, o), unnest({pred args[2]!}) WITH ORDINALITY AS v(m, i) ORDER BY o, i)" else s!"⟨unread joinMap⟩"
       | _ => s!"⟨unread joinMap⟩"
     | some c, _ =>
       if isStructure env c.getPrefix && (getStructureFields env c.getPrefix).contains c.getString!.toName then

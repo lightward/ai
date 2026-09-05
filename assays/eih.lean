@@ -5,13 +5,34 @@ set_option autoImplicit false
 
 namespace Eih.Treaty
 
+structure Request where
+  channel : Nat
+  audience : List Nat
+  sender : Nat
+  confirmed : List Nat
+
+def asked (q : Request) : List Nat := q.audience.filter (fun m => !(Nat.beq m q.sender))
+
+def tally (q : Request) : Nat := (q.confirmed.filter (enrolled Nat.beq (asked q))).length
+
+def heardBy (q : Request) (m : Nat) : List Nat := cond (enrolled Nat.beq q.audience m) q.confirmed []
+
+def confirm (q : Request) (m : Nat) : Request := { q with confirmed := m :: q.confirmed }
+
+def settled (q : Request) : Bool := everyone Nat.beq (asked q) q.confirmed
+
+def unanswered (qs : List Request) : List Request := qs.filter (fun q => !(settled q))
+
+def inChannel (qs : List Request) (ch : Nat) : List Nat :=
+  joinMap (fun q => q.confirmed) (qs.filter (fun q => Nat.beq q.channel ch))
+
 structure Room where
   guests : List Party
   delivered : List Nat
   ledger : List (Nat × Nat × Nat)
   timeline : List Nat
   bach : List Nat
-  confirmed : List Nat
+  requests : List Request
 
 def deliver (r : Room) : Room := { r with delivered := sheet r.guests }
 
@@ -19,18 +40,22 @@ def withGuests (r : Room) (gl : List Party) : Room := { r with guests := gl }
 
 def withBach (r : Room) (b : List Nat) : Room := { r with bach := b }
 
-def withConfirmed (r : Room) (c : List Nat) : Room := { r with confirmed := c }
+def confirmIn (r : Room) (ch m : Nat) : Room :=
+  { r with requests := r.requests.map (fun q => cond (Nat.beq q.channel ch) (confirm q m) q) }
+
+def ask (r : Room) (ch : Nat) (audience : List Nat) (sender : Nat) : Room :=
+  { r with requests := ⟨ch, audience, sender, []⟩ :: r.requests }
 
 def withLine (r : Room) (e : Nat × Nat × Nat) : Room := { r with ledger := e :: r.ledger }
 
-def allClear (r : Room) (members : List Nat) : Prop :=
-  r.delivered = sheet r.guests ∧ everyone Nat.beq members r.confirmed = true
+def allClear (r : Room) : Prop :=
+  r.delivered = sheet r.guests ∧ unanswered r.requests = []
 
 inductive Ask where
-  | guests | sheet | ledger | timeline | bach | confirmed
+  | guests | sheet | ledger | timeline | bach | confirmed | vendorRoom
 
 def Ask.code : Ask → Nat
-  | .guests => 0 | .sheet => 1 | .ledger => 2 | .timeline => 3 | .bach => 4 | .confirmed => 5
+  | .guests => 0 | .sheet => 1 | .ledger => 2 | .timeline => 3 | .bach => 4 | .confirmed => 5 | .vendorRoom => 6
 
 def Ask.beq (a b : Ask) : Bool := Nat.beq a.code b.code
 
@@ -40,21 +65,24 @@ def readRoom (r : Room) : Ask → List Nat
   | .ledger => r.ledger.map (·.2.2)
   | .timeline => r.timeline
   | .bach => r.bach
-  | .confirmed => r.confirmed
+  | .confirmed => inChannel r.requests 0
+  | .vendorRoom => inChannel r.requests 1
 
 def roomFace : Face := ⟨Room, Ask, List Nat, readRoom⟩
 
-def roomSeat : List Ask := [.guests, .sheet, .ledger, .timeline, .bach, .confirmed]
+def roomSeat : List Ask := [.guests, .sheet, .ledger, .timeline, .bach, .confirmed, .vendorRoom]
 
-def coupleSeat : List Ask := [.guests, .sheet, .ledger, .timeline]
+def coupleSeat : List Ask := [.guests, .sheet, .ledger, .timeline, .confirmed]
 
-def lindaSeat : List Ask := [.guests, .timeline]
+def lindaSeat : List Ask := [.guests, .timeline, .confirmed]
 
-def bestManSeat : List Ask := [.timeline, .bach]
+def bestManSeat : List Ask := [.timeline, .bach, .confirmed]
 
-def catererSeat : List Ask := [.timeline, .sheet]
+def catererSeat : List Ask := [.timeline, .sheet, .confirmed, .vendorRoom]
 
 def humanSeats : List (List Ask) := [coupleSeat, lindaSeat, bestManSeat, catererSeat]
+
+def coupleSideSeats : List (List Ask) := [coupleSeat, lindaSeat, bestManSeat]
 
 inductive VendorAsk where
   | timeline | mine
@@ -88,19 +116,6 @@ def joinsFree : Role → Bool := fun _ => true
 
 def pays : Role → Bool
   | .couple => true | .vendor => true | .planner => true | .venue => true | .party => false
-
-structure Request where
-  audience : List Nat
-  sender : Nat
-  confirmed : List Nat
-
-def asked (q : Request) : List Nat := q.audience.filter (fun m => !(Nat.beq m q.sender))
-
-def tally (q : Request) : Nat := (q.confirmed.filter (enrolled Nat.beq (asked q))).length
-
-def heardBy (q : Request) (m : Nat) : List Nat := cond (enrolled Nat.beq q.audience m) q.confirmed []
-
-def confirm (q : Request) (m : Nat) : Request := { q with confirmed := m :: q.confirmed }
 
 def samePage : List Request → Nat → Nat
   | [], _ => 0
@@ -169,7 +184,7 @@ def vendorRoomAudience (roster : List Member) : List Nat := (vendorRoomMembers r
 def channelAudience (roster : List Member) (p : Member → Bool) : List Nat := (roster.filter p).map (·.user)
 
 def vendorRoomRequestOf (roster : List Member) (sender : Nat) (confirmed : List Nat) : Request :=
-  ⟨vendorRoomAudience roster, sender, confirmed⟩
+  ⟨1, vendorRoomAudience roster, sender, confirmed⟩
 
 structure Task where
   owner : Nat
@@ -224,7 +239,11 @@ def cousin : Party := ⟨3, false, [1, 1]⟩
 
 def guestList : List Party := [linda, cousin, rose]
 
-def demo : Room := ⟨guestList, [], [(7, 1, 900), (8, 1, 1200)], [10, 11, 12], [42], [1, 2]⟩
+def everyoneChannel : Request := ⟨0, [1, 2, 7, 8, 9], 1, [7, 8]⟩
+def vendorRoomRequest : Request := ⟨1, [7, 8, 9], 9, [7]⟩
+def demo : Room := ⟨guestList, [], [(7, 1, 900), (8, 1, 1200)], [10, 11, 12], [42], [everyoneChannel, vendorRoomRequest]⟩
+#guard readRoom demo .confirmed == [7, 8]
+#guard readRoom demo .vendorRoom == [7]
 
 #guard sheet guestList == [1, 2, 3]
 #guard heads guestList == 3
@@ -240,19 +259,19 @@ def djSees : List Nat := (vendorFace 8).obs demo .mine
 #guard djSees == [1200]
 
 def catererSees : List (List Nat) := reads roomFace catererSeat (deliver demo)
-#guard catererSees == [[10, 11, 12], [1, 2, 3]]
+#guard catererSees == [[10, 11, 12], [1, 2, 3], [7, 8], [7]]
 
 def lindaSees : List (List Nat) := reads roomFace lindaSeat demo
-#guard lindaSees == [[2, 3, 1], [10, 11, 12]]
+#guard lindaSees == [[2, 3, 1], [10, 11, 12], [7, 8]]
 
 def bestManSees : List (List Nat) := reads roomFace bestManSeat demo
-#guard bestManSees == [[10, 11, 12], [42]]
+#guard bestManSees == [[10, 11, 12], [42], [7, 8]]
 
 def coupleSees : List (List Nat) := reads roomFace coupleSeat demo
-#guard coupleSees == [[2, 3, 1], [], [900, 1200], [10, 11, 12]]
+#guard coupleSees == [[2, 3, 1], [], [900, 1200], [10, 11, 12], [7, 8]]
 
 def roomSees : List (List Nat) := reads roomFace roomSeat demo
-#guard roomSees.length == 6
+#guard roomSees.length == 7
 
 def makerSees : Nat := makerFace.obs demo ()
 #guard makerSees == 3
@@ -270,18 +289,37 @@ def catererSeesMore : List (List Nat) := reads roomFace catererSeat moreGuests
 def newBach : Room := withBach demo [43]
 
 def bestManSeesNew : List (List Nat) := reads roomFace bestManSeat newBach
-#guard bestManSeesNew == [[10, 11, 12], [43]]
+#guard bestManSeesNew == [[10, 11, 12], [43], [7, 8]]
 
 def coupleSeesNew : List (List Nat) := reads roomFace coupleSeat newBach
 #guard coupleSeesNew == coupleSees
 
-def allConfirmed : Room := withConfirmed demo [1, 2, 7, 8]
+def allConfirmed : Room := confirmIn (confirmIn demo 0 2) 0 9
+#guard readRoom allConfirmed .confirmed == [9, 2, 7, 8]
 
 def roomSeesConfirmed : List (List Nat) := reads roomFace roomSeat allConfirmed
 #guard roomSeesConfirmed != roomSees
 
 def lindaSeesConfirmed : List (List Nat) := reads roomFace lindaSeat allConfirmed
-#guard lindaSeesConfirmed == lindaSees
+#guard lindaSeesConfirmed != lindaSees
+
+def vendorConfirmed : Room := confirmIn demo 1 8
+#guard readRoom vendorConfirmed .vendorRoom == [8, 7]
+
+def lindaSeesVendorConfirmed : List (List Nat) := reads roomFace lindaSeat vendorConfirmed
+#guard lindaSeesVendorConfirmed == lindaSees
+
+def coupleSeesVendorConfirmed : List (List Nat) := reads roomFace coupleSeat vendorConfirmed
+#guard coupleSeesVendorConfirmed == coupleSees
+
+def catererSeesDemo : List (List Nat) := reads roomFace catererSeat demo
+def catererSeesVendorConfirmed : List (List Nat) := reads roomFace catererSeat vendorConfirmed
+#guard catererSeesVendorConfirmed != catererSeesDemo
+#guard settled everyoneChannel == false
+#guard settled (confirm (confirm everyoneChannel 2) 9)
+#guard (unanswered demo.requests).length == 2
+#guard (unanswered allConfirmed.requests).length == 1
+#guard (unanswered (confirmIn allConfirmed 1 8).requests).length == 0
 
 def withInvoice : Room := withLine demo (9, 1, 300)
 
@@ -289,14 +327,15 @@ def lindaSeesInvoice : List (List Nat) := reads roomFace lindaSeat withInvoice
 #guard lindaSeesInvoice == lindaSees
 
 def humanEars : List Ask := earshot roomFace humanSeats
-#guard humanEars.length == 10
-#guard enrolled Ask.beq humanEars .confirmed == false
+#guard humanEars.length == 15
+#guard enrolled Ask.beq humanEars .confirmed == true
 #guard enrolled Ask.beq humanEars .ledger == true
-#guard everyone Nat.beq [1, 2] demo.confirmed
-#guard !(everyone Nat.beq [1, 2, 7] demo.confirmed)
+#guard enrolled Ask.beq humanEars .vendorRoom == true
+def coupleSideEars : List Ask := earshot roomFace coupleSideSeats
+#guard enrolled Ask.beq coupleSideEars .vendorRoom == false
+#guard everyone Nat.beq (asked everyoneChannel) (confirm (confirm everyoneChannel 2) 9).confirmed
+#guard !(everyone Nat.beq (asked everyoneChannel) everyoneChannel.confirmed)
 
-def everyoneChannel : Request := ⟨[1, 2, 7, 8, 9], 1, [7, 8]⟩
-def vendorRoomRequest : Request := ⟨[7, 8, 9], 9, [7]⟩
 def maya : Nat := 1
 def jordan : Nat := 7
 #guard asked everyoneChannel == [2, 7, 8, 9]
@@ -356,8 +395,15 @@ theorem the_delivery_is_the_sheet (r : Room) : (deliver r).delivered = sheet r.g
 
 theorem the_delivery_moves_no_guest (r : Room) : (deliver r).guests = r.guests := sorry
 
-theorem everyone_clear_means_everyone_confirmed (r : Room) (members : List Nat)
-    (h : allClear r members) : ∀ m, m ∈ members → enrolled Nat.beq r.confirmed m = true := sorry
+theorem everyone_clear_means_every_request_settled (r : Room) (h : allClear r) :
+    ∀ q, q ∈ r.requests → settled q = true := fun q hq => by
+  cases hs : settled q with
+  | true => rfl
+  | false =>
+      have hm : q ∈ unanswered r.requests :=
+        mem_filter_intro r.requests hq (by show (!(settled q)) = true; rw [hs]; rfl)
+      rw [h.2] at hm
+      exact nomatch hm
 
 theorem a_line_touches_only_the_ledger (r : Room) (e : Nat × Nat × Nat) :
     differOnly roomFace (withLine r e) r .ledger :=
@@ -367,9 +413,63 @@ theorem the_bach_touches_only_the_bach (r : Room) (b : List Nat) :
     differOnly roomFace (withBach r b) r .bach :=
   fun q hq => by cases q <;> first | rfl | exact absurd rfl hq
 
-theorem the_receipt_touches_only_the_receipt (r : Room) (c : List Nat) :
-    differOnly roomFace (withConfirmed r c) r .confirmed :=
-  fun q hq => by cases q <;> first | rfl | exact absurd rfl hq
+theorem a_confirmation_elsewhere_leaves_a_channel (ch ch' m : Nat) (h : Nat.beq ch ch' = false) :
+    ∀ qs : List Request,
+      (qs.map (fun q => cond (Nat.beq q.channel ch) (confirm q m) q)).filter (fun q => Nat.beq q.channel ch')
+        = qs.filter (fun q => Nat.beq q.channel ch')
+  | [] => rfl
+  | q :: qs => by
+      show (cond (Nat.beq q.channel ch) (confirm q m) q :: qs.map (fun q => cond (Nat.beq q.channel ch) (confirm q m) q)).filter (fun q => Nat.beq q.channel ch')
+        = (q :: qs).filter (fun q => Nat.beq q.channel ch')
+      cases hc : Nat.beq q.channel ch with
+      | true =>
+          have hq : q.channel = ch := eq_of_beq _ _ hc
+          have hn : Nat.beq q.channel ch' = false := by rw [hq]; exact h
+          show (confirm q m :: qs.map (fun q => cond (Nat.beq q.channel ch) (confirm q m) q)).filter (fun q => Nat.beq q.channel ch')
+            = (q :: qs).filter (fun q => Nat.beq q.channel ch')
+          rw [List.filter_cons_of_neg (p := fun q => Nat.beq q.channel ch') (a := confirm q m) (ne_true_of_eq_false hn),
+              List.filter_cons_of_neg (p := fun q => Nat.beq q.channel ch') (a := q) (ne_true_of_eq_false hn)]
+          exact a_confirmation_elsewhere_leaves_a_channel ch ch' m h qs
+      | false =>
+          show (q :: qs.map (fun q => cond (Nat.beq q.channel ch) (confirm q m) q)).filter (fun q => Nat.beq q.channel ch')
+            = (q :: qs).filter (fun q => Nat.beq q.channel ch')
+          cases hc' : Nat.beq q.channel ch' with
+          | true =>
+              rw [List.filter_cons_of_pos (p := fun q => Nat.beq q.channel ch') (a := q) hc',
+                  List.filter_cons_of_pos (p := fun q => Nat.beq q.channel ch') (a := q) hc',
+                  a_confirmation_elsewhere_leaves_a_channel ch ch' m h qs]
+          | false =>
+              rw [List.filter_cons_of_neg (p := fun q => Nat.beq q.channel ch') (a := q) (ne_true_of_eq_false hc'),
+                  List.filter_cons_of_neg (p := fun q => Nat.beq q.channel ch') (a := q) (ne_true_of_eq_false hc'),
+                  a_confirmation_elsewhere_leaves_a_channel ch ch' m h qs]
+
+theorem a_confirmation_touches_only_its_channel (r : Room) (m : Nat) :
+    differOnly roomFace (confirmIn r 0 m) r .confirmed := fun q hq => by
+  cases q with
+  | vendorRoom =>
+      show joinMap (fun q => q.confirmed) ((r.requests.map (fun q => cond (Nat.beq q.channel 0) (confirm q m) q)).filter (fun q => Nat.beq q.channel 1))
+        = joinMap (fun q => q.confirmed) (r.requests.filter (fun q => Nat.beq q.channel 1))
+      rw [a_confirmation_elsewhere_leaves_a_channel 0 1 m rfl r.requests]
+  | confirmed => exact absurd rfl hq
+  | guests => rfl
+  | sheet => rfl
+  | ledger => rfl
+  | timeline => rfl
+  | bach => rfl
+
+theorem a_vendor_room_confirmation_touches_only_the_vendor_room (r : Room) (m : Nat) :
+    differOnly roomFace (confirmIn r 1 m) r .vendorRoom := fun q hq => by
+  cases q with
+  | confirmed =>
+      show joinMap (fun q => q.confirmed) ((r.requests.map (fun q => cond (Nat.beq q.channel 1) (confirm q m) q)).filter (fun q => Nat.beq q.channel 0))
+        = joinMap (fun q => q.confirmed) (r.requests.filter (fun q => Nat.beq q.channel 0))
+      rw [a_confirmation_elsewhere_leaves_a_channel 1 0 m rfl r.requests]
+  | vendorRoom => exact absurd rfl hq
+  | guests => rfl
+  | sheet => rfl
+  | ledger => rfl
+  | timeline => rfl
+  | bach => rfl
 
 theorem the_guests_touch_only_the_guests (r : Room) (gl : List Party) :
     differOnly roomFace (withGuests r gl) r .guests :=
@@ -403,8 +503,11 @@ theorem the_caterer_never_sees_the_guests (r : Room) (gl : List Party) :
 theorem the_bach_parts_the_best_man (r : Room) (b : List Nat) (hb : b ≠ r.bach) :
     reads roomFace bestManSeat (withBach r b) ≠ reads roomFace bestManSeat r := sorry
 
-theorem the_receipt_parts_the_room (r : Room) (c : List Nat) (hc : c ≠ r.confirmed) :
-    reads roomFace roomSeat (withConfirmed r c) ≠ reads roomFace roomSeat r := sorry
+theorem a_confirmation_parts_the_audience (r : Room) (m : Nat)
+    (h : readRoom (confirmIn r 0 m) .confirmed ≠ readRoom r .confirmed) :
+    reads roomFace coupleSeat (confirmIn r 0 m) ≠ reads roomFace coupleSeat r :=
+  the_seat_that_hears_it_reads_it roomFace (x := confirmIn r 0 m) (y := r) (p := .confirmed) h coupleSeat
+    (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.tail _ (List.Mem.head _)))))
 
 theorem the_room_covers_itself : covers roomFace [roomSeat] := sorry
 
@@ -430,7 +533,7 @@ theorem lanes_shrink_never_lock : dayOfView.all (enrolled Nat.beq partnerView) =
 theorem the_maker_sees_shape_not_content (r : Room) (gl gl' : List Party)
     (h : gl.length = gl'.length) : alike makerFace (withGuests r gl) (withGuests r gl') := sorry
 
-theorem everyone_clear_means_rose_ate (r : Room) (members : List Nat) (h : allClear r members)
+theorem everyone_clear_means_rose_ate (r : Room) (h : allClear r)
     {p : Party} (hp : p ∈ r.guests) (hr : p.rsvp = true) {m : Nat} (hm : m ∈ p.meals) :
     m ∈ r.delivered := by
   rw [h.1]
@@ -439,22 +542,28 @@ theorem everyone_clear_means_rose_ate (r : Room) (members : List Nat) (h : allCl
 theorem a_quiet_seat_does_not_hear_it (s : List Ask) (p : Ask) (h : enrolled Ask.beq s p = false) :
     ¬ hears roomFace s p := sorry
 
-theorem no_human_hears_the_receipt : ¬ hears roomFace (earshot roomFace humanSeats) .confirmed := sorry
+theorem no_couple_side_seat_hears_the_vendor_room : ¬ hears roomFace (earshot roomFace coupleSideSeats) .vendorRoom :=
+  a_quiet_seat_does_not_hear_it _ _ rfl
 
 theorem the_bach_wall (r : Room) (b : List Nat) (hb : b ≠ r.bach) :
     reads roomFace coupleSeat (withBach r b) = reads roomFace coupleSeat r
       ∧ reads roomFace bestManSeat (withBach r b) ≠ reads roomFace bestManSeat r := sorry
 
-theorem the_room_alone_holds_the_receipt (r : Room) (c : List Nat) (hc : c ≠ r.confirmed) :
-    reads roomFace coupleSeat (withConfirmed r c) = reads roomFace coupleSeat r
-      ∧ reads roomFace lindaSeat (withConfirmed r c) = reads roomFace lindaSeat r
-      ∧ reads roomFace roomSeat (withConfirmed r c) ≠ reads roomFace roomSeat r := sorry
+theorem the_vendor_room_holds_its_own_receipt (r : Room) (m : Nat) :
+    reads roomFace coupleSeat (confirmIn r 1 m) = reads roomFace coupleSeat r
+      ∧ reads roomFace lindaSeat (confirmIn r 1 m) = reads roomFace lindaSeat r
+      ∧ reads roomFace bestManSeat (confirmIn r 1 m) = reads roomFace bestManSeat r :=
+  ⟨a_wall_hides_the_probe roomFace (a_vendor_room_confirmation_touches_only_the_vendor_room r m) coupleSeat
+     (a_quiet_seat_does_not_hear_it coupleSeat .vendorRoom rfl),
+   a_wall_hides_the_probe roomFace (a_vendor_room_confirmation_touches_only_the_vendor_room r m) lindaSeat
+     (a_quiet_seat_does_not_hear_it lindaSeat .vendorRoom rfl),
+   a_wall_hides_the_probe roomFace (a_vendor_room_confirmation_touches_only_the_vendor_room r m) bestManSeat
+     (a_quiet_seat_does_not_hear_it bestManSeat .vendorRoom rfl)⟩
 
-theorem the_humans_witness_no_license (r : Room) (c : List Nat) (hc : c ≠ r.confirmed) :
-    witnessed roomFace humanSeats (withConfirmed r c) r ∧ ¬ alike roomFace (withConfirmed r c) r := by
-  refine ⟨fun s hs => ?_, fun ha => hc (ha .confirmed)⟩
-  refine a_wall_hides_the_probe roomFace (the_receipt_touches_only_the_receipt r c) s ?_
-  exact fun hp => no_human_hears_the_receipt (mem_joinMap_intro hs hp)
+theorem the_couple_side_witnesses_no_vendor_room_license (r : Room) (m : Nat) :
+    witnessed roomFace coupleSideSeats (confirmIn r 1 m) r := fun s hs =>
+  a_wall_hides_the_probe roomFace (a_vendor_room_confirmation_touches_only_the_vendor_room r m) s
+    (fun hp => no_couple_side_seat_hears_the_vendor_room (mem_joinMap_intro hs hp))
 
 theorem the_audience_hears_the_receipt_by_name (q : Request) (m : Nat)
     (h : enrolled Nat.beq q.audience m = true) : heardBy q m = q.confirmed := by
@@ -592,14 +701,20 @@ theorem a_season_reads_each_room_as_the_vendor (rs : List Room) (v : Nat) :
 theorem the_seasons_sum_is_over_my_own_invoices (rs : List Room) (v : Nat) :
     seasonOwed rs v = total (joinMap (fun r => (vendorFace v).obs r .mine) rs) := rfl
 
-theorem everyone_is_here (r : Room) (members : List Nat) (h : allClear r members)
+theorem everyone_is_here (r : Room) (h : allClear r)
     {p : Party} (hp : p ∈ r.guests) (hr : p.rsvp = true) {m : Nat} (hm : m ∈ p.meals)
-    (c : List Nat) (hc : c ≠ r.confirmed) {gl gl' : List Party} (hperm : gl.Perm gl') :
+    (x : Nat) {gl gl' : List Party} (hperm : gl.Perm gl') :
     m ∈ r.delivered
-      ∧ (∀ x, x ∈ members → enrolled Nat.beq r.confirmed x = true)
+      ∧ (∀ q, q ∈ r.requests → settled q = true)
       ∧ (sheet r.guests).length = heads r.guests
       ∧ heads gl = heads gl'
-      ∧ reads roomFace roomSeat (withConfirmed r c) ≠ reads roomFace roomSeat r
-      ∧ witnessed roomFace humanSeats (withConfirmed r c) r := sorry
+      ∧ witnessed roomFace coupleSideSeats (confirmIn r 1 x) r
+      ∧ reads roomFace coupleSeat (confirmIn r 1 x) = reads roomFace coupleSeat r :=
+  ⟨everyone_clear_means_rose_ate r h hp hr hm,
+   everyone_clear_means_every_request_settled r h,
+   the_sheet_counts_the_heads r.guests,
+   reseating_keeps_the_heads hperm,
+   the_couple_side_witnesses_no_vendor_room_license r x,
+   (the_vendor_room_holds_its_own_receipt r x).1⟩
 
 end Eih.Treaty

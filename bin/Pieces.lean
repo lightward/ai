@@ -195,7 +195,11 @@ def nameFor (ns t : Name) : Name :=
 /-- an alternative that contains a `fail` anywhere — a seek never reached, or a rewrite that fails on
 purpose after it lands — cannot be the one that closed the goal -/
 partial def containsFail : Syntax → Bool
-  | .node _ k args => k == ``Lean.Parser.Tactic.fail || args.any containsFail
+  | .node _ k args =>
+    -- `t <;> fail` is not dead: it closes exactly when t leaves nothing, which is what the trial
+    -- meant by a fan that never ran; only the left side is read
+    if args.size == 3 && args[1]!.isAtom && args[1]!.getAtomVal == "<;>" then containsFail args[0]!
+    else k == ``Lean.Parser.Tactic.fail || args.any containsFail
   | _ => false
 
 /-- the winners at each stamp, as one `first` fan (a seek inside `all_goals` wins once per goal);
@@ -208,13 +212,10 @@ partial def substitute (wins : Std.HashMap Nat (Array Syntax)) (stx : Syntax) : 
       if ws.size == 1 then return ws[0]!
       let alts ← ws.mapM fun w => `(tacticSeq| $(TSyntax.mk w):tactic)
       return ← `(tactic| first $[| $alts]*)
-    | none => if stx.getKind == ``firstSeek then return ← `(tactic| skip) else return ← `(tactic| fail)
+    | none => return ← `(tactic| fail)
   match stx with
   | .node i k args =>
     let args ← args.mapM (substitute wins)
-    -- a side-closer fan that never ran (no side goals) reads `<;> skip`: the move stands alone
-    if args.size == 3 && args[1]!.isAtom && args[1]!.getAtomVal == "<;>" && args[2]!.getKind == ``Lean.Parser.Tactic.skip then
-      return args[0]!
     -- an alternative that cannot close (a side search that never fired, a rewrite-then-fail
     -- probe) is dropped from its `first`, so the body reads as the moves that could have
     -- closed it (a `first` keeps at least one alternative)

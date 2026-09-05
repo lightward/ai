@@ -143,8 +143,17 @@ def clone(t, base):
     for f, fty in tables[t]:
         if has_many(fty):
             child = f"{tn}_{snake(f)}"; e = elem(fty)
-            cs = f"{snake(short(e))}_id" if is_table(e) else ', '.join(f'c{k}' for k in range(len(re.findall(r'Nat', e))))
-            q(f"INSERT INTO {child} ({tn}_id, position, {cs}) SELECT {i}, position, {cs} FROM {child} WHERE {tn}_id = {base}")
+            if is_table(e):
+                # the element rows are copied too — a value never aliases, so a clerk on the copy
+                # must not reach the original's elements
+                key = f"{snake(short(e))}_id"
+                olds, _ = q(f"SELECT {key} FROM {child} WHERE {tn}_id = {base} ORDER BY position")
+                for pos, old in enumerate([x for x in olds.split('\n') if x]):
+                    new = clone(short(e), int(old))
+                    q(f"INSERT INTO {child} ({tn}_id, position, {key}) VALUES ({i}, {pos}, {new})")
+            else:
+                cs = ', '.join(f'c{k}' for k in range(len(re.findall(r'Nat', e))))
+                q(f"INSERT INTO {child} ({tn}_id, position, {cs}) SELECT {i}, position, {cs} FROM {child} WHERE {tn}_id = {base}")
     return i
 def arg_sql(a, pty):
     a = a.strip()
@@ -154,7 +163,7 @@ def arg_sql(a, pty):
         if a in lists: return sql_array(lists[a])
         m = re.match(r'^\(?(\w+) :: (\w+)\)?$', a)   # a row prepended to a list
         if m and m.group(1) in ids and m.group(2) in lists: return sql_array([ids[m.group(1)]] + lists[m.group(2)])
-        if a.startswith('('): return sql_array(split_top(a.strip('()')))
+        if a.startswith('(') and ',' in a and not a.startswith('(('): return sql_array(split_top(a.strip('()')))   # a tuple
         if a in defs and elem(defs[a][0]) == 'Nat': return sql_array(lit_list(defs[a][1]) or [])
         return None
     if pty == 'integer':
@@ -164,32 +173,41 @@ def arg_sql(a, pty):
     if pty.endswith('[]'):
         l = lit_list(a) or []; return sql_array([f"'{x.lstrip('.')}'" for x in l], pty[:-2])
     return None
+def toks_of(rest):
+    # arguments split on spaces at depth zero: a parenthesized application stays one token
+    toks, depth, cur = [], 0, ''
+    for ch in rest:
+        if ch in '([⟨': depth += 1
+        elif ch in ')]⟩': depth -= 1
+        if ch == ' ' and depth == 0:
+            if cur: toks.append(cur); cur = ''
+        else: cur += ch
+    if cur: toks.append(cur)
+    return toks
+row_table = {}
 def row_of(e, t=None):
-    # a table-typed expression: a def name, or a clerk applied inline
+    # a table-typed expression: a def name, or a clerk applied inline (to a def, or to another clerk's result)
     e = e.strip()
     if e.startswith('(') and e.endswith(')'): e = e[1:-1].strip()
     if e in ids: return ids[e]
-    m = re.match(r'^(\w+) (\w+)(?: (.+))?$', e)
-    if m and snake(m.group(1)) in funcs and m.group(2) in ids and funcs[snake(m.group(1))][1] == 'void':
-        base = m.group(2); bt = defs[base][0]
-        i = clone(short(bt), ids[base]); params = funcs[snake(m.group(1))][0]
+    toks = toks_of(e)
+    if len(toks) >= 2 and snake(toks[0]) in funcs and funcs[snake(toks[0])][1] == 'void':
+        base = toks[1]
+        bid = ids[base] if base in ids else row_of(base)
+        if bid is None: return None
+        bt = defs[base][0] if base in defs else row_table.get(bid)
+        if bt is None: return None
+        i = clone(short(bt), bid); row_table[i] = bt; params = funcs[snake(toks[0])][0]
         extra = ''
-        if m.group(3):
-            a = arg_sql(m.group(3), params[1] if len(params) > 1 else 'integer[]')
-            if a is None: return None
-            extra = ', ' + a
-        q(f"SELECT {snake(m.group(1))}({i}{extra})"); return i
+        for a, pty in zip(toks[2:], params[1:]):
+            v = arg_sql(a, pty)
+            if v is None or a.startswith('('):
+                inner = expr(a)
+                if inner and inner[0] == 's': v = inner[1]
+            if v is None: return None
+            extra += ', ' + v
+        q(f"SELECT {snake(toks[0])}({i}{extra})"); return i
     return None
-seated = 0
-for name, (ty, val) in defs.items():
-    if is_table(ty) and val.startswith('⟨'):
-        if seat_literal(short(ty), val, name) is not None: seated += 1
-    elif elem(ty) and is_table(elem(ty)):
-        lists[name] = [ids[x] if x in ids else seat_value(x, elem(ty)) for x in (lit_list(val) or [])]
-    elif is_table(ty):
-        r = row_of(val)
-        if r: ids[name] = r; seated += 1
-print(f"the cast: {seated} rows seated from the assay's defs")
 def column(t, field):
     # a field read as SQL at a row of table t: a column, a has-many as its child rows in order, a component thereof
     f, _, comp = field.partition('#')
@@ -227,6 +245,7 @@ def expr(e):
     m = re.match(r'^(\w+)((?: .+)?)$', e)
     if m and snake(m.group(1)) in funcs and (m.group(1) not in defs or '→' in defs[m.group(1)][0]):
         fname = snake(m.group(1)); params, ret = funcs[fname]
+        if ret == 'void': return None
         args = split_top(m.group(2).strip().replace(' ', ',')) if False else None
         rest = m.group(2).strip()
         # arguments: a parenthesized clerk application, a def, a literal, a constructor — split on spaces at depth zero
@@ -262,10 +281,12 @@ def expr(e):
             t = next((tn for tn in tables if pnames[snake(head)] and snake(tn) + '_id' == pnames[snake(head)][0]), None)
         if r and t and t in tables and m.group(2) in dict(tables[t]):
             return ('s', f"(SELECT {column(t, m.group(2))} FROM {snake(t)} WHERE id = {r})")
-    # a reader at a probe
+    # a reader at a probe: through its face's function when a face is built on it, else its column
     m = re.match(r'^(\w+) (.+) \.(\w+)$', e)
     if m and m.group(1) in readers:
         t, _, arms = readers[m.group(1)]; r = row_of(m.group(2))
+        face = next((f for f, rd in faces.items() if rd == m.group(1) and f in facefns and facefns[f][1] == 0), None)
+        if r and face: return ('s', f"(SELECT {snake(m.group(3))} FROM {snake(t)}_as_{snake(face)}({r}))")
         if r and m.group(3) in arms: return ('s', f"(SELECT {column(t, arms[m.group(3)])} FROM {snake(t)} WHERE id = {r})")
     # a face applied to a row at a probe: a column of the face's function
     m = re.match(r'^\(?(\w+)((?: [^\s)]+)*)\)?\.obs (\S+) (\.\w+|\(\))$', e)
@@ -282,7 +303,7 @@ def expr(e):
         t, _, arms = readers[faces[m.group(1)]]; r = row_of(m.group(3))
         if r:
             view = f"{snake(t)}_as_{snake(m.group(2))}"
-            return ('t', [f"(SELECT {view_col(arms[p])} FROM {view} WHERE id = {r})" for p in seats[m.group(2)][1]])
+            return ('t', [f"(SELECT {snake(p)} FROM {view} WHERE id = {r})" for p in seats[m.group(2)][1]])
     # every one of a list enrolled in another: containment (the lanes)
     m = re.match(r'^(\w+)\.all \(enrolled \S+ (\w+)\)$', e)
     if m:
@@ -290,18 +311,24 @@ def expr(e):
         b = expr(m.group(2)) or (literal(defs[m.group(2)][1]) if m.group(2) in defs else None)
         if a and b and a[0] == 's' and b[0] == 's': return ('s', f"({a[1]} <@ {b[1]})")
     # the turnstile: containment
-    m = re.match(r'^everyone \S+ (\[.*?\]) (.+)$', e)
+    m = re.match(r'^everyone \S+ (.+)$', e)
     if m:
-        b = expr(m.group(2))
-        if b and b[0] == 's': return ('s', f"({sql_array(lit_list(m.group(1)))} <@ {b[1]})")
+        t2 = toks_of(m.group(1))
+        if len(t2) == 2:
+            a = literal(t2[0]) if lit_list(t2[0]) is not None else expr(t2[0])
+            b = literal(t2[1]) if lit_list(t2[1]) is not None else expr(t2[1])
+            if a and b and a[0] == 's' and b[0] == 's': return ('s', f"({a[1]} <@ {b[1]})")
     # a length: a seat's, an earshot's, a reading's
-    m = re.match(r'^(\w+)\.length$', e)
+    m = re.match(r'^(.+)\.length$', e)
     if m:
-        if m.group(1) in seats: return ('n', len(seats[m.group(1)][1]))
-        if m.group(1) in defs and earshot_of(defs[m.group(1)][1]) is not None:
-            return ('n', sum(len(seats[s][1]) for s in earshot_of(defs[m.group(1)][1])))
-        inner = expr(m.group(1))
+        x = m.group(1).strip()
+        if x.startswith('(') and x.endswith(')'): x = x[1:-1].strip()
+        if x in seats: return ('n', len(seats[x][1]))
+        if x in defs and earshot_of(defs[x][1]) is not None:
+            return ('n', sum(len(seats[s][1]) for s in earshot_of(defs[x][1])))
+        inner = expr(x)
         if inner and inner[0] == 't': return ('n', len(inner[1]))
+        if inner and inner[0] == 's': return ('s', f"cardinality({inner[1]})")
     # a probe in an earshot: a column of some seat's view
     m = re.match(r'^enrolled \S+ (\w+) \.(\w+)$', e)
     if m and m.group(1) in defs and earshot_of(defs[m.group(1)][1]) is not None:
@@ -309,7 +336,7 @@ def expr(e):
         face = re.match(r'^earshot (\w+)', defs[m.group(1)][1]).group(1)
         t, _, arms = readers[faces[face]]
         views = ', '.join(f"'{snake(t)}_as_{snake(s)}'" for s in ss)
-        return ('s', f"EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name IN ({views}) AND column_name = '{view_col(arms[m.group(2)])}')")
+        return ('s', f"EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name IN ({views}) AND column_name = '{snake(m.group(2))}')")
     # a member of any list: the list an expression
     m = re.match(r'^enrolled \S+ (.+) (\S+)$', e)
     if m:
@@ -339,6 +366,17 @@ def compare(a, b):
     if a[0] == 't' and b[0] == 't' and len(a[1]) == len(b[1]):
         return ('sql', "SELECT " + " AND ".join(f"(({x}) = ({y}))" for x, y in zip(a[1], b[1])))
     return None
+# the cast is seated once every reading is defined (a clerk's argument may be an expression)
+seated = 0
+for name, (ty, val) in defs.items():
+    if is_table(ty) and val.startswith('⟨'):
+        if seat_literal(short(ty), val, name) is not None: seated += 1; row_table[ids[name]] = ty
+    elif elem(ty) and is_table(elem(ty)):
+        lists[name] = [ids[x] if x in ids else seat_value(x, elem(ty)) for x in (lit_list(val) or [])]
+    elif is_table(ty):
+        r = row_of(val)
+        if r: ids[name] = r; row_table[r] = ty; seated += 1
+print(f"the cast: {seated} rows seated from the assay's defs")
 replayed = identical = unread = 0
 held, beyond = [], []
 for g in re.findall(r'^#guard (.+)$', text, re.M):
