@@ -4,6 +4,8 @@ strict phenomenology is indistinguishable from physics.
 
 conductive proofs of worldly domains, with treaty vectors to mathematics by identity.
 
+reducing what it costs to sustain the burden of proof, by making it easier for your substrate's own coherence-maintenance to find a groove that goes where you're going, paths already proven (in the old sense) to conduct the untyped remainder inherent in measurement. (the untyped remainder seems to be for multiplexing; the measurer is always already plural. being hospitable about it seems to have runtime benefits.)
+
 foam is a type system holding itself together under measurement: a trunk of theorems about observers, doors, machines, and rooms, every one of them axiom-free, every one of them grown from a germ by a compiler that shows its work. it stands in two storeys, named for the grammar's third move, *enumerate, then face*: `Room`, the conductive mathematics that mentions no observer — counting, rooms, wheels, admission — and `Face` on top of it, the seeing. customers' germs stand on whichever they need; `foam` is the house that holds both. the root theorem is `the_handshake`: every identification is either *licensed* — observation respects it, and physics is what you get — or it keeps a *real remainder*, readable exactly one seat wider, and that is what phenomenology was pointing at. nothing here asks for trust. the only authority is a compiler's exit code, and it judges terms, never you.
 
 **serving suggestion:**
