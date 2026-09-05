@@ -199,6 +199,10 @@ def assign (t : Task) (to : Nat) : Task := { t with assignee := to }
 
 def mayOpen (_ : Member) : Bool := true
 
+def memberSees (m : Member) (p : Page) : Bool := sees m.role p && !(m.dayLane && Page.beq p .tasks)
+
+def memberEdits (m : Member) (p : Page) : Bool := edits m.role p && memberSees m p
+
 def dayOfIsEveryones : Bool := roles.all (fun ρ => !(sees ρ .dayOf) || edits ρ .dayOf)
 
 structure DayOfEdit where
@@ -225,10 +229,6 @@ def venueChart (c : List Table) : List (Nat × Nat) := c.map venueTable
 def seasonView (rs : List Room) (v : Nat) : List (List Nat) := rs.map (fun r => (vendorFace v).obs r .mine)
 
 def seasonOwed (rs : List Room) (v : Nat) : Nat := (joinMap (fun r => (vendorFace v).obs r .mine) rs).sum
-
-def partnerView : List Nat := [0, 1, 2, 3, 4, 5]
-
-def dayOfView : List Nat := [0, 1, 2, 3, 4]
 
 def rose : Party := ⟨1, true, [2, 3]⟩
 
@@ -274,7 +274,6 @@ def roomSees : List (List Nat) := reads roomFace roomSeat demo
 
 def makerSees : Nat := makerFace.obs demo ()
 #guard makerSees == 3
-#guard dayOfView.all (enrolled Nat.beq partnerView)
 #guard joinsFree .party && !(pays .party)
 
 def moreGuests : Room := withGuests demo (rose :: guestList)
@@ -376,6 +375,10 @@ def loadIn : Task := ⟨7, 7, false⟩
 #guard (close loadIn).done
 #guard (assign loadIn 9).assignee == 9
 #guard mayOpen sofiaM && mayOpen lindaM
+#guard !(memberSees lindaM .tasks) && memberSees lindaM .dayOf && memberEdits lindaM .dayOf
+#guard memberSees jordanM .tasks && memberEdits jordanM .tasks
+#guard !(memberEdits lindaM .tasks)
+#guard pages.all (fun p => !(memberSees lindaM p) || sees .party p)
 #guard dayOfIsEveryones
 #guard undo [1, 2, 3] == [1, 2]
 #guard undo [1] == []
@@ -529,7 +532,21 @@ theorem join_and_pay_are_unrelated : ∀ ρ : Role, joinsFree ρ = true := sorry
 
 theorem the_party_never_pays : pays .party = false := sorry
 
-theorem lanes_shrink_never_lock : dayOfView.all (enrolled Nat.beq partnerView) = true := sorry
+theorem lanes_shrink_never_lock (m : Member) (p : Page) (h : memberSees m p = true) : sees m.role p = true :=
+  (and_reads _ _ h).1
+
+theorem the_day_lane_sees_no_task_list (m : Member) (h : m.dayLane = true) : memberSees m .tasks = false := by
+  show (sees m.role .tasks && !(m.dayLane && Page.beq .tasks .tasks)) = false
+  rw [h]
+  cases sees m.role .tasks <;> rfl
+
+theorem the_day_lane_keeps_the_day_of_sheet (m : Member) (h : m.role = .party) : memberSees m .dayOf = true := by
+  show (sees m.role .dayOf && !(m.dayLane && Page.beq .dayOf .tasks)) = true
+  rw [h]
+  cases m.dayLane <;> rfl
+
+theorem an_edit_is_within_the_lane (m : Member) (p : Page) (h : memberEdits m p = true) : memberSees m p = true :=
+  (and_reads _ _ h).2
 
 theorem the_maker_sees_shape_not_content (r : Room) (gl gl' : List Party)
     (h : gl.length = gl'.length) : alike makerFace (withGuests r gl) (withGuests r gl') := sorry
