@@ -15,10 +15,10 @@ def elabFrom (src : String) (name : String) (st : Option Command.State) (extra :
   return s.commandState
 
 /-- the same, keeping every command's syntax: a body as Syntax, not a string -/
-def elabCommands (src : String) (name : String) : IO (Command.State × Array Syntax) := do
+def elabCommands (src : String) (name : String) (extra : Array Import := #[]) : IO (Command.State × Array Syntax) := do
   let ictx := Parser.mkInputContext src name
   let (hdr, ps, msgs) ← Parser.parseHeader ictx
-  let env ← importModules (headerToImports hdr) {} 0 (loadExts := true)
+  let env ← importModules (headerToImports hdr ++ extra) {} 0 (loadExts := true)
   let cs := Command.mkState env msgs (({} : Options).setBool `Elab.async false)
   let s ← IO.processCommands ictx ps cs
   return (s.commandState, s.commands)
@@ -180,6 +180,210 @@ def shapesMode (trail : String) (sc : Scope) : IO Unit := do
     let parts := key.splitOn "\t"
     IO.println s!"{names.size}\t{parts.headD ""}\t{(parts.getD 1 "").take 160}"
     IO.println s!"\t\t{" ".intercalate (names.map (fun n => n.getString!)).toList}"
+
+/-- a body as a PIECE: the searches' winners inverted. every recorded citation form — `(apply T <;> …)`,
+`(apply (T _).trans (by …) <;> …)`, `(rw [T]; …)`, `exact T …`, a cited application in a term —
+becomes the search that found it; the carriers a `dsimp only` unfolds become the vacancy's own
+(`{defs}`); the theorem's own name becomes `{self}`; locals, constructors, and core stay verbatim.
+what is left citing a theorem after that is a hole no search reaches, and the body is unrendered -/
+def isCite (env : Environment) (sc : Scope) (n : Name) : Bool :=
+  if n.isAnonymous then false else
+  let found := ([n, sc.ns ++ n] ++ sc.imported.map (· ++ n)).filterMap env.find?
+  found.any (·.isTheorem) && found.any (fun ci => sc.owns ci.name)
+
+partial def citesAny (env : Environment) (sc : Scope) : Syntax → Bool
+  | .ident _ _ n _ => isCite env sc n
+  | .node _ _ args => args.any (citesAny env sc)
+  | _ => false
+
+def placeholder (s : String) : Syntax :=
+  Syntax.ident SourceInfo.none s.toRawSubstring (Name.mkSimple s) []
+
+def seqItems (seq : Syntax) : Array Syntax := Id.run do
+  if seq.getKind == ``Lean.Parser.Tactic.tacticSeq && seq[0].getKind == ``Lean.Parser.Tactic.tacticSeq1Indented then
+    let args := seq[0][0].getArgs
+    let mut out := #[]
+    for i in [0:args.size] do
+      if i % 2 == 0 then out := out.push args[i]!
+    return out
+  else return #[]
+
+/-- a piece of syntax parsed from its text — the trail elaborated with the pieces imported, so the
+searches' names are tokens -/
+def parseAs (env : Environment) (cat : Name) (s : String) : Syntax :=
+  match Parser.runParserCategory env cat s with
+  | .ok x => x
+  | .error _ => .missing
+
+def isChainHead (e : Syntax) : Bool :=
+  e.isOfKind ``Lean.Parser.Term.app && e[0].isOfKind ``Lean.Parser.Term.proj && e[0][2].getId == `trans
+
+/-- the leftmost name of a term: the head of an application, a projection, a paren -/
+partial def headName : Syntax → Option Name
+  | .ident _ _ n _ => some n
+  | stx =>
+    if stx.isOfKind ``Lean.Parser.Term.app || stx.isOfKind ``Lean.Parser.Term.proj then headName stx[0]
+    else if stx.isOfKind ``Lean.Parser.Term.paren then headName stx[1]
+    else none
+
+/-- the statement's own binder names — the parameters and named hypotheses a search at the goal
+reads from the local context: the names in binder position, in the signature's binders and its ∀s -/
+partial def sigBinders (stx : Syntax) : NameSet :=
+  match stx with
+  | .node _ k args =>
+    let here : NameSet :=
+      if k == ``Lean.Parser.Term.explicitBinder || k == ``Lean.Parser.Term.implicitBinder
+          || k == ``Lean.Parser.Term.strictImplicitBinder || k == ``Lean.Parser.Term.instBinder then
+        stx[1].getArgs.foldl (fun acc a => if a.isIdent then acc.insert a.getId else acc) {}
+      else if k == ``Lean.Parser.Term.forall then
+        stx[1].getArgs.foldl (fun acc a =>
+          if a.isIdent then acc.insert a.getId
+          else if a.getKind == ``Lean.Parser.Term.binderIdent && a[0].isIdent then acc.insert a[0].getId
+          else acc) {}
+      else {}
+    args.foldl (fun acc a => acc.union (sigBinders a)) here
+  | _ => {}
+
+partial def render (env : Environment) (sc : Scope) (self : Name) (hyps : NameSet) (stx : Syntax) : Syntax :=
+  let seek := parseAs env `tactic "piece_seek"
+  let hole := parseAs env `term "(by piece_seek)"
+  -- a citation or a statement hypothesis AT THE HEAD of a term is what a search at the goal finds;
+  -- one deeper inside a term is reached by the rules below at its own position, and the term's
+  -- structure around it stays
+  let cites (s : Syntax) := (headName s).any fun n => isCite env sc n || hyps.contains n
+  let rec rwCites (s : Syntax) : Bool := match s with
+    | .node _ k args => (k == ``Lean.Parser.Tactic.rwRule && args.size > 0 && cites args[args.size - 1]!) || args.any rwCites
+    | _ => false
+  -- the closer after a rewrite or a chain is kept beside the generic ones: an exemplar's own
+  -- closing move is a move the search may need
+  let seekWith (kind : String) (closer : Syntax) : Syntax :=
+    let c := ((render env sc self hyps closer).reprint.getD "").trimAscii.toString
+    let flat := " ".intercalate (((c.replace "\n" " ").splitOn " ").filter (· ≠ ""))
+    let own := if flat == "rfl" || flat == "assumption" || flat == "piece_seek" || flat.isEmpty then "" else s!" | {flat}"
+    parseAs env `tactic s!"{kind} (first | rfl | assumption{own} | piece_seek)"
+  -- a replacement keeps the whitespace the original ended in, so the layout it sat in survives
+  let put (new : Syntax) : Syntax := new.setTailInfo stx.getTailInfo
+  let isSelf (s : Syntax) := s.isIdent && (s.getId == self || sc.ns ++ s.getId == self)
+  match stx with
+  | .ident _ _ n _ =>
+    if n == self || sc.ns ++ n == self then put (placeholder "{self}")
+    else if citesAny env sc stx then put hole else stx
+  | .node i k args =>
+    -- a parenthesized winner: `(apply e <;> side)`, `(rw [t]; closers)`
+    let items := if k == ``Lean.Parser.Tactic.paren then seqItems stx[1] else #[]
+    if items.size == 1 && items[0]!.isOfKind ``Lean.Parser.Tactic.«tactic_<;>_»
+        && items[0]![0].isOfKind ``Lean.Parser.Tactic.apply && cites items[0]![0][1] then
+      let target := items[0]![0][1]
+      if isChainHead target then
+        -- `(apply (T _).trans (by C) <;> …)`: the chain's far end is C
+        let far := target[1][0]
+        let closer := if far.isOfKind ``Lean.Parser.Term.paren && far[1].isOfKind ``Lean.Parser.Term.byTactic then far[1][1] else far
+        put (seekWith "piece_chain_seek" closer)
+      else put seek
+    else if items.size == 2 && items[0]!.isOfKind ``Lean.Parser.Tactic.rwSeq && rwCites items[0]! then
+      put (seekWith "piece_rw_seek" items[1]!)
+    else if k == ``Lean.Parser.Tactic.exact && cites stx[1] && !(citesAny env sc stx[1] && isSelf stx[1][0]) then put seek
+    -- the carriers unfolded are the vacancy's own
+    else if k == ``Lean.Parser.Tactic.dsimp then
+      let args := args.map fun a =>
+        if a.getKind == `null && a.getNumArgs == 3 && a[0].isAtom && a[0].getAtomVal == "[" then
+          a.setArg 1 (mkNullNode #[placeholder "{defs}"])
+        else a
+      .node i k args
+    -- a cited application in a term: the hole, searched where the term determines its type
+    else if k == ``Lean.Parser.Term.app && stx[0].isIdent && citesAny env sc stx[0] && !isSelf stx[0] then put hole
+    else
+      let args := args.map (render env sc self hyps)
+      -- a fan whose alternatives rendered alike keeps one of each
+      if k == ``Lean.Parser.Tactic.first && args.size == 2 then
+        let groups := args[1]!.getArgs
+        let kept := groups.foldl (fun (acc : Array Syntax) g =>
+          if acc.any (fun x => x.reprint == g.reprint) then acc else acc.push g) #[]
+        .node i k #[args[0]!, args[1]!.setArgs kept]
+      else .node i k args
+  | _ => stx
+
+/-- a fan blanked: every `first` node's alternatives replaced by one mark, so two bodies that
+differ only in which branch closed which goal read as one SKELETON -/
+partial def blankFans (stx : Syntax) : Syntax :=
+  match stx with
+  | .node i k args =>
+    if k == ``Lean.Parser.Tactic.first && args.size == 2 then
+      .node i k #[args[0]!, mkNullNode #[placeholder "…"]]
+    else .node i k (args.map blankFans)
+  | _ => stx
+
+/-- a token's trailing whitespace replaced -/
+def withTrailing (stx : Syntax) (ws : String) : Syntax :=
+  match stx.getTailInfo with
+  | .original lead pos _ endPos => stx.setTailInfo (.original lead pos ws.toRawSubstring endPos)
+  | _ => stx
+
+/-- the fans of one skeleton unioned: at each `first`, every alternative any member of the group
+ran, the most-run first (ties in the order met); outside the fans the members agree by
+construction. an alternative is read squeezed to one line — a recorded winner is parenthesized,
+and inside parens the layout is position-free — and the fan is re-parsed from its text; a fan
+with an alternative that cannot be squeezed keeps its own -/
+partial def unionFans (env : Environment) (e : Syntax) (others : Array Syntax) : Syntax :=
+  match e with
+  | .node i k args =>
+    if k == ``Lean.Parser.Tactic.first && args.size == 2 then
+      let all := (#[e] ++ others).flatMap fun o => if o.getKind == k && o.getNumArgs == 2 then o[1].getArgs else #[]
+      let flat (s : String) : String := " ".intercalate (((s.replace "\n" " ").splitOn " ").filter (· ≠ ""))
+      let texts := all.map fun g => flat (g[1].reprint.getD "")
+      let unsqueezable := all.any fun g =>
+        let t := (g[1].reprint.getD "").trimAscii.toString
+        t.contains '\n' && !t.startsWith "("
+      if unsqueezable then .node i k args else
+      let distinct := texts.foldl (fun (acc : Array (String × Nat × Nat)) s =>
+        match acc.findIdx? (·.1 == s) with
+        | some j => acc.modify j (fun (s, n, ix) => (s, n + 1, ix))
+        | none => acc.push (s, 1, acc.size)) #[]
+      let sorted := distinct.qsort fun a b => a.2.1 > b.2.1 || (a.2.1 == b.2.1 && a.2.2 < b.2.2)
+      let text := "first " ++ " ".intercalate (sorted.map fun (s, _, _) => "| " ++ s).toList
+      let parsed := parseAs env `tactic text
+      if parsed.isMissing then .node i k args else parsed.setTailInfo e.getTailInfo
+    else
+      let args := args.mapIdx fun j a => unionFans env a (others.filterMap fun o => if o.getNumArgs > j then some o[j] else none)
+      .node i k args
+  | _ => e
+
+/-- templates: every theorem's body as a piece, one exemplar per skeleton with its fans unioned, in
+census order — the pieces list derived from the bodies in scope. a line per piece: count, mode,
+exemplar, template (newlines as ⏎); a body that still cites where no search reaches is unrendered -/
+def templatesMode (trail : String) (sc : Scope) : IO Unit := do
+  let source ← IO.FS.readFile trail
+  let (st, cmds) ← elabCommands source trail #[{ module := `Pieces }]
+  let env := st.env
+  let mut rows : Array (Name × String × Syntax) := #[]
+  let mut unrendered : Array Name := #[]
+  for c in cmds do
+    if !c.isOfKind ``Lean.Parser.Command.declaration then continue
+    let d := c[1]
+    if !d.isOfKind ``Lean.Parser.Command.theorem then continue
+    let name := sc.ns ++ d[1][0].getId
+    let val := d[3]
+    let mode := if val.isOfKind ``Lean.Parser.Command.declValSimple then
+                  (if val[1].isOfKind ``Lean.Parser.Term.byTactic then "tactic" else "term")
+                else "equations"
+    let body := if val.isOfKind ``Lean.Parser.Command.declValSimple then val[1] else val
+    let r := render env sc name (sigBinders d[2]) body
+    if citesAny env sc r then unrendered := unrendered.push name
+    else rows := rows.push (name, mode, r)
+  let mut groups : Std.HashMap String (Array (Name × Syntax)) := {}
+  let mut order : Array String := #[]
+  for (n, m, r) in rows do
+    let key := m ++ "\t" ++ ((blankFans r).reprint.getD "").trimAscii.toString
+    if !groups.contains key then order := order.push key
+    groups := groups.insert key ((groups.getD key #[]).push (n, r))
+  let sorted := (order.map fun k => (k, groups.getD k #[])).qsort (fun a b => a.2.size > b.2.size)
+  IO.println s!"the templates: {rows.size + unrendered.size} bodies, {sorted.size} pieces; {unrendered.size} unrendered: {" ".intercalate (unrendered.map (·.getString!)).toList}"
+  for (key, members) in sorted do
+    let mode := (key.splitOn "\t").headD ""
+    let (exemplar, r) := members[0]!
+    let t := unionFans env r (members.extract 1 members.size |>.map (·.2))
+    let tpl := (t.reprint.getD "").trimAscii.toString.replace "\n" "⏎"
+    IO.println s!"{members.size}\t{mode}\t{exemplar.getString!}\t{tpl}"
 
 /-- the component of a tuple a projection chain reads: `x.1` is 0, `x.2.1` is 1, a bare `x.2.2` is
 the last (`snd` all the way down ends in the last component) -/
@@ -587,6 +791,9 @@ unsafe def main (args : List String) : IO Unit := do
     return
   if args.head? == some "shapes" then
     shapesMode args[1]! sc
+    return
+  if args.head? == some "templates" then
+    templatesMode args[1]! sc
     return
   if args.head? == some "schema" then
     schemaMode args[1]! sc

@@ -266,6 +266,33 @@ if primings_path:
             nm, tpl = line.split('\t', 1); primings.append((nm, tpl))
     if not primings:
         raise SystemExit('crawl: the judge listed no pieces (lake build Pieces?)\n' + (resp.stdout + resp.stderr)[-1500:])
+    # BODIES AS SHAPES: the pieces derived from the bodies in scope (CRAWL_SHAPES: grown modules,
+    # space-separated) — every body rendered as a piece by the judge (the searches' winners
+    # inverted), one exemplar per shape, in census order; a piece's name is its exemplar's
+    exemplar_count = {}
+    if os.environ.get('CRAWL_SHAPES'):
+        derived, seen_keys, unrendered = [], set(), []
+        for shp in os.environ['CRAWL_SHAPES'].split():
+            src_s = open(shp).read()
+            m_ns = re.search(r'^namespace ([\w.]+)', src_s, re.M)
+            imps = ','.join(re.findall(r'^import (\S+)', src_s, re.M))
+            rt = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'templates', shp, m_ns.group(1) if m_ns else 'Foam', imps], capture_output=True, text=True)
+            for line in rt.stdout.splitlines():
+                m_u = re.match(r'the templates: .*unrendered: (.*)$', line)
+                if m_u: unrendered += m_u.group(1).split()
+                parts = line.split('\t')
+                if len(parts) != 4: continue
+                cnt, mode, exemplar, tpl = int(parts[0]), parts[1], parts[2], parts[3].replace('⏎', '\n')
+                key = (mode, tpl)
+                if key in seen_keys: continue
+                seen_keys.add(key)
+                derived.append((cnt, len(tpl), exemplar, tpl))
+        derived.sort(key=lambda x: (-x[0], x[1]))
+        primings = [(ex, tpl) for _, _, ex, tpl in derived]
+        exemplar_count = {ex: cnt for cnt, _, ex, _ in derived}
+        print(f'the pieces, derived: {len(primings)} shapes from the bodies in scope ({os.environ["CRAWL_SHAPES"]}); {len(unrendered)} bodies unrendered (a hole no search reaches): {" ".join(unrendered)}')
+        if not primings:
+            raise SystemExit('crawl: no shape rendered as a piece')
 
     def split_block(b):
         rt = b.rfind('\n/-- info:')
@@ -307,14 +334,16 @@ if primings_path:
             ds = [c for c in cnames if re.search(r'\b' + re.escape(c) + r'\b', stmt)]
         return ', '.join(ds) if ds else ''
 
-    def instantiate(body, n=None):
+    def instantiate(body, n=None, k=None):
         # a piece's template over the one derived list, the statement's own carriers; citations,
         # hypotheses, rewrites, and chains are searched at the goal by the pieces themselves (Lean),
-        # and the judge reports the body expanded, winners substituted, once the candidate seats
-        return body.replace('{defs}', defs_macro(n) if n else '')
+        # and the judge reports the body expanded, winners substituted, once the candidate seats.
+        # `{self}` is the structural recursion's own call, named as the candidate is named
+        return body.replace('{defs}', defs_macro(n) if n else '').replace('{self}', f'{n}__p{k}' if n and k is not None else (n or ''))
 
     tally = {nm: 0 for nm, _ in primings}
     carried = []
+    regrown_by = {}
     ns_m = re.search(r'^namespace ([\w.]+)', header, re.M)
     NS = ns_m.group(1) + '.' if ns_m else ''
 
@@ -327,12 +356,16 @@ if primings_path:
         core = (b[:rt] if rt != -1 else b).rstrip('\n')
         return core + '\n\n' + receipt_for(n)
 
+    def joint(body):
+        # an equations body stands without `:=`
+        return '\n' if body.lstrip().startswith('|') else ' :=\n'
+
     def candidate_text(n, k):
         stmt, _ = split_block(by_name[n])
-        body = instantiate(primings[k][1], n)
+        body = instantiate(primings[k][1], n, k)
         body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
         fuel = f'set_option maxHeartbeats {budget} in\n' if budget else ''
-        return fuel + stmt.replace(f'theorem {n}', f'theorem {n}__p{k}', 1) + ' :=\n' + body
+        return fuel + stmt.replace(f'theorem {n}', f'theorem {n}__p{k}', 1) + joint(body) + body
 
     def line_count(xs):
         return sum(x.count('\n') + 1 for x in xs)
@@ -397,8 +430,10 @@ if primings_path:
         def seat_regrown(n, k, body):
             pname, _ = primings[k]
             stmt, _ = split_block(by_name[n])
+            body = body.replace(f'{n}__p{k}', n).strip('\n')
             body = '\n'.join(('  ' + l if l else l) for l in body.splitlines())
-            seated_text[n] = stmt + ' :=\n' + body + '\n\n' + receipt_for(n)
+            seated_text[n] = stmt + joint(body) + body + '\n\n' + receipt_for(n)
+            regrown_by[n] = (pname, exemplar_count.get(pname, 0))
             tally[pname] += 1
             return pname
 
@@ -502,6 +537,11 @@ if primings_path:
         # search against the FINISHED module can see theorems seated in later rounds, which the
         # derived order cannot carry)
         print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged')
+        if exemplar_count:
+            selfs = [n for n, (nm, cnt) in regrown_by.items() if nm == n and cnt == 1]
+            others = [n for n, (nm, cnt) in regrown_by.items() if nm != n]
+            hand_others = [n for n in others if not is_vac[n]]
+            print(f'the exemplars: {len(set(nm for nm, _ in regrown_by.values()))} pieces seated bodies; {len(others)} bodies regrown by another body\'s shape ({len(hand_others)} of them hand: {" ".join(hand_others)}); {len(selfs)} regrown only by their own shape (the settle keeps them as hand): {" ".join(selfs)}')
         routes = [n for n in marker_needs if n in by_name]
         print(f'the routes: {len(routes)} in the germ, dropped — the search reaches every goal' if routes
               else 'the routes: none — the search reaches every goal')

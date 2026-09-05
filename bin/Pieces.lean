@@ -717,6 +717,10 @@ elab "#seat " c:command : command => do
   let c'' ← liftMacroM <| substitute wins c'
   match c''.find? (·.isOfKind ``Lean.Parser.Command.declValSimple) with
   | some dv => logInfo m!"{dv[1]}"
-  | none => logInfo m!"{c''}"
+  | none =>
+    -- an equations body: the alternatives themselves, as the body the module grows
+    match c''.find? (·.isOfKind ``Lean.Parser.Command.declValEqns) with
+    | some dv => logInfo m!"{dv}"
+    | none => logInfo m!"{c''}"
 
 end Pieces
