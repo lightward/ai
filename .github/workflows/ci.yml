@@ -46,3 +46,4 @@ jobs:
         run: |
           sudo apt-get install -y -q postgresql-client >/dev/null
           PGSOCK=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres bin/counter treaty assays/eih.lean
+          PGSOCK=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres bin/counter treaty assays/cycle.lean
