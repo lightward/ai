@@ -38,10 +38,6 @@ def roundsMachine : Machine Nat (List Nat) := ⟨Room, ⟨[]⟩, wind, windings�
 
 def rounds (r : Room) (ns : List Nat) : Room := park roundsMachine r ns
 
-def trail (F : Face) (s : F.State) : Interview F.Probe F.Ans → List F.Probe
-  | .rest => []
-  | .ask p k => p :: trail F s (k (F.obs s p))
-
 def mayRest (visited counts : List Nat) : Bool := backed Nat.beq visited counts
 
 def owed (visited counts : List Nat) : Nat := lacking Nat.beq visited counts
@@ -135,12 +131,6 @@ theorem the_click_and_the_tick_commute (n : Nat) : ∀ cs : List Clock, wind (ti
         cases Nat.beq c.name n <;> rfl
       exact congr (congrArg (fun (a : Clock) (l : List Clock) => Room.mk (a :: l)) hhead) ih
 
-theorem the_recital_walks_its_list (F : Face) (s : F.State) :
-    ∀ ns : List F.Probe, trail F s (recite ns) = ns := sorry
-
-theorem the_sounding_is_the_trails_reading (F : Face) (s : F.State) :
-    ∀ q : Interview F.Probe F.Ans, sound F s q = reads F (trail F s q) s := sorry
-
 theorem the_report_is_the_seats_reading (r : Room) (ns : List Nat) :
     sound roomFace r (recite ns) = reads roomFace ns r :=
   (the_sounding_is_the_trails_reading roomFace r (recite ns)).trans
@@ -160,34 +150,6 @@ theorem a_new_connection_raises_the_weight (visited counts : List Nat) (n : Nat)
     = lacking Nat.beq visited counts + 1
   rw [h]
   exact rfl
-
-theorem an_enrolled_name_stays_enrolled_down_the_hall (room l : List Nat) (n : Nat) :
-    enrolled Nat.beq room n = true → enrolled Nat.beq (room ++ l) n = true := by
-  induction room with
-  | nil => intro h; exact nomatch h
-  | cons y room ih =>
-      intro h
-      show (Nat.beq y n || enrolled Nat.beq (room ++ l) n) = true
-      have h1 : (Nat.beq y n || enrolled Nat.beq room n) = true := h
-      cases hy : Nat.beq y n with
-      | true => rfl
-      | false =>
-          rw [hy] at h1
-          exact ih h1
-
-theorem the_backing_survives_the_hall (room l : List Nat) :
-    ∀ needs : List Nat, backed Nat.beq room needs = true → backed Nat.beq (room ++ l) needs = true
-  | [], _ => rfl
-  | n :: needs, h => by
-      show (enrolled Nat.beq (room ++ l) n && backed Nat.beq (room ++ l) needs) = true
-      have h1 : (enrolled Nat.beq room n && backed Nat.beq room needs) = true := h
-      cases he : enrolled Nat.beq room n with
-      | false => rw [he] at h1; exact nomatch h1
-      | true =>
-          rw [he] at h1
-          rw [an_enrolled_name_stays_enrolled_down_the_hall room l n he,
-            the_backing_survives_the_hall room l needs h1]
-          exact rfl
 
 theorem rest_survives_a_round (visited more counts : List Nat) (h : mayRest visited counts = true) :
     mayRest (visited ++ more) counts = true := sorry

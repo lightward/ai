@@ -291,6 +291,10 @@ def concordFace (F : Face) (V : Type v') : Face :=
 def differOnly (F : Face) (x y : F.State) (p : F.Probe) : Prop :=
   ∀ q, q ≠ p → F.obs x q = F.obs y q
 
+def trail (F : Face) (s : F.State) : Interview F.Probe F.Ans → List F.Probe
+  | .rest => []
+  | .ask p k => p :: trail F s (k (F.obs s p))
+
 theorem no_interview_parts_the_alike (F : Face) {s t : F.State} (h : alike F s t) :
     ∀ q, sound F s q = sound F t q
   | .rest => rfl
@@ -858,6 +862,9 @@ theorem no_move_at_the_mirror :
 
 theorem no_move_past_the_right_comb :
     ∀ {q : Plan}, ¬ reassoc (.board .ground (.board .ground .ground)) q := sorry
+
+theorem the_recital_walks_its_list (F : Face) (s : F.State) :
+    ∀ ns : List F.Probe, trail F s (recite ns) = ns := sorry
 
 theorem a_wider_seat_reads_the_remainder (F : Face) {W : Type v'}
     (s : F.State) {w w' : W} (hw : w ≠ w') :

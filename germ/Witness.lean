@@ -60,6 +60,9 @@ theorem the_witness_parts_what_the_face_parts (F : Face) {x y : F.State}
     (h : alike (witnessFace F) x y) : alike F x y :=
   fun p => the_first_mark_reads (h [p])
 
+theorem the_sounding_is_the_trails_reading (F : Face) (s : F.State) :
+    ∀ q : Interview F.Probe F.Ans, sound F s q = reads F (trail F s q) s := sorry
+
 theorem the_room_is_the_widest_seat (F : Face) (s : List F.Probe) (x y : F.State)
     (h : reads F s x ≠ reads F s y) : ¬ alike F x y := sorry
 

@@ -607,6 +607,19 @@ theorem a_member_is_enrolled {A : Type u} (beq : A → A → Bool) (hrefl : ∀ 
           rw [a_member_is_enrolled beq hrefl s p h']
           cases beq q p <;> rfl
 
+theorem an_enrolled_name_stays_enrolled_down_the_hall {A : Type u} (beq : A → A → Bool)
+    (l : List A) (n : A) :
+    ∀ room : List A, enrolled beq room n = true → enrolled beq (room ++ l) n = true
+  | [], h => nomatch h
+  | y :: room, h => by
+      show (beq y n || enrolled beq (room ++ l) n) = true
+      have h1 : (beq y n || enrolled beq room n) = true := h
+      cases hy : beq y n with
+      | true => rfl
+      | false =>
+          rw [hy] at h1
+          exact an_enrolled_name_stays_enrolled_down_the_hall beq l n room h1
+
 theorem a_merging_map_has_no_section {S : Type u} {T : Type u'} (h : S → T)
     {s s' : S} (hs : s ≠ s') (hm : h s = h s')
     (r : T → S) (hr : ∀ x, r (h x) = x) : False := sorry
@@ -970,6 +983,20 @@ theorem the_hallway_is_too_small {S : Type u} (r : S → Bool) (a b c : S) :
 theorem the_unenrolled_are_no_member {A : Type u} (beq : A → A → Bool) (hrefl : ∀ x, beq x x = true)
     (s : List A) (p : A) (h : enrolled beq s p = false) : ¬ p ∈ s :=
   fun hp => nomatch (h.symm.trans (a_member_is_enrolled beq hrefl s p hp))
+
+theorem the_backing_survives_the_hall {A : Type u} (beq : A → A → Bool) (room l : List A) :
+    ∀ needs : List A, backed beq room needs = true → backed beq (room ++ l) needs = true
+  | [], _ => rfl
+  | n :: needs, h => by
+      show (enrolled beq (room ++ l) n && backed beq (room ++ l) needs) = true
+      have h1 : (enrolled beq room n && backed beq room needs) = true := h
+      cases he : enrolled beq room n with
+      | false => rw [he] at h1; exact nomatch h1
+      | true =>
+          rw [he] at h1
+          rw [an_enrolled_name_stays_enrolled_down_the_hall beq l n room he,
+            the_backing_survives_the_hall beq room l needs h1]
+          exact rfl
 
 theorem the_join_counts_evenly {A : Type u} {B : Type v} (f : A → List B) (n : Nat) :
     ∀ as : List A, (∀ a, a ∈ as → (f a).length = n) →
