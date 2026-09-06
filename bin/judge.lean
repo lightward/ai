@@ -536,9 +536,31 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
       match F.getAppFn.constName? with
       | some fn => s!"FACEOBS[{fn.getString!}]({", ".intercalate (F.getAppArgs.toList.map go)})({go args[1]!}; {go args[2]!})"
       | none => s!"⟨unread Face.obs⟩"
+    | some ``OfNat.ofNat, 3 => go args[1]!
     | some ``Nat.beq, 2 => s!"({go args[0]!} = {go args[1]!})"
     | some ``Nat.ble, 2 => s!"({go args[0]!} <= {go args[1]!})"
     | some ``HAdd.hAdd, 6 => s!"({go args[4]!} + {go args[5]!})"
+    | some ``HMod.hMod, 6 => s!"({go args[4]!} % {go args[5]!})"
+    -- the weight: how many of the needs are not enrolled
+    | some `Room.lacking, 4 => s!"cardinality(ARRAY(SELECT x FROM unnest({go args[3]!}) WITH ORDINALITY AS u(x, o) WHERE NOT (x = ANY(SELECT unnest({go args[2]!}))) ORDER BY o))"
+    -- the first voice: whichever of a, b the list names first — a, true; b, false; neither, false
+    | some `Room.firstOf, 5 => s!"coalesce((SELECT (x = {go args[2]!}) FROM unnest({go args[4]!}) WITH ORDINALITY AS u(x, o) WHERE (x = {go args[2]!}) OR (x = {go args[3]!}) ORDER BY o LIMIT 1), false)"
+    -- a fold: a machine parked over a list is its step run on the row for each element in order,
+    -- when the step is a house clerk by name
+    | some `Face.park, 5 =>
+      match args[2]!.constName? with
+      | some mn =>
+        match env.find? mn with
+        | some ci =>
+          match ci.value? with
+          | some v =>
+            let stepE := if v.isAppOfArity `Face.Machine.mk 6 then (v.getAppArgs)[4]! else v
+            match stepE.constName? with
+            | some f => s!"FOLD[{f.getString!}]({go args[3]!}; {go args[4]!})"
+            | none => s!"⟨unread Face.park⟩"
+          | none => s!"⟨unread Face.park⟩"
+        | none => s!"⟨unread Face.park⟩"
+      | none => s!"⟨unread Face.park⟩"
     | some `Room.everyone, 3 => s!"({go args[1]!} <@ {go args[2]!})"   -- every member enrolled: containment
     | some `Room.backed, 4 => s!"({go args[3]!} <@ {go args[2]!})"
     | some `Room.enrolled, 4 => s!"({go args[3]!} = ANY(SELECT unnest({go args[2]!})))"
@@ -564,7 +586,10 @@ partial def toSQL (env : Environment) (self : Nat) (e : Expr) : String :=
         s!"({go args[0]!} = {go args[1]!})"
       else if c.getPrefix == `Room || c.getPrefix == `Roster || c.getPrefix.getString! == "Treaty" then
         -- a house call; a bare function argument (a comparator) is not a column
-        s!"{c.getString!}({", ".intercalate (args.toList.filter (fun a => !((a.isConst && a != .const `x []) || a.isLambda)) |>.map go)})"
+        let isFn (a : Expr) := match a.constName? with
+          | some cn => match env.find? cn with | some ci => ci.type.isForall | none => false
+          | none => false
+        s!"{c.getString!}({", ".intercalate (args.toList.filter (fun a => !(isFn a || a.isLambda)) |>.map go)})"
       else s!"⟨unread {c}⟩"
     | none, _ => s!"⟨unread⟩"
   | .proj sn i b => match (getStructureFields env sn)[i]? with
@@ -666,6 +691,18 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
         let some stateName := stateTy.getAppFn.constName? | return none
         if !isTableStruct env stateName then return none
         let probeName := probeTy.getAppFn.constName?.getD .anonymous
+        if probeName == ``Nat then
+          -- a face whose probes are names: its reading is one function of the row and the probe
+          let obs ← Meta.mkProjection F `obs
+          let markers := ps.mapIdx fun i _ => Expr.const (Name.mkSimple s!"p{i + 1}") []
+          let arm ← Meta.withLocalDeclD `r stateTy fun r => Meta.withLocalDeclD `q probeTy fun q => do
+            let e ← Meta.whnf (mkAppN obs #[r, q])
+            let e ← Meta.reduce e (skipTypes := true) (skipProofs := true)
+            let e := ((e.replaceFVars ps markers).replaceFVar r (.const `row [])).replaceFVar q (.const `probe [])
+            pure (toSQL env 1000 e)
+          let ansSQL := match ansTy.getAppFn.constName? with
+            | some ``Nat => "integer" | some ``Bool => "boolean" | _ => "integer[]"
+          return some s!"face {n.getString!} {stateName} Nat params={ps.size} ans={ansSQL} probe={arm}"
         let ctors : List Name ← if probeName == ``Unit then pure [``Unit.unit] else
           match env.find? probeName with
           | some (.inductInfo ii) => if isEnumName env probeName then pure ii.ctors else return none
@@ -728,6 +765,7 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
       else if (t.splitOn "×").length > 1 then "integer[]"
       else if isEnumName env t.toName then enumSQL t.toName
       else if isStructure env t.toName then "integer" else "integer[]"
+    let argtypesAll := ",".intercalate (args.toList.map fun a => sqlTy ((a.splitOn ":").getD 1 ""))
     let argtypes := ",".intercalate ((args.toList.drop 1).map fun a => sqlTy ((a.splitOn ":").getD 1 ""))
     let over := firstTy.splitOn " " |>.headD ""
     -- only defs whose first argument is a table (a structure of the shadow) or a list of one
@@ -755,14 +793,22 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
         while body.isLambda do body := body.bindingBody!; depth := depth + 1
         IO.println s!"rule {n.getString!} depth={depth} ret={retSQL} params={params} :: {toSQL env 1000 body}"
       continue
-    if !(isTable || listOf) then continue
-    let kind := if ty.isProp || ty.isConstOf ``Bool then "prop" else if ty.isSort then "sort" else if isTable && ty.getAppFn.constName? == some overName then "clerk" else "data"
+    -- a def every argument of which is a number, a truth, a list of numbers, or an enum is pure:
+    -- a function of its arguments alone, no row
+    let scalarTy (t : String) : Bool :=
+      let t := (shed t).trimAscii.toString
+      t == "Nat" || t == "Bool" || t == "List Nat" || isEnumName env t.toName
+    let pure := !(isTable || listOf) && args.toList.all (fun a => scalarTy ((a.splitOn ":").getD 1 "")) && scalarTy s!"{ty}"
+    if !(isTable || listOf || pure) then continue
+    let kind := if pure then "pure" else if ty.isProp || ty.isConstOf ``Bool then "prop" else if ty.isSort then "sort" else if isTable && ty.getAppFn.constName? == some overName then "clerk" else "data"
     let mut body := v
     let mut depth := 0
     while body.isLambda do body := body.bindingBody!; depth := depth + 1
     -- the row is the first argument: de Bruijn index depth - 1 at the body
     let depth' := if depth == 0 then 1 else depth
-    let sql := if kind == "clerk" then
+    let sql := if kind == "pure" then toSQL env 1000 body
+      else if kind == "clerk" && body.isAppOf `Face.park then toSQL env (depth' - 1) body
+      else if kind == "clerk" then
         -- a constructor with fields: name each as `field = expr`, keeping only those not the row's own
         let args := body.getAppArgs
         let fields := getStructureFields env overName
@@ -778,10 +824,65 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
         "SET " ++ ", ".intercalate sets
       else toSQL env (depth' - 1) body
     let describers := (env.constants.map₂.toList.filter fun (m, ci') => m.getPrefix == sc.ns && ci'.isTheorem && ci'.type.getUsedConstants.contains n).map (·.1.getString!)
-    -- a def the fragment cannot read may be read BY A THEOREM: `∀ x, g x = n x` (or `n x = g x`)
-    -- with g readable — the shadow draws from the proof, and names it
     let mut sql := sql
     let mut byThm := ""
+    -- a def by structural recursion over its list whose step is `cond P V (self tail …)` is a
+    -- FIRST MATCH: the first element the condition selects, read by V, else the base case — read
+    -- from the def's own equations, the head as `x`, the list as the row
+    if sql.startsWith "⟨unread" && (listOf || (pure && firstTy.startsWith "List ")) then
+      let fm ← (Meta.MetaM.toIO (ctxCore := { fileName := trail, fileMap := default }) (sCore := { env := env }) do
+        let eqns? ← Meta.getEqnsFor? n
+        let some eqns := eqns? | do IO.eprintln s!"FIRST {n}: no eqns"; return (none : Option String)
+        if eqns.size != 2 then do IO.eprintln s!"FIRST {n}: {eqns.size} eqns"; return (none : Option String)
+        let env' ← Lean.getEnv
+        let some e1 := env'.find? eqns[0]! | do IO.eprintln s!"FIRST {n}: refused at 1"; return (none : Option String)
+        let some e2 := env'.find? eqns[1]! | do IO.eprintln s!"FIRST {n}: refused at 2"; return (none : Option String)
+        let mut t1 := e1.type; let mut d1 := 0
+        while t1.isForall do t1 := t1.bindingBody!; d1 := d1 + 1
+        let mut t2 := e2.type; let mut d2 := 0
+        while t2.isForall do t2 := t2.bindingBody!; d2 := d2 + 1
+        if !(t1.isAppOfArity ``Eq 3 && t2.isAppOfArity ``Eq 3) then do IO.eprintln s!"FIRST {n}: refused at 3"; return (none : Option String)
+        -- the base: `self [] params = D`, the step: `self (c :: cs) params = cond P V (self cs params)`
+        if !((t1.getArg! 1).getAppArgs.any fun a => a.isAppOf ``List.nil) then do IO.eprintln s!"FIRST {n}: refused at 4"; return (none : Option String)
+        let rhs2 := t2.getArg! 2
+        if !(rhs2.isAppOfArity ``cond 4) then do IO.eprintln s!"FIRST {n}: refused at 5"; return (none : Option String)
+        let recur := (rhs2.getAppArgs)[3]!
+        if !(recur.isAppOf n) then do IO.eprintln s!"FIRST {n}: refused at 6"; return (none : Option String)
+        -- the equations' binders are read off their own left sides: at the step, the list argument
+        -- is `head :: tail` (the head reads as `x`, the tail must not appear) and each other argument
+        -- is a binder that keeps the def's own index; at the base likewise
+        let lhs2 := t2.getArg! 1
+        let a2 := lhs2.getAppArgs
+        let mut subst2 : Array Expr := Array.replicate d2 (Expr.const `tail [])
+        for j in [0:a2.size] do
+          let a := a2[j]!
+          if j == 0 then
+            if a.isAppOfArity ``List.cons 3 then
+              match a.getArg! 1, a.getArg! 2 with
+              | .bvar h, .bvar t => subst2 := (subst2.set! h (.const `x [])).set! t (.const `tail [])
+              | _, _ => do IO.eprintln s!"FIRST {n}: the head or tail is not a binder"; return (none : Option String)
+            else do IO.eprintln s!"FIRST {n}: the step's list is not a cons"; return (none : Option String)
+          else match a with
+            | .bvar p => subst2 := subst2.set! p (.bvar (depth' - 1 - j))
+            | _ => do IO.eprintln s!"FIRST {n}: an argument at the step is not a binder"; return (none : Option String)
+        let lhs1 := t1.getArg! 1
+        let a1 := lhs1.getAppArgs
+        let mut subst1 : Array Expr := Array.replicate d1 (Expr.const `tail [])
+        for j in [0:a1.size] do
+          if j == 0 then continue
+          match a1[j]! with
+          | .bvar p => subst1 := subst1.set! p (.bvar (depth' - 1 - j))
+          | _ => do IO.eprintln s!"FIRST {n}: an argument at the base is not a binder"; return (none : Option String)
+        let P := ((rhs2.getAppArgs)[1]!).instantiate subst2
+        let V := ((rhs2.getAppArgs)[2]!).instantiate subst2
+        let D := (t1.getArg! 2).instantiate subst1
+        let ps := toSQL env 1000 P; let vs := toSQL env 1000 V; let ds := toSQL env 1000 D
+        if ((ps ++ vs ++ ds).splitOn "⟨unread").length > 1 then do IO.eprintln s!"FIRST {n}: refused at 7"; return (none : Option String)
+        if ((ps ++ vs).splitOn "tail").length > 1 then do IO.eprintln s!"FIRST {n}: refused at 8"; return (none : Option String)
+        return some s!"coalesce((SELECT {vs} FROM unnest(row) WITH ORDINALITY AS u(x, o) WHERE {ps} ORDER BY o LIMIT 1), {ds})")
+      if let some f := fm.1 then sql := f
+    -- a def the fragment cannot read may be read BY A THEOREM: `∀ x, g x = n x` (or `n x = g x`)
+    -- with g readable — the shadow draws from the proof, and names it
     if sql.startsWith "⟨unread" then
       for (m, ci') in env.constants.toList do
         if !(sc.owns m) || !ci'.isTheorem then continue
@@ -800,7 +901,7 @@ def schemaMode (trail : String) (sc : Scope) : IO Unit := do
             let s' := toSQL env (d - 1) o
             if !(s'.startsWith "⟨unread") && !((s'.splitOn "⟨unread").length > 1) then
               sql := s'; byThm := m.getString!; break
-    IO.println s!"derived {n.getString!} {kind} over={firstTy} args={depth'} argtypes={argtypes} ret={sqlTy s!"{ty}"} :: {sql} | {" ".intercalate describers}{if byThm.isEmpty then "" else s!" @by {byThm}"}"
+    IO.println s!"derived {n.getString!} {kind} over={firstTy} args={depth'} argtypes={if kind == "pure" then argtypesAll else argtypes} ret={sqlTy s!"{ty}"} :: {sql} | {" ".intercalate describers}{if byThm.isEmpty then "" else s!" @by {byThm}"}"
 
 unsafe def main (args : List String) : IO Unit := do
   Lean.enableInitializersExecution

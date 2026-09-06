@@ -27,10 +27,11 @@ def reading : List Clock → Nat → Nat
 
 def windings (r : Room) : List Nat := r.clocks.map (·.winding)
 
-def wind (r : Room) (n : Nat) : Room :=
-  ⟨r.clocks.map (fun c => cond (Nat.beq c.name n) ⟨c.name, c.winding + 1⟩ c)⟩
+def click (c : Clock) : Clock := ⟨c.name, c.winding + 1⟩
 
-def tick (r : Room) : Room := ⟨r.clocks.map (fun c => ⟨c.name, c.winding + 1⟩)⟩
+def wind (r : Room) (n : Nat) : Room := ⟨r.clocks.map (fun c => cond (Nat.beq c.name n) (click c) c)⟩
+
+def tick (r : Room) : Room := ⟨r.clocks.map click⟩
 
 def roomFace : Face := ⟨Room, Nat, Nat, fun r n => reading r.clocks n⟩
 

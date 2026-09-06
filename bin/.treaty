@@ -52,12 +52,13 @@ def sql_array(items, ty='integer'):
 ns = re.search(r'^namespace (\S+)', open(grown).read(), re.M).group(1)
 imports = ','.join(re.findall(r'^import (\S+)', open(grown).read(), re.M))
 rep = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'schema', grown, ns, imports], capture_output=True, text=True).stdout
-tables, enums, seats, readers, facefns = {}, {}, {}, {}, {}
+tables, enums, seats, readers, facefns, nameprobed = {}, {}, {}, {}, {}, set()
 for l in rep.splitlines():
     p = l.split(' ')
     if p[0] == 'face':
         m = re.match(r'face (\S+) (\S+) (\S+) params=(\d+)', l)
         if m: facefns[m.group(1)] = (short(m.group(2)), int(m.group(4)))
+        if m and m.group(3) == 'Nat': nameprobed.add(m.group(1))
     if p[0] == 'table':
         # a field's type may carry spaces (List X, Prod ...): split on the next `name:`
         rest = l[len('table ') + len(p[1]) + 1:]
@@ -84,8 +85,14 @@ for m in re.finditer(r'^CREATE FUNCTION (\w+)\(([^)]*)\) RETURNS (\S+)', open(sq
     funcs[m.group(1)] = (params, m.group(3))
 # the assay's defs and faces
 defs = {}
-for m in re.finditer(r'^def (\w+) : (.+?) := (.+)$', text, re.M):
+for m in re.finditer(r'^def (\w+) : (.+?) :=[ \t]*\n?[ \t]*(.+)$', text, re.M):
     defs[m.group(1)] = (m.group(2).strip(), m.group(3).strip())
+# a name in a list of numbers is the number it names
+def num(x):
+    x = x.strip()
+    if x in defs and defs[x][0] == 'Nat': return defs[x][1]
+    if x in ids: return str(ids[x])
+    return x
 faces = {}   # face def -> reader
 for name, (ty, val) in defs.items():
     if ty == 'Face' and val.startswith('⟨'):
@@ -139,7 +146,8 @@ def seat_literal(t, val, name):
 def clone(t, base):
     i = new_id(snake(t)); tn = snake(t)
     cols = ['id'] + [snake(f) for f, fty in tables[t] if not has_many(fty)]
-    q(f"INSERT INTO {tn} ({', '.join(cols)}) SELECT {i}, {', '.join(cols[1:])} FROM {tn} WHERE id = {base}")
+    if len(cols) == 1: q(f"INSERT INTO {tn} (id) VALUES ({i})")   # a row that is only its children
+    else: q(f"INSERT INTO {tn} ({', '.join(cols)}) SELECT {i}, {', '.join(cols[1:])} FROM {tn} WHERE id = {base}")
     for f, fty in tables[t]:
         if has_many(fty):
             child = f"{tn}_{snake(f)}"; e = elem(fty)
@@ -159,12 +167,20 @@ def arg_sql(a, pty):
     a = a.strip()
     if pty == 'integer[]':
         l = lit_list(a)
-        if l is not None: return sql_array([str(ids[x]) if x in ids else x for x in l])
+        if l is not None: return sql_array([num(x) for x in l])
         if a in lists: return sql_array(lists[a])
         m = re.match(r'^\(?(\w+) :: (\w+)\)?$', a)   # a row prepended to a list
         if m and m.group(1) in ids and m.group(2) in lists: return sql_array([ids[m.group(1)]] + lists[m.group(2)])
+        if m and (m.group(1) in defs and defs[m.group(1)][0] == 'Nat' or re.match(r'^\d+$', m.group(1))):   # a number prepended
+            rest_ = arg_sql(m.group(2), 'integer[]')
+            if rest_ is not None: return f"array_prepend({num(m.group(1))}, {rest_})"
+        if a.startswith('(') and a.endswith(')') and ' ++ ' in a:   # two lists appended
+            parts = [x.strip() for x in split_top(a[1:-1].replace(' ++ ', ','))]
+            if len(parts) == 2:
+                x, y = arg_sql(parts[0], 'integer[]'), arg_sql(parts[1], 'integer[]')
+                if x is not None and y is not None: return f"({x} || {y})"
         if a.startswith('(') and ',' in a and not a.startswith('(('): return sql_array(split_top(a.strip('()')))   # a tuple
-        if a in defs and elem(defs[a][0]) == 'Nat': return sql_array(lit_list(defs[a][1]) or [])
+        if a in defs and elem(defs[a][0]) == 'Nat': return sql_array([num(x) for x in (lit_list(defs[a][1]) or [])])
         return None
     if pty == 'integer':
         if a in defs and defs[a][0] == 'Nat': return defs[a][1]
@@ -297,6 +313,23 @@ def expr(e):
             col = 'unit' if m.group(4) == '()' else snake(m.group(4)[1:])
             argsql = ''.join(f', {arg_sql(a, "integer")}' for a in args)
             return ('s', f"(SELECT {col} FROM {snake(t)}_as_{snake(m.group(1))}({r}{argsql}))")
+    # a sounding of a recital is the seat's reading — Witness's the_sounding_is_the_trails_reading
+    # with Face's the_recital_walks_its_list
+    m = re.match(r'^sound (\w+) (\S+) \(recite (.+)\)$', e)
+    if m and m.group(1) in nameprobed:
+        return expr(f"reads {m.group(1)} {m.group(3)} {m.group(2)}")
+    # a seat's reading through a face whose probes are names: the face's reading at each name, in order
+    m = re.match(r'^reads (\w+) (\S+) (.+)$', e)
+    if m and m.group(1) in nameprobed:
+        t, n = facefns[m.group(1)]; r = row_of(m.group(3)); l = arg_sql(m.group(2), 'integer[]')
+        if r and l is not None:
+            return ('s', f"ARRAY(SELECT {snake(t)}_as_{snake(m.group(1))}({r}, p) FROM unnest({l}) WITH ORDINALITY AS u(p, o) ORDER BY o)")
+    # the first voice: whichever of a, b the list names first
+    m = re.match(r'^firstOf \S+ (\S+) (\S+) (\S+)$', e)
+    if m:
+        a, b, l = arg_sql(m.group(1), 'integer'), arg_sql(m.group(2), 'integer'), arg_sql(m.group(3), 'integer[]')
+        if a is not None and b is not None and l is not None:
+            return ('s', f"coalesce((SELECT (x = {a}) FROM unnest({l}) WITH ORDINALITY AS u(x, o) WHERE (x = {a}) OR (x = {b}) ORDER BY o LIMIT 1), false)")
     # a seat's reading through a face: the view's columns
     m = re.match(r'^reads (\w+) (\w+) (.+)$', e)
     if m and m.group(1) in faces and m.group(2) in seats:
@@ -355,8 +388,8 @@ def literal(rhs):
     if re.match(r'^\d+$', rhs): return ('n', int(rhs))
     l = lit_list(rhs)
     if l is not None:
-        if l and all(x.startswith('[') for x in l): return ('t', [sql_array(lit_list(x)) for x in l])
-        return ('s', sql_array(l))
+        if l and all(x.startswith('[') for x in l): return ('t', [sql_array([num(y) for y in lit_list(x)]) for x in l])
+        return ('s', sql_array([num(x) for x in l]))
     return None
 def compare(a, b):
     if a[0] == 'n' and b[0] == 'n': return ('py', a[1] == b[1])

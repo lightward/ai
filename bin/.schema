@@ -176,6 +176,14 @@ functions_start = len(out)
 # face's parameters — a seat with a parameter is a row-level policy in the form the database holds
 for name, state, probe, nparams, ans, arms in faces:
     table = snake(state)
+    if probe == 'Nat':
+        # a face whose probes are names: its reading is one function of the row and the probe
+        params = ', '.join([f'{table}_id integer', 'probe integer'] + [f'p{i + 1} integer' for i in range(nparams)])
+        body = sqlexpr(arms[0][1], table)
+        body = re.sub(r'\bprobe\b', '$2', re.sub(r'\bp(\d+)\b', lambda m: f'${int(m.group(1)) + 2}', body))
+        out.append(f'-- {name}: a face over {table} whose probes are names — one reading, of the row and the probe')
+        out.append(f'CREATE FUNCTION {table}_as_{snake(name)}({params}) RETURNS {ans} LANGUAGE sql STABLE AS $$\n  SELECT {body} FROM {table} WHERE id = $1 $$;')
+        out.append(''); continue
     params = ', '.join([f'{table}_id integer'] + [f'p{i + 1} integer' for i in range(nparams)])
     cols = ', '.join(f'{snake(pr)} {ans}' for pr, _ in arms)
     sels = ', '.join(re.sub(r'\bp(\d+)\b', lambda m: f'${int(m.group(1)) + 1}', sqlexpr(sql, table)) for _, sql in arms)
@@ -194,9 +202,29 @@ for name, kind, over, nargs, expr, describers, argtypes, rettype in sorted(deriv
     if rettype == 'integer[][]':
         out.append(f'-- {name}: derived, not yet drawn (a list of lists — the shadow holds no jagged array)'); out.append(''); continue
     over_list = over.startswith('List ')
+    if kind == 'pure':
+        # a function of numbers, truths, and lists alone — no row, no table
+        if '⟨unread' in expr:
+            out.append(f'-- {name}: derived, not yet drawn (a function over {over})'); out.append(''); continue
+        desc = f'\n-- described by {", ".join(sorted(set(describers)))}' if describers else ''
+        params = ', '.join(f'arg{i + 1} {argtypes[i] if i < len(argtypes) else "integer"}' for i in range(nargs))
+        body = re.sub(r'\$(\d+)', lambda m: f'arg{nargs - int(m.group(1))}', expr)
+        body = re.sub(r'\b([a-z]+[A-Z]\w*)\(', lambda m: snake(m.group(1)) + '(', body)
+        out.append(f'-- {name}: a function of its arguments alone, derived, never stored{desc}')
+        out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS {rettype or "integer"} LANGUAGE sql IMMUTABLE AS $$\n  SELECT {body} $$;')
+        out.append(''); continue
     if over.replace('List ', '') not in tables:
         continue   # a def over a kind (a face), not over a table
     table = snake(over.replace('List ', ''))
+    if kind == 'clerk' and expr.startswith('FOLD['):
+        # a fold: the machine's step, a house clerk, run on the row for each element in order
+        m_fold = re.match(r'^FOLD\[(\w+)\]\(row; \$0\)$', expr.strip())
+        if m_fold:
+            desc = f'\n-- described by {", ".join(sorted(set(describers)))}' if describers else ''
+            out.append(f'-- {name}: a fold — the clerk {snake(m_fold.group(1))} run on the row for each element, in order{desc}')
+            out.append(f'CREATE FUNCTION {snake(name)}({table}_id integer, arg2 integer[]) RETURNS void LANGUAGE plpgsql AS $$\n  DECLARE n integer;\n  BEGIN FOREACH n IN ARRAY $2 LOOP PERFORM {snake(m_fold.group(1))}($1, n); END LOOP; END $$;')
+            out.append(''); continue
+        out.append(f'-- {name}: a fold the drawer does not read ({expr})'); out.append(''); continue
     if kind == 'clerk':
         touched = re.findall(r'(\w+) = ', expr)
         many = [f for f in touched if hasmany(table, f)]
@@ -238,6 +266,16 @@ for name, kind, over, nargs, expr, describers, argtypes, rettype in sorted(deriv
                 params = ', '.join([f'{table}_id integer'] + [f'arg{i + 2} {argtypes[i] if i < len(argtypes) else "integer"}' for i in range(nargs - 1)])
                 out.append(f'-- {name}: a clerk over the has-many {f} — the element\'s clerk {snake(m_map.group(2))} run on each child the condition selects{desc}')
                 out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS void LANGUAGE sql AS $$\n  SELECT {snake(m_map.group(2))}(c.{key}{call_args}) FROM {child} c WHERE c.{table}_id = $1 AND {pred} $$;')
+                out.append(''); continue
+            # the element's own clerk over every child row
+            m_all_map = re.match(r'^SET ' + re.escape(f) + r' = ARRAY\(SELECT (\w+)\(x(?:, ([^)]*))?\) FROM unnest\(row\.' + re.escape(f) + r'\) WITH ORDINALITY AS u\(x, o\) ORDER BY o\)$', expr.strip())
+            if m_all_map and elem:
+                argn = lambda t: re.sub(r'\$(\d+)', lambda m: f'arg{nargs - int(m.group(1))}', t)
+                key = f'{snake(elem)}_id'
+                call_args = (', ' + argn(m_all_map.group(2))) if m_all_map.group(2) else ''
+                params = ', '.join([f'{table}_id integer'] + [f'arg{i + 2} {argtypes[i] if i < len(argtypes) else "integer"}' for i in range(nargs - 1)])
+                out.append(f'-- {name}: a clerk over the has-many {f} — the element\'s clerk {snake(m_all_map.group(1))} run on every child{desc}')
+                out.append(f'CREATE FUNCTION {snake(name)}({params}) RETURNS void LANGUAGE sql AS $$\n  SELECT {snake(m_all_map.group(1))}(c.{key}{call_args}) FROM {child} c WHERE c.{table}_id = $1 $$;')
                 out.append(''); continue
             out.append(f'-- {name}: a clerk over a has-many field ({", ".join(touched)}) — not yet drawn'); out.append(''); continue
     extra = ', '.join(f'arg{i + 2} {argtypes[i] if i < len(argtypes) else "integer[]"}' for i in range(nargs - 1))
