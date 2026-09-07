@@ -414,48 +414,109 @@ if primings_path:
     def line_count(xs):
         return sum(x.count('\n') + 1 for x in xs)
 
+    # THE CHAIR (2026-09-07, isaac's move; ../counter): a trial is deterministic — the same prefix,
+    # candidate, judge, pieces, toolchain, and imported artifacts give the same verdict and the same
+    # body on any machine — so a chair may answer for the judge from its charges, and what the judge
+    # judges is charged back. the compiler keeps nothing: with CRAWL_CHAIR unset it runs exactly as
+    # before, and the artifact must be byte-identical either way (counter's pin is the check). the
+    # fingerprint of a trial is the prefix text with everything the verdict stands on
+    chair = os.environ.get('CRAWL_CHAIR')
+    chair_name = os.environ.get('CRAWL_CHAIR_NAME', 'bench')
+    import hashlib
+    def sha(b): return hashlib.sha256(b if isinstance(b, bytes) else b.encode()).hexdigest()[:32]
+    env_fp = ''
+    if chair:
+        parts = [open(f, 'rb').read() for f in ('bin/judge.lean', 'bin/Pieces.lean', 'lean-toolchain', 'lake-manifest.json')]
+        for shp in sorted(set(scope_files) - {germ_path}): parts.append(open(shp, 'rb').read())
+        env_fp = sha(b'\0'.join(parts))
+        def chair_sql(sql, stdin=None):
+            r = subprocess.run(['psql', '-h', os.environ.get('PGSOCK', '/tmp'), '-p', os.environ.get('PGPORT', '5432'), '-U', os.environ.get('PGUSER', os.environ.get('USER', '')), '-d', chair, '-q', '-X', '--csv', '-t', '-v', 'ON_ERROR_STOP=1', '-c', sql], capture_output=True, text=True, input=stdin, env=dict(os.environ, PATH='/opt/homebrew/opt/postgresql@17/bin:' + os.environ.get('PATH', '')))
+            if r.returncode != 0: raise SystemExit('crawl: the chair did not answer:\n' + r.stderr[-1500:])
+            return r.stdout
+        chair_id = chair_sql(f"SELECT counter.who('{chair_name}')").strip()
+        if not chair_id: raise SystemExit(f'crawl: no chair named {chair_name} at {chair}')
+
     def judge(prefix_lines, cands):
         """cands: list of (n, k). every candidate is elaborated in Lean against the
         prefix — once loaded, never re-elaborated — through bin/judge.lean, whose
         message log is complete (the CLI's own report caps at ~100 errors; the
         in-process log does not). returns the set of (n, k) that FAILED."""
+        judge.judged = 0
+        judge.bodies = {}
         if not cands:
             return set()
-        pre = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-prefix-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
-        pre.write('\n'.join(prefix_lines) + '\n'); pre.close()
-        cf = tempfile.NamedTemporaryFile('w', suffix='.txt', prefix='crawl-cands-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
-        # grouped by vacancy, in the pieces' order: the judge stops each group at its first seat
+        texts = [candidate_text(*c) for c in cands]
+        verdicts, bodies = {}, {}
+        # the groups by vacancy, in the pieces' order: the judge stops each group at its first seat
         groups, cur = [], None
-        for c in cands:
+        for i, c in enumerate(cands):
             if c[0] != cur:
                 groups.append([]); cur = c[0]
-            groups[-1].append(candidate_text(*c))
-        cf.write('\n-- vacancy\n'.join('\n-- candidate\n'.join(g) for g in groups) + '\n'); cf.close()
-        import time
-        t0 = time.time()
-        res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', pre.name, cf.name],
-                             capture_output=True, text=True)
-        if os.environ.get('CRAWL_DEBUG') or os.environ.get('CRAWL_KEEP'):
-            print(f'[trial] {pre.name} {cf.name}: {len(cands)} candidates, exit {res.returncode}, {time.time() - t0:.1f}s')
+            groups[-1].append(i)
+        to_judge = []   # the groups' suffixes the chair could not answer
+        if chair:
+            import csv, io
+            pfx = sha(env_fp + '\n'.join(prefix_lines))
+            cfps = [sha(t) for t in texts]
+            memo = {}
+            rows = chair_sql(f"SELECT candidate_fp, verdict, body FROM counter.charge WHERE prefix_fp = '{pfx}' AND candidate_fp = ANY(ARRAY[{', '.join(repr(c) for c in sorted(set(cfps)))}]::text[]) ORDER BY id")
+            for cf_, v, b in csv.reader(io.StringIO(rows)): memo[cf_] = (v, b)
+            for g in groups:
+                for j, i in enumerate(g):
+                    hit = memo.get(cfps[i])
+                    if hit is None:
+                        to_judge.append(g[j:]); break
+                    verdicts[i] = hit[0]; judge.answered += 1
+                    if hit[0] == 'seated':
+                        bodies[i] = hit[1]
+                        for i2 in g[j + 1:]: verdicts[i2] = 'skipped'
+                        break
         else:
-            os.unlink(pre.name); os.unlink(cf.name)
-        verdicts, bodies, cur = {}, {}, None
-        judge.judged = 0
-        for l in res.stdout.splitlines():
-            m = re.match(r'(\d+) (seated|held|skipped)$', l)
-            if m:
-                cur = int(m.group(1)); verdicts[cur] = m.group(2); continue
-            mj = re.match(r'judged (\d+)$', l)
-            if mj:
-                judge.judged = int(mj.group(1)); continue
-            if cur is not None and (l.startswith('| ') or l == '|'):
-                bodies.setdefault(cur, []).append(l[2:])
-        if res.returncode != 0 or len(verdicts) != len(cands):
-            raise SystemExit('crawl: the judge did not return a verdict for every candidate:\n'
-                             + (res.stdout + res.stderr)[-2000:])
+            to_judge = groups
+        if to_judge:
+            pre = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-prefix-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
+            pre.write('\n'.join(prefix_lines) + '\n'); pre.close()
+            cf = tempfile.NamedTemporaryFile('w', suffix='.txt', prefix='crawl-cands-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
+            cf.write('\n-- vacancy\n'.join('\n-- candidate\n'.join(texts[i] for i in g) for g in to_judge) + '\n'); cf.close()
+            flat = [i for g in to_judge for i in g]
+            import time
+            t0 = time.time()
+            res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', pre.name, cf.name],
+                                 capture_output=True, text=True)
+            if os.environ.get('CRAWL_DEBUG') or os.environ.get('CRAWL_KEEP'):
+                print(f'[trial] {pre.name} {cf.name}: {len(flat)} candidates, exit {res.returncode}, {time.time() - t0:.1f}s')
+            else:
+                os.unlink(pre.name); os.unlink(cf.name)
+            jv, jb, cur = {}, {}, None
+            for l in res.stdout.splitlines():
+                m = re.match(r'(\d+) (seated|held|skipped)$', l)
+                if m:
+                    cur = int(m.group(1)); jv[cur] = m.group(2); continue
+                mj = re.match(r'judged (\d+)$', l)
+                if mj:
+                    judge.judged = int(mj.group(1)); continue
+                if cur is not None and (l.startswith('| ') or l == '|'):
+                    jb.setdefault(cur, []).append(l[2:])
+            if res.returncode != 0 or len(jv) != len(flat):
+                raise SystemExit('crawl: the judge did not return a verdict for every candidate:\n'
+                                 + (res.stdout + res.stderr)[-2000:])
+            for j, i in enumerate(flat):
+                verdicts[i] = jv[j]
+                if j in jb: bodies[i] = '\n'.join(jb[j]).rstrip()
+            if chair:
+                # what the judge judged, charged to the chair (a skipped candidate was never judged)
+                buf = io.StringIO(); w = csv.writer(buf, quoting=csv.QUOTE_ALL)   # an empty body is '', never NULL
+                for j, i in enumerate(flat):
+                    if jv[j] == 'skipped': continue
+                    n, k = cands[i]
+                    w.writerow([chair_id, n, pfx, cfps[i], primings_of[n][k][0], jv[j], 0, bodies.get(i, '')])
+                chair_sql('COPY counter.charge (observer, vacancy, prefix_fp, candidate_fp, piece, verdict, ms, body) FROM STDIN CSV', buf.getvalue())
+        if len(verdicts) != len(cands):
+            raise SystemExit('crawl: a candidate has no verdict')
         # the seated bodies as the judge elaborated them, pieces expanded — what the module grows
-        judge.bodies = {i: '\n'.join(v).rstrip() for i, v in bodies.items()}
+        judge.bodies = bodies
         return set(i for i in range(len(cands)) if verdicts[i] != 'seated')
+    judge.answered = 0
 
     kept_hint = {}
     if germ_mode:
@@ -594,7 +655,7 @@ if primings_path:
         # are recorded, so a regrown body is already exactly the citations that closed it; and a
         # search against the FINISHED module can see theorems seated in later rounds, which the
         # derived order cannot carry)
-        print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged')
+        print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged' + (f', {judge.answered} answered by the chair' if chair else ''))
         if derived_mode:
             hand_regrown = [n for n in regrown_by if not is_vac[n]]
             print(f'the exemplars: {len(set(regrown_by.values()))} pieces seated bodies; {len(hand_regrown)} hand bodies regrown by another body\'s shape: {" ".join(hand_regrown)}')
