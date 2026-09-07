@@ -46,6 +46,16 @@
 #     the house gate, drawn from the compiler's own species (Counter.gate): each artifact elaborated
 #     whole, every theorem's receipt read by the kernel, the verdict Counter.conductive on that
 #     shadow — the same def the assay's rows run. default: every grown module and grown assay
+#   bin/counter pin [--set] [grown/*.lean]
+#     the artifacts by fingerprint. with a chair (CRAWL_CHAIR), each against its last pin: identical
+#     or moved; --set pins them. anchor the end so the means can float
+#   bin/counter countersign
+#     the whole house: --check on every germ, the treaty assays grown, lake build, the gate, the book
+#
+# the chair (CRAWL_CHAIR=<database>, CRAWL_CHAIR_NAME=<chair>; ../counter): a trial and a reading of
+# the judge are deterministic, so the chair answers for them by fingerprint and is charged what it
+# could not answer. unset, the compiler runs exactly as before, memoryless; the artifact is
+# byte-identical either way, and pin is the check
 set -u
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -176,6 +186,53 @@ header = header or ''
 NS_NAME = (re.search(r'^namespace ([\w.]+)', header, re.M) or re.search(r'^namespace (\w+)', 'namespace Face', re.M)).group(1)
 IMPORTS = [m for m in re.findall(r'^import (\S+)', header, re.M) if m != 'Init']
 SCOPE = [NS_NAME, ','.join(IMPORTS)]
+
+# THE CHAIR (2026-09-07, isaac's move; ../counter): a trial of the judge and a reading of the judge
+# (templates, needs, cites) are deterministic — the same inputs give the same output on any
+# machine — so a chair may answer for them from its charges and readings, and is charged what it
+# could not answer. the compiler keeps nothing: with CRAWL_CHAIR unset it runs exactly as before,
+# and the artifact must be byte-identical either way (pin is the check). a fingerprint folds in
+# everything the answer stands on: the judge, the pieces, the toolchain, the manifest, and every
+# grown module the germ imports, transitively
+import hashlib
+chair = os.environ.get('CRAWL_CHAIR')
+chair_name = os.environ.get('CRAWL_CHAIR_NAME', 'bench')
+def sha(b): return hashlib.sha256(b if isinstance(b, bytes) else b.encode()).hexdigest()[:32]
+env_fp = ''
+chair_id = ''
+if chair:
+    _parts = [open(f, 'rb').read() for f in ('bin/judge.lean', 'bin/Pieces.lean', 'lean-toolchain', 'lake-manifest.json')]
+    _seen = set()
+    def _walk(mod):
+        if mod in _seen or not os.path.exists(f'grown/{mod}.lean'): return
+        _seen.add(mod)
+        for dep in re.findall(r'^import (\S+)', open(f'grown/{mod}.lean').read(), re.M): _walk(dep)
+        _parts.append(open(f'grown/{mod}.lean', 'rb').read())
+    for _m in IMPORTS: _walk(_m)
+    env_fp = sha(b'\0'.join(_parts))
+    def chair_sql(sql, stdin=None):
+        r = subprocess.run(['psql', '-h', os.environ.get('PGSOCK', '/tmp'), '-p', os.environ.get('PGPORT', '5432'), '-U', os.environ.get('PGUSER', os.environ.get('USER', '')), '-d', chair, '-q', '-X', '--csv', '-t', '-v', 'ON_ERROR_STOP=1', '-c', sql], capture_output=True, text=True, input=stdin, env=dict(os.environ, PATH='/opt/homebrew/opt/postgresql@17/bin:' + os.environ.get('PATH', '')))
+        if r.returncode != 0: raise SystemExit('crawl: the chair did not answer:\n' + r.stderr[-1500:])
+        return r.stdout
+    chair_id = chair_sql(f"SELECT counter.who('{chair_name}')").strip()
+    if not chair_id: raise SystemExit(f'crawl: no chair named {chair_name} at {chair}')
+def chair_read(kind, path, args):
+    """a reading of the judge (templates, needs, cites) on a file: answered by the chair when it
+    has read the same inputs, else read and charged"""
+    if chair:
+        import csv, io
+        fp = sha(env_fp + kind + '\0' + '\0'.join(args) + '\0' + open(path).read())
+        rows = chair_sql(f"SELECT body FROM counter.reading WHERE fp = '{fp}' ORDER BY id DESC LIMIT 1")
+        for (b,) in csv.reader(io.StringIO(rows)):
+            chair_read.answered += 1; return b
+    r = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', kind, path] + args, capture_output=True, text=True)
+    if chair and r.returncode == 0:
+        import csv, io
+        buf = io.StringIO(); w = csv.writer(buf, quoting=csv.QUOTE_ALL); w.writerow([chair_id, kind, fp, r.stdout])
+        chair_sql('COPY counter.reading (observer, kind, fp, body) FROM STDIN CSV', buf.getvalue())
+    chair_read.returncode = r.returncode; chair_read.stderr = r.stderr
+    return r.stdout
+chair_read.answered = 0; chair_read.returncode = 0; chair_read.stderr = ''
 seated_names = set(n for _, n, _ in blocks)
 for k, n, b in held_blocks:
     if n in seated_names:
@@ -204,10 +261,10 @@ for _, n, b in theorems:
 tf = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-needs-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
 tf.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
 tf.close()
-res = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'needs', tf.name] + SCOPE, capture_output=True, text=True)
+needs_out = chair_read('needs', tf.name, SCOPE)
 os.unlink(tf.name)
 exact = 0
-for l in res.stdout.splitlines():
+for l in needs_out.splitlines():
     n, sep, deps = l.partition(' <- ')
     if sep and n in needs:
         needs[n] = (set(deps.split()) & tnames - {n}) | (set(marker_needs.get(n, [])) & tnames)
@@ -291,8 +348,8 @@ if primings_path:
             src_s = open(shp).read()
             m_ns = re.search(r'^namespace ([\w.]+)', src_s, re.M)
             imps = ','.join(m for m in re.findall(r'^import (\S+)', src_s, re.M) if m != 'Init')
-            rt = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'templates', shp, m_ns.group(1) if m_ns else 'Foam', imps], capture_output=True, text=True)
-            for line in rt.stdout.splitlines():
+            rt_out = chair_read('templates', shp, [m_ns.group(1) if m_ns else 'Foam', imps])
+            for line in rt_out.splitlines():
                 m_u = re.match(r'the templates: (\d+) bodies, \d+ rendered; \d+ unrendered: ?(.*)$', line)
                 if m_u:
                     n_bodies += int(m_u.group(1)); unrendered += m_u.group(2).split(); continue
@@ -303,8 +360,8 @@ if primings_path:
                 key = (mode, skel)
                 groups.setdefault(key, []).append((qn, tpl.replace('⏎', '\n'), fans))
                 group_of[qn] = key
-            if rt.returncode != 0 or not rt.stdout.startswith('the templates:'):
-                raise SystemExit(f'crawl: the judge rendered no templates from {shp}\n' + (rt.stdout + rt.stderr)[-1500:])
+            if chair_read.returncode != 0 or not rt_out.startswith('the templates:'):
+                raise SystemExit(f'crawl: the judge rendered no templates from {shp}\n' + (rt_out + chair_read.stderr)[-1500:])
         n_groups = len(groups)
         print(f'the pieces, derived: {n_bodies} bodies in scope ({" ".join(scope_files)}), {n_groups} skeletons; '
               f'{len(unrendered)} bodies unrendered (a hole no search reaches){": " + " ".join(unrendered) if unrendered else ""}')
@@ -358,10 +415,10 @@ if primings_path:
     tf2 = tempfile.NamedTemporaryFile('w', suffix='.lean', prefix='crawl-cites-', dir=os.environ.get('TMPDIR', '/tmp'), delete=False)
     tf2.write('\n'.join([header.rstrip('\n'), ''] + [b.rstrip('\n') + '\n' for _, _, b in blocks] + ([footer] if footer else [])) + '\n')
     tf2.close()
-    res2 = subprocess.run(['lake', 'env', 'lean', '--run', 'bin/judge.lean', 'cites', tf2.name] + SCOPE, capture_output=True, text=True)
+    cites_out = chair_read('cites', tf2.name, SCOPE)
     os.unlink(tf2.name)
     carrier_deps = {}
-    for l in res2.stdout.splitlines():
+    for l in cites_out.splitlines():
         parts = l.split(' <- ')
         if len(parts) == 2 and parts[0].startswith('theorem '):
             defs_of[parts[0].split()[1]] = [d for d in parts[1].split() if d in cnames or (d.startswith(NS_NAME + '.') is False and '.' in d)]
@@ -413,28 +470,6 @@ if primings_path:
 
     def line_count(xs):
         return sum(x.count('\n') + 1 for x in xs)
-
-    # THE CHAIR (2026-09-07, isaac's move; ../counter): a trial is deterministic — the same prefix,
-    # candidate, judge, pieces, toolchain, and imported artifacts give the same verdict and the same
-    # body on any machine — so a chair may answer for the judge from its charges, and what the judge
-    # judges is charged back. the compiler keeps nothing: with CRAWL_CHAIR unset it runs exactly as
-    # before, and the artifact must be byte-identical either way (counter's pin is the check). the
-    # fingerprint of a trial is the prefix text with everything the verdict stands on
-    chair = os.environ.get('CRAWL_CHAIR')
-    chair_name = os.environ.get('CRAWL_CHAIR_NAME', 'bench')
-    import hashlib
-    def sha(b): return hashlib.sha256(b if isinstance(b, bytes) else b.encode()).hexdigest()[:32]
-    env_fp = ''
-    if chair:
-        parts = [open(f, 'rb').read() for f in ('bin/judge.lean', 'bin/Pieces.lean', 'lean-toolchain', 'lake-manifest.json')]
-        for shp in sorted(set(scope_files) - {germ_path}): parts.append(open(shp, 'rb').read())
-        env_fp = sha(b'\0'.join(parts))
-        def chair_sql(sql, stdin=None):
-            r = subprocess.run(['psql', '-h', os.environ.get('PGSOCK', '/tmp'), '-p', os.environ.get('PGPORT', '5432'), '-U', os.environ.get('PGUSER', os.environ.get('USER', '')), '-d', chair, '-q', '-X', '--csv', '-t', '-v', 'ON_ERROR_STOP=1', '-c', sql], capture_output=True, text=True, input=stdin, env=dict(os.environ, PATH='/opt/homebrew/opt/postgresql@17/bin:' + os.environ.get('PATH', '')))
-            if r.returncode != 0: raise SystemExit('crawl: the chair did not answer:\n' + r.stderr[-1500:])
-            return r.stdout
-        chair_id = chair_sql(f"SELECT counter.who('{chair_name}')").strip()
-        if not chair_id: raise SystemExit(f'crawl: no chair named {chair_name} at {chair}')
 
     def judge(prefix_lines, cands):
         """cands: list of (n, k). every candidate is elaborated in Lean against the
@@ -655,7 +690,7 @@ if primings_path:
         # are recorded, so a regrown body is already exactly the citations that closed it; and a
         # search against the FINISHED module can see theorems seated in later rounds, which the
         # derived order cannot carry)
-        print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged' + (f', {judge.answered} answered by the chair' if chair else ''))
+        print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged' + (f', {judge.answered} answered by the chair; {chair_read.answered} of 3 readings answered' if chair else ''))
         if derived_mode:
             hand_regrown = [n for n in regrown_by if not is_vac[n]]
             print(f'the exemplars: {len(set(regrown_by.values()))} pieces seated bodies; {len(hand_regrown)} hand bodies regrown by another body\'s shape: {" ".join(hand_regrown)}')
@@ -945,6 +980,47 @@ print("  a hand body sharing a shape with a regrown one is a piece that exists a
   chart) shift; exec "$ROOT/bin/.chart" "$@" ;;
   schema) shift; exec "$ROOT/bin/.schema" "$@" ;;
   treaty) shift; exec "$ROOT/bin/.treaty" "$@" ;;
+  pin)
+    # the artifacts by fingerprint; with a chair, each against its last pin. anchor the end so the
+    # means can float: a change that keeps every fingerprint is unheard
+    shift; setpin=0; [ "${1:-}" = --set ] && { setpin=1; shift; }
+    if [ $# -eq 0 ]; then
+      set -- $(grep -E '^defaultTargets' lakefile.toml | grep -oE '"[A-Za-z]+"' | tr -d '"' | sed 's|^|grown/|; s|$|.lean|') grown/assays/*.lean
+    fi
+    export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
+    moved=0
+    for f in "$@"; do
+      [ -f "$f" ] || continue
+      fp="$(shasum -a 256 "$f" | cut -c1-16)"
+      if [ -n "${CRAWL_CHAIR:-}" ]; then
+        chair_q() { psql -h "${PGSOCK:-/tmp}" -p "${PGPORT:-5432}" -U "${PGUSER:-$USER}" -d "$CRAWL_CHAIR" -q -X -tA -c "$1"; }
+        last="$(chair_q "SELECT fp FROM counter.pin WHERE path = '../foam/$f' ORDER BY id DESC LIMIT 1")"
+        if [ -z "$last" ]; then verdict="unpinned"; elif [ "$last" = "$fp" ]; then verdict="identical"; else verdict="MOVED from $last"; moved=1; fi
+        [ "$setpin" = 1 ] && { chair_q "INSERT INTO counter.pin (observer, path, fp) VALUES (counter.who('${CRAWL_CHAIR_NAME:-bench}'), '../foam/$f', '$fp')" >/dev/null; verdict="$verdict, pinned"; }
+        echo "  $f $fp — $verdict"
+      else
+        echo "  $f $fp"
+      fi
+    done
+    exit $moved ;;
+  countersign)
+    # the whole house, in one verb: every germ its own settle, the treaty assays grown, lake build,
+    # the gate, the book — the fourth scratch script at this rub, made a verb
+    shift; status=0
+    for g in $(grep -E '^defaultTargets' lakefile.toml | grep -oE '"[A-Za-z]+"' | tr -d '"'); do
+      echo "=== CHECK $g $(date +%H:%M)"
+      "$0" grow --check "germ/$g.lean" 2>&1 | grep -E "^the drain|own settle|the tamper|silent and green|identical|rror|REFUSED|settle"
+      rc=${PIPESTATUS[0]}; echo "exit $rc"; [ "$rc" = 0 ] || status=1
+    done
+    for f in assays/*.lean; do
+      grep -q '^namespace .*Treaty' "$f" || continue
+      echo "=== TREATY $f $(date +%H:%M)"; "$0" grow "$f" 2>&1 | grep -E "^the drain|^the bodies|silent|rror|REFUSED"; rc=${PIPESTATUS[0]}; echo "exit $rc"; [ "$rc" = 0 ] || status=1
+    done
+    echo "=== BUILD"; lake build 2>&1 | tail -1; rc=$?; [ "$rc" = 0 ] || status=1
+    echo "=== GATE"; "$0" gate 2>&1 | tail -3; rc=$?; [ "$rc" = 0 ] || status=1
+    echo "=== PIN"; "$0" pin; [ $? = 0 ] || echo "  (a moved pin is a report, not a red: pin --set to anchor the new end)"
+    echo "=== BOOK"; "$0" book 2>&1 | head -6
+    echo "=== DONE $(date +%H:%M) status $status"; exit $status ;;
   page) shift; exec "$ROOT/bin/.page" "$@" ;;
   *) usage ;;
 esac
