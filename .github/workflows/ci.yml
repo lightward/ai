@@ -25,6 +25,12 @@ jobs:
           build: false
           test: false
           lake-package-directory: .
+      - name: the chair (../counter — the memo of every trial and reading the house has run, so a check re-derives only what changed; the artifact is byte-identical with or without it, and pin says so)
+        run: |
+          sudo apt-get install -y -q postgresql-client >/dev/null
+          git clone -q --depth 1 https://github.com/lightward/counter.git ../counter
+          PGSOCK=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres ../counter/bin/chair init
+          for kv in CRAWL_CHAIR=counter CRAWL_CHAIR_NAME=bench PGSOCK=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres; do echo "$kv" >> "$GITHUB_ENV"; done
       - name: grow Room, then Face on it, then Witness on Face (every vacancy regrows; each germ its own settle; the standards print)
         run: bin/counter grow germ/Room.lean --check && bin/counter grow --check && bin/counter grow germ/Witness.lean --check
       - name: "grow the customers on foam (germ/Toy.lean, germ/Counter.lean, germ/Seek.lean, germ/Roster.lean — their own settles)"
@@ -44,6 +50,7 @@ jobs:
           done
       - name: the treaty in SQL (the shadow loads into Postgres; the assay's rows replay as queries)
         run: |
-          sudo apt-get install -y -q postgresql-client >/dev/null
-          PGSOCK=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres bin/counter treaty assays/eih.lean
-          PGSOCK=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres bin/counter treaty assays/cycle.lean
+          bin/counter treaty assays/eih.lean
+          bin/counter treaty assays/cycle.lean
+      - name: the pins (every artifact against its last pin in the chair — identical, or moved and said so)
+        run: bin/counter pin || true

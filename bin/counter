@@ -690,7 +690,7 @@ if primings_path:
         # are recorded, so a regrown body is already exactly the citations that closed it; and a
         # search against the FINISHED module can see theorems seated in later rounds, which the
         # derived order cannot carry)
-        print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged' + (f', {judge.answered} answered by the chair; {chair_read.answered} of 3 readings answered' if chair else ''))
+        print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged' + (f', {judge.answered} answered by the chair; {chair_read.answered} readings answered' if chair else ''))
         if derived_mode:
             hand_regrown = [n for n in regrown_by if not is_vac[n]]
             print(f'the exemplars: {len(set(regrown_by.values()))} pieces seated bodies; {len(hand_regrown)} hand bodies regrown by another body\'s shape: {" ".join(hand_regrown)}')
