@@ -211,7 +211,11 @@ if chair:
     for _m in IMPORTS: _walk(_m)
     env_fp = sha(b'\0'.join(_parts))
     def chair_sql(sql, stdin=None):
-        r = subprocess.run(['psql', '-h', os.environ.get('PGSOCK', '/tmp'), '-p', os.environ.get('PGPORT', '5432'), '-U', os.environ.get('PGUSER', os.environ.get('USER', '')), '-d', chair, '-q', '-X', '--csv', '-t', '-v', 'ON_ERROR_STOP=1', '-c', sql], capture_output=True, text=True, input=stdin, env=dict(os.environ, PATH='/opt/homebrew/opt/postgresql@17/bin:' + os.environ.get('PATH', '')))
+        # a query goes over stdin (a round's fingerprints outgrow an argument list on Linux); a COPY
+        # keeps its statement on the command line and its rows on stdin
+        base = ['psql', '-h', os.environ.get('PGSOCK', '/tmp'), '-p', os.environ.get('PGPORT', '5432'), '-U', os.environ.get('PGUSER', os.environ.get('USER', '')), '-d', chair, '-q', '-X', '--csv', '-t', '-v', 'ON_ERROR_STOP=1']
+        args, inp = (base + ['-c', sql], stdin) if stdin is not None else (base, sql)
+        r = subprocess.run(args, capture_output=True, text=True, input=inp, env=dict(os.environ, PATH='/opt/homebrew/opt/postgresql@17/bin:' + os.environ.get('PATH', '')))
         if r.returncode != 0: raise SystemExit('crawl: the chair did not answer:\n' + r.stderr[-1500:])
         return r.stdout
     chair_id = chair_sql(f"SELECT counter.who('{chair_name}')").strip()
