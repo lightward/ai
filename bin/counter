@@ -903,9 +903,31 @@ EOF
   # the report mirrors the whole verdict: the gate and the treaty vectors are said here, after the
   # python half's tee has closed, so they are appended by hand or the page reads an empty treaty
   say() { printf '%s\n' "$*"; if [ -n "$report" ]; then printf '%s\n' "$*" >> "$report"; fi; }
+  # an elaboration is deterministic too: the chair (CRAWL_CHAIR) answers for `lake env lean <file>`
+  # by the fingerprint of the file, the toolchain, the manifest, and every grown module it imports,
+  # transitively; else the file is elaborated and the answer charged as a reading of kind elab.
+  # prints the output; returns the exit code
+  chair_elab() {
+    local f="$1" fp body rc out_
+    if [ -n "${CRAWL_CHAIR:-}" ]; then
+      local -a seen=(); local closure=""
+      grown_closure() { local m; for m in "$@"; do case " ${seen[*]:-} " in *" $m "*) continue ;; esac; seen+=("$m"); [ -f "grown/$m.lean" ] || continue; grown_closure $(grep -E '^import ' "grown/$m.lean" | awk '{print $2}'); closure="$closure grown/$m.lean"; done; }
+      grown_closure $(grep -E '^import ' "$f" | awk '{print $2}')
+      fp="$( { echo elab; cat "$f" lean-toolchain lake-manifest.json $closure; } | shasum -a 256 | cut -c1-32)"
+      export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
+      body="$(psql -h "${PGSOCK:-/tmp}" -p "${PGPORT:-5432}" -U "${PGUSER:-$USER}" -d "$CRAWL_CHAIR" -q -X -tA -c "SELECT body FROM counter.reading WHERE fp = '$fp' ORDER BY id DESC LIMIT 1")"
+      if [ -n "$body" ]; then printf '%s\n' "$body" | sed 1d; return "$(printf '%s\n' "$body" | head -1)"; fi
+      out_="$(lake env lean "$f" 2>&1)"; rc=$?
+      printf '%s\n%s' "$rc" "$out_" | psql -h "${PGSOCK:-/tmp}" -p "${PGPORT:-5432}" -U "${PGUSER:-$USER}" -d "$CRAWL_CHAIR" -q -X -c "COPY counter.reading (observer, kind, fp, body) FROM STDIN (FORMAT text)" 2>/dev/null <<EOF_
+$(psql -h "${PGSOCK:-/tmp}" -p "${PGPORT:-5432}" -U "${PGUSER:-$USER}" -d "$CRAWL_CHAIR" -q -X -tA -c "SELECT counter.who('${CRAWL_CHAIR_NAME:-bench}')")	elab	$fp	$(printf '%s\n%s' "$rc" "$out_" | sed 's/\\/\\\\/g' | awk 'BEGIN{ORS=""} NR>1{print "\\n"} {print}')
+EOF_
+      printf '%s' "$out_"; return $rc
+    fi
+    lake env lean "$f" 2>&1
+  }
   say "the gate on the regrown trail:"
   local gate
-  gate="$(lake env lean "$out" 2>&1)"
+  gate="$(chair_elab "$out")"
   if [ -n "$gate" ]; then
     say "$(echo "$gate" | head -20)"
     say "crawl: the regrown trail did not elaborate silently"
@@ -928,7 +950,7 @@ EOF
     fi
     probe="$(mktemp /tmp/crawl-assay.XXXXXX).lean"
     { grep -E '^import ' "$src" | grep -vE "^import ${name}\$"; cat "$out"; echo; grep -vE '^import ' "$src"; } > "$probe"
-    if lake env lean "$probe" >/dev/null 2>&1; then say "  $f: identical"
+    if chair_elab "$probe" >/dev/null 2>&1; then say "  $f: identical"
     else say "  $f: PARTS"; rm -f "$probe"; exit 1; fi
     rm -f "$probe"
   done

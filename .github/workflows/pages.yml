@@ -21,6 +21,15 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
@@ -28,6 +37,12 @@ jobs:
           build: false
           test: false
           lake-package-directory: .
+      - name: the chair (../counter — the memo of every trial and reading, so the grow re-derives only what changed)
+        run: |
+          sudo apt-get install -y -q postgresql-client >/dev/null
+          git clone -q --depth 1 https://github.com/lightward/counter.git ../counter
+          PGSOCK=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres ../counter/bin/chair init
+          for kv in CRAWL_CHAIR=counter CRAWL_CHAIR_NAME=bench PGSOCK=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres; do echo "$kv" >> "$GITHUB_ENV"; done
       - name: grow foam and its customers
         run: bin/counter grow germ/Room.lean && bin/counter grow && bin/counter grow germ/Witness.lean && bin/counter grow germ/Toy.lean && bin/counter grow germ/Counter.lean && bin/counter grow germ/Seek.lean && bin/counter grow germ/Roster.lean
       - name: build the grown modules
