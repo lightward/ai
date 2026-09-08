@@ -98,8 +98,8 @@ src = open('bin/counter').read()
 disp = src[src.index('case "${1:-}" in'):src.index('\nesac')]
 verbs = [m.group(1) for m in re.finditer(r'^  ([a-z]+)\)', disp, re.M)]
 sites = [('ci', '.github/workflows/ci.yml'), ('pages', '.github/workflows/pages.yml'),
-         ('README', 'README.md'), ('CLAUDE.md', 'CLAUDE.md'), ('page', 'bin/.page'),
-         ('treaty', 'bin/.treaty'), ('schema', 'bin/.schema'), ('chart', 'bin/.chart'), ('book', 'bin/.book'),
+         ('README', 'README.md'), ('CLAUDE.md', 'CLAUDE.md'), ('page', 'bin/page.sh'),
+         ('treaty', 'bin/treaty.sh'), ('schema', 'bin/schema.sh'), ('chart', 'bin/chart.sh'), ('book', 'bin/book.sh'),
          ('counter', 'bin/counter')]
 texts = {}
 for label, path in sites:

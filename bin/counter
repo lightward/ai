@@ -699,7 +699,15 @@ if primings_path:
         # are recorded, so a regrown body is already exactly the citations that closed it; and a
         # search against the FINISHED module can see theorems seated in later rounds, which the
         # derived order cannot carry)
-        print(f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged' + (f', {judge.answered} answered by the chair; {chair_read.answered} readings answered' if chair else ''))
+        drain_line = f'the drain, grown: {len(rounds)} rounds — ' + ' '.join(str(c) for c in rounds) + f'; {tried} candidates judged' + (f', {judge.answered} answered by the chair; {chair_read.answered} readings answered' if chair else '')
+        print(drain_line)
+        if chair:
+            # the report carries its own baseline: the last drain of this germ, as the chair heard it
+            import csv, io
+            prev = chair_sql(f"SELECT body FROM counter.reading WHERE kind = 'drain' AND fp = '{sha('drain ' + germ_path)}' ORDER BY id DESC LIMIT 1")
+            for (b,) in csv.reader(io.StringIO(prev)): print(f'the drain, last time: {b}'); break
+            buf = io.StringIO(); w = csv.writer(buf, quoting=csv.QUOTE_ALL); w.writerow([chair_id, 'drain', sha('drain ' + germ_path), drain_line[len('the drain, grown: '):]])
+            chair_sql('COPY counter.reading (observer, kind, fp, body) FROM STDIN CSV', buf.getvalue())
         if derived_mode:
             hand_regrown = [n for n in regrown_by if not is_vac[n]]
             print(f'the exemplars: {len(set(regrown_by.values()))} pieces seated bodies; {len(hand_regrown)} hand bodies regrown by another body\'s shape: {" ".join(hand_regrown)}')
@@ -983,7 +991,7 @@ case "${1:-}" in
       CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear "$@"
     fi ;;
   probe) shift; CRAWL_GERM=1 CRAWL_PRIMINGS=1 regrow_ear --probe "$2" "$1" ;;
-  book) shift; exec "$ROOT/bin/.book" "$@" ;;
+  book) shift; exec "$ROOT/bin/book.sh" "$@" ;;
   shapes)
     shift
     f="${1:?a grown module: grown/Room.lean}"
@@ -1008,9 +1016,9 @@ print("  a hand body sharing a shape with a regrown one is a piece that exists a
     fi
     lake build Counter >/dev/null 2>&1 || { echo "the gate cannot open: Counter (the species it is drawn from) does not build"; exit 1; }
     exec lake env lean --run "$ROOT/bin/gate.lean" "$@" ;;
-  chart) shift; exec "$ROOT/bin/.chart" "$@" ;;
-  schema) shift; exec "$ROOT/bin/.schema" "$@" ;;
-  treaty) shift; exec "$ROOT/bin/.treaty" "$@" ;;
+  chart) shift; exec "$ROOT/bin/chart.sh" "$@" ;;
+  schema) shift; exec "$ROOT/bin/schema.sh" "$@" ;;
+  treaty) shift; exec "$ROOT/bin/treaty.sh" "$@" ;;
   pin)
     # the artifacts by fingerprint; with a chair, each against its last pin. anchor the end so the
     # means can float: a change that keeps every fingerprint is unheard
@@ -1052,6 +1060,6 @@ print("  a hand body sharing a shape with a regrown one is a piece that exists a
     echo "=== PIN"; "$0" pin; [ $? = 0 ] || echo "  (a moved pin is a report, not a red: pin --set to anchor the new end)"
     echo "=== BOOK"; "$0" book 2>&1 | head -6
     echo "=== DONE $(date +%H:%M) status $status"; exit $status ;;
-  page) shift; exec "$ROOT/bin/.page" "$@" ;;
+  page) shift; exec "$ROOT/bin/page.sh" "$@" ;;
   *) usage ;;
 esac
