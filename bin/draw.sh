@@ -86,6 +86,10 @@ if clerks:
         what = expr.replace('$0', 'the argument').replace('row.', '')
         m = re.match(r'^SET (\w+) = ARRAY\(SELECT \(CASE WHEN (.+) THEN (\w+)\(x(?:, [^)]*)?\) ELSE x END\) FROM unnest\((\w+)\)', what)
         if m: what = f'run `{m.group(3)}` on each of {m.group(4)} where {re.sub(r"\(SELECT (\w+) FROM \w+ WHERE id = x\)", lambda k: "its " + k.group(1), m.group(2)).replace("$1", "the argument").strip("()")}'
+        m = re.match(r'^FOLD\[(\w+)\]\(row; the argument\)$', what)
+        if m: what = f'run `{m.group(1)}` for each of the argument, in order'
+        m = re.match(r'^SET (\w+) = ARRAY\(SELECT (\w+)\(x\) FROM unnest\((\w+)\)', what)
+        if m: what = f'run `{m.group(2)}` on each of {m.group(3)}'
         if '⟨unread' in what: what = 'beyond the drawer\'s fragment'
         out.append(f'| `{name}` | {over} | `{what}` | ' + ', '.join(f'`{t}`' for t in desc if t and not t.startswith('(')) + ' |')
     out.append('')
