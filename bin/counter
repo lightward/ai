@@ -46,6 +46,9 @@
 #     the house gate, drawn from the compiler's own species (Counter.gate): each artifact elaborated
 #     whole, every theorem's receipt read by the kernel, the verdict Counter.conductive on that
 #     shadow — the same def the assay's rows run. default: every grown module and grown assay
+#   bin/counter draw grown/assays/<arc>.lean
+#     the assay as the grid its makers would draw: seats down, probes across, a mark where a seat
+#     hears, the walls beside each seat as the theorems that cite it, the doors below. markdown
 #   bin/counter pin [--set] [grown/*.lean]
 #     the artifacts by fingerprint. with a chair (CRAWL_CHAIR), each against its last pin: identical
 #     or moved; --set pins them. anchor the end so the means can float
@@ -1017,6 +1020,7 @@ print("  a hand body sharing a shape with a regrown one is a piece that exists a
     lake build Counter >/dev/null 2>&1 || { echo "the gate cannot open: Counter (the species it is drawn from) does not build"; exit 1; }
     exec lake env lean --run "$ROOT/bin/gate.lean" "$@" ;;
   chart) shift; exec "$ROOT/bin/chart.sh" "$@" ;;
+  draw) shift; exec "$ROOT/bin/draw.sh" "$@" ;;
   schema) shift; exec "$ROOT/bin/schema.sh" "$@" ;;
   treaty) shift; exec "$ROOT/bin/treaty.sh" "$@" ;;
   pin)
