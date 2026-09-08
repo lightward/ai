@@ -636,8 +636,10 @@ if primings_path:
             for n in seated_order:
                 prefix_lines.append(seated_text[n]); prefix_lines.append('')
             cands = [(n, k) for n in ready_hand + pending_vac for k in range(len(primings_of[n]))]
+            answered_before = judge.answered
             failed = judge(prefix_lines, cands)
             tried += judge.judged
+            answered_round = judge.answered - answered_before
             bodies = judge.bodies
             best = {}
             for i, (n, k) in enumerate(cands):
@@ -667,7 +669,10 @@ if primings_path:
             pending_vac = [n for n in pending_vac if n not in seated_set]
             rounds.append(len(seated_now))
             detail = ' '.join(f'{nm} {c}' for nm, c in per_round.items() if c)
-            print(f'  round {r}: seated {len(seated_now)} — regrown {len(seated_now) - carried_now} ({detail}), carried {carried_now}; {len(pending_vac)} vacancies still pending')
+            # with a chair, the round says how much of it was home: the first round the chair could
+            # not answer is the round a change landed in
+            home = (f'; home {answered_round} of {answered_round + judge.judged}' if chair else '')
+            print(f'  round {r}: seated {len(seated_now)} — regrown {len(seated_now) - carried_now} ({detail}), carried {carried_now}; {len(pending_vac)} vacancies still pending{home}')
             if not seated_now:
                 print(f'GROW REFUSED at round {r}: {len(pending_vac)} vacancies no piece regrows — the germ names them:')
                 for n in pending_vac:
