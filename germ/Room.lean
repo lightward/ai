@@ -107,6 +107,10 @@ def lacking {A : Type u} (beq : A → A → Bool) (room : List A) : List A → N
 def everyone (beq : Nat → Nat → Bool) (members confirmed : List Nat) : Bool :=
   backed beq confirmed members
 
+def longest {A : Type u} : List (List A) → Nat
+  | [] => 0
+  | c :: cs => cond (Nat.ble c.length (longest cs)) (longest cs) c.length
+
 theorem the_carriers_compose {S : Type u} {T : Type u'} {U : Type u''} {P : Type v} {A : Type w}
     (f : S → P → A) (g : T → P → A) (k : U → P → A) (h : S → T) (h' : T → U)
     (c1 : carries f g h) (c2 : carries g k h') :
@@ -620,6 +624,12 @@ theorem an_enrolled_name_stays_enrolled_down_the_hall {A : Type u} (beq : A → 
           rw [hy] at h1
           exact an_enrolled_name_stays_enrolled_down_the_hall beq l n room h1
 
+theorem ble_flips : ∀ a b : Nat, Nat.ble a b = false → Nat.ble b a = true
+  | 0, 0, h => nomatch h
+  | 0, _ + 1, h => nomatch h
+  | _ + 1, 0, _ => rfl
+  | a + 1, b + 1, h => ble_flips a b h
+
 theorem a_merging_map_has_no_section {S : Type u} {T : Type u'} (h : S → T)
     {s s' : S} (hs : s ≠ s') (hm : h s = h s')
     (r : T → S) (hr : ∀ x, r (h x) = x) : False := sorry
@@ -997,6 +1007,23 @@ theorem the_backing_survives_the_hall {A : Type u} (beq : A → A → Bool) (roo
           rw [an_enrolled_name_stays_enrolled_down_the_hall beq l n room he,
             the_backing_survives_the_hall beq room l needs h1]
           exact rfl
+
+theorem the_longest_reaches_each {A : Type u} (c : List A) :
+    ∀ l : List (List A), c ∈ l → Nat.ble c.length (longest l) = true
+  | [], h => nomatch h
+  | d :: cs, h => by
+      cases h with
+      | head =>
+          show Nat.ble c.length (cond (Nat.ble c.length (longest cs)) (longest cs) c.length) = true
+          cases hb : Nat.ble c.length (longest cs) with
+          | true => exact hb
+          | false => exact ble_refl c.length
+      | tail _ h' =>
+          have ih := the_longest_reaches_each c cs h'
+          show Nat.ble c.length (cond (Nat.ble d.length (longest cs)) (longest cs) d.length) = true
+          cases hb : Nat.ble d.length (longest cs) with
+          | true => exact ih
+          | false => exact ble_trans c.length (longest cs) d.length ih (ble_flips d.length (longest cs) hb)
 
 theorem the_join_counts_evenly {A : Type u} {B : Type v} (f : A → List B) (n : Nat) :
     ∀ as : List A, (∀ a, a ∈ as → (f a).length = n) →

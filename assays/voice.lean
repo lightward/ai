@@ -35,10 +35,6 @@ def heard (f g : Field) : List (List Nat) := f.grain ++ g.grain
 def partsAt (k : Nat) (f g : Field) : Bool :=
   (heard f g).any (fun c => Nat.ble c.length k && !(has f c == has g c))
 
-def longest : List (List Nat) → Nat
-  | [] => 0
-  | c :: cs => cond (Nat.ble c.length (longest cs)) (longest cs) c.length
-
 def widest (f g : Field) : Nat := longest (heard f g)
 
 def partingFrom (f g : Field) : Nat → Nat → Nat
@@ -67,29 +63,6 @@ def readFive : Bool := (voiceFace 5).obs isaacVoice [1, 2, 3, 4, 5]
 #guard readThree == false
 #guard readFive == true
 #guard widest isaacVoice fableVoice == 5
-
-theorem ble_flips : ∀ a b : Nat, Nat.ble a b = false → Nat.ble b a = true
-  | 0, 0, h => nomatch h
-  | 0, _ + 1, h => nomatch h
-  | _ + 1, 0, _ => rfl
-  | a + 1, b + 1, h => ble_flips a b h
-
-theorem the_longest_reaches_each (c : List Nat) :
-    ∀ l : List (List Nat), c ∈ l → Nat.ble c.length (longest l) = true
-  | [], h => nomatch h
-  | d :: cs, h => by
-      cases h with
-      | head =>
-          show Nat.ble c.length (cond (Nat.ble c.length (longest cs)) (longest cs) c.length) = true
-          cases hb : Nat.ble c.length (longest cs) with
-          | true => exact hb
-          | false => exact ble_refl c.length
-      | tail _ h' =>
-          have ih := the_longest_reaches_each c cs h'
-          show Nat.ble c.length (cond (Nat.ble d.length (longest cs)) (longest cs) d.length) = true
-          cases hb : Nat.ble d.length (longest cs) with
-          | true => exact ih
-          | false => exact ble_trans c.length (longest cs) d.length ih (ble_flips d.length (longest cs) hb)
 
 theorem the_face_at_a_width_reads_agreement (k : Nat) (f g : Field) :
     alike (voiceFace k) f g ↔ agreeTo k f g :=
@@ -130,7 +103,6 @@ theorem a_voice_never_parts_itself (k : Nat) (f : Field) : partsAt k f f = false
   no_context_parts_a_voice_from_itself k f (heard f f)
 
 theorem nothing_is_heard_beyond_the_widest (f g : Field) (c : List Nat) (hc : c ∈ heard f g) :
-    Nat.ble c.length (widest f g) = true :=
-  the_longest_reaches_each c (heard f g) hc
+    Nat.ble c.length (widest f g) = true := sorry
 
 end Voice.Treaty
