@@ -1,19 +1,17 @@
 # EVERYONE IS HERE, a slice, in its maintainer's sentences (2026-09-08). bin/counter seat assays/sheet.feature
 model Sheet
 
-a Role is one of: couple, vendor, venue, party
+a Role is one of: couple, vendor, helper
 a Page is one of: floorPlan, guestList, samePage, invoices, budget, guests, site, team, dayOf, tasks
 a Ask is one of: guests, sheet, timeline, bachelor
 
 the couple sees: every Page
 the vendor sees: floorPlan, samePage, invoices, team, dayOf, tasks
-the venue sees: floorPlan, samePage, invoices, team, dayOf, tasks
-the party sees: floorPlan, guestList, samePage, team, dayOf, tasks
+the helper sees: floorPlan, guestList, samePage, team, dayOf, tasks
 
 the couple edits: every Page
 the vendor edits: invoices, dayOf, tasks
-the venue edits: floorPlan, invoices, dayOf, tasks
-the party edits: floorPlan, guestList, dayOf, tasks
+the helper edits: floorPlan, guestList, dayOf, tasks
 
 a Room has: guests (a list of numbers), delivered (a list of numbers), timeline (a list of numbers), bachelor (a list of numbers)
 the room reads: guests as guests, sheet as delivered, timeline as timeline, bachelor as bachelor

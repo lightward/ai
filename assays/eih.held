@@ -33,3 +33,8 @@
 -- word — "planner is vendor, or planner is couple." held: a planner is not a Role; a planner is a vendor
 -- or the couple. waits on a carrier (the Role enum, and Member.kind, which may be where it already
 -- lives) and on Abe's word for which one, when. the feature (assays/sheet.feature) follows him now.
+-- the same round, his second word: "venue is a vendor. couple / vendor / helper (mother in law, wedding
+-- party member, etc)." held: the venue is not a Role, it is a vendor; and the Role called party is a
+-- helper, wider than the wedding party — a mother-in-law is one. so the Roles are three: couple, vendor,
+-- helper. waits on the same carrier (the Role enum) and on the rules that hand each Role its pages, which
+-- the treaty states for five and he states for three. the feature follows him.

@@ -5,14 +5,14 @@ set_option autoImplicit false
 namespace Sheet.Treaty
 
 inductive Role where
-  | couple | vendor | venue | party
+  | couple | vendor | helper
 
 def Role.code : Role → Nat
-  | .couple => 0 | .vendor => 1 | .venue => 2 | .party => 3
+  | .couple => 0 | .vendor => 1 | .helper => 2
 
 def Role.beq (a b : Role) : Bool := Nat.beq a.code b.code
 
-def roles : List Role := [.couple, .vendor, .venue, .party]
+def roles : List Role := [.couple, .vendor, .helper]
 
 inductive Page where
   | floorPlan | guestList | samePage | invoices | budget | guests | site | team | dayOf | tasks
@@ -51,16 +51,14 @@ def roomFace : Face := ⟨Room, Ask, List Nat, readRoom⟩
 def seen : Role → List Page
   | .couple => pages
   | .vendor => [.floorPlan, .samePage, .invoices, .team, .dayOf, .tasks]
-  | .venue => [.floorPlan, .samePage, .invoices, .team, .dayOf, .tasks]
-  | .party => [.floorPlan, .guestList, .samePage, .team, .dayOf, .tasks]
+  | .helper => [.floorPlan, .guestList, .samePage, .team, .dayOf, .tasks]
 
 def sees (ρ : Role) (p : Page) : Bool := enrolled Page.beq (seen ρ) p
 
 def edited : Role → List Page
   | .couple => pages
   | .vendor => [.invoices, .dayOf, .tasks]
-  | .venue => [.floorPlan, .invoices, .dayOf, .tasks]
-  | .party => [.floorPlan, .guestList, .dayOf, .tasks]
+  | .helper => [.floorPlan, .guestList, .dayOf, .tasks]
 
 def edits (ρ : Role) (p : Page) : Bool := enrolled Page.beq (edited ρ) p
 
