@@ -27,3 +27,9 @@
 -- the vestibule is empty (2026-09-04, isaac's move): the business, parked by Abe until a studio arrives,
 -- cleared — if it is needed it comes back by being asked for; the repo does not remember on his behalf.
 -- a held statement here is a disagreement between the customer's word and the treaty; today there is none.
+
+-- the eighth round (2026-09-08, Abe between turns at league night, through isaac): the first one-liner
+-- of the feature file, "a Role is one of: couple, planner, vendor, venue, party", refused at the first
+-- word — "planner is vendor, or planner is couple." held: a planner is not a Role; a planner is a vendor
+-- or the couple. waits on a carrier (the Role enum, and Member.kind, which may be where it already
+-- lives) and on Abe's word for which one, when. the feature (assays/sheet.feature) follows him now.
