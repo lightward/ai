@@ -2,7 +2,7 @@ import Witness
 open Room Face Witness
 set_option autoImplicit false
 
-namespace Sheet.Treaty
+namespace Everyone.Treaty
 
 inductive Role where
   | couple | helper
@@ -110,4 +110,4 @@ theorem withGuests_changes_nothing_the_caterer_hears (r : Room) (x : List Nat) :
 theorem withGuests_changes_nothing_the_bestMan_hears (r : Room) (x : List Nat) :
     reads roomFace bestManSeat (withGuests r x) = reads roomFace bestManSeat r := sorry
 
-end Sheet.Treaty
+end Everyone.Treaty

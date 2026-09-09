@@ -1,5 +1,5 @@
-# EVERYONE IS HERE, a slice, in its maintainer's sentences (2026-09-08). bin/counter seat assays/sheet.feature
-model Sheet
+# EVERYONE IS HERE, in its maintainer's sentences, one line at a time (2026-09-08, league night). bin/counter seat assays/everyone.feature
+model Everyone
 
 a vendor is a helper who is paid
 a Role is one of: couple, helper
