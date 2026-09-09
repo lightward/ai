@@ -1,8 +1,8 @@
 # EVERYONE IS HERE, a slice, in its maintainer's sentences (2026-09-08). bin/counter seat assays/sheet.feature
 model Sheet
 
-a Role is one of: couple, vendor, helper
 a vendor is a helper who is paid
+a Role is one of: couple, helper
 a Page is one of: floorPlan, guestList, samePage, invoices, budget, guests, site, team, dayOf, tasks
 a Ask is one of: guests, sheet, timeline, bachelor
 

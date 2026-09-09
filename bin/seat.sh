@@ -27,7 +27,7 @@ import re, sys
 lines = [l.rstrip() for l in open(sys.argv[1]) if l.strip() and not l.lstrip().startswith('#')]
 name = 'Sheet'
 enums, structs, faces, rules, seats, doors, walls, casts, thens, whens = {}, {}, {}, {}, {}, [], [], [], [], []
-aliases, truths, ruleThens, everyThens = {}, set(), [], []
+aliases, truths, ruleThens, everyThens, rawRules = {}, set(), [], [], []
 def items(s): return [x.strip() for x in s.split(',') if x.strip()]
 def ident(s): return re.sub(r'\s+(\w)', lambda m: m.group(1).upper(), s.strip())   # "best man" -> bestMan
 def ty(t):
@@ -46,21 +46,13 @@ for l in lines:
         # later mention of "the vendor" reads as "a paid helper"
         aliases[m.group(1)] = (ident(m.group(2)), m.group(3))
         truths.add(m.group(3))
-        for e, cs in enums.items():
-            if ident(m.group(1)) in cs: cs.remove(ident(m.group(1)))
         continue
     m = re.match(r'^an? (\w+) has: (.+)$', l)
     if m: structs[m.group(1)] = [(ident(f.strip()), ty(t)) for f, t in re.findall(r'(\w[\w ]*?)\s*\(([^)]*)\)', m.group(2))]; continue
     m = re.match(r'^the (\w+) reads: (.+)$', l)
     if m: faces[m.group(1)] = [(ident(a), ident(b)) for a, b in re.findall(r'(\w+) as (\w+)', m.group(2))]; continue
     m = re.match(r'^(?:the|an?) ([\w ]+?) (sees|edits): (.+)$', l)
-    if m:
-        who = m.group(1).strip(); key = None
-        mm = re.match(r'^(un)?(\w+) (\w+)$', who)
-        if mm and mm.group(3) and mm.group(2) in truths: key = (ident(mm.group(3)), mm.group(1) is None)
-        elif ident(who) in aliases: key = (aliases[ident(who)][0], True)
-        else: key = (ident(who), None)
-        rules.setdefault(m.group(2), {})[key] = m.group(3).strip(); continue
+    if m: rawRules.append((m.group(1).strip(), m.group(2), m.group(3).strip())); continue
     m = re.match(r'^the ([\w ]+?) hears: (.+)$', l)
     if m: seats[ident(m.group(1))] = [ident(x) for x in items(m.group(2))]; continue
     m = re.match(r'^an? (\w+) may: (\w+) \((\w+) (becomes the argument|gets the argument first)\)$', l)
@@ -78,6 +70,17 @@ for l in lines:
     m = re.match(r'^then every (\w+) (sees|edits) (\w+)$', l)
     if m: everyThens.append((m.group(1), m.group(2), ident(m.group(3)))); continue
     sys.exit(f'seat: a line the grammar does not read: {l}')
+# the file's order is not the model's: a retired constructor leaves every enum whenever its sentence
+# came, and a phrase ("a paid helper", "the vendor") resolves against every truth and alias named
+def whoKey(who):
+    mm = re.match(r'^(un)?(\w+) (\w+)$', who)
+    if mm and mm.group(2) in truths: return (ident(mm.group(3)), mm.group(1) is None)
+    if ident(who) in aliases: return (aliases[ident(who)][0], True)
+    return (ident(who), None)
+for a in aliases:
+    for e, cs in enums.items():
+        if ident(a) in cs: cs.remove(ident(a))
+for who, verb, v in rawRules: rules.setdefault(verb, {})[whoKey(who)] = v
 out = ['import Witness', 'open Room Face Witness', 'set_option autoImplicit false', '', f'namespace {name}.Treaty', '']
 for e, cs in enums.items():
     out.append(f'inductive {e} where'); out.append('  | ' + ' | '.join(cs)); out.append('')
@@ -143,10 +146,7 @@ for seat, row, expect in thens:
     out.append(f'def {seat}In{row[0].upper() + row[1:]} : List (List Nat) := reads {room}Face {seat}Seat {row}')
     out.append(f'#guard {seat}In{row[0].upper() + row[1:]} == {expect}')
 for who, verb, page in ruleThens:
-    mm = re.match(r'^(un)?(\w+) (\w+)$', who)
-    if mm and mm.group(2) in truths: role, t = ident(mm.group(3)), ('false' if mm.group(1) else 'true')
-    elif ident(who) in aliases: role, t = aliases[ident(who)][0], 'true'
-    else: role, t = ident(who), None
+    role, tk = whoKey(who); t = None if tk is None else ('true' if tk else 'false')
     v = 'sees' if 'see' in verb else 'edits'; want = 'false' if verb.startswith('does not') else 'true'
     withTruth = any(tt is not None for _, tt in rules.get(v, {}))
     call = f'{v} .{role}' + ((f' {t}' if t is not None else ' true') if withTruth else '') + f' .{page}'
