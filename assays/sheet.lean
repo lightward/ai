@@ -5,14 +5,14 @@ set_option autoImplicit false
 namespace Sheet.Treaty
 
 inductive Role where
-  | couple | vendor | helper
+  | couple | helper
 
 def Role.code : Role → Nat
-  | .couple => 0 | .vendor => 1 | .helper => 2
+  | .couple => 0 | .helper => 1
 
 def Role.beq (a b : Role) : Bool := Nat.beq a.code b.code
 
-def roles : List Role := [.couple, .vendor, .helper]
+def roles : List Role := [.couple, .helper]
 
 inductive Page where
   | floorPlan | guestList | samePage | invoices | budget | guests | site | team | dayOf | tasks
@@ -48,19 +48,29 @@ def readRoom (r : Room) : Ask → List Nat
 
 def roomFace : Face := ⟨Room, Ask, List Nat, readRoom⟩
 
-def seen : Role → List Page
+def seenPaid : Role → List Page
   | .couple => pages
-  | .vendor => [.floorPlan, .samePage, .invoices, .team, .dayOf, .tasks]
+  | .helper => [.floorPlan, .samePage, .invoices, .team, .dayOf, .tasks]
+
+def seenUnpaid : Role → List Page
+  | .couple => pages
   | .helper => [.floorPlan, .guestList, .samePage, .team, .dayOf, .tasks]
 
-def sees (ρ : Role) (p : Page) : Bool := enrolled Page.beq (seen ρ) p
+def seen (ρ : Role) (paid : Bool) : List Page := cond paid (seenPaid ρ) (seenUnpaid ρ)
 
-def edited : Role → List Page
+def sees (ρ : Role) (paid : Bool) (p : Page) : Bool := enrolled Page.beq (seen ρ paid) p
+
+def editedPaid : Role → List Page
   | .couple => pages
-  | .vendor => [.invoices, .dayOf, .tasks]
+  | .helper => [.invoices, .dayOf, .tasks]
+
+def editedUnpaid : Role → List Page
+  | .couple => pages
   | .helper => [.floorPlan, .guestList, .dayOf, .tasks]
 
-def edits (ρ : Role) (p : Page) : Bool := enrolled Page.beq (edited ρ) p
+def edited (ρ : Role) (paid : Bool) : List Page := cond paid (editedPaid ρ) (editedUnpaid ρ)
+
+def edits (ρ : Role) (paid : Bool) (p : Page) : Bool := enrolled Page.beq (edited ρ paid) p
 
 def coupleSeat : List Ask := [.guests, .sheet, .timeline]
 
@@ -83,6 +93,9 @@ def bestManInNewBach : List (List Nat) := reads roomFace bestManSeat newBach
 #guard bestManInNewBach == [[10, 11, 12], [43]]
 def coupleInNewBach : List (List Nat) := reads roomFace coupleSeat newBach
 #guard coupleInNewBach == [[2, 3, 1], [], [10, 11, 12]]
+#guard sees .helper true .invoices == true
+#guard sees .helper false .invoices == false
+#guard sees .couple true .invoices == true
 
 theorem withBachelor_changes_nothing_the_couple_hears (r : Room) (x : List Nat) :
     reads roomFace coupleSeat (withBachelor r x) = reads roomFace coupleSeat r := sorry

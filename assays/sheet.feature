@@ -2,17 +2,17 @@
 model Sheet
 
 a Role is one of: couple, vendor, helper
-# Abe, 2026-09-08: a vendor is a helper who gets paid — held in assays/eih.held until the grammar can say it
+a vendor is a helper who is paid
 a Page is one of: floorPlan, guestList, samePage, invoices, budget, guests, site, team, dayOf, tasks
 a Ask is one of: guests, sheet, timeline, bachelor
 
 the couple sees: every Page
-the vendor sees: floorPlan, samePage, invoices, team, dayOf, tasks
-the helper sees: floorPlan, guestList, samePage, team, dayOf, tasks
+a paid helper sees: floorPlan, samePage, invoices, team, dayOf, tasks
+an unpaid helper sees: floorPlan, guestList, samePage, team, dayOf, tasks
 
 the couple edits: every Page
-the vendor edits: invoices, dayOf, tasks
-the helper edits: floorPlan, guestList, dayOf, tasks
+a paid helper edits: invoices, dayOf, tasks
+an unpaid helper edits: floorPlan, guestList, dayOf, tasks
 
 a Room has: guests (a list of numbers), delivered (a list of numbers), timeline (a list of numbers), bachelor (a list of numbers)
 the room reads: guests as guests, sheet as delivered, timeline as timeline, bachelor as bachelor
@@ -35,3 +35,8 @@ when demo withBachelor [43] is newBach
 then the caterer hears [[10, 11, 12], []] in demo
 then the best man hears [[10, 11, 12], [43]] in newBach
 then the couple hears [[2, 3, 1], [], [10, 11, 12]] in newBach
+
+# Abe, 2026-09-08, league night: thumbs up
+then a paid helper sees invoices
+then an unpaid helper does not see invoices
+then the couple sees invoices

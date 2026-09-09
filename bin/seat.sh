@@ -27,22 +27,40 @@ import re, sys
 lines = [l.rstrip() for l in open(sys.argv[1]) if l.strip() and not l.lstrip().startswith('#')]
 name = 'Sheet'
 enums, structs, faces, rules, seats, doors, walls, casts, thens, whens = {}, {}, {}, {}, {}, [], [], [], [], []
+aliases, truths, ruleThens = {}, set(), []
 def items(s): return [x.strip() for x in s.split(',') if x.strip()]
 def ident(s): return re.sub(r'\s+(\w)', lambda m: m.group(1).upper(), s.strip())   # "best man" -> bestMan
 def ty(t):
     t = t.strip().lower()
-    return {'a number': 'Nat', 'a truth': 'Bool', 'a list of numbers': 'List Nat'}.get(t, 'Nat')
+    if t in ('a number', 'a truth', 'a list of numbers'): return {'a number': 'Nat', 'a truth': 'Bool', 'a list of numbers': 'List Nat'}[t]
+    e = next((k for k in enums if t == 'a ' + k.lower()), None)
+    return e or 'Nat'
 for l in lines:
     m = re.match(r'^model (\w+)$', l)
     if m: name = m.group(1); continue
     m = re.match(r'^an? (\w+) is one of: (.+)$', l)
     if m: enums[m.group(1)] = [ident(x) for x in items(m.group(2))]; continue
+    m = re.match(r'^an? (\w+) is an? (\w+) who is (\w+)$', l)
+    if m:
+        # a vendor is a helper who is paid: the constructor retires, the truth is minted, and every
+        # later mention of "the vendor" reads as "a paid helper"
+        aliases[m.group(1)] = (ident(m.group(2)), m.group(3))
+        truths.add(m.group(3))
+        for e, cs in enums.items():
+            if ident(m.group(1)) in cs: cs.remove(ident(m.group(1)))
+        continue
     m = re.match(r'^an? (\w+) has: (.+)$', l)
     if m: structs[m.group(1)] = [(ident(f.strip()), ty(t)) for f, t in re.findall(r'(\w[\w ]*?)\s*\(([^)]*)\)', m.group(2))]; continue
     m = re.match(r'^the (\w+) reads: (.+)$', l)
     if m: faces[m.group(1)] = [(ident(a), ident(b)) for a, b in re.findall(r'(\w+) as (\w+)', m.group(2))]; continue
-    m = re.match(r'^the ([\w ]+?) (sees|edits): (.+)$', l)
-    if m: rules.setdefault(m.group(2), {})[ident(m.group(1))] = m.group(3).strip(); continue
+    m = re.match(r'^(?:the|an?) ([\w ]+?) (sees|edits): (.+)$', l)
+    if m:
+        who = m.group(1).strip(); key = None
+        mm = re.match(r'^(un)?(\w+) (\w+)$', who)
+        if mm and mm.group(3) and mm.group(2) in truths: key = (ident(mm.group(3)), mm.group(1) is None)
+        elif ident(who) in aliases: key = (aliases[ident(who)][0], True)
+        else: key = (ident(who), None)
+        rules.setdefault(m.group(2), {})[key] = m.group(3).strip(); continue
     m = re.match(r'^the ([\w ]+?) hears: (.+)$', l)
     if m: seats[ident(m.group(1))] = [ident(x) for x in items(m.group(2))]; continue
     m = re.match(r'^an? (\w+) may: (\w+) \((\w+) (becomes the argument|gets the argument first)\)$', l)
@@ -55,6 +73,8 @@ for l in lines:
     if m: whens.append((m.group(4), m.group(2), m.group(1), m.group(3))); continue
     m = re.match(r'^then the ([\w ]+?) hears (\[.*\]) in (\w+)$', l)
     if m: thens.append((ident(m.group(1)), m.group(3), m.group(2))); continue
+    m = re.match(r'^then (?:the|an?) ([\w ]+?) (does not see|sees|does not edit|edits) (\w+)$', l)
+    if m: ruleThens.append((m.group(1).strip(), m.group(2), ident(m.group(3)))); continue
     sys.exit(f'seat: a line the grammar does not read: {l}')
 out = ['import Witness', 'open Room Face Witness', 'set_option autoImplicit false', '', f'namespace {name}.Treaty', '']
 for e, cs in enums.items():
@@ -77,15 +97,27 @@ for room, arms in faces.items():
     faces[room] = (S, probe, arms)
 for verb, arms in rules.items():
     fn = {'sees': 'seen', 'edits': 'edited'}[verb]
-    roleE = next((e for e, cs in enums.items() if all(r in cs for r in arms)), None)
+    roleE = next((e for e, cs in enums.items() if all(r in cs for r, _ in arms)), None)
     pageE = next((e for e in enums if e != roleE and any(any(x in enums[e] for x in [ident(y) for y in items(v)]) or v.startswith('every') for v in arms.values())), None)
     if not (roleE and pageE): sys.exit(f'seat: {verb} names roles or pages no enum has')
-    out.append(f'def {fn} : {roleE} → List {pageE}')
-    for r in enums[roleE]:
-        v = arms.get(r, '')
-        body = f'{pageE[0].lower() + pageE[1:]}s' if v.startswith('every') else '[' + ', '.join('.' + ident(x) for x in items(v)) + ']'
-        out.append(f'  | .{r} => {body}')
-    out.append(''); out.append(f'def {verb} (ρ : {roleE}) (p : {pageE}) : Bool := enrolled {pageE}.beq ({fn} ρ) p'); out.append('')
+    withTruth = any(t is not None for _, t in arms)
+    truth = next(iter(truths)) if truths else 'paid'
+    def body(v): return f'{pageE[0].lower() + pageE[1:]}s' if v.startswith('every') else '[' + ', '.join('.' + ident(x) for x in items(v)) + ']'
+    if withTruth:
+        # one rule per side of the truth, each read by the kernel at every constructor, and the rule
+        # over both as a cond between them
+        T = truth[0].upper() + truth[1:]
+        for side, tv in ((T, True), ('Un' + truth, False)):
+            out.append(f'def {fn}{side} : {roleE} → List {pageE}')
+            for r in enums[roleE]:
+                out.append(f'  | .{r} => {body(arms[(r, None)] if (r, None) in arms else arms.get((r, tv), ""))}')
+            out.append('')
+        out.append(f'def {fn} (ρ : {roleE}) ({truth} : Bool) : List {pageE} := cond {truth} ({fn}{T} ρ) ({fn}Un{truth} ρ)'); out.append('')
+        out.append(f'def {verb} (ρ : {roleE}) ({truth} : Bool) (p : {pageE}) : Bool := enrolled {pageE}.beq ({fn} ρ {truth}) p'); out.append('')
+    else:
+        out.append(f'def {fn} : {roleE} → List {pageE}')
+        for r in enums[roleE]: out.append(f'  | .{r} => {body(arms.get((r, None), ""))}')
+        out.append(''); out.append(f'def {verb} (ρ : {roleE}) (p : {pageE}) : Bool := enrolled {pageE}.beq ({fn} ρ) p'); out.append('')
 for seat, ps in seats.items():
     probe = next((e for e, cs in enums.items() if all(p in cs for p in ps)), None)
     if not probe: sys.exit(f'seat: the {seat} hears probes no enum names')
@@ -108,6 +140,15 @@ for seat, row, expect in thens:
     room = next(r for r in faces)
     out.append(f'def {seat}In{row[0].upper() + row[1:]} : List (List Nat) := reads {room}Face {seat}Seat {row}')
     out.append(f'#guard {seat}In{row[0].upper() + row[1:]} == {expect}')
+for who, verb, page in ruleThens:
+    mm = re.match(r'^(un)?(\w+) (\w+)$', who)
+    if mm and mm.group(2) in truths: role, t = ident(mm.group(3)), ('false' if mm.group(1) else 'true')
+    elif ident(who) in aliases: role, t = aliases[ident(who)][0], 'true'
+    else: role, t = ident(who), None
+    v = 'sees' if 'see' in verb else 'edits'; want = 'false' if verb.startswith('does not') else 'true'
+    withTruth = any(tt is not None for _, tt in rules.get(v, {}))
+    call = f'{v} .{role}' + ((f' {t}' if t is not None else ' true') if withTruth else '') + f' .{page}'
+    out.append(f'#guard {call} == {want}')
 out.append('')
 for door, seat in walls:
     S = next((S for S, d, _, _ in doors if d == door), 'Room'); room = next(r for r, (s, _, _) in faces.items() if s == S)
