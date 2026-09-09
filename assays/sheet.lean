@@ -72,14 +72,14 @@ def catererSeat : List Ask := [.timeline, .sheet]
 
 def bestManSeat : List Ask := [.timeline, .bach]
 
-def withBach (r : Room) (x : List Nat) : Room := { r with bach := x }
+def withBachelor (r : Room) (x : List Nat) : Room := { r with bach := x }
 
 def withGuests (r : Room) (x : List Nat) : Room := { r with guests := x }
 
 def withTime (r : Room) (x : Nat) : Room := { r with timeline := x :: r.timeline }
 
 def demo : Room := ⟨[2, 3, 1], [], [10, 11, 12], [42]⟩
-def newBach : Room := withBach demo [43]
+def newBach : Room := withBachelor demo [43]
 
 def catererInDemo : List (List Nat) := reads roomFace catererSeat demo
 #guard catererInDemo == [[10, 11, 12], []]
@@ -88,11 +88,11 @@ def bestManInNewBach : List (List Nat) := reads roomFace bestManSeat newBach
 def coupleInNewBach : List (List Nat) := reads roomFace coupleSeat newBach
 #guard coupleInNewBach == [[2, 3, 1], [], [10, 11, 12]]
 
-theorem withBach_changes_nothing_the_couple_hears (r : Room) (x : List Nat) :
-    reads roomFace coupleSeat (withBach r x) = reads roomFace coupleSeat r := sorry
+theorem withBachelor_changes_nothing_the_couple_hears (r : Room) (x : List Nat) :
+    reads roomFace coupleSeat (withBachelor r x) = reads roomFace coupleSeat r := sorry
 
-theorem withBach_changes_nothing_the_caterer_hears (r : Room) (x : List Nat) :
-    reads roomFace catererSeat (withBach r x) = reads roomFace catererSeat r := sorry
+theorem withBachelor_changes_nothing_the_caterer_hears (r : Room) (x : List Nat) :
+    reads roomFace catererSeat (withBachelor r x) = reads roomFace catererSeat r := sorry
 
 theorem withGuests_changes_nothing_the_caterer_hears (r : Room) (x : List Nat) :
     reads roomFace catererSeat (withGuests r x) = reads roomFace catererSeat r := sorry

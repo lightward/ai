@@ -24,17 +24,17 @@ the couple hears: guests, sheet, timeline
 the caterer hears: timeline, sheet
 the best man hears: timeline, bach
 
-a Room may: withBach (bach becomes the argument)
+a Room may: withBachelor (bach becomes the argument)
 a Room may: withGuests (guests becomes the argument)
 a Room may: withTime (timeline gets the argument first)
 
-wall: withBach changes nothing the couple hears
-wall: withBach changes nothing the caterer hears
+wall: withBachelor changes nothing the couple hears
+wall: withBachelor changes nothing the caterer hears
 wall: withGuests changes nothing the caterer hears
 wall: withGuests changes nothing the best man hears
 
 given demo is a Room with guests [2, 3, 1], delivered [], timeline [10, 11, 12], bach [42]
-when demo withBach [43] is newBach
+when demo withBachelor [43] is newBach
 then the caterer hears [[10, 11, 12], []] in demo
 then the best man hears [[10, 11, 12], [43]] in newBach
 then the couple hears [[2, 3, 1], [], [10, 11, 12]] in newBach
