@@ -71,6 +71,40 @@ for name, ret, params, expr in rules:
         got = {c.strip("' ") for c in a.split(',') if c.strip()}
         out.append(f'| `{who}` | ' + ' | '.join('●' if c in got else '' for c in cols) + ' |')
     out.append('')
+# the scopes: for each grid a rule draws, the distinct patterns of who is handed a column — a scope
+# is a column's pattern, named by the rows that have it, with the columns that share it
+grids = {}
+for name, ret, params, expr in rules:
+    if len(params) != 1 or not typeOf(params[0]): continue
+    arms = re.findall(r"WHEN '(\w+)' THEN ARRAY\[([^\]]*)\]", expr)
+    if not arms: continue
+    cols = types.get(typeOf(ret.rstrip('[]')) or '') or []
+    grids[name] = {c: tuple(who for who, a in arms if c in {x.strip("' ") for x in a.split(',') if x.strip()}) for c in cols}
+# a rule split by a truth (seenPaid / seenUnpaid) is one grid whose rows are the role and the truth;
+# the scopes are read over the joined grid, where a row like "helper, paid" is a seat of its own
+stems = {}
+for name in list(grids):
+    m = re.match(r'^(\w+?)(Paid|Unpaid|Un(\w+)|([A-Z]\w+))$', name)
+    if m and m.group(1) in [n[:len(m.group(1))] for n in grids if n != name]:
+        stems.setdefault(m.group(1), []).append(name)
+for stem, names in stems.items():
+    if len(names) < 2: continue
+    joined = {}
+    for n in names:
+        tag = n[len(stem):]; tag = re.sub(r'^Un', 'not ', tag).lower()
+        for c, who in grids[n].items():
+            joined.setdefault(c, ())
+            joined[c] = joined[c] + tuple(f'{w}, {tag}' if any(w in grids[m2][c] for m2 in names) and not all(w in grids[m2][c] for m2 in names) else w for w in who)
+    for n in names: grids.pop(n)
+    grids[stem] = {c: tuple(dict.fromkeys(who)) for c, who in joined.items()}
+for name, table in grids.items():
+    pats = {}
+    for c, who in table.items(): pats.setdefault(who, []).append(c)
+    out.append(f'## the scopes of `{name}` — each pattern of who is handed a column, and the columns that share it'); out.append('')
+    out.append('| scope | columns |'); out.append('|---|---|')
+    for who, cs in sorted(pats.items(), key=lambda kv: (-len(kv[0]), kv[0])):
+        out.append(f'| {", ".join(who) if who else "no one"} | {", ".join(cs)} |')
+    out.append('')
 for enum in types:
     truths = [(name, dict(re.findall(r"WHEN '(\w+)' THEN (true|false)", expr))) for name, ret, params, expr in rules if ret == 'boolean' and len(params) == 1 and typeOf(params[0]) == enum]
     truths = [(n, a) for n, a in truths if a]

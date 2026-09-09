@@ -4,7 +4,9 @@ model Sheet
 a vendor is a helper who is paid
 a Role is one of: couple, helper
 # Abe, league night: a mother in law, a wedding party member — a helper who is not paid
-a Page is one of: floorPlan, guestList, samePage, invoices, budget, guests, site, team, dayOf, tasks, vendorChat, mySeason
+a Page is one of: home, seatingChart, guestList, samePage, invoices, budget, guests, site, team, dayOf, tasks, files, guide, profile, vendorChat, mySeason
+# Abe, frame five: the room has the guests, the sheet, the timeline — and the seating chart, the tasks, planning team, files, invoices.
+# his sidebar: Home, Tasks, Same page, Day-of sheet, Planning team, Invoices, Seating chart, Files, The Guide, My profile, My season, and the chats
 # Abe: yes; look at the demo, might be more but those are some — the list is a floor, held open in assays/eih.held
 a Ask is one of: guests, sheet, timeline
 # Abe: no bachelor party stuff, there's already an app for that. the room is one room for the whole wedding (his word)
@@ -12,14 +14,14 @@ a Ask is one of: guests, sheet, timeline
 the couple sees: every Page except vendorChat, mySeason
 # Abe: the couple doesn't see the private chats with vendors; paid vendors have a chat. and not Vendor Pro —
 # My season, which is only for season pass vendors: a second truth, pro, held in assays/eih.held
-a paid helper sees: floorPlan, samePage, invoices, team, dayOf, tasks, vendorChat
-an unpaid helper sees: floorPlan, guestList, samePage, team, dayOf, tasks
+a paid helper sees: home, seatingChart, samePage, invoices, team, dayOf, tasks, files, guide, profile, vendorChat
+an unpaid helper sees: home, seatingChart, guestList, samePage, team, dayOf, tasks, files, guide, profile
 # Abe's Claude, from the demo: the wedding party role in the planning lane; in the day lane tasks and team drop
 # (the view shrinks, it doesn't lock — EIH's lanes_shrink_never_lock); never guests, site, invoices, budget, the vendor room, my season
 
 the couple edits: every Page except vendorChat, mySeason
-a paid helper edits: invoices, dayOf, tasks, vendorChat
-an unpaid helper edits: floorPlan, guestList, dayOf, tasks
+a paid helper edits: invoices, dayOf, tasks, files, profile, vendorChat
+an unpaid helper edits: seatingChart, guestList, dayOf, tasks, files, profile
 
 a Room has: guests (a list of numbers), delivered (a list of numbers), timeline (a list of numbers)
 the room reads: guests as guests, sheet as delivered, timeline as timeline
@@ -53,5 +55,5 @@ then an unpaid helper does not see mySeason
 then an unpaid helper does not see guests
 then an unpaid helper does not see site
 then an unpaid helper does not see budget
-then an unpaid helper sees floorPlan
+then an unpaid helper sees seatingChart
 then an unpaid helper sees dayOf

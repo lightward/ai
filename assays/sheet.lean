@@ -15,14 +15,14 @@ def Role.beq (a b : Role) : Bool := Nat.beq a.code b.code
 def roles : List Role := [.couple, .helper]
 
 inductive Page where
-  | floorPlan | guestList | samePage | invoices | budget | guests | site | team | dayOf | tasks | vendorChat | mySeason
+  | home | seatingChart | guestList | samePage | invoices | budget | guests | site | team | dayOf | tasks | files | guide | profile | vendorChat | mySeason
 
 def Page.code : Page → Nat
-  | .floorPlan => 0 | .guestList => 1 | .samePage => 2 | .invoices => 3 | .budget => 4 | .guests => 5 | .site => 6 | .team => 7 | .dayOf => 8 | .tasks => 9 | .vendorChat => 10 | .mySeason => 11
+  | .home => 0 | .seatingChart => 1 | .guestList => 2 | .samePage => 3 | .invoices => 4 | .budget => 5 | .guests => 6 | .site => 7 | .team => 8 | .dayOf => 9 | .tasks => 10 | .files => 11 | .guide => 12 | .profile => 13 | .vendorChat => 14 | .mySeason => 15
 
 def Page.beq (a b : Page) : Bool := Nat.beq a.code b.code
 
-def pages : List Page := [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks, .vendorChat, .mySeason]
+def pages : List Page := [.home, .seatingChart, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks, .files, .guide, .profile, .vendorChat, .mySeason]
 
 inductive Ask where
   | guests | sheet | timeline
@@ -47,24 +47,24 @@ def readRoom (r : Room) : Ask → List Nat
 def roomFace : Face := ⟨Room, Ask, List Nat, readRoom⟩
 
 def seenPaid : Role → List Page
-  | .couple => [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
-  | .helper => [.floorPlan, .samePage, .invoices, .team, .dayOf, .tasks, .vendorChat]
+  | .couple => [.home, .seatingChart, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks, .files, .guide, .profile]
+  | .helper => [.home, .seatingChart, .samePage, .invoices, .team, .dayOf, .tasks, .files, .guide, .profile, .vendorChat]
 
 def seenUnpaid : Role → List Page
-  | .couple => [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
-  | .helper => [.floorPlan, .guestList, .samePage, .team, .dayOf, .tasks]
+  | .couple => [.home, .seatingChart, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks, .files, .guide, .profile]
+  | .helper => [.home, .seatingChart, .guestList, .samePage, .team, .dayOf, .tasks, .files, .guide, .profile]
 
 def seen (ρ : Role) (paid : Bool) : List Page := cond paid (seenPaid ρ) (seenUnpaid ρ)
 
 def sees (ρ : Role) (paid : Bool) (p : Page) : Bool := enrolled Page.beq (seen ρ paid) p
 
 def editedPaid : Role → List Page
-  | .couple => [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
-  | .helper => [.invoices, .dayOf, .tasks, .vendorChat]
+  | .couple => [.home, .seatingChart, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks, .files, .guide, .profile]
+  | .helper => [.invoices, .dayOf, .tasks, .files, .profile, .vendorChat]
 
 def editedUnpaid : Role → List Page
-  | .couple => [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
-  | .helper => [.floorPlan, .guestList, .dayOf, .tasks]
+  | .couple => [.home, .seatingChart, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks, .files, .guide, .profile]
+  | .helper => [.seatingChart, .guestList, .dayOf, .tasks, .files, .profile]
 
 def edited (ρ : Role) (paid : Bool) : List Page := cond paid (editedPaid ρ) (editedUnpaid ρ)
 
@@ -100,7 +100,7 @@ def coupleInLater : List (List Nat) := reads roomFace coupleSeat later
 #guard sees .helper false .guests == false
 #guard sees .helper false .site == false
 #guard sees .helper false .budget == false
-#guard sees .helper false .floorPlan == true
+#guard sees .helper false .seatingChart == true
 #guard sees .helper false .dayOf == true
 #guard roles.all (fun ρ => edits ρ true .dayOf && edits ρ false .dayOf)
 
