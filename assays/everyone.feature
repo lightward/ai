@@ -30,7 +30,8 @@ the room reads: guests as guests, headcount as delivered, timeline as timeline
 the couple hears: guests, headcount, timeline
 a caterer is a vendor
 the caterer hears: timeline, headcount
-# Abe: the caterer sees the timeline and the headcount — yes, not only that: a caterer is a vendor and sees a paid helper's pages
+# Abe: the caterer sees the timeline and the headcount — yes, not only that: a caterer is a vendor and sees a paid helper's
+# pages. then, both halves in one line: a clean yes
 the best man hears: timeline
 
 a Room may: withGuests (guests becomes the argument)
