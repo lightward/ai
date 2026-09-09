@@ -4,16 +4,17 @@ model Sheet
 a vendor is a helper who is paid
 a Role is one of: couple, helper
 # Abe, league night: a mother in law, a wedding party member — a helper who is not paid
-a Page is one of: floorPlan, guestList, samePage, invoices, budget, guests, site, team, dayOf, tasks
+a Page is one of: floorPlan, guestList, samePage, invoices, budget, guests, site, team, dayOf, tasks, vendorChat
 # Abe: yes; look at the demo, might be more but those are some — the list is a floor, held open in assays/eih.held
 a Ask is one of: guests, sheet, timeline, bachelor
 
-the couple sees: every Page
-a paid helper sees: floorPlan, samePage, invoices, team, dayOf, tasks
+the couple sees: every Page except vendorChat
+# Abe: the couple doesn't see the private chats with vendors; paid vendors have a chat
+a paid helper sees: floorPlan, samePage, invoices, team, dayOf, tasks, vendorChat
 an unpaid helper sees: floorPlan, guestList, samePage, team, dayOf, tasks
 
-the couple edits: every Page
-a paid helper edits: invoices, dayOf, tasks
+the couple edits: every Page except vendorChat
+a paid helper edits: invoices, dayOf, tasks, vendorChat
 an unpaid helper edits: floorPlan, guestList, dayOf, tasks
 
 a Room has: guests (a list of numbers), delivered (a list of numbers), timeline (a list of numbers), bachelor (a list of numbers)
@@ -43,3 +44,6 @@ then a paid helper sees invoices
 then an unpaid helper does not see invoices
 then the couple sees invoices
 then every Role edits dayOf
+then the couple does not see vendorChat
+then a paid helper sees vendorChat
+then an unpaid helper does not see vendorChat

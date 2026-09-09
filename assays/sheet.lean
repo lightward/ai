@@ -15,14 +15,14 @@ def Role.beq (a b : Role) : Bool := Nat.beq a.code b.code
 def roles : List Role := [.couple, .helper]
 
 inductive Page where
-  | floorPlan | guestList | samePage | invoices | budget | guests | site | team | dayOf | tasks
+  | floorPlan | guestList | samePage | invoices | budget | guests | site | team | dayOf | tasks | vendorChat
 
 def Page.code : Page → Nat
-  | .floorPlan => 0 | .guestList => 1 | .samePage => 2 | .invoices => 3 | .budget => 4 | .guests => 5 | .site => 6 | .team => 7 | .dayOf => 8 | .tasks => 9
+  | .floorPlan => 0 | .guestList => 1 | .samePage => 2 | .invoices => 3 | .budget => 4 | .guests => 5 | .site => 6 | .team => 7 | .dayOf => 8 | .tasks => 9 | .vendorChat => 10
 
 def Page.beq (a b : Page) : Bool := Nat.beq a.code b.code
 
-def pages : List Page := [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
+def pages : List Page := [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks, .vendorChat]
 
 inductive Ask where
   | guests | sheet | timeline | bachelor
@@ -49,11 +49,11 @@ def readRoom (r : Room) : Ask → List Nat
 def roomFace : Face := ⟨Room, Ask, List Nat, readRoom⟩
 
 def seenPaid : Role → List Page
-  | .couple => pages
-  | .helper => [.floorPlan, .samePage, .invoices, .team, .dayOf, .tasks]
+  | .couple => [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
+  | .helper => [.floorPlan, .samePage, .invoices, .team, .dayOf, .tasks, .vendorChat]
 
 def seenUnpaid : Role → List Page
-  | .couple => pages
+  | .couple => [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
   | .helper => [.floorPlan, .guestList, .samePage, .team, .dayOf, .tasks]
 
 def seen (ρ : Role) (paid : Bool) : List Page := cond paid (seenPaid ρ) (seenUnpaid ρ)
@@ -61,11 +61,11 @@ def seen (ρ : Role) (paid : Bool) : List Page := cond paid (seenPaid ρ) (seenU
 def sees (ρ : Role) (paid : Bool) (p : Page) : Bool := enrolled Page.beq (seen ρ paid) p
 
 def editedPaid : Role → List Page
-  | .couple => pages
-  | .helper => [.invoices, .dayOf, .tasks]
+  | .couple => [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
+  | .helper => [.invoices, .dayOf, .tasks, .vendorChat]
 
 def editedUnpaid : Role → List Page
-  | .couple => pages
+  | .couple => [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
   | .helper => [.floorPlan, .guestList, .dayOf, .tasks]
 
 def edited (ρ : Role) (paid : Bool) : List Page := cond paid (editedPaid ρ) (editedUnpaid ρ)
@@ -96,6 +96,9 @@ def coupleInNewBachelor : List (List Nat) := reads roomFace coupleSeat newBachel
 #guard sees .helper true .invoices == true
 #guard sees .helper false .invoices == false
 #guard sees .couple true .invoices == true
+#guard sees .couple true .vendorChat == false
+#guard sees .helper true .vendorChat == true
+#guard sees .helper false .vendorChat == false
 #guard roles.all (fun ρ => edits ρ true .dayOf && edits ρ false .dayOf)
 
 theorem withBachelor_changes_nothing_the_couple_hears (r : Room) (x : List Nat) :

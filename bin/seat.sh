@@ -9,7 +9,7 @@
 #   a Role is one of: couple, planner, vendor      an enum, with its code and beq
 #   a Room has: guests (a list of numbers), timeline (a list of numbers), done (a truth), n (a number)
 #   the room reads: guests as guests, sheet as delivered      a face over Room at the Ask enum: probe as field
-#   the couple sees: floorPlan, guestList | every Page         a rule handing each Role its Pages (seen / sees)
+#   the couple sees: floorPlan, guestList | every Page | every Page except vendorChat   a rule handing each Role its Pages
 #   the couple edits: …                                        edited / edits
 #   the caterer hears: timeline, sheet, confirmed              a seat: a list of Asks (catererSeat)
 #   a Room may: withBach (bach becomes the argument)           a door: a field replaced
@@ -107,7 +107,10 @@ for verb, arms in rules.items():
     if not (roleE and pageE): sys.exit(f'seat: {verb} names roles or pages no enum has')
     withTruth = any(t is not None for _, t in arms)
     truth = next(iter(truths)) if truths else 'paid'
-    def body(v): return f'{pageE[0].lower() + pageE[1:]}s' if v.startswith('every') else '[' + ', '.join('.' + ident(x) for x in items(v)) + ']'
+    def body(v):
+        m = re.match(r'^every \w+ except (.+)$', v)
+        if m: return '[' + ', '.join('.' + c for c in enums[pageE] if c not in [ident(x) for x in items(m.group(1))]) + ']'
+        return f'{pageE[0].lower() + pageE[1:]}s' if v.startswith('every') else '[' + ', '.join('.' + ident(x) for x in items(v)) + ']'
     if withTruth:
         # one rule per side of the truth, each read by the kernel at every constructor, and the rule
         # over both as a cond between them
