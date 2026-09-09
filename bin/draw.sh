@@ -48,7 +48,7 @@ for enum, ctors in types.items():
     out.append(title); out.append('')
     out.append('| seat | ' + ' | '.join(ctors) + ' | walls |')
     out.append('|---|' + '---|' * len(ctors) + '---|')
-    rows = [(n, ps) for n, ps in rows if not (set(ps) == set(ctors) and not (face or reader))]   # the list of every constructor is the enum itself, not a seat
+    rows = [(n, ps) for n, ps in rows if not (set(ps) == set(ctors) and len(rows) > 1)]   # the list of every constructor is the enum itself, not a seat
     if not rows: out.pop(); out.pop(); out.pop(); out.pop(); continue
     for n, ps in rows:
         marks = ' | '.join('●' if c in ps else '' for c in ctors)

@@ -25,26 +25,26 @@ def Page.beq (a b : Page) : Bool := Nat.beq a.code b.code
 def pages : List Page := [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks]
 
 inductive Ask where
-  | guests | sheet | timeline | bach
+  | guests | sheet | timeline | bachelor
 
 def Ask.code : Ask → Nat
-  | .guests => 0 | .sheet => 1 | .timeline => 2 | .bach => 3
+  | .guests => 0 | .sheet => 1 | .timeline => 2 | .bachelor => 3
 
 def Ask.beq (a b : Ask) : Bool := Nat.beq a.code b.code
 
-def asks : List Ask := [.guests, .sheet, .timeline, .bach]
+def asks : List Ask := [.guests, .sheet, .timeline, .bachelor]
 
 structure Room where
   guests : List Nat
   delivered : List Nat
   timeline : List Nat
-  bach : List Nat
+  bachelor : List Nat
 
 def readRoom (r : Room) : Ask → List Nat
   | .guests => r.guests
   | .sheet => r.delivered
   | .timeline => r.timeline
-  | .bach => r.bach
+  | .bachelor => r.bachelor
 
 def roomFace : Face := ⟨Room, Ask, List Nat, readRoom⟩
 
@@ -70,9 +70,9 @@ def coupleSeat : List Ask := [.guests, .sheet, .timeline]
 
 def catererSeat : List Ask := [.timeline, .sheet]
 
-def bestManSeat : List Ask := [.timeline, .bach]
+def bestManSeat : List Ask := [.timeline, .bachelor]
 
-def withBachelor (r : Room) (x : List Nat) : Room := { r with bach := x }
+def withBachelor (r : Room) (x : List Nat) : Room := { r with bachelor := x }
 
 def withGuests (r : Room) (x : List Nat) : Room := { r with guests := x }
 
