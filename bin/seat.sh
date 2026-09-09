@@ -7,6 +7,8 @@
 #
 #   model Name                                     the namespace: Name.Treaty
 #   a Role is one of: couple, planner, vendor      an enum, with its code and beq
+#   a vendor is a helper who is paid               a constructor retired into a truth
+#   a caterer is a vendor                          a name that reads as the seat it names
 #   a Room has: guests (a list of numbers), timeline (a list of numbers), done (a truth), n (a number)
 #   the room reads: guests as guests, sheet as delivered      a face over Room at the Ask enum: probe as field
 #   the couple sees: floorPlan, guestList | every Page | every Page except vendorChat   a rule handing each Role its Pages
@@ -47,6 +49,10 @@ for l in lines:
         aliases[m.group(1)] = (ident(m.group(2)), m.group(3))
         truths.add(m.group(3))
         continue
+    m = re.match(r'^an? (\w+) is an? (\w+)$', l)
+    if m:
+        # a caterer is a vendor: a name for a seat that reads as the seat it names, through every alias
+        aliases[m.group(1)] = (ident(m.group(2)), None); continue
     m = re.match(r'^an? (\w+) has: (.+)$', l)
     if m: structs[m.group(1)] = [(ident(f.strip()), ty(t)) for f, t in re.findall(r'(\w[\w ]*?)\s*\(([^)]*)\)', m.group(2))]; continue
     m = re.match(r'^the (\w+) reads: (.+)$', l)
@@ -72,12 +78,20 @@ for l in lines:
     sys.exit(f'seat: a line the grammar does not read: {l}')
 # the file's order is not the model's: a retired constructor leaves every enum whenever its sentence
 # came, and a phrase ("a paid helper", "the vendor") resolves against every truth and alias named
+def resolve(name, t=None):
+    # follow the aliases to a role, carrying the truth the chain asserts
+    seen = set()
+    while name in aliases and name not in seen:
+        seen.add(name); target, truth = aliases[name]
+        if truth is not None: t = True
+        name = target
+    return name, t
 def whoKey(who):
     mm = re.match(r'^(un)?(\w+) (\w+)$', who)
-    if mm and mm.group(2) in truths: return (ident(mm.group(3)), mm.group(1) is None)
-    if ident(who) in aliases: return (aliases[ident(who)][0], True)
-    return (ident(who), None)
-for a in aliases:
+    if mm and mm.group(2) in truths: return (resolve(ident(mm.group(3)))[0], mm.group(1) is None)
+    return resolve(ident(who))
+for a, (_, truth) in aliases.items():
+    if truth is None: continue
     for e, cs in enums.items():
         if ident(a) in cs: cs.remove(ident(a))
 for who, verb, v in rawRules: rules.setdefault(verb, {})[whoKey(who)] = v

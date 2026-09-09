@@ -8,7 +8,8 @@ a Page is one of: home, seatingChart, guestList, samePage, invoices, budget, gue
 # Abe, frame five: the room has the guests, the sheet, the timeline — and the seating chart, the tasks, planning team, files, invoices.
 # his sidebar: Home, Tasks, Same page, Day-of sheet, Planning team, Invoices, Seating chart, Files, The Guide, My profile, My season, and the chats
 # Abe: yes; look at the demo, might be more but those are some — the list is a floor, held open in assays/eih.held
-a Ask is one of: guests, sheet, timeline
+a Ask is one of: guests, headcount, timeline
+# Abe: 'what sheet' — his sidebar says HEADCOUNT for the meal sheet the room delivers
 # Abe: no bachelor party stuff, there's already an app for that. the room is one room for the whole wedding (his word)
 
 the couple sees: every Page except vendorChat, mySeason
@@ -24,10 +25,12 @@ a paid helper edits: invoices, dayOf, tasks, files, profile, vendorChat
 an unpaid helper edits: seatingChart, guestList, dayOf, tasks, files, profile
 
 a Room has: guests (a list of numbers), delivered (a list of numbers), timeline (a list of numbers)
-the room reads: guests as guests, sheet as delivered, timeline as timeline
+the room reads: guests as guests, headcount as delivered, timeline as timeline
 
-the couple hears: guests, sheet, timeline
-the caterer hears: timeline, sheet
+the couple hears: guests, headcount, timeline
+a caterer is a vendor
+the caterer hears: timeline, headcount
+# Abe: the caterer sees the timeline and the headcount — yes, not only that: a caterer is a vendor and sees a paid helper's pages
 the best man hears: timeline
 
 a Room may: withGuests (guests becomes the argument)
@@ -60,3 +63,5 @@ then an unpaid helper sees dayOf
 
 # Abe, frames nine and ten: the couple slot always pays for the room, by themselves or by a vendor; a vendor pays for a season pass.
 # EIH's treaty has it as lawful and the_payer_is_the_owner_or_the_host; the sheet's grammar has no bills yet
+then the caterer sees invoices
+then the caterer does not see guests

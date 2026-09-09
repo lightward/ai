@@ -25,14 +25,14 @@ def Page.beq (a b : Page) : Bool := Nat.beq a.code b.code
 def pages : List Page := [.home, .seatingChart, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks, .files, .guide, .profile, .vendorChat, .mySeason]
 
 inductive Ask where
-  | guests | sheet | timeline
+  | guests | headcount | timeline
 
 def Ask.code : Ask → Nat
-  | .guests => 0 | .sheet => 1 | .timeline => 2
+  | .guests => 0 | .headcount => 1 | .timeline => 2
 
 def Ask.beq (a b : Ask) : Bool := Nat.beq a.code b.code
 
-def asks : List Ask := [.guests, .sheet, .timeline]
+def asks : List Ask := [.guests, .headcount, .timeline]
 
 structure Room where
   guests : List Nat
@@ -41,7 +41,7 @@ structure Room where
 
 def readRoom (r : Room) : Ask → List Nat
   | .guests => r.guests
-  | .sheet => r.delivered
+  | .headcount => r.delivered
   | .timeline => r.timeline
 
 def roomFace : Face := ⟨Room, Ask, List Nat, readRoom⟩
@@ -70,9 +70,9 @@ def edited (ρ : Role) (paid : Bool) : List Page := cond paid (editedPaid ρ) (e
 
 def edits (ρ : Role) (paid : Bool) (p : Page) : Bool := enrolled Page.beq (edited ρ paid) p
 
-def coupleSeat : List Ask := [.guests, .sheet, .timeline]
+def coupleSeat : List Ask := [.guests, .headcount, .timeline]
 
-def catererSeat : List Ask := [.timeline, .sheet]
+def catererSeat : List Ask := [.timeline, .headcount]
 
 def bestManSeat : List Ask := [.timeline]
 
@@ -102,6 +102,8 @@ def coupleInLater : List (List Nat) := reads roomFace coupleSeat later
 #guard sees .helper false .budget == false
 #guard sees .helper false .seatingChart == true
 #guard sees .helper false .dayOf == true
+#guard sees .helper true .invoices == true
+#guard sees .helper true .guests == false
 #guard roles.all (fun ρ => edits ρ true .dayOf && edits ρ false .dayOf)
 
 theorem withGuests_changes_nothing_the_caterer_hears (r : Room) (x : List Nat) :
