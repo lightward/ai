@@ -57,3 +57,6 @@ then an unpaid helper does not see site
 then an unpaid helper does not see budget
 then an unpaid helper sees seatingChart
 then an unpaid helper sees dayOf
+
+# Abe, frames nine and ten: the couple slot always pays for the room, by themselves or by a vendor; a vendor pays for a season pass.
+# EIH's treaty has it as lawful and the_payer_is_the_owner_or_the_host; the sheet's grammar has no bills yet
