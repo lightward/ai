@@ -34,7 +34,8 @@ for l in res.stdout.splitlines():
     elif p[0] == 'derived':
         m = re.match(r'derived (\S+) clerk over=(\S+) .*? :: (.*?) \| ?(.*?)(?: @by \S+)?$', l)
         if m: clerks.append((m.group(1), short(m.group(2)), m.group(3), m.group(4).split()))
-out = [f'# {ns}, drawn', '', f'read from the kernel of `{src}`. a mark is a probe the seat hears; beside each seat, the theorems that cite it — the walls, licensed. below, the doors: the clerks, with the theorems that describe them.', '']
+out = [f'# {ns}, drawn', '',
+       f'three houses. the UNDERWORLD is foam\'s trunk ({", ".join(imports)}), the species that know no product\'s name; this grid is the OVERWORLD, the maintainer\'s model, read from the kernel of `{src}`; the cast (the rows a Room named demo, the database the shadow draws) is USERLAND; and the day itself is on no sheet. a mark is a probe the seat hears; beside each seat, the theorems that cite it — the walls, licensed in the underworld. below, the doors: the clerks, with the theorems that describe them.', '']
 # the grids: for each enum some seat lists, the seats over it against its constructors; the face
 # that reads at that enum names the room
 for enum, ctors in types.items():
