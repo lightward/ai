@@ -28,7 +28,8 @@ a Room has: guests (a list of numbers), delivered (a list of numbers), timeline 
 the room reads: guests as guests, headcount as delivered, timeline as timeline
 
 the couple hears: guests, headcount, timeline
-# Abe: the couple gets the guests, the headcount, the timeline from the room — yep, and other things
+# Abe: the couple gets the guests, the headcount, the timeline from the room — yep, and other things: the channels
+# (#Everyone, a private chat per vendor) and the badges (guests waiting, same page 2/6, tasks, invoices, files) — held
 a caterer is a vendor
 the caterer hears: timeline, headcount
 # Abe: the caterer sees the timeline and the headcount — yes, not only that: a caterer is a vendor and sees a paid helper's
