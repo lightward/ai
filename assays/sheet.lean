@@ -15,14 +15,14 @@ def Role.beq (a b : Role) : Bool := Nat.beq a.code b.code
 def roles : List Role := [.couple, .helper]
 
 inductive Page where
-  | floorPlan | guestList | samePage | invoices | budget | guests | site | team | dayOf | tasks | vendorChat
+  | floorPlan | guestList | samePage | invoices | budget | guests | site | team | dayOf | tasks | vendorChat | mySeason
 
 def Page.code : Page → Nat
-  | .floorPlan => 0 | .guestList => 1 | .samePage => 2 | .invoices => 3 | .budget => 4 | .guests => 5 | .site => 6 | .team => 7 | .dayOf => 8 | .tasks => 9 | .vendorChat => 10
+  | .floorPlan => 0 | .guestList => 1 | .samePage => 2 | .invoices => 3 | .budget => 4 | .guests => 5 | .site => 6 | .team => 7 | .dayOf => 8 | .tasks => 9 | .vendorChat => 10 | .mySeason => 11
 
 def Page.beq (a b : Page) : Bool := Nat.beq a.code b.code
 
-def pages : List Page := [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks, .vendorChat]
+def pages : List Page := [.floorPlan, .guestList, .samePage, .invoices, .budget, .guests, .site, .team, .dayOf, .tasks, .vendorChat, .mySeason]
 
 inductive Ask where
   | guests | sheet | timeline | bachelor
@@ -99,6 +99,8 @@ def coupleInNewBachelor : List (List Nat) := reads roomFace coupleSeat newBachel
 #guard sees .couple true .vendorChat == false
 #guard sees .helper true .vendorChat == true
 #guard sees .helper false .vendorChat == false
+#guard sees .couple true .mySeason == false
+#guard sees .helper false .mySeason == false
 #guard roles.all (fun ρ => edits ρ true .dayOf && edits ρ false .dayOf)
 
 theorem withBachelor_changes_nothing_the_couple_hears (r : Room) (x : List Nat) :
