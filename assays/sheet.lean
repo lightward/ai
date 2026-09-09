@@ -85,17 +85,16 @@ def withGuests (r : Room) (x : List Nat) : Room := { r with guests := x }
 def withTime (r : Room) (x : Nat) : Room := { r with timeline := x :: r.timeline }
 
 def demo : Room := ⟨[2, 3, 1], [], [10, 11, 12], [42]⟩
-def newBach : Room := withBachelor demo [43]
+def newBachelor : Room := withBachelor demo [43]
 
 def catererInDemo : List (List Nat) := reads roomFace catererSeat demo
 #guard catererInDemo == [[10, 11, 12], []]
-def bestManInNewBach : List (List Nat) := reads roomFace bestManSeat newBach
-#guard bestManInNewBach == [[10, 11, 12], [43]]
-def coupleInNewBach : List (List Nat) := reads roomFace coupleSeat newBach
-#guard coupleInNewBach == [[2, 3, 1], [], [10, 11, 12]]
+def bestManInNewBachelor : List (List Nat) := reads roomFace bestManSeat newBachelor
+#guard bestManInNewBachelor == [[10, 11, 12], [43]]
+def coupleInNewBachelor : List (List Nat) := reads roomFace coupleSeat newBachelor
+#guard coupleInNewBachelor == [[2, 3, 1], [], [10, 11, 12]]
 #guard sees .helper true .invoices == true
 #guard sees .helper false .invoices == false
-#guard sees .couple true .invoices == true
 #guard sees .couple true .invoices == true
 #guard roles.all (fun ρ => edits ρ true .dayOf && edits ρ false .dayOf)
 
