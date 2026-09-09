@@ -56,3 +56,15 @@
 -- has one truth per model tonight. waits on a carrier (pro) and on the grammar's sentence for a second
 -- truth. the sheet keeps the page, keeps the couple and the unpaid out of it, and says nothing yet about
 -- the paid helper there.
+-- his seventh word came through his Claude, reading the demo: the mother of the bride is the wedding
+-- party role, and what she sees depends on her LANE — the planning lane (home, the channels she is in,
+-- tasks, same page, day-of, planning team, the seating chart with the guest names, editable, files, the
+-- guide, her profile) or the helping-with-the-day lane (home, chats, same page, day-of, the chart, her
+-- profile: tasks, team, files, and the guide drop away; the view shrinks, it doesn't lock). never: guests,
+-- site, invoices and budget, the vendor room, my season, the who-can-edit panel. the treaty has the lane
+-- (Member.dayLane, the_day_lane_sees_no_task_list, lanes_shrink_never_lock) and not files, guide, or team
+-- dropping in the day lane; the sheet has one truth per model and cannot say the lane yet. held: the lane
+-- as a third truth beside paid and pro, and five more pages on the floor — home, channels, files, the
+-- guide, my profile — and the seating chart as floor plan and guest names in one page. and a fact for the
+-- log: their walls table said invoices was off for the wedding party while the demo sidebar showed it; the
+-- table won and the demo was fixed the same hour.

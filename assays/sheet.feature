@@ -13,6 +13,8 @@ the couple sees: every Page except vendorChat, mySeason
 # My season, which is only for season pass vendors: a second truth, pro, held in assays/eih.held
 a paid helper sees: floorPlan, samePage, invoices, team, dayOf, tasks, vendorChat
 an unpaid helper sees: floorPlan, guestList, samePage, team, dayOf, tasks
+# Abe's Claude, from the demo: the wedding party role in the planning lane; in the day lane tasks and team drop
+# (the view shrinks, it doesn't lock — EIH's lanes_shrink_never_lock); never guests, site, invoices, budget, the vendor room, my season
 
 the couple edits: every Page except vendorChat, mySeason
 a paid helper edits: invoices, dayOf, tasks, vendorChat
@@ -50,3 +52,8 @@ then a paid helper sees vendorChat
 then an unpaid helper does not see vendorChat
 then the couple does not see mySeason
 then an unpaid helper does not see mySeason
+then an unpaid helper does not see guests
+then an unpaid helper does not see site
+then an unpaid helper does not see budget
+then an unpaid helper sees floorPlan
+then an unpaid helper sees dayOf

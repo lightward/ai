@@ -101,6 +101,11 @@ def coupleInNewBachelor : List (List Nat) := reads roomFace coupleSeat newBachel
 #guard sees .helper false .vendorChat == false
 #guard sees .couple true .mySeason == false
 #guard sees .helper false .mySeason == false
+#guard sees .helper false .guests == false
+#guard sees .helper false .site == false
+#guard sees .helper false .budget == false
+#guard sees .helper false .floorPlan == true
+#guard sees .helper false .dayOf == true
 #guard roles.all (fun ρ => edits ρ true .dayOf && edits ρ false .dayOf)
 
 theorem withBachelor_changes_nothing_the_couple_hears (r : Room) (x : List Nat) :
