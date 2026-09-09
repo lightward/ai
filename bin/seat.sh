@@ -27,7 +27,7 @@ import re, sys
 lines = [l.rstrip() for l in open(sys.argv[1]) if l.strip() and not l.lstrip().startswith('#')]
 name = 'Sheet'
 enums, structs, faces, rules, seats, doors, walls, casts, thens, whens = {}, {}, {}, {}, {}, [], [], [], [], []
-aliases, truths, ruleThens = {}, set(), []
+aliases, truths, ruleThens, everyThens = {}, set(), [], []
 def items(s): return [x.strip() for x in s.split(',') if x.strip()]
 def ident(s): return re.sub(r'\s+(\w)', lambda m: m.group(1).upper(), s.strip())   # "best man" -> bestMan
 def ty(t):
@@ -75,6 +75,8 @@ for l in lines:
     if m: thens.append((ident(m.group(1)), m.group(3), m.group(2))); continue
     m = re.match(r'^then (?:the|an?) ([\w ]+?) (does not see|sees|does not edit|edits) (\w+)$', l)
     if m: ruleThens.append((m.group(1).strip(), m.group(2), ident(m.group(3)))); continue
+    m = re.match(r'^then every (\w+) (sees|edits) (\w+)$', l)
+    if m: everyThens.append((m.group(1), m.group(2), ident(m.group(3)))); continue
     sys.exit(f'seat: a line the grammar does not read: {l}')
 out = ['import Witness', 'open Room Face Witness', 'set_option autoImplicit false', '', f'namespace {name}.Treaty', '']
 for e, cs in enums.items():
@@ -149,6 +151,11 @@ for who, verb, page in ruleThens:
     withTruth = any(tt is not None for _, tt in rules.get(v, {}))
     call = f'{v} .{role}' + ((f' {t}' if t is not None else ' true') if withTruth else '') + f' .{page}'
     out.append(f'#guard {call} == {want}')
+for enum, v, page in everyThens:
+    withTruth = any(tt is not None for _, tt in rules.get(v, {}))
+    lst = enum[0].lower() + enum[1:] + 's'
+    call = f'{lst}.all (fun ρ => {v} ρ true .{page} && {v} ρ false .{page})' if withTruth else f'{lst}.all (fun ρ => {v} ρ .{page})'
+    out.append(f'#guard {call}')
 out.append('')
 for door, seat in walls:
     S = next((S for S, d, _, _ in doors if d == door), 'Room'); room = next(r for r, (s, _, _) in faces.items() if s == S)

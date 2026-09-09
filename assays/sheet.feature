@@ -40,3 +40,5 @@ then the couple hears [[2, 3, 1], [], [10, 11, 12]] in newBach
 then a paid helper sees invoices
 then an unpaid helper does not see invoices
 then the couple sees invoices
+then the couple sees invoices
+then every Role edits dayOf

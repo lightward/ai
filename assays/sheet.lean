@@ -96,6 +96,8 @@ def coupleInNewBach : List (List Nat) := reads roomFace coupleSeat newBach
 #guard sees .helper true .invoices == true
 #guard sees .helper false .invoices == false
 #guard sees .couple true .invoices == true
+#guard sees .couple true .invoices == true
+#guard roles.all (fun ρ => edits ρ true .dayOf && edits ρ false .dayOf)
 
 theorem withBachelor_changes_nothing_the_couple_hears (r : Room) (x : List Nat) :
     reads roomFace coupleSeat (withBachelor r x) = reads roomFace coupleSeat r := sorry
