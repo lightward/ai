@@ -2,6 +2,7 @@
 model Sheet
 
 a Role is one of: couple, vendor, helper
+# Abe, 2026-09-08: a vendor is a helper who gets paid — held in assays/eih.held until the grammar can say it
 a Page is one of: floorPlan, guestList, samePage, invoices, budget, guests, site, team, dayOf, tasks
 a Ask is one of: guests, sheet, timeline, bachelor
 

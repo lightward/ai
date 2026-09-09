@@ -38,3 +38,9 @@
 -- helper, wider than the wedding party — a mother-in-law is one. so the Roles are three: couple, vendor,
 -- helper. waits on the same carrier (the Role enum) and on the rules that hand each Role its pages, which
 -- the treaty states for five and he states for three. the feature follows him.
+-- his third word: "is a vendor a helper who gets paid? — yep." held: a vendor is not a Role; a vendor is
+-- a helper with a truth, paid. so the Roles are two, couple and helper, and the pages a paid helper is
+-- handed (the invoices, among them) are a rule over the role and the truth together. waits on a carrier
+-- (paid, a truth on Member) and on a rule shape the feature grammar does not yet have — a sentence like
+-- "a vendor is a helper who is paid" compiling to the retirement of a constructor and the minting of a
+-- field. the feature keeps vendor as its own constructor until the grammar can say what he said.
