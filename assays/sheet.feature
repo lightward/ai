@@ -3,6 +3,7 @@ model Sheet
 
 a vendor is a helper who is paid
 a Role is one of: couple, helper
+# Abe, league night: a mother in law, a wedding party member — a helper who is not paid
 a Page is one of: floorPlan, guestList, samePage, invoices, budget, guests, site, team, dayOf, tasks
 a Ask is one of: guests, sheet, timeline, bachelor
 
